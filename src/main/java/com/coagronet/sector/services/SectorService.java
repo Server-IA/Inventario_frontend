@@ -28,7 +28,7 @@ public class SectorService {
     private final UserEmpresaService userEmpresaService;
 
 
-    public List <SectorDTO> findAl() {
+    public List <SectorDTO> findAll() {
         return sectorRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .stream()
                 .map(sectorMapper::toDto)
