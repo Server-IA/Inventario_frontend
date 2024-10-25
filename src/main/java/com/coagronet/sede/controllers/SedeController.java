@@ -14,11 +14,15 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.coagronet.sede.dtos.DatosListadoSede;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.sede.Sede;
+import com.coagronet.sede.dtos.DatosListadoSede;
 import com.coagronet.sede.dtos.SedeDTO;
 import com.coagronet.sede.mappers.SedeMapper;
 import com.coagronet.sede.repositories.SedeRepository;
@@ -45,7 +49,6 @@ public class SedeController {
 
     private final PagedResourcesAssembler<SedeDTO> pagedResourcesAssembler;
 
-    @Autowired
     public SedeController(SedeRepository sedeRepository, PagedResourcesAssembler<SedeDTO> pagedResourcesAssembler) {
         this.sedeRepository = sedeRepository;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
@@ -68,7 +71,8 @@ public class SedeController {
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         Sort sort = Sort.by(Sort.Direction.ASC, "nombre");
         List<Sede> sedes = sedeRepository.findByEstadoNotAndEmpresa(2, empresa, sort);
-        List<DatosListadoSede> datosListadoSedes = sedes.stream().map(DatosListadoSede::new).collect(Collectors.toList());
+        List<DatosListadoSede> datosListadoSedes = sedes.stream().map(DatosListadoSede::new)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(datosListadoSedes);
     }
 
