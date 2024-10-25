@@ -43,9 +43,6 @@ public class AuthController {
     private String default_role;
 
     @Autowired
-    private MyUserDetailsService myUserDetailsService;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
