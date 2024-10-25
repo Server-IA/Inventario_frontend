@@ -1,12 +1,9 @@
 package com.coagronet.estado.controllers;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.coagronet.estado.dtos.DatosListadoEstado;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.estado.Estado;
+import com.coagronet.estado.dtos.DatosListadoEstado;
 import com.coagronet.estado.repositories.EstadoRepository;
 
 @RestController
@@ -33,10 +31,6 @@ public class EstadoController {
 
     public EstadoController(EstadoRepository estadoRepository) {
         this.estadoRepository = estadoRepository;
-    }
-
-    private Optional<Estado> findEstado(Integer requestedId) {
-        return estadoRepository.findById(requestedId);
     }
 
     @GetMapping("/{requestedId}")
@@ -55,7 +49,8 @@ public class EstadoController {
     @GetMapping("/short")
     public ResponseEntity<List<DatosListadoEstado>> listadoEstados() {
         List<Estado> estados = estadoRepository.findAll();
-        List<DatosListadoEstado> datosListadoEstados = estados.stream().map(DatosListadoEstado::new).collect(Collectors.toList());
+        List<DatosListadoEstado> datosListadoEstados = estados.stream().map(DatosListadoEstado::new)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(datosListadoEstados);
     }
 
