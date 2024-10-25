@@ -5,15 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.grupo.dtos.DatosListadoGrupo;
-import com.coagronet.user.User;
-import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
-import com.coagronet.userRole.repositories.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,8 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.grupo.Grupo;
+import com.coagronet.grupo.dtos.DatosListadoGrupo;
 import com.coagronet.grupo.repositories.GrupoRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/grupo")
@@ -72,7 +70,8 @@ public class GrupoController {
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         Sort sort = Sort.by(Sort.Direction.ASC, "nombre");
         List<Grupo> grupos = grupoRepository.findByEstadoNotAndEmpresa(2, empresa, sort);
-        List<DatosListadoGrupo> datosListadoGrupos = grupos.stream().map(DatosListadoGrupo::new).collect(Collectors.toList());
+        List<DatosListadoGrupo> datosListadoGrupos = grupos.stream().map(DatosListadoGrupo::new)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(datosListadoGrupos);
     }
 
