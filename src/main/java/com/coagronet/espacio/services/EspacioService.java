@@ -1,12 +1,12 @@
 package com.coagronet.espacio.services;
 
-import com.coagronet.espacio.Espacio;
-import com.coagronet.espacio.repositories.EspacioRepository;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.coagronet.espacio.Espacio;
+import com.coagronet.espacio.repositories.EspacioRepository;
 
 @Service
 public class EspacioService {
