@@ -2,7 +2,6 @@ package com.coagronet.infrastructure.configuration;
 
 import java.util.Map;
 
-import com.coagronet.kardex.Kardex;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
