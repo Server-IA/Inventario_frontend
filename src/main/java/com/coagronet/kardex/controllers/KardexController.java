@@ -1,11 +1,7 @@
 package com.coagronet.kardex.controllers;
 
-import com.coagronet.exceptionHandler.ResourceNotFoundException;
-import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.asemblers.KardexModelAssembler;
-import com.coagronet.kardex.dtos.KardexDTO;
-import com.coagronet.kardex.mappers.KardexMapper;
-import com.coagronet.kardex.repositories.KardexRepository;
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,10 +11,23 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
+import com.coagronet.exceptionHandler.ResourceNotFoundException;
+import com.coagronet.kardex.Kardex;
+import com.coagronet.kardex.asemblers.KardexModelAssembler;
+import com.coagronet.kardex.dtos.KardexDTO;
+import com.coagronet.kardex.mappers.KardexMapper;
+import com.coagronet.kardex.repositories.KardexRepository;
 
 @RestController
 @RequestMapping("/api/v1/kardex")
@@ -49,14 +58,23 @@ public class KardexController {
     }
 
     @PutMapping("/{requestedId}")
-    private ResponseEntity<EntityModel<KardexDTO>> updateKardex(@PathVariable Integer requestedId, @RequestBody KardexDTO kardexDTOUpdate) {
+    public ResponseEntity<EntityModel<KardexDTO>> updateKardex(
+            @PathVariable Integer requestedId,
+            @RequestBody KardexDTO kardexDTOUpdate) {
+
+        // Verifica si el Kardex con el requestedId existe
+        if (!kardexRepository.existsById(requestedId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Mapea el DTO a la entidad y establece el ID
         Kardex kardex = KardexMapper.INSTANCE.toEntity(kardexDTOUpdate);
         kardex.setId(requestedId);
-        if (null != kardex) {
-            kardexRepository.save(kardex);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+
+        // Guarda la entidad actualizada en el repositorio
+        kardexRepository.save(kardex);
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
@@ -90,7 +108,3 @@ public class KardexController {
         return ResponseEntity.created(locationOfNewKardex).build();
     }
 }
-
-
-
-
