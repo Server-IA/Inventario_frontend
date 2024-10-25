@@ -1,24 +1,26 @@
 package com.coagronet.espacio.controllers;
 
-import com.coagronet.bloque.Bloque;
-import com.coagronet.bloque.dtos.DatosListadoBloque;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
 import com.coagronet.espacio.dtos.DatosListadoEspacio;
-import com.coagronet.espacio.repositories.EspacioRepository;
 import com.coagronet.espacio.services.EspacioService;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/espacios")
@@ -52,7 +54,8 @@ public class EspacioController {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         List<Espacio> espacios = espacioService.obtenerEspaciosPorBloque(bloqueId, empresa.getId());
-        List<DatosListadoEspacio> datosListadoEspacios = espacios.stream().map(DatosListadoEspacio::new).collect(Collectors.toList());
+        List<DatosListadoEspacio> datosListadoEspacios = espacios.stream().map(DatosListadoEspacio::new)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(datosListadoEspacios);
     }
 
