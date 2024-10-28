@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/productoCategorias")
 public class ProductoCategoriaController {
 
