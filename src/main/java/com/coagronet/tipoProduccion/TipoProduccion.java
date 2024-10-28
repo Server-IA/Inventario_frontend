@@ -1,7 +1,12 @@
 package com.coagronet.tipoProduccion;
 
-import com.coagronet.estado.Estado;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,8 +32,7 @@ public class TipoProduccion {
     @Column(name = "tip_descripcion", length = 255)
     private String descripcion;
 
-    @ManyToOne
-    @JoinColumn(name = "tip_estado", referencedColumnName = "est_id")
-    private Estado estado;
+    @Column(name = "tip_estado", columnDefinition = "integer default 1")
+    private Integer estado;
 
 }
