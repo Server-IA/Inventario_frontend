@@ -15,6 +15,6 @@ public class ItemService {
     private CustomRepository customRepository;
 
     public List<Item> getAllItems(String tableName) {
-        return customRepository.findAllItems(tableName,0,20);
+        return customRepository.findAllItems(tableName);
     }
 }

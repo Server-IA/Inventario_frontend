@@ -22,18 +22,17 @@ public class CustomRepository {
     @Autowired
     private AppConfig appConfig;
 
-    public List<Item> findAllItems(String tableName, int page, int size) {
+    public List<Item> findAllItems(String tableName) {
         Map<String, String> queries = appConfig.getQueries();
-        if (queries == null || queries.get(tableName) == null) {
-            throw new IllegalStateException("No hay consulta configurada para esta tabla");
+        if (queries == null) {
+            throw new IllegalStateException("Configuration properties for queries are not initialized");
         }
         String sql = queries.get(tableName);
 
-        Query query = entityManager.createNativeQuery(sql, "ItemMapping");
-        query.setFirstResult(page * size);
-        query.setMaxResults(size);
+        System.out.println(tableName + " " + sql);
 
-        return (List<Item>) query.getResultList();
+        Query query = entityManager.createNativeQuery(sql, "ItemMapping");
+        return query.getResultList();
     }
 
 }
