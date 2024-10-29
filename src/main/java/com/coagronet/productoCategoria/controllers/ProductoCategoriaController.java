@@ -32,8 +32,8 @@ import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/productoCategorias")
+@CrossOrigin(origins = "*")
 public class ProductoCategoriaController {
 
     @Autowired
