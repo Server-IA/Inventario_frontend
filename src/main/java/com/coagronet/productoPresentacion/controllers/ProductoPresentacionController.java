@@ -1,14 +1,14 @@
 package com.coagronet.productoPresentacion.controllers;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,84 +18,106 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.ResourceNotFoundException;
+import com.coagronet.productoPresentacion.ProductoPresentacion;
 import com.coagronet.productoPresentacion.dtos.ProductoPresentacionDTO;
 import com.coagronet.productoPresentacion.mappers.ProductoPresentacionMapper;
-import com.coagronet.productoPresentacion.services.ProductoPresentacionService;
+import com.coagronet.productoPresentacion.repositories.ProductoPresentacionRepository;
+//import com.coagronet.productoPresentacion.services.ProductoPresentacionService;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/producto-presentaciones")
 public class ProductoPresentacionController {
 
-    @Autowired
-    private ProductoPresentacionService productoPresentacionService;
+    // @Autowired
+    // private ProductoPresentacionService productoPresentacionService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductoPresentacionDTO> getProductoPresentacion(@PathVariable Integer id) {
-        ProductoPresentacionDTO productoPresentacionDTO = productoPresentacionService.getProductoPresentacionById(id);
-        return ResponseEntity.ok(productoPresentacionDTO);
+    @Autowired
+    private ProductoPresentacionMapper productoPresentacionMapper;
+
+    @Autowired
+    private EstadoRepository estadoRepository;
+
+    @Autowired
+    private ProductoPresentacionRepository productoPresentacionRepository;
+
+    @Autowired
+    private PagedResourcesAssembler<ProductoPresentacionDTO> pagedResourcesAssembler;
+
+    @GetMapping("/{requestedId}")
+    private ResponseEntity<ProductoPresentacionDTO> findById(@PathVariable Integer requestedId) {
+        ProductoPresentacion productoPresentacion = productoPresentacionRepository.findByIdAndEstadoNot(requestedId, 2);
+        ProductoPresentacionDTO reqProductoPresentacionDTO = productoPresentacionMapper.toDto(productoPresentacion);
+        if (productoPresentacion != null) {
+            return ResponseEntity.ok(reqProductoPresentacionDTO);
+        } else {
+            throw new ResourceNotFoundException("ProductoPresentacion not found");
+        }
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllProductoPresentaciones(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String sortBy) {
+    private ResponseEntity<PagedModel<EntityModel<ProductoPresentacionDTO>>> findAll(
+            @PageableDefault Pageable paginacion) {
+        Page<ProductoPresentacion> productoPresentacionPage = productoPresentacionRepository.findByEstadoNot(2,
+                paginacion);
+        Page<ProductoPresentacionDTO> productoPresentacionDTOPage = productoPresentacionPage
+                .map(productoPresentacionMapper::toDto);
 
-        String[] sortParams = sortBy.split(",");
-        if (sortParams.length != 2
-                || (!sortParams[1].equalsIgnoreCase("asc") && !sortParams[1].equalsIgnoreCase("desc"))) {
-            return ResponseEntity.badRequest().body(
-                    "El parámetro 'sortBy' debe tener el formato 'campo,dirección', donde dirección es 'asc' o 'desc'.");
-        }
+        PagedModel<EntityModel<ProductoPresentacionDTO>> pagedModel = pagedResourcesAssembler
+                .toModel(productoPresentacionDTOPage);
 
-        Sort sort = Sort.by(Sort.Direction.fromString(sortParams[1]), sortParams[0]);
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ProductoPresentacionDTO> productoPresentacionPage = productoPresentacionService
-                .getAllProductoPresentaciones(pageable)
-                .map(ProductoPresentacionMapper.INSTANCE::toDto);
-
-        Map<String, Object> response = new HashMap<>();
-        Map<String, Object> header = new HashMap<>();
-        header.put("totalElements", productoPresentacionPage.getTotalElements());
-        header.put("totalPages", productoPresentacionPage.getTotalPages());
-        header.put("size", productoPresentacionPage.getSize());
-        header.put("number", productoPresentacionPage.getNumber());
-        header.put("sort", productoPresentacionPage.getSort());
-        header.put("first", productoPresentacionPage.isFirst());
-        header.put("last", productoPresentacionPage.isLast());
-        header.put("numberOfElements", productoPresentacionPage.getNumberOfElements());
-        header.put("empty", productoPresentacionPage.isEmpty());
-
-        response.put("header", header);
-        response.put("data", productoPresentacionPage.getContent());
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(pagedModel);
     }
 
     @PostMapping
-    public ResponseEntity<ProductoPresentacionDTO> createProductoPresentacion(
-            @RequestBody ProductoPresentacionDTO productoPresentacionDTO) {
-        ProductoPresentacionDTO createdProductoPresentacion = productoPresentacionService
-                .createProductoPresentacion(productoPresentacionDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProductoPresentacion);
+    public ResponseEntity<Void> create(@RequestBody ProductoPresentacionDTO productoPresentacionDTO,
+            UriComponentsBuilder ucb) {
+        ProductoPresentacion productoPresentacion = productoPresentacionMapper.toEntity(productoPresentacionDTO);
+        ProductoPresentacion savedProductoPresentacion = productoPresentacionRepository.save(productoPresentacion);
+        URI locationOfNewProductoPresentacion = ucb
+                .path("/api/v1/producto-presentaciones/{id}")
+                .buildAndExpand(savedProductoPresentacion.getId())
+                .toUri();
+        return ResponseEntity.created(locationOfNewProductoPresentacion).build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductoPresentacionDTO> updateProductoPresentacion(@PathVariable Integer id,
+    @PutMapping("/{requestedId}")
+    public ResponseEntity<EntityModel<ProductoPresentacionDTO>> update(
+            @PathVariable Integer requestedId,
             @RequestBody ProductoPresentacionDTO productoPresentacionDTO) {
-        ProductoPresentacionDTO updatedProductoPresentacion = productoPresentacionService.updateProductoPresentacion(id,
-                productoPresentacionDTO);
-        return ResponseEntity.ok(updatedProductoPresentacion);
+
+        // Verifica si el Kardex con el requestedId existe
+        if (!productoPresentacionRepository.existsById(requestedId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Mapea el DTO a la entidad y establece el ID
+        ProductoPresentacion productoPresentacion = ProductoPresentacionMapper.INSTANCE
+                .toEntity(productoPresentacionDTO);
+        productoPresentacion.setId(requestedId);
+
+        // Guarda la entidad actualizada en el repositorio
+        productoPresentacionRepository.save(productoPresentacion);
+
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProductoPresentacion(@PathVariable Integer id) {
-        productoPresentacionService.deleteProductoPresentacion(id);
+    private ResponseEntity<Void> delete(@PathVariable Integer id) {
+        ProductoPresentacion productoPresentacion = productoPresentacionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Almacen not found with id: " + id));
+
+        Estado nuevoEstado = estadoRepository.findById(2)
+                .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
+
+        productoPresentacion.setEstado(nuevoEstado);
+        productoPresentacionRepository.save(productoPresentacion);
         return ResponseEntity.noContent().build();
     }
 }

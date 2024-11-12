@@ -1,16 +1,19 @@
 package com.coagronet.productoPresentacion.repositories;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import com.coagronet.productoPresentacion.ProductoPresentacion;
 
+@Repository
 public interface ProductoPresentacionRepository extends JpaRepository<ProductoPresentacion, Integer> {
-    Optional<ProductoPresentacion> findByIdAndEstado(Integer id, Integer estado);
+    @Query("SELECT p FROM ProductoPresentacion p WHERE p.id = :id AND p.estado.id != :estadoId")
+    ProductoPresentacion findByIdAndEstadoNot(@Param("id") Integer id, @Param("estadoId") Integer estadoId);
 
-    Page<ProductoPresentacion> findByEstadoNot(Integer estado, Pageable pageable);
-
+    @Query("SELECT p FROM ProductoPresentacion p WHERE p.estado.id != :estadoId")
+    Page<ProductoPresentacion> findByEstadoNot(@Param("estadoId") Integer estadoId, Pageable pageable);
 }
