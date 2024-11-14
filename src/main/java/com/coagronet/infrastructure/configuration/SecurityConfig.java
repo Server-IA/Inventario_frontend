@@ -54,7 +54,8 @@ public class SecurityConfig {
                                 "/api/v1/producto-presentaciones/**",
                                 "/api/v1/activaciones/**",
                                 "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                                "/api/v1/tipo_identificacion/**")
+                                "/api/v1/tipo_identificacion/**",
+                                "/api/v1/tipo_bloque")
                         .permitAll()
                         .requestMatchers("/api/v1/productoCategorias/**").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
