@@ -1,9 +1,11 @@
 package com.coagronet.tipoSede.controllers;
 
-import java.util.List;
+import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,9 +16,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.infrastructure.configuration.ResponseHandler;
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoSede.TipoSede;
+import com.coagronet.tipoSede.dtos.TipoSedeDTO;
+import com.coagronet.tipoSede.mappers.TipoSedeMapper;
+import com.coagronet.tipoSede.repositories.TipoSedeRepository;
 import com.coagronet.tipoSede.services.TipoSedeService;
 
 @RestController
@@ -26,82 +33,68 @@ public class TipoSedeController {
     @Autowired
     private TipoSedeService tipoSedeService;
 
-    @PostMapping
-    public ResponseEntity<Object> addTipoSede(@RequestBody TipoSede tipoSede) {
-        try {
-            tipoSedeService.addTipoSede(tipoSede);
-            return ResponseHandler.generateResponse(HttpStatus.CREATED,
-                    false,
-                    "Tipo de Sede creado exitosamente.",
-                    null);
-        } catch (Exception e) {
-            return ResponseHandler.generateResponse(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    true,
-                    "Error al crear el tipo de sede.",
-                    null);
-        }
-    }
+    @Autowired
+    private TipoSedeRepository tipoSedeRepository;
+
+    @Autowired
+    private TipoSedeMapper tipoSedeMapper;
+
+    @Autowired
+    private EstadoRepository estadoRepository;
 
     @GetMapping
-    public List<TipoSede> getAllTipoSedes() {
-        return tipoSedeService.getAllTipoSedes();
+    private ResponseEntity<Page<TipoSedeDTO>> findAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity
+                .ok(tipoSedeRepository.findByEstadoNot(2, pageable).map(TipoSedeMapper.INSTANCE::toDTO));
     }
 
-    @GetMapping("/{id}")
-    public TipoSede getTipoSedeById(@PathVariable Integer id) {
-        return tipoSedeService.getTipoSedeById(id);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> updateTipoSede(@PathVariable Integer id, @RequestBody TipoSede tipoSedeDetails) {
-        try {
-            TipoSede existingTipoSede = tipoSedeService.getTipoSedeById(id);
-            if (existingTipoSede == null) {
-                return ResponseHandler.generateResponse(
-                        HttpStatus.NOT_FOUND,
-                        false,
-                        "Tipo de Sede no encontrada.",
-                        null);
-            }
-            tipoSedeService.updateTipoSede(id, tipoSedeDetails);
-            return ResponseHandler.generateResponse(
-                    HttpStatus.NO_CONTENT,
-                    false,
-                    "Tipo de Sede actualizada exitosamente.",
-                    null);
-        } catch (Exception e) {
-            return ResponseHandler.generateResponse(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    true,
-                    "Error al actualizar la Tipo de Sede.",
-                    null);
+    @GetMapping("/{requestedId}")
+    private ResponseEntity<TipoSedeDTO> findById(@PathVariable Integer requestedId) {
+        TipoSede tipoSede = tipoSedeRepository.findByIdAndEstadoNot(requestedId, 2);
+        TipoSedeDTO tipoSedeDTO = tipoSedeMapper.toDTO(tipoSede);
+        if (tipoSede != null) {
+            return ResponseEntity.ok(tipoSedeDTO);
+        } else {
+            return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping
+    private ResponseEntity<Void> createTipoSede(@RequestBody TipoSedeDTO tipoSedeDTO,
+            UriComponentsBuilder ucb) {
+        TipoSede tipoSede = tipoSedeMapper.toEntity(tipoSedeDTO);
+        tipoSedeRepository.save(tipoSede);
+        URI locationOfNewTipoSede = ucb
+                .path("/api/v1/tipo_sede/{id}")
+                .buildAndExpand(tipoSede.getId())
+                .toUri();
+        return ResponseEntity.created(locationOfNewTipoSede).build();
+    }
+
+    @PutMapping("/{requestedId}")
+    private ResponseEntity<Void> putTipoSede(@PathVariable Integer requestedId,
+            @RequestBody TipoSedeDTO tipoSedeUpdate) {
+        TipoSede tipoSede = tipoSedeMapper.toEntity(tipoSedeUpdate);
+        tipoSedeRepository.findByIdAndEstadoNot(requestedId, 2);
+        if (null != tipoSede) {
+            tipoSede.setId(requestedId);
+            tipoSedeRepository.save(tipoSede);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleleTipoSede(@PathVariable Integer id) {
-        try {
-            TipoSede existingTipoSede = tipoSedeService.getTipoSedeById(id);
-            if (existingTipoSede == null) {
-                return ResponseHandler.generateResponse(
-                        HttpStatus.NOT_FOUND,
-                        false,
-                        "Tipo de Sede no encontrada.",
-                        null);
-            }
-            tipoSedeService.deleteTipoSede(id);
-            return ResponseHandler.generateResponse(
-                    HttpStatus.NO_CONTENT,
-                    false,
-                    "Tipo de Sede borrada exitosamente.",
-                    null);
-        } catch (Exception e) {
-            return ResponseHandler.generateResponse(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    true,
-                    "Error al borrar el Tipo de Sede.",
-                    null);
+    private ResponseEntity<Void> deleteTipoSede(@PathVariable Integer id) {
+        if (tipoSedeRepository.existsByIdAndEstadoNot(id, 2)) {
+            TipoSede tipoSede = tipoSedeRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("TipoSede not found with id: " + id));
+            Estado nuevoEstado = estadoRepository.findById(2)
+                    .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
+            tipoSede.setEstado(nuevoEstado);
+            tipoSedeRepository.save(tipoSede);
+            return ResponseEntity.noContent().build();
         }
+        return ResponseEntity.notFound().build();
     }
 }
