@@ -24,14 +24,11 @@ import com.coagronet.tipoSede.TipoSede;
 import com.coagronet.tipoSede.dtos.TipoSedeDTO;
 import com.coagronet.tipoSede.mappers.TipoSedeMapper;
 import com.coagronet.tipoSede.repositories.TipoSedeRepository;
-import com.coagronet.tipoSede.services.TipoSedeService;
 
 @RestController
 @RequestMapping("/api/v1/tipo_sede")
 @CrossOrigin(origins = "*")
 public class TipoSedeController {
-    @Autowired
-    private TipoSedeService tipoSedeService;
 
     @Autowired
     private TipoSedeRepository tipoSedeRepository;
