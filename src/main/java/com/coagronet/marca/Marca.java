@@ -1,11 +1,16 @@
 package com.coagronet.marca;
 
+import com.coagronet.estado.Estado;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,22 +18,24 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "marca")
+@Entity
+@Table(name = "marca")
 public class Marca {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "marca_generator")
     @SequenceGenerator(name = "marca_generator", sequenceName = "marca_mar_id_seq", allocationSize = 1)
-    @Column(name = "mar_id")
+    @Column(name = "mar_id", nullable = false)
     private Long id;
 
-    @Column(name = "mar_nombre", length = 100)
+    @Column(name = "mar_nombre")
     private String nombre;
 
-    @Column(name = "mar_descripcion", length = 255)
+    @Column(name = "mar_descripcion")
     private String descripcion;
 
-    @Column(name = "mar_estado", columnDefinition = "integer default 1")
-    private Integer estado;
+    @ManyToOne
+    @JoinColumn(name = "mar_estado", referencedColumnName = "est_id")
+    private Estado estado;
 
 }

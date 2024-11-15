@@ -2,11 +2,9 @@ package com.coagronet.marca.controllers;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,7 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.marca.Marca;
+import com.coagronet.marca.dtos.MarcaDTO;
+import com.coagronet.marca.mappers.MarcaMapper;
 import com.coagronet.marca.repositories.MarcaRepository;
 
 @RestController
@@ -27,56 +29,55 @@ import com.coagronet.marca.repositories.MarcaRepository;
 @CrossOrigin(origins = "*")
 public class MarcaController {
 
-    private final MarcaRepository marcaRepository;
+    @Autowired
+    private MarcaRepository marcaRepository;
 
-    private MarcaController(MarcaRepository marcaRepository) {
-        this.marcaRepository = marcaRepository;
-    }
+    @Autowired
+    private MarcaMapper marcaMapper;
 
-    private Marca findMarca(Long requestedId, Integer estado) {
-        return marcaRepository.findByIdAndEstado(requestedId, 1);
+    @Autowired
+    private EstadoRepository estadoRepository;
+
+    @GetMapping
+    private ResponseEntity<List<MarcaDTO>> findAll() {
+        List<MarcaDTO> marcaDTOs = marcaRepository.findByEstadoNot(2)
+                .stream()
+                .map(MarcaMapper.INSTANCE::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(marcaDTOs);
     }
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<Marca> findById(@PathVariable Long requestedId, Integer estado) {
-        Marca marca = findMarca(requestedId, 1);
+    private ResponseEntity<MarcaDTO> findById(@PathVariable Long requestedId) {
+        Marca marca = marcaRepository.findByIdAndEstadoNot(requestedId, 2);
+        MarcaDTO marcaDTO = marcaMapper.toDTO(marca);
         if (marca != null) {
-            return ResponseEntity.ok(marca);
+            return ResponseEntity.ok(marcaDTO);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @GetMapping
-    public ResponseEntity<List<Marca>> findAll(Pageable pageable, Integer estado) {
-        Page<Marca> page = marcaRepository.findAllByEstado(1, PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                pageable.getSortOr(Sort.by(Sort.Direction.ASC, "id"))));
-        return ResponseEntity.ok(page.getContent());
-    }
-
     @PostMapping
-    private ResponseEntity<Void> createMarca(@RequestBody Marca newMarcaRequest,
+    private ResponseEntity<Void> createMarca(@RequestBody MarcaDTO marcaDTO,
             UriComponentsBuilder ucb) {
-        Marca marca = new Marca(null, newMarcaRequest.getNombre(),
-                newMarcaRequest.getDescripcion(), newMarcaRequest.getEstado());
-        Marca savedMarca = marcaRepository.save(marca);
+        Marca marca = marcaMapper.toEntity(marcaDTO);
+        marcaRepository.save(marca);
         URI locationOfNewMarca = ucb
-                .path("marcas/{id}")
-                .buildAndExpand(savedMarca.getId())
+                .path("/api/v1/marcas/{id}")
+                .buildAndExpand(marca.getId())
                 .toUri();
         return ResponseEntity.created(locationOfNewMarca).build();
     }
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putMarca(@PathVariable Long requestedId,
-            @RequestBody Marca marcaUpdate, Integer estado) {
-        Marca marca = findMarca(requestedId, 1);
+            @RequestBody MarcaDTO marcaUpdate) {
+        Marca marca = marcaMapper.toEntity(marcaUpdate);
+        marcaRepository.findByIdAndEstadoNot(requestedId, 2);
         if (null != marca) {
-            Marca updatedMarca = new Marca(marca.getId(), marcaUpdate.getNombre(),
-                    marcaUpdate.getDescripcion(), marcaUpdate.getEstado());
-            marcaRepository.save(updatedMarca);
+            marca.setId(requestedId);
+            marcaRepository.save(marca);
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
@@ -84,9 +85,12 @@ public class MarcaController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deleteMarca(@PathVariable Long id) {
-        if (marcaRepository.existsById(id)) {
-            Marca marca = marcaRepository.getReferenceById(id);
-            marca.setEstado(2);
+        if (marcaRepository.existsByIdAndEstadoNot(id, 2)) {
+            Marca marca = marcaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Marca not found with id: " + id));
+            Estado nuevoEstado = estadoRepository.findById(2)
+                    .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
+            marca.setEstado(nuevoEstado);
             marcaRepository.save(marca);
             return ResponseEntity.noContent().build();
         }
