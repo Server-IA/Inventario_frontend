@@ -56,9 +56,10 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
                                 "/api/v1/tipo_identificacion/**",
                                 "/api/v1/tipo_bloque/**",
-                                "/api/v1/tipo_espacio/**")
+                                "/api/v1/tipo_espacio/**",
+                                "/api/v1/producto_categoria/**")
                         .permitAll()
-                        .requestMatchers("/api/v1/productoCategorias/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

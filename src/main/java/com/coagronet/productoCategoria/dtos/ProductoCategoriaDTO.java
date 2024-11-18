@@ -10,4 +10,5 @@ public class ProductoCategoriaDTO {
     private String nombre;
     private String descripcion;
     private Integer estado;
+    private Long empresa;
 }
