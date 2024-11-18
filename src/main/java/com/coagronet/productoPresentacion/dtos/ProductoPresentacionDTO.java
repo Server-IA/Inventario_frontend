@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductoPresentacionDTO {
-
     private Integer id;
     private Integer producto;
     private String nombre;

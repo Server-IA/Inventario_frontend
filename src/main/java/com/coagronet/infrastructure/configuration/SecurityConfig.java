@@ -51,7 +51,7 @@ public class SecurityConfig {
                                 "/api/v1/roles/**",
                                 "/api/v1/personas/**",
                                 "/api/v1/productos/**",
-                                "/api/v1/producto-presentaciones/**",
+                                "/api/v1/producto-presentacion",
                                 "/api/v1/activaciones/**",
                                 "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
                                 "/api/v1/tipo_identificacion/**",
