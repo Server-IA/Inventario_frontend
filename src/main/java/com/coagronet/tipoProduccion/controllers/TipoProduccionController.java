@@ -1,8 +1,10 @@
 package com.coagronet.tipoProduccion.controllers;
 
+import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,67 +15,109 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoProduccion.TipoProduccion;
+import com.coagronet.tipoProduccion.dtos.TipoProduccionDTO;
+import com.coagronet.tipoProduccion.mappers.TipoProduccionMapper;
 import com.coagronet.tipoProduccion.repositories.TipoProduccionRepository;
 
 @RestController
-@RequestMapping("/api/v1/tipoProduccion")
+@RequestMapping("/api/v1/tipo_produccion")
 @CrossOrigin(origins = "*")
 public class TipoProduccionController {
-
     private final TipoProduccionRepository tipoProduccionRepository;
+    private final TipoProduccionMapper tipoProduccionMapper;
+    private final EstadoRepository estadoRepository;
 
-    public TipoProduccionController(TipoProduccionRepository tipoProduccionRepository) {
+    @Autowired
+    public TipoProduccionController(
+            TipoProduccionRepository tipoProduccionRepository,
+            TipoProduccionMapper tipoProduccionMapper,
+            EstadoRepository estadoRepository) {
         this.tipoProduccionRepository = tipoProduccionRepository;
+        this.tipoProduccionMapper = tipoProduccionMapper;
+        this.estadoRepository = estadoRepository;
     }
 
-    // Obtener todos los tipos de producción sin paginación
-    @GetMapping
-    public ResponseEntity<List<TipoProduccion>> listarTiposProduccion() {
-        List<TipoProduccion> tiposProduccion = tipoProduccionRepository.listarTipoProduccion();
-        return new ResponseEntity<>(tiposProduccion, HttpStatus.OK);
+    @GetMapping("/{requestedId}")
+    private ResponseEntity<TipoProduccionDTO> findById(@PathVariable Integer requestedId) {
+        TipoProduccion tipoProduccion = tipoProduccionRepository.findByIdAndEstadoIdNot(requestedId, 2);
+        TipoProduccionDTO tipoProduccionDTO = tipoProduccionMapper.toDto(tipoProduccion);
+        if (tipoProduccion != null) {
+            return ResponseEntity.ok(tipoProduccionDTO);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // Obtener tipo de producción por ID
-    @GetMapping("/{id}")
-    public ResponseEntity<TipoProduccion> obtenerTipoProduccion(@PathVariable Integer id) {
-        return tipoProduccionRepository.findByIdAndEstadoNot(id, 2)
-                .map(tipoProduccion -> new ResponseEntity<>(tipoProduccion, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    // Crear un nuevo tipo de producción
     @PostMapping
-    public ResponseEntity<TipoProduccion> crearTipoProduccion(@RequestBody TipoProduccion tipoProduccion) {
-        TipoProduccion nuevoTipoProduccion = tipoProduccionRepository.save(tipoProduccion);
-        return new ResponseEntity<>(nuevoTipoProduccion, HttpStatus.CREATED);
+    public ResponseEntity<Void> createTipoProduccion(
+            @RequestBody TipoProduccionDTO newTipoProduccionRequest,
+            UriComponentsBuilder ucb) {
+        TipoProduccion tipoProduccion = tipoProduccionMapper.toEntity(newTipoProduccionRequest);
+
+        // Asegurarse de que el estado existe
+        Estado estado = estadoRepository.findById(newTipoProduccionRequest.getEstado())
+                .orElseThrow(() -> new RuntimeException("Estado not found"));
+        tipoProduccion.setEstado(estado);
+
+        tipoProduccion = tipoProduccionRepository.save(tipoProduccion);
+
+        URI locationOfNewTipoProduccion = ucb
+                .path("/api/v1/tipo_produccion/{id}")
+                .buildAndExpand(tipoProduccion.getId())
+                .toUri();
+
+        return ResponseEntity.created(locationOfNewTipoProduccion).build();
     }
 
-    // Actualizar un tipo de producción existente
-    @PutMapping("/{id}")
-    public ResponseEntity<TipoProduccion> actualizarTipoProduccion(@PathVariable Integer id,
-            @RequestBody TipoProduccion tipoProduccion) {
-        return tipoProduccionRepository.findById(id)
-                .map(tipoExistente -> {
-                    tipoExistente.setNombre(tipoProduccion.getNombre());
-                    tipoExistente.setDescripcion(tipoProduccion.getDescripcion());
-                    tipoExistente.setEstado(tipoProduccion.getEstado());
-                    TipoProduccion actualizado = tipoProduccionRepository.save(tipoExistente);
-                    return new ResponseEntity<>(actualizado, HttpStatus.OK);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    @GetMapping
+    public ResponseEntity<List<TipoProduccionDTO>> findAll() {
+        List<TipoProduccionDTO> tipoProduccionDTOs = tipoProduccionRepository
+                .findByEstadoIdNotOrderByTipoIdAsc(2)
+                .stream()
+                .map(tipoProduccionMapper::toDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(tipoProduccionDTOs);
     }
 
-    // Eliminar un tipo de producción (cambio de estado a inactivo, por ejemplo)
+    @PutMapping("/{requestedId}")
+    public ResponseEntity<Void> putTipoProduccion(
+            @PathVariable Integer requestedId,
+            @RequestBody TipoProduccionDTO tipoProduccionUpdate) {
+        if (!tipoProduccionRepository.existsById(requestedId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        TipoProduccion tipoProduccion = tipoProduccionMapper.toEntity(tipoProduccionUpdate);
+        tipoProduccion.setId(requestedId);
+
+        // Asegurarse de que el estado existe
+        Estado estado = estadoRepository.findById(tipoProduccionUpdate.getEstado())
+                .orElseThrow(() -> new RuntimeException("Estado not found"));
+        tipoProduccion.setEstado(estado);
+
+        tipoProduccionRepository.save(tipoProduccion);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarTipoProduccion(@PathVariable Integer id) {
-        return tipoProduccionRepository.findById(id)
-                .map(tipoProduccion -> {
-                    tipoProduccion.setEstado(2); // Suponiendo que el estado "2" corresponde a inactivo
-                    tipoProduccionRepository.save(tipoProduccion);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<Void> deleteTipoProduccion(@PathVariable Integer id) {
+        if (tipoProduccionRepository.existsByIdAndEstadoIdNot(id, 2)) {
+            TipoProduccion tipoProduccion = tipoProduccionRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("TipoProduccion not found with id: " + id));
+
+            Estado nuevoEstado = estadoRepository.findById(2)
+                    .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
+
+            tipoProduccion.setEstado(nuevoEstado);
+            tipoProduccionRepository.save(tipoProduccion);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }
