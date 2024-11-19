@@ -57,7 +57,8 @@ public class SecurityConfig {
                                 "/api/v1/tipo_identificacion/**",
                                 "/api/v1/tipo_bloque/**",
                                 "/api/v1/tipo_espacio/**",
-                                "/api/v1/producto_categoria/**")
+                                "/api/v1/producto_categoria/**",
+                                "/api/v1/tipo_movimiento")
                         .permitAll()
                         .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
