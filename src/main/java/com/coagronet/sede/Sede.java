@@ -1,6 +1,7 @@
 package com.coagronet.sede;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
 import com.coagronet.grupo.Grupo;
 import com.coagronet.municipio.Municipio;
 import com.coagronet.tipoSede.TipoSede;
@@ -67,7 +68,8 @@ public class Sede {
     @Column(name = "sed_descripcion", length = 255)
     private String descripcion;
 
-    @Column(name = "sed_estado", columnDefinition = "integer default 1")
-    private Integer estado;
+    @ManyToOne
+    @JoinColumn(name = "sed_estado", referencedColumnName = "est_id")
+    private Estado estado;
 
 }
