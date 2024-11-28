@@ -23,18 +23,22 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.almacen.Almacen;
-import com.coagronet.almacen.dtos.DTOAlmacen;
-import com.coagronet.almacen.dtos.DatosListadoAlmacen;
+import com.coagronet.almacen.dtos.AlmacenDTO;
+import com.coagronet.almacen.dtos.AlmacenMinimalDTO;
 import com.coagronet.almacen.mappers.AlmacenMapper;
-import com.coagronet.almacen.services.AlmacenService;
+import com.coagronet.almacen.repositories.AlmacenRepository;
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.ResourceNotFoundException;
+import com.coagronet.sede.repositories.SedeRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
-@RequestMapping("/api/v1/almacenes")
+@RequestMapping("/api/v1/almacen")
 @CrossOrigin(origins = "*")
 public class AlmacenController {
 
@@ -44,8 +48,21 @@ public class AlmacenController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private AlmacenService almacenService;
+    private final AlmacenRepository almacenRepository;
+    private final AlmacenMapper almacenMapper;
+    private final EstadoRepository estadoRepository;
+    private final SedeRepository sedeRepository;
+
+    public AlmacenController(
+            AlmacenRepository almacenRepository,
+            AlmacenMapper almacenMapper,
+            EstadoRepository estadoRepository,
+            SedeRepository sedeRepository) {
+        this.almacenRepository = almacenRepository;
+        this.almacenMapper = almacenMapper;
+        this.estadoRepository = estadoRepository;
+        this.sedeRepository = sedeRepository;
+    }
 
     private Empresa getEmpresaFromUser(User user) {
         return userRoleRepository.findByUser(user).stream()
@@ -60,51 +77,98 @@ public class AlmacenController {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
     }
 
-    @GetMapping("/short/{sedeId}")
-    public ResponseEntity<List<DatosListadoAlmacen>> listadoProducciones(@PathVariable Long sedeId) {
+    @GetMapping("/{requestedId}")
+    public ResponseEntity<AlmacenDTO> findById(@PathVariable Integer requestedId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        List<Almacen> almacenes = almacenService.ObtenerAlmacenesPorSede(sedeId, empresa.getId());
-        List<DatosListadoAlmacen> datosListadoAlmacenes = almacenes.stream().map(DatosListadoAlmacen::new)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(datosListadoAlmacenes);
+        return almacenRepository
+                .findByIdAndSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+                .map(almacenMapper::toDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{sedeId}")
-    public ResponseEntity<Page<DTOAlmacen>> listadorAlmacenes(@PathVariable Long sedeId,
-            @PageableDefault Pageable paginacion) {
+    @GetMapping("/sede/{sedeId}")
+    public ResponseEntity<Page<AlmacenDTO>> findAllBySedeId(
+            @PathVariable Long sedeId,
+            @PageableDefault Pageable pageable) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        Page<Almacen> almacenes = almacenService.ObtenerAlmacenesPorSedePage(sedeId, empresa.getId(), paginacion);
 
-        // Mapea cada Almacen a DTOAlmacen
-        Page<DTOAlmacen> dtoAlmacenes = almacenes.map(almacen -> AlmacenMapper.INSTANCE.toDTO(almacen));
+        Page<AlmacenDTO> page = almacenRepository
+                .findBySedeIdAndEstadoIdNotAndSedeEmpresaId(sedeId, 2, empresa.getId(), pageable)
+                .map(AlmacenMapper.INSTANCE::toDTO);
 
-        return ResponseEntity.ok(dtoAlmacenes);
+        return page.hasContent()
+                ? ResponseEntity.ok(page)
+                : ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/minimal/sede/{sedeId}")
+    public ResponseEntity<List<AlmacenMinimalDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
+        List<AlmacenMinimalDTO> almacenMinimalDTOs = almacenRepository
+                .findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(sedeId, 2, empresa.getId())
+                .stream()
+                .map(almacenMapper::toMinimalDTO)
+                .collect(Collectors.toList());
+
+        return !almacenMinimalDTOs.isEmpty()
+                ? ResponseEntity.ok(almacenMinimalDTOs)
+                : ResponseEntity.noContent().build();
     }
 
     @PostMapping
-    public ResponseEntity<Void> crearAlmacen(@RequestBody DTOAlmacen dtoAlmacen, UriComponentsBuilder ucb) {
-        Almacen nuevoAlmacen = almacenService.guardarAlmacen(dtoAlmacen);
-        URI ubicacionDeNueuevoAlmacen = ucb
-                .path("/api/v1/almacenes/{id}")
-                .buildAndExpand(nuevoAlmacen.getId())
-                .toUri();
-        return ResponseEntity.created(ubicacionDeNueuevoAlmacen).build();
+    public ResponseEntity<Void> createAlmacen(@RequestBody AlmacenDTO newAlmacenRequest, UriComponentsBuilder ucb) {
+        AlmacenDTO newAlmacen = new AlmacenDTO(null, newAlmacenRequest.getNombre(), newAlmacenRequest.getSede(),
+                newAlmacenRequest.getGeolocalizacion(), newAlmacenRequest.getCoordenadas(),
+                newAlmacenRequest.getDescripcion(), newAlmacenRequest.getEstado());
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        if (sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newAlmacen.getSede(), empresa.getId(), 2)) {
+            Almacen savedAlmacen = almacenMapper.toEntity(newAlmacen);
+            almacenRepository.save(savedAlmacen);
+            URI locationOfNewSede = ucb
+                    .path("/api/v1/almacen/{id}")
+                    .buildAndExpand(savedAlmacen.getId())
+                    .toUri();
+            return ResponseEntity.created(locationOfNewSede).build();
+        }
+        return ResponseEntity.badRequest().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> actualizarAlmacen(@PathVariable Integer id,
-            @RequestBody DTOAlmacen dtoAlmacen) {
-        dtoAlmacen.setId(id);
-        almacenService.actualizarAlmacen(dtoAlmacen);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{requestedId}")
+    public ResponseEntity<Void> putAlmacen(@PathVariable Integer requestedId,
+            @RequestBody AlmacenDTO almacenDTOUpdate) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Almacen almacen = almacenRepository.findByIdAndSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+                .orElseThrow(() -> new ResourceNotFoundException("Almacén no encontrado"));
+        if (null != almacen) {
+            AlmacenDTO updatedAlmacenDTO = new AlmacenDTO(requestedId, almacenDTOUpdate.getNombre(),
+                    almacenDTOUpdate.getSede(), almacenDTOUpdate.getGeolocalizacion(),
+                    almacenDTOUpdate.getCoordenadas(), almacenDTOUpdate.getDescripcion(), almacenDTOUpdate.getEstado());
+            Almacen updatedAlmacen = almacenMapper.toEntity(updatedAlmacenDTO);
+            almacenRepository.save(updatedAlmacen);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarAlmacen(@PathVariable Integer id) {
-        almacenService.eliminarAlmacen(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteAlmacen(@PathVariable Integer id) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        if (almacenRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
+            Almacen almacen = almacenRepository.findById(id).orElse(null);
+            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
+            almacen.setEstado(estadoInactivo);
+            almacenRepository.save(almacen);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
 }

@@ -2,7 +2,17 @@ package com.coagronet.almacen;
 
 import com.coagronet.estado.Estado;
 import com.coagronet.sede.Sede;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,20 +34,20 @@ public class Almacen {
     @Column(name = "alm_nombre", length = 100)
     private String nombre;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "alm_sede_id", referencedColumnName = "sed_id")
     private Sede sede;
 
-    @Column(name = "alm_geolocalizacion", columnDefinition = "json")
+    @Column(name = "alm_geolocalizacion")
     private String geolocalizacion;
 
-    @Column(name = "alm_coordenadas", columnDefinition = "json")
+    @Column(name = "alm_coordenadas")
     private String coordenadas;
 
     @Column(name = "alm_descripcion", length = 255)
     private String descripcion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "alm_estado", referencedColumnName = "est_id")
     private Estado estado;
 }

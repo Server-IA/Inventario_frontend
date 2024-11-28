@@ -1,15 +1,13 @@
 package com.coagronet.almacen.dtos;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@Builder
-@NoArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
-public class DTOAlmacen {
+public class AlmacenDTO {
     private Integer id;
     private String nombre;
     private Long sede;

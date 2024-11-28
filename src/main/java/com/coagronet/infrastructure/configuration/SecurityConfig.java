@@ -38,7 +38,7 @@ public class SecurityConfig {
                                 "/api/v1/producciones/**",
                                 "/api/v1/items/**",
                                 "/api/v1/marcas/**",
-                                "/api/v1/sede/**",
+                                "/api/v1/sede",
                                 "/api/v1/kardex/**",
                                 "/api/v1/kardexItem/**",
                                 "/api/v1/unidades/**",
@@ -58,7 +58,8 @@ public class SecurityConfig {
                                 "/api/v1/tipo_bloque/**",
                                 "/api/v1/tipo_espacio/**",
                                 "/api/v1/producto_categoria/**",
-                                "/api/v1/tipo_movimiento")
+                                "/api/v1/tipo_movimiento",
+                                "/api/v1/almacen")
                         .permitAll()
                         .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
