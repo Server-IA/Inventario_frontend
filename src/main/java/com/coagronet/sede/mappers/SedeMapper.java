@@ -28,7 +28,7 @@ public interface SedeMapper {
     @Mapping(source = "empresa", target = "empresa.id")
     @Mapping(source = "municipio", target = "municipio.id")
     @Mapping(source = "estado", target = "estado.id")
-    Sede toEntity(SedeDTO dto);
+    Sede toEntity(SedeDTO sedeDTO);
 
     SedeMinimalDTO toMinimalDTO(Sede sede);
 

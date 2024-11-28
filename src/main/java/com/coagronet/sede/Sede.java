@@ -8,6 +8,7 @@ import com.coagronet.tipoSede.TipoSede;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,11 +35,11 @@ public class Sede {
     @Column(name = "sed_id", nullable = false)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sed_grupo_id", referencedColumnName = "gru_id")
     private Grupo grupo;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sed_tipo_sede_id", referencedColumnName = "tis_id")
     private TipoSede tipoSede;
 
@@ -49,7 +50,7 @@ public class Sede {
     @Column(name = "sed_nombre", length = 100)
     private String nombre;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sed_municipio_id", referencedColumnName = "mun_id")
     private Municipio municipio;
 
@@ -68,7 +69,7 @@ public class Sede {
     @Column(name = "sed_descripcion", length = 255)
     private String descripcion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sed_estado", referencedColumnName = "est_id")
     private Estado estado;
 

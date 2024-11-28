@@ -11,16 +11,16 @@ import com.coagronet.sede.Sede;
 
 public interface SedeRepository extends JpaRepository<Sede, Long> {
 
-    @Query("SELECT s FROM Sede s WHERE s.empresa.id = :empresaId AND s.estado.id != :estadoId ORDER BY s.id ASC")
-    List<Sede> findByEmpresaIdAndEstadoIdNot(@Param("empresaId") Long empresaId,
-            @Param("estadoId") Integer estadoId);
+        @Query("SELECT s FROM Sede s WHERE s.empresa.id = :empresaId AND s.estado.id != :estadoId ORDER BY s.nombre ASC")
+        List<Sede> findByEmpresaIdAndEstadoIdNot(@Param("empresaId") Long empresaId,
+                        @Param("estadoId") Integer estadoId);
 
-    @Query("SELECT s FROM Sede s WHERE s.id = :id  AND s.empresa.id = :empresaId AND s.estado.id != :estadoId")
-    Optional<Sede> findByIdAndEmpresaIdAndEstadoIdNot(@Param("id") Long id, @Param("empresaId") Long empresaId,
-            @Param("estadoId") Integer estadoId);
+        @Query("SELECT s FROM Sede s WHERE s.id = :id  AND s.empresa.id = :empresaId AND s.estado.id != :estadoId")
+        Optional<Sede> findByIdAndEmpresaIdAndEstadoIdNot(@Param("id") Long id, @Param("empresaId") Long empresaId,
+                        @Param("estadoId") Integer estadoId);
 
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Sede s WHERE s.id = :id AND s.empresa.id = :empresaId AND s.estado.id != :estadoId")
-    boolean existsByIdAndEmpresaIdAndEstadoIdNot(@Param("id") Long id, @Param("empresaId") Long empresaId,
-            @Param("estadoId") Integer estadoId);
+        @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Sede s WHERE s.id = :id AND s.empresa.id = :empresaId AND s.estado.id != :estadoId")
+        boolean existsByIdAndEmpresaIdAndEstadoIdNot(@Param("id") Long id, @Param("empresaId") Long empresaId,
+                        @Param("estadoId") Integer estadoId);
 
 }
