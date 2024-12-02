@@ -3,7 +3,17 @@ package com.coagronet.bloque;
 import com.coagronet.estado.Estado;
 import com.coagronet.sede.Sede;
 import com.coagronet.tipoBloque.TipoBloque;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,22 +33,22 @@ public class Bloque {
     @Column(name = "blo_id", nullable = false)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "blo_sede_id", referencedColumnName = "sed_id")
     private Sede sede;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "blo_tipo_bloque_id", referencedColumnName = "tib_id")
     private TipoBloque tipoBloque;
 
     @Column(name = "blo_nombre", length = 100)
     private String nombre;
 
-    @Column(name = "blo_geolocalizacion", columnDefinition = "json")
-    private String geolocalizacion;  // Cambia a 'String' si usas JSON como cadena
+    @Column(name = "blo_geolocalizacion", length = 255)
+    private String geolocalizacion;
 
-    @Column(name = "blo_coordenadas", columnDefinition = "json")
-    private String coordenadas;  // Cambia a 'String' si usas JSON como cadena
+    @Column(name = "blo_coordenadas", length = 255)
+    private String coordenadas;
 
     @Column(name = "blo_numero_pisos")
     private Integer numeroPisos;
@@ -46,7 +56,7 @@ public class Bloque {
     @Column(name = "blo_descripcion", length = 255)
     private String descripcion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "blo_estado", referencedColumnName = "est_id")
     private Estado estado;
 
