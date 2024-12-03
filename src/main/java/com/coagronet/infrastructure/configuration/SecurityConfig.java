@@ -41,7 +41,7 @@ public class SecurityConfig {
                                 "/api/v1/sede",
                                 "/api/v1/kardex/**",
                                 "/api/v1/kardexItem/**",
-                                "/api/v1/unidades/**",
+                                "/api/v1/unidad",
                                 "/api/v1/estados/**",
                                 "/api/v1/tipo_sede/**",
                                 "/api/v1/empresas/**",
@@ -59,7 +59,10 @@ public class SecurityConfig {
                                 "/api/v1/tipo_espacio/**",
                                 "/api/v1/producto_categoria/**",
                                 "/api/v1/tipo_movimiento",
-                                "/api/v1/almacen")
+                                "/api/v1/almacen",
+                                "/api/v1/bloque",
+                                "/api/v1/espacio",
+                                "/api/v1/espacio_ocupacion")
                         .permitAll()
                         .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
