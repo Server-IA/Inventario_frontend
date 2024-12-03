@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/grupo")
+@CrossOrigin(origins = "*")
 public class GrupoController {
 
     private final GrupoRepository grupoRepository;
@@ -64,7 +66,7 @@ public class GrupoController {
         }
     }
 
-    @GetMapping("/short")
+    @GetMapping("/minimal")
     public ResponseEntity<List<DatosListadoGrupo>> listadoGrupos() {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
