@@ -1,9 +1,11 @@
 package com.coagronet.marca;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,8 +36,12 @@ public class Marca {
     @Column(name = "mar_descripcion")
     private String descripcion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mar_estado", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mar_empresa", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }
