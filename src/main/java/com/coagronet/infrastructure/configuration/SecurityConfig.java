@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 "/api/v1/kardexItem/**",
                                 "/api/v1/unidad",
                                 "/api/v1/estados/**",
-                                "/api/v1/tipo_sede/**",
+                                "/api/v1/tipo_sede",
                                 "/api/v1/empresas/**",
                                 "/api/v1/grupo/**",
                                 "/api/report/**",
