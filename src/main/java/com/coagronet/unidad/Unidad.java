@@ -42,7 +42,7 @@ public class Unidad {
     @JoinColumn(name = "uni_estado", referencedColumnName = "est_id")
     private Estado estado;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uni_empresa", referencedColumnName = "emp_id")
     private Empresa empresa;
 

@@ -96,7 +96,7 @@ public class UnidadController {
         Unidad savedUnidad = unidadMapper.toEntity(newUnidad);
         unidadRepository.save(savedUnidad);
         URI locationOfNewUnidad = ucb
-                .path("unidad/{id}")
+                .path("/api/v1/unidad/{id}")
                 .buildAndExpand(savedUnidad.getId())
                 .toUri();
         return ResponseEntity.created(locationOfNewUnidad).build();
