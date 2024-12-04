@@ -1,19 +1,26 @@
 package com.coagronet.unidad.repositories;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import com.coagronet.unidad.Unidad;
 
 public interface UnidadRepository extends JpaRepository<Unidad, Integer> {
 
-    Unidad findByIdAndEstado(Integer id, Integer estado);
+    Optional<Unidad> findByIdAndEmpresaIdAndEstadoIdNot(
+            Integer id,
+            Long empresaId,
+            Integer estado);
 
-    Page<Unidad> findAllByEstado(Integer estado, PageRequest pageRequest);
+    List<Unidad> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
+            Long empresaId,
+            Integer estadoId);
 
-    @Query("select u from unidad u where u.id = ?1")
-    Unidad findUnidadById(Integer id);
+    boolean existsByIdAndEmpresaIdAndEstadoIdNot(
+            Integer id,
+            Long empresaId,
+            Integer estadoId);
 
 }
