@@ -1,12 +1,12 @@
 package com.coagronet.tipoBloque.controllers;
 
 import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,64 +18,139 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoBloque.TipoBloque;
 import com.coagronet.tipoBloque.dtos.TipoBloqueDTO;
+import com.coagronet.tipoBloque.dtos.TipoBloqueMinimalDTO;
 import com.coagronet.tipoBloque.mappers.TipoBloqueMapper;
 import com.coagronet.tipoBloque.repositories.TipoBloqueRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/tipo_bloque")
 @CrossOrigin(origins = "*")
 public class TipoBloqueController {
 
-    @Autowired
-    private TipoBloqueRepository tipoBloqueRepository;
+    private final TipoBloqueRepository tipoBloqueRepository;
+    private final TipoBloqueMapper tipoBloqueMapper;
+    private final EstadoRepository estadoRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private TipoBloqueMapper tipoBloqueMapper;
+    private TipoBloqueController(
+            TipoBloqueRepository tipoBloqueRepository,
+            TipoBloqueMapper tipoBloqueMapper,
+            EstadoRepository estadoRepository,
+            UserRoleRepository userRoleRepository,
+            UserRepository userRepository) {
+        this.tipoBloqueRepository = tipoBloqueRepository;
+        this.tipoBloqueMapper = tipoBloqueMapper;
+        this.estadoRepository = estadoRepository;
+        this.userRoleRepository = userRoleRepository;
+        this.userRepository = userRepository;
+    }
 
-    @Autowired
-    private EstadoRepository estadoRepository;
+    private Empresa getEmpresaFromUser(User user) {
+        return userRoleRepository.findByUser(user).stream()
+                .map(UserRole::getEmpresa)
+                .findFirst()
+                .orElseThrow(
+                        () -> new RuntimeException("Empresa no encontrada para el usuario"));
+    }
 
-    @GetMapping
-    private ResponseEntity<Page<TipoBloqueDTO>> findAll(@PageableDefault Pageable pageable) {
-        return ResponseEntity
-                .ok(tipoBloqueRepository.findByEstadoNot(2, pageable).map(TipoBloqueMapper.INSTANCE::toDTO));
+    private User getAuthenticatedUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Usuario no encontrado"));
     }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<TipoBloqueDTO> findById(@PathVariable Integer requestedId) {
-        TipoBloque tipoBloque = tipoBloqueRepository.findByIdAndEstadoNot(requestedId, 2);
-        TipoBloqueDTO tipoBloqueDTO = tipoBloqueMapper.toDTO(tipoBloque);
-        if (tipoBloque != null) {
-            return ResponseEntity.ok(tipoBloqueDTO);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        return tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(
+                requestedId,
+                empresa.getId(),
+                2)
+                .map(tipoBloqueMapper::toDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    private ResponseEntity<Void> createTipoBloque(@RequestBody TipoBloqueDTO tipoBloqueDTO,
+    private ResponseEntity<Void> createTipoBloque(@RequestBody TipoBloqueDTO newTipoBloqueRequest,
             UriComponentsBuilder ucb) {
-        TipoBloque tipoBloque = tipoBloqueMapper.toEntity(tipoBloqueDTO);
-        tipoBloqueRepository.save(tipoBloque);
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        TipoBloqueDTO newTipoBloque = new TipoBloqueDTO(
+                null,
+                newTipoBloqueRequest.getNombre(),
+                newTipoBloqueRequest.getDescripcion(),
+                newTipoBloqueRequest.getEstado(),
+                empresa.getId());
+        TipoBloque savedTipoBloque = tipoBloqueMapper.toEntity(newTipoBloque);
+        tipoBloqueRepository.save(savedTipoBloque);
         URI locationOfNewTipoBloque = ucb
                 .path("/api/v1/tipo_bloque/{id}")
-                .buildAndExpand(tipoBloque.getId())
+                .buildAndExpand(savedTipoBloque.getId())
                 .toUri();
         return ResponseEntity.created(locationOfNewTipoBloque).build();
     }
 
+    @GetMapping
+    private ResponseEntity<List<TipoBloqueDTO>> findAll() {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
+        List<TipoBloqueDTO> tipoBloqueDTOs = tipoBloqueRepository
+                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                .stream()
+                .map(tipoBloqueMapper::toDTO)
+                .collect(Collectors.toList());
+
+        return tipoBloqueDTOs.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(tipoBloqueDTOs);
+    }
+
+    @GetMapping("/minimal")
+    private ResponseEntity<List<TipoBloqueMinimalDTO>> findAllMinimal() {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
+        List<TipoBloqueMinimalDTO> tipoBloqueDTOs = tipoBloqueRepository
+                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                .stream()
+                .map(tipoBloqueMapper::toMinimalDTO)
+                .collect(Collectors.toList());
+
+        return tipoBloqueDTOs.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(tipoBloqueDTOs);
+    }
+
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putTipoBloque(@PathVariable Integer requestedId,
-            @RequestBody TipoBloqueDTO tipoBloqueUpdate) {
-        TipoBloque tipoBloque = tipoBloqueMapper.toEntity(tipoBloqueUpdate);
-        tipoBloqueRepository.findByIdAndEstadoNot(requestedId, 2);
+            @RequestBody TipoBloqueDTO tipoBloqueDTOUpdate) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        TipoBloque tipoBloque = tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+                .orElse(null);
         if (null != tipoBloque) {
-            tipoBloque.setId(requestedId);
-            tipoBloqueRepository.save(tipoBloque);
+            TipoBloqueDTO updateTipoBloqueDTO = new TipoBloqueDTO(
+                    requestedId,
+                    tipoBloqueDTOUpdate.getNombre(),
+                    tipoBloqueDTOUpdate.getDescripcion(),
+                    tipoBloqueDTOUpdate.getEstado(),
+                    empresa.getId());
+            TipoBloque updatedTipoBloque = tipoBloqueMapper.toEntity(updateTipoBloqueDTO);
+            tipoBloqueRepository.save(updatedTipoBloque);
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
@@ -83,12 +158,12 @@ public class TipoBloqueController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deleteTipoBloque(@PathVariable Integer id) {
-        if (tipoBloqueRepository.existsByIdAndEstadoNot(id, 2)) {
-            TipoBloque tipoBloque = tipoBloqueRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("TipoBloque not found with id: " + id));
-            Estado nuevoEstado = estadoRepository.findById(2)
-                    .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
-            tipoBloque.setEstado(nuevoEstado);
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        if (tipoBloqueRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
+            TipoBloque tipoBloque = tipoBloqueRepository.findById(id).orElse(null);
+            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
+            tipoBloque.setEstado(estadoInactivo);
             tipoBloqueRepository.save(tipoBloque);
             return ResponseEntity.noContent().build();
         }
