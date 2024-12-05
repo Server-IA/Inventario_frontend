@@ -64,7 +64,8 @@ public class SecurityConfig {
                                 "/api/v1/espacio",
                                 "/api/v1/espacio_ocupacion",
                                 "/api/v1/tipo_bloque",
-                                "/api/v1/marca")
+                                "/api/v1/marca",
+                                "/api/v1/tipo_espacio")
                         .permitAll()
                         .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())

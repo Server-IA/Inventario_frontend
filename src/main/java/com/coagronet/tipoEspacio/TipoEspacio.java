@@ -1,7 +1,18 @@
 package com.coagronet.tipoEspacio;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,7 +38,12 @@ public class TipoEspacio {
     @Column(name = "tie_descripcion", length = 255)
     private String descripcion;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tie_estado", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tie_empresa", referencedColumnName = "emp_id")
+    private Empresa empresa;
+    
 }
