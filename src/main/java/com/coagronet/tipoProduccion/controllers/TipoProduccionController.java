@@ -4,8 +4,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,104 +18,153 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoProduccion.TipoProduccion;
 import com.coagronet.tipoProduccion.dtos.TipoProduccionDTO;
+import com.coagronet.tipoProduccion.dtos.TipoProduccionMinimalDTO;
 import com.coagronet.tipoProduccion.mappers.TipoProduccionMapper;
 import com.coagronet.tipoProduccion.repositories.TipoProduccionRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/tipo_produccion")
 @CrossOrigin(origins = "*")
 public class TipoProduccionController {
+
     private final TipoProduccionRepository tipoProduccionRepository;
     private final TipoProduccionMapper tipoProduccionMapper;
     private final EstadoRepository estadoRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    public TipoProduccionController(
+    private TipoProduccionController(
             TipoProduccionRepository tipoProduccionRepository,
             TipoProduccionMapper tipoProduccionMapper,
-            EstadoRepository estadoRepository) {
+            EstadoRepository estadoRepository,
+            UserRoleRepository userRoleRepository,
+            UserRepository userRepository) {
         this.tipoProduccionRepository = tipoProduccionRepository;
         this.tipoProduccionMapper = tipoProduccionMapper;
         this.estadoRepository = estadoRepository;
+        this.userRoleRepository = userRoleRepository;
+        this.userRepository = userRepository;
+    }
+
+    private Empresa getEmpresaFromUser(User user) {
+        return userRoleRepository.findByUser(user).stream()
+                .map(UserRole::getEmpresa)
+                .findFirst()
+                .orElseThrow(
+                        () -> new RuntimeException("Empresa no encontrada para el usuario"));
+    }
+
+    private User getAuthenticatedUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Usuario no encontrado"));
     }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<TipoProduccionDTO> findById(@PathVariable Integer requestedId) {
-        TipoProduccion tipoProduccion = tipoProduccionRepository.findByIdAndEstadoIdNot(requestedId, 2);
-        TipoProduccionDTO tipoProduccionDTO = tipoProduccionMapper.toDto(tipoProduccion);
-        if (tipoProduccion != null) {
-            return ResponseEntity.ok(tipoProduccionDTO);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        return tipoProduccionRepository.findByIdAndEmpresaIdAndEstadoIdNot(
+                requestedId,
+                empresa.getId(),
+                2)
+                .map(tipoProduccionMapper::toDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Void> createTipoProduccion(
-            @RequestBody TipoProduccionDTO newTipoProduccionRequest,
+    private ResponseEntity<Void> createTipoProduccion(@RequestBody TipoProduccionDTO newTipoProduccionRequest,
             UriComponentsBuilder ucb) {
-        TipoProduccion tipoProduccion = tipoProduccionMapper.toEntity(newTipoProduccionRequest);
-
-        // Asegurarse de que el estado existe
-        Estado estado = estadoRepository.findById(newTipoProduccionRequest.getEstado())
-                .orElseThrow(() -> new RuntimeException("Estado not found"));
-        tipoProduccion.setEstado(estado);
-
-        tipoProduccion = tipoProduccionRepository.save(tipoProduccion);
-
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        TipoProduccionDTO newTipoProduccion = new TipoProduccionDTO(
+                null,
+                newTipoProduccionRequest.getNombre(),
+                newTipoProduccionRequest.getDescripcion(),
+                newTipoProduccionRequest.getEstado(),
+                empresa.getId());
+        TipoProduccion savedTipoProduccion = tipoProduccionMapper.toEntity(newTipoProduccion);
+        tipoProduccionRepository.save(savedTipoProduccion);
         URI locationOfNewTipoProduccion = ucb
                 .path("/api/v1/tipo_produccion/{id}")
-                .buildAndExpand(tipoProduccion.getId())
+                .buildAndExpand(savedTipoProduccion.getId())
                 .toUri();
-
         return ResponseEntity.created(locationOfNewTipoProduccion).build();
     }
 
     @GetMapping
-    public ResponseEntity<List<TipoProduccionDTO>> findAll() {
+    private ResponseEntity<List<TipoProduccionDTO>> findAll() {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
         List<TipoProduccionDTO> tipoProduccionDTOs = tipoProduccionRepository
-                .findByEstadoIdNotOrderByTipoIdAsc(2)
+                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
                 .stream()
                 .map(tipoProduccionMapper::toDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(tipoProduccionDTOs);
+        return tipoProduccionDTOs.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(tipoProduccionDTOs);
+    }
+
+    @GetMapping("/minimal")
+    private ResponseEntity<List<TipoProduccionMinimalDTO>> findAllMinimal() {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
+        List<TipoProduccionMinimalDTO> tipoProduccionDTOs = tipoProduccionRepository
+                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                .stream()
+                .map(tipoProduccionMapper::toMinimalDTO)
+                .collect(Collectors.toList());
+
+        return tipoProduccionDTOs.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(tipoProduccionDTOs);
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putTipoProduccion(
-            @PathVariable Integer requestedId,
-            @RequestBody TipoProduccionDTO tipoProduccionUpdate) {
-        if (!tipoProduccionRepository.existsById(requestedId)) {
-            return ResponseEntity.notFound().build();
+    private ResponseEntity<Void> putTipoProduccion(@PathVariable Integer requestedId,
+            @RequestBody TipoProduccionDTO tipoProduccionDTOUpdate) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        TipoProduccion tipoProduccion = tipoProduccionRepository
+                .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+                .orElse(null);
+        if (null != tipoProduccion) {
+            TipoProduccionDTO updateTipoProduccionDTO = new TipoProduccionDTO(
+                    requestedId,
+                    tipoProduccionDTOUpdate.getNombre(),
+                    tipoProduccionDTOUpdate.getDescripcion(),
+                    tipoProduccionDTOUpdate.getEstado(),
+                    empresa.getId());
+            TipoProduccion updatedTipoProduccion = tipoProduccionMapper.toEntity(updateTipoProduccionDTO);
+            tipoProduccionRepository.save(updatedTipoProduccion);
+            return ResponseEntity.noContent().build();
         }
-
-        TipoProduccion tipoProduccion = tipoProduccionMapper.toEntity(tipoProduccionUpdate);
-        tipoProduccion.setId(requestedId);
-
-        // Asegurarse de que el estado existe
-        Estado estado = estadoRepository.findById(tipoProduccionUpdate.getEstado())
-                .orElseThrow(() -> new RuntimeException("Estado not found"));
-        tipoProduccion.setEstado(estado);
-
-        tipoProduccionRepository.save(tipoProduccion);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoProduccion(@PathVariable Integer id) {
-        if (tipoProduccionRepository.existsByIdAndEstadoIdNot(id, 2)) {
-            TipoProduccion tipoProduccion = tipoProduccionRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("TipoProduccion not found with id: " + id));
-
-            Estado nuevoEstado = estadoRepository.findById(2)
-                    .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
-
-            tipoProduccion.setEstado(nuevoEstado);
+    private ResponseEntity<Void> deleteTipoProduccion(@PathVariable Integer id) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        if (tipoProduccionRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
+            TipoProduccion tipoProduccion = tipoProduccionRepository.findById(id).orElse(null);
+            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
+            tipoProduccion.setEstado(estadoInactivo);
             tipoProduccionRepository.save(tipoProduccion);
             return ResponseEntity.noContent().build();
         }

@@ -1,5 +1,6 @@
 package com.coagronet.tipoProduccion;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
 import jakarta.persistence.Column;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "tipo_produccion")
 public class TipoProduccion {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_produccion_generator")
     @SequenceGenerator(name = "tipo_produccion_generator", sequenceName = "tipo_produccion_tip_id_seq", allocationSize = 1)
@@ -39,4 +41,9 @@ public class TipoProduccion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tip_estado", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tip_empresa", referencedColumnName = "emp_id")
+    private Empresa empresa;
+
 }
