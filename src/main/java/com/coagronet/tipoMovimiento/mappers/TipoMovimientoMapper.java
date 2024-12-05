@@ -16,12 +16,14 @@ public interface TipoMovimientoMapper {
     TipoMovimientoMapper INSTANCE = Mappers.getMapper(TipoMovimientoMapper.class);
 
     @Mapping(source = "estado.id", target = "estado")
+    @Mapping(source = "empresa.id", target = "empresa")
     TipoMovimientoDTO toDto(TipoMovimiento tipoMovimiento);
 
     // Nuevo método para mapear a DTO minimal
     TipoMovimientoMinimalDTO toMinimalDto(TipoMovimiento tipoMovimiento);
 
     @Mapping(source = "estado", target = "estado.id")
+    @Mapping(source = "empresa", target = "empresa.id")
     TipoMovimiento toEntity(TipoMovimientoDTO tipoMovimientoDTO);
 
     @AfterMapping

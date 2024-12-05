@@ -4,8 +4,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
@@ -24,123 +26,149 @@ import com.coagronet.tipoMovimiento.dtos.TipoMovimientoDTO;
 import com.coagronet.tipoMovimiento.dtos.TipoMovimientoMinimalDTO;
 import com.coagronet.tipoMovimiento.mappers.TipoMovimientoMapper;
 import com.coagronet.tipoMovimiento.reposritories.TipoMovimientoRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/tipo_movimiento")
 @CrossOrigin(origins = "*")
 public class TipoMovimientoController {
-    private final TipoMovimientoRepository tipoMovimientoRepository;
-    private final TipoMovimientoMapper tipoMovimientoMapper;
-    private final EstadoRepository estadoRepository;
 
-    @Autowired
-    public TipoMovimientoController(
-            TipoMovimientoRepository tipoMovimientoRepository,
-            TipoMovimientoMapper tipoMovimientoMapper,
-            EstadoRepository estadoRepository) {
-        this.tipoMovimientoRepository = tipoMovimientoRepository;
-        this.tipoMovimientoMapper = tipoMovimientoMapper;
-        this.estadoRepository = estadoRepository;
-    }
+        private final TipoMovimientoRepository tipoMovimientoRepository;
+        private final TipoMovimientoMapper tipoMovimientoMapper;
+        private final EstadoRepository estadoRepository;
+        private final UserRoleRepository userRoleRepository;
+        private final UserRepository userRepository;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoMovimientoDTO> findById(@PathVariable Integer requestedId) {
-        return tipoMovimientoRepository.findByIdAndEstadoIdNot(requestedId, 2)
-                .map(tipoMovimientoMapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<Void> createTipoMovimiento(
-            @RequestBody TipoMovimientoDTO newTipoMovimientoRequest,
-            UriComponentsBuilder ucb) {
-        // Validar que el estado exista
-        Estado estado = estadoRepository.findById(newTipoMovimientoRequest.getEstado())
-                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
-
-        TipoMovimiento tipoMovimiento = tipoMovimientoMapper.toEntity(newTipoMovimientoRequest);
-        tipoMovimiento.setEstado(estado);
-
-        TipoMovimiento savedTipoMovimiento = tipoMovimientoRepository.save(tipoMovimiento);
-
-        URI locationOfNewTipoMovimiento = ucb
-                .path("/api/v1/tipo_movimiento/{id}")
-                .buildAndExpand(savedTipoMovimiento.getId())
-                .toUri();
-
-        return ResponseEntity.created(locationOfNewTipoMovimiento).build();
-    }
-
-    @GetMapping
-    public ResponseEntity<List<TipoMovimientoDTO>> findAll() {
-        List<TipoMovimientoDTO> tipoMovimientoDTOs = tipoMovimientoRepository
-                .findByEstadoIdNotOrderByIdAsc(2)
-                .stream()
-                .map(tipoMovimientoMapper::toDto)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(tipoMovimientoDTOs);
-    }
-
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putTipoMovimiento(
-            @PathVariable Integer requestedId,
-            @RequestBody TipoMovimientoDTO tipoMovimientoUpdate) {
-        // Verificar que el registro exista
-        TipoMovimiento existingTipoMovimiento = tipoMovimientoRepository.findById(requestedId)
-                .orElseThrow(() -> new RuntimeException("Tipo Movimiento no encontrado"));
-
-        // Validar que el estado exista
-        Estado estado = estadoRepository.findById(tipoMovimientoUpdate.getEstado())
-                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
-
-        // Mapear y actualizar
-        TipoMovimiento tipoMovimiento = tipoMovimientoMapper.toEntity(tipoMovimientoUpdate);
-        tipoMovimiento.setId(requestedId);
-        tipoMovimiento.setEstado(estado);
-
-        tipoMovimientoRepository.save(tipoMovimiento);
-
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoMovimiento(@PathVariable Integer id) {
-        // Verificar si existe y no está en estado eliminado
-        if (tipoMovimientoRepository.existsByIdAndEstadoIdNot(id, 2)) {
-            TipoMovimiento tipoMovimiento = tipoMovimientoRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Tipo Movimiento no encontrado"));
-
-            // Cambiar estado a eliminado (generalmente estado con ID 2)
-            Estado estadoEliminado = estadoRepository.findById(2)
-                    .orElseThrow(() -> new RuntimeException("Estado eliminado no encontrado"));
-
-            tipoMovimiento.setEstado(estadoEliminado);
-            tipoMovimientoRepository.save(tipoMovimiento);
-
-            return ResponseEntity.noContent().build();
+        private TipoMovimientoController(
+                        TipoMovimientoRepository tipoMovimientoRepository,
+                        TipoMovimientoMapper tipoMovimientoMapper,
+                        EstadoRepository estadoRepository,
+                        UserRoleRepository userRoleRepository,
+                        UserRepository userRepository) {
+                this.tipoMovimientoRepository = tipoMovimientoRepository;
+                this.tipoMovimientoMapper = tipoMovimientoMapper;
+                this.estadoRepository = estadoRepository;
+                this.userRoleRepository = userRoleRepository;
+                this.userRepository = userRepository;
         }
-        return ResponseEntity.notFound().build();
-    }
 
-    @GetMapping("/minimal")
-    public ResponseEntity<List<TipoMovimientoMinimalDTO>> findAllMinimal() {
-        List<TipoMovimientoMinimalDTO> tipoMovimientoMinimalDTOs = tipoMovimientoRepository
-                .findByEstadoIdNotOrderByIdAsc(2)
-                .stream()
-                .map(tipoMovimientoMapper::toMinimalDto)
-                .collect(Collectors.toList());
+        private Empresa getEmpresaFromUser(User user) {
+                return userRoleRepository.findByUser(user).stream()
+                                .map(UserRole::getEmpresa)
+                                .findFirst()
+                                .orElseThrow(
+                                                () -> new RuntimeException("Empresa no encontrada para el usuario"));
+        }
 
-        return ResponseEntity.ok(tipoMovimientoMinimalDTOs);
-    }
+        private User getAuthenticatedUser() {
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                return userRepository.findByUsername(username)
+                                .orElseThrow(
+                                                () -> new UsernameNotFoundException("Usuario no encontrado"));
+        }
 
-    // Método para obtener un DTO minimal por ID
-    @GetMapping("/minimal/{requestedId}")
-    public ResponseEntity<TipoMovimientoMinimalDTO> findMinimalById(@PathVariable Integer requestedId) {
-        return tipoMovimientoRepository.findByIdAndEstadoIdNot(requestedId, 2)
-                .map(tipoMovimientoMapper::toMinimalDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+        @GetMapping("/{requestedId}")
+        private ResponseEntity<TipoMovimientoDTO> findById(@PathVariable Integer requestedId) {
+                User authenticatedUser = getAuthenticatedUser();
+                Empresa empresa = getEmpresaFromUser(authenticatedUser);
+                return tipoMovimientoRepository.findByIdAndEmpresaIdAndEstadoIdNot(
+                                requestedId,
+                                empresa.getId(),
+                                2)
+                                .map(tipoMovimientoMapper::toDto)
+                                .map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build());
+        }
+
+        @PostMapping
+        private ResponseEntity<Void> createTipoMovimiento(@RequestBody TipoMovimientoDTO newTipoMovimientoRequest,
+                        UriComponentsBuilder ucb) {
+                User authenticatedUser = getAuthenticatedUser();
+                Empresa empresa = getEmpresaFromUser(authenticatedUser);
+                TipoMovimientoDTO newTipoMovimiento = new TipoMovimientoDTO(
+                                null,
+                                newTipoMovimientoRequest.getNombre(),
+                                newTipoMovimientoRequest.getDescripcion(),
+                                newTipoMovimientoRequest.getEstado(),
+                                empresa.getId());
+                TipoMovimiento savedTipoMovimiento = tipoMovimientoMapper.toEntity(newTipoMovimiento);
+                tipoMovimientoRepository.save(savedTipoMovimiento);
+                URI locationOfNewTipoMovimiento = ucb
+                                .path("/api/v1/tipo_movimiento/{id}")
+                                .buildAndExpand(savedTipoMovimiento.getId())
+                                .toUri();
+                return ResponseEntity.created(locationOfNewTipoMovimiento).build();
+        }
+
+        @GetMapping
+        private ResponseEntity<List<TipoMovimientoDTO>> findAll() {
+                User authenticatedUser = getAuthenticatedUser();
+                Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
+                List<TipoMovimientoDTO> tipoMovimientoDTOs = tipoMovimientoRepository
+                                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                                .stream()
+                                .map(tipoMovimientoMapper::toDto)
+                                .collect(Collectors.toList());
+
+                return tipoMovimientoDTOs.isEmpty()
+                                ? ResponseEntity.noContent().build()
+                                : ResponseEntity.ok(tipoMovimientoDTOs);
+        }
+
+        @GetMapping("/minimal")
+        private ResponseEntity<List<TipoMovimientoMinimalDTO>> findAllMinimal() {
+                User authenticatedUser = getAuthenticatedUser();
+                Empresa empresa = getEmpresaFromUser(authenticatedUser);
+
+                List<TipoMovimientoMinimalDTO> tipoMovimientoDTOs = tipoMovimientoRepository
+                                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                                .stream()
+                                .map(tipoMovimientoMapper::toMinimalDto)
+                                .collect(Collectors.toList());
+
+                return tipoMovimientoDTOs.isEmpty()
+                                ? ResponseEntity.noContent().build()
+                                : ResponseEntity.ok(tipoMovimientoDTOs);
+        }
+
+        @PutMapping("/{requestedId}")
+        private ResponseEntity<Void> putTipoMovimiento(@PathVariable Integer requestedId,
+                        @RequestBody TipoMovimientoDTO tipoMovimientoDTOUpdate) {
+                User authenticatedUser = getAuthenticatedUser();
+                Empresa empresa = getEmpresaFromUser(authenticatedUser);
+                TipoMovimiento tipoMovimiento = tipoMovimientoRepository
+                                .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+                                .orElse(null);
+                if (null != tipoMovimiento) {
+                        TipoMovimientoDTO updateTipoMovimientoDTO = new TipoMovimientoDTO(
+                                        requestedId,
+                                        tipoMovimientoDTOUpdate.getNombre(),
+                                        tipoMovimientoDTOUpdate.getDescripcion(),
+                                        tipoMovimientoDTOUpdate.getEstado(),
+                                        empresa.getId());
+                        TipoMovimiento updatedTipoMovimiento = tipoMovimientoMapper.toEntity(updateTipoMovimientoDTO);
+                        tipoMovimientoRepository.save(updatedTipoMovimiento);
+                        return ResponseEntity.noContent().build();
+                }
+                return ResponseEntity.notFound().build();
+        }
+
+        @DeleteMapping("/{id}")
+        private ResponseEntity<Void> deleteTipoMovimiento(@PathVariable Integer id) {
+                User authenticatedUser = getAuthenticatedUser();
+                Empresa empresa = getEmpresaFromUser(authenticatedUser);
+                if (tipoMovimientoRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
+                        TipoMovimiento tipoMovimiento = tipoMovimientoRepository.findById(id).orElse(null);
+                        Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
+                        tipoMovimiento.setEstado(estadoInactivo);
+                        tipoMovimientoRepository.save(tipoMovimiento);
+                        return ResponseEntity.noContent().build();
+                }
+                return ResponseEntity.notFound().build();
+        }
+
 }

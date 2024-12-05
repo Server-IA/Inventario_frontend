@@ -1,5 +1,6 @@
 package com.coagronet.tipoMovimiento;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
 import jakarta.persistence.Column;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "tipo_movimiento")
 public class TipoMovimiento {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_movimiento_generator")
     @SequenceGenerator(name = "tipo_movimiento_generator", sequenceName = "tipo_movimiento_tim_id_seq", allocationSize = 1)
@@ -39,4 +41,9 @@ public class TipoMovimiento {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tim_estado", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tim_empresa", referencedColumnName = "emp_id")
+    private Empresa empresa;
+
 }
