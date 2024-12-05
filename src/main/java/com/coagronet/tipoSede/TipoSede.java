@@ -45,4 +45,5 @@ public class TipoSede {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tis_empresa", referencedColumnName = "emp_id")
     private Empresa empresa;
+    
 }
