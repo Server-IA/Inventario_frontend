@@ -16,7 +16,7 @@ import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.dtos.PersonaDTO;
 import com.coagronet.persona.mappers.PersonaMapper;
-import com.coagronet.persona.services.PersonaService;
+import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
@@ -27,7 +27,7 @@ import com.coagronet.usuarioEstado.UsuarioEstado;
 public class PersonaUsuarioController {
 
     @Autowired
-    private PersonaService personaService;
+    private PersonaRepository personaRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -49,13 +49,13 @@ public class PersonaUsuarioController {
 
         // Lógica de tu método
         Persona persona = PersonaMapper.INSTANCE.toEntity(personaDTO);
-        Persona savedPersona = personaService.savePersona(persona);
+        personaRepository.save(persona);
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
-        user.setPersona(savedPersona);
+        user.setPersona(persona);
         userRepository.save(user);
 
         // Devolver solo el estado del usuario en la respuesta

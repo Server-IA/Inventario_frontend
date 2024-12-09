@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "/api/report/**",
                                 "/api/v1/email/**",
                                 "/api/v1/roles/**",
-                                "/api/v1/personas/**",
+                                "/api/v1/persona",
                                 "/api/v1/productos/**",
                                 "/api/v1/producto-presentacion",
                                 "/api/v1/activaciones/**",
