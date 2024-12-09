@@ -7,10 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class UserDTO {
-    private Long id;
-    private String password;
+public class UserMinimalDTO {
+    private Long Id;
     private String username;
-    private Long persona;
-    private Long usuarioEstado;
 }

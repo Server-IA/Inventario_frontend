@@ -37,16 +37,17 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "usuario")
 public class User implements UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "usu_id")
     private Long id;
 
     @Email
-    @Column(name = "usu_email", unique = true, nullable = false)
+    @Column(name = "usu_email", unique = true, nullable = false, length = 255)
     private String username;
 
-    @Column(name = "usu_password", nullable = false)
+    @Column(name = "usu_password", nullable = false, length = 255)
     private String password;
 
     @ManyToOne
@@ -72,7 +73,6 @@ public class User implements UserDetails {
         this.usuarioEstado = usuarioEstado;
     }
 
-    // Métodos de UserDetails
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -90,8 +90,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // Retorna true si el estado del usuario es "ACTIVADO_SIN_INFO" o cualquier
-        // estado superior
         return this.usuarioEstado.getId() >= 2;
     }
+
 }
