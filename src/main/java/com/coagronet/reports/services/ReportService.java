@@ -23,7 +23,7 @@ public class ReportService {
     @Autowired
     private DataSource dataSource;
 
-    public byte[] generateReport(int category) throws Exception {
+    public byte[] generateProductoReport(int category) throws Exception {
         // Load the compiled JasperReport file (.jasper)
         JasperReport jasperReport;
         try (InputStream reportStream = new ClassPathResource("producto4.jrxml").getInputStream()) {
@@ -42,9 +42,97 @@ public class ReportService {
 
             String queryCategory = "";
             if (category > 0) {
-                queryCategory = " and prc_id = " + category;
+                queryCategory = "" + category;
             }
             parameters.put("QueryCategory", queryCategory);
+
+            // Fill the report
+            JasperPrint jasperPrint = JasperFillManager.fillReport(
+                    jasperReport,
+                    parameters,
+                    connection);
+
+            System.out.println("R91");
+
+            // Check if the report was filled with data
+            if (jasperPrint.getPages().isEmpty()) {
+                throw new RuntimeException("No data found for the report.");
+            }
+
+            // Export the report to PDF
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            System.out.println("Error durante la generación del reporte: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to generate report.", e);
+        }
+    }
+
+    public byte[] generatePedidoReport(Integer id) throws Exception {
+        // Load the compiled JasperReport file (.jasper)
+        JasperReport jasperReport;
+        try (InputStream reportStream = new ClassPathResource("Reporte_pedido.jrxml").getInputStream()) {
+            jasperReport = JasperCompileManager.compileReport(reportStream);
+        } catch (Exception e) {
+            System.out.println("Error durante la compilación del reporte: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to compile report.", e);
+        }
+
+        // Ensure that your SQL query returns data from the database
+        try (Connection connection = dataSource.getConnection()) {
+            // Parameters (if any)
+            Map<String, Object> parameters = new HashMap<>();
+
+            Integer ped_id = null;
+            if (id > 0) {
+                ped_id = id;
+            }
+            parameters.put("ped_id", ped_id);
+
+            // Fill the report
+            JasperPrint jasperPrint = JasperFillManager.fillReport(
+                    jasperReport,
+                    parameters,
+                    connection);
+
+            System.out.println("R91");
+
+            // Check if the report was filled with data
+            if (jasperPrint.getPages().isEmpty()) {
+                throw new RuntimeException("No data found for the report.");
+            }
+
+            // Export the report to PDF
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            System.out.println("Error durante la generación del reporte: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to generate report.", e);
+        }
+    }
+
+    public byte[] generateOrdenCompraReport(Integer id) throws Exception {
+        // Load the compiled JasperReport file (.jasper)
+        JasperReport jasperReport;
+        try (InputStream reportStream = new ClassPathResource("Reporte_oden_compra.jrxml").getInputStream()) {
+            jasperReport = JasperCompileManager.compileReport(reportStream);
+        } catch (Exception e) {
+            System.out.println("Error durante la compilación del reporte: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to compile report.", e);
+        }
+
+        // Ensure that your SQL query returns data from the database
+        try (Connection connection = dataSource.getConnection()) {
+            // Parameters (if any)
+            Map<String, Object> parameters = new HashMap<>();
+
+            Integer orc_id = null;
+            if (id > 0) {
+                orc_id = id;
+            }
+            parameters.put("orc_id", orc_id);
 
             // Fill the report
             JasperPrint jasperPrint = JasperFillManager.fillReport(

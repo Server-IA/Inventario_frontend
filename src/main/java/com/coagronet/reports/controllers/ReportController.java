@@ -28,7 +28,7 @@ public class ReportController {
 
         try {
             // Generate the report as a byte array
-            byte[] report = reportService.generateReport(category); // (message);
+            byte[] report = reportService.generateProductoReport(category); // (message);
 
             // Set headers for PDF response
             HttpHeaders headers = new HttpHeaders();
