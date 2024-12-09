@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version
+6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+	name="Reporte_pedido" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20"
+	rightMargin="20" topMargin="20" bottomMargin="20" uuid="f28bd500-f1b3-498a-ac5c-12c8095e8efc">
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="484" />
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="516" />
+	<property name="com.jaspersoft.studio.data.sql.tables" value="" />
+	<property name="com.jaspersoft.studio.data.defaultdataadapter">
+		<![CDATA[U:Postgres & DB:agropro]]>
+	</property>
+	<parameter name="ped_id" class="java.lang.Integer" />
+	<queryString>
+		<![CDATA[SELECT p.ped_id AS header_pedido_id,
+    p.ped_fecha_hora AS header_fecha_hora,
+    pp.prp_nombre AS item_producto,
+    pi.pei_cantidad AS item_cantidad,
+    u.uni_nombre AS item_unidad,
+    a.alm_nombre AS header_almacen_nombre,
+    s.sed_nombre AS header_sede,
+    e.emp_nombre AS header_empresa
+FROM pedido AS p
+    JOIN pedido_item AS pi ON p.ped_id = pi.pei_pedido_id
+    JOIN producto_presentacion AS pp ON pi.pei_producto_presentacion_id = pp.prp_id
+    JOIN producto AS pr ON pp.prp_producto_id = pr.pro_id
+    JOIN unidad AS u ON pp.prp_unidad_id = u.uni_id
+    JOIN almacen AS a ON p.ped_almacen_id = a.alm_id
+    JOIN sede AS s ON a.alm_sede_id = s.sed_id
+    JOIN empresa AS e ON s.sed_empresa_id = e.emp_id
+WHERE p.ped_id = $P{ped_id}]]>
+	</queryString>
+	<field name="header_pedido_id" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="header_pedido_id" />
+		<property name="com.jaspersoft.studio.field.label" value="header_pedido_id" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="pedido" />
+	</field>
+	<field name="header_fecha_hora" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="header_fecha_hora" />
+		<property name="com.jaspersoft.studio.field.label" value="header_fecha_hora" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="pedido" />
+	</field>
+	<field name="item_producto" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_producto" />
+		<property name="com.jaspersoft.studio.field.label" value="item_producto" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto_presentacion" />
+	</field>
+	<field name="item_cantidad" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_cantidad" />
+		<property name="com.jaspersoft.studio.field.label" value="item_cantidad" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="pedido_item" />
+	</field>
+	<field name="item_unidad" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_unidad" />
+		<property name="com.jaspersoft.studio.field.label" value="item_unidad" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="unidad" />
+	</field>
+	<field name="header_almacen_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_almacen_nombre" />
+		<property name="com.jaspersoft.studio.field.label" value="header_almacen_nombre" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="almacen" />
+	</field>
+	<field name="header_sede" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_sede" />
+		<property name="com.jaspersoft.studio.field.label" value="header_sede" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede" />
+	</field>
+	<field name="header_empresa" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_empresa" />
+		<property name="com.jaspersoft.studio.field.label" value="header_empresa" />
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa" />
+	</field>
+	<background>
+		<band splitType="Stretch" />
+	</background>
+	<title>
+		<band height="45" splitType="Stretch">
+			<staticText>
+				<reportElement x="231" y="15" width="100" height="15"
+					uuid="011f0d34-816a-4752-b160-6b43ab0f5571" />
+				<textElement textAlignment="Center" />
+				<text><![CDATA[PEDIDO]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="127" splitType="Stretch">
+			<textField>
+				<reportElement x="65" y="10" width="100" height="16"
+					uuid="35375aae-af71-4ceb-bb29-09e64826457c" />
+				<textFieldExpression><![CDATA[$F{header_pedido_id}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="310" y="9" width="139" height="18"
+					uuid="b611cce3-bd58-4320-83b6-4d95932c15fb" />
+				<textFieldExpression><![CDATA[$F{header_fecha_hora}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="50" width="100" height="14"
+					uuid="ae1ddd33-fa88-4afc-b5ec-84c835a36bb4" />
+				<textFieldExpression><![CDATA[$F{header_empresa}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="70" width="110" height="20"
+					uuid="0a614ace-4900-4166-b7e2-ce6da5489047" />
+				<textFieldExpression><![CDATA[$F{header_sede}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="100" width="155" height="19"
+					uuid="fb2a430f-4f69-4177-9436-a29a99d6c713" />
+				<textFieldExpression><![CDATA[$F{header_almacen_nombre}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="10" y="10" width="60" height="17"
+					uuid="01876295-1cd9-4d6e-9551-7221c9d71239" />
+				<text><![CDATA[No. pedido:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="240" y="8" width="70" height="21"
+					uuid="fe1cf81c-9f86-4b5d-a0f9-b0ead6475e92" />
+				<text><![CDATA[Fecha y hora:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="10" y="50" width="51" height="14"
+					uuid="f84bbdbb-a67e-4503-8fae-c22aef98bb25" />
+				<text><![CDATA[Empresa:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="10" y="70" width="51" height="20"
+					uuid="1a2a92c8-db0e-4215-848f-7bbc2914e734" />
+				<text><![CDATA[Sede:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="10" y="100" width="51" height="21"
+					uuid="78fdbb38-7888-4b15-9e85-e874cdaebd7b" />
+				<text><![CDATA[Almacén:]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="61" splitType="Stretch">
+			<staticText>
+				<reportElement x="10" y="20" width="100" height="20"
+					uuid="c0d30ebc-2b14-4e88-900b-d72553fb6f2a">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID"
+						value="44879e2e-57a0-47b3-b2d3-b58e8f3e0396" />
+				</reportElement>
+				<text><![CDATA[item_producto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="180" y="20" width="100" height="20"
+					uuid="6a0efa45-0f32-4860-af59-6dd38cc00744">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID"
+						value="13305f7d-d294-456a-8f39-7f905a17cafc" />
+				</reportElement>
+				<text><![CDATA[item_cantidad]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="380" y="20" width="100" height="20"
+					uuid="6b9e0051-4104-4348-8ce7-62fe1f33ca67">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID"
+						value="d4d4ab93-ff27-42c3-9971-79dde082a969" />
+				</reportElement>
+				<text><![CDATA[item_unidad]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="330" splitType="Stretch">
+			<textField>
+				<reportElement x="10" y="20" width="100" height="20"
+					uuid="ebbbcd22-c99e-49cb-aa2b-d1c704bc6cff">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID"
+						value="44879e2e-57a0-47b3-b2d3-b58e8f3e0396" />
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{item_producto}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="180" y="20" width="100" height="20"
+					uuid="e933541b-4e10-4567-baed-3f27869f97da">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID"
+						value="13305f7d-d294-456a-8f39-7f905a17cafc" />
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{item_cantidad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="380" y="20" width="100" height="20"
+					uuid="89030fae-d307-4fb5-ade6-a8f9b3517b47">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID"
+						value="d4d4ab93-ff27-42c3-9971-79dde082a969" />
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{item_unidad}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch" />
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch" />
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch" />
+	</summary>
+</jasperReport>
