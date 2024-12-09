@@ -80,7 +80,7 @@ public class PersonaController {
     }
 
     @PutMapping("/{requestedId}")
-    private ResponseEntity<PersonaDTO> putPersona(@PathVariable Long requestedId,
+    private ResponseEntity<Void> putPersona(@PathVariable Long requestedId,
             @RequestBody PersonaDTO personaDTOUpdate) {
         Persona persona = personaRepository.findById(requestedId).orElse(null);
         if (null != persona) {
