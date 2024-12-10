@@ -31,7 +31,7 @@ import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
-@RequestMapping("/api/v1/kardexItem")
+@RequestMapping("/api/v1/kardex_item")
 @CrossOrigin(origins = "*")
 public class KardexItemController {
 
@@ -96,7 +96,7 @@ public class KardexItemController {
             KardexItem savedKardexItem = kardexItemMapper.toEntity(newKardexItem);
             kardexItemRepository.save(savedKardexItem);
             URI locationOfNewKardexItem = ucb
-                    .path("/api/v1/kardexItem/{id}")
+                    .path("/api/v1/kardex_item/{id}")
                     .buildAndExpand(savedKardexItem.getId())
                     .toUri();
             return ResponseEntity.created(locationOfNewKardexItem).build();
