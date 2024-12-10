@@ -14,9 +14,13 @@ public interface ProductoMapper {
 
     ProductoMapper INSTANCE = Mappers.getMapper(ProductoMapper.class);
 
-    @Mapping(source = "productoCategoria.id", target = "productoCategoriaId")
+    @Mapping(source = "productoCategoria.id", target = "productoCategoria")
+    @Mapping(source = "estado.id", target = "estado")
+    @Mapping(source = "empresa.id", target = "empresa")
     ProductoDTO toDto(Producto producto);
 
-    @Mapping(source = "productoCategoriaId", target = "productoCategoria.id")
+    @Mapping(source = "productoCategoria", target = "productoCategoria.id")
+    @Mapping(source = "estado", target = "estado.id")
+    @Mapping(source = "empresa", target = "empresa.id")
     Producto toEntity(ProductoDTO productoDTO);
 }

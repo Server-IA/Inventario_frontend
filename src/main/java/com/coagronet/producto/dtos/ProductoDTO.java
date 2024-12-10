@@ -1,14 +1,17 @@
 package com.coagronet.producto.dtos;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
 public class ProductoDTO {
-
     private Integer id;
     private String nombre;
-    private Long productoCategoriaId;
+    private Long productoCategoria;
     private String descripcion;
     private Integer estado;
-
+    private Long empresa;
 }

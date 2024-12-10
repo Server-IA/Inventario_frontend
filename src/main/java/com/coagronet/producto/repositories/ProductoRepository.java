@@ -9,7 +9,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.coagronet.producto.Producto;
 
 public interface ProductoRepository extends JpaRepository<Producto, Integer> {
-    Optional<Producto> findByIdAndEstado(Integer id, Integer estado);
 
-    Page<Producto> findByEstadoNot(Integer estado, Pageable pageable);
+    Optional<Producto> findByIdAndEmpresaId(
+            Integer id,
+            Long empresaId);
+
+    Page<Producto> findByEmpresaIdAndEstadoIdNot(
+            Long empresaId,
+            Integer estado,
+            Pageable pageable);
+
+    boolean existsByIdAndEmpresaId(
+            Integer id,
+            Long empresaId);
+
 }

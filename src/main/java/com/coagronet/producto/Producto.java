@@ -1,8 +1,19 @@
 package com.coagronet.producto;
 
+import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
 import com.coagronet.productoCategoria.ProductoCategoria;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,25 +23,32 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "producto")
+@Entity
+@Table(name = "producto")
 public class Producto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pro_id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_generator")
+    @SequenceGenerator(name = "producto_generator", sequenceName = "producto_pro_id_seq", allocationSize = 1)
+    @Column(name = "pro_id", nullable = false)
     private Integer id;
 
-    @Column(name = "pro_nombre")
+    @Column(name = "pro_nombre", length = 255)
     private String nombre;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "pro_producto_categoria_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pro_producto_categoria_id", referencedColumnName = "prc_id")
     private ProductoCategoria productoCategoria;
 
-    @Column(name = "pro_descripcion")
+    @Column(name = "pro_descripcion", length = 255)
     private String descripcion;
 
-    @Column(name = "pro_estado", columnDefinition = "integer default 1")
-    private Integer estado;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pro_estado", referencedColumnName = "est_id")
+    private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }
