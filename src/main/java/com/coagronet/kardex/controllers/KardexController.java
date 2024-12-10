@@ -2,15 +2,12 @@ package com.coagronet.kardex.controllers;
 
 import java.net.URI;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,89 +19,142 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.exceptionHandler.ResourceNotFoundException;
+import com.coagronet.almacen.repositories.AlmacenRepository;
+import com.coagronet.empresa.Empresa;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.asemblers.KardexModelAssembler;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/kardex")
 @CrossOrigin(origins = "*")
 public class KardexController {
 
-    @Autowired
-    private KardexRepository kardexRepository;
+    private final KardexRepository kardexRepository;
+    private final KardexMapper kardexMapper;
+    private final UserRoleRepository userRoleRepository;
+    private final UserRepository userRepository;
+    private final AlmacenRepository almacenRepository;
 
-    @Autowired
-    private KardexMapper kardexMapper;
+    public KardexController(
+            KardexRepository kardexRepository,
+            KardexMapper kardexMapper,
+            UserRoleRepository userRoleRepository,
+            UserRepository userRepository,
+            AlmacenRepository almacenRepository) {
+        this.kardexRepository = kardexRepository;
+        this.kardexMapper = kardexMapper;
+        this.userRoleRepository = userRoleRepository;
+        this.userRepository = userRepository;
+        this.almacenRepository = almacenRepository;
+    }
 
-    @Autowired
-    private KardexModelAssembler kardexModelAssembler;
+    private Empresa getEmpresaFromUser(User user) {
+        return userRoleRepository.findByUser(user).stream()
+                .map(UserRole::getEmpresa)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Empresa no encontrada para el usuario"));
+    }
 
-    @Autowired
-    private PagedResourcesAssembler<Kardex> kardexPagedResourcesAssembler;
+    private User getAuthenticatedUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+    }
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteKardex(@PathVariable Integer id) {
-        if (kardexRepository.existsById(id)) {
-            Kardex kardex = kardexRepository.findByIdAndEstadoNot(id, 2);
-            kardex.setEstado(2);
-            kardexRepository.save(kardex);
+    @GetMapping("/{requestedId}")
+    public ResponseEntity<KardexDTO> findById(@PathVariable Integer requestedId) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        return kardexRepository
+                .findByIdAndAlmacenSedeEmpresaId(requestedId, empresa.getId())
+                .map(kardexMapper::toDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> createKardex(@RequestBody KardexDTO newKardexRequest, UriComponentsBuilder ucb) {
+        KardexDTO newKardex = new KardexDTO(
+                null,
+                newKardexRequest.getFechaHora(),
+                newKardexRequest.getAlmacen(),
+                newKardexRequest.getProduccion(),
+                newKardexRequest.getTipoMovimiento(),
+                newKardexRequest.getDescripcion(),
+                newKardexRequest.getEstado());
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        if (almacenRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(
+                newKardex.getAlmacen(),
+                empresa.getId(),
+                2)) {
+            Kardex savedKardex = kardexMapper.toEntity(newKardex);
+            kardexRepository.save(savedKardex);
+            URI locationOfNewSede = ucb
+                    .path("/api/v1/kardex/{id}")
+                    .buildAndExpand(savedKardex.getId())
+                    .toUri();
+            return ResponseEntity.created(locationOfNewSede).build();
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<KardexDTO>> findAll(@PageableDefault Pageable pageable) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Page<KardexDTO> page = kardexRepository
+                .findByAlmacenSedeEmpresaIdAndEstadoIdNot(
+                        empresa.getId(), 2, pageable)
+                .map(kardexMapper::toDto);
+        return page.hasContent()
+                ? ResponseEntity.ok(page)
+                : ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{requestedId}")
+    public ResponseEntity<Void> putKardex(
+            @PathVariable Integer requestedId,
+            @RequestBody KardexDTO kardexDTOUpdate) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Kardex kardex = kardexRepository.findByIdAndAlmacenSedeEmpresaId(requestedId, empresa.getId())
+                .orElse(null);
+        if (null != kardex) {
+            KardexDTO updateKardexDTO = new KardexDTO(
+                    requestedId,
+                    kardexDTOUpdate.getFechaHora(),
+                    kardexDTOUpdate.getAlmacen(),
+                    kardexDTOUpdate.getProduccion(),
+                    kardexDTOUpdate.getTipoMovimiento(),
+                    kardexDTOUpdate.getDescripcion(),
+                    kardexDTOUpdate.getEstado());
+            Kardex updatedKardex = kardexMapper.toEntity(updateKardexDTO);
+            kardexRepository.save(updatedKardex);
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<EntityModel<KardexDTO>> updateKardex(
-            @PathVariable Integer requestedId,
-            @RequestBody KardexDTO kardexDTOUpdate) {
-
-        // Verifica si el Kardex con el requestedId existe
-        if (!kardexRepository.existsById(requestedId)) {
+    @DeleteMapping("/{id}")
+    private ResponseEntity<Void> deleteKardex(@PathVariable Integer id) {
+        try {
+            User authenticatedUser = getAuthenticatedUser();
+            Empresa empresa = getEmpresaFromUser(authenticatedUser);
+            if (kardexRepository.existsByIdAndAlmacenSedeEmpresaId(id, empresa.getId())) {
+                kardexRepository.deleteById(id);
+                return ResponseEntity.noContent().build();
+            }
             return ResponseEntity.notFound().build();
-        }
-
-        // Mapea el DTO a la entidad y establece el ID
-        Kardex kardex = KardexMapper.INSTANCE.toEntity(kardexDTOUpdate);
-        kardex.setId(requestedId);
-
-        // Guarda la entidad actualizada en el repositorio
-        kardexRepository.save(kardex);
-
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping
-    public PagedModel<EntityModel<KardexDTO>> all(Integer estado, Pageable pageable) {
-        Page<Kardex> kardexPage = kardexRepository.findByEstadoNot(2, PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                pageable.getSortOr(Sort.by(Sort.Direction.ASC, "id"))));
-
-        return kardexPagedResourcesAssembler.toModel(kardexPage, kardexModelAssembler);
-    }
-
-    @GetMapping("/{requestedId}")
-    public EntityModel<KardexDTO> findKardex(@PathVariable Integer requestedId) {
-        Kardex kardex = kardexRepository.findByIdAndEstadoNot(requestedId, 2);
-        if (kardex != null) {
-            return kardexModelAssembler.toModel(kardex);
-        } else {
-            throw new ResourceNotFoundException("Kardex not found");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-    @PostMapping
-    public ResponseEntity<Void> createKardex(@RequestBody KardexDTO kardexDTO, UriComponentsBuilder ucb) {
-        Kardex kardex = kardexMapper.toEntity(kardexDTO);
-        Kardex savedKardex = kardexRepository.save(kardex);
-        URI locationOfNewKardex = ucb
-                .path("/api/v1/kardex/{id}")
-                .buildAndExpand(savedKardex.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewKardex).build();
-    }
 }
