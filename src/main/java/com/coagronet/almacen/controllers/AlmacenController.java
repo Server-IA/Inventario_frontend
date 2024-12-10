@@ -53,7 +53,7 @@ public class AlmacenController {
     private final EstadoRepository estadoRepository;
     private final SedeRepository sedeRepository;
 
-    public AlmacenController(
+    private AlmacenController(
             AlmacenRepository almacenRepository,
             AlmacenMapper almacenMapper,
             EstadoRepository estadoRepository,
@@ -78,7 +78,7 @@ public class AlmacenController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<AlmacenDTO> findById(@PathVariable Integer requestedId) {
+    private ResponseEntity<AlmacenDTO> findById(@PathVariable Integer requestedId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         return almacenRepository
@@ -89,7 +89,7 @@ public class AlmacenController {
     }
 
     @GetMapping("/sede/{sedeId}")
-    public ResponseEntity<Page<AlmacenDTO>> findAllBySedeId(
+    private ResponseEntity<Page<AlmacenDTO>> findAllBySedeId(
             @PathVariable Long sedeId,
             @PageableDefault Pageable pageable) {
         User authenticatedUser = getAuthenticatedUser();
@@ -105,7 +105,7 @@ public class AlmacenController {
     }
 
     @GetMapping("/minimal/sede/{sedeId}")
-    public ResponseEntity<List<AlmacenMinimalDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
+    private ResponseEntity<List<AlmacenMinimalDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
 
@@ -121,7 +121,7 @@ public class AlmacenController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createAlmacen(@RequestBody AlmacenDTO newAlmacenRequest, UriComponentsBuilder ucb) {
+    private ResponseEntity<Void> createAlmacen(@RequestBody AlmacenDTO newAlmacenRequest, UriComponentsBuilder ucb) {
         AlmacenDTO newAlmacen = new AlmacenDTO(null, newAlmacenRequest.getNombre(), newAlmacenRequest.getSede(),
                 newAlmacenRequest.getGeolocalizacion(), newAlmacenRequest.getCoordenadas(),
                 newAlmacenRequest.getDescripcion(), newAlmacenRequest.getEstado());
@@ -130,17 +130,17 @@ public class AlmacenController {
         if (sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newAlmacen.getSede(), empresa.getId(), 2)) {
             Almacen savedAlmacen = almacenMapper.toEntity(newAlmacen);
             almacenRepository.save(savedAlmacen);
-            URI locationOfNewSede = ucb
+            URI locationOfNewAlmacen = ucb
                     .path("/api/v1/almacen/{id}")
                     .buildAndExpand(savedAlmacen.getId())
                     .toUri();
-            return ResponseEntity.created(locationOfNewSede).build();
+            return ResponseEntity.created(locationOfNewAlmacen).build();
         }
         return ResponseEntity.badRequest().build();
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putAlmacen(@PathVariable Integer requestedId,
+    private ResponseEntity<Void> putAlmacen(@PathVariable Integer requestedId,
             @RequestBody AlmacenDTO almacenDTOUpdate) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
@@ -158,7 +158,7 @@ public class AlmacenController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlmacen(@PathVariable Integer id) {
+    private ResponseEntity<Void> deleteAlmacen(@PathVariable Integer id) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         if (almacenRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {

@@ -41,7 +41,7 @@ public class KardexController {
     private final UserRepository userRepository;
     private final AlmacenRepository almacenRepository;
 
-    public KardexController(
+    private KardexController(
             KardexRepository kardexRepository,
             KardexMapper kardexMapper,
             UserRoleRepository userRoleRepository,
@@ -68,7 +68,7 @@ public class KardexController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<KardexDTO> findById(@PathVariable Integer requestedId) {
+    private ResponseEntity<KardexDTO> findById(@PathVariable Integer requestedId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         return kardexRepository
@@ -79,7 +79,7 @@ public class KardexController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createKardex(@RequestBody KardexDTO newKardexRequest, UriComponentsBuilder ucb) {
+    private ResponseEntity<Void> createKardex(@RequestBody KardexDTO newKardexRequest, UriComponentsBuilder ucb) {
         KardexDTO newKardex = new KardexDTO(
                 null,
                 newKardexRequest.getFechaHora(),
@@ -96,17 +96,17 @@ public class KardexController {
                 2)) {
             Kardex savedKardex = kardexMapper.toEntity(newKardex);
             kardexRepository.save(savedKardex);
-            URI locationOfNewSede = ucb
+            URI locationOfNewKardex = ucb
                     .path("/api/v1/kardex/{id}")
                     .buildAndExpand(savedKardex.getId())
                     .toUri();
-            return ResponseEntity.created(locationOfNewSede).build();
+            return ResponseEntity.created(locationOfNewKardex).build();
         }
         return ResponseEntity.badRequest().build();
     }
 
     @GetMapping
-    public ResponseEntity<Page<KardexDTO>> findAll(@PageableDefault Pageable pageable) {
+    private ResponseEntity<Page<KardexDTO>> findAll(@PageableDefault Pageable pageable) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         Page<KardexDTO> page = kardexRepository
@@ -119,7 +119,7 @@ public class KardexController {
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putKardex(
+    private ResponseEntity<Void> putKardex(
             @PathVariable Integer requestedId,
             @RequestBody KardexDTO kardexDTOUpdate) {
         User authenticatedUser = getAuthenticatedUser();

@@ -49,7 +49,7 @@ public class BloqueController {
     private final EstadoRepository estadoRepository;
     private final SedeRepository sedeRepository;
 
-    public BloqueController(
+    private BloqueController(
             BloqueRepository bloqueRepository,
             BloqueMapper bloqueMapper,
             EstadoRepository estadoRepository,
@@ -74,7 +74,7 @@ public class BloqueController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<BloqueDTO> findById(@PathVariable Integer requestedId) {
+    private ResponseEntity<BloqueDTO> findById(@PathVariable Integer requestedId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         return bloqueRepository
@@ -85,7 +85,7 @@ public class BloqueController {
     }
 
     @GetMapping("/sede/{sedeId}")
-    public ResponseEntity<List<BloqueDTO>> findAllBySedeId(
+    private ResponseEntity<List<BloqueDTO>> findAllBySedeId(
             @PathVariable Long sedeId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
@@ -102,7 +102,7 @@ public class BloqueController {
     }
 
     @GetMapping("/minimal/sede/{sedeId}")
-    public ResponseEntity<List<BloqueMinimalDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
+    private ResponseEntity<List<BloqueMinimalDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
 
@@ -118,7 +118,7 @@ public class BloqueController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createBloque(@RequestBody BloqueDTO newBloqueRequest, UriComponentsBuilder ucb) {
+    private ResponseEntity<Void> createBloque(@RequestBody BloqueDTO newBloqueRequest, UriComponentsBuilder ucb) {
         BloqueDTO newBloque = new BloqueDTO(null, newBloqueRequest.getSede(), newBloqueRequest.getTipoBloque(),
                 newBloqueRequest.getNombre(), newBloqueRequest.getGeolocalizacion(), newBloqueRequest.getCoordenadas(),
                 newBloqueRequest.getNumeroPisos(), newBloqueRequest.getDescripcion(), newBloqueRequest.getEstado());
@@ -127,17 +127,17 @@ public class BloqueController {
         if (sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newBloque.getSede(), empresa.getId(), 2)) {
             Bloque savedBloque = bloqueMapper.toEntity(newBloque);
             bloqueRepository.save(savedBloque);
-            URI locationOfNewSede = ucb
+            URI locationOfNewBloque = ucb
                     .path("/api/v1/bloque/{id}")
                     .buildAndExpand(savedBloque.getId())
                     .toUri();
-            return ResponseEntity.created(locationOfNewSede).build();
+            return ResponseEntity.created(locationOfNewBloque).build();
         }
         return ResponseEntity.badRequest().build();
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putBloque(@PathVariable Integer requestedId,
+    private ResponseEntity<Void> putBloque(@PathVariable Integer requestedId,
             @RequestBody BloqueDTO bloqueDTOUpdate) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
@@ -156,7 +156,7 @@ public class BloqueController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBloque(@PathVariable Integer id) {
+    private ResponseEntity<Void> deleteBloque(@PathVariable Integer id) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         if (bloqueRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
