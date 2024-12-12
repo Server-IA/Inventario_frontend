@@ -18,6 +18,11 @@ public interface ProductoPresentacionRepository extends JpaRepository<ProductoPr
     @Query("SELECT p FROM ProductoPresentacion p WHERE p.estado.id != :estadoId")
     Page<ProductoPresentacion> findByEstadoNot(@Param("estadoId") Integer estadoId, Pageable pageable);
 
+    Page<ProductoPresentacion> findByProductoEmpresaIdAndEstadoIdNot(
+            Long empresaId,
+            Integer estadoId,
+            Pageable pageable);
+
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM ProductoPresentacion p WHERE p.id = :id AND p.estado.id != :estadoId")
     boolean existsByIdAndEstadoNot(@Param("id") Integer id, @Param("estadoId") Integer estadoId);
 

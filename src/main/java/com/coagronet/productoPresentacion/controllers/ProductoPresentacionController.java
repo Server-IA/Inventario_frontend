@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +20,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.productoPresentacion.ProductoPresentacion;
 import com.coagronet.productoPresentacion.dtos.ProductoPresentacionDTO;
+import com.coagronet.productoPresentacion.dtos.ProductoPresentacionMinimalDTO;
 import com.coagronet.productoPresentacion.mappers.ProductoPresentacionMapper;
 import com.coagronet.productoPresentacion.repositories.ProductoPresentacionRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -38,6 +46,25 @@ public class ProductoPresentacionController {
 
     @Autowired
     private ProductoPresentacionRepository productoPresentacionRepository;
+
+    @Autowired
+    UserRoleRepository userRoleRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    private Empresa getEmpresaFromUser(User user) {
+        return userRoleRepository.findByUser(user).stream()
+                .map(UserRole::getEmpresa)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Empresa no encontrada para el usuario"));
+    }
+
+    private User getAuthenticatedUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+    }
 
     @GetMapping
     private ResponseEntity<Page<ProductoPresentacionDTO>> findAll(@PageableDefault Pageable pageable) {
@@ -70,6 +97,19 @@ public class ProductoPresentacionController {
                 .buildAndExpand(productoPresentacion.getId())
                 .toUri();
         return ResponseEntity.created(locationOfNewProductoPresentacion).build();
+    }
+
+    @GetMapping("/minimal")
+    private ResponseEntity<Page<ProductoPresentacionMinimalDTO>> findAllMinimal(@PageableDefault Pageable pageable) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Page<ProductoPresentacionMinimalDTO> page = productoPresentacionRepository
+                .findByProductoEmpresaIdAndEstadoIdNot(
+                        empresa.getId(), 2, pageable)
+                .map(productoPresentacionMapper::toMinimalDTO);
+        return page.hasContent()
+                ? ResponseEntity.ok(page)
+                : ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{requestedId}")

@@ -6,6 +6,7 @@ import org.mapstruct.factory.Mappers;
 
 import com.coagronet.productoPresentacion.ProductoPresentacion;
 import com.coagronet.productoPresentacion.dtos.ProductoPresentacionDTO;
+import com.coagronet.productoPresentacion.dtos.ProductoPresentacionMinimalDTO;
 
 @Mapper(componentModel = "spring")
 public interface ProductoPresentacionMapper {
@@ -18,6 +19,8 @@ public interface ProductoPresentacionMapper {
     @Mapping(source = "marca.id", target = "marca")
     @Mapping(source = "presentacion.id", target = "presentacion")
     ProductoPresentacionDTO toDto(ProductoPresentacion productoPresentacion);
+
+    ProductoPresentacionMinimalDTO toMinimalDTO(ProductoPresentacion productoPresentacion);
 
     @Mapping(source = "producto", target = "producto.id")
     @Mapping(source = "unidad", target = "unidad.id")
