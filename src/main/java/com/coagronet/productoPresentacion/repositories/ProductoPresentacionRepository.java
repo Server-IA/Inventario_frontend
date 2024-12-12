@@ -20,4 +20,8 @@ public interface ProductoPresentacionRepository extends JpaRepository<ProductoPr
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM ProductoPresentacion p WHERE p.id = :id AND p.estado.id != :estadoId")
     boolean existsByIdAndEstadoNot(@Param("id") Integer id, @Param("estadoId") Integer estadoId);
+
+    boolean existsByIdAndProductoEmpresaId(
+            Integer id,
+            Long empresaId);
 }
