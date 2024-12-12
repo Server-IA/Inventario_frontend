@@ -22,6 +22,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.producto.Producto;
 import com.coagronet.producto.dtos.ProductoDTO;
+import com.coagronet.producto.dtos.ProductoMinimalDTO;
 import com.coagronet.producto.mappers.ProductoMapper;
 import com.coagronet.producto.repositories.ProductoRepository;
 import com.coagronet.user.User;
@@ -103,6 +104,19 @@ public class ProductoController {
                 .findByEmpresaIdAndEstadoIdNot(
                         empresa.getId(), 2, pageable)
                 .map(productoMapper::toDto);
+        return page.hasContent()
+                ? ResponseEntity.ok(page)
+                : ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/minimal")
+    private ResponseEntity<Page<ProductoMinimalDTO>> findAllMinimal(@PageableDefault Pageable pageable) {
+        User authenticatedUser = getAuthenticatedUser();
+        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Page<ProductoMinimalDTO> page = productoRepository
+                .findByEmpresaIdAndEstadoIdNot(
+                        empresa.getId(), 2, pageable)
+                .map(productoMapper::toMinimalDTO);
         return page.hasContent()
                 ? ResponseEntity.ok(page)
                 : ResponseEntity.noContent().build();
