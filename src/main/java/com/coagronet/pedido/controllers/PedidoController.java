@@ -83,7 +83,7 @@ public class PedidoController {
     }
 
     @PostMapping
-    private ResponseEntity<PedidoDTO> createPedido(@RequestBody PedidoDTO newPedidoRequest,
+    private ResponseEntity<Void> createPedido(@RequestBody PedidoDTO newPedidoRequest,
             UriComponentsBuilder ucb) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
