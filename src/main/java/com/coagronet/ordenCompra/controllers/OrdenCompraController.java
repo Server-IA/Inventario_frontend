@@ -115,8 +115,6 @@ public class OrdenCompraController {
             @PageableDefault Pageable pageable) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        System.out.println(requestedPedidoId);
-        System.out.println(empresa.getId());
         List<OrdenCompraDTO> ordenCompraDTOs = ordenCompraRepository
                 .findByPedidoIdAndPedidoAlmacenSedeEmpresaIdAndEstadoIdNotOrderByIdAsc(
                         requestedPedidoId, empresa.getId(), 2)

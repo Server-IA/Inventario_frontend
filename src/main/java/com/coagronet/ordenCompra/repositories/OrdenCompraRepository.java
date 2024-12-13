@@ -22,4 +22,9 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
                         Long id,
                         Long empresaId);
 
+        boolean existsByIdAndPedidoAlmacenSedeEmpresaIdAndEstadoIdNot(
+                        Long id,
+                        Long empresaId,
+                        Integer estadoId);
+
 }
