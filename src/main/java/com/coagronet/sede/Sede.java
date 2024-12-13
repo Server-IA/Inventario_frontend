@@ -43,7 +43,7 @@ public class Sede {
     @JoinColumn(name = "sed_tipo_sede_id", referencedColumnName = "tis_id")
     private TipoSede tipoSede;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sed_empresa_id", referencedColumnName = "emp_id")
     private Empresa empresa;
 
