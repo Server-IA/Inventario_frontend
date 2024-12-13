@@ -39,18 +39,19 @@ public class SecurityConfig {
                                 "/api/v1/items/**",
                                 "/api/v1/marcas/**",
                                 "/api/v1/sede",
-                                "/api/v1/kardex/**",
-                                "/api/v1/kardexItem/**",
+                                "/api/v1/kardex",
+                                "/api/v1/kardexItem",
                                 "/api/v1/unidad",
                                 "/api/v1/estados/**",
                                 "/api/v1/tipo_sede",
                                 "/api/v1/empresas/**",
                                 "/api/v1/grupo/**",
                                 "/api/report/**",
+                                "/api/v2/report",
                                 "/api/v1/email/**",
                                 "/api/v1/roles/**",
                                 "/api/v1/persona",
-                                "/api/v1/productos/**",
+                                "/api/v1/producto",
                                 "/api/v1/producto-presentacion",
                                 "/api/v1/activaciones/**",
                                 "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
@@ -65,7 +66,12 @@ public class SecurityConfig {
                                 "/api/v1/espacio_ocupacion",
                                 "/api/v1/tipo_bloque",
                                 "/api/v1/marca",
-                                "/api/v1/tipo_espacio")
+                                "/api/v1/tipo_espacio",
+                                "/api/v1/user",
+                                "/api/v1/pedido",
+                                "/api/v1/pedido_item",
+                                "/api/v1/actividad_ocupacion",
+                                "/api/v1/orden_compra")
                         .permitAll()
                         .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
