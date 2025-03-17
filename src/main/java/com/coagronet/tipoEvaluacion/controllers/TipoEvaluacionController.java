@@ -1,16 +1,18 @@
 package com.coagronet.tipoEvaluacion.controllers;
 
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.tipoEvaluacion.TipoEvaluacion;
+import com.coagronet.criterioEvaluacion.dtos.CriterioEvaluacionDTO;
 import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
 import com.coagronet.tipoEvaluacion.mappers.TipoEvaluacionMapper;
 import com.coagronet.tipoEvaluacion.repositories.TipoEvaluacionRepository;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/tipo_evaluacion")
@@ -19,16 +21,13 @@ public class TipoEvaluacionController {
 
     private final TipoEvaluacionRepository tipoEvaluacionRepository;
     private final TipoEvaluacionMapper tipoEvaluacionMapper;
-    private final EstadoRepository estadoRepository;
 
 
     private TipoEvaluacionController(
             TipoEvaluacionRepository tipoEvaluacionRepository,
-            TipoEvaluacionMapper tipoEvaluacionMapper,
-            EstadoRepository estadoRepository) {
+            TipoEvaluacionMapper tipoEvaluacionMapper) {
         this.tipoEvaluacionRepository = tipoEvaluacionRepository;
         this.tipoEvaluacionMapper = tipoEvaluacionMapper;
-        this.estadoRepository = estadoRepository;
     }
 
     @GetMapping("/{requestedId}")
@@ -57,5 +56,18 @@ public class TipoEvaluacionController {
                 .toUri();
         return ResponseEntity.created(locationOfNewTipoEvaluacion).build();
     } */
+
+    @GetMapping
+    private ResponseEntity<List<?>> findAll() {
+        List<TipoEvaluacionDTO> tipoEvaluacionDTOList = tipoEvaluacionRepository
+                .findByEstadoIdNotOrderByIdAsc( 2)
+                .stream()
+                .map(tipoEvaluacionMapper::toDTO)
+                .toList();
+
+        return !tipoEvaluacionDTOList.isEmpty()
+                ? ResponseEntity.ok(tipoEvaluacionDTOList)
+                : ResponseEntity.noContent().build();
+    }
 
 }
