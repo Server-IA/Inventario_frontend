@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface TipoEvaluacionRepository extends JpaRepository<TipoEvaluacion, Integer> {
 
     List<TipoEvaluacion> findByEstadoIdNotOrderByIdAsc(
-            Long estadoId);
+            Integer estadoId);
 
     Optional<TipoEvaluacion> findByIdAndEstadoIdNot(
             Integer id,
