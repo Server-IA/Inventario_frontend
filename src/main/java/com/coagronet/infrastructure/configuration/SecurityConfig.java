@@ -72,7 +72,9 @@ public class SecurityConfig {
                                 "/api/v1/pedido_item",
                                 "/api/v1/actividad_ocupacion",
                                 "/api/v1/orden_compra",
-                                "/api/v1/orden_compra_item")
+                                "/api/v1/orden_compra_item",
+                                "/api/v1/tipo_evaluacion",
+                                "/api/v1/criterio_evaluacion")
                         .permitAll()
                         .requestMatchers("/api").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
