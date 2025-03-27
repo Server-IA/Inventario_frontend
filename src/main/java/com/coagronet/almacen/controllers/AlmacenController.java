@@ -122,12 +122,20 @@ public class AlmacenController {
 
     @PostMapping
     private ResponseEntity<Void> createAlmacen(@RequestBody AlmacenDTO newAlmacenRequest, UriComponentsBuilder ucb) {
-        AlmacenDTO newAlmacen = new AlmacenDTO(null, newAlmacenRequest.getNombre(), newAlmacenRequest.getSede(),
-                newAlmacenRequest.getGeolocalizacion(), newAlmacenRequest.getCoordenadas(),
-                newAlmacenRequest.getDescripcion(), newAlmacenRequest.getEstado());
+        AlmacenDTO newAlmacen = new AlmacenDTO(
+                null,
+                newAlmacenRequest.getNombre(),
+                newAlmacenRequest.getSedeId(),
+                newAlmacenRequest.getDescripcion(),
+                newAlmacenRequest.getEstadoId(),
+                newAlmacenRequest.getGeolocalizacion(),
+                newAlmacenRequest.getCoordenadas(),               
+                newAlmacenRequest.getEspacioId(),
+                newAlmacenRequest.getDireccion()
+        );
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        if (sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newAlmacen.getSede(), empresa.getId(), 2)) {
+        if (sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newAlmacen.getSedeId(), empresa.getId(), 2)) {
             Almacen savedAlmacen = almacenMapper.toEntity(newAlmacen);
             almacenRepository.save(savedAlmacen);
             URI locationOfNewAlmacen = ucb
@@ -147,9 +155,17 @@ public class AlmacenController {
         Almacen almacen = almacenRepository.findByIdAndSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElseThrow(() -> new ResourceNotFoundException("Almacén no encontrado"));
         if (null != almacen) {
-            AlmacenDTO updatedAlmacenDTO = new AlmacenDTO(requestedId, almacenDTOUpdate.getNombre(),
-                    almacenDTOUpdate.getSede(), almacenDTOUpdate.getGeolocalizacion(),
-                    almacenDTOUpdate.getCoordenadas(), almacenDTOUpdate.getDescripcion(), almacenDTOUpdate.getEstado());
+            AlmacenDTO updatedAlmacenDTO = new AlmacenDTO(
+                    requestedId,
+                    almacenDTOUpdate.getNombre(),
+                    almacenDTOUpdate.getSedeId(),
+                    almacenDTOUpdate.getDescripcion(),
+                    almacenDTOUpdate.getEstadoId(),
+                    almacenDTOUpdate.getGeolocalizacion(),
+                    almacenDTOUpdate.getCoordenadas(),
+                    almacenDTOUpdate.getEspacioId(),
+                    almacenDTOUpdate.getDireccion()
+            );
             Almacen updatedAlmacen = almacenMapper.toEntity(updatedAlmacenDTO);
             almacenRepository.save(updatedAlmacen);
             return ResponseEntity.noContent().build();

@@ -10,9 +10,11 @@ import lombok.Setter;
 public class AlmacenDTO {
     private Integer id;
     private String nombre;
-    private Long sede;
+    private Long sedeId;
+    private String descripcion;
+    private Integer estadoId;
     private String geolocalizacion;
     private String coordenadas;
-    private String descripcion;
-    private Integer estado;
+    private Integer espacioId;
+    private String direccion;
 }
