@@ -4,11 +4,11 @@ import com.coagronet.item.models.Item;
 
 import jakarta.persistence.ColumnResult;
 import jakarta.persistence.ConstructorResult;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.SqlResultSetMapping;
 
-@Entity
+@MappedSuperclass
 @SqlResultSetMapping(name = "ItemMapping", classes = @ConstructorResult(targetClass = Item.class, columns = {
         @ColumnResult(name = "id", type = Long.class),
         @ColumnResult(name = "name", type = String.class)
