@@ -23,10 +23,9 @@ public class ReportService {
     @Autowired
     private DataSource dataSource;
 
-    public byte[] generateProductoReport(int category) throws Exception {
-        // Load the compiled JasperReport file (.jasper)
+    private byte[] generateReport(String reportPath, Map<String, Object> parameters) throws Exception {
         JasperReport jasperReport;
-        try (InputStream reportStream = new ClassPathResource("producto4.jrxml").getInputStream()) {
+        try (InputStream reportStream = new ClassPathResource(reportPath).getInputStream()) {
             jasperReport = JasperCompileManager.compileReport(reportStream);
         } catch (Exception e) {
             System.out.println("Error durante la compilación del reporte: " + e.getMessage());
@@ -34,125 +33,41 @@ public class ReportService {
             throw new RuntimeException("Failed to compile report.", e);
         }
 
-        // Ensure that your SQL query returns data from the database
         try (Connection connection = dataSource.getConnection()) {
-            // Parameters (if any)
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("ReportTitle", "Products Report");
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, connection);
 
-            String queryCategory = "";
-            if (category > 0) {
-                queryCategory = "" + category;
-            }
-            parameters.put("QueryCategory", queryCategory);
-
-            // Fill the report
-            JasperPrint jasperPrint = JasperFillManager.fillReport(
-                    jasperReport,
-                    parameters,
-                    connection);
-
-            System.out.println("R91");
-
-            // Check if the report was filled with data
             if (jasperPrint.getPages().isEmpty()) {
                 throw new RuntimeException("No data found for the report.");
             }
 
-            // Export the report to PDF
             return JasperExportManager.exportReportToPdf(jasperPrint);
         } catch (Exception e) {
             System.out.println("Error durante la generación del reporte: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Failed to generate report.", e);
         }
+    }
+
+    public byte[] generateProductoReport(int category) throws Exception {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("ReportTitle", "Products Report");
+        parameters.put("QueryCategory", category > 0 ? String.valueOf(category) : "");
+
+        return generateReport("producto4.jrxml", parameters);
     }
 
     public byte[] generatePedidoReport(Integer id) throws Exception {
-        // Load the compiled JasperReport file (.jasper)
-        JasperReport jasperReport;
-        try (InputStream reportStream = new ClassPathResource("Reporte_pedido.jrxml").getInputStream()) {
-            jasperReport = JasperCompileManager.compileReport(reportStream);
-        } catch (Exception e) {
-            System.out.println("Error durante la compilación del reporte: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to compile report.", e);
-        }
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("ped_id", id > 0 ? id : null);
 
-        // Ensure that your SQL query returns data from the database
-        try (Connection connection = dataSource.getConnection()) {
-            // Parameters (if any)
-            Map<String, Object> parameters = new HashMap<>();
-
-            Integer ped_id = null;
-            if (id > 0) {
-                ped_id = id;
-            }
-            parameters.put("ped_id", ped_id);
-
-            // Fill the report
-            JasperPrint jasperPrint = JasperFillManager.fillReport(
-                    jasperReport,
-                    parameters,
-                    connection);
-
-            System.out.println("R91");
-
-            // Check if the report was filled with data
-            if (jasperPrint.getPages().isEmpty()) {
-                throw new RuntimeException("No data found for the report.");
-            }
-
-            // Export the report to PDF
-            return JasperExportManager.exportReportToPdf(jasperPrint);
-        } catch (Exception e) {
-            System.out.println("Error durante la generación del reporte: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to generate report.", e);
-        }
+        return generateReport("Reporte_pedido.jrxml", parameters);
     }
 
     public byte[] generateOrdenCompraReport(Integer id) throws Exception {
-        // Load the compiled JasperReport file (.jasper)
-        JasperReport jasperReport;
-        try (InputStream reportStream = new ClassPathResource("Reporte_oden_compra.jrxml").getInputStream()) {
-            jasperReport = JasperCompileManager.compileReport(reportStream);
-        } catch (Exception e) {
-            System.out.println("Error durante la compilación del reporte: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to compile report.", e);
-        }
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("orc_id", id > 0 ? id : null);
 
-        // Ensure that your SQL query returns data from the database
-        try (Connection connection = dataSource.getConnection()) {
-            // Parameters (if any)
-            Map<String, Object> parameters = new HashMap<>();
-
-            Integer orc_id = null;
-            if (id > 0) {
-                orc_id = id;
-            }
-            parameters.put("orc_id", orc_id);
-
-            // Fill the report
-            JasperPrint jasperPrint = JasperFillManager.fillReport(
-                    jasperReport,
-                    parameters,
-                    connection);
-
-            System.out.println("R91");
-
-            // Check if the report was filled with data
-            if (jasperPrint.getPages().isEmpty()) {
-                throw new RuntimeException("No data found for the report.");
-            }
-
-            // Export the report to PDF
-            return JasperExportManager.exportReportToPdf(jasperPrint);
-        } catch (Exception e) {
-            System.out.println("Error durante la generación del reporte: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to generate report.", e);
-        }
+        return generateReport("Reporte_oden_compra.jrxml", parameters);
     }
+    
 }

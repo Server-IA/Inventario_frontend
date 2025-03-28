@@ -23,24 +23,19 @@ public class ReportControllerV2 {
         this.reportService = reportService;
     }
 
+    private ResponseEntity<byte[]> generateReport(String reportName, byte[] reportData) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("inline", reportName + ".pdf");
+
+        return new ResponseEntity<>(reportData, headers, HttpStatus.OK);
+    }
+
     @GetMapping("/producto")
     public ResponseEntity<byte[]> generateProductoReport(@RequestParam int category) {
-
-        System.out.println("category=" + category);
-
         try {
-            // Generate the report as a byte array
-            byte[] report = reportService.generateProductoReport(category); // (message);
-
-            // Set headers for PDF response
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            // headers.setContentDispositionFormData("attachment", "report.pdf");
-            headers.setContentDispositionFormData("inline", "productoReport.pdf");
-            // headers.setContentDispositionFormData("inline", "report.pdf");
-
-            return new ResponseEntity<>(report, headers, HttpStatus.OK);
-
+            byte[] report = reportService.generateProductoReport(category);
+            return generateReport("productoReport", report);
         } catch (Exception e) {
             System.out.println("Error LIA:" + e.toString());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -49,50 +44,23 @@ public class ReportControllerV2 {
 
     @GetMapping("/pedido")
     public ResponseEntity<byte[]> generatePedidoReport(@RequestParam Integer pedidoId) {
-
-        System.out.println("pedido=" + pedidoId);
-
         try {
-            // Generate the report as a byte array
-            byte[] report = reportService.generatePedidoReport(pedidoId); // (message);
-
-            // Set headers for PDF response
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            // headers.setContentDispositionFormData("attachment", "report.pdf");
-            headers.setContentDispositionFormData("inline", "pedidoReport.pdf");
-            // headers.setContentDispositionFormData("inline", "report.pdf");
-
-            return new ResponseEntity<>(report, headers, HttpStatus.OK);
-
+            byte[] report = reportService.generatePedidoReport(pedidoId);
+            return generateReport("pedidoReport", report);
         } catch (Exception e) {
             System.out.println("Error LIA:" + e.toString());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping("/oden_compra")
+    @GetMapping("/orden_compra")
     public ResponseEntity<byte[]> generateOrdenCompraReport(@RequestParam Integer ordenId) {
-
-        System.out.println("pedido=" + ordenId);
-
         try {
-            // Generate the report as a byte array
-            byte[] report = reportService.generateOrdenCompraReport(ordenId); // (message);
-
-            // Set headers for PDF response
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            // headers.setContentDispositionFormData("attachment", "report.pdf");
-            headers.setContentDispositionFormData("inline", "ordenCompraReport.pdf");
-            // headers.setContentDispositionFormData("inline", "report.pdf");
-
-            return new ResponseEntity<>(report, headers, HttpStatus.OK);
-
+            byte[] report = reportService.generateOrdenCompraReport(ordenId);
+            return generateReport("ordenCompraReport", report);
         } catch (Exception e) {
             System.out.println("Error LIA:" + e.toString());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }
