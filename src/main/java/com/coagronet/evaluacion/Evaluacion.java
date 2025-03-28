@@ -1,6 +1,10 @@
 package com.coagronet.evaluacion;
 
+import java.time.LocalDateTime;
+
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
+import com.coagronet.tipoEvaluacion.TipoEvaluacion;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,31 +18,40 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@Builder
+@Entity
+@Table(name = "evaluacion", schema = "public")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "evaluacion")
+@Builder
 public class Evaluacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaluacion_generator")
-    @SequenceGenerator(name = "evaluacion_generator", sequenceName = "evaluacion_eva_id_seq", allocationSize = 1)
-    @Column(name = "eva_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaSeqGen")
+    @SequenceGenerator(name = "evaSeqGen", sequenceName = "evaluacion_eva_id_seq", allocationSize = 1)
+    @Column(name = "eva_id")
     private Integer id;
 
-    @Column(name = "eva_nombre", length = 100)
-    private String nombre;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "eva_tipo_evaluacion_id", referencedColumnName = "tie_id")
+    private TipoEvaluacion tipoEvaluacion;
 
-    @Column(name = "eva_descripcion", length = 255)
-    private String descripcion;
+    @Column(name = "eva_fecha_hora")
+    private LocalDateTime fechaHora;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "eva_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
+
+    @Column(name = "eva_evaluado")
+    private Integer evaluado;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "eva_estado", referencedColumnName = "est_id")
     private Estado estado;
-
 }
