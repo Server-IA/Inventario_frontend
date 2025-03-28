@@ -23,19 +23,19 @@ public class TipoEvaluacionService {
 
     public List<TipoEvaluacionDTO> findAll() {
         return tipoEvaluacionRepository.findAll().stream()
-                .map(tipoEvaluacionMapper::convert)
+                .map(tipoEvaluacionMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     public List<TipoEvaluacionDTO> findAllAvailable() {
         return tipoEvaluacionRepository.findByEstadoIdNotOrderByIdAsc(2).stream()
-                .map(tipoEvaluacionMapper::convert)
+                .map(tipoEvaluacionMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     public TipoEvaluacionDTO findById(Integer requestedId) {
         return tipoEvaluacionRepository.findById(requestedId)
-                .map(tipoEvaluacionMapper::convert)
+                .map(tipoEvaluacionMapper::toDTO)
                 .orElse(null); // Devuelve null si no se encuentra
     }
 
@@ -44,7 +44,7 @@ public class TipoEvaluacionService {
                 null,
                 newtipoEvaluacionDTORequest.getNombre(),
                 newtipoEvaluacionDTORequest.getEstadoId());
-        return tipoEvaluacionMapper.convert(
+        return tipoEvaluacionMapper.toDTO(
                 tipoEvaluacionRepository.save(
                         tipoEvaluacionMapper.toEntity(tipoEvaluacionDTO)));
     }
