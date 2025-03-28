@@ -1,38 +1,22 @@
 package com.coagronet.tipoEvaluacion;
 
 import com.coagronet.estado.Estado;
+import jakarta.persistence.*;
+import lombok.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
+@Entity
+@Table(name = "tipo_evaluacion", schema = "public")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "tipo_evaluacion")
+@Builder
 public class TipoEvaluacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_evaluacion_generator")
-    @SequenceGenerator(
-            name = "tipo_evaluacion_generator",
-            sequenceName = "tipo_evaluacion_tie_id_seq",
-            allocationSize = 1
-    )
-    @Column(name = "tie_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tieSeqGen")
+    @SequenceGenerator(name = "tieSeqGen", sequenceName = "tipo_evaluacion_tie_id_seq", allocationSize = 1)
+    @Column(name = "tie_id")
     private Integer id;
 
     @Column(name = "tie_nombre", length = 255)

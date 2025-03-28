@@ -11,15 +11,13 @@ import java.util.Optional;
 @Repository
 public interface TipoEvaluacionRepository extends JpaRepository<TipoEvaluacion, Integer> {
 
-    List<TipoEvaluacion> findByEstadoIdNotOrderByIdAsc(
-            Integer estadoId);
+        List<TipoEvaluacion> findByEstadoIdNotOrderByIdAsc(
+                        Integer estadoId);
 
-    Optional<TipoEvaluacion> findByIdAndEstadoIdNot(
-            Integer id,
-            Integer estadoId);
+        Optional<TipoEvaluacion> findById(
+                        Integer id);
 
-    boolean existsByIdAndEstadoIdNot(
-            Integer id,
-            Integer estadoId);
+        boolean existsById(
+                        Integer id);
 
 }

@@ -10,5 +10,5 @@ import lombok.Setter;
 public class TipoEvaluacionDTO {
     private Integer id;
     private String nombre;
-    private Integer estado;
+    private Integer estadoId;
 }

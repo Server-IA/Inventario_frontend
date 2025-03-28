@@ -4,16 +4,18 @@ import com.coagronet.tipoEvaluacion.TipoEvaluacion;
 import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.ReportingPolicy;
+import org.mapstruct.extensions.spring.SpringMapperConfig;
+import org.springframework.core.convert.converter.Converter;
 
-@Mapper(componentModel = "spring")
-public interface TipoEvaluacionMapper {
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@SpringMapperConfig
+public interface TipoEvaluacionMapper extends Converter<TipoEvaluacion, TipoEvaluacionDTO> {
 
-    TipoEvaluacionMapper INSTANCE = Mappers.getMapper(TipoEvaluacionMapper.class);
+    @Override
+    @Mapping(source = "estado.id", target = "estadoId")
+    TipoEvaluacionDTO convert(TipoEvaluacion tipoEvaluacion);
 
-    @Mapping(source = "estado.id", target = "estado")
-    TipoEvaluacionDTO toDTO(TipoEvaluacion tipoEvaluacion);
-
-    @Mapping(source = "estado", target = "estado.id")
+    @Mapping(source = "estadoId", target = "estado.id")
     TipoEvaluacion toEntity(TipoEvaluacionDTO tipoEvaluacionDTO);
 }

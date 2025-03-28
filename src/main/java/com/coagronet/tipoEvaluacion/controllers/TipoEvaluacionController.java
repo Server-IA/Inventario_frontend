@@ -1,73 +1,84 @@
 package com.coagronet.tipoEvaluacion.controllers;
 
-import com.coagronet.criterioEvaluacion.dtos.CriterioEvaluacionDTO;
 import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
-import com.coagronet.tipoEvaluacion.mappers.TipoEvaluacionMapper;
-import com.coagronet.tipoEvaluacion.repositories.TipoEvaluacionRepository;
+import com.coagronet.tipoEvaluacion.services.TipoEvaluacionService;
+import com.coagronet.utils.UriBuilderUtil;
 
+import lombok.RequiredArgsConstructor;
+
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/v1/tipo_evaluacion")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class TipoEvaluacionController {
 
-    private final TipoEvaluacionRepository tipoEvaluacionRepository;
-    private final TipoEvaluacionMapper tipoEvaluacionMapper;
+        private final TipoEvaluacionService tipoEvaluacionService;
+        private final UriBuilderUtil uriBuilderUtil;
 
+        @GetMapping("/all")
+        public ResponseEntity<List<TipoEvaluacionDTO>> findAll() {
+                return ResponseEntity.ok(tipoEvaluacionService.findAll());
+        }
 
-    private TipoEvaluacionController(
-            TipoEvaluacionRepository tipoEvaluacionRepository,
-            TipoEvaluacionMapper tipoEvaluacionMapper) {
-        this.tipoEvaluacionRepository = tipoEvaluacionRepository;
-        this.tipoEvaluacionMapper = tipoEvaluacionMapper;
-    }
+        @GetMapping("/available")
+        public ResponseEntity<List<TipoEvaluacionDTO>> findAllAvailable() {
+                return ResponseEntity.ok(tipoEvaluacionService.findAllAvailable());
+        }
 
-    @GetMapping("/{requestedId}")
-    private ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Integer requestedId) {
-        return tipoEvaluacionRepository.findByIdAndEstadoIdNot(
-                        requestedId,
-                        2)
-                .map(tipoEvaluacionMapper::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+        @GetMapping("/{requestedId}")
+        public ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Integer requestedId) {
+                TipoEvaluacionDTO tipoEvaluacionDTO = tipoEvaluacionService.findById(requestedId);
+                if (tipoEvaluacionDTO != null) {
+                        return ResponseEntity.ok(tipoEvaluacionDTO);
+                } else {
+                        return ResponseEntity.notFound().build();
+                }
+        }
 
-    /* @PostMapping
-    private ResponseEntity<Void> createTipoEvaluacion(
-            @RequestBody TipoEvaluacionDTO newTipoEvaluacionRequest,
-            UriComponentsBuilder ucb) {
-        TipoEvaluacionDTO newTipoEvaluacion = new TipoEvaluacionDTO(
-                null,
-                newTipoEvaluacionRequest.getNombre(),
-                newTipoEvaluacionRequest.getEstado());
-        TipoEvaluacion savedTipoEvaluacion = tipoEvaluacionMapper.toEntity(newTipoEvaluacion);
-        tipoEvaluacionRepository.save(savedTipoEvaluacion);
-        URI locationOfNewTipoEvaluacion = ucb
-                .path("/api/v1/tipo_evaluacion/{id}")
-                .buildAndExpand(savedTipoEvaluacion.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewTipoEvaluacion).build();
-    } */
+        @PostMapping
+        public ResponseEntity<Void> createTipoEvaluacion(
+                        @RequestBody TipoEvaluacionDTO newTipoEvaluacionDTORequest,
+                        UriComponentsBuilder ucb) {
+                TipoEvaluacionDTO savedTipoEvaluacion = tipoEvaluacionService.create(
+                                newTipoEvaluacionDTORequest);
+                URI locationOfNewTipoEvaluacion = uriBuilderUtil.buildTipoEvaluacionUri(
+                                savedTipoEvaluacion.getId(),
+                                ucb);
+                return ResponseEntity.created(locationOfNewTipoEvaluacion).build();
+        }
 
-    @GetMapping
-    private ResponseEntity<List<?>> findAll() {
-        List<TipoEvaluacionDTO> tipoEvaluacionDTOList = tipoEvaluacionRepository
-                .findByEstadoIdNotOrderByIdAsc( 2)
-                .stream()
-                .map(tipoEvaluacionMapper::toDTO)
-                .toList();
+        @PutMapping("/{requestedId}")
+        public ResponseEntity<Void> updateTipoEvaluacion(
+                        @PathVariable Integer requestedId,
+                        @RequestBody TipoEvaluacionDTO tipoEvaluacionUpdate) {
+                boolean updated = tipoEvaluacionService.update(requestedId, tipoEvaluacionUpdate);
+                if (updated) {
+                        return ResponseEntity.noContent().build();
+                }
+                return ResponseEntity.notFound().build();
+        }
 
-        return !tipoEvaluacionDTOList.isEmpty()
-                ? ResponseEntity.ok(tipoEvaluacionDTOList)
-                : ResponseEntity.noContent().build();
-    }
+        @DeleteMapping("/{id}")
+        public ResponseEntity<Void> deleteTipoEvaluacion(@PathVariable Integer id) {
+                if (tipoEvaluacionService.delete(id)) {
+                        return ResponseEntity.noContent().build();
+                }
+                return ResponseEntity.notFound().build();
+        }
 
 }
