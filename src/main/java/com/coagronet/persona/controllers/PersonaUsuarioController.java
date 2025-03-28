@@ -38,7 +38,7 @@ public class PersonaUsuarioController {
 
     @PostMapping("/persona-usuario")
     public ResponseEntity<Map<String, Integer>> createPersona(
-            @RequestBody PersonaDTO personaDTO,
+            @RequestBody PersonaDTO newPersonaRequest,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         // Extraer el token de la cabecera Authorization
@@ -48,7 +48,20 @@ public class PersonaUsuarioController {
         String username = jwtService.extractUsername(token);
 
         // Lógica de tu método
-        Persona persona = PersonaMapper.INSTANCE.toEntity(personaDTO);
+        PersonaDTO newPersona = new PersonaDTO(
+                null,
+                newPersonaRequest.getTipoIdentificacion(),
+                newPersonaRequest.getIdentificacion(),
+                newPersonaRequest.getNombre(),
+                newPersonaRequest.getApellido(),
+                newPersonaRequest.getGenero(),
+                newPersonaRequest.getFechaNacimiento(),
+                newPersonaRequest.getEstrato(),
+                newPersonaRequest.getDireccion(),
+                newPersonaRequest.getEmail(),
+                newPersonaRequest.getCelular(),
+                newPersonaRequest.getEstado());
+        Persona persona = PersonaMapper.INSTANCE.toEntity(newPersona);
         personaRepository.save(persona);
 
         User user = userRepository.findByUsername(username)
