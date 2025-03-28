@@ -1,0 +1,19 @@
+[
+        {
+      "id": "inventario",
+      "text": "Inventario",
+      "icon": "People",
+      "children": [
+        {
+          "id": "tipo_movimiento",
+          "text": "Tipo Movimiento",
+          "icon": "ProductionQuantityLimitsIcon"
+        },
+        {
+          "id": "kardex_nuevo",
+          "text": "Kardex Nuevo",
+          "icon": "ProductionQuantityLimitsIcon"
+        }
+      ]
+    }
+  ]

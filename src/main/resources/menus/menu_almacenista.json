@@ -1,0 +1,29 @@
+[
+    {
+      "id": "inventario",
+      "text": "Inventario",
+      "icon": "People",
+      "children": [
+        {
+          "id": "kardex_nuevo",
+          "text": "Kardex Nuevo",
+          "icon": "ProductionQuantityLimitsIcon"
+        },
+        {
+            "id": "presentacion",
+            "text": "Presentacion",
+            "icon": "ProductionQuantityLimitsIcon"
+        },
+        {
+            "id": "r_pedido",
+            "text": "Reportes de Pedido",
+            "icon": "Settings"
+        },
+        {
+            "id": "r_orden_compra",
+            "text": "Reportes de Orden de Compra",
+            "icon": "Settings"
+        }   
+      ]
+    }
+  ]
