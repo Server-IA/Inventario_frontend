@@ -76,7 +76,7 @@ public class SecurityConfig {
                                 "/api/v1/tipo_evaluacion",
                                 "/api/v1/criterio_evaluacion")
                         .permitAll()
-                        .requestMatchers("/api").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/api").hasRole("ADMINISTRADOR_SISTEMA")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

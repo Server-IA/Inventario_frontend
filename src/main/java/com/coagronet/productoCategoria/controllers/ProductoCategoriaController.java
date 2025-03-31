@@ -54,7 +54,7 @@ public class ProductoCategoriaController {
     private Empresa getEmpresaFromUser(User user) {
         return userRoleRepository.findByUser(user)
                 .stream()
-                .filter(userRole -> userRole.getRole().getName().equals("ROLE_ADMINISTRADOR"))
+                .filter(userRole -> userRole.getRole().getName().equals("ROLE_ADMINISTRADOR_EMPRESA"))
                 .map(UserRole::getEmpresa)
                 .findFirst()
                 .orElseThrow(
