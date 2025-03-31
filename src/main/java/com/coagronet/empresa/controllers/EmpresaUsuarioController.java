@@ -74,7 +74,7 @@ public class EmpresaUsuarioController {
         userRepository.save(user);
 
         // Crear y asignar rol de administrador a la empresa creada
-        Role adminRole = roleRepository.findByName("ROLE_ADMINISTRADOR")
+        Role adminRole = roleRepository.findByName("ROLE_ADMINISTRADOR_EMPRESA")
                 .orElseThrow(() -> new RuntimeException("Rol de administrador no encontrado"));
 
         UserRole userRole = new UserRole(user, adminRole, savedEmpresa);
