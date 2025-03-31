@@ -5,8 +5,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
 import com.coagronet.tipoEvaluacion.mappers.TipoEvaluacionMapper;
 import com.coagronet.tipoEvaluacion.repositories.TipoEvaluacionRepository;
@@ -19,7 +17,6 @@ public class TipoEvaluacionService {
 
     private final TipoEvaluacionRepository tipoEvaluacionRepository;
     private final TipoEvaluacionMapper tipoEvaluacionMapper;
-    private final EstadoRepository estadoRepository;
 
     public List<TipoEvaluacionDTO> findAll() {
         return tipoEvaluacionRepository.findAll().stream()
@@ -50,20 +47,17 @@ public class TipoEvaluacionService {
     }
 
     public boolean update(Integer requestedId, TipoEvaluacionDTO tipoEvaluacionUpdate) {
-        return tipoEvaluacionRepository.findById(requestedId).map(existingTipoEvaluacion -> {
-            existingTipoEvaluacion.setNombre(tipoEvaluacionUpdate.getNombre());
-
-            // Buscar el nuevo Estado en la base de datos
-            Estado nuevoEstado = estadoRepository.findById(tipoEvaluacionUpdate.getEstadoId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Estado no encontrado con id: " + tipoEvaluacionUpdate.getEstadoId()));
-
-            // Asignar el nuevo Estado
-            existingTipoEvaluacion.setEstado(nuevoEstado);
-
-            tipoEvaluacionRepository.save(existingTipoEvaluacion);
+        if (tipoEvaluacionRepository.existsById(requestedId)) {
+            TipoEvaluacionDTO updatedTipoEvaluacion = new TipoEvaluacionDTO(
+                    requestedId,
+                    tipoEvaluacionUpdate.getNombre(),
+                    tipoEvaluacionUpdate.getEstadoId());
+            tipoEvaluacionRepository.save(tipoEvaluacionMapper.toEntity(updatedTipoEvaluacion));
             return true;
-        }).orElse(false);
+        } else {
+            return false;
+        }
+
     }
 
     public boolean delete(Integer id) {
