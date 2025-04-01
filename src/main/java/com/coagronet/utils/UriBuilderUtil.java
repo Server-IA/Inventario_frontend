@@ -14,4 +14,10 @@ public class UriBuilderUtil {
                 .toUri();
     }
 
+    public URI buildSedeUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/sede/{id}")
+                .buildAndExpand(id)
+                .toUri();
+    }
+
 }

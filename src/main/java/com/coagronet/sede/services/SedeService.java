@@ -23,9 +23,52 @@ public class SedeService {
     private final UserEmpresaService userEmpresaService;
 
     public List<SedeDTO> findAll() {
-        return sedeRepository.findAll().stream()
-                .map(sedeMapper::toDTO)
+        return sedeRepository.findByEmpresaId(
+                userEmpresaService.getEmpresaFromUser(
+                        authenticationService.getAuthenticatedUser()).getId())
+                .stream()
+                .map(sedeMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    public List<SedeDTO> findAllAvailable() {
+        return sedeRepository.findByEmpresaIdAndEstadoIdNot(
+                userEmpresaService.getEmpresaFromUser(
+                        authenticationService.getAuthenticatedUser()).getId(),
+                2)
+                .stream()
+                .map(sedeMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public SedeDTO findById(Long requestedId) {
+        return sedeRepository.findByIdAndEmpresaId(
+                requestedId,
+                userEmpresaService.getEmpresaFromUser(
+                        authenticationService.getAuthenticatedUser()).getId())
+                .map(sedeMapper::toDto)
+                .orElse(null);
+    }
+
+    public SedeDTO create(SedeDTO newSedeDTORequest) {
+        SedeDTO sedeDTO = new SedeDTO(
+                null,
+                newSedeDTORequest.getGrupoId(),
+                newSedeDTORequest.getTipoSedeId(),
+                userEmpresaService.getEmpresaFromUser(
+                        authenticationService.getAuthenticatedUser()).getId(),
+                newSedeDTORequest.getNombre(),
+                newSedeDTORequest.getMunicipioId(),
+                newSedeDTORequest.getArea(),
+                newSedeDTORequest.getComuna(),
+                newSedeDTORequest.getDescripcion(),
+                newSedeDTORequest.getEstadoId(),
+                newSedeDTORequest.getGeolocalizacion(),
+                newSedeDTORequest.getCoordenadas(),
+                newSedeDTORequest.getDireccion());
+        return sedeMapper.toDto(
+                sedeRepository.save(
+                        sedeMapper.toEntity(sedeDTO)));
     }
 
 }
