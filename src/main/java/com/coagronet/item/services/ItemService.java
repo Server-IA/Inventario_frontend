@@ -14,7 +14,7 @@ public class ItemService {
     @Autowired
     private CustomRepository customRepository;
 
-    public List<Item> getAllItems(String tableName) {
-        return customRepository.findAllItems(tableName);
+    public List<Item> getAllItems(String tableName, Long parentId) {
+        return customRepository.findAllItems(tableName, parentId);
     }
 }

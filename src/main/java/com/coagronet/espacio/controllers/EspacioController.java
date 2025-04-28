@@ -30,8 +30,8 @@ import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
+import com.coagronet.utils.UserEmpresaService;
 
 @RestController
 @RequestMapping("/api/v1/espacio")
@@ -44,27 +44,23 @@ public class EspacioController {
     @Autowired
     private UserRepository userRepository;
 
+    private final UserEmpresaService userEmpresaService;
+
     private final EspacioRepository espacioRepository;
     private final EspacioMapper espacioMapper;
     private final EstadoRepository estadoRepository;
     private final BloqueRepository bloqueRepository;
 
     public EspacioController(
-            EspacioRepository espacioRepository,
+            UserEmpresaService userEmpresaService, EspacioRepository espacioRepository,
             EspacioMapper espacioMapper,
             EstadoRepository estadoRepository,
             BloqueRepository bloqueRepository) {
+        this.userEmpresaService = userEmpresaService;
         this.espacioRepository = espacioRepository;
         this.espacioMapper = espacioMapper;
         this.estadoRepository = estadoRepository;
         this.bloqueRepository = bloqueRepository;
-    }
-
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Empresa no encontrada para el usuario"));
     }
 
     private User getAuthenticatedUser() {
@@ -76,7 +72,7 @@ public class EspacioController {
     @GetMapping("/{requestedId}")
     public ResponseEntity<EspacioDTO> findById(@PathVariable Integer requestedId) {
         User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return espacioRepository
                 .findByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .map(espacioMapper::toDTO)
@@ -88,7 +84,7 @@ public class EspacioController {
     public ResponseEntity<List<EspacioDTO>> findAllByBloqueId(
             @PathVariable Integer bloqueId) {
         User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<EspacioDTO> espacioDTOs = espacioRepository
                 .findByBloqueSedeEmpresaIdAndBloqueIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), bloqueId, 2)
@@ -104,7 +100,7 @@ public class EspacioController {
     @GetMapping("/minimal/bloque/{bloqueId}")
     public ResponseEntity<List<EspacioMinimalDTO>> findAllMinimalByBloqueId(@PathVariable Integer bloqueId) {
         User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<EspacioMinimalDTO> espacioMinimalDTOs = espacioRepository
                 .findByBloqueSedeEmpresaIdAndBloqueIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), bloqueId, 2)
@@ -123,7 +119,7 @@ public class EspacioController {
                 newEspacioRequest.getNombre(), newEspacioRequest.getGeolocalizacion(),
                 newEspacioRequest.getCoordenadas(), newEspacioRequest.getDescripcion(), newEspacioRequest.getEstado());
         User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         if (bloqueRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(newEspacio.getBloque(), empresa.getId(), 2)) {
             Espacio savedEspacio = espacioMapper.toEntity(newEspacio);
             espacioRepository.save(savedEspacio);
@@ -140,7 +136,7 @@ public class EspacioController {
     public ResponseEntity<Void> putEspacio(@PathVariable Integer requestedId,
             @RequestBody EspacioDTO espacioDTOUpdate) {
         User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Espacio espacio = espacioRepository
                 .findByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElse(null);
@@ -159,7 +155,7 @@ public class EspacioController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEspacio(@PathVariable Integer id) {
         User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         if (espacioRepository.existsByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
             Espacio espacio = espacioRepository.findById(id).orElse(null);
             Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
