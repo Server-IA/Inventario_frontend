@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,8 @@ import com.coagronet.verificationToken.repositories.VerificationTokenRepository;
 @Service
 public class EmailVerificationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmailVerificationService.class);
+
     private final VerificationTokenRepository verificationTokenRepository;
     private final JavaMailSender mailSender;
 
@@ -22,10 +27,10 @@ public class EmailVerificationService {
     private String verificationUrl;
 
     @Value("${app.reset-password-url}")
-    private String resetPasswordUrl; // URL base para restablecer la contraseña
+    private String resetPasswordUrl;
 
     public EmailVerificationService(VerificationTokenRepository verificationTokenRepository,
-                                    JavaMailSender mailSender) {
+            JavaMailSender mailSender) {
         this.verificationTokenRepository = verificationTokenRepository;
         this.mailSender = mailSender;
     }
@@ -34,63 +39,75 @@ public class EmailVerificationService {
         String token = UUID.randomUUID().toString();
         LocalDateTime expiryDate = LocalDateTime.now().plusHours(24);
 
-        VerificationToken verificationToken = VerificationToken.builder()
-                .email(email)
-                .token(token)
-                .expiryDate(expiryDate)
-                .build();
+        VerificationToken verificationToken = verificationTokenRepository.findByEmail(email)
+                .map(existingToken -> {
+                    existingToken.setToken(token);
+                    existingToken.setExpiryDate(expiryDate);
+                    return existingToken;
+                })
+                .orElse(VerificationToken.builder()
+                        .email(email)
+                        .token(token)
+                        .expiryDate(expiryDate)
+                        .build());
+
         verificationTokenRepository.save(verificationToken);
+
+        logger.info("Verification token created or updated for email: {}", email);
 
         return token;
     }
 
+    public boolean validateToken(String token) {
+        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
+
+        return tokenOptional
+                .filter(t -> !t.isExpired())
+                .map(t -> {
+                    verificationTokenRepository.delete(t);
+                    logger.info("Token validated and deleted for email: {}", t.getEmail());
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    public String getEmailAndInvalidateToken(String token) {
+        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
+
+        return tokenOptional
+                .filter(t -> !t.isExpired())
+                .map(t -> {
+                    verificationTokenRepository.delete(t);
+                    logger.info("Token used and deleted for email: {}", t.getEmail());
+                    return t.getEmail();
+                })
+                .orElse(null);
+    }
+
     public void sendVerificationEmail(String email, String token) {
-        String verificationLink = verificationUrl + "?token=" + token;
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("Verify your account");
-        message.setText("Click the link to verify your account: " + verificationLink);
-
-        mailSender.send(message);
-
-        System.out.println("Verification link sent to " + email + ": " + verificationLink);
+        String subject = "Verify your account";
+        String text = "Click the link to verify your account: " + verificationUrl + "?token=" + token;
+        sendEmail(email, subject, text);
     }
 
     public void sendResetPasswordEmail(String email, String token) {
-        String resetPasswordLink = resetPasswordUrl + "?token=" + token;
+        String subject = "Reset your password";
+        String text = "Click the link to reset your password: " + resetPasswordUrl + "?token=" + token;
+        sendEmail(email, subject, text);
+    }
 
+    private void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("Reset your password");
-        message.setText("Click the link to reset your password: " + resetPasswordLink);
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
 
-        mailSender.send(message);
-
-        System.out.println("Password reset link sent to " + email + ": " + resetPasswordLink);
-    }
-
-    public boolean verifyToken(String token) {
-        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
-        if (tokenOptional.isPresent()) {
-            VerificationToken verificationToken = tokenOptional.get();
-            if (!verificationToken.isExpired()) {
-                verificationTokenRepository.delete(verificationToken);
-                return true;
-            }
+        try {
+            mailSender.send(message);
+            logger.info("Email sent to {} with subject: {}", to, subject);
+        } catch (MailException e) {
+            logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+            // Podrías lanzar una excepción customizada si quieres que el error suba
         }
-        return false;
-    }
-
-    public String validateVerificationToken(String token) {
-        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
-        if (tokenOptional.isPresent()) {
-            VerificationToken verificationToken = tokenOptional.get();
-            if (!verificationToken.isExpired()) {
-                verificationTokenRepository.delete(verificationToken);
-                return verificationToken.getEmail();
-            }
-        }
-        return null;
     }
 }
