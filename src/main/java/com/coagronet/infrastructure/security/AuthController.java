@@ -26,14 +26,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.email.services.EmailVerificationService;
 import com.coagronet.role.Role;
 import com.coagronet.role.repositories.RoleRepository;
 import com.coagronet.user.User;
+import com.coagronet.user.dtos.RegisterRequestDTO;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
@@ -61,26 +65,29 @@ public class AuthController {
     private UserRepository userRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
+        // Validar si ya existe un usuario con ese email
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+            return ResponseEntity.badRequest().body("Email is already in use.");
+        }
+
+        // Crear el usuario
+        User user = new User();
+        user.setUsername(registerRequest.getUsername());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
+
+        // Asignar rol
+        Role userRole = roleRepository.findByName(default_role)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+        user.setRoles(Set.of(userRole));
+
+        // Guardar el usuario
+        userRegistrationService.registerUser(user);
 
         // Crear y enviar el token de verificación
         String token = emailVerificationService.createVerificationToken(user.getUsername());
         emailVerificationService.sendVerificationEmail(user.getUsername(), token);
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        // Buscar el rol predeterminado y manejar el caso en que no se encuentre
-        Role userRole = roleRepository.findByName(default_role)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
-        Set<Role> roles = new HashSet<>();
-        roles.add(userRole);
-        user.setRoles(roles);
-
-        // Asignar el estado inicial (1: Usuario registrado, pero no se ha activado el
-        // email)
-        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
-
-        userRegistrationService.registerUser(user);
 
         return ResponseEntity.ok("Verification email sent to " + user.getUsername());
     }
@@ -184,7 +191,7 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        String username = emailVerificationService.validateVerificationToken(token);
+        String username = emailVerificationService.getEmailAndInvalidateToken(token);
         if (username == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enlace de recuperación inválido o expirado");
         }

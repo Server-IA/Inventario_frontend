@@ -12,14 +12,16 @@ import com.coagronet.user.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByUsername(
-            String username);
+        Optional<User> findByUsername(
+                        String username);
 
-    Page<User> findByUsuarioEstadoIdGreaterThanEqual(
-            int usuarioEstadoId,
-            Pageable pageable);
+        Page<User> findByUsuarioEstadoIdGreaterThanEqual(
+                        int usuarioEstadoId,
+                        Pageable pageable);
 
-    Optional<User> findById(
-            Long id);
+        Optional<User> findById(
+                        Long id);
 
+        Boolean existsByUsername(
+                        String username);
 }
