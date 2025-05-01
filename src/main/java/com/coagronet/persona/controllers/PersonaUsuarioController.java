@@ -3,6 +3,8 @@ package com.coagronet.persona.controllers;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -26,6 +28,7 @@ import com.coagronet.usuarioEstado.UsuarioEstado;
 @CrossOrigin(origins = "*")
 public class PersonaUsuarioController {
 
+    private static final Logger log = LoggerFactory.getLogger(PersonaUsuarioController.class);
     @Autowired
     private PersonaRepository personaRepository;
 
@@ -47,34 +50,21 @@ public class PersonaUsuarioController {
         // Extraer el username desde el JWT usando la instancia de JwtService
         String username = jwtService.extractUsername(token);
 
-        // Lógica de tu método
-        PersonaDTO newPersona = new PersonaDTO(
-                null,
-                newPersonaRequest.getTipoIdentificacion(),
-                newPersonaRequest.getIdentificacion(),
-                newPersonaRequest.getNombre(),
-                newPersonaRequest.getApellido(),
-                newPersonaRequest.getGenero(),
-                newPersonaRequest.getFechaNacimiento(),
-                newPersonaRequest.getEstrato(),
-                newPersonaRequest.getDireccion(),
-                newPersonaRequest.getEmail(),
-                newPersonaRequest.getCelular(),
-                newPersonaRequest.getEstado());
-        Persona persona = PersonaMapper.INSTANCE.toEntity(newPersona);
-        personaRepository.save(persona);
-
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
+        Persona persona = PersonaMapper.INSTANCE.toEntity(newPersonaRequest);
+        persona = personaRepository.save(persona);
+
         user.setPersona(persona);
+        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
+
+
         userRepository.save(user);
 
         // Devolver solo el estado del usuario en la respuesta
         Map<String, Integer> response = new HashMap<>();
         response.put("usuarioEstado", user.getUsuarioEstado().getId().intValue());
-
         return ResponseEntity.ok(response);
     }
 

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,18 +13,6 @@ import com.coagronet.persona.Persona;
 import com.coagronet.role.Role;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,15 +39,15 @@ public class User implements UserDetails {
     @Column(name = "usu_password", nullable = false, length = 255)
     private String password;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usu_persona_id", referencedColumnName = "per_id")
     private Persona persona;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "usuario_rol", joinColumns = @JoinColumn(name = "usr_usuario_id"), inverseJoinColumns = @JoinColumn(name = "usr_rol_id"))
     private Set<Role> roles;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usu_estado", referencedColumnName = "use_id")
     private UsuarioEstado usuarioEstado;
 

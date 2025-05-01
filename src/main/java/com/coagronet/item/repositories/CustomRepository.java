@@ -63,11 +63,6 @@ public class CustomRepository {
             }
         }
 
-
-
-
-        //myapp.queries.departamento=SELECT dep_id as id, dep_nombre as name FROM departamento WHERE dep_empresa_id = $EMPRESA_ID$ $AND dep_id = PARENT_ID$ order by dep_nombre
-
         Query query = entityManager.createNativeQuery(sql, "ItemMapping");
 
         System.out.println(tableName + " " + sql);
