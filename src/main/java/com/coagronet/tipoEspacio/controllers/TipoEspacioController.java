@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.coagronet.utils.AuthenticationService;
+import com.coagronet.utils.UserEmpresaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -41,39 +43,30 @@ public class TipoEspacioController {
     private final EstadoRepository estadoRepository;
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
+    private final UserEmpresaService userEmpresaService;
+    private final AuthenticationService authenticationService;
 
     private TipoEspacioController(
             TipoEspacioRepository tipoEspacioRepository,
             TipoEspacioMapper tipoEspacioMapper,
             EstadoRepository estadoRepository,
             UserRoleRepository userRoleRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, UserEmpresaService userEmpresaService, AuthenticationService authenticationService) {
         this.tipoEspacioRepository = tipoEspacioRepository;
         this.tipoEspacioMapper = tipoEspacioMapper;
         this.estadoRepository = estadoRepository;
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
+        this.userEmpresaService = userEmpresaService;
+        this.authenticationService = authenticationService;
     }
 
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(
-                        () -> new RuntimeException("Empresa no encontrada para el usuario"));
-    }
 
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(
-                        () -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<TipoEspacioDTO> findById(@PathVariable Integer requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return tipoEspacioRepository.findByIdAndEmpresaIdAndEstadoIdNot(
                 requestedId,
                 empresa.getId(),
@@ -86,8 +79,8 @@ public class TipoEspacioController {
     @PostMapping
     private ResponseEntity<Void> createTipoEspacio(@RequestBody TipoEspacioDTO newTipoEspacioRequest,
             UriComponentsBuilder ucb) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         TipoEspacioDTO newTipoEspacio = new TipoEspacioDTO(
                 null,
                 newTipoEspacioRequest.getNombre(),
@@ -105,8 +98,8 @@ public class TipoEspacioController {
 
     @GetMapping
     private ResponseEntity<List<TipoEspacioDTO>> findAll() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<TipoEspacioDTO> tipoEspacioDTOs = tipoEspacioRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -121,8 +114,8 @@ public class TipoEspacioController {
 
     @GetMapping("/minimal")
     private ResponseEntity<List<TipoEspacioMinimalDTO>> findAllMinimal() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<TipoEspacioMinimalDTO> tipoEspacioDTOs = tipoEspacioRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -138,8 +131,8 @@ public class TipoEspacioController {
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putTipoEspacio(@PathVariable Integer requestedId,
             @RequestBody TipoEspacioDTO tipoEspacioDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         TipoEspacio tipoEspacio = tipoEspacioRepository
                 .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElse(null);
@@ -159,8 +152,8 @@ public class TipoEspacioController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deleteTipoEspacio(@PathVariable Integer id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         if (tipoEspacioRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
             TipoEspacio tipoEspacio = tipoEspacioRepository.findById(id).orElse(null);
             Estado estadoInactivo = estadoRepository.findById(2).orElse(null);

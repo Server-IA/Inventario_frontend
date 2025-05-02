@@ -4,9 +4,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.coagronet.utils.AuthenticationService;
+import com.coagronet.utils.UserEmpresaService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +29,6 @@ import com.coagronet.tipoSede.mappers.TipoSedeMapper;
 import com.coagronet.tipoSede.repositories.TipoSedeRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
@@ -41,39 +41,29 @@ public class TipoSedeController {
     private final EstadoRepository estadoRepository;
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
+    private final AuthenticationService authenticationService;
+    private final UserEmpresaService userEmpresaService;
 
     private TipoSedeController(
             TipoSedeRepository tipoSedeRepository,
             TipoSedeMapper tipoSedeMapper,
             EstadoRepository estadoRepository,
             UserRoleRepository userRoleRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, AuthenticationService authenticationService, UserEmpresaService userEmpresaService) {
         this.tipoSedeRepository = tipoSedeRepository;
         this.tipoSedeMapper = tipoSedeMapper;
         this.estadoRepository = estadoRepository;
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
+        this.authenticationService = authenticationService;
+        this.userEmpresaService = userEmpresaService;
     }
 
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(
-                        () -> new RuntimeException("Empresa no encontrada para el usuario"));
-    }
-
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(
-                        () -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<TipoSedeDTO> findById(@PathVariable Integer requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return tipoSedeRepository.findByIdAndEmpresaIdAndEstadoIdNot(
                 requestedId,
                 empresa.getId(),
@@ -86,8 +76,8 @@ public class TipoSedeController {
     @PostMapping
     private ResponseEntity<Void> createTipoSede(@RequestBody TipoSedeDTO newTipoSedeRequest,
             UriComponentsBuilder ucb) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         TipoSedeDTO newTipoSede = new TipoSedeDTO(
                 null,
                 newTipoSedeRequest.getNombre(),
@@ -105,8 +95,8 @@ public class TipoSedeController {
 
     @GetMapping
     private ResponseEntity<List<TipoSedeDTO>> findAll() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<TipoSedeDTO> tipoSedeDTOs = tipoSedeRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -121,8 +111,8 @@ public class TipoSedeController {
 
     @GetMapping("/minimal")
     private ResponseEntity<List<TipoSedeMinimalDTO>> findAllMinimal() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<TipoSedeMinimalDTO> tipoSedeDTOs = tipoSedeRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -138,8 +128,8 @@ public class TipoSedeController {
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putTipoSede(@PathVariable Integer requestedId,
             @RequestBody TipoSedeDTO tipoSedeDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         TipoSede tipoSede = tipoSedeRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElse(null);
         if (null != tipoSede) {
@@ -158,8 +148,8 @@ public class TipoSedeController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deleteTipoSede(@PathVariable Integer id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         if (tipoSedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
             TipoSede tipoSede = tipoSedeRepository.findById(id).orElse(null);
             Estado estadoInactivo = estadoRepository.findById(2).orElse(null);

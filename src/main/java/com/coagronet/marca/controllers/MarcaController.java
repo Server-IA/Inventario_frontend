@@ -4,9 +4,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.coagronet.utils.AuthenticationService;
+import com.coagronet.utils.UserEmpresaService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +28,6 @@ import com.coagronet.marca.mappers.MarcaMapper;
 import com.coagronet.marca.repositories.MarcaRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
@@ -41,39 +40,29 @@ public class MarcaController {
     private final EstadoRepository estadoRepository;
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
+    private final AuthenticationService authenticationService;
+    private final UserEmpresaService userEmpresaService;
 
     private MarcaController(
             MarcaRepository marcaRepository,
             MarcaMapper marcaMapper,
             EstadoRepository estadoRepository,
             UserRoleRepository userRoleRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, AuthenticationService authenticationService, UserEmpresaService userEmpresaService) {
         this.marcaRepository = marcaRepository;
         this.marcaMapper = marcaMapper;
         this.estadoRepository = estadoRepository;
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
+        this.authenticationService = authenticationService;
+        this.userEmpresaService = userEmpresaService;
     }
 
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(
-                        () -> new RuntimeException("Empresa no encontrada para el usuario"));
-    }
-
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(
-                        () -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<MarcaDTO> findById(@PathVariable Long requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return marcaRepository.findByIdAndEmpresaIdAndEstadoIdNot(
                 requestedId,
                 empresa.getId(),
@@ -86,8 +75,8 @@ public class MarcaController {
     @PostMapping
     private ResponseEntity<Void> createMarca(@RequestBody MarcaDTO newMarcaRequest,
             UriComponentsBuilder ucb) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         MarcaDTO newMarca = new MarcaDTO(
                 null,
                 newMarcaRequest.getNombre(),
@@ -105,8 +94,8 @@ public class MarcaController {
 
     @GetMapping
     private ResponseEntity<List<MarcaDTO>> findAll() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<MarcaDTO> marcaDTOs = marcaRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -121,8 +110,8 @@ public class MarcaController {
 
     @GetMapping("/minimal")
     private ResponseEntity<List<MarcaMinimalDTO>> findAllMinimal() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<MarcaMinimalDTO> marcaMinimalDTOs = marcaRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -138,8 +127,8 @@ public class MarcaController {
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putMarca(@PathVariable Long requestedId,
             @RequestBody MarcaDTO marcaDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Marca marca = marcaRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElse(null);
         if (null != marca) {
@@ -158,8 +147,8 @@ public class MarcaController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deleteMarca(@PathVariable Long id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         if (marcaRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
             Marca marca = marcaRepository.findById(id).orElse(null);
             Estado estadoInactivo = estadoRepository.findById(2).orElse(null);

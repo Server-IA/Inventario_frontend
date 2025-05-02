@@ -20,11 +20,6 @@ public class ItemController {
     @Autowired
     private ItemService itemService;
 
-    /*@GetMapping("/{tableName}")
-    public List<Item> getAllItems(@PathVariable String tableName) {
-        return itemService.getAllItems(tableName);
-    }*/
-
     @GetMapping("/{tableName}/{parentId}")
     public List<Item> getAllItems2Params(@PathVariable String tableName, @PathVariable Long parentId) {
         return itemService.getAllItems(tableName, parentId);

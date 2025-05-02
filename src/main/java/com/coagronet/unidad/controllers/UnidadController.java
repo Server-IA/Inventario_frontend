@@ -4,9 +4,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.coagronet.utils.AuthenticationService;
+import com.coagronet.utils.UserEmpresaService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,7 @@ import com.coagronet.unidad.mappers.UnidadMapper;
 import com.coagronet.unidad.repositories.UnidadRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
+
 import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
@@ -40,39 +41,30 @@ public class UnidadController {
     private final EstadoRepository estadoRepository;
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
+    private final UserEmpresaService userEmpresaService;
+    private final AuthenticationService authenticationService;
 
     private UnidadController(
             UnidadRepository unidadRepository,
             UnidadMapper unidadMapper,
             EstadoRepository estadoRepository,
             UserRoleRepository userRoleRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, UserEmpresaService userEmpresaService, AuthenticationService authenticationService) {
         this.unidadRepository = unidadRepository;
         this.unidadMapper = unidadMapper;
         this.estadoRepository = estadoRepository;
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
+        this.userEmpresaService = userEmpresaService;
+        this.authenticationService = authenticationService;
     }
 
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(
-                        () -> new RuntimeException("Empresa no encontrada para el usuario"));
-    }
 
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(
-                        () -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<UnidadDTO> findById(@PathVariable Integer requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return unidadRepository.findByIdAndEmpresaIdAndEstadoIdNot(
                 requestedId,
                 empresa.getId(),
@@ -85,8 +77,8 @@ public class UnidadController {
     @PostMapping
     private ResponseEntity<Void> createUnidad(@RequestBody UnidadDTO newUnidadRequest,
             UriComponentsBuilder ucb) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         UnidadDTO newUnidad = new UnidadDTO(
                 null,
                 newUnidadRequest.getNombre(),
@@ -104,8 +96,8 @@ public class UnidadController {
 
     @GetMapping
     private ResponseEntity<List<UnidadDTO>> findAll() {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<UnidadDTO> unidadDTOs = unidadRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
@@ -120,8 +112,8 @@ public class UnidadController {
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putUnidad(@PathVariable Integer requestedId, @RequestBody UnidadDTO unidadDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Unidad unidad = unidadRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElse(null);
         if (null != unidad) {
@@ -140,8 +132,8 @@ public class UnidadController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deleteUnidad(@PathVariable Integer id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         if (unidadRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
             Unidad unidad = unidadRepository.findById(id).orElse(null);
             Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
