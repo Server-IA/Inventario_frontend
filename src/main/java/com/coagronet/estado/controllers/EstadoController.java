@@ -19,19 +19,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.estado.Estado;
-import com.coagronet.estado.dtos.DatosListadoEstado;
+import com.coagronet.estado.dtos.EstadoDTO;
+import com.coagronet.estado.mappers.EstadoMapper;
 import com.coagronet.estado.repositories.EstadoRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/estados")
 @CrossOrigin(origins = "*")
 public class EstadoController {
 
+    private final EstadoMapper estadoMapper;
     private final EstadoRepository estadoRepository;
-
-    public EstadoController(EstadoRepository estadoRepository) {
-        this.estadoRepository = estadoRepository;
-    }
 
     @GetMapping("/{requestedId}")
     public ResponseEntity<Estado> findById(@PathVariable Integer requestedId) {
@@ -47,9 +48,10 @@ public class EstadoController {
     }
 
     @GetMapping("/short")
-    public ResponseEntity<List<DatosListadoEstado>> listadoEstados() {
+    public ResponseEntity<List<EstadoDTO>> listadoEstados() {
         List<Estado> estados = estadoRepository.findAll();
-        List<DatosListadoEstado> datosListadoEstados = estados.stream().map(DatosListadoEstado::new)
+        List<EstadoDTO> datosListadoEstados = estados.stream()
+                .map(estadoMapper::toShortDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(datosListadoEstados);
     }

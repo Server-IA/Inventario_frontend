@@ -1,6 +1,12 @@
 package com.coagronet.estado;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +24,7 @@ public class Estado {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "estado_generator")
     @SequenceGenerator(name = "estado_generator", sequenceName = "estado_est_id_seq", allocationSize = 1)
     @Column(name = "est_id")
-    private Integer id;
+    private Long id;
 
     @Column(name = "est_nombre", length = 100)
     private String nombre;
