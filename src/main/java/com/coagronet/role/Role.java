@@ -29,7 +29,7 @@ public class Role {
     @Column(name = "rol_descripcion")
     private String description;
 
-    @Column(name = "rol_estado", columnDefinition = "integer default 1")
+    @Column(name = "rol_estado_id", columnDefinition = "integer default 1")
     private Integer state;
 
 }
