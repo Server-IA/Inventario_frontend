@@ -1,5 +1,6 @@
 package com.coagronet.espacio.dtos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,13 +8,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EspacioDTO {
-    private Integer id;
+    private Long id;
     private Integer bloque;
     private Integer tipoEspacio;
     private String nombre;
     private String geolocalizacion;
     private String coordenadas;
     private String descripcion;
-    private Integer estado;
+    private Long estado;
 }
