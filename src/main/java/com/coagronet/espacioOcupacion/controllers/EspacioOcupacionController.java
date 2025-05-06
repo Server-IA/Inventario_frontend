@@ -73,7 +73,7 @@ public class EspacioOcupacionController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<EspacioOcupacionDTO> findById(@PathVariable Integer requestedId) {
+    public ResponseEntity<EspacioOcupacionDTO> findById(@PathVariable Long requestedId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         return espacioOcupacionRepository
@@ -112,7 +112,7 @@ public class EspacioOcupacionController {
 
     @GetMapping("/espacio/{espacioId}")
     public ResponseEntity<List<EspacioOcupacionDTO>> findAllByEspacioId(
-            @PathVariable Integer espacioId) {
+            @PathVariable Long espacioId) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
 
@@ -128,7 +128,7 @@ public class EspacioOcupacionController {
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putEspacioOcupacion(@PathVariable Integer requestedId,
+    public ResponseEntity<Void> putEspacioOcupacion(@PathVariable Long requestedId,
             @RequestBody EspacioOcupacionDTO espacioOcupacionDTOUpdate) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
@@ -154,7 +154,7 @@ public class EspacioOcupacionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEspacioOcupacion(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteEspacioOcupacion(@PathVariable Long id) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         if (espacioOcupacionRepository.existsByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {

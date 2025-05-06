@@ -30,7 +30,7 @@ public class Espacio {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "espacio_generator")
     @SequenceGenerator(name = "espacio_generator", sequenceName = "espacio_esp_id_seq", allocationSize = 1)
     @Column(name = "esp_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "esp_bloque_id", referencedColumnName = "blo_id")

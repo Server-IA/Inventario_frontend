@@ -33,7 +33,7 @@ public class EspacioOcupacion {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "espacio_ocupacion_generator")
     @SequenceGenerator(name = "espacio_ocupacion_generator", sequenceName = "espacio_ocupacion_eso_id_seq", allocationSize = 1)
     @Column(name = "eso_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "eso_espacio_id", referencedColumnName = "esp_id")
