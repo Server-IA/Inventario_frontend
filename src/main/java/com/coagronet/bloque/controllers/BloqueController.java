@@ -5,10 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,18 +19,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.bloque.Bloque;
 import com.coagronet.bloque.dtos.BloqueDTO;
-import com.coagronet.bloque.dtos.BloqueMinimalDTO;
 import com.coagronet.bloque.mappers.BloqueMapper;
 import com.coagronet.bloque.repositories.BloqueRepository;
 import com.coagronet.empresa.Empresa;
-import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.sede.repositories.SedeRepository;
 import com.coagronet.tipoBloque.repositories.TipoBloqueRepository;
 import com.coagronet.user.User;
-import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
-import com.coagronet.userRole.repositories.UserRoleRepository;
 import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UriBuilderUtil;
 import com.coagronet.utils.UserEmpresaService;
@@ -49,7 +40,6 @@ public class BloqueController {
 
     private final BloqueRepository bloqueRepository;
     private final BloqueMapper bloqueMapper;
-    private final EstadoRepository estadoRepository;
     private final SedeRepository sedeRepository;
     private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
