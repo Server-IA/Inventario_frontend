@@ -8,15 +8,15 @@ import lombok.Setter;
 public class SedeDTO {
 	private Long id;
 	private Long grupo;
-	private Integer tipoSede;
+	private Long tipoSede;
 	private Long empresa;
 	private String nombre;
-	private Integer municipio;
+	private Long municipio;
 	private String geolocalizacion;
 	private String coordenadas;
 	private Double area;
 	private String comuna;
 	private String descripcion;
 	private String direccion;
-	private Integer estado;
+	private Long estado;
 }
