@@ -11,6 +11,6 @@ public class MarcaDTO {
     private Long id;
     private String nombre;
     private String descripcion;
-    private Integer estado;
+    private Long estado;
     private Long empresa;
 }

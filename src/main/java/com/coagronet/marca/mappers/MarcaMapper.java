@@ -9,7 +9,6 @@ import org.mapstruct.factory.Mappers;
 import com.coagronet.estado.Estado;
 import com.coagronet.marca.Marca;
 import com.coagronet.marca.dtos.MarcaDTO;
-import com.coagronet.marca.dtos.MarcaMinimalDTO;
 
 @Mapper(componentModel = "spring")
 public interface MarcaMapper {
@@ -20,11 +19,19 @@ public interface MarcaMapper {
     @Mapping(source = "empresa.id", target = "empresa")
     MarcaDTO toDTO(Marca marca);
 
-    MarcaMinimalDTO toMinimalDTO(Marca marca);
 
     @Mapping(source = "estado", target = "estado.id")
     @Mapping(source = "empresa", target = "empresa.id")
     Marca toEntity(MarcaDTO marcaDTO);
+
+
+    @Mapping(target = "descripcion", ignore = true)
+    @Mapping(target = "empresa", ignore = true)
+    @Mapping(target = "estado", ignore = true)
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "nombre", source = "nombre")
+    MarcaDTO toMinimalDTO(Marca marca);
+
 
     @AfterMapping
     default void setEstadoAfterMapping(@MappingTarget Marca marca,

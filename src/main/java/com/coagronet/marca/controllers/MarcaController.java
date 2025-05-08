@@ -23,7 +23,6 @@ import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.marca.Marca;
 import com.coagronet.marca.dtos.MarcaDTO;
-import com.coagronet.marca.dtos.MarcaMinimalDTO;
 import com.coagronet.marca.mappers.MarcaMapper;
 import com.coagronet.marca.repositories.MarcaRepository;
 import com.coagronet.user.User;
@@ -109,11 +108,11 @@ public class MarcaController {
     }
 
     @GetMapping("/minimal")
-    private ResponseEntity<List<MarcaMinimalDTO>> findAllMinimal() {
+    private ResponseEntity<List<MarcaDTO>> findAllMinimal() {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
-        List<MarcaMinimalDTO> marcaMinimalDTOs = marcaRepository
+        List<MarcaDTO> marcaMinimalDTOs = marcaRepository
                 .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
                 .stream()
                 .map(marcaMapper::toMinimalDTO)
