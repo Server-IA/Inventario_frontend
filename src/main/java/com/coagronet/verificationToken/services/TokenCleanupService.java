@@ -7,14 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.verificationToken.repositories.VerificationTokenRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class TokenCleanupService {
 
     private final VerificationTokenRepository verificationTokenRepository;
-
-    public TokenCleanupService(VerificationTokenRepository verificationTokenRepository) {
-        this.verificationTokenRepository = verificationTokenRepository;
-    }
 
     @Transactional
     public void deleteExpiredTokens() {
