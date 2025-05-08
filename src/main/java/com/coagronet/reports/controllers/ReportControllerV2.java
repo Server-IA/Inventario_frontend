@@ -1,5 +1,6 @@
 package com.coagronet.reports.controllers;
 
+import net.sf.jasperreports.engine.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,15 +13,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.coagronet.reports.services.ReportService;
 
+import javax.sql.DataSource;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v2/report")
 @CrossOrigin(origins = "*")
 public class ReportControllerV2 {
 
     private final ReportService reportService;
+    private final DataSource dataSource;
 
-    public ReportControllerV2(ReportService reportService) {
+
+
+    public ReportControllerV2(ReportService reportService, DataSource dataSource) {
         this.reportService = reportService;
+        this.dataSource = dataSource;
     }
 
     private ResponseEntity<byte[]> generateReport(String reportName, byte[] reportData) {
@@ -30,6 +40,24 @@ public class ReportControllerV2 {
 
         return new ResponseEntity<>(reportData, headers, HttpStatus.OK);
     }
+
+    private ResponseEntity<byte[]> generalReport(String tablename, Map<String, Object> parameters) throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("inline", tablename + ".pdf");
+
+        String jrxmlFile = "/reports/" + tablename + ".jrxml";
+        InputStream jrxmlStream = getClass().getResourceAsStream(jrxmlFile);
+
+        JasperReport jasperReport = JasperCompileManager.compileReport(jrxmlStream);
+        Connection conn = dataSource.getConnection();
+
+        JasperPrint print = JasperFillManager.fillReport(jasperReport, parameters, conn);
+        byte[] reportData = JasperExportManager.exportReportToPdf(print);
+
+        return new ResponseEntity<>(reportData, headers, HttpStatus.OK);
+    }
+
 
     @GetMapping("/producto")
     public ResponseEntity<byte[]> generateProductoReport(@RequestParam int category) {
