@@ -10,10 +10,10 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class EspacioOcupacionDTO {
-    private Integer id;
-    private Integer espacio;
+    private Long id;
+    private Long espacio;
     private Integer actividadOcupacion;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
-    private Integer estado;
+    private Long estado;
 }

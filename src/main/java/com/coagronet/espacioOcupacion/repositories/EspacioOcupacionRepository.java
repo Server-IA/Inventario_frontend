@@ -7,20 +7,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.espacioOcupacion.EspacioOcupacion;
 
-public interface EspacioOcupacionRepository extends JpaRepository<EspacioOcupacion, Integer> {
+public interface EspacioOcupacionRepository extends JpaRepository<EspacioOcupacion, Long> {
 
     List<EspacioOcupacion> findByEspacioIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNotOrderByIdAsc(
-            Integer espacioId,
+            Long espacioId,
             Long empresaId,
             Integer estadoId);
 
     Optional<EspacioOcupacion> findByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(
-            Integer id,
+            Long id,
             Long empresaId,
             Integer estadoId);
 
     boolean existsByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(
-            Integer id,
+            Long id,
             Long empresaId,
             Integer estadoId);
 
