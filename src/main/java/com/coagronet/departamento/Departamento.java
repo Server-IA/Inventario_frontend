@@ -1,5 +1,6 @@
 package com.coagronet.departamento;
 
+import com.coagronet.estado.Estado;
 import com.coagronet.pais.Pais;
 
 import jakarta.persistence.Column;
@@ -45,4 +46,9 @@ public class Departamento {
 
     @Column(name = "dep_acronimo", length = 3, nullable = false)
     private String acronimo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dep_estado_id", referencedColumnName = "est_id", nullable = false)
+    private Estado estado;
+
 }

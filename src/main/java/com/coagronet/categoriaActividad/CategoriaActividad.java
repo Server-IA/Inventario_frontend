@@ -28,8 +28,8 @@ public class CategoriaActividad {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "categoria_actividad_generator")
     @SequenceGenerator(name = "categoria_actividad_generator", sequenceName = "categoria_actividad_caa_id_seq", allocationSize = 1)
-    @Column(name = "caa_id", nullable = false)
-    private Integer id;
+    @Column(name = "caa_id")
+    private Long id;
 
     @Column(name = "caa_nombre", length = 100)
     private String nombre;

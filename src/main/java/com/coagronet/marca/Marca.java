@@ -27,7 +27,7 @@ public class Marca {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "marca_generator")
     @SequenceGenerator(name = "marca_generator", sequenceName = "marca_mar_id_seq", allocationSize = 1)
-    @Column(name = "mar_id", nullable = false)
+    @Column(name = "mar_id")
     private Long id;
 
     @Column(name = "mar_nombre")
