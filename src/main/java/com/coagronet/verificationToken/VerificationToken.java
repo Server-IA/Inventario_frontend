@@ -7,8 +7,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,19 +25,20 @@ import lombok.NoArgsConstructor;
         @UniqueConstraint(name = "verification_tokens_email_unique", columnNames = "email")
 })
 public class VerificationToken {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(name = "verification_tokens_sequence", sequenceName = "verification_tokens_sequence", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "verification_tokens_sequence")
+    @Column(name = "vet_id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "email", nullable = false, length = 255)                                                                                                      
+    @Column(name = "vet_email", nullable = false, length = 255)
     private String email;
 
-    @Column(name = "token", nullable = false)
-    private String token;
-
-    @Column(name = "expiry_date", nullable = false)
+    @Column(name = "vet_expiry_date", nullable = false)
     private LocalDateTime expiryDate;
+
+    @Column(name = "vet_token", nullable = false, length = 255)
+    private String token;
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiryDate);
