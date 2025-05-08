@@ -20,4 +20,10 @@ public class UriBuilderUtil {
                 .toUri();
     }
 
+    public URI buildBloqueUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/bloque/{id}")
+                .buildAndExpand(id)
+                .toUri();
+    }
+
 }
