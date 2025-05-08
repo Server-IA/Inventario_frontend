@@ -119,7 +119,7 @@ public class EspacioController {
                 newEspacioRequest.getCoordenadas(), newEspacioRequest.getDescripcion(), newEspacioRequest.getEstado());
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        if (bloqueRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(newEspacio.getBloque(), empresa.getId(), 2)) {
+        if (bloqueRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(newEspacio.getBloque(), empresa.getId(), 2L)) {
             Espacio savedEspacio = espacioMapper.toEntity(newEspacio);
             espacioRepository.save(savedEspacio);
             URI locationOfNewEspacio = ucb

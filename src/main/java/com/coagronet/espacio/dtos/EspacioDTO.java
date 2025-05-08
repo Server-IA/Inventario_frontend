@@ -11,7 +11,7 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EspacioDTO {
     private Long id;
-    private Integer bloque;
+    private Long bloque;
     private Integer tipoEspacio;
     private String nombre;
     private String geolocalizacion;
