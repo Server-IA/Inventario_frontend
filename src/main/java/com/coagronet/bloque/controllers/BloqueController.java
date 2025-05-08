@@ -128,7 +128,7 @@ public class BloqueController {
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<?> putBloque(@PathVariable Long requestedId,
-            @RequestBody BloqueDTO bloqueUpdate) {
+            @Valid @RequestBody BloqueDTO bloqueUpdate) {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
