@@ -7,20 +7,28 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.bloque.Bloque;
 
-public interface BloqueRepository extends JpaRepository<Bloque, Integer> {
+public interface BloqueRepository extends JpaRepository<Bloque, Long> {
 
-    List<Bloque> findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(
-            Long sedeId,
-            Integer estadoId,
-            Long empresaId);
+        List<Bloque> findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(
+                        Long sedeId,
+                        Long estadoId,
+                        Long empresaId);
 
-    Optional<Bloque> findByIdAndSedeEmpresaIdAndEstadoIdNot(
-            Integer id,
-            Long empresaId,
-            Integer estadoId);
+        Optional<Bloque> findByIdAndSedeEmpresaIdAndEstadoIdNot(
+                        Long id,
+                        Long empresaId,
+                        Long estadoId);
 
-    boolean existsByIdAndSedeEmpresaIdAndEstadoIdNot(
-            Integer id,
-            Long empresaId,
-            Integer estadoId);
+        Optional<Bloque> findByIdAndSedeEmpresaId(
+                        Long id,
+                        Long empresaId);
+
+        boolean existsByIdAndSedeEmpresaId(
+                        Long id,
+                        Long empresaId);
+
+        boolean existsByIdAndSedeEmpresaIdAndEstadoIdNot(
+                        Long id,
+                        Long empresaId,
+                        Long estadoId);
 }

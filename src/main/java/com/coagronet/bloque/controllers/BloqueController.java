@@ -2,6 +2,7 @@ package com.coagronet.bloque.controllers;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,57 +29,40 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.sede.repositories.SedeRepository;
+import com.coagronet.tipoBloque.repositories.TipoBloqueRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.userRole.UserRole;
 import com.coagronet.userRole.repositories.UserRoleRepository;
+import com.coagronet.utils.AuthenticationService;
+import com.coagronet.utils.UriBuilderUtil;
+import com.coagronet.utils.UserEmpresaService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/bloque")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class BloqueController {
-
-    @Autowired
-    private UserRoleRepository userRoleRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     private final BloqueRepository bloqueRepository;
     private final BloqueMapper bloqueMapper;
     private final EstadoRepository estadoRepository;
     private final SedeRepository sedeRepository;
-
-    private BloqueController(
-            BloqueRepository bloqueRepository,
-            BloqueMapper bloqueMapper,
-            EstadoRepository estadoRepository,
-            SedeRepository sedeRepository) {
-        this.bloqueRepository = bloqueRepository;
-        this.bloqueMapper = bloqueMapper;
-        this.estadoRepository = estadoRepository;
-        this.sedeRepository = sedeRepository;
-    }
-
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Empresa no encontrada para el usuario"));
-    }
-
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
+    private final AuthenticationService authenticationService;
+    private final UserEmpresaService userEmpresaService;
+    private final TipoBloqueRepository tipoBloqueRepository;
+    private final UriBuilderUtil uriBuilderUtil;
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<BloqueDTO> findById(@PathVariable Integer requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+    private ResponseEntity<BloqueDTO> findById(@PathVariable Long requestedId) {
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
+
         return bloqueRepository
-                .findByIdAndSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+                .findByIdAndSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2L)
                 .map(bloqueMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -87,11 +71,11 @@ public class BloqueController {
     @GetMapping("/sede/{sedeId}")
     private ResponseEntity<List<BloqueDTO>> findAllBySedeId(
             @PathVariable Long sedeId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
         List<BloqueDTO> bloqueDTOs = bloqueRepository
-                .findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(sedeId, 2, empresa.getId())
+                .findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(sedeId, 2L, empresa.getId())
                 .stream()
                 .map(bloqueMapper::toDTO)
                 .collect(Collectors.toList());
@@ -102,12 +86,12 @@ public class BloqueController {
     }
 
     @GetMapping("/minimal/sede/{sedeId}")
-    private ResponseEntity<List<BloqueMinimalDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
+    private ResponseEntity<List<BloqueDTO>> findAllMinimalBySedeId(@PathVariable Long sedeId) {
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
-        List<BloqueMinimalDTO> bloqueMinimalDTOs = bloqueRepository
-                .findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(sedeId, 2, empresa.getId())
+        List<BloqueDTO> bloqueMinimalDTOs = bloqueRepository
+                .findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(sedeId, 2L, empresa.getId())
                 .stream()
                 .map(bloqueMapper::toMinimalDTO)
                 .collect(Collectors.toList());
@@ -118,54 +102,71 @@ public class BloqueController {
     }
 
     @PostMapping
-    private ResponseEntity<Void> createBloque(@RequestBody BloqueDTO newBloqueRequest, UriComponentsBuilder ucb) {
-        BloqueDTO newBloque = new BloqueDTO(null, newBloqueRequest.getSede(), newBloqueRequest.getTipoBloque(),
-                newBloqueRequest.getNombre(), newBloqueRequest.getGeolocalizacion(), newBloqueRequest.getCoordenadas(),
-                newBloqueRequest.getNumeroPisos(), newBloqueRequest.getDescripcion(), newBloqueRequest.getEstado());
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        if (sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newBloque.getSede(), empresa.getId(), 2)) {
-            Bloque savedBloque = bloqueMapper.toEntity(newBloque);
-            bloqueRepository.save(savedBloque);
-            URI locationOfNewBloque = ucb
-                    .path("/api/v1/bloque/{id}")
-                    .buildAndExpand(savedBloque.getId())
-                    .toUri();
-            return ResponseEntity.created(locationOfNewBloque).build();
+    public ResponseEntity<?> createBloque(@Valid @RequestBody BloqueDTO newBloqueRequest, UriComponentsBuilder ucb) {
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
+
+        if (!sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newBloqueRequest.getSedeId(), empresa.getId(), 2)) {
+            return ResponseEntity.badRequest().body("La sede no es válida o está inactiva.");
         }
-        return ResponseEntity.badRequest().build();
+
+        if (!tipoBloqueRepository.existsByIdAndEmpresaIdAndEstadoIdNot(newBloqueRequest.getTipoBloqueId(),
+                empresa.getId(), 2)) {
+            return ResponseEntity.badRequest().body("El tipo de bloque no es válido o está inactivo.");
+        }
+
+        newBloqueRequest.setId(null);
+        newBloqueRequest.setEmpresaId(empresa.getId());
+
+        Bloque savedBloque = bloqueRepository.save(bloqueMapper.toEntity(newBloqueRequest));
+
+        URI locationOfNewBloque = uriBuilderUtil.buildBloqueUri(
+                savedBloque.getId(),
+                ucb);
+        return ResponseEntity.created(locationOfNewBloque).build();
     }
 
     @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putBloque(@PathVariable Integer requestedId,
-            @RequestBody BloqueDTO bloqueDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        Bloque bloque = bloqueRepository.findByIdAndSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
-                .orElse(null);
-        if (null != bloque) {
-            BloqueDTO updatedBloqueDTO = new BloqueDTO(requestedId, bloqueDTOUpdate.getSede(),
-                    bloqueDTOUpdate.getTipoBloque(), bloqueDTOUpdate.getNombre(), bloqueDTOUpdate.getGeolocalizacion(),
-                    bloqueDTOUpdate.getCoordenadas(),
-                    bloqueDTOUpdate.getNumeroPisos(), bloqueDTOUpdate.getDescripcion(), bloqueDTOUpdate.getEstado());
-            Bloque updatedBloque = bloqueMapper.toEntity(updatedBloqueDTO);
-            bloqueRepository.save(updatedBloque);
+    private ResponseEntity<?> putBloque(@PathVariable Long requestedId,
+            @Valid @RequestBody BloqueDTO bloqueUpdate) {
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
+
+        if (!sedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(bloqueUpdate.getSedeId(), empresa.getId(), 2)) {
+            return ResponseEntity.badRequest().body("La sede no es válida o está inactiva.");
+        }
+
+        if (!tipoBloqueRepository.existsByIdAndEmpresaIdAndEstadoIdNot(bloqueUpdate.getTipoBloqueId(),
+                empresa.getId(), 2)) {
+            return ResponseEntity.badRequest().body("El tipo de bloque no es válido o está inactivo.");
+        }
+
+        if (bloqueRepository.existsByIdAndSedeEmpresaId(requestedId, empresa.getId())) {
+            bloqueUpdate.setId(requestedId);
+            bloqueUpdate.setEmpresaId(empresa.getId());
+
+            Bloque bloque = bloqueMapper.toEntity(bloqueUpdate);
+
+            bloqueRepository.save(bloque);
+
             return ResponseEntity.noContent().build();
         }
+
         return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteBloque(@PathVariable Integer id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        if (bloqueRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
-            Bloque bloque = bloqueRepository.findById(id).orElse(null);
-            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
-            bloque.setEstado(estadoInactivo);
-            bloqueRepository.save(bloque);
+    private ResponseEntity<Void> deleteBloque(@PathVariable Long id) {
+        User authenticatedUser = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
+
+        Optional<Bloque> bloqueOptional = bloqueRepository.findByIdAndSedeEmpresaId(id, empresa.getId());
+
+        if (bloqueOptional.isPresent()) {
+            bloqueRepository.delete(bloqueOptional.get());
             return ResponseEntity.noContent().build();
         }
+
         return ResponseEntity.notFound().build();
     }
 
