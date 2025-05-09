@@ -1,8 +1,5 @@
 package com.coagronet.pais.dtos;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.estado.Estado;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
