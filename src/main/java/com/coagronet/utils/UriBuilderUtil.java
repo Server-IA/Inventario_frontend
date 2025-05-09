@@ -14,6 +14,12 @@ public class UriBuilderUtil {
                 .toUri();
     }
 
+    public URI buildDepartamentoUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/departamento/{id}")
+                .buildAndExpand(id)
+                .toUri();
+    }
+
     public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
         return ucb.path("/api/v1/tipo_evaluacion/{id}")
                 .buildAndExpand(id)
