@@ -8,7 +8,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class UriBuilderUtil {
 
-    public URI buildTipoEvaluacionUri(Integer id, UriComponentsBuilder ucb) {
+    public URI buildTipoIdentificacionUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/tipo_identificacion/{id}")
+                .buildAndExpand(id)
+                .toUri();
+    }
+
+    public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
         return ucb.path("/api/v1/tipo_evaluacion/{id}")
                 .buildAndExpand(id)
                 .toUri();
