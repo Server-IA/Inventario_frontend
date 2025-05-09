@@ -13,6 +13,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DepartamentoDTO {
 
     private Long id;
