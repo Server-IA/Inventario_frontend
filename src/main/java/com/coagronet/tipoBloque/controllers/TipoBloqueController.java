@@ -157,7 +157,7 @@ public class TipoBloqueController {
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteTipoBloque(@PathVariable Integer id) {
+    private ResponseEntity<Void> deleteTipoBloque(@PathVariable Long id) {
         User authenticatedUser = getAuthenticatedUser();
         Empresa empresa = getEmpresaFromUser(authenticatedUser);
         if (tipoBloqueRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
