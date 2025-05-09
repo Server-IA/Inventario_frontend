@@ -13,24 +13,25 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
-@Table(name = "pais", schema = "public")
-@Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@NoArgsConstructor
+@Setter
+@Entity
+@Table(name = "pais", schema = "public")
 public class Pais {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "paiSeqGen")
-    @SequenceGenerator(name = "paiSeqGen", sequenceName = "pais_pai_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "pai_generator", sequenceName = "pais_pai_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pai_generator")
     @Column(name = "pai_id")
     private Long id;
 
@@ -50,5 +51,5 @@ public class Pais {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pai_estado_id", referencedColumnName = "est_id", nullable = false)
     private Estado estado;
-}
 
+}
