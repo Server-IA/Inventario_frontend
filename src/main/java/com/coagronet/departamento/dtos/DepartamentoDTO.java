@@ -23,7 +23,7 @@ public class DepartamentoDTO {
     @NotNull(message = "El pais es obligatorio.")
     private Long paisId;
 
-    @NotBlank(message = "El codigo es obligatorio.")
+    @NotNull(message = "El código no puede ser nulo")
     private Integer codigo;
 
     @NotBlank(message = "El acronimo es obligatorio.")
