@@ -66,23 +66,15 @@ public class TipoIdentificacionController {
     public ResponseEntity<Void> updateTipoIdentificacion(
             @PathVariable Long requestedId,
             @Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO) {
-        boolean updated = tipoIdentificacionService.update(requestedId, tipoIdentificacionDTO);
-        if (updated) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        tipoIdentificacionService.update(requestedId, tipoIdentificacionDTO);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTipoIdentificacion(
             @PathVariable Long id) {
-        boolean deleted = tipoIdentificacionService.delete(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        tipoIdentificacionService.delete(id);
+        return ResponseEntity.noContent().build();
     }
-    
+
 }
