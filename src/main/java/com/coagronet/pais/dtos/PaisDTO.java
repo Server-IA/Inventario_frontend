@@ -28,7 +28,7 @@ public class PaisDTO {
     @NotNull(message = "La empresa es obligatoria.")
     private Long empresaId;
 
-    @NotNull(message = "La empresa es obligatoria.")
+    @NotNull(message = "El estado es obligatorio.")
     private Long estadoId;
 
 }
