@@ -26,6 +26,12 @@ public class UriBuilderUtil {
                 .toUri();
     }
 
+    public URI buildMarcaUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/marca/{id}")
+                .buildAndExpand(id)
+                .toUri();
+    }
+
     public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
         return ucb.path("/api/v1/tipo_evaluacion/{id}")
                 .buildAndExpand(id)
