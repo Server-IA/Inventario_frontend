@@ -57,18 +57,6 @@ public class GrupoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/v2/{requestedId}")
-    private ResponseEntity<GrupoDTO> buscarPorId(@PathVariable Long requestedId) {
-
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
-        return grupoRepository.buscarPorIdYEmpresaIdYEstadoEsDiferenteDeInactivo(requestedId, empresa.getId(), 2L)
-                .map(grupoMapper::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/minimal")
     public ResponseEntity<List<DatosListadoGrupo>> listadoGrupos() {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
