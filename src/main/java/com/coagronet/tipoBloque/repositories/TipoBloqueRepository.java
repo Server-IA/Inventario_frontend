@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.coagronet.tipoBloque.TipoBloque;
 
 @Repository
-public interface TipoBloqueRepository extends JpaRepository<TipoBloque, Integer> {
+public interface TipoBloqueRepository extends JpaRepository<TipoBloque, Long> {
 
         List<TipoBloque> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
                         Long empresaId,
