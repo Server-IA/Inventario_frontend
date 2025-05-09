@@ -70,7 +70,8 @@ public class DepartamentoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartamento(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDepartamento(
+            @PathVariable Long id) {
         departamentoService.delete(id);
         return ResponseEntity.noContent().build();
     }
