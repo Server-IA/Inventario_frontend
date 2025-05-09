@@ -6,10 +6,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.coagronet.tipoIdentificacion.TipoIdentificacion;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoIdentificacion.dtos.TipoIdentificacionDTO;
 import com.coagronet.tipoIdentificacion.mappers.TipoIdentificacionMapper;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
+import com.coagronet.utils.BadRequestException;
+import com.coagronet.utils.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +21,7 @@ public class TipoIdentificacionService {
 
     private final TipoIdentificacionRepository tipoIdentificacionRepository;
     private final TipoIdentificacionMapper tipoIdentificacionMapper;
+    private final EstadoRepository estadoRepository;
 
     public List<TipoIdentificacionDTO> findAll() {
         return tipoIdentificacionRepository.findAll()
@@ -40,30 +43,33 @@ public class TipoIdentificacionService {
     }
 
     public TipoIdentificacionDTO create(TipoIdentificacionDTO tipoIdentificacionDTO) {
+        estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+
         tipoIdentificacionDTO.setId(null);
+
         return tipoIdentificacionMapper.toDTO(
                 tipoIdentificacionRepository.save(
                         tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO)));
     }
 
-    public boolean update(Long requestedId, TipoIdentificacionDTO tipoIdentificacionDTO) {
-        if (tipoIdentificacionRepository.existsById(requestedId)) {
-            tipoIdentificacionDTO.setId(requestedId);
-            TipoIdentificacion tipoIdentificacion = tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO);
-            tipoIdentificacionRepository.save(tipoIdentificacion);
-            return true;
-        } else {
-            return false;
-        }
+    public void update(Long requestedId, TipoIdentificacionDTO tipoIdentificacionDTO) {
+        tipoIdentificacionRepository.findById(requestedId)
+                .orElseThrow(() -> new BadRequestException("El tipo de identificación no existe"));
+
+        estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+
+        tipoIdentificacionDTO.setId(requestedId);
+        tipoIdentificacionRepository.save(
+                tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO));
     }
 
-    public boolean delete(Long id) {
-        if (tipoIdentificacionRepository.existsById(id)) {
-            tipoIdentificacionRepository.deleteById(id);
-            return true;
-        } else {
-            return false;
-        }
+    public void delete(Long id) {
+        tipoIdentificacionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("El tipo de identificación no existe"));
+
+        tipoIdentificacionRepository.deleteById(id);
     }
 
 }
