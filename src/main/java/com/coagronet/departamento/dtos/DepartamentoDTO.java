@@ -17,6 +17,7 @@ public class DepartamentoDTO {
 
     private Long id;
 
+    @NotBlank(message = "El nombre es obligatorio.")
     @Size(max = 70, message = "El nombre no debe superar los 70 caracteres.")
     private String nombre;
 
