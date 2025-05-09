@@ -11,6 +11,7 @@ import com.coagronet.departamento.dtos.DepartamentoDTO;
 import com.coagronet.departamento.mappers.DepartamentoMapper;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.pais.repositories.PaisRepository;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
@@ -29,16 +30,21 @@ public class DepartamentoService {
     private final PaisRepository paisRepository;
     private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
+    private final EstadoRepository estadoRepository;
 
     public List<DepartamentoDTO> findAll() {
-        return departamentoRepository.findAll()
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        return departamentoRepository.findByEmpresaIdOrderByIdAsc(empresa.getId())
                 .stream()
                 .map(departamentoMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     public List<DepartamentoDTO> findAllAvailable() {
-        return departamentoRepository.findByEstadoIdNotOrderByIdAsc(2L)
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        return departamentoRepository.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2L)
                 .stream()
                 .map(departamentoMapper::toDTO)
                 .collect(Collectors.toList());
@@ -52,23 +58,23 @@ public class DepartamentoService {
     }
 
     public DepartamentoDTO create(DepartamentoDTO departamentoDTO) {
+
+        paisRepository.findByIdAndEmpresaId(departamentoDTO.getPaisId(), departamentoDTO.getEmpresaId())
+                .orElseThrow(
+                        () -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
+
+        estadoRepository.findById(departamentoDTO.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
         departamentoDTO.setId(null);
         departamentoDTO.setEmpresaId(empresa.getId());
 
-        boolean paisValido = paisRepository.existsByIdAndEmpresaId(
-                departamentoDTO.getPaisId(),
-                empresa.getId());
-
-        if (!paisValido) {
-            throw new BadRequestException("El país no es válido para la empresa del usuario autenticado");
-        }
-
-        Departamento departamento = departamentoMapper.toEntity(departamentoDTO);
-        departamento = departamentoRepository.save(departamento);
-        return departamentoMapper.toDTO(departamento);
+        return departamentoMapper.toDTO(
+                departamentoRepository.save(
+                        departamentoMapper.toEntity(departamentoDTO)));
     }
 
     public void update(Long requestedId, DepartamentoDTO departamentoDTO) {
@@ -85,18 +91,18 @@ public class DepartamentoService {
         departamentoDTO.setId(requestedId);
         departamentoDTO.setEmpresaId(empresa.getId());
 
-        Departamento actualizado = departamentoMapper.toEntity(departamentoDTO);
-        departamentoRepository.save(actualizado);
+        departamentoRepository.save(
+                departamentoMapper.toEntity(departamentoDTO));
     }
 
     public void delete(Long id) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-        Departamento departamento = departamentoRepository.findByIdAndEmpresaId(id, empresa.getId())
+        departamentoRepository.findByIdAndEmpresaId(id, empresa.getId())
                 .orElseThrow(() -> new NotFoundException("Departamento no encontrado"));
 
-        departamentoRepository.delete(departamento);
+        departamentoRepository.deleteById(id);
     }
 
 }
