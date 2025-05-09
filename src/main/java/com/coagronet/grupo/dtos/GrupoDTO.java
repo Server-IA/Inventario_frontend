@@ -1,4 +1,4 @@
-package com.coagronet.departamento.dtos;
+package com.coagronet.grupo.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -9,7 +9,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DepartamentoDTO {
-    private Integer id;
-    private String name;
+public class GrupoDTO {
+
+    private Long id;
+    private String nombre;
+    private Long empresa;
+    private String descripcion;
+    private Long estado;
 }
