@@ -55,7 +55,6 @@ public class SecurityConfig {
                                 "/api/v1/producto-presentacion",
                                 "/api/v1/activaciones/**",
                                 "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                                "/api/v1/tipo_identificacion/**",
                                 "/api/v1/tipo_bloque/**",
                                 "/api/v1/tipo_espacio/**",
                                 "/api/v1/producto_categoria/**",
@@ -76,7 +75,9 @@ public class SecurityConfig {
                                 "/api/v1/tipo_evaluacion",
                                 "/api/v1/criterio_evaluacion")
                         .permitAll()
-                        .requestMatchers("/api").hasRole("ADMINISTRADOR_SISTEMA")
+                        .requestMatchers(
+                                "/api/v1/tipo_identificacion")
+                        .hasRole("ADMINISTRADOR_SISTEMA")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
