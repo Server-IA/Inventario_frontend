@@ -1,5 +1,6 @@
 package com.coagronet.categoriaActividad;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
 import jakarta.persistence.Column;
@@ -26,19 +27,23 @@ import lombok.NoArgsConstructor;
 public class CategoriaActividad {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "categoria_actividad_generator")
     @SequenceGenerator(name = "categoria_actividad_generator", sequenceName = "categoria_actividad_caa_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "categoria_actividad_generator") 
     @Column(name = "caa_id")
     private Long id;
 
-    @Column(name = "caa_nombre", length = 100)
+    @Column(name = "caa_nombre", length = 100, nullable = false)
     private String nombre;
 
     @Column(name = "caa_descripcion", length = 255)
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "caa_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "caa_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "caa_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
 }
