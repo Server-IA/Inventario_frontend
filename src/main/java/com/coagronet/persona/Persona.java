@@ -35,7 +35,7 @@ public class Persona {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "per_tipo_identificacion", referencedColumnName = "tii_id")
+    @JoinColumn(name = "per_tipo_identificacion_id", referencedColumnName = "tii_id")
     private TipoIdentificacion tipoIdentificacion;
 
     @Column(name = "per_identificacion", length = 255)
@@ -66,7 +66,7 @@ public class Persona {
     private String celular;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "per_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "per_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 
 }

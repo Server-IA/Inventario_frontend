@@ -1,14 +1,10 @@
 package com.coagronet.empresa;
 
+import com.coagronet.estado.Estado;
 import com.coagronet.persona.Persona;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,8 +39,9 @@ public class Empresa {
     @Column(name = "emp_descripcion")
     private String descripcion;
 
-    @Column(name = "emp_estado", columnDefinition = "integer default 1")
-    private Integer estado;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "emp_estado_id", referencedColumnName = "est_id")
+    private Estado estado;
 
     @Column(name = "emp_celular")
     private String celular;
