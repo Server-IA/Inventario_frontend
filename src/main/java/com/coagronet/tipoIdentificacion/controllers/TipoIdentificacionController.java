@@ -1,9 +1,8 @@
 package com.coagronet.tipoIdentificacion.controllers;
 
+import java.net.URI;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,56 +13,76 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.infrastructure.configuration.ResponseHandler;
-import com.coagronet.tipoIdentificacion.TipoIdentificacion;
+import com.coagronet.tipoIdentificacion.dtos.TipoIdentificacionDTO;
 import com.coagronet.tipoIdentificacion.services.TipoIdentificacionService;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/tipo_identificacion")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class TipoIdentificacionController {
-    @Autowired
-    private TipoIdentificacionService tipoIdentificacionService;
 
-    @RequestMapping("/test")
-    ResponseEntity<Object> getAllCountry() {
-        // LOGGER.info("Country list fetched");
-        return ResponseHandler.generateResponse(
-                HttpStatus.OK,
-                false,
-                "Success",
-                null);
+    private final TipoIdentificacionService tipoIdentificacionService;
+    private final UriBuilderUtil uriBuilderUtil;
+
+    @GetMapping
+    public ResponseEntity<List<TipoIdentificacionDTO>> findAll() {
+        return ResponseEntity.ok(tipoIdentificacionService.findAll());
     }
 
-    // Create a new TipoIdentificacion
-    @PostMapping("/add")
-    public TipoIdentificacion add(@RequestBody TipoIdentificacion tipoIdentificacion) {
-        return tipoIdentificacionService.add(tipoIdentificacion);
+    @GetMapping(params = "available=true")
+    public ResponseEntity<List<TipoIdentificacionDTO>> findAllAvailable() {
+        return ResponseEntity.ok(tipoIdentificacionService.findAllAvailable());
     }
 
-    // Get all TipoIdentificacion
-    @GetMapping("/all")
-    public List<TipoIdentificacion> getAll() {
-        return tipoIdentificacionService.getAll();
+    @GetMapping("/{requestedId}")
+    public ResponseEntity<TipoIdentificacionDTO> findById(
+            @PathVariable Long requestedId) {
+        return tipoIdentificacionService.findById(requestedId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // Get a TipoIdentificacion by ID
-    @GetMapping("/{id}")
-    public TipoIdentificacion getById(@PathVariable Integer id) {
-        return tipoIdentificacionService.getById(id);
+    @PostMapping
+    public ResponseEntity<Void> createTipoIdentificacion(
+            @Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO,
+            UriComponentsBuilder ucb) {
+        TipoIdentificacionDTO savedTipoIdentificacion = tipoIdentificacionService.create(
+                tipoIdentificacionDTO);
+        URI locationOfNewTipoIdentificacion = uriBuilderUtil.buildTipoIdentificacionUri(
+                savedTipoIdentificacion.getId(),
+                ucb);
+        return ResponseEntity.created(locationOfNewTipoIdentificacion).build();
     }
 
-    // Update a TipoIdentificacion
-    @PutMapping("/update/{id}")
-    public TipoIdentificacion update(@PathVariable Integer id,
-            @RequestBody TipoIdentificacion tipoIdentificacionDetails) {
-        return tipoIdentificacionService.update(id, tipoIdentificacionDetails);
+    @PutMapping("/{requestedId}")
+    public ResponseEntity<Void> updateTipoIdentificacion(
+            @PathVariable Long requestedId,
+            @Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO) {
+        boolean updated = tipoIdentificacionService.update(requestedId, tipoIdentificacionDTO);
+        if (updated) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // Delete a TipoIdentificacion
-    @DeleteMapping("/delete/{id}")
-    public void delete(@PathVariable Integer id) {
-        tipoIdentificacionService.delete(id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTipoIdentificacion(
+            @PathVariable Long id) {
+        boolean deleted = tipoIdentificacionService.delete(id);
+        if (deleted) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
+    
 }
