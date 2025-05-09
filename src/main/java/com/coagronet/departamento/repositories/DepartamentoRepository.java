@@ -11,19 +11,23 @@ import com.coagronet.departamento.Departamento;
 @Repository
 public interface DepartamentoRepository extends JpaRepository<Departamento, Long> {
 
-    Optional<Departamento> findByIdAndEmpresaId(
-            Long id,
-            Long empresaId);
+        Optional<Departamento> findByIdAndEmpresaId(
+                        Long id,
+                        Long empresaId);
 
-    List<Departamento> findByEstadoIdNotOrderByIdAsc(
-            Long estadoId);
+        List<Departamento> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
+                        Long empresaId,
+                        Long estadoId);
 
-    boolean existsByIdAndEmpresaId(
-            Long id,
-            Long empresaId);
+        List<Departamento> findByEmpresaIdOrderByIdAsc(
+                        Long empresaId);
 
-    boolean existsByIdAndEstadoIdNot(
-            Long id,
-            Long estadoId);
+        boolean existsByIdAndEmpresaId(
+                        Long id,
+                        Long empresaId);
+
+        boolean existsByIdAndEstadoIdNot(
+                        Long id,
+                        Long estadoId);
 
 }
