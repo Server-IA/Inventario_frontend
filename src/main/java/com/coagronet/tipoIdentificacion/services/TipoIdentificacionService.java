@@ -61,6 +61,7 @@ public class TipoIdentificacionService {
                 .orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
         tipoIdentificacionDTO.setId(requestedId);
+
         tipoIdentificacionRepository.save(
                 tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO));
     }
