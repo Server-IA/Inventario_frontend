@@ -30,7 +30,7 @@ public class TipoBloque {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_bloque_generator")
     @SequenceGenerator(name = "tipo_bloque_generator", sequenceName = "tipo_bloque_tib_id_seq", allocationSize = 1)
     @Column(name = "tib_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "tib_nombre", length = 100)
     private String nombre;
@@ -39,11 +39,11 @@ public class TipoBloque {
     private String descripcion;
 
     @ManyToOne
-    @JoinColumn(name = "tib_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "tib_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tib_empresa", referencedColumnName = "emp_id")
+    @JoinColumn(name = "tib_empresa_id", referencedColumnName = "emp_id")
     private Empresa empresa;
 
 }

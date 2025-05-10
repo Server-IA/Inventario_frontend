@@ -16,7 +16,7 @@ public interface TipoBloqueRepository extends JpaRepository<TipoBloque, Long> {
                         Integer estadoId);
 
         Optional<TipoBloque> findByIdAndEmpresaIdAndEstadoIdNot(
-                        Integer id,
+                        Long id,
                         Long empresaId,
                         Integer estadoId);
 

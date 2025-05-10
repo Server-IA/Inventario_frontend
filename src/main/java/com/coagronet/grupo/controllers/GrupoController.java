@@ -23,7 +23,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.grupo.Grupo;
-import com.coagronet.grupo.dtos.DatosListadoGrupo;
 import com.coagronet.grupo.repositories.GrupoRepository;
 import com.coagronet.user.User;
 
@@ -58,13 +57,16 @@ public class GrupoController {
     }
 
     @GetMapping("/minimal")
-    public ResponseEntity<List<DatosListadoGrupo>> listadoGrupos() {
+    public ResponseEntity<List<GrupoDTO>> listadoGrupos() {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Sort sort = Sort.by(Sort.Direction.ASC, "nombre");
         List<Grupo> grupos = grupoRepository.findByEstadoNotAndEmpresa(2, empresa, sort);
-        List<DatosListadoGrupo> datosListadoGrupos = grupos.stream().map(DatosListadoGrupo::new)
+
+        List<GrupoDTO> datosListadoGrupos = grupos.stream()
+                .map(grupoMapper::toMinimalDTO)
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok(datosListadoGrupos);
     }
 

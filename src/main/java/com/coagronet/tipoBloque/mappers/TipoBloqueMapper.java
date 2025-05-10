@@ -9,29 +9,30 @@ import org.mapstruct.factory.Mappers;
 import com.coagronet.estado.Estado;
 import com.coagronet.tipoBloque.TipoBloque;
 import com.coagronet.tipoBloque.dtos.TipoBloqueDTO;
-import com.coagronet.tipoBloque.dtos.TipoBloqueMinimalDTO;
 
 @Mapper(componentModel = "spring")
 public interface TipoBloqueMapper {
 
-    TipoBloqueMapper INSTANCE = Mappers.getMapper(TipoBloqueMapper.class);
-
-    @Mapping(source = "estado.id", target = "estado")
-    @Mapping(source = "empresa.id", target = "empresa")
+    @Mapping(source = "estado.id", target = "estadoId")
+    @Mapping(source = "empresa.id", target = "empresaId")
     TipoBloqueDTO toDTO(TipoBloque tipoBloque);
 
-    TipoBloqueMinimalDTO toMinimalDTO(TipoBloque tipoBloque);
 
-    @Mapping(source = "estado", target = "estado.id")
-    @Mapping(source = "empresa", target = "empresa.id")
+    @Mapping(target = "empresaId", ignore = true)
+    @Mapping(target = "estadoId", ignore = true)
+    @Mapping(target = "descripcion", ignore = true)
+    TipoBloqueDTO toMinimalDTO(TipoBloque tipoBloque);
+
+    @Mapping(source = "estadoId", target = "estado.id")
+    @Mapping(source = "empresaId", target = "empresa.id")
     TipoBloque toEntity(TipoBloqueDTO tipoBloqueDTO);
 
     @AfterMapping
     default void setEstadoAfterMapping(@MappingTarget TipoBloque tipoBloque,
             TipoBloqueDTO tipoBloqueDTO) {
-        if (tipoBloque.getEstado() == null && tipoBloqueDTO.getEstado() != null) {
+        if (tipoBloque.getEstado() == null && tipoBloqueDTO.getEstadoId() != null) {
             Estado estado = new Estado();
-            estado.setId(tipoBloqueDTO.getEstado());
+            estado.setId(tipoBloqueDTO.getEstadoId());
             tipoBloque.setEstado(estado);
         }
     }
