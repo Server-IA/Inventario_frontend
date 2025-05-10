@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD Report Design//EN"
+        "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="lenteja" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              uuid="d4f4e65f-1123-4e3a-8b1c-abcdef123456">
+
+    <!-- Parámetros -->
+    <parameter name="id" class="java.lang.Integer"/>
+    <parameter name="nombre" class="java.lang.String"/>
+
+    <!-- Fuente de datos vacía -->
+    <queryString language="SQL">
+        <![CDATA[]]>
+    </queryString>
+
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="10" width="555" height="30"/>
+                <textElement textAlignment="Center">
+                    <font size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Reporte Genérico]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <detail>
+        <band height="100">
+            <textField>
+                <reportElement x="0" y="10" width="555" height="20"/>
+                <textElement>
+                    <font size="12"/>
+                </textElement>
+                <textFieldExpression><![CDATA["ID: " + $P{id}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="0" y="40" width="555" height="20"/>
+                <textElement>
+                    <font size="12"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Nombre: " + $P{nombre}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>

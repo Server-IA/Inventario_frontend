@@ -2,26 +2,48 @@ package com.coagronet.reports.services;
 
 import java.io.InputStream;
 import java.sql.Connection;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
+import lombok.RequiredArgsConstructor;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-
 @Service
+@RequiredArgsConstructor
 public class ReportService {
 
     @Autowired
     private DataSource dataSource;
+
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    public byte[] generarReporte(String tableName, Map<String, Object> parametros) {
+        try {
+            InputStream reportStream = getClass().getResourceAsStream("/reports/" + tableName + ".jrxml");
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+
+            JRDataSource dataSource = new JREmptyDataSource();
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parametros, dataSource);
+
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
+        }
+    }
+
+
+
+
 
     private byte[] generateReport(String reportPath, Map<String, Object> parameters) throws Exception {
         JasperReport jasperReport;
@@ -47,6 +69,9 @@ public class ReportService {
             throw new RuntimeException("Failed to generate report.", e);
         }
     }
+
+
+
 
     public byte[] generateProductoReport(int category) throws Exception {
         Map<String, Object> parameters = new HashMap<>();

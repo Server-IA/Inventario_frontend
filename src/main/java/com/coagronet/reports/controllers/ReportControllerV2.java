@@ -5,17 +5,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.coagronet.reports.services.ReportService;
 
 import javax.sql.DataSource;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -33,27 +31,26 @@ public class ReportControllerV2 {
         this.dataSource = dataSource;
     }
 
+    @PostMapping("/test/{tableName}")
+    public ResponseEntity<byte[]> generarReporte(
+            @PathVariable String tableName,
+            @RequestBody Map<String, Object> parametros) {
+
+        byte[] reporte = reportService.generarReporte(tableName, parametros);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("reporte", tableName + ".pdf");
+
+        return new ResponseEntity<>(reporte, headers, HttpStatus.OK);
+    }
+
+
+
     private ResponseEntity<byte[]> generateReport(String reportName, byte[] reportData) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("inline", reportName + ".pdf");
-
-        return new ResponseEntity<>(reportData, headers, HttpStatus.OK);
-    }
-
-    private ResponseEntity<byte[]> generalReport(String tablename, Map<String, Object> parameters) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("inline", tablename + ".pdf");
-
-        String jrxmlFile = "/reports/" + tablename + ".jrxml";
-        InputStream jrxmlStream = getClass().getResourceAsStream(jrxmlFile);
-
-        JasperReport jasperReport = JasperCompileManager.compileReport(jrxmlStream);
-        Connection conn = dataSource.getConnection();
-
-        JasperPrint print = JasperFillManager.fillReport(jasperReport, parameters, conn);
-        byte[] reportData = JasperExportManager.exportReportToPdf(print);
 
         return new ResponseEntity<>(reportData, headers, HttpStatus.OK);
     }
