@@ -9,7 +9,7 @@ import com.coagronet.tipoBloque.mappers.TipoBloqueMapper;
 import com.coagronet.tipoBloque.repositories.TipoBloqueRepository;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
-import com.coagronet.utils.NotFoundException;
+import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

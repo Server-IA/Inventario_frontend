@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
-import com.coagronet.utils.BadRequestException;
-import com.coagronet.utils.NotFoundException;
-
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

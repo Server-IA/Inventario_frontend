@@ -10,8 +10,8 @@ import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoIdentificacion.dtos.TipoIdentificacionDTO;
 import com.coagronet.tipoIdentificacion.mappers.TipoIdentificacionMapper;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
-import com.coagronet.utils.BadRequestException;
-import com.coagronet.utils.NotFoundException;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 

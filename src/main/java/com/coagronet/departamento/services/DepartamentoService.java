@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.coagronet.departamento.Departamento;
 import com.coagronet.departamento.dtos.DepartamentoDTO;
 import com.coagronet.departamento.mappers.DepartamentoMapper;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
@@ -15,8 +14,8 @@ import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.pais.repositories.PaisRepository;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
-import com.coagronet.utils.BadRequestException;
-import com.coagronet.utils.NotFoundException;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
