@@ -41,6 +41,23 @@ public class ReportService {
         }
     }
 
+    public byte[] generarReporteSQL(String tableName, Map<String, Object> parametros) {
+        try {
+            InputStream reportStream = getClass().getResourceAsStream("/reports/" + tableName + ".jrxml");
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+
+            Connection connection = dataSource.getConnection();
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parametros, connection);
+
+
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
+        }
+    }
+
+
+
 
 
 
