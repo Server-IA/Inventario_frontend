@@ -35,7 +35,7 @@ public class EstadoController {
     private final EstadoRepository estadoRepository;
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<Estado> findById(@PathVariable Integer requestedId) {
+    public ResponseEntity<Estado> findById(@PathVariable Long requestedId) {
         return estadoRepository.findById(requestedId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -68,7 +68,7 @@ public class EstadoController {
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Object> putEstado(@PathVariable Integer requestedId, @RequestBody Estado estadoUpdate) {
+    public ResponseEntity<Object> putEstado(@PathVariable Long requestedId, @RequestBody Estado estadoUpdate) {
         return estadoRepository.findById(requestedId)
                 .map(estado -> {
                     estado.setNombre(estadoUpdate.getNombre());
@@ -81,7 +81,7 @@ public class EstadoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEstado(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteEstado(@PathVariable Long id) {
         if (estadoRepository.existsById(id)) {
             estadoRepository.deleteById(id);
             return ResponseEntity.noContent().build();

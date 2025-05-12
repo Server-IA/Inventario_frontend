@@ -13,7 +13,7 @@ public class EmpresaDTO {
     private Integer id;
     private String nombre;
     private String descripcion;
-    private Integer estado;
+    private Integer estadoId;
     private String celular;
     private String correo;
     private String contacto;

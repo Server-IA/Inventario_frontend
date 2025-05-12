@@ -14,6 +14,7 @@ public interface EmpresaMapper {
 
     @Mapping(source = "tipoIdentificacion.id", target = "tipoIdentificacionId")
     @Mapping(source = "persona.id", target = "personaId")
+    @Mapping(source ="estado.id", target = "estadoId")
     EmpresaDTO toEmpresaDTO(Empresa empresa);
 
     @Mapping(source = "tipoIdentificacionId", target = "tipoIdentificacion.id")
