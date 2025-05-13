@@ -43,6 +43,9 @@ public class SecurityConfig {
                                 "/api/v1/departamento",
                                 "/api/v1/marca/**")
                         .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
+                        .requestMatchers(
+                                "/api/v2/report/**")
+                        .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
