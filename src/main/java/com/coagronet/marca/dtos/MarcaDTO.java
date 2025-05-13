@@ -24,7 +24,6 @@ public class MarcaDTO {
     @NotNull(message = "El estado es obligatorio.")
     private Long estadoId;
 
-    @NotNull(message = "La empresa es obligatoria.")
     private Long empresaId;
 
 }
