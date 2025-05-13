@@ -4,13 +4,13 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+
 import jakarta.annotation.PostConstruct;
 
 @Component
@@ -27,27 +27,16 @@ public class JwtUtil {
         secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    @Autowired
-    MyUserDetailsService myUserDetailsService;
-
     public String generateToken(String username) {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)).signWith(secretKey)
                 .compact();
-        // Jwts.builder()
-        // .setSubject(username)
-        // .setIssuedAt(new Date())
-        // .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) //
-        // 10 hours
-        // .signWith(secretKey, SignatureAlgorithm.HS256)
-        // .compact();
     }
 
     public Claims extractAllClaims(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
-        //return Jwts.parser().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
     public String extractUsername(String token) {
