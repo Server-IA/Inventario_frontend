@@ -32,52 +32,20 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/presentaciones/**",
-                                "/auth/**",
-                                "/api/v1/tipo_produccion",
-                                "/api/v1/producciones/**",
-                                "/api/v1/items/**",
-                                "/api/v1/marcas/**",
-                                "/api/v1/sede",
-                                "/api/v1/kardex",
-                                "/api/v1/kardexItem",
-                                "/api/v1/unidad",
-                                "/api/v1/estados/**",
-                                "/api/v1/tipo_sede",
-                                "/api/v1/empresas/**",
-                                "/api/v1/grupo/**",
-                                "/api/report/**",
-                                "/api/v2/report/**",
-                                "/api/v1/email/**",
-                                "/api/v1/roles/**",
-                                "/api/v1/persona",
-                                "/api/v1/producto",
-                                "/api/v1/producto-presentacion",
-                                "/api/v1/activaciones/**",
-                                "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                                "/api/v1/tipo_bloque/**",
-                                "/api/v1/tipo_espacio/**",
-                                "/api/v1/producto_categoria/**",
-                                "/api/v1/tipo_movimiento",
-                                "/api/v1/almacen",
-                                "/api/v1/bloque",
-                                "/api/v1/espacio",
-                                "/api/v1/espacio_ocupacion",
-                                "/api/v1/tipo_bloque",
-                                "/api/v1/marca",
-                                "/api/v1/tipo_espacio",
-                                "/api/v1/user",
-                                "/api/v1/pedido",
-                                "/api/v1/pedido_item",
-                                "/api/v1/actividad_ocupacion",
-                                "/api/v1/orden_compra",
-                                "/api/v1/orden_compra_item",
-                                "/api/v1/tipo_evaluacion",
-                                "/api/v1/criterio_evaluacion")
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/auth/**")
                         .permitAll()
                         .requestMatchers(
-                                "/api/v1/tipo_identificacion")
-                        .hasRole("ADMINISTRADOR_SISTEMA")
+                                "/api/v1/tipo_identificacion/**",
+                                "/api/v1/pais/**",
+                                "/api/v1/departamento",
+                                "/api/v1/marca/**")
+                        .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
+                        .requestMatchers(
+                                "/api/v2/report/**")
+                        .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

@@ -1,7 +1,6 @@
 package com.coagronet.infrastructure.security;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -10,11 +9,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,171 +38,170 @@ import com.coagronet.user.services.UserRegistrationService;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class AuthController {
-    @Value("${jwt.default_role}")
-    private String default_role;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+	@Value("${jwt.default_role}")
+	private String default_role;
 
-    @Autowired
-    private RoleRepository roleRepository;
+	private final PasswordEncoder passwordEncoder;
+	private final RoleRepository roleRepository;
+	private final JwtService jwtService;
+	private final UserRegistrationService userRegistrationService;
+	private final EmailVerificationService emailVerificationService;
+	private final UserRepository userRepository;
+	private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtService jwtService;
+	@PostMapping("/register")
+	public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
+		// Validar si ya existe un usuario con ese email
+		if (userRepository.existsByUsername(registerRequest.getUsername())) {
+			return ResponseEntity.badRequest().body("Email is already in use.");
+		}
 
-    @Autowired
-    private UserRegistrationService userRegistrationService;
+		// Crear el usuario
+		User user = new User();
+		user.setUsername(registerRequest.getUsername());
+		user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
 
-    @Autowired
-    private EmailVerificationService emailVerificationService;
+		// Asignar rol
+		Role userRole = roleRepository.findByName(default_role)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+		user.setRoles(Set.of(userRole));
 
-    @Autowired
-    private UserRepository userRepository;
+		// Guardar el usuario
+		userRegistrationService.registerUser(user);
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
-        // Validar si ya existe un usuario con ese email
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            return ResponseEntity.badRequest().body("Email is already in use.");
-        }
+		// Crear y enviar el token de verificación
+		String token = emailVerificationService.createVerificationToken(user.getUsername());
+		emailVerificationService.sendVerificationEmail(user.getUsername(), token);
 
-        // Crear el usuario
-        User user = new User();
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
+		return ResponseEntity.ok("Verification email sent to " + user.getUsername());
+	}
 
-        // Asignar rol
-        Role userRole = roleRepository.findByName(default_role)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-        user.setRoles(Set.of(userRole));
+	@PostMapping("/change-password")
+	public ResponseEntity<?> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+		String username = getUserName();
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Contraseña antigua incorrecta");
+		} else {
+			user.setPassword(passwordEncoder.encode(newPassword));
+			userRepository.save(user);
+			return ResponseEntity.ok("Contraseña cambiada exitosamente");
+		}
+	}
 
-        // Guardar el usuario
-        userRegistrationService.registerUser(user);
+	@GetMapping("/verify")
+	public ResponseEntity<String> verifyUser(@RequestParam String token) {
+		boolean isVerified = userRegistrationService.activateUser(token);
+		if (isVerified) {
+			return ResponseEntity.ok("User activated successfully");
+		} else {
+			return ResponseEntity.status(400).body("Invalid verification link");
+		}
+	}
 
-        // Crear y enviar el token de verificación
-        String token = emailVerificationService.createVerificationToken(user.getUsername());
-        emailVerificationService.sendVerificationEmail(user.getUsername(), token);
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody User user) {
+		// Autenticar al usuario
+		Authentication authentication = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-        return ResponseEntity.ok("Verification email sent to " + user.getUsername());
-    }
+		// Establecer en el contexto de seguridad
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
-        String username = getUserName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Contraseña antigua incorrecta");
-        } else {
-            user.setPassword(passwordEncoder.encode(newPassword));
-            userRepository.save(user);
-            return ResponseEntity.ok("Contraseña cambiada exitosamente");
-        }
-    }
+		// Obtener usuario autenticado
+		User authenticatedUser = (User) authentication.getPrincipal();
 
-    @GetMapping("/verify")
-    public ResponseEntity<String> verifyUser(@RequestParam String token) {
-        boolean isVerified = userRegistrationService.activateUser(token);
-        if (isVerified) {
-            return ResponseEntity.ok("User activated successfully");
-        } else {
-            return ResponseEntity.status(400).body("Invalid verification link");
-        }
-    }
+		// Generar el token
+		String token = jwtService.createJwtToken(user.getUsername(), user.getPassword());
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
-        String token = jwtService.createJwtToken(user.getUsername(), user.getPassword());
+		// Respuesta
+		Map<String, Object> response = new HashMap<>();
+		response.put("token", token);
+		response.put("usuarioEstado", authenticatedUser.getUsuarioEstado().getId());
 
-        // Obtener el usuario por su nombre de usuario para acceder a su estado
-        User foundUser = userRepository.findByUsername(user.getUsername())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+		return ResponseEntity.ok(response);
+	}
 
-        // Crear una respuesta que incluya el token y el estado del usuario
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", token);
-        response.put("usuarioEstado", foundUser.getUsuarioEstado().getId());
+	@GetMapping("/roles")
+	public Set<String> getUserRoles() {
+		System.out.println("roles()");
 
-        return ResponseEntity.ok(response);
-    }
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-    @GetMapping("/roles")
-    public Set<String> getUserRoles() {
-        System.out.println("roles()");
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			System.out.println("aquiii");
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			System.out.println(userDetails);
 
-            System.out.println("aquiii");
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			return userDetails.getAuthorities().stream().map(grantedAuthority -> grantedAuthority.getAuthority())
+					.collect(Collectors.toSet());
+		}
+		return null;
+	}
 
-            System.out.println(userDetails);
+	private String getUserName() {
+		String currentUserName = "";
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (!(authentication instanceof AnonymousAuthenticationToken)) {
+			// return authentication.getName();
+			currentUserName = authentication.getName();
+		}
+		return currentUserName;
+	}
 
-            return userDetails.getAuthorities().stream()
-                    .map(grantedAuthority -> grantedAuthority.getAuthority())
-                    .collect(Collectors.toSet());
-        }
-        return null;
-    }
+	@GetMapping("/home")
+	public String home() {
 
-    private String getUserName() {
-        String currentUserName = "";
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            // return authentication.getName();
-            currentUserName = authentication.getName();
-        }
-        return currentUserName;
-    }
+		String userName = this.getUserName();
+		return "Welcome to the home page! UserName: " + userName;
+	}
 
-    @GetMapping("/home")
-    public String home() {
+	@PostMapping("/logout")
+	public void logout(HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			session.invalidate();
+		}
+		response.setStatus(HttpServletResponse.SC_OK);
+	}
 
-        String userName = this.getUserName();
-        return "Welcome to the home page! UserName: " + userName;
-    }
+	@PostMapping("/forgot-password")
+	public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+		User user = userRepository.findByUsername(email)
+				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    @PostMapping("/logout")
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-        response.setStatus(HttpServletResponse.SC_OK);
-    }
+		String token = emailVerificationService.createVerificationToken(user.getUsername());
+		emailVerificationService.sendResetPasswordEmail(user.getUsername(), token);
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        User user = userRepository.findByUsername(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+		return ResponseEntity.ok("Correo de recuperación de contraseña enviado");
+	}
 
-        String token = emailVerificationService.createVerificationToken(user.getUsername());
-        emailVerificationService.sendResetPasswordEmail(user.getUsername(), token);
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+		String username = emailVerificationService.getEmailAndInvalidateToken(token);
+		if (username == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enlace de recuperación inválido o expirado");
+		}
 
-        return ResponseEntity.ok("Correo de recuperación de contraseña enviado");
-    }
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        String username = emailVerificationService.getEmailAndInvalidateToken(token);
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enlace de recuperación inválido o expirado");
-        }
+		user.setPassword(passwordEncoder.encode(newPassword));
+		userRepository.save(user);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-
-        return ResponseEntity.ok("Contraseña restablecida exitosamente");
-    }
+		return ResponseEntity.ok("Contraseña restablecida exitosamente");
+	}
 
 }
