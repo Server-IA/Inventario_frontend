@@ -8,13 +8,14 @@ import org.springframework.stereotype.Service;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.marca.dtos.MarcaDTO;
 import com.coagronet.marca.mappers.MarcaMapper;
 import com.coagronet.marca.repositories.MarcaRepository;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
-import com.coagronet.utils.BadRequestException;
-import com.coagronet.utils.NotFoundException;
+
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
