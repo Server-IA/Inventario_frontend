@@ -71,7 +71,8 @@ public class PaisController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePais(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePais(
+            @PathVariable Long id) {
         paisService.delete(id);
         return ResponseEntity.noContent().build();
     }

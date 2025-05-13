@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -20,58 +21,69 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
-    @Value("${jwt.secret}")
-    private String secret;
+	@Value("${jwt.secret}")
+	private String secret;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+	@Autowired
+	private JwtUtil jwtUtil;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+	@Autowired
+	private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private MyUserDetailsService myUserDetailsService;
+	@Autowired
+	private MyUserDetailsService myUserDetailsService;
 
-    public String createJwtToken(String username, String password) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
-        return jwtUtil.generateToken(userDetails.getUsername());
-    }
+	public String createJwtToken(String username, String password) {
+		UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolvers.apply(claims);
-    }
+		// Autenticar usando el UserDetails
+		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, password,
+				userDetails.getAuthorities());
 
-    private Claims extractAllClaims(String token) {
-        //return Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
-        return (Claims) Jwts.parser().verifyWith((SecretKey) getSigningKey()).build().parseSignedClaims(token).getPayload();
-    }
+		authenticationManager.authenticate(authToken);
 
-    private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
+		// Guardar en el contexto de seguridad para uso posterior
+		SecurityContextHolder.getContext().setAuthentication(authToken);
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
+		return jwtUtil.generateToken(userDetails.getUsername());
+	}
 
-    public boolean validateToken(String token, String username) {
-        return jwtUtil.validateToken(token, username);
-    }
+	private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
+		final Claims claims = extractAllClaims(token);
+		return claimsResolvers.apply(claims);
+	}
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String userName = extractUsername(token);
-        return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);
-    }
+	private Claims extractAllClaims(String token) {
+		// return
+		// Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+		return (Claims) Jwts.parser().verifyWith((SecretKey) getSigningKey()).build().parseSignedClaims(token)
+				.getPayload();
+	}
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
+	private Key getSigningKey() {
+		byte[] keyBytes = Decoders.BASE64.decode(secret);
+		return Keys.hmacShaKeyFor(keyBytes);
+	}
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
+	public String extractUsername(String token) {
+		return extractClaim(token, Claims::getSubject);
+	}
+
+	public boolean validateToken(String token, String username) {
+		return jwtUtil.validateToken(token, username);
+	}
+
+	public boolean isTokenValid(String token, UserDetails userDetails) {
+		final String userName = extractUsername(token);
+		return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);
+	}
+
+	private boolean isTokenExpired(String token) {
+		return extractExpiration(token).before(new Date());
+	}
+
+	private Date extractExpiration(String token) {
+		return extractClaim(token, Claims::getExpiration);
+	}
 
 }

@@ -11,18 +11,20 @@ import com.coagronet.marca.Marca;
 @Repository
 public interface MarcaRepository extends JpaRepository<Marca, Long> {
 
-    List<Marca> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
-            Long empresaId,
-            Integer estadoId);
+        List<Marca> findByEmpresaIdOrderByIdAsc(
+                        Long empresaId);
 
-    Optional<Marca> findByIdAndEmpresaIdAndEstadoIdNot(
-            Long id,
-            Long empresaId,
-            Integer estadoId);
+        List<Marca> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
+                        Long empresaId,
+                        Long estadoId);
 
-    boolean existsByIdAndEmpresaIdAndEstadoIdNot(
-            Long id,
-            Long empresaId,
-            Integer estadoId);
+        Optional<Marca> findByIdAndEmpresaId(
+                        Long id,
+                        Long empresaId);
+
+        boolean existsByIdAndEmpresaIdAndEstadoIdNot(
+                        Long id,
+                        Long empresaId,
+                        Long estadoId);
 
 }

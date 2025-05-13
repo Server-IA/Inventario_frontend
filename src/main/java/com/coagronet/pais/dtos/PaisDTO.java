@@ -1,8 +1,5 @@
 package com.coagronet.pais.dtos;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.estado.Estado;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -31,7 +28,7 @@ public class PaisDTO {
     @NotNull(message = "La empresa es obligatoria.")
     private Long empresaId;
 
-    @NotNull(message = "La empresa es obligatoria.")
+    @NotNull(message = "El estado es obligatorio.")
     private Long estadoId;
 
 }
