@@ -42,11 +42,11 @@ public class Marca {
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mar_estado", referencedColumnName = "est_id", nullable = false)
+    @JoinColumn(name = "mar_estado_id", referencedColumnName = "est_id", nullable = false)
     private Estado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mar_empresa", referencedColumnName = "emp_id", nullable = false)
+    @JoinColumn(name = "mar_empresa_id", referencedColumnName = "emp_id", nullable = false)
     private Empresa empresa;
 
 }
