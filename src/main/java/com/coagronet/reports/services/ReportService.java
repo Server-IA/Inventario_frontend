@@ -41,9 +41,9 @@ public class ReportService {
         }
     }
 
-    public byte[] generarReporteSQL(String tableName, Map<String, Object> parametros) {
+    public byte[] generarReporteSQL(String reportName, Map<String, Object> parametros) {
         try {
-            InputStream reportStream = getClass().getResourceAsStream("/reports/" + tableName + ".jrxml");
+            InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
             JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 
             Connection connection = dataSource.getConnection();

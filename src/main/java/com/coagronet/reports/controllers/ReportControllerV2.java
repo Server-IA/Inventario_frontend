@@ -45,15 +45,15 @@ public class ReportControllerV2 {
         return new ResponseEntity<>(reporte, headers, HttpStatus.OK);
     }
 
-    @PostMapping("/test2/{tableName}")
-    public ResponseEntity<byte[]> generarReporteSQL(@PathVariable String tableName,
+    @PostMapping("/test2/{reportName}")
+    public ResponseEntity<byte[]> generarReporteSQL(@PathVariable String reportName,
                                                     @RequestBody Map<String, Object> parametros) {
 
-        byte[] reporte = reportService.generarReporteSQL(tableName, parametros);
+        byte[] reporte = reportService.generarReporteSQL(reportName, parametros);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("reporte", tableName + ".pdf");
+        headers.setContentDispositionFormData("reporte", reportName + ".pdf");
 
         return new ResponseEntity<>(reporte, headers, HttpStatus.OK);
     }
