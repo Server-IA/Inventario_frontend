@@ -25,7 +25,6 @@ public class PaisDTO {
     @Size(max = 3, message = "El acronimo no debe superar los 3 caracteres.")
     private String acronimo;
 
-    @NotNull(message = "La empresa es obligatoria.")
     private Long empresaId;
 
     @NotNull(message = "El estado es obligatorio.")
