@@ -91,14 +91,10 @@ public class TipoBloqueService {
 
 
         TipoBloque tipoBloque = tipoBloqueRepository
-                .findByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)
+                .findByIdAndEmpresaId(id, empresa.getId())
                 .orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o ya está inactivo"));
 
-        Estado estadoInactivo = estadoRepository.findById(2L)
-                .orElseThrow(() -> new NotFoundException("Estado inactivo no encontrado"));
-
-        tipoBloque.setEstado(estadoInactivo);
-        tipoBloqueRepository.save(tipoBloque);
+        tipoBloqueRepository.deleteById(tipoBloque.getId());
 
     }
 
