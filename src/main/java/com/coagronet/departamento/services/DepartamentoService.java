@@ -34,6 +34,7 @@ public class DepartamentoService {
 	public List<DepartamentoDTO> findAll() {
 		User user = authenticationService.getAuthenticatedUser();
 		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+
 		return departamentoRepository.findByEmpresaIdOrderByIdAsc(empresa.getId()).stream()
 				.map(departamentoMapper::toListDto).collect(Collectors.toList());
 	}
@@ -41,6 +42,7 @@ public class DepartamentoService {
 	public List<DepartamentoDTO> findAllAvailable() {
 		User user = authenticationService.getAuthenticatedUser();
 		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+
 		return departamentoRepository.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2L).stream()
 				.map(departamentoMapper::toListDto).collect(Collectors.toList());
 	}
@@ -48,20 +50,20 @@ public class DepartamentoService {
 	public Optional<DepartamentoDTO> findById(Long requestedId) {
 		User user = authenticationService.getAuthenticatedUser();
 		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+
 		return departamentoRepository.findByIdAndEmpresaId(requestedId, empresa.getId())
 				.map(departamentoMapper::toListDto);
 	}
 
 	public DepartamentoDTO create(DepartamentoDTO departamentoDTO) {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-		paisRepository.findByIdAndEmpresaId(departamentoDTO.getPaisId(), departamentoDTO.getEmpresaId()).orElseThrow(
+		paisRepository.findByIdAndEmpresaId(departamentoDTO.getPaisId(), empresa.getId()).orElseThrow(
 				() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
 
 		estadoRepository.findById(departamentoDTO.getEstadoId())
 				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
-
-		User user = authenticationService.getAuthenticatedUser();
-		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
 		departamentoDTO.setId(null);
 		departamentoDTO.setEmpresaId(empresa.getId());
