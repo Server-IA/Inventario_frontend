@@ -21,52 +21,52 @@ import com.coagronet.infrastructure.security.MyUserDetailsService;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private MyUserDetailsService myUserDetailsService;
+	@Autowired
+	private MyUserDetailsService myUserDetailsService;
 
-    @Autowired
-    private JwtService jwtService;
+	@Autowired
+	private JwtService jwtService;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/auth/**")
-                        .permitAll()
-                        .requestMatchers(
-                                "/api/v1/tipo_identificacion/**",
-                                "/api/v1/pais/**",
-                                "/api/v1/departamento",
-                                "/api/v1/marca/**")
-                        .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
-                        .requestMatchers(
-                                "/api/v2/report/**")
-                        .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(auth -> auth
+				.requestMatchers("/v3/api-docs/**",
+						"/swagger-ui.html",
+						"/swagger-ui/**",
+						"/auth/**")
+				.permitAll()
+				.requestMatchers("/api/v1/tipo_identificacion/**",
+						"/api/v1/estado/**")
+				.hasAnyRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers("/api/v1/pais/**",
+						"/api/v1/departamento/**",
+						"/api/v1/municipio/**",
+						"/api/v1/marca/**")
+				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
+				.requestMatchers("/api/v2/report/**")
+				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
+				.anyRequest()
+				.authenticated())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+		return http.build();
+	}
 
-    @Bean
-    public JwtRequestFilter jwtRequestFilter() {
-        return new JwtRequestFilter(jwtService, myUserDetailsService);
-    }
+	@Bean
+	public JwtRequestFilter jwtRequestFilter() {
+		return new JwtRequestFilter(jwtService, myUserDetailsService);
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+			throws Exception {
+		return authenticationConfiguration.getAuthenticationManager();
+	}
 }

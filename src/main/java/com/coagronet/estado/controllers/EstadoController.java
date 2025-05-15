@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/estados")
+@RequestMapping("/api/v1/estado")
 @CrossOrigin(origins = "*")
 public class EstadoController {
 
