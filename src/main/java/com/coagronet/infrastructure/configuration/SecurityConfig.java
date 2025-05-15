@@ -41,7 +41,8 @@ public class SecurityConfig {
 				.requestMatchers("/api/v1/pais/**",
 						"/api/v1/departamento/**",
 						"/api/v1/municipio/**",
-						"/api/v1/marca/**")
+						"/api/v1/marca/**",
+						"/api/v1/tipo_bloque")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
 				.requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
