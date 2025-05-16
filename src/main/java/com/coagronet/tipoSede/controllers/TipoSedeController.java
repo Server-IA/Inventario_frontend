@@ -2,10 +2,9 @@ package com.coagronet.tipoSede.controllers;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import com.coagronet.utils.AuthenticationService;
-import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.tipoSede.services.TipoSedeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,73 +18,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.tipoSede.TipoSede;
 import com.coagronet.tipoSede.dtos.TipoSedeDTO;
-import com.coagronet.tipoSede.dtos.TipoSedeMinimalDTO;
-import com.coagronet.tipoSede.mappers.TipoSedeMapper;
-import com.coagronet.tipoSede.repositories.TipoSedeRepository;
-import com.coagronet.user.User;
-import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.repositories.UserRoleRepository;
 
 @RestController
 @RequestMapping("/api/v1/tipo_sede")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class TipoSedeController {
 
-    private final TipoSedeRepository tipoSedeRepository;
-    private final TipoSedeMapper tipoSedeMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserRoleRepository userRoleRepository;
-    private final UserRepository userRepository;
-    private final AuthenticationService authenticationService;
-    private final UserEmpresaService userEmpresaService;
-
-    private TipoSedeController(
-            TipoSedeRepository tipoSedeRepository,
-            TipoSedeMapper tipoSedeMapper,
-            EstadoRepository estadoRepository,
-            UserRoleRepository userRoleRepository,
-            UserRepository userRepository, AuthenticationService authenticationService, UserEmpresaService userEmpresaService) {
-        this.tipoSedeRepository = tipoSedeRepository;
-        this.tipoSedeMapper = tipoSedeMapper;
-        this.estadoRepository = estadoRepository;
-        this.userRoleRepository = userRoleRepository;
-        this.userRepository = userRepository;
-        this.authenticationService = authenticationService;
-        this.userEmpresaService = userEmpresaService;
-    }
-
+    private final TipoSedeService tipoSedeService;
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<TipoSedeDTO> findById(@PathVariable Integer requestedId) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        return tipoSedeRepository.findByIdAndEmpresaIdAndEstadoIdNot(
-                requestedId,
-                empresa.getId(),
-                2)
-                .map(tipoSedeMapper::toDTO)
+    public ResponseEntity<TipoSedeDTO> findById(@PathVariable Long requestedId) {
+        return tipoSedeService.findById(requestedId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    private ResponseEntity<Void> createTipoSede(@RequestBody TipoSedeDTO newTipoSedeRequest,
+    public ResponseEntity<Void> createTipoSede(@RequestBody TipoSedeDTO newTipoSedeRequest,
             UriComponentsBuilder ucb) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        TipoSedeDTO newTipoSede = new TipoSedeDTO(
-                null,
-                newTipoSedeRequest.getNombre(),
-                newTipoSedeRequest.getDescripcion(),
-                newTipoSedeRequest.getEstado(),
-                empresa.getId());
-        TipoSede savedTipoSede = tipoSedeMapper.toEntity(newTipoSede);
-        tipoSedeRepository.save(savedTipoSede);
+        TipoSedeDTO savedTipoSede = tipoSedeService.create(newTipoSedeRequest);
         URI locationOfNewTipoSede = ucb
                 .path("/api/v1/tipo_sede/{id}")
                 .buildAndExpand(savedTipoSede.getId())
@@ -94,69 +47,20 @@ public class TipoSedeController {
     }
 
     @GetMapping
-    private ResponseEntity<List<TipoSedeDTO>> findAll() {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
-        List<TipoSedeDTO> tipoSedeDTOs = tipoSedeRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
-                .stream()
-                .map(tipoSedeMapper::toDTO)
-                .collect(Collectors.toList());
-
-        return tipoSedeDTOs.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(tipoSedeDTOs);
-    }
-
-    @GetMapping("/minimal")
-    private ResponseEntity<List<TipoSedeMinimalDTO>> findAllMinimal() {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
-        List<TipoSedeMinimalDTO> tipoSedeDTOs = tipoSedeRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
-                .stream()
-                .map(tipoSedeMapper::toMinimalDTO)
-                .collect(Collectors.toList());
-
-        return tipoSedeDTOs.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(tipoSedeDTOs);
+    public ResponseEntity<List<TipoSedeDTO>> findAll() {
+        return ResponseEntity.ok(tipoSedeService.findAll());
     }
 
     @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putTipoSede(@PathVariable Integer requestedId,
+    public ResponseEntity<Void> putTipoSede(@PathVariable Long requestedId,
             @RequestBody TipoSedeDTO tipoSedeDTOUpdate) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        TipoSede tipoSede = tipoSedeRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
-                .orElse(null);
-        if (null != tipoSede) {
-            TipoSedeDTO updateTipoSedeDTO = new TipoSedeDTO(
-                    requestedId,
-                    tipoSedeDTOUpdate.getNombre(),
-                    tipoSedeDTOUpdate.getDescripcion(),
-                    tipoSedeDTOUpdate.getEstado(),
-                    empresa.getId());
-            TipoSede updatedTipoSede = tipoSedeMapper.toEntity(updateTipoSedeDTO);
-            tipoSedeRepository.save(updatedTipoSede);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        tipoSedeService.update(requestedId, tipoSedeDTOUpdate);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteTipoSede(@PathVariable Integer id) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        if (tipoSedeRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
-            TipoSede tipoSede = tipoSedeRepository.findById(id).orElse(null);
-            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
-            tipoSede.setEstado(estadoInactivo);
-            tipoSedeRepository.save(tipoSede);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteTipoSede(@PathVariable Long id) {
+        tipoSedeService.delete(id);
+        return ResponseEntity.ok().build();
     }
 }
