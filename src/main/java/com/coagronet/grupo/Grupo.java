@@ -6,32 +6,37 @@ import com.coagronet.estado.Estado;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Getter
+@NoArgsConstructor
+@Setter
 @Entity
-@Table(name = "grupo")
+@Table(name = "grupo", schema = "public")
 public class Grupo {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "gru_id")
-    private Long id;
 
-    @Column(name = "gru_nombre")
-    private String nombre;
+	@Id
+	@SequenceGenerator(name = "grupo_generator", sequenceName = "grupo_gru_id_seq", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "grupo_generator")
+	@Column(name = "gru_id")
+	private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gru_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@Column(name = "gru_nombre", length = 255, nullable = false)
+	private String nombre;
 
-    @Column(name = "gru_descripcion")
-    private String descripcion;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "gru_empresa_id", referencedColumnName = "emp_id", nullable = false)
+	private Empresa empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gru_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@Column(name = "gru_descripcion", length = 255)
+	private String descripcion;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "gru_estado_id", referencedColumnName = "est_id", nullable = false)
+	private Estado estado;
+
 }

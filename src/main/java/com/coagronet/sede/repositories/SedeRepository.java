@@ -11,14 +11,10 @@ import com.coagronet.sede.Sede;
 @Repository
 public interface SedeRepository extends JpaRepository<Sede, Long> {
 
-	List<Sede> findByEmpresaId(Long empresaId);
-
-	List<Sede> findByEmpresaIdAndEstadoIdNot(Long empresaId, Integer estadoId);
-
 	Optional<Sede> findByIdAndEmpresaId(Long id, Long empresaId);
-	
-	Optional<Sede> findByIdAndEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Integer estadoId);
 
-	boolean existsByIdAndEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Integer estadoId);
+	List<Sede> findByEmpresaIdOrderByIdAsc(Long empresaId);
+
+	List<Sede> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
 
 }
