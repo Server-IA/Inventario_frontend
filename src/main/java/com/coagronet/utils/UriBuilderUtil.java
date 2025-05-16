@@ -28,16 +28,20 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/tipo_espacio/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildGrupoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/grupo/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildSedeUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/sede/{id}").buildAndExpand(id).toUri();
+	}
+
 	public URI buildMarcaUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/marca/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/tipo_evaluacion/{id}").buildAndExpand(id).toUri();
-	}
-
-	public URI buildSedeUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/sede/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildBloqueUri(Long id, UriComponentsBuilder ucb) {
