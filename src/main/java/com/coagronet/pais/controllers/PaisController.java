@@ -29,52 +29,41 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaisController {
 
-    private final PaisService paisService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final PaisService paisService;
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping
-    public ResponseEntity<List<PaisDTO>> findAll() {
-        return ResponseEntity.ok(paisService.findAll());
-    }
+	@GetMapping
+	public ResponseEntity<List<PaisDTO>> findAll() {
+		return ResponseEntity.ok(paisService.findAll());
+	}
 
-    @GetMapping(params = "available=true")
-    public ResponseEntity<List<PaisDTO>> findAllAvailable() {
-        return ResponseEntity.ok(paisService.findAllAvailable());
-    }
+	@GetMapping(params = "available=true")
+	public ResponseEntity<List<PaisDTO>> findAllAvailable() {
+		return ResponseEntity.ok(paisService.findAllAvailable());
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<PaisDTO> findById(
-            @PathVariable Long requestedId) {
-        return paisService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<PaisDTO> findById(@PathVariable Long requestedId) {
+		return paisService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createPais(
-            @Valid @RequestBody PaisDTO paisDTO,
-            UriComponentsBuilder ucb) {
-        PaisDTO savedPais = paisService.create(
-                paisDTO);
-        URI locationOfNewPais = uriBuilderUtil.buildPaisUri(
-                savedPais.getId(),
-                ucb);
-        return ResponseEntity.created(locationOfNewPais).build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createPais(@Valid @RequestBody PaisDTO paisDTO, UriComponentsBuilder ucb) {
+		PaisDTO savedPais = paisService.create(paisDTO);
+		URI locationOfNewPais = uriBuilderUtil.buildPaisUri(savedPais.getId(), ucb);
+		return ResponseEntity.created(locationOfNewPais).build();
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updatePais(
-            @PathVariable Long requestedId,
-            @Valid @RequestBody PaisDTO paisDTO) {
-        paisService.update(requestedId, paisDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updatePais(@PathVariable Long requestedId, @Valid @RequestBody PaisDTO paisDTO) {
+		paisService.update(requestedId, paisDTO);
+		return ResponseEntity.noContent().build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePais(
-            @PathVariable Long id) {
-        paisService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deletePais(@PathVariable Long id) {
+		paisService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }
