@@ -8,52 +8,40 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class UriBuilderUtil {
 
-    public URI buildTipoIdentificacionUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/tipo_identificacion/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildTipoIdentificacionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipo_identificacion/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildPaisUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/pais/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildPaisUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/pais/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildDepartamentoUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/departamento/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildDepartamentoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/departamento/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildMunicipioUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/municipio/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildMunicipioUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/municipio/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildMarcaUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/marca/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildTipoEspacioUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipo_espacio/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/tipo_evaluacion/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildMarcaUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/marca/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildSedeUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/sede/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipo_evaluacion/{id}").buildAndExpand(id).toUri();
+	}
 
-    public URI buildBloqueUri(Long id, UriComponentsBuilder ucb) {
-        return ucb.path("/api/v1/bloque/{id}")
-                .buildAndExpand(id)
-                .toUri();
-    }
+	public URI buildSedeUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/sede/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildBloqueUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/bloque/{id}").buildAndExpand(id).toUri();
+	}
 
 }
