@@ -23,74 +23,72 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaisService {
 
-    private final PaisMapper paisMapper;
-    private final PaisRepository paisRepository;
-    private final AuthenticationService authenticationService;
-    private final UserEmpresaService userEmpresaService;
-    private final EstadoRepository estadoRepository;
+	private final PaisMapper paisMapper;
+	private final PaisRepository paisRepository;
+	private final AuthenticationService authenticationService;
+	private final UserEmpresaService userEmpresaService;
+	private final EstadoRepository estadoRepository;
 
-    public List<PaisDTO> findAll() {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
-        return paisRepository.findByEmpresaIdOrderByIdAsc(empresa.getId())
-                .stream()
-                .map(paisMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	public List<PaisDTO> findAll() {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-    public List<PaisDTO> findAllAvailable() {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
-        return paisRepository.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2L)
-                .stream()
-                .map(paisMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+		return paisRepository.findByEmpresaIdOrderByIdAsc(empresa.getId()).stream().map(paisMapper::toListDto)
+				.collect(Collectors.toList());
+	}
 
-    public Optional<PaisDTO> findById(Long requestedId) {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
-        return paisRepository.findByIdAndEmpresaId(requestedId, empresa.getId())
-                .map(paisMapper::toDTO);
-    }
+	public List<PaisDTO> findAllAvailable() {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-    public PaisDTO create(PaisDTO paisDTO) {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+		return paisRepository.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2L).stream()
+				.map(paisMapper::toListDto).collect(Collectors.toList());
+	}
 
-        estadoRepository.findById(paisDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	public Optional<PaisDTO> findById(Long requestedId) {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-        paisDTO.setId(null);
-        paisDTO.setEmpresaId(empresa.getId());
+		return paisRepository.findByIdAndEmpresaId(requestedId, empresa.getId()).map(paisMapper::toListDto);
+	}
 
-        return paisMapper.toDTO(paisRepository.save(paisMapper.toEntity(paisDTO)));
-    }
+	public PaisDTO create(PaisDTO paisDTO) {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-    public void update(Long requestedId, PaisDTO paisDTO) {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+		estadoRepository.findById(paisDTO.getEstadoId())
+				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        paisRepository.findByIdAndEmpresaId(paisDTO.getId(), empresa.getId())
-                .orElseThrow(() -> new NotFoundException("Pais no encontrado"));
+		paisDTO.setId(null);
+		paisDTO.setEmpresaId(empresa.getId());
 
-        estadoRepository.findById(paisDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		return paisMapper.toDTO(paisRepository.save(paisMapper.toEntity(paisDTO)));
+	}
 
-        paisDTO.setId(requestedId);
-        paisDTO.setEmpresaId(empresa.getId());
+	public void update(Long requestedId, PaisDTO paisDTO) {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
-        paisRepository.save(paisMapper.toEntity(paisDTO));
-    }
+		paisRepository.findByIdAndEmpresaId(requestedId, empresa.getId())
+				.orElseThrow(() -> new NotFoundException("Pais no encontrado"));
 
-    public void delete(Long id) {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+		estadoRepository.findById(paisDTO.getEstadoId())
+				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        paisRepository.findByIdAndEmpresaId(id, empresa.getId())
-                .orElseThrow(() -> new NotFoundException("Pais no encontrado"));
+		paisDTO.setId(requestedId);
+		paisDTO.setEmpresaId(empresa.getId());
 
-        paisRepository.deleteById(id);
-    }
+		paisRepository.save(paisMapper.toEntity(paisDTO));
+	}
+
+	public void delete(Long id) {
+		User user = authenticationService.getAuthenticatedUser();
+		Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+
+		paisRepository.findByIdAndEmpresaId(id, empresa.getId())
+				.orElseThrow(() -> new NotFoundException("Pais no encontrado"));
+
+		paisRepository.deleteById(id);
+	}
 
 }
