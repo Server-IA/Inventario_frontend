@@ -48,4 +48,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/bloque/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildEspacioUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/espacio/{id}").buildAndExpand(id).toUri();
+	}
+
 }
