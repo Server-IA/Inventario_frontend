@@ -9,11 +9,10 @@ import com.coagronet.espacio.Espacio;
 
 public interface EspacioRepository extends JpaRepository<Espacio, Long> {
 
+	Optional<Espacio> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<Espacio> findByBloqueSedeEmpresaIdAndBloqueIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Integer bloqueId,
-            Integer estadoId);
+	List<Espacio> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<Espacio> findByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Integer estadoId);
+	List<Espacio> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
 
-    boolean existsByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Integer estadoId);
 }
