@@ -2,12 +2,8 @@ package com.coagronet.espacio.controllers;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,150 +15,55 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.bloque.repositories.BloqueRepository;
-import com.coagronet.empresa.Empresa;
-import com.coagronet.espacio.Espacio;
 import com.coagronet.espacio.dtos.EspacioDTO;
-import com.coagronet.espacio.mappers.EspacioMapper;
-import com.coagronet.espacio.repositories.EspacioRepository;
-import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.user.User;
-import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.repositories.UserRoleRepository;
-import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.espacio.services.EspacioService;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/espacio")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class EspacioController {
 
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+	private final EspacioService espacioService;
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @Autowired
-    private UserRepository userRepository;
+	@GetMapping
+	public ResponseEntity<List<EspacioDTO>> findAll() {
+		return ResponseEntity.ok(espacioService.findAll());
+	}
 
-    private final UserEmpresaService userEmpresaService;
+	@GetMapping(params = "available=true")
+	public ResponseEntity<List<EspacioDTO>> findAllAvailable() {
+		return ResponseEntity.ok(espacioService.findAllAvailable());
+	}
 
-    private final EspacioRepository espacioRepository;
-    private final EspacioMapper espacioMapper;
-    private final EstadoRepository estadoRepository;
-    private final BloqueRepository bloqueRepository;
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<EspacioDTO> findById(@PathVariable Long requestedId) {
+		return espacioService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
-    public EspacioController(
-            UserEmpresaService userEmpresaService, EspacioRepository espacioRepository,
-            EspacioMapper espacioMapper,
-            EstadoRepository estadoRepository,
-            BloqueRepository bloqueRepository) {
-        this.userEmpresaService = userEmpresaService;
-        this.espacioRepository = espacioRepository;
-        this.espacioMapper = espacioMapper;
-        this.estadoRepository = estadoRepository;
-        this.bloqueRepository = bloqueRepository;
-    }
+	@PostMapping
+	public ResponseEntity<Void> createEspacio(@Valid @RequestBody EspacioDTO espacioDTO, UriComponentsBuilder ucb) {
+		EspacioDTO savedEspacio = espacioService.create(espacioDTO);
+		URI locationOfNewEspacio = uriBuilderUtil.buildEspacioUri(savedEspacio.getId(), ucb);
+		return ResponseEntity.created(locationOfNewEspacio).build();
+	}
 
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateEspacio(@PathVariable Long requestedId,
+			@Valid @RequestBody EspacioDTO espacioDTO) {
+		espacioService.update(requestedId, espacioDTO);
+		return ResponseEntity.noContent().build();
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<EspacioDTO> findById(@PathVariable Long requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        return espacioRepository
-                .findByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
-                .map(espacioMapper::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/bloque/{bloqueId}")
-    public ResponseEntity<List<EspacioDTO>> findAllByBloqueId(
-            @PathVariable Integer bloqueId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
-        List<EspacioDTO> espacioDTOs = espacioRepository
-                .findByBloqueSedeEmpresaIdAndBloqueIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), bloqueId, 2)
-                .stream()
-                .map(espacioMapper::toDTO)
-                .collect(Collectors.toList());
-
-        return !espacioDTOs.isEmpty()
-                ? ResponseEntity.ok(espacioDTOs)
-                : ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/minimal/bloque/{bloqueId}")
-    public ResponseEntity<List<EspacioDTO>> findAllMinimalByBloqueId(@PathVariable Integer bloqueId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
-        List<EspacioDTO> espacioMinimalDTOs = espacioRepository
-                .findByBloqueSedeEmpresaIdAndBloqueIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), bloqueId, 2)
-                .stream()
-                .map(espacioMapper::toMinimalDTO)
-                .collect(Collectors.toList());
-
-        return !espacioMinimalDTOs.isEmpty()
-                ? ResponseEntity.ok(espacioMinimalDTOs)
-                : ResponseEntity.noContent().build();
-    }
-
-    @PostMapping
-    public ResponseEntity<Void> createEspacio(@RequestBody EspacioDTO newEspacioRequest, UriComponentsBuilder ucb) {
-        EspacioDTO newEspacio = new EspacioDTO(null, newEspacioRequest.getBloque(), newEspacioRequest.getTipoEspacio(),
-                newEspacioRequest.getNombre(), newEspacioRequest.getGeolocalizacion(),
-                newEspacioRequest.getCoordenadas(), newEspacioRequest.getDescripcion(), newEspacioRequest.getEstado());
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        if (bloqueRepository.existsByIdAndSedeEmpresaIdAndEstadoIdNot(newEspacio.getBloque(), empresa.getId(), 2L)) {
-            Espacio savedEspacio = espacioMapper.toEntity(newEspacio);
-            espacioRepository.save(savedEspacio);
-            URI locationOfNewEspacio = ucb
-                    .path("/api/v1/espacio/{id}")
-                    .buildAndExpand(savedEspacio.getId())
-                    .toUri();
-            return ResponseEntity.created(locationOfNewEspacio).build();
-        }
-        return ResponseEntity.badRequest().build();
-    }
-
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putEspacio(@PathVariable Long requestedId,
-            @RequestBody EspacioDTO espacioDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Espacio espacio = espacioRepository
-                .findByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
-                .orElse(null);
-        if (null != espacio) {
-            EspacioDTO updatedEspacioDTO = new EspacioDTO(requestedId, espacioDTOUpdate.getBloque(),
-                    espacioDTOUpdate.getTipoEspacio(),
-                    espacioDTOUpdate.getNombre(), espacioDTOUpdate.getGeolocalizacion(),
-                    espacioDTOUpdate.getCoordenadas(), espacioDTOUpdate.getDescripcion(), espacioDTOUpdate.getEstado());
-            Espacio updatedEspacio = espacioMapper.toEntity(updatedEspacioDTO);
-            espacioRepository.save(updatedEspacio);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEspacio(@PathVariable Long id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        if (espacioRepository.existsByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
-            Espacio espacio = espacioRepository.findById(id).orElse(null);
-            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
-            espacio.setEstado(estadoInactivo);
-            espacioRepository.save(espacio);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteEspacio(@PathVariable Long id) {
+		espacioService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }
