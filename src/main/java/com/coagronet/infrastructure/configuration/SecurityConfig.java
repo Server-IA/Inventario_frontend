@@ -46,7 +46,8 @@ public class SecurityConfig {
 						"/api/v1/tipo_espacio/**",
 						"/api/v1/tipo_sede/**",
 						"/api/v1/grupo/**",						
-						"/api/v1/sede/**")
+						"/api/v1/sede/**",
+						"/api/v1/bloque/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
 				.requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
