@@ -9,26 +9,10 @@ import com.coagronet.bloque.Bloque;
 
 public interface BloqueRepository extends JpaRepository<Bloque, Long> {
 
-        List<Bloque> findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(
-                        Long sedeId,
-                        Long estadoId,
-                        Long empresaId);
+	Optional<Bloque> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        Optional<Bloque> findByIdAndSedeEmpresaIdAndEstadoIdNot(
-                        Long id,
-                        Long empresaId,
-                        Long estadoId);
+	List<Bloque> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-        Optional<Bloque> findByIdAndSedeEmpresaId(
-                        Long id,
-                        Long empresaId);
+	List<Bloque> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
 
-        boolean existsByIdAndSedeEmpresaId(
-                        Long id,
-                        Long empresaId);
-
-        boolean existsByIdAndSedeEmpresaIdAndEstadoIdNot(
-                        Long id,
-                        Long empresaId,
-                        Long estadoId);
 }
