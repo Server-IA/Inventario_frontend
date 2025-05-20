@@ -3,30 +3,16 @@ package com.coagronet.almacen.repositories;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.almacen.Almacen;
 
-public interface AlmacenRepository extends JpaRepository<Almacen, Integer> {
+public interface AlmacenRepository extends JpaRepository<Almacen, Long> {
 
-        List<Almacen> findBySedeIdAndEstadoIdNotAndSedeEmpresaIdOrderByIdAsc(
-                        Long sedeId,
-                        Integer estadoId,
-                        Long empresaId);
+	Optional<Almacen> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        Page<Almacen> findBySedeIdAndEstadoIdNotAndSedeEmpresaId(
-                        Long sedeId,
-                        Integer estadoId,
-                        Long empresaId,
-                        Pageable pageable);
+	List<Almacen> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-        boolean existsByIdAndSedeEmpresaIdAndEstadoIdNot(
-                        Integer id,
-                        Long empresaId,
-                        Integer estadoId);
-
-        Optional<Almacen> findByIdAndSedeEmpresaIdAndEstadoIdNot(Integer id, Long empresaId, Integer estadoId);
+	List<Almacen> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
 
 }
