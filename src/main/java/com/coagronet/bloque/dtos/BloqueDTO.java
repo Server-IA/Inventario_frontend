@@ -16,6 +16,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BloqueDTO {
+
 	private Long id;
 
 	@NotNull(message = "La sede es obligatoria.")
