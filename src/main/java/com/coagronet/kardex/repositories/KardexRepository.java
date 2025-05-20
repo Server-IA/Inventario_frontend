@@ -10,17 +10,14 @@ import com.coagronet.kardex.Kardex;
 
 public interface KardexRepository extends JpaRepository<Kardex, Integer> {
 
-    Optional<Kardex> findByIdAndAlmacenSedeEmpresaId(
-            Integer id,
-            Long empresaId);
-
-    Page<Kardex> findByAlmacenSedeEmpresaIdAndEstadoIdNot(
-            Long empresaId,
-            Integer estadoId,
-            Pageable pageable);
-
-    boolean existsByIdAndAlmacenSedeEmpresaId(
-            Integer id,
-            Long empresaId);
+	/*
+	 * Optional<Kardex> findByIdAndAlmacenSedeEmpresaId( Integer id, Long
+	 * empresaId);
+	 * 
+	 * Page<Kardex> findByAlmacenSedeEmpresaIdAndEstadoIdNot( Long empresaId,
+	 * Integer estadoId, Pageable pageable);
+	 * 
+	 * boolean existsByIdAndAlmacenSedeEmpresaId( Integer id, Long empresaId);
+	 */
 
 }
