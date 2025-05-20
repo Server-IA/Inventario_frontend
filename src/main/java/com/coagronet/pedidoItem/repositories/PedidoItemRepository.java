@@ -8,20 +8,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.pedidoItem.PedidoItem;
 
-public interface PedidoItemRepository extends JpaRepository<PedidoItem, Long> {
-
-    Optional<PedidoItem> findByIdAndPedidoAlmacenSedeEmpresaId(
-            Long id,
-            Long empresaId);
-
-    Page<PedidoItem> findByPedidoIdAndPedidoAlmacenSedeEmpresaIdAndEstadoIdNot(
-            Integer pedidoId,
-            Long empresaId,
-            Integer estadoId,
-            Pageable pageable);
-
-    boolean existsByIdAndPedidoAlmacenSedeEmpresaId(
-            Long id,
-            Long empresaId);
+public interface PedidoItemRepository extends
+		JpaRepository<PedidoItem, Long> {/*
+											 * 
+											 * Optional<PedidoItem> findByIdAndPedidoAlmacenSedeEmpresaId( Long id, Long
+											 * empresaId);
+											 * 
+											 * Page<PedidoItem>
+											 * findByPedidoIdAndPedidoAlmacenSedeEmpresaIdAndEstadoIdNot( Integer
+											 * pedidoId, Long empresaId, Integer estadoId, Pageable pageable);
+											 * 
+											 * boolean existsByIdAndPedidoAlmacenSedeEmpresaId( Long id, Long
+											 * empresaId);
+											 */
 
 }
