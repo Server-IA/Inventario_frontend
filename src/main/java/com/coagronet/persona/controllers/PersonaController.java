@@ -2,6 +2,8 @@ package com.coagronet.persona.controllers;
 
 import java.net.URI;
 
+import com.coagronet.persona.services.PersonaService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -25,44 +27,22 @@ import com.coagronet.persona.repositories.PersonaRepository;
 @RestController
 @RequestMapping("/api/v1/persona")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class PersonaController {
 
-    private final PersonaRepository personaRepository;
+    private final PersonaService personaService;
     private final PersonaMapper personaMapper;
-
-    public PersonaController(
-            PersonaRepository personaRepository,
-            PersonaMapper personaMapper) {
-        this.personaRepository = personaRepository;
-        this.personaMapper = personaMapper;
-    }
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<PersonaDTO> findById(@PathVariable Long requestedId) {
-        return personaRepository
-                .findById(requestedId)
-                .map(personaMapper::toDto)
+        return personaService.findById(requestedId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     private ResponseEntity<Void> createPersona(@RequestBody PersonaDTO newPersonaRequest, UriComponentsBuilder ucb) {
-        PersonaDTO newPersona = new PersonaDTO(
-                null,
-                newPersonaRequest.getTipoIdentificacion(),
-                newPersonaRequest.getIdentificacion(),
-                newPersonaRequest.getNombre(),
-                newPersonaRequest.getApellido(),
-                newPersonaRequest.getGenero(),
-                newPersonaRequest.getFechaNacimiento(),
-                newPersonaRequest.getEstrato(),
-                newPersonaRequest.getDireccion(),
-                newPersonaRequest.getEmail(),
-                newPersonaRequest.getCelular(),
-                newPersonaRequest.getEstado());
-        Persona savedPersona = personaMapper.toEntity(newPersona);
-        personaRepository.save(savedPersona);
+        PersonaDTO savedPersona = personaService.create(newPersonaRequest);
         URI locationOfNewPersona = ucb
                 .path("/api/v1/personas/{id}")
                 .buildAndExpand(savedPersona.getId())
@@ -70,51 +50,23 @@ public class PersonaController {
         return ResponseEntity.created(locationOfNewPersona).build();
     }
 
-    @GetMapping
-    private ResponseEntity<Page<PersonaDTO>> findAll(@PageableDefault Pageable pageable) {
-        Page<PersonaDTO> page = personaRepository.findByEstadoIdNot(2, pageable)
-                .map(personaMapper::toDto);
-        return page.hasContent()
-                ? ResponseEntity.ok(page)
-                : ResponseEntity.noContent().build();
-    }
+        @GetMapping
+        private ResponseEntity<Page<PersonaDTO>> findAll(@PageableDefault Pageable pageable) {
+            Page<PersonaDTO> personas = personaService.findAll(pageable);
+            return ResponseEntity.ok(personas);
+        }
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putPersona(@PathVariable Long requestedId,
             @RequestBody PersonaDTO personaDTOUpdate) {
-        Persona persona = personaRepository.findById(requestedId).orElse(null);
-        if (null != persona) {
-            PersonaDTO updatedPersonaDTO = new PersonaDTO(
-                    requestedId,
-                    personaDTOUpdate.getTipoIdentificacion(),
-                    personaDTOUpdate.getIdentificacion(),
-                    personaDTOUpdate.getNombre(),
-                    personaDTOUpdate.getApellido(),
-                    personaDTOUpdate.getGenero(),
-                    personaDTOUpdate.getFechaNacimiento(),
-                    personaDTOUpdate.getEstrato(),
-                    personaDTOUpdate.getDireccion(),
-                    personaDTOUpdate.getEmail(),
-                    personaDTOUpdate.getCelular(),
-                    personaDTOUpdate.getEstado());
-            Persona updatedPersona = personaMapper.toEntity(updatedPersonaDTO);
-            personaRepository.save(updatedPersona);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        personaService.update(requestedId, personaDTOUpdate);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deletePersona(@PathVariable Long id) {
-        try {
-            if (personaRepository.existsById(id)) {
-                personaRepository.deleteById(id);
-                return ResponseEntity.noContent().build();
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+      personaService.delete(id);
+      return ResponseEntity.ok().build();
     }
 
 }

@@ -36,7 +36,9 @@ public class SecurityConfig {
 						"/auth/**")
 				.permitAll()
 				.requestMatchers("/api/v1/tipo_identificacion/**",
-						"/api/v1/estado/**")
+						"/api/v1/estado/**",
+						"/api/v1/persona/**"
+						)
 				.hasAnyRole("ADMINISTRADOR_SISTEMA")
 				.requestMatchers("/api/v1/pais/**",
 						"/api/v1/departamento/**",
