@@ -52,4 +52,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/espacio/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildAlmacenUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/almacen/{id}").buildAndExpand(id).toUri();
+	}
+
 }
