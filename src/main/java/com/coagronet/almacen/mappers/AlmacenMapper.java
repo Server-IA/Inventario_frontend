@@ -2,26 +2,26 @@ package com.coagronet.almacen.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 import com.coagronet.almacen.Almacen;
 import com.coagronet.almacen.dtos.AlmacenDTO;
-import com.coagronet.almacen.dtos.AlmacenMinimalDTO;
 
 @Mapper(componentModel = "spring")
 public interface AlmacenMapper {
 
-    AlmacenMapper INSTANCE = Mappers.getMapper(AlmacenMapper.class);
+	@Mapping(source = "espacio.id", target = "espacioId")
+	@Mapping(source = "estado.id", target = "estadoId")
+	@Mapping(source = "empresa.id", target = "empresaId")
+	AlmacenDTO toDTO(Almacen almacen);
 
-    @Mapping(source = "sede.id", target = "sedeId")
-    @Mapping(source = "estado.id", target = "estadoId")
-    @Mapping(source = "espacio.id", target = "espacioId")
-    AlmacenDTO toDTO(Almacen almacen);
+	@Mapping(source = "espacioId", target = "espacio.id")
+	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(source = "empresaId", target = "empresa.id")
+	Almacen toEntity(AlmacenDTO almacenDTO);
 
-    AlmacenMinimalDTO toMinimalDTO(Almacen almacen);
+	@Mapping(source = "espacio.id", target = "espacioId")
+	@Mapping(source = "estado.id", target = "estadoId")
+	@Mapping(ignore = true, target = "empresaId")
+	AlmacenDTO toListDto(Almacen almacen);
 
-    @Mapping(source = "sedeId", target = "sede.id")
-    @Mapping(source = "estadoId", target = "estado.id")
-    @Mapping(source = "espacioId", target = "espacio.id")
-    Almacen toEntity(AlmacenDTO almacenDTO);
 }
