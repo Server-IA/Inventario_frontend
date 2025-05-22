@@ -32,22 +32,29 @@ import com.coagronet.email.services.EmailVerificationService;
 import com.coagronet.role.Role;
 import com.coagronet.role.repositories.RoleRepository;
 import com.coagronet.user.User;
+import com.coagronet.user.dtos.ApiResponse;
+import com.coagronet.user.dtos.ChangePasswordRequestDTO;
+import com.coagronet.user.dtos.ForgotPasswordRequestDTO;
+import com.coagronet.user.dtos.LoginRequestDTO;
 import com.coagronet.user.dtos.RegisterRequestDTO;
+import com.coagronet.user.dtos.ResetPasswordRequestDTO;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
 	@Value("${jwt.default_role}")
-	private String default_role;
+	private String defaultRole;
 
 	private final PasswordEncoder passwordEncoder;
 	private final RoleRepository roleRepository;
@@ -58,73 +65,38 @@ public class AuthController {
 	private final AuthenticationManager authenticationManager;
 
 	@PostMapping("/register")
-	public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
-		// Validar si ya existe un usuario con ese email
+	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
 		if (userRepository.existsByUsername(registerRequest.getUsername())) {
-			return ResponseEntity.badRequest().body("Email is already in use.");
+			return ResponseEntity.badRequest().body(new ApiResponse(false, "Email ya está en uso."));
 		}
 
-		// Crear el usuario
 		User user = new User();
 		user.setUsername(registerRequest.getUsername());
 		user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
 
-		// Asignar rol
-		Role userRole = roleRepository.findByName(default_role)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+		Role userRole = roleRepository.findByName(defaultRole)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
 		user.setRoles(Set.of(userRole));
 
-		// Guardar el usuario
 		userRegistrationService.registerUser(user);
 
-		// Crear y enviar el token de verificación
 		String token = emailVerificationService.createVerificationToken(user.getUsername());
 		emailVerificationService.sendVerificationEmail(user.getUsername(), token);
 
-		return ResponseEntity.ok("Verification email sent to " + user.getUsername());
-	}
-
-	@PostMapping("/change-password")
-	public ResponseEntity<?> changePassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
-		String username = getUserName();
-		User user = userRepository.findByUsername(username)
-				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Contraseña antigua incorrecta");
-		} else {
-			user.setPassword(passwordEncoder.encode(newPassword));
-			userRepository.save(user);
-			return ResponseEntity.ok("Contraseña cambiada exitosamente");
-		}
-	}
-
-	@GetMapping("/verify")
-	public ResponseEntity<String> verifyUser(@RequestParam String token) {
-		boolean isVerified = userRegistrationService.activateUser(token);
-		if (isVerified) {
-			return ResponseEntity.ok("User activated successfully");
-		} else {
-			return ResponseEntity.status(400).body("Invalid verification link");
-		}
+		return ResponseEntity.ok(new ApiResponse(true, "Correo de verificación enviado a " + user.getUsername()));
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody User user) {
-		// Autenticar al usuario
+	public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO request) {
 		Authentication authentication = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+				.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-		// Establecer en el contexto de seguridad
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		// Obtener usuario autenticado
 		User authenticatedUser = (User) authentication.getPrincipal();
 
-		// Generar el token
-		String token = jwtService.createJwtToken(user.getUsername(), user.getPassword());
+		String token = jwtService.createJwtToken(request.getUsername(), request.getPassword());
 
-		// Respuesta
 		Map<String, Object> response = new HashMap<>();
 		response.put("token", token);
 		response.put("usuarioEstado", authenticatedUser.getUsuarioEstado().getId());
@@ -132,40 +104,57 @@ public class AuthController {
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/roles")
-	public Set<String> getUserRoles() {
-		System.out.println("roles()");
+	@PostMapping("/change-password")
+	public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody ChangePasswordRequestDTO dto) {
+		String username = getUserName();
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-
-			System.out.println("aquiii");
-			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-			System.out.println(userDetails);
-
-			return userDetails.getAuthorities().stream().map(grantedAuthority -> grantedAuthority.getAuthority())
-					.collect(Collectors.toSet());
+		if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+			return ResponseEntity.badRequest().body(new ApiResponse(false, "Contraseña antigua incorrecta"));
 		}
-		return null;
+
+		user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+		userRepository.save(user);
+
+		return ResponseEntity.ok(new ApiResponse(true, "Contraseña cambiada exitosamente"));
 	}
 
-	private String getUserName() {
-		String currentUserName = "";
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (!(authentication instanceof AnonymousAuthenticationToken)) {
-			// return authentication.getName();
-			currentUserName = authentication.getName();
+	@GetMapping("/verify")
+	public ResponseEntity<ApiResponse> verifyUser(@RequestParam String token) {
+		boolean isVerified = userRegistrationService.activateUser(token);
+		if (isVerified) {
+			return ResponseEntity.ok(new ApiResponse(true, "Usuario activado correctamente"));
 		}
-		return currentUserName;
+		return ResponseEntity.badRequest().body(new ApiResponse(false, "Enlace de verificación inválido"));
 	}
 
-	@GetMapping("/home")
-	public String home() {
+	@PostMapping("/forgot-password")
+	public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO dto) {
+		User user = userRepository.findByUsername(dto.getEmail())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-		String userName = this.getUserName();
-		return "Welcome to the home page! UserName: " + userName;
+		String token = emailVerificationService.createVerificationToken(user.getUsername());
+		emailVerificationService.sendResetPasswordEmail(user.getUsername(), token);
+
+		return ResponseEntity.ok(new ApiResponse(true, "Correo de recuperación enviado"));
+	}
+
+	@PostMapping("/reset-password")
+	public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO dto) {
+		String username = emailVerificationService.getEmailAndInvalidateToken(dto.getToken());
+		if (username == null) {
+			return ResponseEntity.badRequest()
+					.body(new ApiResponse(false, "Enlace de recuperación inválido o expirado"));
+		}
+
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+		user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+		userRepository.save(user);
+
+		return ResponseEntity.ok(new ApiResponse(true, "Contraseña restablecida exitosamente"));
 	}
 
 	@PostMapping("/logout")
@@ -177,31 +166,26 @@ public class AuthController {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 
-	@PostMapping("/forgot-password")
-	public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-		User user = userRepository.findByUsername(email)
-				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-		String token = emailVerificationService.createVerificationToken(user.getUsername());
-		emailVerificationService.sendResetPasswordEmail(user.getUsername(), token);
-
-		return ResponseEntity.ok("Correo de recuperación de contraseña enviado");
-	}
-
-	@PostMapping("/reset-password")
-	public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-		String username = emailVerificationService.getEmailAndInvalidateToken(token);
-		if (username == null) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enlace de recuperación inválido o expirado");
+	@GetMapping("/roles")
+	public Set<String> getUserRoles() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+			return userDetails.getAuthorities().stream().map(authority -> authority.getAuthority())
+					.collect(Collectors.toSet());
 		}
-
-		User user = userRepository.findByUsername(username)
-				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-		user.setPassword(passwordEncoder.encode(newPassword));
-		userRepository.save(user);
-
-		return ResponseEntity.ok("Contraseña restablecida exitosamente");
+		return Set.of();
 	}
 
+	@GetMapping("/home")
+	public String home() {
+		return "Welcome to the home page! UserName: " + getUserName();
+	}
+
+	private String getUserName() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication instanceof AnonymousAuthenticationToken || authentication == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado");
+		}
+		return authentication.getName();
+	}
 }
