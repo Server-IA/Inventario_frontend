@@ -22,11 +22,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "verification_tokens", uniqueConstraints = {
-        @UniqueConstraint(name = "verification_tokens_email_unique", columnNames = "email")
+        @UniqueConstraint(name = "verification_tokens_vet_email_key", columnNames = "email")
 })
 public class VerificationToken {
+
     @Id
-    @SequenceGenerator(name = "verification_tokens_sequence", sequenceName = "verification_tokens_sequence", allocationSize = 1)
+    @SequenceGenerator(name = "verification_tokens_sequence", sequenceName = "verification_tokens_vet_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "verification_tokens_sequence")
     @Column(name = "vet_id", nullable = false, updatable = false)
     private Long id;
@@ -43,4 +44,5 @@ public class VerificationToken {
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiryDate);
     }
+
 }
