@@ -56,4 +56,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/almacen/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildProductoCategoriaUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/producto_categoria/{id}").buildAndExpand(id).toUri();
+	}
+
 }
