@@ -55,6 +55,7 @@ public class TipoBloqueService {
                 .map(tipoBloqueMapper::toMinimalDTO)
                 .collect(Collectors.toList());
     }
+
     @Transactional
     public TipoBloqueDTO create(TipoBloqueDTO tipoBloqueDTO){
         User authenticatedUser = authenticationService.getAuthenticatedUser();
@@ -66,6 +67,7 @@ public class TipoBloqueService {
         tipoBloque = tipoBloqueRepository.save(tipoBloque);
         return tipoBloqueMapper.toDTO(tipoBloque);
     }
+
     @Transactional
     public void update(Long requestedId, TipoBloqueDTO tipoBloqueDTO){
         User authenticatedUser = authenticationService.getAuthenticatedUser();
@@ -84,7 +86,7 @@ public class TipoBloqueService {
         tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO));
     }
 
-
+    @Transactional
     public void delete(Long id){
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);

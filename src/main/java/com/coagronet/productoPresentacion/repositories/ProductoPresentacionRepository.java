@@ -9,29 +9,17 @@ import org.springframework.stereotype.Repository;
 
 import com.coagronet.productoPresentacion.ProductoPresentacion;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
-public interface ProductoPresentacionRepository extends JpaRepository<ProductoPresentacion, Integer> {
+public interface ProductoPresentacionRepository extends JpaRepository<ProductoPresentacion, Long> {
 
-        @Query("SELECT p FROM ProductoPresentacion p WHERE p.id = :id AND p.estado.id != :estadoId")
-        ProductoPresentacion findByIdAndEstadoNot(@Param("id") Integer id, @Param("estadoId") Integer estadoId);
 
-        @Query("SELECT p FROM ProductoPresentacion p WHERE p.estado.id != :estadoId")
-        Page<ProductoPresentacion> findByEstadoNot(@Param("estadoId") Integer estadoId, Pageable pageable);
+        List<ProductoPresentacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-        Page<ProductoPresentacion> findByProductoEmpresaIdAndEstadoIdNot(
-                        Long empresaId,
-                        Integer estadoId,
-                        Pageable pageable);
+        Optional<ProductoPresentacion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM ProductoPresentacion p WHERE p.id = :id AND p.estado.id != :estadoId")
-        boolean existsByIdAndEstadoNot(@Param("id") Integer id, @Param("estadoId") Integer estadoId);
 
-        boolean existsByIdAndProductoEmpresaId(
-                        Integer id,
-                        Long empresaId);
 
-        boolean existsByIdAndProductoEmpresaIdAndEstadoIdNot(
-                        Integer id,
-                        Long empresaId,
-                        Integer estadoId);
 }

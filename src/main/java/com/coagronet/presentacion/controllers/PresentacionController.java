@@ -3,10 +3,10 @@ package com.coagronet.presentacion.controllers;
 import java.net.URI;
 import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import com.coagronet.presentacion.dtos.PresentacionDTO;
+import com.coagronet.presentacion.services.PresentacionService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,50 +20,46 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.presentacion.Presentacion;
-import com.coagronet.presentacion.repositories.PresentacionRepository;
 
 @RestController
-@RequestMapping("/api/v1/presentaciones")
+@RequestMapping("/api/v1/presentacion")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class PresentacionController {
 
-    private final PresentacionRepository presentacionRepository;
+    private final PresentacionService presentacionService;
 
-    private PresentacionController(PresentacionRepository presentacionRepository) {
-        this.presentacionRepository = presentacionRepository;
-    }
-
-    private Presentacion findPresentacion(Long requestedId, Integer estado) {
-        return presentacionRepository.findByIdAndEstado(requestedId, 1);
-    }
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<Presentacion> findById(@PathVariable Long requestedId, Integer estado) {
-        Presentacion presentacion = findPresentacion(requestedId, 1);
-        if (presentacion != null) {
-            return ResponseEntity.ok(presentacion);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    private ResponseEntity<PresentacionDTO> findById(@PathVariable Long requestedId) {
+        return presentacionService.findById(requestedId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<Presentacion>> findAll(Pageable pageable, Integer estado) {
-        Page<Presentacion> page = presentacionRepository.findAllByEstado(1, PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                pageable.getSortOr(Sort.by(Sort.Direction.ASC, "id"))));
-        return ResponseEntity.ok(page.getContent());
+    public ResponseEntity<List<PresentacionDTO>> findAll() {
+        List<PresentacionDTO> presentacionDTOList = presentacionService.findAll();
+        return presentacionDTOList.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(presentacionDTOList);
+    }
+
+    @GetMapping("/minimal")
+    public ResponseEntity<List<PresentacionDTO>> findAllMinimal() {
+        List<PresentacionDTO> presentacionDTOList = presentacionService.findAllMinimal();
+        return presentacionDTOList.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(presentacionDTOList);
     }
 
     @PostMapping
-    private ResponseEntity<Void> createPresentacion(@RequestBody Presentacion newPresentacionRequest,
+    public ResponseEntity<Void> createPresentacion(@Valid @RequestBody PresentacionDTO newPresentacionRequest,
             UriComponentsBuilder ucb) {
-        Presentacion presentacion = new Presentacion(null, newPresentacionRequest.getNombre(),
-                newPresentacionRequest.getDescripcion(), newPresentacionRequest.getEstado());
-        Presentacion savedPresentacion = presentacionRepository.save(presentacion);
+
+        PresentacionDTO savedPresentacion = presentacionService.create(newPresentacionRequest);
         URI locationOfNewPresentacion = ucb
-                .path("presentaciones/{id}")
+                .path("/{id}")
                 .buildAndExpand(savedPresentacion.getId())
                 .toUri();
         return ResponseEntity.created(locationOfNewPresentacion).build();
@@ -71,25 +67,15 @@ public class PresentacionController {
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putPresentacion(@PathVariable Long requestedId,
-            @RequestBody Presentacion presentacionUpdate, Integer estado) {
-        Presentacion presentacion = findPresentacion(requestedId, 1);
-        if (null != presentacion) {
-            Presentacion updatedPresentacion = new Presentacion(presentacion.getId(), presentacionUpdate.getNombre(),
-                    presentacionUpdate.getDescripcion(), presentacionUpdate.getEstado());
-            presentacionRepository.save(updatedPresentacion);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+                                                 @Valid @RequestBody PresentacionDTO presentacionUpdate) {
+
+        presentacionService.update(requestedId, presentacionUpdate);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deletePresentacion(@PathVariable Long id) {
-        if (presentacionRepository.existsById(id)) {
-            Presentacion presentacion = presentacionRepository.findPresentacionById(id);
-            presentacion.setEstado(2);
-            presentacionRepository.save(presentacion);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        presentacionService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

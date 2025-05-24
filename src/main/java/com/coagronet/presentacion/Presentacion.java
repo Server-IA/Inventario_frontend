@@ -1,11 +1,8 @@
 package com.coagronet.presentacion;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
+import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +25,12 @@ public class Presentacion {
     @Column(name = "pre_descripcion", length = 500)
     private String descripcion;
 
-    @Column(name = "pre_estado", columnDefinition = "integer default 1")
-    private Integer estado;
+    @ManyToOne
+    @JoinColumn(name = "pre_estado_id", referencedColumnName = "est_id")
+    private Estado estado;
+
+    @ManyToOne
+    @JoinColumn(name = "pre_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }

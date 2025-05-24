@@ -1,5 +1,6 @@
 package com.coagronet.productoPresentacion;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.marca.Marca;
 import com.coagronet.presentacion.Presentacion;
@@ -31,7 +32,7 @@ public class ProductoPresentacion {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prp_generator")
     @SequenceGenerator(name = "prp_generator", sequenceName = "producto_presentacion_prp_id_seq", allocationSize = 1)
     @Column(name = "prp_id")
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "prp_producto_id")
@@ -48,7 +49,7 @@ public class ProductoPresentacion {
     private String descripcion;
 
     @ManyToOne
-    @JoinColumn(name = "prp_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "prp_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 
     @Column(name = "prp_cantidad")
@@ -61,5 +62,12 @@ public class ProductoPresentacion {
     @ManyToOne
     @JoinColumn(name = "prp_presentacion_id")
     private Presentacion presentacion;
+
+    @ManyToOne
+    @JoinColumn(name = "prp_empresa_id")
+    private Empresa empresa;
+
+    @Column(name = "prp_ingrediente_id")
+    private Long ingredienteId;
 
 }

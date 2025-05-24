@@ -36,23 +36,23 @@ public class TipoBloqueController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<Void> createTipoBloque(@RequestBody TipoBloqueDTO newTipoBloqueRequest,
-            UriComponentsBuilder ucb) {
-        TipoBloqueDTO savedTipoBloque = tipoBloqueService.create(newTipoBloqueRequest);
-        URI locationOfNewTipoBloque = ucb
-                .path("/api/v1/tipo_bloque/{id}")
-                .buildAndExpand(savedTipoBloque.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewTipoBloque).build();
-    }
-
     @GetMapping
     public ResponseEntity<List<TipoBloqueDTO>> findAll() {
         List<TipoBloqueDTO> tipoBloques = tipoBloqueService.findAll();
         return tipoBloques.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(tipoBloques);
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> createTipoBloque(@RequestBody TipoBloqueDTO newTipoBloqueRequest,
+                                                 UriComponentsBuilder ucb) {
+        TipoBloqueDTO savedTipoBloque = tipoBloqueService.create(newTipoBloqueRequest);
+        URI locationOfNewTipoBloque = ucb
+                .path("/api/v1/tipo_bloque/{id}")
+                .buildAndExpand(savedTipoBloque.getId())
+                .toUri();
+        return ResponseEntity.created(locationOfNewTipoBloque).build();
     }
 
     @GetMapping("/minimal")
@@ -67,12 +67,12 @@ public class TipoBloqueController {
     public ResponseEntity<Void> putTipoBloque(@PathVariable Long requestedId,
             @RequestBody TipoBloqueDTO tipoBloqueDTOUpdate) {
         tipoBloqueService.update(requestedId, tipoBloqueDTOUpdate);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTipoBloque(@PathVariable Long id) {
         tipoBloqueService.delete(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }
