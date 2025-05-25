@@ -13,24 +13,15 @@ import com.coagronet.unidad.dtos.UnidadDTO;
 @Mapper(componentModel = "spring")
 public interface UnidadMapper {
 
-    UnidadMapper INSTANCE = Mappers.getMapper(UnidadMapper.class);
 
-    @Mapping(source = "empresa.id", target = "empresa")
-    @Mapping(source = "estado.id", target = "estado")
+    @Mapping(source = "empresa.id", target = "empresaId")
+    @Mapping(source = "estado.id", target = "estadoId")
     UnidadDTO toDTO(Unidad unidad);
 
-    @Mapping(source = "empresa", target = "empresa.id")
-    @Mapping(source = "estado", target = "estado.id")
+    @Mapping(source = "empresaId", target = "empresa.id")
+    @Mapping(source = "estadoId", target = "estado.id")
     Unidad toEntity(UnidadDTO unidadDTO);
 
-    @AfterMapping
-    default void setEstadoAfterMapping(@MappingTarget Unidad unidad,
-            UnidadDTO unidadDTO) {
-        if (unidad.getEstado() == null && unidadDTO.getEstado() != null) {
-            Estado estado = new Estado();
-            estado.setId(unidadDTO.getEstado());
-            unidad.setEstado(estado);
-        }
-    }
+
 
 }

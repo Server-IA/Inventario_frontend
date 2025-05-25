@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.presentacion.Presentacion;
 
 @RestController
 @RequestMapping("/api/v1/presentacion")
@@ -45,24 +44,18 @@ public class PresentacionController {
                 : ResponseEntity.ok(presentacionDTOList);
     }
 
-    @GetMapping("/minimal")
-    public ResponseEntity<List<PresentacionDTO>> findAllMinimal() {
-        List<PresentacionDTO> presentacionDTOList = presentacionService.findAllMinimal();
-        return presentacionDTOList.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(presentacionDTOList);
-    }
 
     @PostMapping
-    public ResponseEntity<Void> createPresentacion(@Valid @RequestBody PresentacionDTO newPresentacionRequest,
+    public ResponseEntity<PresentacionDTO> createPresentacion(@Valid @RequestBody PresentacionDTO newPresentacionRequest,
             UriComponentsBuilder ucb) {
 
         PresentacionDTO savedPresentacion = presentacionService.create(newPresentacionRequest);
+
         URI locationOfNewPresentacion = ucb
                 .path("/{id}")
                 .buildAndExpand(savedPresentacion.getId())
                 .toUri();
-        return ResponseEntity.created(locationOfNewPresentacion).build();
+        return ResponseEntity.created(locationOfNewPresentacion).body(savedPresentacion);
     }
 
     @PutMapping("/{requestedId}")

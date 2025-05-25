@@ -30,20 +30,20 @@ public class Unidad {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "unidad_generator")
     @SequenceGenerator(name = "unidad_generator", sequenceName = "unidad_uni_id_seq", allocationSize = 1)
     @Column(name = "uni_id", nullable = false)
-    private Integer id;
+    private Long id;
 
-    @Column(name = "uni_nombre", length = 255)
+    @Column(name = "uni_nombre")
     private String nombre;
 
     @Column(name = "uni_descripcion", length = 500)
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uni_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "uni_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uni_empresa", referencedColumnName = "emp_id")
+    @JoinColumn(name = "uni_empresa_id", referencedColumnName = "emp_id")
     private Empresa empresa;
 
 }

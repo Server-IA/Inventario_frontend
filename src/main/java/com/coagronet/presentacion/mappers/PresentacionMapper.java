@@ -12,11 +12,6 @@ public interface PresentacionMapper {
     @Mapping(source = "empresa.id", target = "empresaId")
     PresentacionDTO toDTO (Presentacion presentacion);
 
-    @Mapping(target = "estadoId", ignore = true)
-    @Mapping(target = "empresaId", ignore = true)
-    @Mapping(target = "descripcion", ignore = true)
-    PresentacionDTO toMinimalDTO (Presentacion presentacion);
-
     @Mapping(source = "estadoId", target = "estado.id")
     @Mapping(source = "empresaId", target = "empresa.id")
     Presentacion toEntity (PresentacionDTO presentacionDTO);

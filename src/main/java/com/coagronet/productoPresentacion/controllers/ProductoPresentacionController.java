@@ -22,7 +22,7 @@ import com.coagronet.productoPresentacion.dtos.ProductoPresentacionDTO;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api/v1/producto-presentacion")
+@RequestMapping("/api/v1/producto_presentacion")
 @RequiredArgsConstructor
 public class ProductoPresentacionController {
 

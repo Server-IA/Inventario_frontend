@@ -2,10 +2,10 @@ package com.coagronet.unidad.controllers;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import com.coagronet.utils.AuthenticationService;
-import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.unidad.services.UnidadService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,128 +19,62 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.unidad.Unidad;
-import com.coagronet.unidad.dtos.UnidadDTO;
-import com.coagronet.unidad.mappers.UnidadMapper;
-import com.coagronet.unidad.repositories.UnidadRepository;
-import com.coagronet.user.User;
-import com.coagronet.user.repositories.UserRepository;
 
-import com.coagronet.userRole.repositories.UserRoleRepository;
+import com.coagronet.unidad.dtos.UnidadDTO;
+
 
 @RestController
 @RequestMapping("/api/v1/unidad")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class UnidadController {
 
-    private final UnidadRepository unidadRepository;
-    private final UnidadMapper unidadMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserRoleRepository userRoleRepository;
-    private final UserRepository userRepository;
-    private final UserEmpresaService userEmpresaService;
-    private final AuthenticationService authenticationService;
+    private final UnidadService unidadService;
 
-    private UnidadController(
-            UnidadRepository unidadRepository,
-            UnidadMapper unidadMapper,
-            EstadoRepository estadoRepository,
-            UserRoleRepository userRoleRepository,
-            UserRepository userRepository, UserEmpresaService userEmpresaService, AuthenticationService authenticationService) {
-        this.unidadRepository = unidadRepository;
-        this.unidadMapper = unidadMapper;
-        this.estadoRepository = estadoRepository;
-        this.userRoleRepository = userRoleRepository;
-        this.userRepository = userRepository;
-        this.userEmpresaService = userEmpresaService;
-        this.authenticationService = authenticationService;
-    }
 
 
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<UnidadDTO> findById(@PathVariable Integer requestedId) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        return unidadRepository.findByIdAndEmpresaIdAndEstadoIdNot(
-                requestedId,
-                empresa.getId(),
-                2)
-                .map(unidadMapper::toDTO)
+    private ResponseEntity<UnidadDTO> findById(@PathVariable Long requestedId) {
+        return unidadService.findById(requestedId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    private ResponseEntity<Void> createUnidad(@RequestBody UnidadDTO newUnidadRequest,
-            UriComponentsBuilder ucb) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        UnidadDTO newUnidad = new UnidadDTO(
-                null,
-                newUnidadRequest.getNombre(),
-                newUnidadRequest.getDescripcion(),
-                newUnidadRequest.getEstado(),
-                empresa.getId());
-        Unidad savedUnidad = unidadMapper.toEntity(newUnidad);
-        unidadRepository.save(savedUnidad);
-        URI locationOfNewUnidad = ucb
-                .path("/api/v1/unidad/{id}")
-                .buildAndExpand(savedUnidad.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewUnidad).build();
-    }
-
     @GetMapping
     private ResponseEntity<List<UnidadDTO>> findAll() {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
+        List<UnidadDTO> unidadDTOList = unidadService.findAll();
 
-        List<UnidadDTO> unidadDTOs = unidadRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
-                .stream()
-                .map(unidadMapper::toDTO)
-                .collect(Collectors.toList());
-
-        return unidadDTOs.isEmpty()
+        return unidadDTOList.isEmpty()
                 ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(unidadDTOs);
+                : ResponseEntity.ok(unidadDTOList);
     }
 
+    @PostMapping
+    private ResponseEntity<UnidadDTO> createUnidad(@Valid @RequestBody UnidadDTO newUnidadRequest,
+            UriComponentsBuilder ucb) {
+
+        UnidadDTO savedUnidad = unidadService.create(newUnidadRequest);
+
+        URI locationOfNewUnidad = ucb
+                .path("/{id}")
+                .buildAndExpand(savedUnidad.getId())
+                .toUri();
+        return ResponseEntity.created(locationOfNewUnidad).body(savedUnidad);
+    }
+
+
+
     @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putUnidad(@PathVariable Integer requestedId, @RequestBody UnidadDTO unidadDTOUpdate) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Unidad unidad = unidadRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
-                .orElse(null);
-        if (null != unidad) {
-            UnidadDTO updateUnidadDTO = new UnidadDTO(
-                    requestedId,
-                    unidadDTOUpdate.getNombre(),
-                    unidadDTOUpdate.getDescripcion(),
-                    unidadDTOUpdate.getEstado(),
-                    empresa.getId());
-            Unidad updatedUnidad = unidadMapper.toEntity(updateUnidadDTO);
-            unidadRepository.save(updatedUnidad);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    private ResponseEntity<Void> putUnidad(@PathVariable Long requestedId, @Valid @RequestBody UnidadDTO unidadDTOUpdate) {
+
+        unidadService.update(requestedId, unidadDTOUpdate);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteUnidad(@PathVariable Integer id) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        if (unidadRepository.existsByIdAndEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
-            Unidad unidad = unidadRepository.findById(id).orElse(null);
-            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
-            unidad.setEstado(estadoInactivo);
-            unidadRepository.save(unidad);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    private ResponseEntity<Void> deleteUnidad(@PathVariable Long id) {
+        unidadService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
