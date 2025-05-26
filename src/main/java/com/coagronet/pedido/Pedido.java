@@ -3,6 +3,7 @@ package com.coagronet.pedido;
 import java.time.LocalDateTime;
 
 import com.coagronet.almacen.Almacen;
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.produccion.Produccion;
 
@@ -33,7 +34,7 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pedido_generator")
     @SequenceGenerator(name = "pedido_generator", sequenceName = "pedido_id_seq", allocationSize = 1)
     @Column(name = "ped_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "ped_fecha_hora")
     private LocalDateTime fechaHora;
@@ -50,7 +51,11 @@ public class Pedido {
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ped_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "ped_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ped_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }

@@ -35,14 +35,14 @@ public class UnidadController {
 
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<UnidadDTO> findById(@PathVariable Long requestedId) {
+    public ResponseEntity<UnidadDTO> findById(@PathVariable Long requestedId) {
         return unidadService.findById(requestedId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    private ResponseEntity<List<UnidadDTO>> findAll() {
+    public ResponseEntity<List<UnidadDTO>> findAll() {
         List<UnidadDTO> unidadDTOList = unidadService.findAll();
 
         return unidadDTOList.isEmpty()
@@ -51,7 +51,7 @@ public class UnidadController {
     }
 
     @PostMapping
-    private ResponseEntity<UnidadDTO> createUnidad(@Valid @RequestBody UnidadDTO newUnidadRequest,
+    public ResponseEntity<Void> createUnidad(@Valid @RequestBody UnidadDTO newUnidadRequest,
             UriComponentsBuilder ucb) {
 
         UnidadDTO savedUnidad = unidadService.create(newUnidadRequest);
@@ -60,20 +60,20 @@ public class UnidadController {
                 .path("/{id}")
                 .buildAndExpand(savedUnidad.getId())
                 .toUri();
-        return ResponseEntity.created(locationOfNewUnidad).body(savedUnidad);
+        return ResponseEntity.created(locationOfNewUnidad).build();
     }
 
 
 
     @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putUnidad(@PathVariable Long requestedId, @Valid @RequestBody UnidadDTO unidadDTOUpdate) {
+    public ResponseEntity<Void> putUnidad(@PathVariable Long requestedId, @Valid @RequestBody UnidadDTO unidadDTOUpdate) {
 
         unidadService.update(requestedId, unidadDTOUpdate);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteUnidad(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUnidad(@PathVariable Long id) {
         unidadService.delete(id);
         return ResponseEntity.noContent().build();
     }

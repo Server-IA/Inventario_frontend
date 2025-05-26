@@ -2,6 +2,8 @@ package com.coagronet.pedido.dtos;
 
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,10 +12,20 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class PedidoDTO {
-    private Integer id;
+    private Long id;
     private LocalDateTime fechaHora;
-    private Integer almacen;
-    private Integer produccion;
+
+    @NotNull
+    private Long almacenId;
+
+    @NotNull
+    private Long produccionId;
+
+    @NotNull
+    @Size(max = 2048, message = "La descripcion no puede superar los 2048 caracteres")
     private String descripcion;
-    private Integer estado;
+
+    @NotNull
+    private Long estadoId;
+    private Long empresaId;
 }
