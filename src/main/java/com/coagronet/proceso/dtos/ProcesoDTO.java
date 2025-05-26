@@ -1,4 +1,4 @@
-package com.coagronet.tipoProduccion.dtos;
+package com.coagronet.proceso.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -13,8 +13,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TipoProduccionDTO {
-
+public class ProcesoDTO {
+	
 	private Long id;
 
 	@NotBlank(message = "El nombre es obligatorio.")
@@ -22,7 +22,10 @@ public class TipoProduccionDTO {
 	private String nombre;
 
 	@Size(max = 255, message = "La descripción no debe superar los 255 caracteres.")
-	private String descripcion;
+	private String descripcion;	
+	
+	@NotNull(message = "El tipo de producción es obligatorio.")
+	private Long tipoProduccionId;
 
 	@NotNull(message = "El estado es obligatorio.")
 	private Long estadoId;

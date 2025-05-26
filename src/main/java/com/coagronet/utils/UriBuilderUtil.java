@@ -64,4 +64,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/tipo_produccion/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildProcesoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/proceso/{id}").buildAndExpand(id).toUri();
+	}
+
 }
