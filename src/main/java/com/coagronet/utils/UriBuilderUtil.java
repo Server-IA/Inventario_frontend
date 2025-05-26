@@ -68,4 +68,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/proceso/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildMovimientoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/movimiento/{id}").buildAndExpand(id).toUri();
+	}
+
 }
