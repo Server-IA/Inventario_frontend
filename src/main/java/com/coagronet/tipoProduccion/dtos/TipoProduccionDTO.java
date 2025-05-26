@@ -21,7 +21,7 @@ public class TipoProduccionDTO {
 	@Size(max = 100, message = "El nombre no debe superar los 100 caracteres.")
 	private String nombre;
 
-	@Size(max = 255, message = "La descripcion no debe superar los 255 caracteres.")
+	@Size(max = 255, message = "La descripción no debe superar los 255 caracteres.")
 	private String descripcion;
 
 	@NotNull(message = "El estado es obligatorio.")
