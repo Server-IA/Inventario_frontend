@@ -77,4 +77,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/movimiento/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildIngredienteUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/ingrediente/{id}").buildAndExpand(id).toUri();
+	}
+
 }
