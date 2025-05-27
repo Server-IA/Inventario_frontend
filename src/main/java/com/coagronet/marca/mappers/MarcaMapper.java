@@ -17,4 +17,8 @@ public interface MarcaMapper {
     @Mapping(source = "empresaId", target = "empresa.id")
     Marca toEntity(MarcaDTO marcaDTO);
 
+    @Mapping(source = "estado.id", target = "estadoId")
+    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
+    MarcaDTO toListDto(Marca marca);
+
 }
