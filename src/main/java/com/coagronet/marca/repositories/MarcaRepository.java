@@ -14,10 +14,6 @@ public interface MarcaRepository extends JpaRepository<Marca, Long> {
         List<Marca> findByEmpresaIdOrderByIdAsc(
                         Long empresaId);
 
-        List<Marca> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
-                        Long empresaId,
-                        Long estadoId);
-
         Optional<Marca> findByIdAndEmpresaId(
                         Long id,
                         Long empresaId);
