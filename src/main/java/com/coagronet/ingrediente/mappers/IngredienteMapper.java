@@ -1,24 +1,24 @@
-package com.coagronet.marca.mappers;
+package com.coagronet.ingrediente.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import com.coagronet.marca.Marca;
-import com.coagronet.marca.dtos.MarcaDTO;
+import com.coagronet.ingrediente.Ingrediente;
+import com.coagronet.ingrediente.dtos.IngredienteDTO;
 
 @Mapper(componentModel = "spring")
-public interface MarcaMapper {
+public interface IngredienteMapper {
 
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "empresa.id", target = "empresaId")
-    MarcaDTO toDTO(Marca marca);
+    IngredienteDTO toDTO(Ingrediente ingrediente);
 
     @Mapping(source = "estadoId", target = "estado.id")
     @Mapping(source = "empresaId", target = "empresa.id")
-    Marca toEntity(MarcaDTO marcaDTO);
+    Ingrediente toEntity(IngredienteDTO ingredienteDTO);
 
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
-    MarcaDTO toListDto(Marca marca);
+    IngredienteDTO toListDto(Ingrediente ingrediente);
 
 }

@@ -37,11 +37,6 @@ public class MarcaController {
 		return ResponseEntity.ok(marcaService.findAll());
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<MarcaDTO>> findAllAvailable() {
-		return ResponseEntity.ok(marcaService.findAllAvailable());
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<MarcaDTO> findById(@PathVariable Long requestedId) {
 		return marcaService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
@@ -50,8 +45,7 @@ public class MarcaController {
 	@PostMapping
 	public ResponseEntity<Void> createMarca(@Valid @RequestBody MarcaDTO marcaDTO, UriComponentsBuilder ucb) {
 		MarcaDTO savedMarca = marcaService.create(marcaDTO);
-		URI locationOfNewMarca = uriBuilderUtil.buildMarcaUri(savedMarca.getId(), ucb);
-		return ResponseEntity.created(locationOfNewMarca).build();
+		return ResponseEntity.created(uriBuilderUtil.buildMarcaUri(savedMarca.getId(), ucb)).build();
 	}
 
 	@PutMapping("/{requestedId}")
