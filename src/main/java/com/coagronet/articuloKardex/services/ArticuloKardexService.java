@@ -48,9 +48,9 @@ public class ArticuloKardexService {
 	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO) {
 		kardexRepository.findById(articuloKardexDTO.getEstadoId())
 				.orElseThrow(() -> new BadRequestException("El kardex no es válido."));
-		
+
 		productoPresentacionRepository.findById(articuloKardexDTO.getEstadoId())
-		.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
+				.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
 		estadoRepository.findById(articuloKardexDTO.getEstadoId())
 				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
@@ -67,7 +67,13 @@ public class ArticuloKardexService {
 		articuloKardexRepository
 				.findByIdAndEmpresaId(requestedId,
 						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
-				.orElseThrow(() -> new NotFoundException("El articuloKardex no fue encontrado."));
+				.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
+
+		kardexRepository.findById(articuloKardexDTO.getEstadoId())
+				.orElseThrow(() -> new BadRequestException("El kardex no es válido."));
+
+		productoPresentacionRepository.findById(articuloKardexDTO.getEstadoId())
+				.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
 		estadoRepository.findById(articuloKardexDTO.getEstadoId())
 				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
@@ -83,7 +89,7 @@ public class ArticuloKardexService {
 		articuloKardexRepository
 				.findByIdAndEmpresaId(id,
 						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
-				.orElseThrow(() -> new NotFoundException("El articuloKardex no fue encontrado."));
+				.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
 
 		articuloKardexRepository.deleteById(id);
 	}
