@@ -36,17 +36,7 @@ public class MarcaService {
 
         return marcaRepository.findByEmpresaIdOrderByIdAsc(empresa.getId())
                 .stream()
-                .map(marcaMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<MarcaDTO> findAllAvailable() {
-        User user = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
-
-        return marcaRepository.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2L)
-                .stream()
-                .map(marcaMapper::toDTO)
+                .map(marcaMapper::toListDto)
                 .collect(Collectors.toList());
     }
 
@@ -55,7 +45,7 @@ public class MarcaService {
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
 
         return marcaRepository.findByIdAndEmpresaId(requestedId, empresa.getId())
-                .map(marcaMapper::toDTO);
+                .map(marcaMapper::toListDto);
     }
 
     public MarcaDTO create(MarcaDTO marcaDTO) {
