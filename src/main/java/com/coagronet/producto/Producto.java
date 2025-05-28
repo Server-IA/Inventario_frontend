@@ -4,6 +4,7 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.productoCategoria.ProductoCategoria;
 
+import com.coagronet.unidad.Unidad;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,24 +32,30 @@ public class Producto {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_generator")
     @SequenceGenerator(name = "producto_generator", sequenceName = "producto_pro_id_seq", allocationSize = 1)
     @Column(name = "pro_id", nullable = false)
-    private Integer id;
+    private Long id;
 
-    @Column(name = "pro_nombre", length = 255)
+    @Column(name = "pro_nombre")
     private String nombre;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pro_producto_categoria_id", referencedColumnName = "prc_id")
     private ProductoCategoria productoCategoria;
 
-    @Column(name = "pro_descripcion", length = 255)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pro_unidad_minima_id", referencedColumnName = "uni_id")
+    private Unidad unidad;
+
+    @Column(name = "pro_descripcion")
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id")
     private Empresa empresa;
+
+
 
 }

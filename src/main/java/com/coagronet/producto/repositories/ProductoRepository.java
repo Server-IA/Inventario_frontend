@@ -1,5 +1,6 @@
 package com.coagronet.producto.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -8,19 +9,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.producto.Producto;
 
-public interface ProductoRepository extends JpaRepository<Producto, Integer> {
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     Optional<Producto> findByIdAndEmpresaId(
-            Integer id,
+            Long id,
             Long empresaId);
 
-    Page<Producto> findByEmpresaIdAndEstadoIdNot(
-            Long empresaId,
-            Integer estado,
-            Pageable pageable);
-
-    boolean existsByIdAndEmpresaId(
-            Integer id,
+    List<Producto> findByEmpresaIdOrderByIdAsc(
             Long empresaId);
 
 }

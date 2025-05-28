@@ -44,7 +44,7 @@ public class UnidadService {
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Long empresaId = empresa.getId();
 
-        return unidadRepository.findByIdAndEmpresaIdOrderByIdAsc(requestId, empresaId)
+        return unidadRepository.findByIdAndEmpresaId(requestId, empresaId)
                 .map(unidadMapper::toDTO);
     }
 
@@ -66,7 +66,7 @@ public class UnidadService {
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Long empresaId = empresa.getId();
 
-        unidadRepository.findByIdAndEmpresaIdOrderByIdAsc(requestId, empresaId)
+        unidadRepository.findByIdAndEmpresaId(requestId, empresaId)
                 .orElseThrow(()-> new NotFoundException("Unidad no encontrada"));
 
         estadoRepository.findById(unidadDTO.getEstadoId())
@@ -83,7 +83,7 @@ public class UnidadService {
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Long empresaId = empresa.getId();
 
-        unidadRepository.findByIdAndEmpresaIdOrderByIdAsc(requestId, empresaId)
+        unidadRepository.findByIdAndEmpresaId(requestId, empresaId)
                 .orElseThrow(()-> new NotFoundException("Unidad no encontrada"));
 
         unidadRepository.deleteById(requestId);

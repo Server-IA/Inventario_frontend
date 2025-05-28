@@ -7,23 +7,21 @@ import org.springframework.stereotype.Component;
 
 import com.coagronet.producto.Producto;
 import com.coagronet.producto.dtos.ProductoDTO;
-import com.coagronet.producto.dtos.ProductoMinimalDTO;
 
 @Component
 @Mapper(componentModel = "spring")
 public interface ProductoMapper {
 
-    ProductoMapper INSTANCE = Mappers.getMapper(ProductoMapper.class);
 
-    @Mapping(source = "productoCategoria.id", target = "productoCategoria")
-    @Mapping(source = "estado.id", target = "estado")
-    @Mapping(source = "empresa.id", target = "empresa")
+    @Mapping(source = "productoCategoria.id", target = "productoCategoriaId")
+    @Mapping(source = "estado.id", target = "estadoId")
+    @Mapping(source = "empresa.id", target = "empresaId")
+    @Mapping(source = "unidad.id", target = "unidadMinimaId")
     ProductoDTO toDto(Producto producto);
 
-    ProductoMinimalDTO toMinimalDTO(Producto producto);
-
-    @Mapping(source = "productoCategoria", target = "productoCategoria.id")
-    @Mapping(source = "estado", target = "estado.id")
-    @Mapping(source = "empresa", target = "empresa.id")
+    @Mapping(source = "productoCategoriaId", target = "productoCategoria.id")
+    @Mapping(source = "unidadMinimaId", target = "unidad.id")
+    @Mapping(source = "estadoId", target = "estado.id")
+    @Mapping(source = "empresaId", target = "empresa.id")
     Producto toEntity(ProductoDTO productoDTO);
 }
