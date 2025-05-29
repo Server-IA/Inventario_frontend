@@ -60,7 +60,6 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/producto_categoria/{id}").buildAndExpand(id).toUri();
 	}
 
-
 	public URI buildPedidoUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/pedido/{id}").buildAndExpand(id).toUri();
 	}
@@ -83,6 +82,10 @@ public class UriBuilderUtil {
 
 	public URI buildProductoUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/producto/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildArticuloKardexUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/articulo-kardex/{id}").buildAndExpand(id).toUri();
 	}
 
 }
