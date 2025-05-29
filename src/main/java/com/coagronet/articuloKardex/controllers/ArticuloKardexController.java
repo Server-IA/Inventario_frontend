@@ -1,9 +1,24 @@
 package com.coagronet.articuloKardex.controllers;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
+import com.coagronet.articuloKardex.services.ArticuloKardexService;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -11,5 +26,41 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class ArticuloKardexController {
+
+	private final ArticuloKardexService articuloKardexService;
+	private final UriBuilderUtil uriBuilderUtil;
+
+	@GetMapping
+	public ResponseEntity<List<ArticuloKardexDTO>> findAll() {
+		return ResponseEntity.ok(articuloKardexService.findAll());
+	}
+
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<ArticuloKardexDTO> findById(@PathVariable Long requestedId) {
+		return articuloKardexService.findById(requestedId).map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
+	}
+
+	@PostMapping
+	public ResponseEntity<Void> createArticuloKardex(@Valid @RequestBody ArticuloKardexDTO articuloKardexDTO,
+			UriComponentsBuilder ucb) {
+		return ResponseEntity
+				.created(uriBuilderUtil
+						.buildArticuloKardexUri((articuloKardexService.create(articuloKardexDTO)).getId(), ucb))
+				.build();
+	}
+
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateArticuloKardex(@PathVariable Long requestedId,
+			@Valid @RequestBody ArticuloKardexDTO articuloKardexDTO) {
+		articuloKardexService.update(requestedId, articuloKardexDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteArticuloKardex(@PathVariable Long id) {
+		articuloKardexService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }
