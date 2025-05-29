@@ -53,7 +53,7 @@ public class ArticuloKardexService {
 				.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
 		estadoRepository.findById(articuloKardexDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
 		articuloKardexDTO.setId(null);
 		articuloKardexDTO.setEmpresaId(
@@ -76,7 +76,7 @@ public class ArticuloKardexService {
 				.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
 		estadoRepository.findById(articuloKardexDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
 		articuloKardexDTO.setId(requestedId);
 		articuloKardexDTO.setEmpresaId(
