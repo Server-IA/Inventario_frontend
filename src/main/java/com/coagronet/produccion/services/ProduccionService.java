@@ -1,60 +1,99 @@
 package com.coagronet.produccion.services;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.coagronet.empresa.Empresa;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.produccion.dtos.ProduccionDTO;
+import com.coagronet.produccion.mappers.ProduccionMapper;
+import com.coagronet.user.User;
+import com.coagronet.utils.AuthenticationService;
+import com.coagronet.utils.UserEmpresaService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.produccion.Produccion;
-import com.coagronet.produccion.dtos.DTOProduccion;
-import com.coagronet.produccion.mappers.ProduccionMapper;
 import com.coagronet.produccion.repositories.ProduccionRepository;
-
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ProduccionService {
 
-    @Autowired
-    private ProduccionRepository produccionRepository;
+    private final ProduccionRepository produccionRepository;
+    private final ProduccionMapper produccionMapper;
+    private final EstadoRepository estadoRepository;
+    private final AuthenticationService authenticationService;
+    private final UserEmpresaService userEmpresaService;
 
-    @Autowired
-    private EstadoRepository estadoRepository;
-
-    public List<Produccion> obtenerProduccionPorEspaciosShort(Integer espacioId, Long empresaId) {
-        return produccionRepository.buscarProduccionPorEspacioShort(espacioId, empresaId);
+    public List<ProduccionDTO> findAll() {
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        Long empresaId = empresa.getId();
+        return produccionRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+                .stream()
+                .map(produccionMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Page<Produccion> obtenerProduccionPorEspaciosLong(Integer espacioId, Long empresaId, Pageable paginacion) {
-        return produccionRepository.buscarProduccionPorEspacioLong(espacioId, empresaId, paginacion);
+    public Optional<ProduccionDTO> findById(Long requestedId) {
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        Long empresaId = empresa.getId();
+
+        return produccionRepository.findByIdAndEmpresaId(requestedId, empresaId)
+                .map(produccionMapper::toDto);
     }
 
-    public Produccion guardarProduccion(DTOProduccion dtoProduccion) {
-        Produccion produccion = ProduccionMapper.INSTANCE.toEntity(dtoProduccion);
-        return produccionRepository.save(produccion);
+
+    @Transactional
+    public ProduccionDTO create(ProduccionDTO produccionDTO) {
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        Long empresaId = empresa.getId();
+
+        estadoRepository.findById(produccionDTO.getEstadoId())
+                .orElseThrow(()-> new BadRequestException("El estado no es válido"));
+
+        produccionDTO.setEmpresaId(empresaId);
+
+        Produccion produccion = produccionMapper.toEntity(produccionDTO);
+        produccion = produccionRepository.save(produccion);
+        return produccionMapper.toDto(produccion);
     }
 
-    public Produccion actualizarProduccion(DTOProduccion dtoProduccion) {
-        Produccion produccion = ProduccionMapper.INSTANCE.toEntity(dtoProduccion);
-        if (!produccionRepository.existsById(produccion.getId())) {
-            throw new EntityNotFoundException("Producción no encontrada");
-        }
-        return produccionRepository.save(produccion);
+    @Transactional
+    public void update(Long requestedId, ProduccionDTO produccionDTO) {
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        Long empresaId = empresa.getId();
+
+        produccionRepository.findByIdAndEmpresaId(requestedId, empresaId)
+                .orElseThrow(()-> new NotFoundException("Produccion no encontrada o no válida"));
+
+        estadoRepository.findById(produccionDTO.getEstadoId())
+                .orElseThrow(()-> new BadRequestException("El estado no es válido"));
+
+        produccionDTO.setId(requestedId);
+        produccionDTO.setEmpresaId(empresaId);
+        produccionRepository.save(produccionMapper.toEntity(produccionDTO));
     }
 
-    public void eliminarProduccion(Integer id) {
-        Produccion produccion = produccionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produccion not found with id: " + id));
+    @Transactional
+    public void delete(Long requestId) {
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        Long empresaId = empresa.getId();
+        produccionRepository.findByIdAndEmpresaId(requestId, empresaId)
+                .orElseThrow(()-> new NotFoundException("Producto no encontrado o no válido"));
 
-        Estado nuevoEstado = estadoRepository.findById(2)
-                .orElseThrow(() -> new RuntimeException("Estado not found with id: 2"));
-
-        produccion.setEstado(nuevoEstado);
-        produccionRepository.save(produccion);
+        produccionRepository.deleteById(requestId);
     }
 
 }

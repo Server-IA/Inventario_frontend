@@ -1,7 +1,9 @@
 package com.coagronet.produccion;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
 import com.coagronet.estado.Estado;
+import com.coagronet.producto.Producto;
 import com.coagronet.tipoProduccion.TipoProduccion;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,7 +25,7 @@ public class Produccion {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "produccion_generator")
     @SequenceGenerator(name = "produccion_generator", sequenceName = "produccion_pro_id_seq", allocationSize = 1)
     @Column(name = "pro_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "pro_nombre", length = 100)
     private String nombre;
@@ -46,7 +48,15 @@ public class Produccion {
     private Espacio espacio;
 
     @ManyToOne
-    @JoinColumn(name = "pro_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne
+    @JoinColumn(name = "pro_producto_id", referencedColumnName = "pro_id")
+    private Producto producto;
+
+    @ManyToOne
+    @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }
