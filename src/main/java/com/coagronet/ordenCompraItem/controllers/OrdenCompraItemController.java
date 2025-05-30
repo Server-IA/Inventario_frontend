@@ -69,7 +69,7 @@ public class OrdenCompraItemController {/*
 										 * getAuthenticatedUser(); Empresa empresa =
 										 * getEmpresaFromUser(authenticatedUser); return ordenCompraItemRepository
 										 * .findByIdAndOrdenCompraPedidoAlmacenSedeEmpresaId(requestedId,
-										 * empresa.getId()) .map(ordenCompraItemMapper::toDTO) .map(ResponseEntity::ok)
+										 * empresa.getId()) .map(ordenCompraItemMapper::toDto) .map(ResponseEntity::ok)
 										 * .orElse(ResponseEntity.notFound().build()); }
 										 * 
 										 * @PostMapping private ResponseEntity<Void> createOrdenCompraItem(@RequestBody
@@ -104,7 +104,7 @@ public class OrdenCompraItemController {/*
 										 * ordenCompraItemDTOs = ordenCompraItemRepository
 										 * .findByOrdenCompraIdAndOrdenCompraPedidoAlmacenSedeEmpresaIdAndEstadoIdNotOrderByIdAsc(
 										 * requestedOrdenCompraId, empresa.getId(), 2) .stream()
-										 * .map(ordenCompraItemMapper::toDTO) .collect(Collectors.toList());
+										 * .map(ordenCompraItemMapper::toDto) .collect(Collectors.toList());
 										 * 
 										 * return !ordenCompraItemDTOs.isEmpty() ?
 										 * ResponseEntity.ok(ordenCompraItemDTOs) : ResponseEntity.noContent().build();

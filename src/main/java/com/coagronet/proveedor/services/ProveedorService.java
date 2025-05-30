@@ -1,57 +1,56 @@
-package com.coagronet.produccion.services;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+package com.coagronet.proveedor.services;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.produccion.dtos.ProduccionDTO;
-import com.coagronet.produccion.mappers.ProduccionMapper;
+import com.coagronet.proveedor.Proveedor;
+import com.coagronet.proveedor.dtos.ProveedorDTO;
+import com.coagronet.proveedor.mappers.ProveedorMapper;
+import com.coagronet.proveedor.repositories.ProveedorRepository;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.produccion.Produccion;
-import com.coagronet.produccion.repositories.ProduccionRepository;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ProduccionService {
+public class ProveedorService {
 
-    private final ProduccionRepository produccionRepository;
-    private final ProduccionMapper produccionMapper;
+    private final ProveedorRepository proveedorRepository;
     private final EstadoRepository estadoRepository;
+    private final ProveedorMapper proveedorMapper;
     private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
 
-    public List<ProduccionDTO> findAll() {
+    public List<ProveedorDTO> findAll() {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
-        return produccionRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+        return proveedorRepository.findByEmpresaIdOrderByIdAsc(empresaId)
                 .stream()
-                .map(produccionMapper::toDto)
+                .map(proveedorMapper::toDto)
                 .collect(Collectors.toList());
     }
 
-    public Optional<ProduccionDTO> findById(Long requestedId) {
+    public Optional<ProveedorDTO> findById(Long requestedId) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
 
-        return produccionRepository.findByIdAndEmpresaId(requestedId, empresaId)
-                .map(produccionMapper::toDto);
+        return proveedorRepository.findByIdAndEmpresaId(requestedId, empresaId)
+                .map(proveedorMapper::toDto);
     }
 
 
     @Transactional
-    public ProduccionDTO create(ProduccionDTO produccionDTO) {
+    public ProveedorDTO create(ProveedorDTO produccionDTO) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
@@ -61,26 +60,26 @@ public class ProduccionService {
 
         produccionDTO.setEmpresaId(empresaId);
 
-        Produccion produccion = produccionMapper.toEntity(produccionDTO);
-        produccion = produccionRepository.save(produccion);
-        return produccionMapper.toDto(produccion);
+        Proveedor produccion = proveedorMapper.toEntity(produccionDTO);
+        produccion = proveedorRepository.save(produccion);
+        return proveedorMapper.toDto(produccion);
     }
 
     @Transactional
-    public void update(Long requestedId, ProduccionDTO produccionDTO) {
+    public void update(Long requestedId, ProveedorDTO produccionDTO) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
 
-        produccionRepository.findByIdAndEmpresaId(requestedId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Produccion no encontrada o no válida"));
+        proveedorRepository.findByIdAndEmpresaId(requestedId, empresaId)
+                .orElseThrow(()-> new NotFoundException("Proveedor no encontrada o no válida"));
 
         estadoRepository.findById(produccionDTO.getEstadoId())
                 .orElseThrow(()-> new BadRequestException("El estado no es válido"));
 
         produccionDTO.setId(requestedId);
         produccionDTO.setEmpresaId(empresaId);
-        produccionRepository.save(produccionMapper.toEntity(produccionDTO));
+        proveedorRepository.save(proveedorMapper.toEntity(produccionDTO));
     }
 
     @Transactional
@@ -88,10 +87,11 @@ public class ProduccionService {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
-        produccionRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Produccion no encontrado o no válido"));
+        proveedorRepository.findByIdAndEmpresaId(requestId, empresaId)
+                .orElseThrow(()-> new NotFoundException("Proveedor no encontrado o no válido"));
 
-        produccionRepository.deleteById(requestId);
+        proveedorRepository.deleteById(requestId);
     }
-
+    
+    
 }
