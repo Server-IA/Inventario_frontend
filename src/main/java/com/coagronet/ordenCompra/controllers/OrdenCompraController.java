@@ -52,23 +52,23 @@ public class OrdenCompraController {
 
 
 	@PostMapping
-	public ResponseEntity<Void> crearProduccion(@RequestBody @Valid OrdenCompraDTO produccionDTO, UriComponentsBuilder ucb) {
-		OrdenCompraDTO savedOrdenCompraDTO = ordenCompraService.create(produccionDTO);
+	public ResponseEntity<Void> crearOrdenCompra(@RequestBody @Valid OrdenCompraDTO ordenCompraDTODTO, UriComponentsBuilder ucb) {
+		OrdenCompraDTO savedOrdenCompraDTO = ordenCompraService.create(ordenCompraDTODTO);
 
-		URI locationOfNewProduccion = uriBuilderUtil.buildProduccion(savedOrdenCompraDTO.getId(), ucb);
-		return ResponseEntity.created(locationOfNewProduccion).build();
+		URI locationOfNewOrdenCompra = uriBuilderUtil.buildOrdenCompraUri(savedOrdenCompraDTO.getId(), ucb);
+		return ResponseEntity.created(locationOfNewOrdenCompra).build();
 	}
 
 	@PutMapping("/{requestedId}")
-	public ResponseEntity<Void> actualizarProduccion(@PathVariable Long requestedId,
-													 @RequestBody OrdenCompraDTO produccionDTO) {
+	public ResponseEntity<Void> actualizarOrdenCompra(@PathVariable Long requestedId,
+													 @RequestBody OrdenCompraDTO ordenCompraDTODTO) {
 
-		ordenCompraService.update(requestedId, produccionDTO);
+		ordenCompraService.update(requestedId, ordenCompraDTODTO);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{requestedId}")
-	public ResponseEntity<Void> eliminarProduccion(@PathVariable Long requestedId) {
+	public ResponseEntity<Void> eliminarOrdenCompra(@PathVariable Long requestedId) {
 		ordenCompraService.delete(requestedId);
 		return ResponseEntity.noContent().build();
 	}
