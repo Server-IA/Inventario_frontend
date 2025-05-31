@@ -55,7 +55,7 @@ public class ArticuloKardex {
 	private ProductoPresentacion productoPresentacion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kai_estado", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_itemestadoest_id_fkey"))
+	@JoinColumn(name = "kai_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_itemestadoest_id_fkey"))
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
