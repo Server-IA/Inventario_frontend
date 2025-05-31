@@ -86,12 +86,12 @@ public class UriBuilderUtil {
 
 	public URI buildArticuloKardexUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/articulo-kardex/{id}").buildAndExpand(id).toUri();
-  }
+	}
 
 	public URI buildProduccion(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/produccion/{id}").buildAndExpand(id).toUri();
-  }
-  
+	}
+
 	public URI buildArticuloPedidoUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/articulo-pedido/{id}").buildAndExpand(id).toUri();
 	}
@@ -110,5 +110,9 @@ public class UriBuilderUtil {
 
 	public URI buildTipoMovimientoUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/tipo_movimiento/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildArticuloOrdenCompraUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/articulo-orden-compra/{id}").buildAndExpand(id).toUri();
 	}
 }
