@@ -22,8 +22,7 @@ public class OrdenCompraDTO {
     @NotNull(message = "El ID del proveedor no puede ser nulo")
     private Long proveedorId;
 
-    @NotNull(message = "La descripción no puede ser nula")
-    @Size(min = 1, max = 255, message = "La descripción debe tener entre 1 y 255 caracteres")
+    @Size(max = 255, message = "La descripción debe tener maximo 255 caracteres")
     private String descripcion;
 
     @NotNull(message = "El id del estado no puede ser nulo")
