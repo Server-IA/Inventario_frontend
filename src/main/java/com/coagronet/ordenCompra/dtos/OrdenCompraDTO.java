@@ -12,8 +12,9 @@ import lombok.Setter;
 public class OrdenCompraDTO {
     private Long id;
     private LocalDateTime fechaHora;
-    private Integer pedido;
-    private Integer proveedor;
+    private Long pedidoId;
+    private Long proveedorId;
     private String descripcion;
-    private Integer estado;
+    private Long estadoId;
+    private Long empresaId;
 }
