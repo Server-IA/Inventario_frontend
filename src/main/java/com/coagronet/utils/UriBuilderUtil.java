@@ -99,4 +99,8 @@ public class UriBuilderUtil {
 	public URI buildProveedorUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/proveedor/{id}").buildAndExpand(id).toUri();
 	}
+
+	public URI buildOrdenCompraUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/orden_compra/{id}").buildAndExpand(id).toUri();
+	}
 }

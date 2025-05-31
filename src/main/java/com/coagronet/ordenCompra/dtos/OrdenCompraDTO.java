@@ -2,6 +2,8 @@ package com.coagronet.ordenCompra.dtos;
 
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,9 +13,20 @@ import lombok.Setter;
 @AllArgsConstructor
 public class OrdenCompraDTO {
     private Long id;
+    @NotNull(message = "La fecha y hora no puede ser nula")
     private LocalDateTime fechaHora;
-    private Integer pedido;
-    private Integer proveedor;
+
+    @NotNull(message = "El ID del pedido no puede ser nulo")
+    private Long pedidoId;
+
+    @NotNull(message = "El ID del proveedor no puede ser nulo")
+    private Long proveedorId;
+
+    @NotNull(message = "La descripción no puede ser nula")
+    @Size(min = 1, max = 255, message = "La descripción debe tener entre 1 y 255 caracteres")
     private String descripcion;
-    private Integer estado;
+
+    @NotNull(message = "El id del estado no puede ser nulo")
+    private Long estadoId;
+    private Long empresaId;
 }
