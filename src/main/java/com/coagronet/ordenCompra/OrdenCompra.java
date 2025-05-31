@@ -2,6 +2,7 @@ package com.coagronet.ordenCompra;
 
 import java.time.LocalDateTime;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.proveedor.Proveedor;
@@ -50,7 +51,11 @@ public class OrdenCompra {
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orc_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "orc_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }

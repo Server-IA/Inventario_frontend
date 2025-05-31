@@ -32,5 +32,6 @@ public interface ProductoPresentacionMapper {
     @Mapping(source = "estadoId", target = "estado.id")
     @Mapping(source = "marcaId", target = "marca.id")
     @Mapping(source = "presentacionId", target = "presentacion.id")
+    @Mapping(source = "empresaId", target = "empresa.id")
     ProductoPresentacion toEntity(ProductoPresentacionDTO productoPresentacionDTO);
 }

@@ -3,6 +3,7 @@ package com.coagronet.kardex;
 import java.time.LocalDateTime;
 
 import com.coagronet.almacen.Almacen;
+import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
@@ -34,7 +35,7 @@ public class Kardex {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_generator")
     @SequenceGenerator(name = "kardex_generator", sequenceName = "kardex_kar_id_seq", allocationSize = 1)
     @Column(name = "kar_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "kar_fecha_hora")
     private LocalDateTime fechaHora;
@@ -55,7 +56,11 @@ public class Kardex {
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "kar_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }
