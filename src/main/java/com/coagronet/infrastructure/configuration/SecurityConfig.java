@@ -57,7 +57,9 @@ public class SecurityConfig {
 						"/api/v1/proceso/**",
 						"/api/v1/movimiento/**",
 						"/api/v1/ingrediente/**",
-						"/api/v1/articulo-pedido/**")
+						"/api/v1/articulo-pedido/**",
+						"/api/v1/articulo-orden-compra/**",
+						"/api/v1/articulo-kardex/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
 				.requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
