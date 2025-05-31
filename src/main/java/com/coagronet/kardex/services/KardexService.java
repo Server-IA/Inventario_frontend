@@ -1,13 +1,13 @@
-package com.coagronet.proveedor.services;
+package com.coagronet.kardex.services;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.proveedor.Proveedor;
-import com.coagronet.proveedor.dtos.ProveedorDTO;
-import com.coagronet.proveedor.mappers.ProveedorMapper;
-import com.coagronet.proveedor.repositories.ProveedorRepository;
+import com.coagronet.kardex.mappers.KardexMapper;
+import com.coagronet.kardex.repositories.KardexRepository;
+import com.coagronet.kardex.Kardex;
+import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
@@ -21,65 +21,66 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ProveedorService {
+public class KardexService {
 
-    private final ProveedorRepository proveedorRepository;
+    private final KardexRepository kardexRepository;
+    private final KardexMapper kardexMapper;
     private final EstadoRepository estadoRepository;
-    private final ProveedorMapper proveedorMapper;
-    private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
+    private final AuthenticationService authenticationService;
 
-    public List<ProveedorDTO> findAll() {
+
+    public List<KardexDTO> findAll() {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
-        return proveedorRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+        return kardexRepository.findByEmpresaIdOrderByIdAsc(empresaId)
                 .stream()
-                .map(proveedorMapper::toDto)
+                .map(kardexMapper::toDto)
                 .collect(Collectors.toList());
     }
 
-    public Optional<ProveedorDTO> findById(Long requestedId) {
+    public Optional<KardexDTO> findById(Long requestedId) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
 
-        return proveedorRepository.findByIdAndEmpresaId(requestedId, empresaId)
-                .map(proveedorMapper::toDto);
+        return kardexRepository.findByIdAndEmpresaId(requestedId, empresaId)
+                .map(kardexMapper::toDto);
     }
 
 
     @Transactional
-    public ProveedorDTO create(ProveedorDTO proveedorDTO) {
+    public KardexDTO create(KardexDTO kardexDTO) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
 
-        estadoRepository.findById(proveedorDTO.getEstadoId())
+        estadoRepository.findById(kardexDTO.getEstadoId())
                 .orElseThrow(()-> new BadRequestException("El estado no es válido"));
 
-        proveedorDTO.setEmpresaId(empresaId);
+        kardexDTO.setEmpresaId(empresaId);
 
-        Proveedor proveedor = proveedorMapper.toEntity(proveedorDTO);
-        proveedor = proveedorRepository.save(proveedor);
-        return proveedorMapper.toDto(proveedor);
+        Kardex kardex = kardexMapper.toEntity(kardexDTO);
+        kardex = kardexRepository.save(kardex);
+        return kardexMapper.toDto(kardex);
     }
 
     @Transactional
-    public void update(Long requestedId, ProveedorDTO proveedorDTO) {
+    public void update(Long requestedId, KardexDTO kardexDTO) {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
 
-        proveedorRepository.findByIdAndEmpresaId(requestedId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Proveedor no encontrada o no válida"));
+        kardexRepository.findByIdAndEmpresaId(requestedId, empresaId)
+                .orElseThrow(()-> new NotFoundException("Kardex no encontrada o no válida"));
 
-        estadoRepository.findById(proveedorDTO.getEstadoId())
+        estadoRepository.findById(kardexDTO.getEstadoId())
                 .orElseThrow(()-> new BadRequestException("El estado no es válido"));
 
-        proveedorDTO.setId(requestedId);
-        proveedorDTO.setEmpresaId(empresaId);
-        proveedorRepository.save(proveedorMapper.toEntity(proveedorDTO));
+        kardexDTO.setId(requestedId);
+        kardexDTO.setEmpresaId(empresaId);
+        kardexRepository.save(kardexMapper.toEntity(kardexDTO));
     }
 
     @Transactional
@@ -87,11 +88,10 @@ public class ProveedorService {
         User user = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
         Long empresaId = empresa.getId();
-        proveedorRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Proveedor no encontrado o no válido"));
+        kardexRepository.findByIdAndEmpresaId(requestId, empresaId)
+                .orElseThrow(()-> new NotFoundException("Kardex no encontrado o no válido"));
 
-        proveedorRepository.deleteById(requestId);
+        kardexRepository.deleteById(requestId);
     }
-    
-    
+
 }

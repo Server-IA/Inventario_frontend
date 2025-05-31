@@ -24,11 +24,11 @@ public class ProveedorController {
 
     @GetMapping
     public ResponseEntity<List<ProveedorDTO>> findAll () {
-        List<ProveedorDTO> produccionDTOList = proveedorService.findAll();
+        List<ProveedorDTO> proveedorDTOList = proveedorService.findAll();
 
-        return produccionDTOList.isEmpty()?
+        return proveedorDTOList.isEmpty()?
                 ResponseEntity.noContent().build()
-                : ResponseEntity.ok(produccionDTOList);
+                : ResponseEntity.ok(proveedorDTOList);
 
     }
 
@@ -41,23 +41,23 @@ public class ProveedorController {
 
 
     @PostMapping
-    public ResponseEntity<Void> crearProduccion(@RequestBody @Valid ProveedorDTO produccionDTO, UriComponentsBuilder ucb) {
-        ProveedorDTO savedProveedorDTO = proveedorService.create(produccionDTO);
+    public ResponseEntity<Void> crearProveedor(@RequestBody @Valid ProveedorDTO proveedorDTO, UriComponentsBuilder ucb) {
+        ProveedorDTO savedProveedorDTO = proveedorService.create(proveedorDTO);
 
-        URI locationOfNewProduccion = uriBuilderUtil.buildProveedorUri(savedProveedorDTO.getId(), ucb);
-        return ResponseEntity.created(locationOfNewProduccion).build();
+        URI locationOfNewProveedor = uriBuilderUtil.buildProveedorUri(savedProveedorDTO.getId(), ucb);
+        return ResponseEntity.created(locationOfNewProveedor).build();
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> actualizarProduccion(@PathVariable Long requestedId,
-                                                     @RequestBody ProveedorDTO produccionDTO) {
+    public ResponseEntity<Void> actualizarProveedor(@PathVariable Long requestedId,
+                                                     @RequestBody ProveedorDTO proveedorDTO) {
 
-        proveedorService.update(requestedId, produccionDTO);
+        proveedorService.update(requestedId, proveedorDTO);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{requestedId}")
-    public ResponseEntity<Void> eliminarProduccion(@PathVariable Long requestedId) {
+    public ResponseEntity<Void> eliminarProveedor(@PathVariable Long requestedId) {
         proveedorService.delete(requestedId);
         return ResponseEntity.noContent().build();
     }
