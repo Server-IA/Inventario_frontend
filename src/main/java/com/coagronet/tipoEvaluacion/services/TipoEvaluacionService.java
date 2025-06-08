@@ -3,6 +3,7 @@ package com.coagronet.tipoEvaluacion.services;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.coagronet.utils.Constantes;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
@@ -25,12 +26,12 @@ public class TipoEvaluacionService {
     }
 
     public List<TipoEvaluacionDTO> findAllAvailable() {
-        return tipoEvaluacionRepository.findByEstadoIdNotOrderByIdAsc(2).stream()
+        return tipoEvaluacionRepository.findByEstadoIdNotOrderByIdAsc(Constantes.ESTADO_INACTIVO).stream()
                 .map(tipoEvaluacionMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public TipoEvaluacionDTO findById(Integer requestedId) {
+    public TipoEvaluacionDTO findById(Long requestedId) {
         return tipoEvaluacionRepository.findById(requestedId)
                 .map(tipoEvaluacionMapper::toDTO)
                 .orElse(null); // Devuelve null si no se encuentra
@@ -46,7 +47,7 @@ public class TipoEvaluacionService {
                         tipoEvaluacionMapper.toEntity(tipoEvaluacionDTO)));
     }
 
-    public boolean update(Integer requestedId, TipoEvaluacionDTO tipoEvaluacionUpdate) {
+    public boolean update(Long requestedId, TipoEvaluacionDTO tipoEvaluacionUpdate) {
         if (tipoEvaluacionRepository.existsById(requestedId)) {
             TipoEvaluacionDTO updatedTipoEvaluacion = new TipoEvaluacionDTO(
                     requestedId,
@@ -60,7 +61,7 @@ public class TipoEvaluacionService {
 
     }
 
-    public boolean delete(Integer id) {
+    public boolean delete(Long id) {
         if (tipoEvaluacionRepository.existsById(id)) {
             tipoEvaluacionRepository.deleteById(id);
             return true;

@@ -3,6 +3,7 @@ package com.coagronet.criterioEvaluacion.controllers;
 import java.net.URI;
 import java.util.List;
 
+import com.coagronet.utils.Constantes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,7 +40,7 @@ public class CriterioEvaluacionController {
     }
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<?> findById(@PathVariable Integer requestedId) {
+    private ResponseEntity<?> findById(@PathVariable Long requestedId) {
         return criterioEvaluacionRepository.findById(requestedId)
                 .map(criterioEvaluacionMapper::toDTO)
                 .map(ResponseEntity::ok)
@@ -69,9 +70,9 @@ public class CriterioEvaluacionController {
     }
 
     @GetMapping("/tipoEvaluacionId/{requestedTipoEvaluacionId}")
-    private ResponseEntity<List<?>> findAllByTipoEvaluacionId(@PathVariable Integer requestedTipoEvaluacionId) {
+    private ResponseEntity<List<?>> findAllByTipoEvaluacionId(@PathVariable Long requestedTipoEvaluacionId) {
         List<CriterioEvaluacionDTO> criterioEvaluacionDTOList = criterioEvaluacionRepository
-                .findByTipoEvaluacionIdAndEstadoIdNotOrderByIdAsc(requestedTipoEvaluacionId, 2)
+                .findByTipoEvaluacionIdAndEstadoIdNotOrderByIdAsc(requestedTipoEvaluacionId, Constantes.ESTADO_INACTIVO)
                 .stream()
                 .map(criterioEvaluacionMapper::toDTO)
                 .toList();
@@ -83,14 +84,14 @@ public class CriterioEvaluacionController {
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putCriterioEvaluacion(
-            @PathVariable Integer requestedId,
+            @PathVariable Long requestedId,
             @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTOUpdate) {
         // Verifica si el CriterioEvaluacion especificado en el DTO existe en el
         // repositorio
         if (criterioEvaluacionRepository.existsById(requestedId)
                 && tipoEvaluacionRepository.existsByIdAndEstadoIdNot(
                         criterioEvaluacionDTOUpdate.getTipoEvaluacion(),
-                        2)) {
+                        Constantes.ESTADO_INACTIVO)) {
             // Actualiza el CriterioEvaluacion en el repositorio
             CriterioEvaluacionDTO updateCriterioEvaluacionDTO = new CriterioEvaluacionDTO(
                     requestedId,
@@ -107,7 +108,7 @@ public class CriterioEvaluacionController {
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteCriterioEvaluacion(@PathVariable Integer id) {
+    private ResponseEntity<Void> deleteCriterioEvaluacion(@PathVariable Long id) {
         // Verifica si el CriterioEvaluacion especificado en el DTO existe en el
         // repositorio
         if (criterioEvaluacionRepository.existsById(id)) {

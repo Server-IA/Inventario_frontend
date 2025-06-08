@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmpresaDTO {
-    private Integer id;
+    private Long id;
     private String nombre;
     private String descripcion;
-    private Integer estadoId;
+    private Long estadoId;
     private String celular;
     private String correo;
     private String contacto;

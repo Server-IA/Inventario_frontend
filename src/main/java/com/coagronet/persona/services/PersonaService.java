@@ -28,7 +28,7 @@ public class PersonaService {
     }
 
     public Page<PersonaDTO> findAll(Pageable pageable){
-        return personaRepository.findByEstadoIdNot(Constantes.INACTIVO, pageable)
+        return personaRepository.findByEstadoIdNot(Constantes.ESTADO_INACTIVO, pageable)
                 .map(personaMapper::toDto);
     }
 

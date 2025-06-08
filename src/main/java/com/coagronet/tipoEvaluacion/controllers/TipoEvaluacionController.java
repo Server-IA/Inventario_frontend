@@ -41,7 +41,7 @@ public class TipoEvaluacionController {
         }
 
         @GetMapping("/{requestedId}")
-        public ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Integer requestedId) {
+        public ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Long requestedId) {
                 TipoEvaluacionDTO tipoEvaluacionDTO = tipoEvaluacionService.findById(requestedId);
                 if (tipoEvaluacionDTO != null) {
                         return ResponseEntity.ok(tipoEvaluacionDTO);
@@ -64,7 +64,7 @@ public class TipoEvaluacionController {
 
         @PutMapping("/{requestedId}")
         public ResponseEntity<Void> updateTipoEvaluacion(
-                        @PathVariable Integer requestedId,
+                        @PathVariable Long requestedId,
                         @RequestBody TipoEvaluacionDTO tipoEvaluacionUpdate) {
                 boolean updated = tipoEvaluacionService.update(requestedId, tipoEvaluacionUpdate);
                 if (updated) {
@@ -74,7 +74,7 @@ public class TipoEvaluacionController {
         }
 
         @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deleteTipoEvaluacion(@PathVariable Integer id) {
+        public ResponseEntity<Void> deleteTipoEvaluacion(@PathVariable Long id) {
                 if (tipoEvaluacionService.delete(id)) {
                         return ResponseEntity.noContent().build();
                 }

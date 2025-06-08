@@ -8,13 +8,13 @@ import org.springframework.stereotype.Repository;
 import com.coagronet.tipoEvaluacion.TipoEvaluacion;
 
 @Repository
-public interface TipoEvaluacionRepository extends JpaRepository<TipoEvaluacion, Integer> {
+public interface TipoEvaluacionRepository extends JpaRepository<TipoEvaluacion, Long> {
 
     List<TipoEvaluacion> findByEstadoIdNotOrderByIdAsc(
-            Integer estadoId);
+            Long estadoId);
 
     boolean existsByIdAndEstadoIdNot(
-            Integer id,
-            Integer estadoId);
+            Long id,
+            Long estadoId);
 
 }

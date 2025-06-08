@@ -30,7 +30,7 @@ public class ActividadOcupacion {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "actividad_ocupacion_generator")
     @SequenceGenerator(name = "actividad_ocupacion_generator", sequenceName = "actividad_ocupacion_aco_id_seq", allocationSize = 1)
     @Column(name = "aco_id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "aco_nombre", length = 100)
     private String nombre;

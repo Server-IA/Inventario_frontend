@@ -11,15 +11,15 @@ import com.coagronet.user.dtos.UserMinimalDTO;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
-    @Mapping(source = "persona.id", target = "persona")
-    @Mapping(source = "usuarioEstado.id", target = "usuarioEstado")
+    @Mapping(source = "persona.id", target = "personaId")
+    @Mapping(source = "usuarioEstado.id", target = "usuarioEstadoId")
     UserDTO toDto(User user);
 
     UserMinimalDTO toMinimalDTO(User user);
 
-    @Mapping(source = "persona", target = "persona.id")
-    @Mapping(source = "usuarioEstado", target = "usuarioEstado.id")
+    @Mapping(source = "personaId", target = "persona.id")
+    @Mapping(source = "usuarioEstadoId", target = "usuarioEstado.id")
+    @Mapping(target = "roles", ignore = true)
     User toEntity(UserDTO userDTO);
 }

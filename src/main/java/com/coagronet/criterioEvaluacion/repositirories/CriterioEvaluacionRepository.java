@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CriterioEvaluacionRepository extends JpaRepository<CriterioEvaluacion, Integer> {
+public interface CriterioEvaluacionRepository extends JpaRepository<CriterioEvaluacion, Long> {
 
-    List<CriterioEvaluacion> findByTipoEvaluacionIdAndEstadoIdNotOrderByIdAsc(Integer tipoEvaluacionId,Integer estadoId);
+    List<CriterioEvaluacion> findByTipoEvaluacionIdAndEstadoIdNotOrderByIdAsc(Long tipoEvaluacionId,Long estadoId);
 
-    Optional<CriterioEvaluacion> findByIdAndEstadoIdNot(Integer id, Integer estadoId);
+    Optional<CriterioEvaluacion> findByIdAndEstadoIdNot(Long id, Long estadoId);
 
-    boolean existsByIdAndEstadoIdNot(Integer id, Integer estadoId);
+    boolean existsByIdAndEstadoIdNot(Long id, Long estadoId);
 
-    boolean existsByTipoEvaluacionIdAndEstadoIdNot(Integer tipoEvaluacionId, Integer estadoId); // Nuevo método
+    boolean existsByTipoEvaluacionIdAndEstadoIdNot(Long tipoEvaluacionId, Long estadoId); // Nuevo método
 }

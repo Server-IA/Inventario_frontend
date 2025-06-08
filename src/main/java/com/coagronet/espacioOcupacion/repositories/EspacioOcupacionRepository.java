@@ -9,19 +9,9 @@ import com.coagronet.espacioOcupacion.EspacioOcupacion;
 
 public interface EspacioOcupacionRepository extends JpaRepository<EspacioOcupacion, Long> {
 
-    List<EspacioOcupacion> findByEspacioIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNotOrderByIdAsc(
-            Long espacioId,
-            Long empresaId,
-            Integer estadoId);
+    List<EspacioOcupacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<EspacioOcupacion> findByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(
+    Optional<EspacioOcupacion> findByIdAndEmpresaId(
             Long id,
-            Long empresaId,
-            Integer estadoId);
-
-    boolean existsByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(
-            Long id,
-            Long empresaId,
-            Integer estadoId);
-
+            Long empresaId);
 }

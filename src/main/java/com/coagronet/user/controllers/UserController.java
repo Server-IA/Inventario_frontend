@@ -74,8 +74,8 @@ public class UserController {
                     requestedId,
                     encodedPassword,
                     userDTOUpdate.getUsername(),
-                    userDTOUpdate.getPersona(),
-                    userDTOUpdate.getUsuarioEstado());
+                    userDTOUpdate.getPersonaId(),
+                    userDTOUpdate.getUsuarioEstadoId());
             User updatedUser = userMapper.toEntity(updatedUserDTO);
             userRepository.save(updatedUser);
             return ResponseEntity.noContent().build();

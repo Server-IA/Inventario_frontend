@@ -2,12 +2,12 @@ package com.coagronet.espacioOcupacion.controllers;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.coagronet.espacioOcupacion.services.EspacioOcupacionService;
+import com.coagronet.espacioOcupacion.dtos.EspacioOcupacionDTO;
+import com.coagronet.utils.UriBuilderUtil;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,152 +19,53 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.espacio.repositories.EspacioRepository;
-import com.coagronet.espacioOcupacion.EspacioOcupacion;
-import com.coagronet.espacioOcupacion.dtos.EspacioOcupacionDTO;
-import com.coagronet.espacioOcupacion.mappers.EspacioOcupacionMapper;
-import com.coagronet.espacioOcupacion.repositories.EspacioOcupacionRepository;
-import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.user.User;
-import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
-import com.coagronet.userRole.repositories.UserRoleRepository;
-
 @RestController
 @RequestMapping("/api/v1/espacio_ocupacion")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class EspacioOcupacionController {
 
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+    private final EspacioOcupacionService espacioOcupacionService;
+    private final UriBuilderUtil uriBuilderUtil;
 
-    @Autowired
-    private UserRepository userRepository;
+    @GetMapping
+    public ResponseEntity<List<EspacioOcupacionDTO>> findAll () {
+        List<EspacioOcupacionDTO> espacioOcupacionDTOList = espacioOcupacionService.findAll();
 
-    private final EspacioOcupacionRepository espacioOcupacionRepository;
-    private final EspacioOcupacionMapper espacioOcupacionMapper;
-    private final EstadoRepository estadoRepository;
-    private final EspacioRepository espacioRepository;
+        return espacioOcupacionDTOList.isEmpty()?
+                ResponseEntity.noContent().build()
+                : ResponseEntity.ok(espacioOcupacionDTOList);
 
-    public EspacioOcupacionController(
-            EspacioOcupacionRepository espacioOcupacionRepository,
-            EspacioOcupacionMapper espacioOcupacionMapper,
-            EstadoRepository estadoRepository,
-            EspacioRepository espacioRepository) {
-        this.espacioOcupacionRepository = espacioOcupacionRepository;
-        this.espacioOcupacionMapper = espacioOcupacionMapper;
-        this.estadoRepository = estadoRepository;
-        this.espacioRepository = espacioRepository;
-    }
-
-    private Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Empresa no encontrada para el usuario"));
-    }
-
-    private User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<EspacioOcupacionDTO> findById(@PathVariable Long requestedId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        return espacioOcupacionRepository
-                .findByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
-                .map(espacioOcupacionMapper::toDTO)
-                .map(ResponseEntity::ok)
+    public ResponseEntity<EspacioOcupacionDTO> findById (@PathVariable Long requestedId) {
+        return espacioOcupacionService.findById(requestedId).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+
     }
+
 
     @PostMapping
-    public ResponseEntity<Void> createEspacioOcupacion(@RequestBody EspacioOcupacionDTO newEspacioOcupacionRequest,
-            UriComponentsBuilder ucb) {
-        EspacioOcupacionDTO newEspacioOcupacion = new EspacioOcupacionDTO(
-                null,
-                newEspacioOcupacionRequest.getEspacio(),
-                newEspacioOcupacionRequest.getActividadOcupacion(),
-                newEspacioOcupacionRequest.getFechaInicio(),
-                newEspacioOcupacionRequest.getFechaFin(),
-                newEspacioOcupacionRequest.getEstado());
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        if (espacioRepository.existsByIdAndBloqueSedeEmpresaIdAndEstadoIdNot(
-                newEspacioOcupacion.getEspacio(),
-                empresa.getId(),
-                2)) {
-            EspacioOcupacion savedEspacioOcupacion = espacioOcupacionMapper.toEntity(newEspacioOcupacion);
-            espacioOcupacionRepository.save(savedEspacioOcupacion);
-            URI locationOfNewEspacioOcupacion = ucb
-                    .path("/api/v1/espacio_ocupacion/{id}")
-                    .buildAndExpand(savedEspacioOcupacion.getId())
-                    .toUri();
-            return ResponseEntity.created(locationOfNewEspacioOcupacion).build();
-        }
-        return ResponseEntity.badRequest().build();
-    }
+    public ResponseEntity<Void> crearEspacioOcupacion(@RequestBody @Valid EspacioOcupacionDTO espacioOcupacionDTO, UriComponentsBuilder ucb) {
+        EspacioOcupacionDTO savedEspacioOcupacionDTO = espacioOcupacionService.create(espacioOcupacionDTO);
 
-    @GetMapping("/espacio/{espacioId}")
-    public ResponseEntity<List<EspacioOcupacionDTO>> findAllByEspacioId(
-            @PathVariable Long espacioId) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-
-        List<EspacioOcupacionDTO> espacioOcupacionDTOs = espacioOcupacionRepository
-                .findByEspacioIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNotOrderByIdAsc(espacioId, empresa.getId(), 2)
-                .stream()
-                .map(espacioOcupacionMapper::toDTO)
-                .collect(Collectors.toList());
-
-        return !espacioOcupacionDTOs.isEmpty()
-                ? ResponseEntity.ok(espacioOcupacionDTOs)
-                : ResponseEntity.noContent().build();
+        URI locationOfNewEspacioOcupacion = uriBuilderUtil.buildEspacioOcupacionUri(savedEspacioOcupacionDTO.getId(), ucb);
+        return ResponseEntity.created(locationOfNewEspacioOcupacion).build();
     }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putEspacioOcupacion(@PathVariable Long requestedId,
-            @RequestBody EspacioOcupacionDTO espacioOcupacionDTOUpdate) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        EspacioOcupacion espacioOcupacion = espacioOcupacionRepository
-                .findByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(
-                        requestedId,
-                        empresa.getId(),
-                        2)
-                .orElse(null);
-        if (null != espacioOcupacion) {
-            EspacioOcupacionDTO updatedEspacioOcupacionDTO = new EspacioOcupacionDTO(
-                    requestedId,
-                    espacioOcupacionDTOUpdate.getEspacio(),
-                    espacioOcupacionDTOUpdate.getActividadOcupacion(),
-                    espacioOcupacionDTOUpdate.getFechaInicio(),
-                    espacioOcupacionDTOUpdate.getFechaFin(),
-                    espacioOcupacionDTOUpdate.getEstado());
-            EspacioOcupacion updatedEspacioOcupacion = espacioOcupacionMapper.toEntity(updatedEspacioOcupacionDTO);
-            espacioOcupacionRepository.save(updatedEspacioOcupacion);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> actualizarEspacioOcupacion(@PathVariable Long requestedId,
+                                                    @RequestBody EspacioOcupacionDTO espacioOcupacionDTO) {
+
+        espacioOcupacionService.update(requestedId, espacioOcupacionDTO);
+        return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEspacioOcupacion(@PathVariable Long id) {
-        User authenticatedUser = getAuthenticatedUser();
-        Empresa empresa = getEmpresaFromUser(authenticatedUser);
-        if (espacioOcupacionRepository.existsByIdAndEspacioBloqueSedeEmpresaIdAndEstadoIdNot(id, empresa.getId(), 2)) {
-            EspacioOcupacion espacioOcupacion = espacioOcupacionRepository.findById(id).orElse(null);
-            Estado estadoInactivo = estadoRepository.findById(2).orElse(null);
-            espacioOcupacion.setEstado(estadoInactivo);
-            espacioOcupacionRepository.save(espacioOcupacion);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    @DeleteMapping("/{requestedId}")
+    public ResponseEntity<Void> eliminarEspacioOcupacion(@PathVariable Long requestedId) {
+        espacioOcupacionService.delete(requestedId);
+        return ResponseEntity.noContent().build();
     }
 
 }

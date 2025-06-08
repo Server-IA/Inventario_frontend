@@ -3,6 +3,7 @@ package com.coagronet.espacioOcupacion;
 import java.time.LocalDateTime;
 
 import com.coagronet.actividadOcupacion.ActividadOcupacion;
+import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
 import com.coagronet.estado.Estado;
 
@@ -50,7 +51,11 @@ public class EspacioOcupacion {
     private LocalDateTime fechaFin;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eso_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "eso_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "eso_empresa_id", referencedColumnName = "emp_id")
+    private Empresa empresa;
 
 }

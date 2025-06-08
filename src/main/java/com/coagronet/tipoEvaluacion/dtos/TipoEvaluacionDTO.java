@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class TipoEvaluacionDTO {
-    private Integer id;
+    private Long id;
     private String nombre;
-    private Integer estadoId;
+    private Long estadoId;
 }

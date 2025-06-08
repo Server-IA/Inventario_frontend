@@ -17,7 +17,7 @@ public class TipoEvaluacion {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tieSeqGen")
     @SequenceGenerator(name = "tieSeqGen", sequenceName = "tipo_evaluacion_tie_id_seq", allocationSize = 1)
     @Column(name = "tie_id")
-    private Integer id;
+    private Long id;
 
     @Column(name = "tie_nombre", length = 255)
     private String nombre;

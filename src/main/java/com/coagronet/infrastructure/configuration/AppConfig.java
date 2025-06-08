@@ -24,9 +24,4 @@ public class AppConfig {
         this.queries = queries;
     }
 
-    @Primary
-    @Bean
-    public PagedResourcesAssembler<?> kardexPagedResourcesAssembler() {
-        return new PagedResourcesAssembler<>(null, null);
-    }
 }

@@ -1,5 +1,6 @@
 package com.coagronet.empresa.services;
 
+import com.coagronet.utils.Constantes;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,8 @@ public class EmpresaService {
     public Empresa getEmpresaById(Long id) {
         // Asegúrate de que también se filtren por estado aquí si es necesario
         Empresa empresa = empresaRepository.findById(id).orElse(null);
-        return (empresa != null && empresa.getEstado() != 2) ? empresa : null;
+
+        return (empresa != null && empresa.getEstado().getId() != 2) ? empresa : null;
     }
 
     public Empresa save(Empresa empresa) {
@@ -37,7 +39,7 @@ public class EmpresaService {
     public void deleteEmpresa(Long id) {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Persona not found with id: " + id));
-        empresa.setEstado(2);
+        empresa.getEstado().setId(Constantes.ESTADO_INACTIVO);
         empresaRepository.save(empresa);
     }
 }
