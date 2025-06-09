@@ -27,8 +27,8 @@ public class SecurityConfig {
 	@Autowired
 	private JwtService jwtService;
 
-	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(auth -> auth
 				.requestMatchers("/v3/api-docs/**",
 						"/swagger-ui.html",
@@ -72,19 +72,19 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	@Bean
-	public JwtRequestFilter jwtRequestFilter() {
+    @Bean
+    JwtRequestFilter jwtRequestFilter() {
 		return new JwtRequestFilter(jwtService, myUserDetailsService);
 	}
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
+    @Bean
+    PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-			throws Exception {
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
 		return authenticationConfiguration.getAuthenticationManager();
 	}
 }

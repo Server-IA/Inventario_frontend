@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.persona.Persona;
 import com.coagronet.persona.dtos.PersonaDTO;
-import com.coagronet.persona.mappers.PersonaMapper;
-import com.coagronet.persona.repositories.PersonaRepository;
 
 @RestController
 @RequestMapping("/api/v1/persona")
@@ -31,7 +28,6 @@ import com.coagronet.persona.repositories.PersonaRepository;
 public class PersonaController {
 
     private final PersonaService personaService;
-    private final PersonaMapper personaMapper;
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<PersonaDTO> findById(@PathVariable Long requestedId) {
@@ -50,11 +46,11 @@ public class PersonaController {
         return ResponseEntity.created(locationOfNewPersona).build();
     }
 
-        @GetMapping
-        private ResponseEntity<Page<PersonaDTO>> findAll(@PageableDefault Pageable pageable) {
-            Page<PersonaDTO> personas = personaService.findAll(pageable);
-            return ResponseEntity.ok(personas);
-        }
+    @GetMapping
+    private ResponseEntity<Page<PersonaDTO>> findAll(@PageableDefault Pageable pageable) {
+        Page<PersonaDTO> personas = personaService.findAll(pageable);
+        return ResponseEntity.ok(personas);
+    }
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putPersona(@PathVariable Long requestedId,
@@ -65,8 +61,8 @@ public class PersonaController {
 
     @DeleteMapping("/{id}")
     private ResponseEntity<Void> deletePersona(@PathVariable Long id) {
-      personaService.delete(id);
-      return ResponseEntity.ok().build();
+        personaService.delete(id);
+        return ResponseEntity.ok().build();
     }
 
 }

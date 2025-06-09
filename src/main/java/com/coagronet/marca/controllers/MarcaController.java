@@ -5,7 +5,6 @@ import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;

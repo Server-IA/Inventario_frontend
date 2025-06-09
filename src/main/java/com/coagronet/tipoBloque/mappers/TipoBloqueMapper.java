@@ -4,8 +4,6 @@ import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.factory.Mappers;
-
 import com.coagronet.estado.Estado;
 import com.coagronet.tipoBloque.TipoBloque;
 import com.coagronet.tipoBloque.dtos.TipoBloqueDTO;
@@ -16,7 +14,6 @@ public interface TipoBloqueMapper {
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "empresa.id", target = "empresaId")
     TipoBloqueDTO toDTO(TipoBloque tipoBloque);
-
 
     @Mapping(target = "empresaId", ignore = true)
     @Mapping(target = "estadoId", ignore = true)

@@ -10,19 +10,17 @@ import javax.sql.DataSource;
 
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
-import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.stereotype.Service;
 
+@DependsOnDatabaseInitialization
 @Service
 @RequiredArgsConstructor
 public class ReportService {
 
     @Autowired
     private DataSource dataSource;
-
 
     public byte[] generarReporte(String reportName, Map<String, Object> parametros) {
         try {
@@ -32,9 +30,10 @@ public class ReportService {
                 String key = entry.getKey();
                 Object value = entry.getValue();
 
-                if (value instanceof String && (key.toLowerCase().contains("fecha") || key.toLowerCase().contains("date"))) {
+                if (value instanceof String string
+                        && (key.toLowerCase().contains("fecha") || key.toLowerCase().contains("date"))) {
                     try {
-                        Date parsedDate = sdf.parse((String) value);
+                        Date parsedDate = sdf.parse(string);
                         parametros.put(key, parsedDate);
                     } catch (ParseException e) {
                         throw new RuntimeException("Error al parsear la fecha para el parámetro: " + key, e);
@@ -55,6 +54,4 @@ public class ReportService {
         }
     }
 
-
-    
 }
