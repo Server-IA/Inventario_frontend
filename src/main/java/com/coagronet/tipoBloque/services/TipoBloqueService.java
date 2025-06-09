@@ -1,7 +1,6 @@
 package com.coagronet.tipoBloque.services;
 
 import com.coagronet.empresa.Empresa;
-import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoBloque.TipoBloque;
 import com.coagronet.tipoBloque.dtos.TipoBloqueDTO;
@@ -28,15 +27,14 @@ public class TipoBloqueService {
     private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
 
-
-    public Optional<TipoBloqueDTO> findById(Long requestedId){
+    public Optional<TipoBloqueDTO> findById(Long requestedId) {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        return tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(),2)
+        return tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .map(tipoBloqueMapper::toDTO);
     }
 
-    public List<TipoBloqueDTO> findAll(){
+    public List<TipoBloqueDTO> findAll() {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return tipoBloqueRepository
@@ -46,7 +44,7 @@ public class TipoBloqueService {
                 .collect(Collectors.toList());
     }
 
-    public List<TipoBloqueDTO> findAllMinimal(){
+    public List<TipoBloqueDTO> findAllMinimal() {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return tipoBloqueRepository
@@ -57,7 +55,7 @@ public class TipoBloqueService {
     }
 
     @Transactional
-    public TipoBloqueDTO create(TipoBloqueDTO tipoBloqueDTO){
+    public TipoBloqueDTO create(TipoBloqueDTO tipoBloqueDTO) {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
@@ -69,16 +67,15 @@ public class TipoBloqueService {
     }
 
     @Transactional
-    public void update(Long requestedId, TipoBloqueDTO tipoBloqueDTO){
+    public void update(Long requestedId, TipoBloqueDTO tipoBloqueDTO) {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
 
-       tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+        tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
                 .orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o está inactivo"));
 
-       estadoRepository.findById(tipoBloqueDTO.getEstadoId())
+        estadoRepository.findById(tipoBloqueDTO.getEstadoId())
                 .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
-
 
         tipoBloqueDTO.setId(requestedId);
         tipoBloqueDTO.setEmpresaId(empresa.getId());
@@ -87,10 +84,9 @@ public class TipoBloqueService {
     }
 
     @Transactional
-    public void delete(Long id){
+    public void delete(Long id) {
         User authenticatedUser = authenticationService.getAuthenticatedUser();
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
 
         TipoBloque tipoBloque = tipoBloqueRepository
                 .findByIdAndEmpresaId(id, empresa.getId())
@@ -99,7 +95,5 @@ public class TipoBloqueService {
         tipoBloqueRepository.deleteById(tipoBloque.getId());
 
     }
-
-
 
 }

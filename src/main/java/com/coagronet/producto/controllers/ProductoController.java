@@ -3,14 +3,10 @@ package com.coagronet.producto.controllers;
 import java.net.URI;
 import java.util.List;
 
-import com.coagronet.pedido.services.PedidoService;
 import com.coagronet.producto.services.ProductoService;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,10 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.producto.Producto;
 import com.coagronet.producto.dtos.ProductoDTO;
-import com.coagronet.user.User;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -34,19 +27,17 @@ import com.coagronet.user.User;
 @RequiredArgsConstructor
 public class ProductoController {
 
-   private final ProductoService productoService;
-   private final UriBuilderUtil uriBuilderUtil;
-
+    private final ProductoService productoService;
+    private final UriBuilderUtil uriBuilderUtil;
 
     @GetMapping
-    public ResponseEntity<List<ProductoDTO>> findAll(){
+    public ResponseEntity<List<ProductoDTO>> findAll() {
         List<ProductoDTO> productoDTOList = productoService.findAll();
 
         return productoDTOList.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(productoDTOList);
     }
-
 
     @GetMapping("/{requestedId}")
     private ResponseEntity<ProductoDTO> findById(@PathVariable Long requestedId) {
@@ -64,10 +55,6 @@ public class ProductoController {
 
         return ResponseEntity.created(locationOfNewPedido).build();
     }
-
-
-
-
 
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putProducto(@PathVariable Long requestedId,

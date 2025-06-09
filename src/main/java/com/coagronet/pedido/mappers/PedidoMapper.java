@@ -2,14 +2,12 @@ package com.coagronet.pedido.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 import com.coagronet.pedido.Pedido;
 import com.coagronet.pedido.dtos.PedidoDTO;
 
 @Mapper(componentModel = "spring")
 public interface PedidoMapper {
-
 
     @Mapping(source = "almacen.id", target = "almacenId")
     @Mapping(source = "produccion.id", target = "produccionId")

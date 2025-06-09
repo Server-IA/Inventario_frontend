@@ -3,13 +3,11 @@ package com.coagronet.produccion.mappers;
 import com.coagronet.produccion.dtos.ProduccionDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 import com.coagronet.produccion.Produccion;
 
 @Mapper(componentModel = "spring")
 public interface ProduccionMapper {
-    
 
     @Mapping(source = "tipoProduccion.id", target = "tipoProduccionId")
     @Mapping(source = "espacio.id", target = "espacioId")
@@ -25,4 +23,3 @@ public interface ProduccionMapper {
     @Mapping(source = "empresaId", target = "empresa.id")
     Produccion toEntity(ProduccionDTO produccionDTO);
 }
-
