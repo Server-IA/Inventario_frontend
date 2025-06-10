@@ -3,8 +3,6 @@ package com.coagronet.persona.controllers;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -28,7 +26,6 @@ import com.coagronet.usuarioEstado.UsuarioEstado;
 @CrossOrigin(origins = "*")
 public class PersonaUsuarioController {
 
-    private static final Logger log = LoggerFactory.getLogger(PersonaUsuarioController.class);
     @Autowired
     private PersonaRepository personaRepository;
 
@@ -58,7 +55,6 @@ public class PersonaUsuarioController {
 
         user.setPersona(persona);
         user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
-
 
         userRepository.save(user);
 
