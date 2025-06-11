@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Reporte_kardex" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.0.1"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<parameter name="fecha_inicio" class="java.util.Date"/>
+	<parameter name="fecha_fin" class="java.util.Date"/>
+	<parameter name="ALM_ID" class="java.lang.Integer"/>
+	<parameter name="EMP_ID" class="java.lang.Integer"/>
+	<parameter name="SED_ID" class="java.lang.Integer"/>
+	<parameter name="MUN_ID" class="java.lang.Integer"/>
+	<parameter name="BLO_ID" class="java.lang.Integer"/>
+	<parameter name="ESP_ID" class="java.lang.Integer"/>
+	<parameter name="PRO_ID" class="java.lang.Integer"/>
+	<parameter name="PRO_CAT_ID" class="java.lang.Integer"/>
+	<queryString>
+		<![CDATA[SELECT 
+    e.emp_id AS header_empresa_id,
+    e.emp_nombre AS header_empresa,
+    s.sed_id AS header_sede_id,
+    s.sed_nombre AS header_sede,
+    A.alm_id AS header_almacen_id,
+    al.alm_nombre AS header_almacen,
+    m.mun_id AS header_municipio_id,
+    m.mun_nombre AS header_municipio,
+    e.emp_correo AS header_correo,
+    e.emp_contacto AS header_contacto,
+    e.emp_logo AS header_empresa_logo,
+    CONCAT(per.per_nombre, ' ', per.per_apellido) AS header_responsable,
+    esp.esp_id AS header_espacio_id,
+    esp.esp_nombre AS header_espacio,
+    blo.blo_id AS header_bloque_id,
+    blo.blo_nombre AS header_bloque,
+    p.pro_id AS item_producto_id,
+    p.pro_producto_categoria_id AS item_categoria_producto_id,
+    A.pro_nombre AS item_producto,
+    A.uni_nombre AS item_unidad,
+    A.kar_fecha_hora AS item_fecha,
+    A.kar_tipo_movimiento_id AS item_tipo_movimiento,
+    A.cantidad AS item_cantidad,
+    A.entrada AS item_entrada,
+    A.salida AS item_salida,
+    ki.kai_fecha_vencimiento AS item_fecha_vencimiento,
+    (SELECT SUM(B.cantidad * B.prp_cantidad) 
+     FROM vista_kardex AS B 
+     WHERE B.prp_producto_id = A.prp_producto_id AND B.kai_id <= A.kai_id) AS item_saldo
+FROM vista_kardex AS A
+JOIN kardex_item AS ki ON A.kai_id = ki.kai_id
+JOIN kardex AS k ON ki.kai_kardex_id = k.kar_id
+JOIN almacen AS al ON A.alm_id = al.alm_id
+JOIN espacio AS esp ON al.alm_espacio_id = esp.esp_id
+JOIN bloque AS blo ON esp.esp_bloque_id = blo.blo_id
+JOIN sede AS s ON A.sed_id = s.sed_id
+JOIN empresa AS e ON s.sed_empresa_id = e.emp_id
+JOIN municipio AS m ON s.sed_municipio_id = m.mun_id
+JOIN persona AS per ON e.emp_persona_id = per.per_id
+JOIN producto AS p ON A.prp_producto_id = p.pro_id
+
+WHERE 
+	(CAST($P{PRO_ID} AS BIGINT) IS NULL OR p.pro_id = $P{PRO_ID}) AND
+	(CAST($P{PRO_CAT_ID} AS BIGINT) IS NULL OR p.pro_id = $P{PRO_CAT_ID}) AND
+    (CAST($P{EMP_ID} AS BIGINT) IS NULL OR e.emp_id = $P{EMP_ID}) AND
+    (CAST($P{SED_ID} AS BIGINT) IS NULL OR s.sed_id = $P{SED_ID}) AND
+    (CAST($P{MUN_ID} AS BIGINT) IS NULL OR m.mun_id = $P{MUN_ID}) AND
+    (CAST($P{BLO_ID} AS BIGINT) IS NULL OR blo.blo_id = $P{BLO_ID}) AND
+    (CAST($P{ESP_ID} AS BIGINT) IS NULL OR esp.esp_id = $P{ESP_ID}) AND
+    (CAST($P{ALM_ID} AS BIGINT) IS NULL OR al.alm_id = $P{ALM_ID}) AND
+    A.kar_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
+
+ORDER BY A.kai_id]]>
+	</queryString>
+	<field name="header_empresa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_empresa" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_empresa"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_empresa"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_sede_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_sede_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_sede_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
+	</field>
+	<field name="header_sede" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_sede"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_sede"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
+	</field>
+	<field name="header_almacen_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_almacen_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_almacen_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="header_almacen" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_almacen"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_almacen"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="almacen"/>
+	</field>
+	<field name="header_municipio_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_municipio_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_municipio_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="municipio"/>
+	</field>
+	<field name="header_municipio" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_municipio"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_municipio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="municipio"/>
+	</field>
+	<field name="header_correo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_correo"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_correo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_contacto" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_contacto"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_contacto"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_empresa_logo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_empresa_logo"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_empresa_logo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_responsable" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_responsable"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_responsable"/>
+	</field>
+	<field name="header_espacio_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="header_espacio" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_espacio"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_espacio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="header_bloque_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_bloque_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_bloque_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="header_bloque" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_bloque"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_bloque"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="item_producto_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="item_producto_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_producto_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto"/>
+	</field>
+	<field name="item_categoria_producto_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="item_categoria_producto_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_categoria_producto_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto"/>
+	</field>
+	<field name="item_producto" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_producto"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_producto"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_unidad" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_unidad"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_unidad"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_fecha" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="item_fecha"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_fecha"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_tipo_movimiento" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="item_tipo_movimiento"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_tipo_movimiento"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_cantidad" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_cantidad"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_cantidad"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_entrada" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_entrada"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_entrada"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_salida" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_salida"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_salida"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_fecha_vencimiento" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="item_fecha_vencimiento"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_fecha_vencimiento"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="kardex_item"/>
+	</field>
+	<field name="item_saldo" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_saldo"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_saldo"/>
+	</field>
+	<variable name="totalCantidad" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{item_cantidad}]]></variableExpression>
+	</variable>
+	<variable name="totalEntrada" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{item_entrada}]]></variableExpression>
+	</variable>
+	<variable name="totalSalida" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{item_salida}]]></variableExpression>
+	</variable>
+	<variable name="totalSaldo" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{item_saldo}]]></variableExpression>
+	</variable>
+	<title>
+		<band height="74">
+			<rectangle>
+				<reportElement x="-20" y="-20" width="595" height="94" backcolor="#D6E4F0" uuid="7068c842-c18d-413e-8ae7-f5bbfecf8d8a"/>
+				<graphicElement>
+					<pen lineColor="#3747A1"/>
+				</graphicElement>
+			</rectangle>
+			<image>
+				<reportElement x="60" y="0" width="79" height="39" uuid="cc4cf37f-04d4-49c7-8c31-d44b05992cea"/>
+				<imageExpression><![CDATA[$F{header_empresa_logo} != null ? new java.net.URL($F{header_empresa_logo}) : null]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="240" y="0" width="290" height="40" uuid="f1a3b1d1-03f9-4144-b512-8610c993a234"/>
+				<textElement textAlignment="Right">
+					<font fontName="Arial" size="26" isBold="true"/>
+				</textElement>
+				<text><![CDATA[FACTURA]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="20" y="45" width="150" height="20" uuid="f46b7e68-64fa-4f15-bc1e-a9cc894c3ebf"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_empresa}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="198">
+			<rectangle>
+				<reportElement x="-20" y="0" width="595" height="198" backcolor="#FFFFFF" uuid="6d0bfea8-3503-46b8-a64a-4df717dfc882"/>
+				<graphicElement>
+					<pen lineColor="#3747A1"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="20" width="70" height="20" backcolor="#D6E4F0" uuid="91db920a-6ed2-4181-b718-a8ca2ef009a3"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Sede:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="20" width="150" height="20" uuid="b83a1dcf-7321-454a-9270-c3ffb580de18"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_sede}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="80" width="70" height="20" backcolor="#D6E4F0" uuid="e75aee68-e4e1-41d9-a928-42a5373e9275"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Almacén:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="80" width="150" height="20" uuid="7f95d458-4749-4a8f-8557-c9809ad28509"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_almacen}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="100" width="70" height="20" backcolor="#D6E4F0" uuid="04bfb93a-179f-4895-91a8-a12a732eb051"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Correo:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="100" width="150" height="20" uuid="5c05a5e2-d01e-4a7d-99d9-180a217c5dde"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_correo}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="120" width="70" height="20" backcolor="#D6E4F0" uuid="d8e752bc-ad64-4bac-a291-eed46493fa1c"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Municipio:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="120" width="150" height="20" uuid="da65d96c-c127-4321-b565-826b0ad4b2f1"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_municipio}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="293" y="20" width="70" height="20" backcolor="#D6E4F0" uuid="d2edb052-b680-426e-85d4-2e0a1246c038"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Responsable:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="363" y="20" width="162" height="20" uuid="4bef04ab-8922-4025-a3bd-f59288a318da"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_responsable}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="293" y="40" width="70" height="20" backcolor="#D6E4F0" uuid="7d563ce7-a136-48a1-b1b8-5baa97c0c75e"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Generado:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="363" y="40" width="162" height="20" uuid="899a676a-cf9e-4bfc-93b1-eebbf9de66d1"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="363" y="60" width="162" height="20" uuid="03d7ca4b-989d-4deb-8dcc-9aa901c3605d">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$P{fecha_inicio}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="363" y="80" width="162" height="20" uuid="49e7f8cb-7a61-4a9f-aae4-b05183bbcf87">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$P{fecha_fin}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="363" y="100" width="162" height="20" uuid="16edb09d-ba61-4f9d-936d-937f97a810ac">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+					<topPen lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$P{ALM_ID}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="293" y="60" width="70" height="20" backcolor="#D6E4F0" uuid="076463ce-798b-4fd7-b72b-7fc0e754b2df"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Fecha Inicio:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="293" y="79" width="70" height="20" backcolor="#D6E4F0" uuid="d45dbea2-c50c-42a4-9ed5-9325df6dbe21"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Fecha Fin:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="293" y="100" width="70" height="20" backcolor="#D6E4F0" uuid="cd6a77ea-b603-4bdc-ae36-9a3bb6620b41"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Id producto:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="140" width="150" height="20" uuid="421c5203-efcb-4c1b-bf61-13da9901867e"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{header_contacto}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="140" width="70" height="20" backcolor="#D6E4F0" uuid="dc619787-6642-4ffa-b6fe-1bf89631f49d"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Contacto:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="40" width="70" height="20" backcolor="#D6E4F0" uuid="e1e9f0aa-3c8f-40df-ae8f-c4d2f9552b98"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Bloque:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="40" width="150" height="20" uuid="47e99f21-e943-4287-9175-9cf17d159319"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[$F{header_bloque}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="20" y="60" width="70" height="20" backcolor="#D6E4F0" uuid="4d19e5cb-d591-4c60-97d9-d33310952c4c"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ Espacio:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="90" y="60" width="150" height="20" uuid="7896c977-fb84-4dc3-af11-fbbc3bc8be1c"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[$F{header_espacio}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="25">
+			<staticText>
+				<reportElement mode="Opaque" x="22" y="2" width="100" height="20" backcolor="#D6E4F0" uuid="ec4d6625-1f8e-49fc-980b-836072de5671"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="122" y="2" width="100" height="20" backcolor="#D6E4F0" uuid="2f18ad61-a971-42dc-8774-cb097e461303"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Producto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="222" y="2" width="48" height="20" backcolor="#D6E4F0" uuid="f801345a-166c-4ad3-8946-84f668545271"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Unidad]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="270" y="2" width="60" height="20" backcolor="#D6E4F0" uuid="321b1ef6-7e75-4e7e-a589-853a3226e0d8"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cantidad]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="330" y="2" width="60" height="20" backcolor="#D6E4F0" uuid="dcfcb993-f861-4c58-8993-4d306a1ad210"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Entrada]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="390" y="2" width="60" height="20" backcolor="#D6E4F0" uuid="67ee2cb3-41c1-404d-a358-3f1a19f8586a"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Salida]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="450" y="2" width="75" height="20" backcolor="#D6E4F0" uuid="3c0563a4-91e9-42ef-941a-ce42f832a0f6"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Saldo]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20">
+			<textField>
+				<reportElement stretchType="ContainerHeight" x="22" y="-2" width="100" height="20" uuid="d1b3ed0a-a577-4d28-8936-de9928371a64"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_fecha}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="122" y="-2" width="100" height="20" uuid="8db288f6-b430-4cf4-b07b-ce66d97590bb"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_producto}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="222" y="-2" width="48" height="20" uuid="30732894-64a2-4a38-89a6-2048cb1b4360"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_unidad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="270" y="-2" width="60" height="20" uuid="4535c2f4-2ca3-4dab-bf2a-d44b813adf53"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_cantidad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="330" y="-2" width="60" height="20" uuid="7988253e-f6b1-4fd7-be7f-2868f007fdbc"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_entrada}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="390" y="-2" width="60" height="20" uuid="978147ac-505a-42c3-a83e-08f1ceb5674f"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_salida}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="450" y="-2" width="75" height="20" uuid="ed469bbf-9119-4831-87e4-515c9eb8d1ec"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$F{item_saldo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="25">
+			<staticText>
+				<reportElement mode="Opaque" x="222" y="-2" width="48" height="20" backcolor="#D6E4F0" uuid="6f9a4d9d-88ea-4d8b-a62f-48ad63a3402d"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[TOTALES:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="270" y="-2" width="60" height="20" uuid="9172166f-4442-404d-902d-13af525e8cb8"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[$V{totalCantidad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="330" y="-2" width="60" height="20" uuid="41fa326f-03cb-4f9b-8904-0bc0697716fa"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[$V{totalEntrada}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="390" y="-2" width="60" height="20" uuid="7b95f2e7-9b7b-46d5-92a3-ff8ed1e77969"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[$V{totalSalida}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="450" y="-2" width="75" height="20" uuid="7cbc27e3-c799-44db-96af-aa426911158a"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+				<textFieldExpression><![CDATA[" "+$V{totalSaldo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="55">
+			<textField evaluationTime="Report">
+				<reportElement x="430" y="5" width="100" height="20" uuid="2b9075fa-dff7-49c2-895b-6425751b65cf"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

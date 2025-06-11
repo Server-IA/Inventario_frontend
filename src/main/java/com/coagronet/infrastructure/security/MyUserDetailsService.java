@@ -35,6 +35,6 @@ public class MyUserDetailsService implements UserDetailsService {
 			throw new IllegalStateException("Unexpected value: " + user.getUsuarioEstado().getId());
 		}
 
-		return user; // ← Aquí el cambio importante
+		return user; //Aqui el cambio importante
 	}
 }
