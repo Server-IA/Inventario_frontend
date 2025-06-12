@@ -38,6 +38,13 @@ public class ArticuloKardexService {
 				.stream().map(articuloKardexMapper::toListDTO).collect(Collectors.toList());
 	}
 
+	public List<ArticuloKardexDTO> findAllByKardexId(Long kardexId) {
+		return articuloKardexRepository
+				.findByEmpresaIdAndKardexIdOrderByIdAsc(
+						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId(), kardexId)
+				.stream().map(articuloKardexMapper::toListDTO).collect(Collectors.toList());
+	}
+
 	public Optional<ArticuloKardexDTO> findById(Long requestedId) {
 		return articuloKardexRepository
 				.findByIdAndEmpresaId(requestedId,
