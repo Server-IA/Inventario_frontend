@@ -1,9 +1,9 @@
 com.coagronet
-com.coagronet.actividadOcupacion
-com.coagronet.actividadOcupacion.controllers
-com.coagronet.actividadOcupacion.dtos
-com.coagronet.actividadOcupacion.mappers
-com.coagronet.actividadOcupacion.repositories
+com.coagronet.ocupacion
+com.coagronet.ocupacion.controllers
+com.coagronet.ocupacion.dtos
+com.coagronet.ocupacion.mappers
+com.coagronet.ocupacion.repositories
 com.coagronet.almacen
 com.coagronet.almacen.controllers
 com.coagronet.almacen.dtos

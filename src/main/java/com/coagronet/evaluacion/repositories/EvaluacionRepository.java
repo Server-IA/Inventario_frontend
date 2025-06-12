@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.coagronet.evaluacion.Evaluacion;
 
 @Repository
-public interface EvaluacionRepository extends JpaRepository<Evaluacion, Integer> {
+public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
 
     List<Evaluacion> findByTipoEvaluacionId(
             Integer tipoEvaluacionId);

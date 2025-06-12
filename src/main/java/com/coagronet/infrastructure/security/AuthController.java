@@ -16,6 +16,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -95,7 +96,8 @@ public class AuthController {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		User authenticatedUser = (User) authentication.getPrincipal();
 
-		String token = jwtService.createJwtToken(request.getUsername(), request.getPassword());
+		// Pass authenticationManager as parameter
+		String token = jwtService.createJwtToken(request.getUsername(), request.getPassword(), authenticationManager);
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("token", token);
@@ -170,7 +172,7 @@ public class AuthController {
 	public Set<String> getUserRoles() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
-			return userDetails.getAuthorities().stream().map(authority -> authority.getAuthority())
+			return userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority)
 					.collect(Collectors.toSet());
 		}
 		return Set.of();

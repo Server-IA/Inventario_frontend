@@ -18,8 +18,8 @@ public class EspacioOcupacionDTO {
     @NotNull(message = "El espacio no puede ser nulo")
     private Long espacioId;
 
-    @NotNull(message = "La actividadOcupacion no puede ser nula")
-    private Long actividadOcupacionId;
+    @NotNull(message = "La ocupacion no puede ser nula")
+    private Long ocupacionId;
 
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;

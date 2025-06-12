@@ -28,21 +28,16 @@ public class JwtService {
 	private JwtUtil jwtUtil;
 
 	@Autowired
-	private AuthenticationManager authenticationManager;
-
-	@Autowired
 	private MyUserDetailsService myUserDetailsService;
 
-	public String createJwtToken(String username, String password) {
+	public String createJwtToken(String username, String password, AuthenticationManager authenticationManager) {
 		UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
 
-		// Autenticar usando el UserDetails
 		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, password,
 				userDetails.getAuthorities());
 
 		authenticationManager.authenticate(authToken);
 
-		// Guardar en el contexto de seguridad para uso posterior
 		SecurityContextHolder.getContext().setAuthentication(authToken);
 
 		return jwtUtil.generateToken(userDetails.getUsername());
@@ -54,8 +49,6 @@ public class JwtService {
 	}
 
 	private Claims extractAllClaims(String token) {
-		// return
-		// Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
 		return (Claims) Jwts.parser().verifyWith((SecretKey) getSigningKey()).build().parseSignedClaims(token)
 				.getPayload();
 	}
@@ -85,5 +78,4 @@ public class JwtService {
 	private Date extractExpiration(String token) {
 		return extractClaim(token, Claims::getExpiration);
 	}
-
 }

@@ -35,7 +35,7 @@ public class Evaluacion {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaSeqGen")
     @SequenceGenerator(name = "evaSeqGen", sequenceName = "evaluacion_eva_id_seq", allocationSize = 1)
     @Column(name = "eva_id")
-    private Integer id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "eva_tipo_evaluacion_id", referencedColumnName = "tie_id")
@@ -52,6 +52,6 @@ public class Evaluacion {
     private Integer evaluado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eva_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "eva_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 }

@@ -2,7 +2,7 @@ package com.coagronet.espacioOcupacion;
 
 import java.time.LocalDateTime;
 
-import com.coagronet.actividadOcupacion.ActividadOcupacion;
+import com.coagronet.ocupacion.Ocupacion;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
 import com.coagronet.estado.Estado;
@@ -42,7 +42,7 @@ public class EspacioOcupacion {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "eso_actividad_ocupacion_id", referencedColumnName = "aco_id")
-    private ActividadOcupacion actividadOcupacion;
+    private Ocupacion ocupacion;
 
     @Column(name = "eso_fecha_inicio")
     private LocalDateTime fechaInicio;

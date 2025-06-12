@@ -10,13 +10,13 @@ import com.coagronet.espacioOcupacion.dtos.EspacioOcupacionDTO;
 public interface EspacioOcupacionMapper {
 
     @Mapping(source = "espacio.id", target = "espacioId")
-    @Mapping(source = "actividadOcupacion.id", target = "actividadOcupacionId")
+    @Mapping(source = "ocupacion.id", target = "ocupacionId")
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "empresa.id", target = "empresaId")
     EspacioOcupacionDTO toDTO(EspacioOcupacion espacioOcupacion);
 
     @Mapping(source = "espacioId", target = "espacio.id")
-    @Mapping(source = "actividadOcupacionId", target = "actividadOcupacion.id")
+    @Mapping(source = "ocupacionId", target = "ocupacion.id")
     @Mapping(source = "estadoId", target = "estado.id")
     @Mapping(source = "empresaId", target = "empresa.id")
     EspacioOcupacion toEntity(EspacioOcupacionDTO espacioOcupacionDTO);
