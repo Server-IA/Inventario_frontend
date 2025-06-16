@@ -47,15 +47,15 @@ public class ArticuloKardex {
 	private LocalDateTime fechaVencimiento;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kai_kardex_id", referencedColumnName = "kar_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_itemkardexkar_id_fkey"))
+	@JoinColumn(name = "kai_kardex_id", referencedColumnName = "kar_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_kardex_id_fkey"))
 	private Kardex kardex;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kai_producto_presentacion_id", referencedColumnName = "prp_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_itemproducto_presentacionprp_id_fkey"))
+	@JoinColumn(name = "kai_producto_presentacion_id", referencedColumnName = "prp_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_producto_presentacion_id_fkey"))
 	private ProductoPresentacion productoPresentacion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kai_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_itemestadoest_id_fkey"))
+	@JoinColumn(name = "kai_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_estado_id_fkey"))
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
