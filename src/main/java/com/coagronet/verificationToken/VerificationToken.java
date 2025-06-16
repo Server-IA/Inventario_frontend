@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -27,9 +26,8 @@ import lombok.NoArgsConstructor;
 public class VerificationToken {
 
     @Id
-    @SequenceGenerator(name = "verification_tokens_sequence", sequenceName = "verification_tokens_vet_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "verification_tokens_sequence")
-    @Column(name = "vet_id", nullable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "vet_id")
     private Long id;
 
     @Column(name = "vet_email", nullable = false, length = 255)
