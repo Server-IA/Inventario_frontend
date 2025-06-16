@@ -2,6 +2,7 @@ package com.coagronet.item.repositories;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.user.User;
@@ -43,32 +44,36 @@ public class CustomRepository {
         Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         Long empresaId = empresa.getId();
         String sql = queries.get(tableName);
-        sql = sql.replace("$EMPRESA_ID$", String.valueOf(empresaId) );
+        sql = sql.replace("$EMPRESA_ID$", String.valueOf(empresaId));
 
         int start = sql.indexOf("$AND");
         int end = sql.indexOf("PARENT_ID$");
 
-        if(start != -1 || end != -1){
+        if (start != -1 || end != -1) {
             String parentText = sql.substring(start, end);
 
-            if(parentId != null) {
-                if(parentId != 0){
-                    sql = sql.replace("PARENT_ID$", String.valueOf(parentId) );
-                    sql = sql.replace("$AND", "and" );
+            if (parentId != null) {
+                if (parentId != 0) {
+                    sql = sql.replace("PARENT_ID$", String.valueOf(parentId));
+                    sql = sql.replace("$AND", "and");
 
-                }else{
-                    sql = sql.replace(parentText, "" );
-                    sql = sql.replace("PARENT_ID$", "" );
+                } else {
+                    sql = sql.replace(parentText, "");
+                    sql = sql.replace("PARENT_ID$", "");
                 }
             }
         }
 
-        Query query = entityManager.createNativeQuery(sql, "ItemMapping");
+        Query query = entityManager.createNativeQuery(sql);
 
-        System.out.println(tableName + " " + sql);
-        return query.getResultList();
+        // Map the result manually
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = query.getResultList();
+
+        return results.stream()
+                .map(row -> new Item(
+                        row[0] instanceof Number n ? n.longValue() : Long.parseLong(row[0].toString()),
+                        row[1] != null ? row[1].toString() : null))
+                .collect(Collectors.toList());
     }
-
-
-
 }

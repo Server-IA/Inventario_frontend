@@ -6,7 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Item {
-
     private Long id;
     private String name;
 
@@ -14,5 +13,4 @@ public class Item {
         this.id = id;
         this.name = name;
     }
-
 }

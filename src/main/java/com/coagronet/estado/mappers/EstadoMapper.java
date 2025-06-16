@@ -2,16 +2,11 @@ package com.coagronet.estado.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.dtos.EstadoDTO;
 
 @Mapper(componentModel = "spring")
 public interface EstadoMapper {
-
-    EstadoMapper INSTANCE = org.mapstruct.factory.Mappers.getMapper(EstadoMapper.class);
-
-    
     EstadoDTO toDTO(Estado estado);
 
     Estado toEntity(EstadoDTO estadoDTO);
@@ -21,5 +16,4 @@ public interface EstadoMapper {
     @Mapping(target = "id", source = "id")
     @Mapping(target = "nombre", source = "nombre")
     EstadoDTO toShortDTO(Estado estado);
-
 }

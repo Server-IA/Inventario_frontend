@@ -1,6 +1,5 @@
 package com.coagronet.movimiento;
 
-import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
 import jakarta.persistence.Column;
@@ -26,18 +25,18 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "movimiento", schema = "public")
 public class Movimiento {
-	
+
 	@Id
 	@SequenceGenerator(name = "movimiento_generator", sequenceName = "movimiento_mov_id_seq", allocationSize = 1)
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "movimiento_generator")
 	@Column(name = "mov_id")
 	private Long id;
-	
+
 	@Column(name = "mov_nombre", length = 25, nullable = false)
-    private String nombre;  
+	private String nombre;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "mov_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "movimiento_mov_estado_fkey"))
+	@JoinColumn(name = "mov_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "movimiento_mov_estado_id_fkey"))
 	private Estado estado;
 
 }

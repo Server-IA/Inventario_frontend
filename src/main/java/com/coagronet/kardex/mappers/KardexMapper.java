@@ -8,7 +8,6 @@ import com.coagronet.kardex.dtos.KardexDTO;
 @Mapper(componentModel = "spring")
 public interface KardexMapper {
 
-
     @Mapping(source = "almacen.id", target = "almacenId")
     @Mapping(source = "produccion.id", target = "produccionId")
     @Mapping(source = "tipoMovimiento.id", target = "tipoMovimientoId")

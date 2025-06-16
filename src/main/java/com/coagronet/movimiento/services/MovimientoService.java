@@ -12,8 +12,6 @@ import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.movimiento.dtos.MovimientoDTO;
 import com.coagronet.movimiento.mappers.MovimientoMapper;
 import com.coagronet.movimiento.repositories.MovimientoRepository;
-import com.coagronet.utils.AuthenticationService;
-import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MovimientoService {
 
-    private final AuthenticationService authenticationService;
-    private final UserEmpresaService userEmpresaService;
     private final MovimientoMapper movimientoMapper;
     private final MovimientoRepository movimientoRepository;
     private final EstadoRepository estadoRepository;
