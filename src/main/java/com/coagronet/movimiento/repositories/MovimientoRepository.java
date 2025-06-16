@@ -10,9 +10,4 @@ import com.coagronet.movimiento.Movimiento;
 
 @Repository
 public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
-
-	Optional<Movimiento> findByIdAndEmpresaId(Long id, Long empresaId);
-
-	List<Movimiento> findByEmpresaIdOrderByIdAsc(Long empresaId);
-
 }

@@ -23,6 +23,6 @@ public class TipoEvaluacion {
     private String nombre;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tie_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "tie_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 }

@@ -40,8 +40,4 @@ public class Movimiento {
 	@JoinColumn(name = "mov_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "movimiento_mov_estado_fkey"))
 	private Estado estado;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "mov_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "movimiento_mov_empresa_id_fkey"))
-	private Empresa empresa;
-
 }

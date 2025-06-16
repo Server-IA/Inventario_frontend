@@ -39,7 +39,4 @@ public class ProductoPresentacionDTO {
 
 
     private Long empresaId;
-
-    @NotNull
-    private Long ingredienteId;
 }

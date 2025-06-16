@@ -67,7 +67,4 @@ public class ProductoPresentacion {
     @JoinColumn(name = "prp_empresa_id")
     private Empresa empresa;
 
-    @Column(name = "prp_ingrediente_id")
-    private Long ingredienteId;
-
 }

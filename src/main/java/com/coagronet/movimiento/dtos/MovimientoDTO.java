@@ -24,6 +24,4 @@ public class MovimientoDTO {
 	@NotNull(message = "El estado es obligatorio.")
 	private Long estadoId;
 
-	private Long empresaId;
-
 }

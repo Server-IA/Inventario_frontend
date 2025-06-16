@@ -10,10 +10,10 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class EvaluacionDTO {
-    private Integer id;
-    private Integer tipoEvaluacionId;
+    private Long id;
+    private Long tipoEvaluacionId;
     private LocalDateTime fechaHora;
     private Long empresaId;
-    private Integer evaluado;
-    private Integer estadoId;
+    private Long evaluado;
+    private Long estadoId;
 }

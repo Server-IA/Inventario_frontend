@@ -43,6 +43,6 @@ public class CriterioEvaluacion {
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cre_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "cre_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 }
