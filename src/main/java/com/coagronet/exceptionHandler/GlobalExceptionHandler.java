@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,12 +14,14 @@ import org.springframework.web.context.request.WebRequest;
 
 import io.jsonwebtoken.ExpiredJwtException;
 
+import java.sql.SQLException;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex,
-			WebRequest request) {
+																   WebRequest request) {
 		Map<String, String> fieldErrors = new LinkedHashMap<>();
 
 		ex.getBindingResult().getFieldErrors()
@@ -51,4 +54,22 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
 	}
 
+	// Manejo general para violaciones de integridad de datos (por ejemplo, claves foráneas)
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
+		String message = "No se puede completar la operación porque existen datos relacionados o restricciones en la base de datos.";
+		// Si la causa raíz es una SQLException, podemos personalizar el mensaje
+		Throwable rootCause = ex.getRootCause();
+		if (rootCause instanceof SQLException) {
+			String sqlState = ((SQLException) rootCause).getSQLState();
+			// 23503 es violación de clave foránea en PostgreSQL
+			if ("23503".equals(sqlState)) {
+				message = "No se puede eliminar o modificar el registro porque está siendo referenciado por otros datos (por ejemplo, departamentos asociados a un país).";
+			}
+		}
+		ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), "Data Integrity Violation", message,
+				request.getDescription(false), null);
+
+		return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT); // 409
+	}
 }
