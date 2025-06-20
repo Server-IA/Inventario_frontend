@@ -1,6 +1,5 @@
 package com.coagronet.seccion.repositories;
 
-import com.coagronet.proceso.Proceso;
 import com.coagronet.seccion.Seccion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
