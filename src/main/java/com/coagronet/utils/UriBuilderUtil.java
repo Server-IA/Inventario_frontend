@@ -123,4 +123,8 @@ public class UriBuilderUtil {
 	public URI buildOcupacionUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/ocupacion/{id}").buildAndExpand(id).toUri();
 	}
+
+	public URI buildTipoInventarioUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipo_inventario/{id}").buildAndExpand(id).toUri();
+	}
 }
