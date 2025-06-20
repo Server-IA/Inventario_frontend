@@ -54,15 +54,12 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
 	}
 
-	// Manejo general para violaciones de integridad de datos (por ejemplo, claves foráneas)
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
 		String message = "No se puede completar la operación porque existen datos relacionados o restricciones en la base de datos.";
-		// Si la causa raíz es una SQLException, podemos personalizar el mensaje
 		Throwable rootCause = ex.getRootCause();
 		if (rootCause instanceof SQLException) {
 			String sqlState = ((SQLException) rootCause).getSQLState();
-			// 23503 es violación de clave foránea en PostgreSQL
 			if ("23503".equals(sqlState)) {
 				message = "No se puede eliminar o modificar el registro porque está siendo referenciado por otros datos (por ejemplo, departamentos asociados a un país).";
 			}
