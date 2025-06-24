@@ -15,4 +15,6 @@ public interface ArticuloPedidoRepository extends JpaRepository<ArticuloPedido, 
 
     List<ArticuloPedido> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
+    List<ArticuloPedido> findByEmpresaIdAndPedidoIdOrderByIdAsc(Long empresaId, Long pedidoId);
+
 }
