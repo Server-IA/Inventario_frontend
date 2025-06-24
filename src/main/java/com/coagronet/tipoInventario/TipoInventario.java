@@ -18,6 +18,8 @@ public class TipoInventario {
 
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_inventario_seq")
+    @SequenceGenerator(name = "tipo_inventario_seq", sequenceName = "tipo_inventario_tii_id_seq", allocationSize = 1)
     @Column(name = "tii_id")
     private Long id;
 
@@ -28,7 +30,7 @@ public class TipoInventario {
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tii_estado", referencedColumnName = "est_id")
+    @JoinColumn(name = "tii_estado_id", referencedColumnName = "est_id")
     private Estado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)

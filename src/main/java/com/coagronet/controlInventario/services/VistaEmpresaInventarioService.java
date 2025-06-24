@@ -1,8 +1,8 @@
-package com.coagronet.inventario.services;
+package com.coagronet.controlInventario.services;
 
 import com.coagronet.empresa.Empresa;
-import com.coagronet.inventario.VistaEmpresaInventario;
-import com.coagronet.inventario.repositories.VistaEmpresaInventarioRepository;
+import com.coagronet.controlInventario.VistaEmpresaInventario;
+import com.coagronet.controlInventario.repositories.VistaEmpresaInventarioRepository;
 import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
@@ -25,6 +25,15 @@ public class VistaEmpresaInventarioService {
         Long empresaId = empresa.getId();
 
         return vistaEmpresaInventarioRepository.findByInvEmpresaId(empresaId);
+    }
+
+
+    public List<VistaEmpresaInventario> findByEmpresaIdAndSubseccionId(Long subSeccionId){
+        User user = authenticationService.getAuthenticatedUser();
+        Empresa empresa = userEmpresaService.getEmpresaFromUser(user);
+        Long empresaId = empresa.getId();
+
+        return vistaEmpresaInventarioRepository.findByInvEmpresaIdAndInvSubSeccionId(empresaId, subSeccionId);
     }
 
 }

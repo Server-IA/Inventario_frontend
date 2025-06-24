@@ -1,6 +1,6 @@
-package com.coagronet.inventario.repositories;
+package com.coagronet.controlInventario.repositories;
 
-import com.coagronet.inventario.VistaInventarioProducto;
+import com.coagronet.controlInventario.VistaInventarioProducto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

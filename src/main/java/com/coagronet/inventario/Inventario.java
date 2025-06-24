@@ -1,6 +1,9 @@
 package com.coagronet.inventario;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
+import com.coagronet.subseccion.Subseccion;
+import com.coagronet.tipoInventario.TipoInventario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +21,8 @@ import java.time.LocalDateTime;
 public class Inventario {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inventario_seq")
+    @SequenceGenerator(name = "inventario_seq", sequenceName = "inventario_inv_id_seq", allocationSize = 1)
     @Column(name = "inv_id", nullable = false)
     private Long id;
 
@@ -30,16 +35,19 @@ public class Inventario {
     @Column(name = "inv_fecha_hora")
     private LocalDateTime fechaHora;
 
-    @Column(name = "inv_tipo_inventario_id")
-    private Long tipoInventarioId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inv_tipo_inventario_id", referencedColumnName = "tii_id")
+    private TipoInventario tipoInventario;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inv_empresa_id", referencedColumnName = "emp_id")
     private Empresa empresa;
 
-    @Column(name = "inv_subseccion_id")
-    private Long subseccionId;
+    @ManyToOne
+    @JoinColumn(name = "inv_sub_seccion_id", referencedColumnName = "sus_id")
+    private Subseccion subseccion;
 
-    @Column(name = "inv_estado_id")
-    private Long estadoId;
+    @ManyToOne
+    @JoinColumn(name = "inv_estado_id", referencedColumnName = "est_id")
+    private Estado estado;
 }

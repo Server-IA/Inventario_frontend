@@ -1,4 +1,4 @@
-package com.coagronet.inventario;
+package com.coagronet.controlInventario;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
