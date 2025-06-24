@@ -39,6 +39,15 @@ public class ArticuloPedidoService {
                                 .stream().map(articuloPedidoMapper::toListDTO).collect(Collectors.toList());
         }
 
+        public List<ArticuloPedidoDTO> findAllByPedidoId(Long pedidoId) {
+                return articuloPedidoRepository
+                                .findByEmpresaIdAndPedidoIdOrderByIdAsc(
+                                                (userEmpresaService.getEmpresaFromUser(
+                                                                authenticationService.getAuthenticatedUser())).getId(),
+                                                pedidoId)
+                                .stream().map(articuloPedidoMapper::toListDTO).collect(Collectors.toList());
+        }
+
         public Optional<ArticuloPedidoDTO> findById(Long requestedId) {
                 return articuloPedidoRepository
                                 .findByIdAndEmpresaId(requestedId,
