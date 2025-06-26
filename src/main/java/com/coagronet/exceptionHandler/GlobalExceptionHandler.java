@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex,
-																   WebRequest request) {
+			WebRequest request) {
 		Map<String, String> fieldErrors = new LinkedHashMap<>();
 
 		ex.getBindingResult().getFieldErrors()
@@ -55,7 +55,8 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
+	public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+			WebRequest request) {
 		String message = "No se puede completar la operación porque existen datos relacionados o restricciones en la base de datos.";
 		Throwable rootCause = ex.getRootCause();
 		if (rootCause instanceof SQLException) {
@@ -68,5 +69,16 @@ public class GlobalExceptionHandler {
 				request.getDescription(false), null);
 
 		return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT); // 409
+	}
+
+	@ExceptionHandler(UserRoleForbiddenException.class)
+	public ResponseEntity<ErrorDetails> handleUserRoleForbidden(UserRoleForbiddenException ex, WebRequest request) {
+		ErrorDetails errorDetails = new ErrorDetails(
+				LocalDateTime.now(),
+				"Forbidden",
+				ex.getMessage(),
+				request.getDescription(false),
+				null);
+		return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
 	}
 }
