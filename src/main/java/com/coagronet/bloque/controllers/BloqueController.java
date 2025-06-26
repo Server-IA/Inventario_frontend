@@ -36,11 +36,6 @@ public class BloqueController {
 		return ResponseEntity.ok(bloqueService.findAll());
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<BloqueDTO>> findAllAvailable() {
-		return ResponseEntity.ok(bloqueService.findAllAvailable());
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<BloqueDTO> findById(@PathVariable Long requestedId) {
 		return bloqueService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
