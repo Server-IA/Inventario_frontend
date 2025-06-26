@@ -28,20 +28,9 @@ public class ProductoPresentacionController {
 
     private final ProductoPresentacionService productoPresentacionService;
 
-
-
     @GetMapping
     private ResponseEntity<List<ProductoPresentacionDTO>> findAll() {
         List<ProductoPresentacionDTO> productoPresentacionDTOS = productoPresentacionService.findAll();
-
-        return productoPresentacionDTOS.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(productoPresentacionDTOS);
-    }
-
-    @GetMapping("/minimal")
-    private ResponseEntity<List<ProductoPresentacionDTO>> findAllMinimal() {
-        List<ProductoPresentacionDTO> productoPresentacionDTOS = productoPresentacionService.findAllMinimal();
 
         return productoPresentacionDTOS.isEmpty()
                 ? ResponseEntity.noContent().build()
@@ -59,7 +48,8 @@ public class ProductoPresentacionController {
     private ResponseEntity<Void> createProductoPresentacion(
             @Valid @RequestBody ProductoPresentacionDTO newproductoPresentacionDTO,
             UriComponentsBuilder ucb) {
-        ProductoPresentacionDTO savedProductoPresentacion = productoPresentacionService.create(newproductoPresentacionDTO);
+        ProductoPresentacionDTO savedProductoPresentacion = productoPresentacionService
+                .create(newproductoPresentacionDTO);
         URI locationOfNewProductoPresentacion = ucb
                 .path("/{id}")
                 .buildAndExpand(savedProductoPresentacion.getId())
@@ -67,11 +57,9 @@ public class ProductoPresentacionController {
         return ResponseEntity.created(locationOfNewProductoPresentacion).build();
     }
 
-
-
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putProductoPresentacion(@PathVariable Long requestedId,
-                                                         @Valid @RequestBody ProductoPresentacionDTO productoPresentacionUpdate) {
+            @Valid @RequestBody ProductoPresentacionDTO productoPresentacionUpdate) {
 
         productoPresentacionService.update(requestedId, productoPresentacionUpdate);
         return ResponseEntity.noContent().build();
