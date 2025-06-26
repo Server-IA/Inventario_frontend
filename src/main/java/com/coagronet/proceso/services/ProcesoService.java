@@ -13,7 +13,6 @@ import com.coagronet.proceso.dtos.ProcesoDTO;
 import com.coagronet.proceso.mappers.ProcesoMapper;
 import com.coagronet.proceso.repositories.ProcesoRepository;
 import com.coagronet.tipoProduccion.repositories.TipoProduccionRepository;
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProcesoService {
 
-	private final AuthenticationService authenticationService;
 	private final UserEmpresaService userEmpresaService;
 	private final ProcesoMapper procesoMapper;
 	private final ProcesoRepository procesoRepository;
@@ -32,14 +30,14 @@ public class ProcesoService {
 	public List<ProcesoDTO> findAll() {
 		return procesoRepository
 				.findByEmpresaIdOrderByIdAsc(
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.stream().map(procesoMapper::toListDTO).collect(Collectors.toList());
 	}
 
 	public Optional<ProcesoDTO> findById(Long requestedId) {
 		return procesoRepository
 				.findByIdAndEmpresaId(requestedId,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.map(procesoMapper::toListDTO);
 	}
 
@@ -52,7 +50,7 @@ public class ProcesoService {
 
 		procesoDTO.setId(null);
 		procesoDTO.setEmpresaId(
-				(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId());
+				userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		return procesoMapper.toDTO(procesoRepository.save(procesoMapper.toEntity(procesoDTO)));
 	}
@@ -60,7 +58,7 @@ public class ProcesoService {
 	public void update(Long requestedId, ProcesoDTO procesoDTO) {
 		procesoRepository
 				.findByIdAndEmpresaId(requestedId,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new NotFoundException("El proceso no fue encontrado."));
 
 		tipoProduccionRepository.findById(procesoDTO.getTipoProduccionId())
@@ -71,7 +69,7 @@ public class ProcesoService {
 
 		procesoDTO.setId(requestedId);
 		procesoDTO.setEmpresaId(
-				(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId());
+				userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		procesoRepository.save(procesoMapper.toEntity(procesoDTO));
 	}
@@ -79,7 +77,7 @@ public class ProcesoService {
 	public void delete(Long id) {
 		procesoRepository
 				.findByIdAndEmpresaId(id,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new NotFoundException("El proceso no fue encontrado."));
 
 		procesoRepository.deleteById(id);
