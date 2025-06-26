@@ -37,11 +37,6 @@ public class PaisController {
 		return ResponseEntity.ok(paisService.findAll());
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<PaisDTO>> findAllAvailable() {
-		return ResponseEntity.ok(paisService.findAllAvailable());
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<PaisDTO> findById(@PathVariable Long requestedId) {
 		return paisService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
