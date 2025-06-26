@@ -1,13 +1,10 @@
 package com.coagronet.tipoBloque.services;
 
-import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoBloque.TipoBloque;
 import com.coagronet.tipoBloque.dtos.TipoBloqueDTO;
 import com.coagronet.tipoBloque.mappers.TipoBloqueMapper;
 import com.coagronet.tipoBloque.repositories.TipoBloqueRepository;
-import com.coagronet.user.User;
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
@@ -24,31 +21,25 @@ public class TipoBloqueService {
     private final TipoBloqueRepository tipoBloqueRepository;
     private final EstadoRepository estadoRepository;
     private final TipoBloqueMapper tipoBloqueMapper;
-    private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
 
     public Optional<TipoBloqueDTO> findById(Long requestedId) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        return tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+        return tipoBloqueRepository
+                .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
                 .map(tipoBloqueMapper::toDTO);
     }
 
     public List<TipoBloqueDTO> findAll() {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return tipoBloqueRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
                 .stream()
                 .map(tipoBloqueMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     public List<TipoBloqueDTO> findAllMinimal() {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
         return tipoBloqueRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(empresa.getId(), 2)
+                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
                 .stream()
                 .map(tipoBloqueMapper::toMinimalDTO)
                 .collect(Collectors.toList());
@@ -56,40 +47,30 @@ public class TipoBloqueService {
 
     @Transactional
     public TipoBloqueDTO create(TipoBloqueDTO tipoBloqueDTO) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
+        tipoBloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        tipoBloqueDTO.setEmpresaId(empresa.getId());
-
-        TipoBloque tipoBloque = tipoBloqueMapper.toEntity(tipoBloqueDTO);
-        tipoBloque = tipoBloqueRepository.save(tipoBloque);
-        return tipoBloqueMapper.toDTO(tipoBloque);
+        return tipoBloqueMapper.toDTO(tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO)));
     }
 
     @Transactional
     public void update(Long requestedId, TipoBloqueDTO tipoBloqueDTO) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
-        tipoBloqueRepository.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, empresa.getId(), 2)
+        tipoBloqueRepository
+                .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
                 .orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o está inactivo"));
 
         estadoRepository.findById(tipoBloqueDTO.getEstadoId())
                 .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
         tipoBloqueDTO.setId(requestedId);
-        tipoBloqueDTO.setEmpresaId(empresa.getId());
+        tipoBloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
         tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO));
     }
 
     @Transactional
     public void delete(Long id) {
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-
         TipoBloque tipoBloque = tipoBloqueRepository
-                .findByIdAndEmpresaId(id, empresa.getId())
+                .findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o ya está inactivo"));
 
         tipoBloqueRepository.deleteById(tipoBloque.getId());
