@@ -12,7 +12,6 @@ import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.tipoProduccion.dtos.TipoProduccionDTO;
 import com.coagronet.tipoProduccion.mappers.TipoProduccionMapper;
 import com.coagronet.tipoProduccion.repositories.TipoProduccionRepository;
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,21 +22,20 @@ public class TipoProduccionService {
 
 	private final TipoProduccionMapper tipoProduccionMapper;
 	private final TipoProduccionRepository tipoProduccionRepository;
-	private final AuthenticationService authenticationService;
 	private final UserEmpresaService userEmpresaService;
 	private final EstadoRepository estadoRepository;
 
 	public List<TipoProduccionDTO> findAll() {
 		return tipoProduccionRepository
 				.findByEmpresaIdOrderByIdAsc(
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.stream().map(tipoProduccionMapper::toListDTO).collect(Collectors.toList());
 	}
 
 	public Optional<TipoProduccionDTO> findById(Long requestedId) {
 		return tipoProduccionRepository
 				.findByIdAndEmpresaId(requestedId,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.map(tipoProduccionMapper::toListDTO);
 	}
 
@@ -47,7 +45,7 @@ public class TipoProduccionService {
 
 		tipoProduccionDTO.setId(null);
 		tipoProduccionDTO.setEmpresaId(
-				(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId());
+				userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		return tipoProduccionMapper
 				.toDTO(tipoProduccionRepository.save(tipoProduccionMapper.toEntity(tipoProduccionDTO)));
@@ -56,7 +54,7 @@ public class TipoProduccionService {
 	public void update(Long requestedId, TipoProduccionDTO tipoProduccionDTO) {
 		tipoProduccionRepository
 				.findByIdAndEmpresaId(requestedId,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new NotFoundException("El tipo de producción no fue encontrado."));
 
 		estadoRepository.findById(tipoProduccionDTO.getEstadoId())
@@ -64,7 +62,7 @@ public class TipoProduccionService {
 
 		tipoProduccionDTO.setId(requestedId);
 		tipoProduccionDTO.setEmpresaId(
-				(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId());
+				userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		tipoProduccionRepository.save(tipoProduccionMapper.toEntity(tipoProduccionDTO));
 	}
@@ -72,7 +70,7 @@ public class TipoProduccionService {
 	public void delete(Long id) {
 		tipoProduccionRepository
 				.findByIdAndEmpresaId(id,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new NotFoundException("El tipo de producción no fue encontrado."));
 
 		tipoProduccionRepository.deleteById(id);
