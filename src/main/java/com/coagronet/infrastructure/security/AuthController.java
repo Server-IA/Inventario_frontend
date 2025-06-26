@@ -1,6 +1,7 @@
 package com.coagronet.infrastructure.security;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.email.services.EmailVerificationService;
+import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.role.Role;
 import com.coagronet.role.repositories.RoleRepository;
 import com.coagronet.user.User;
@@ -39,8 +42,11 @@ import com.coagronet.user.dtos.ForgotPasswordRequestDTO;
 import com.coagronet.user.dtos.LoginRequestDTO;
 import com.coagronet.user.dtos.RegisterRequestDTO;
 import com.coagronet.user.dtos.ResetPasswordRequestDTO;
+import com.coagronet.user.dtos.SelectRoleRequestDTO;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
+import com.coagronet.userRole.UserRole;
+import com.coagronet.userRole.repositories.UserRoleRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 
 import jakarta.validation.Valid;
@@ -59,11 +65,12 @@ public class AuthController {
 
 	private final PasswordEncoder passwordEncoder;
 	private final RoleRepository roleRepository;
-	private final JwtService jwtService;
+	private final JwtUtil jwtUtil;
 	private final UserRegistrationService userRegistrationService;
 	private final EmailVerificationService emailVerificationService;
 	private final UserRepository userRepository;
 	private final AuthenticationManager authenticationManager;
+	private final UserRoleRepository userRoleRepository;
 
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
@@ -89,19 +96,49 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO request) {
+	public ResponseEntity<?> preLogin(@Valid @RequestBody LoginRequestDTO request) {
+		// 1. Validar usuario y contraseña (sin autenticar todavía la sesión)
 		Authentication authentication = authenticationManager
 				.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-		SecurityContextHolder.getContext().setAuthentication(authentication);
 		User authenticatedUser = (User) authentication.getPrincipal();
 
-		// Pass authenticationManager as parameter
-		String token = jwtService.createJwtToken(request.getUsername(), request.getPassword(), authenticationManager);
+		// 2. Obtener roles/empresas del usuario
+		List<UserRole> userRoles = userRoleRepository.findByUser(authenticatedUser);
+		List<Map<String, Object>> rolesPorEmpresa = userRoles.stream().map(userRole -> {
+			Map<String, Object> map = new HashMap<>();
+			map.put("empresaId", userRole.getEmpresa().getId());
+			map.put("empresaNombre", userRole.getEmpresa().getNombre());
+			map.put("rolId", userRole.getRole().getId());
+			map.put("rolNombre", roleRepository.findById(userRole.getRole().getId()).map(Role::getName).orElse(null));
+			return map;
+		}).collect(Collectors.toList());
+
+		// 3. Responder con los roles/empresas disponibles
+		Map<String, Object> response = new HashMap<>();
+		response.put("rolesPorEmpresa", rolesPorEmpresa);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping("/login/seleccion")
+	public ResponseEntity<?> seleccionarRol(@RequestBody SelectRoleRequestDTO request) {
+		// 1. Validar que el usuario tiene ese rol/empresa asignado
+		User user = userRepository.findByUsername(request.getUsername())
+				.orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+		userRoleRepository.findByUserAndEmpresaIdAndRoleId(
+				user, request.getEmpresaId(), request.getRolId())
+				.orElseThrow(() -> new UserRoleForbiddenException(
+						"No tienes asignado el rol o empresa seleccionada. Por favor, verifica tus permisos."));
+
+		// 2. Generar el token JWT para ese contexto
+		String token = jwtUtil.generateToken(user.getUsername(), request.getEmpresaId(), request.getRolId());
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("token", token);
-		response.put("usuarioEstado", authenticatedUser.getUsuarioEstado().getId());
+		response.put("empresaId", request.getEmpresaId());
+		response.put("rolId", request.getRolId());
 
 		return ResponseEntity.ok(response);
 	}
