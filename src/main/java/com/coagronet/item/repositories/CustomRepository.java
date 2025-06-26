@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +26,9 @@ public class CustomRepository {
     private AppConfig appConfig;
 
     private final UserEmpresaService userEmpresaService;
-    private final AuthenticationService authenticationService;
 
     public CustomRepository(UserEmpresaService userEmpresaService, AuthenticationService authenticationService) {
         this.userEmpresaService = userEmpresaService;
-        this.authenticationService = authenticationService;
     }
 
     public List<Item> findAllItems(String tableName, Long parentId) {
@@ -40,11 +36,8 @@ public class CustomRepository {
         if (queries == null) {
             throw new IllegalStateException("Configuration properties for queries are not initialized");
         }
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
         String sql = queries.get(tableName);
-        sql = sql.replace("$EMPRESA_ID$", String.valueOf(empresaId));
+        sql = sql.replace("$EMPRESA_ID$", String.valueOf(userEmpresaService.getEmpresaIdFromCurrentRequest()));
 
         int start = sql.indexOf("$AND");
         int end = sql.indexOf("PARENT_ID$");
