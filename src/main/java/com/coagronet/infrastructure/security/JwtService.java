@@ -8,9 +8,6 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -30,17 +27,10 @@ public class JwtService {
 	@Autowired
 	private MyUserDetailsService myUserDetailsService;
 
-	public String createJwtToken(String username, String password, AuthenticationManager authenticationManager) {
+	public String createJwtToken(String username, Long empresaId, Long rolId) {
 		UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
 
-		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, password,
-				userDetails.getAuthorities());
-
-		authenticationManager.authenticate(authToken);
-
-		SecurityContextHolder.getContext().setAuthentication(authToken);
-
-		return jwtUtil.generateToken(userDetails.getUsername());
+		return jwtUtil.generateToken(userDetails.getUsername(), empresaId, rolId);
 	}
 
 	private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
