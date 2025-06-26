@@ -36,11 +36,6 @@ public class AlmacenController {
 		return ResponseEntity.ok(almacenService.findAll());
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<AlmacenDTO>> findAllAvailable() {
-		return ResponseEntity.ok(almacenService.findAllAvailable());
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<AlmacenDTO> findById(@PathVariable Long requestedId) {
 		return almacenService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
