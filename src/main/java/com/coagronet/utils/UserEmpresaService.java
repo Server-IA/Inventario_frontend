@@ -2,23 +2,29 @@ package com.coagronet.utils;
 
 import org.springframework.stereotype.Service;
 
-import com.coagronet.empresa.Empresa;
-import com.coagronet.user.User;
-import com.coagronet.userRole.UserRole;
-import com.coagronet.userRole.repositories.UserRoleRepository;
-
+import com.coagronet.infrastructure.security.JwtUtil;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 @RequiredArgsConstructor
 public class UserEmpresaService {
 
-    private final UserRoleRepository userRoleRepository;
+    private final JwtUtil jwtUtil;
 
-    public Empresa getEmpresaFromUser(User user) {
-        return userRoleRepository.findByUser(user).stream()
-                .map(UserRole::getEmpresa)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Empresa no encontrada para el usuario"));
+    public Long getEmpresaIdFromCurrentRequest() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                .getRequest();
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalStateException("No se encontró el token JWT en la solicitud.");
+        }
+        String jwtToken = authHeader.substring(7);
+        Claims claims = jwtUtil.extractAllClaims(jwtToken);
+        return claims.get("empresaId", Long.class);
     }
 }
