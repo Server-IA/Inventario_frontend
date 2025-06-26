@@ -1,15 +1,10 @@
 package com.coagronet.productoPresentacion.services;
 
-import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.productoPresentacion.ProductoPresentacion;
 import com.coagronet.productoPresentacion.dtos.ProductoPresentacionDTO;
 import com.coagronet.productoPresentacion.mappers.ProductoPresentacionMapper;
 import com.coagronet.productoPresentacion.repositories.ProductoPresentacionRepository;
-import com.coagronet.user.User;
-import com.coagronet.utils.AuthenticationService;
-
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 
@@ -28,75 +23,50 @@ public class ProductoPresentacionService {
     private final EstadoRepository estadoRepository;
     private final ProductoPresentacionMapper productoPresentacionMapper;
     private final UserEmpresaService userEmpresaService;
-    private final AuthenticationService authenticationService;
 
-
-    public List<ProductoPresentacionDTO> findAll(){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-        return productoPresentacionRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+    public List<ProductoPresentacionDTO> findAll() {
+        return productoPresentacionRepository
+                .findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .stream()
                 .map(productoPresentacionMapper::toDto).collect(Collectors.toList());
     }
 
-    public List<ProductoPresentacionDTO> findAllMinimal(){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-        return productoPresentacionRepository.findByEmpresaIdOrderByIdAsc(empresaId)
-                .stream()
-                .map(productoPresentacionMapper::toMinimalDTO).collect(Collectors.toList());
-    }
-
-    public Optional<ProductoPresentacionDTO> findById(Long requestId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        return productoPresentacionRepository.findByIdAndEmpresaId(requestId, empresaId)
+    public Optional<ProductoPresentacionDTO> findById(Long requestId) {
+        return productoPresentacionRepository
+                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .map(productoPresentacionMapper::toDto);
     }
 
     @Transactional
-    public ProductoPresentacionDTO create(ProductoPresentacionDTO productoPresentacionDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
+    public ProductoPresentacionDTO create(ProductoPresentacionDTO productoPresentacionDTO) {
+        productoPresentacionDTO.setId(null);
+        productoPresentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        productoPresentacionDTO.setEmpresaId(empresaId);
-        ProductoPresentacion productoPresentacion = productoPresentacionMapper.toEntity(productoPresentacionDTO);
-        productoPresentacion = productoPresentacionRepository.save(productoPresentacion);
-        return productoPresentacionMapper.toDto(productoPresentacion);
+        return productoPresentacionMapper.toDto(
+                productoPresentacionRepository.save(productoPresentacionMapper.toEntity(productoPresentacionDTO)));
     }
 
     @Transactional
-    public void update(Long requestId, ProductoPresentacionDTO productoPresentacionDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        productoPresentacionRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Producto Presentacion no encontrado"));
+    public void update(Long requestId, ProductoPresentacionDTO productoPresentacionDTO) {
+        productoPresentacionRepository
+                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new NotFoundException("Producto Presentacion no encontrado"));
 
         estadoRepository.findById(productoPresentacionDTO.getEstadoId())
                 .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
         productoPresentacionDTO.setId(requestId);
-        productoPresentacionDTO.setEmpresaId(empresaId);
+        productoPresentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
         productoPresentacionRepository.save(productoPresentacionMapper.toEntity(productoPresentacionDTO));
 
     }
 
     @Transactional
-    public void delete(Long requestId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        productoPresentacionRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Producto Presentacion no encontrada"));
+    public void delete(Long requestId) {
+        productoPresentacionRepository
+                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new NotFoundException("Producto Presentacion no encontrada"));
 
         productoPresentacionRepository.deleteById(requestId);
     }
