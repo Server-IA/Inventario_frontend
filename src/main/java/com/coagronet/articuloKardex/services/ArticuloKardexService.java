@@ -14,7 +14,6 @@ import com.coagronet.productoPresentacion.repositories.ProductoPresentacionRepos
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloKardexService {
 
-	private final AuthenticationService authenticationService;
 	private final UserEmpresaService userEmpresaService;
 	private final ArticuloKardexMapper articuloKardexMapper;
 	private final ArticuloKardexRepository articuloKardexRepository;
@@ -34,21 +32,21 @@ public class ArticuloKardexService {
 	public List<ArticuloKardexDTO> findAll() {
 		return articuloKardexRepository
 				.findByEmpresaIdOrderByIdAsc(
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.stream().map(articuloKardexMapper::toListDTO).collect(Collectors.toList());
 	}
 
 	public List<ArticuloKardexDTO> findAllByKardexId(Long kardexId) {
 		return articuloKardexRepository
 				.findByEmpresaIdAndKardexIdOrderByIdAsc(
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId(), kardexId)
+						userEmpresaService.getEmpresaIdFromCurrentRequest(), kardexId)
 				.stream().map(articuloKardexMapper::toListDTO).collect(Collectors.toList());
 	}
 
 	public Optional<ArticuloKardexDTO> findById(Long requestedId) {
 		return articuloKardexRepository
 				.findByIdAndEmpresaId(requestedId,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.map(articuloKardexMapper::toListDTO);
 	}
 
@@ -64,7 +62,7 @@ public class ArticuloKardexService {
 
 		articuloKardexDTO.setId(null);
 		articuloKardexDTO.setEmpresaId(
-				(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId());
+				userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		return articuloKardexMapper
 				.toDTO(articuloKardexRepository.save(articuloKardexMapper.toEntity(articuloKardexDTO)));
@@ -73,7 +71,7 @@ public class ArticuloKardexService {
 	public void update(Long requestedId, ArticuloKardexDTO articuloKardexDTO) {
 		articuloKardexRepository
 				.findByIdAndEmpresaId(requestedId,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
 
 		kardexRepository.findById(articuloKardexDTO.getKardexId())
@@ -87,7 +85,7 @@ public class ArticuloKardexService {
 
 		articuloKardexDTO.setId(requestedId);
 		articuloKardexDTO.setEmpresaId(
-				(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId());
+				userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		articuloKardexRepository.save(articuloKardexMapper.toEntity(articuloKardexDTO));
 	}
@@ -95,7 +93,7 @@ public class ArticuloKardexService {
 	public void delete(Long id) {
 		articuloKardexRepository
 				.findByIdAndEmpresaId(id,
-						(userEmpresaService.getEmpresaFromUser(authenticationService.getAuthenticatedUser())).getId())
+						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
 
 		articuloKardexRepository.deleteById(id);

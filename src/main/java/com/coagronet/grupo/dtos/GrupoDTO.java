@@ -23,6 +23,7 @@ public class GrupoDTO {
 
 	private Long empresaId;
 
+	@Size(max = 2048, message = "La descripción no debe superar los 2048 caracteres.")
 	private String descripcion;
 
 	@NotNull(message = "El estado es obligatorio.")

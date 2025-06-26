@@ -36,11 +36,6 @@ public class SedeController {
 		return ResponseEntity.ok(sedeService.findAll());
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<SedeDTO>> findAllAvailable() {
-		return ResponseEntity.ok(sedeService.findAllAvailable());
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<SedeDTO> findById(@PathVariable Long requestedId) {
 		return sedeService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());

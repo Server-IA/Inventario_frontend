@@ -27,18 +27,13 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class GrupoController {
-	
+
 	private final GrupoService grupoService;
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
 	public ResponseEntity<List<GrupoDTO>> findAll() {
 		return ResponseEntity.ok(grupoService.findAll());
-	}
-
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<GrupoDTO>> findAllAvailable() {
-		return ResponseEntity.ok(grupoService.findAllAvailable());
 	}
 
 	@GetMapping("/{requestedId}")

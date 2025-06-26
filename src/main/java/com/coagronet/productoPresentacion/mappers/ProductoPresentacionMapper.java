@@ -17,15 +17,6 @@ public interface ProductoPresentacionMapper {
     @Mapping(source = "empresa.id", target = "empresaId")
     ProductoPresentacionDTO toDto(ProductoPresentacion productoPresentacion);
 
-
-    @Mapping(target = "productoId", ignore = true)
-    @Mapping(target = "unidadId", ignore = true)
-    @Mapping(target = "estadoId", ignore = true)
-    @Mapping(target = "marcaId", ignore = true)
-    @Mapping(target = "presentacionId", ignore = true)
-    @Mapping(target = "empresaId", ignore = true)
-    ProductoPresentacionDTO toMinimalDTO(ProductoPresentacion productoPresentacion);
-
     @Mapping(source = "productoId", target = "producto.id")
     @Mapping(source = "unidadId", target = "unidad.id")
     @Mapping(source = "estadoId", target = "estado.id")

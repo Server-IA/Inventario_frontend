@@ -36,11 +36,6 @@ public class EspacioController {
 		return ResponseEntity.ok(espacioService.findAll());
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<EspacioDTO>> findAllAvailable() {
-		return ResponseEntity.ok(espacioService.findAllAvailable());
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<EspacioDTO> findById(@PathVariable Long requestedId) {
 		return espacioService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());

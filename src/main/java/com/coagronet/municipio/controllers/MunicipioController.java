@@ -37,11 +37,6 @@ public class MunicipioController {
 		return ResponseEntity.ok(municipioService.findAll(departamentoId));
 	}
 
-	@GetMapping(params = "available=true")
-	public ResponseEntity<List<MunicipioDTO>> findAllAvailable(@RequestParam Long departamentoId) {
-		return ResponseEntity.ok(municipioService.findAllAvailable(departamentoId));
-	}
-
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<MunicipioDTO> findById(@PathVariable Long requestedId) {
 		return municipioService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());

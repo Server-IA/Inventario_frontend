@@ -1,14 +1,11 @@
 package com.coagronet.unidad.services;
 
-import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.unidad.Unidad;
 import com.coagronet.unidad.dtos.UnidadDTO;
 import com.coagronet.unidad.mappers.UnidadMapper;
 import com.coagronet.unidad.repositories.UnidadRepository;
-import com.coagronet.user.User;
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,66 +22,48 @@ public class UnidadService {
     private final UnidadRepository unidadRepository;
     private final UnidadMapper unidadMapper;
     private final UserEmpresaService userEmpresaService;
-    private final AuthenticationService authenticationService;
     private final EstadoRepository estadoRepository;
 
-
-    public List<UnidadDTO> findAll(){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-        return unidadRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+    public List<UnidadDTO> findAll() {
+        return unidadRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .stream()
                 .map(unidadMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public Optional<UnidadDTO>findById(Long requestId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        return unidadRepository.findByIdAndEmpresaId(requestId, empresaId)
+    public Optional<UnidadDTO> findById(Long requestId) {
+        return unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .map(unidadMapper::toDTO);
     }
 
     @Transactional
-    public UnidadDTO create(UnidadDTO unidadDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
+    public UnidadDTO create(UnidadDTO unidadDTO) {
+        estadoRepository.findById(unidadDTO.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        unidadDTO.setEmpresaId(empresaId);
-        Unidad unidad = unidadMapper.toEntity(unidadDTO);
-        unidad = unidadRepository.save(unidad);
-        return unidadMapper.toDTO(unidad);
+        unidadDTO.setId(null);
+        unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+        return unidadMapper.toDTO(unidadRepository.save(unidadMapper.toEntity(unidadDTO)));
     }
 
     @Transactional
-    public void update(Long requestId, UnidadDTO unidadDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        unidadRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Unidad no encontrada"));
+    public void update(Long requestId, UnidadDTO unidadDTO) {
+        unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
 
         estadoRepository.findById(unidadDTO.getEstadoId())
                 .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
         unidadDTO.setId(requestId);
-        unidadDTO.setEmpresaId(empresaId);
+        unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
         unidadRepository.save(unidadMapper.toEntity(unidadDTO));
     }
 
     @Transactional
-    public void delete(Long requestId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        unidadRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Unidad no encontrada"));
+    public void delete(Long requestId) {
+        unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
 
         unidadRepository.deleteById(requestId);
     }
