@@ -36,11 +36,6 @@ public class DepartamentoController {
         return ResponseEntity.ok(departamentoService.findAll());
     }
 
-    @GetMapping(params = "available=true")
-    public ResponseEntity<List<DepartamentoDTO>> findAllAvailable() {
-        return ResponseEntity.ok(departamentoService.findAllAvailable());
-    }
-
     @GetMapping("/{requestedId}")
     public ResponseEntity<DepartamentoDTO> findById(
             @PathVariable Long requestedId) {
