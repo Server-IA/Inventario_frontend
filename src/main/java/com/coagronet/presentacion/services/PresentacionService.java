@@ -1,14 +1,10 @@
 package com.coagronet.presentacion.services;
 
-import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.presentacion.Presentacion;
 import com.coagronet.presentacion.dtos.PresentacionDTO;
 import com.coagronet.presentacion.mappers.PresentacionMapper;
 import com.coagronet.presentacion.repositories.PresentacionRepository;
-import com.coagronet.user.User;
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,69 +21,48 @@ public class PresentacionService {
     private final PresentacionRepository presentacionRepository;
     private final PresentacionMapper presentacionMapper;
     private final UserEmpresaService userEmpresaService;
-    private final AuthenticationService authenticationService;
     private final EstadoRepository estadoRepository;
 
-
-    public List<PresentacionDTO> findAll(){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        return presentacionRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+    public List<PresentacionDTO> findAll() {
+        return presentacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .stream()
                 .map(presentacionMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public Optional<PresentacionDTO> findById(Long requestedId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-        return presentacionRepository.findByIdAndEmpresaId(requestedId, empresaId)
+    public Optional<PresentacionDTO> findById(Long requestedId) {
+        return presentacionRepository
+                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .map(presentacionMapper::toDTO);
     }
 
-
     @Transactional
-    public PresentacionDTO create(PresentacionDTO presentacionDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
+    public PresentacionDTO create(PresentacionDTO presentacionDTO) {
+        presentacionDTO.setId(null);
+        presentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        presentacionDTO.setEmpresaId(empresaId);
-        Presentacion presentacion = presentacionMapper.toEntity(presentacionDTO);
-        presentacion = presentacionRepository.save(presentacion);
-        return presentacionMapper.toDTO(presentacion);
+        return presentacionMapper.toDTO(presentacionRepository.save(presentacionMapper.toEntity(presentacionDTO)));
     }
 
     @Transactional
-    public void update(Long requestId, PresentacionDTO presentacionDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        presentacionRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Presentacion no encontrada."));
+    public void update(Long requestId, PresentacionDTO presentacionDTO) {
+        presentacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new NotFoundException("Presentacion no encontrada."));
 
         estadoRepository.findById(presentacionDTO.getEstadoId())
                 .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
         presentacionDTO.setId(requestId);
-        presentacionDTO.setEmpresaId(empresaId);
+        presentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
         presentacionRepository.save(presentacionMapper.toEntity(presentacionDTO));
 
     }
 
     @Transactional
-    public void delete(Long requestId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
-
-        presentacionRepository.findByIdAndEmpresaId(requestId, empresaId)
-                .orElseThrow(()-> new NotFoundException("Presentacion no encontrada."));
+    public void delete(Long requestId) {
+        presentacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new NotFoundException("Presentacion no encontrada."));
 
         presentacionRepository.deleteById(requestId);
 
