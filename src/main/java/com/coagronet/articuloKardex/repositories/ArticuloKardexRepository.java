@@ -17,4 +17,7 @@ public interface ArticuloKardexRepository extends JpaRepository<ArticuloKardex, 
 
 	List<ArticuloKardex> findByEmpresaIdAndKardexIdOrderByIdAsc(Long empresaId, Long kardexId);
 
+	Optional<ArticuloKardex> findByProductoIdentificador(String productoIdentificador);
+
+
 }

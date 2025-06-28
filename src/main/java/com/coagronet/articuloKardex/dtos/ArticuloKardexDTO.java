@@ -23,6 +23,8 @@ public class ArticuloKardexDTO {
 
 	private LocalDateTime fechaVencimiento;
 
+	private String productoIdentificador;
+
 	@NotNull(message = "El kardex es obligatorio.")
 	private Long kardexId;
 

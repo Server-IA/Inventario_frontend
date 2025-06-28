@@ -11,13 +11,13 @@ public interface InventarioItemMapper {
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "inventario.id", target = "inventarioId")
     @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
-    @Mapping(source = "articuloKardex.id", target = "articuloKardexId")
+    @Mapping(source = "articuloKardex.productoIdentificador", target = "productoIdentificadorId")
     InventarioItemDTO toDTO(InventarioItem inventarioItem);
 
     @Mapping(source = "estadoId", target = "estado.id")
     @Mapping(source = "inventarioId", target = "inventario.id")
     @Mapping(source = "empresaId", target = "empresa.id")
-    @Mapping(source = "articuloKardexId", target = "articuloKardex.id")
+    @Mapping(source = "productoIdentificadorId", target = "articuloKardex.productoIdentificador")
     InventarioItem toEntity(InventarioItemDTO inventarioItemDTO);
 
 }

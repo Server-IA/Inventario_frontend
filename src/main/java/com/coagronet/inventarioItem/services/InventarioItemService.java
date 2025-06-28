@@ -1,5 +1,7 @@
 package com.coagronet.inventarioItem.services;
 
+import com.coagronet.articuloKardex.ArticuloKardex;
+import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
@@ -26,51 +28,49 @@ public class InventarioItemService {
     private final InventarioItemRepository inventarioItemRepository;
     private final EstadoRepository estadoRepository;
     private final InventarioItemMapper inventarioItemMapper;
-    private final AuthenticationService authenticationService;
     private final UserEmpresaService userEmpresaService;
+    private final ArticuloKardexRepository articuloKardexRepository;
 
 
     public List<InventarioItemDTO> findAll(){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
 
-        return inventarioItemRepository.findByEmpresaIdOrderByIdAsc(empresaId)
-                .stream()
-                .map(inventarioItemMapper::toDTO)
-                .collect(Collectors.toList());
+        return inventarioItemRepository.findByEmpresaIdOrderByIdAsc(
+                        userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .stream().map(inventarioItemMapper::toDTO).collect(Collectors.toList());
     }
 
     public Optional<InventarioItemDTO> findById(Long requestedId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
 
-        return inventarioItemRepository.findByIdAndEmpresaId(requestedId, empresaId)
+        return inventarioItemRepository.findByIdAndEmpresaId(requestedId,
+                userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .map(inventarioItemMapper::toDTO);
     }
 
 
     @Transactional
     public InventarioItemDTO create(InventarioItemDTO inventarioItemDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
+
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
         estadoRepository.findById(inventarioItemDTO.getEstadoId())
                 .orElseThrow(()-> new BadRequestException("Estado no encontrado o no válido"));
 
+        ArticuloKardex articuloKardex = articuloKardexRepository
+                .findByProductoIdentificador(inventarioItemDTO.getProductoIdentificadorId())
+                .orElseThrow(() -> new BadRequestException("ArticuloKardex no encontrado para ese identificador"));
+
+
         inventarioItemDTO.setEmpresaId(empresaId);
+
         InventarioItem inventarioItem = inventarioItemMapper.toEntity(inventarioItemDTO);
+        inventarioItem.setArticuloKardex(articuloKardex);
         inventarioItem = inventarioItemRepository.save(inventarioItem);
         return inventarioItemMapper.toDTO(inventarioItem);
     }
 
     @Transactional
     public void update(Long requestedId, InventarioItemDTO inventarioItemDTO){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
         inventarioItemRepository.findByIdAndEmpresaId(requestedId, empresaId)
                 .orElseThrow(()-> new NotFoundException("InventarioItem no encontrada en su empresa"));
@@ -86,9 +86,7 @@ public class InventarioItemService {
 
     @Transactional
     public void delete(Long requestedId){
-        User authenticatedUser = authenticationService.getAuthenticatedUser();
-        Empresa empresa = userEmpresaService.getEmpresaFromUser(authenticatedUser);
-        Long empresaId = empresa.getId();
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
         inventarioItemRepository.findByIdAndEmpresaId(requestedId, empresaId)
                 .orElseThrow(()-> new NotFoundException("InventarioItem no encontrada en su empresa"));

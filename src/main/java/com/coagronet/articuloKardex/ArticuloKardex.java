@@ -46,6 +46,9 @@ public class ArticuloKardex {
 	@Column(name = "kai_fecha_vencimiento")
 	private LocalDateTime fechaVencimiento;
 
+	@Column(name = "kai_producto_identificador")
+	private String productoIdentificador;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kai_kardex_id", referencedColumnName = "kar_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_kardex_id_fkey"))
 	private Kardex kardex;

@@ -22,7 +22,7 @@ public class InventarioItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inventario_item_seq")
-    @SequenceGenerator(name = "inventario_seq", sequenceName = "inventario_item_ini_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "inventario_item_seq", sequenceName = "inventario_item_ini_id_seq", allocationSize = 1)
     @Column(name = "ini_id", nullable = false)
     private Long id;
 
@@ -45,7 +45,7 @@ public class InventarioItem {
     private Estado estado;
 
     @ManyToOne
-    @JoinColumn(name = "ini_producto_identificador_id", referencedColumnName = "kai_id")
+    @JoinColumn(name = "ini_producto_identificador_id", referencedColumnName = "kai_producto_identificador")
     private ArticuloKardex articuloKardex;
 
     @PrePersist

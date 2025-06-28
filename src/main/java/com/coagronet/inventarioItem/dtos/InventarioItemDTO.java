@@ -30,7 +30,6 @@ public class InventarioItemDTO {
     @NotNull(message = "El estado no puede ser nulo")
     private Long estadoId;
 
-    @NotNull(message = "El producto identificador o KardexItemId es obligatorio")
-    private Long articuloKardexId;
+    private String productoIdentificadorId;
 
 }
