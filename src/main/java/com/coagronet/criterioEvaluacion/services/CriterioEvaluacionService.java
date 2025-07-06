@@ -21,67 +21,70 @@ import com.coagronet.utils.UserEmpresaService;
 @RequiredArgsConstructor
 public class CriterioEvaluacionService {
 
-    private final UserEmpresaService userEmpresaService;
-    private final CriterioEvaluacionRepository criterioEvaluacionRepository;
-    private final CriterioEvaluacionMapper criterioEvaluacionMapper;
-    private final TipoEvaluacionRepository tipoEvaluacionRepository;
-    private final EstadoRepository estadoRepository;
+        private final UserEmpresaService userEmpresaService;
+        private final CriterioEvaluacionRepository criterioEvaluacionRepository;
+        private final CriterioEvaluacionMapper criterioEvaluacionMapper;
+        private final TipoEvaluacionRepository tipoEvaluacionRepository;
+        private final EstadoRepository estadoRepository;
 
-    public List<CriterioEvaluacionDTO> findAll() {
-        return criterioEvaluacionRepository
-                .findByEmpresaIdOrderByIdAsc(
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream().map(criterioEvaluacionMapper::toListDTO).collect(Collectors.toList());
-    }
+        public List<CriterioEvaluacionDTO> findAll() {
+                return criterioEvaluacionRepository
+                                .findByEmpresaIdOrderByIdAsc(
+                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
+                                .stream().map(criterioEvaluacionMapper::toListDTO).collect(Collectors.toList());
+        }
 
-    public Optional<CriterioEvaluacionDTO> findById(Long requestedId) {
-        return criterioEvaluacionRepository
-                .findByIdAndEmpresaId(requestedId,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(criterioEvaluacionMapper::toListDTO);
-    }
+        public Optional<CriterioEvaluacionDTO> findById(Long requestedId) {
+                return criterioEvaluacionRepository
+                                .findByIdAndEmpresaId(requestedId,
+                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
+                                .map(criterioEvaluacionMapper::toListDTO);
+        }
 
-    public CriterioEvaluacionDTO createCriterioEvaluacion(CriterioEvaluacionDTO criterioEvaluacionDTO) {
-        tipoEvaluacionRepository.findById(criterioEvaluacionDTO.getTipoEvaluacionId())
-                .orElseThrow(() -> new BadRequestException("El tipo de evaluación no es válido."));
+        public CriterioEvaluacionDTO create(CriterioEvaluacionDTO criterioEvaluacionDTO) {
+                tipoEvaluacionRepository.findById(criterioEvaluacionDTO.getTipoEvaluacionId())
+                                .orElseThrow(() -> new BadRequestException("El tipo de evaluación no es válido."));
 
-        estadoRepository.findById(criterioEvaluacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+                estadoRepository.findById(criterioEvaluacionDTO.getEstadoId())
+                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-        criterioEvaluacionDTO.setId(null);
-        criterioEvaluacionDTO.setEmpresaId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest());
+                criterioEvaluacionDTO.setId(null);
+                criterioEvaluacionDTO.setEmpresaId(
+                                userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        return criterioEvaluacionMapper
-                .toDTO(criterioEvaluacionRepository.save(criterioEvaluacionMapper.toEntity(criterioEvaluacionDTO)));
-    }
+                return criterioEvaluacionMapper
+                                .toDTO(criterioEvaluacionRepository
+                                                .save(criterioEvaluacionMapper.toEntity(criterioEvaluacionDTO)));
+        }
 
-    public void updateCriterioEvaluacion(Long requestedId, CriterioEvaluacionDTO criterioEvaluacionDTO) {
-        criterioEvaluacionRepository
-                .findByIdAndEmpresaId(requestedId,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("El criterio de evaluación no fue encontrado."));
+        public void update(Long requestedId, CriterioEvaluacionDTO criterioEvaluacionDTO) {
+                criterioEvaluacionRepository
+                                .findByIdAndEmpresaId(requestedId,
+                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
+                                .orElseThrow(() -> new NotFoundException(
+                                                "El criterio de evaluación no fue encontrado."));
 
-        tipoEvaluacionRepository.findById(criterioEvaluacionDTO.getTipoEvaluacionId())
-                .orElseThrow(() -> new BadRequestException("El tipo de evaluación no es válido."));
+                tipoEvaluacionRepository.findById(criterioEvaluacionDTO.getTipoEvaluacionId())
+                                .orElseThrow(() -> new BadRequestException("El tipo de evaluación no es válido."));
 
-        estadoRepository.findById(criterioEvaluacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+                estadoRepository.findById(criterioEvaluacionDTO.getEstadoId())
+                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-        criterioEvaluacionDTO.setId(requestedId);
-        criterioEvaluacionDTO.setEmpresaId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest());
+                criterioEvaluacionDTO.setId(requestedId);
+                criterioEvaluacionDTO.setEmpresaId(
+                                userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        criterioEvaluacionRepository.save(criterioEvaluacionMapper.toEntity(criterioEvaluacionDTO));
-    }
+                criterioEvaluacionRepository.save(criterioEvaluacionMapper.toEntity(criterioEvaluacionDTO));
+        }
 
-    public void deleteCriterioEvaluacion(Long id) {
-        criterioEvaluacionRepository
-                .findByIdAndEmpresaId(id,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("El criterio de evaluación no fue encontrado."));
+        public void delete(Long id) {
+                criterioEvaluacionRepository
+                                .findByIdAndEmpresaId(id,
+                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
+                                .orElseThrow(() -> new NotFoundException(
+                                                "El criterio de evaluación no fue encontrado."));
 
-        criterioEvaluacionRepository.deleteById(id);
-    }
+                criterioEvaluacionRepository.deleteById(id);
+        }
 
 }
