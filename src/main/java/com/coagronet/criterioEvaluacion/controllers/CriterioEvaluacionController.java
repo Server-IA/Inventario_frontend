@@ -1,9 +1,12 @@
 package com.coagronet.criterioEvaluacion.controllers;
 
-import java.net.URI;
 import java.util.List;
 
-import com.coagronet.utils.Constantes;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,12 +14,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
 import com.coagronet.criterioEvaluacion.dtos.CriterioEvaluacionDTO;
-import com.coagronet.criterioEvaluacion.mappers.CriterioEvaluacionMapper;
-import com.coagronet.criterioEvaluacion.repositirories.CriterioEvaluacionRepository;
-import com.coagronet.tipoEvaluacion.repositories.TipoEvaluacionRepository;
+import com.coagronet.criterioEvaluacion.services.CriterioEvaluacionService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,101 +25,44 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/api/v1/criterio_evaluacion")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class CriterioEvaluacionController {
 
-    private final CriterioEvaluacionRepository criterioEvaluacionRepository;
-    private final CriterioEvaluacionMapper criterioEvaluacionMapper;
-    private final TipoEvaluacionRepository tipoEvaluacionRepository;
+    private final CriterioEvaluacionService criterioEvaluacionService;
+    private final UriBuilderUtil uriBuilderUtil;
 
-    private CriterioEvaluacionController(
-            CriterioEvaluacionRepository criterioEvaluacionRepository,
-            CriterioEvaluacionMapper criterioEvaluacionMapper,
-            TipoEvaluacionRepository tipoEvaluacionRepository) {
-        this.criterioEvaluacionRepository = criterioEvaluacionRepository;
-        this.criterioEvaluacionMapper = criterioEvaluacionMapper;
-        this.tipoEvaluacionRepository = tipoEvaluacionRepository;
+    @GetMapping
+    public ResponseEntity<List<CriterioEvaluacionDTO>> findAll() {
+        return ResponseEntity.ok(criterioEvaluacionService.findAll());
     }
 
     @GetMapping("/{requestedId}")
-    private ResponseEntity<?> findById(@PathVariable Long requestedId) {
-        return criterioEvaluacionRepository.findById(requestedId)
-                .map(criterioEvaluacionMapper::toDTO)
-                .map(ResponseEntity::ok)
+    public ResponseEntity<CriterioEvaluacionDTO> findById(@PathVariable Long requestedId) {
+        return criterioEvaluacionService.findById(requestedId).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    private ResponseEntity<?> createCriterioEvaluacion(@RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO) {
-        // Verifica si ya existe un CriterioEvaluacion con el mismo TipoEvaluacion y
-        // Estado diferente
-        if (criterioEvaluacionRepository.existsByTipoEvaluacionIdAndEstadoIdNot(
-                criterioEvaluacionDTO.getTipoEvaluacion(),
-                criterioEvaluacionDTO.getEstado())) {
-            return ResponseEntity.badRequest().build();
-        }
-        // Verifica si el TipoEvaluacion especificado en el DTO existe en el repositorio
-        if (!tipoEvaluacionRepository.existsById(criterioEvaluacionDTO.getTipoEvaluacion())) {
-            return ResponseEntity.badRequest().build();
-        }
-        // Guarda el nuevo CriterioEvaluacion en el repositorio
-        CriterioEvaluacion savedEntity = criterioEvaluacionRepository
-                .save(criterioEvaluacionMapper.toEntity(criterioEvaluacionDTO));
-        // Devuelve una respuesta 201 (Created) con la ubicación del nuevo recurso y el
-        // objeto CriterioEvaluacionDTO creado
-        return ResponseEntity.created(URI.create("/api/v1/criterio_evaluacion/" + savedEntity.getId()))
-                .body(criterioEvaluacionMapper.toDTO(savedEntity));
-    }
-
-    @GetMapping("/tipoEvaluacionId/{requestedTipoEvaluacionId}")
-    private ResponseEntity<List<?>> findAllByTipoEvaluacionId(@PathVariable Long requestedTipoEvaluacionId) {
-        List<CriterioEvaluacionDTO> criterioEvaluacionDTOList = criterioEvaluacionRepository
-                .findByTipoEvaluacionIdAndEstadoIdNotOrderByIdAsc(requestedTipoEvaluacionId, Constantes.ESTADO_INACTIVO)
-                .stream()
-                .map(criterioEvaluacionMapper::toDTO)
-                .toList();
-
-        return !criterioEvaluacionDTOList.isEmpty()
-                ? ResponseEntity.ok(criterioEvaluacionDTOList)
-                : ResponseEntity.noContent().build();
+    public ResponseEntity<Void> createCriterioEvaluacion(
+            @Valid @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO,
+            UriComponentsBuilder ucb) {
+        return ResponseEntity
+                .created(uriBuilderUtil
+                        .buildCriterioEvaluacionUri((criterioEvaluacionService.create(criterioEvaluacionDTO)).getId(),
+                                ucb))
+                .build();
     }
 
     @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putCriterioEvaluacion(
-            @PathVariable Long requestedId,
-            @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTOUpdate) {
-        // Verifica si el CriterioEvaluacion especificado en el DTO existe en el
-        // repositorio
-        if (criterioEvaluacionRepository.existsById(requestedId)
-                && tipoEvaluacionRepository.existsByIdAndEstadoIdNot(
-                        criterioEvaluacionDTOUpdate.getTipoEvaluacion(),
-                        Constantes.ESTADO_INACTIVO)) {
-            // Actualiza el CriterioEvaluacion en el repositorio
-            CriterioEvaluacionDTO updateCriterioEvaluacionDTO = new CriterioEvaluacionDTO(
-                    requestedId,
-                    criterioEvaluacionDTOUpdate.getTipoEvaluacion(),
-                    criterioEvaluacionDTOUpdate.getNombre(),
-                    criterioEvaluacionDTOUpdate.getDescripcion(),
-                    criterioEvaluacionDTOUpdate.getEstado());
-            criterioEvaluacionRepository.save(criterioEvaluacionMapper.toEntity(updateCriterioEvaluacionDTO));
-            // Devuelve una respuesta 204 (No Content)
-            return ResponseEntity.noContent().build();
-        }
-        // Devuelve una respuesta 404 (Not Found)
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> updateCriterioEvaluacion(@PathVariable Long requestedId,
+            @Valid @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO) {
+        criterioEvaluacionService.update(requestedId, criterioEvaluacionDTO);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteCriterioEvaluacion(@PathVariable Long id) {
-        // Verifica si el CriterioEvaluacion especificado en el DTO existe en el
-        // repositorio
-        if (criterioEvaluacionRepository.existsById(id)) {
-            // Elimina el CriterioEvaluacion del repositorio
-            criterioEvaluacionRepository.deleteById(id);
-            // Devuelve una respuesta 204 (No Content)
-            return ResponseEntity.noContent().build();
-        }
-        // Devuelve una respuesta 404 (Not Found)
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteCriterioEvaluacion(@PathVariable Long id) {
+        criterioEvaluacionService.delete(id);
+        return ResponseEntity.noContent().build();
     }
-
 }
