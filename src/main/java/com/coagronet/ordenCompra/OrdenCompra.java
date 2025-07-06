@@ -33,7 +33,7 @@ public class OrdenCompra {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "orden_compra_generator")
     @SequenceGenerator(name = "orden_compra_generator", sequenceName = "orden_compra_orc_id_seq", allocationSize = 1)
-    @Column(name = "orc_id", nullable = false)
+    @Column(name = "orc_id")
     private Long id;
 
     @Column(name = "orc_fecha_hora")
@@ -47,7 +47,7 @@ public class OrdenCompra {
     @JoinColumn(name = "orc_proveedor_id", referencedColumnName = "pro_id")
     private Proveedor proveedor;
 
-    @Column(name = "orc_descripcion", length = 500)
+    @Column(name = "orc_descripcion", length = 2048)
     private String descripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
