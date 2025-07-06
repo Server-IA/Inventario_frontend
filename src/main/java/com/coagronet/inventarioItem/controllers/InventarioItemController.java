@@ -21,26 +21,24 @@ public class InventarioItemController {
     private final InventarioItemService inventarioItemService;
     private final UriBuilderUtil uriBuilderUtil;
 
-
     @GetMapping
-    public ResponseEntity<List<InventarioItemDTO>> findAll(){
+    public ResponseEntity<List<InventarioItemDTO>> findAll() {
         List<InventarioItemDTO> inventarioItemDTOList = inventarioItemService.findAll();
 
-        return inventarioItemDTOList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(inventarioItemDTOList);
+        return inventarioItemDTOList.isEmpty() ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(inventarioItemDTOList);
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<InventarioItemDTO> findById(@PathVariable Long requestedId){
+    public ResponseEntity<InventarioItemDTO> findById(@PathVariable Long requestedId) {
         return inventarioItemService.findById(requestedId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<InventarioItemDTO> createInventarioItem
-            (@RequestBody @Valid InventarioItemDTO newInventarioItem, UriComponentsBuilder ucb){
+    public ResponseEntity<InventarioItemDTO> createInventarioItem(
+            @RequestBody @Valid InventarioItemDTO newInventarioItem, UriComponentsBuilder ucb) {
 
         InventarioItemDTO savedInventarioItemDTO = inventarioItemService.create(newInventarioItem);
 
@@ -50,10 +48,9 @@ public class InventarioItemController {
 
     }
 
-
     @PutMapping("/{requestedId}")
     private ResponseEntity<Void> putInventarioItem(@PathVariable Long requestedId,
-                                               @RequestBody @Valid InventarioItemDTO inventarioItemDTOUpdate) {
+            @RequestBody @Valid InventarioItemDTO inventarioItemDTOUpdate) {
         inventarioItemService.update(requestedId, inventarioItemDTOUpdate);
         return ResponseEntity.noContent().build();
     }
