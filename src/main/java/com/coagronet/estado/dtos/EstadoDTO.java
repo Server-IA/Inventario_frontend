@@ -15,4 +15,5 @@ public class EstadoDTO {
     private String nombre;
     private String descripcion;
     private String acronimo;
+    private Long estadoCategoriaId;
 }

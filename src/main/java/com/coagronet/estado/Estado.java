@@ -1,12 +1,7 @@
 package com.coagronet.estado;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import com.coagronet.estadoCategoria.EstadoCategoria;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,5 +29,9 @@ public class Estado {
 
     @Column(name = "est_acronimo", length = 100)
     private String acronimo;
+
+    @ManyToOne
+    @JoinColumn(name = "est_estado_categoria_id", referencedColumnName = "esc_id")
+    private EstadoCategoria estadoCategoria;
 
 }

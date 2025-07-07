@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -57,10 +58,9 @@ public class EstadoController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createEstado(@RequestBody Estado newEstadoRequest, UriComponentsBuilder ucb) {
-        Estado estado = new Estado(null, newEstadoRequest.getNombre(),
-                newEstadoRequest.getDescripcion(), newEstadoRequest.getAcronimo());
-        Estado savedEstado = estadoRepository.save(estado);
+    public ResponseEntity<Void> createEstado(@RequestBody @Valid EstadoDTO newEstadoRequest, UriComponentsBuilder ucb) {
+
+        Estado savedEstado = estadoRepository.save(estadoMapper.toEntity(newEstadoRequest));
         URI locationOfNewEstado = ucb.path("/api/v1/estados/{id}")
                 .buildAndExpand(savedEstado.getId())
                 .toUri();
