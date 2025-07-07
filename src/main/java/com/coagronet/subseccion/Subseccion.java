@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 public class Subseccion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "subseccion_seq")
-    @SequenceGenerator(name = "subseccion_seq", sequenceName = "subseccion_sus_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sub_seccion_seq")
+    @SequenceGenerator(name = "sub_seccion_seq", sequenceName = "sub_seccion_sus_id_seq", allocationSize = 1)
     @Column(name = "sus_id")
     private Long id;
 
