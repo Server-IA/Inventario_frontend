@@ -71,6 +71,7 @@ public class SecurityConfig {
                                                                 "/api/v1/ocupacion/**",
                                                                 "/api/v1/control_inventario/**",
                                                                 "/api/v1/tipo_inventario/**",
+                                                                "/api/v1/inventario/**",
                                                                 "/api/v1/ocupacion/**",
                                                                 "/api/v1/seccion/**",
                                                                 "/api/v1/orden_compra/**",
