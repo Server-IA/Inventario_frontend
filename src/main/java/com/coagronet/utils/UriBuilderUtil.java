@@ -147,4 +147,8 @@ public class UriBuilderUtil {
 	public URI buildCriterioEvaluacionUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/criterio_evaluacion/{id}").buildAndExpand(id).toUri();
 	}
+
+	public URI buildEvaluacionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/evaluacion/{id}").buildAndExpand(id).toUri();
+	}
 }
