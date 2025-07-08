@@ -7,6 +7,8 @@ import com.coagronet.estado.dtos.EstadoDTO;
 
 @Mapper(componentModel = "spring")
 public interface EstadoMapper {
+    
+    @Mapping(source = "estadoCategoria.id", target = "estadoCategoriaId")
     EstadoDTO toDTO(Estado estado);
 
     @Mapping(source = "estadoCategoriaId", target = "estadoCategoria.id")
