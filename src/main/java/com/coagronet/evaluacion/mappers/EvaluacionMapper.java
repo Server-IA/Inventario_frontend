@@ -18,4 +18,9 @@ public interface EvaluacionMapper {
     @Mapping(source = "empresaId", target = "empresa.id")
     @Mapping(source = "estadoId", target = "estado.id")
     Evaluacion toEntity(EvaluacionDTO evaluacionDTO);
+
+    @Mapping(source = "tipoEvaluacion.id", target = "tipoEvaluacionId")
+    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
+    @Mapping(source = "estado.id", target = "estadoId")
+    EvaluacionDTO toListDTO(Evaluacion evaluacion);
 }

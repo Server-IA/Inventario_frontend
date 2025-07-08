@@ -15,14 +15,10 @@ public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
                         Long id,
                         Long empresaId);
 
-        List<Evaluacion> findByTipoEvaluacionId(
-                        Integer tipoEvaluacionId);
+        List<Evaluacion> findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(
+                        Long empresaId,
+                        Long tipoEvaluacionId);
 
-        List<Evaluacion> findByTipoEvaluacionIdAndEstadoIdNot(
-                        Integer tipoEvaluacionId,
-                        Integer estadoId);
-
-        boolean existsByIdAndEstadoIdNot(
-                        Integer id,
-                        Integer estadoId);
+        List<Evaluacion> findByEmpresaIdOrderByIdAsc(
+                        Long empresaId);
 }
