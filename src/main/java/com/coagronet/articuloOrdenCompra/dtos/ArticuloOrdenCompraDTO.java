@@ -25,7 +25,7 @@ public class ArticuloOrdenCompraDTO {
     private Long ordenCompraId;
 
     @NotNull(message = "La presentación de producto es obligatoria.")
-    private Long productoPresentacionId;
+    private Long presentacionProductoId;
 
     @NotNull(message = "El estado es obligatorio.")
     private Long estadoId;

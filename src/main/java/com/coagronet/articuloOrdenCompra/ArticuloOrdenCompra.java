@@ -3,7 +3,7 @@ package com.coagronet.articuloOrdenCompra;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.ordenCompra.OrdenCompra;
-import com.coagronet.productoPresentacion.ProductoPresentacion;
+import com.coagronet.presentacionProducto.PresentacionProducto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,7 +47,7 @@ public class ArticuloOrdenCompra {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "oci_producto_presentacion_id", referencedColumnName = "prp_id", nullable = false, foreignKey = @ForeignKey(name = "orden_compra_itemproducto_presentacionprp_id_fkey"))
-    private ProductoPresentacion productoPresentacion;
+    private PresentacionProducto presentacionProducto;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "oci_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "orden_compra_itemestadoest_id_fkey"))

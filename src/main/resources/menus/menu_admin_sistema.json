@@ -124,8 +124,8 @@
         "icon": "ProductionQuantityLimitsIcon"
       },
       {
-        "id": "producto_presentacion",
-        "text": "ProductoPresentacion",
+        "id": "presentacion_producto",
+        "text": "PresentacionProducto",
         "icon": "ProductionQuantityLimitsIcon"
       },
       {

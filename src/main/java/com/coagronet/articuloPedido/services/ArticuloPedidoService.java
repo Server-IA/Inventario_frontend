@@ -13,7 +13,7 @@ import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.pedido.repositories.PedidoRepository;
-import com.coagronet.productoPresentacion.repositories.ProductoPresentacionRepository;
+import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class ArticuloPedidoService {
         private final ArticuloPedidoMapper articuloPedidoMapper;
         private final ArticuloPedidoRepository articuloPedidoRepository;
         private final PedidoRepository pedidoRepository;
-        private final ProductoPresentacionRepository productoPresentacionRepository;
+        private final PresentacionProductoRepository presentacionProductoRepository;
         private final EstadoRepository estadoRepository;
 
         public List<ArticuloPedidoDTO> findAll() {
@@ -56,8 +56,8 @@ public class ArticuloPedidoService {
                                 userEmpresaService.getEmpresaIdFromCurrentRequest())
                                 .orElseThrow(() -> new BadRequestException("El pedido no es válido."));
 
-                productoPresentacionRepository
-                                .findByIdAndEmpresaId(articuloPedidoDTO.getProductoPresentacionId(),
+                presentacionProductoRepository
+                                .findByIdAndEmpresaId(articuloPedidoDTO.getPresentacionProductoId(),
                                                 userEmpresaService.getEmpresaIdFromCurrentRequest())
                                 .orElseThrow(() -> new BadRequestException(
                                                 "La presentación de producto no es válida."));
@@ -82,8 +82,8 @@ public class ArticuloPedidoService {
                                 userEmpresaService.getEmpresaIdFromCurrentRequest())
                                 .orElseThrow(() -> new BadRequestException("El pedido no es válido."));
 
-                productoPresentacionRepository
-                                .findByIdAndEmpresaId(articuloPedidoDTO.getProductoPresentacionId(),
+                presentacionProductoRepository
+                                .findByIdAndEmpresaId(articuloPedidoDTO.getPresentacionProductoId(),
                                                 userEmpresaService.getEmpresaIdFromCurrentRequest())
                                 .orElseThrow(() -> new BadRequestException(
                                                 "La presentación de producto no es válida."));

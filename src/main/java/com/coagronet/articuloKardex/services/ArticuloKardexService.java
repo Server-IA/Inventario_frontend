@@ -10,7 +10,7 @@ import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.repositories.KardexRepository;
-import com.coagronet.productoPresentacion.repositories.ProductoPresentacionRepository;
+import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
@@ -26,7 +26,7 @@ public class ArticuloKardexService {
 	private final ArticuloKardexMapper articuloKardexMapper;
 	private final ArticuloKardexRepository articuloKardexRepository;
 	private final KardexRepository kardexRepository;
-	private final ProductoPresentacionRepository productoPresentacionRepository;
+	private final PresentacionProductoRepository presentacionProductoRepository;
 	private final EstadoRepository estadoRepository;
 
 	public List<ArticuloKardexDTO> findAll() {
@@ -56,8 +56,8 @@ public class ArticuloKardexService {
 						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new BadRequestException("El kardex no es válido."));
 
-		productoPresentacionRepository
-				.findByIdAndEmpresaId(articuloKardexDTO.getProductoPresentacionId(),
+		presentacionProductoRepository
+				.findByIdAndEmpresaId(articuloKardexDTO.getPresentacionProductoId(),
 						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
@@ -83,8 +83,8 @@ public class ArticuloKardexService {
 						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new BadRequestException("El kardex no es válido."));
 
-		productoPresentacionRepository
-				.findByIdAndEmpresaId(articuloKardexDTO.getProductoPresentacionId(),
+		presentacionProductoRepository
+				.findByIdAndEmpresaId(articuloKardexDTO.getPresentacionProductoId(),
 						userEmpresaService.getEmpresaIdFromCurrentRequest())
 				.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
