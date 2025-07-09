@@ -1,4 +1,4 @@
-package com.coagronet.productoPresentacion;
+package com.coagronet.presentacionProducto;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "producto_presentacion")
-public class ProductoPresentacion {
+public class PresentacionProducto {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prp_generator")
     @SequenceGenerator(name = "prp_generator", sequenceName = "producto_presentacion_prp_id_seq", allocationSize = 1)

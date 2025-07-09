@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.productoPresentacion.ProductoPresentacion;
+import com.coagronet.presentacionProducto.PresentacionProducto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -55,7 +55,7 @@ public class ArticuloKardex {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kai_producto_presentacion_id", referencedColumnName = "prp_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_producto_presentacion_id_fkey"))
-	private ProductoPresentacion productoPresentacion;
+	private PresentacionProducto presentacionProducto;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kai_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_estado_id_fkey"))

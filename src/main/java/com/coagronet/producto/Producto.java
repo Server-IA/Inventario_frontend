@@ -2,6 +2,7 @@ package com.coagronet.producto;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
+import com.coagronet.ingredientePresentacionProducto.IngredientePresentacionProducto;
 import com.coagronet.productoCategoria.ProductoCategoria;
 
 import com.coagronet.unidad.Unidad;
@@ -17,15 +18,17 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "producto")
+@Table(name = "producto", schema = "public")
 public class Producto {
 
     @Id
@@ -37,6 +40,9 @@ public class Producto {
     @Column(name = "pro_nombre")
     private String nombre;
 
+    @Column(name = "pro_descripcion")
+    private String descripcion;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pro_producto_categoria_id", referencedColumnName = "prc_id")
     private ProductoCategoria productoCategoria;
@@ -45,8 +51,9 @@ public class Producto {
     @JoinColumn(name = "pro_unidad_minima_id", referencedColumnName = "uni_id")
     private Unidad unidad;
 
-    @Column(name = "pro_descripcion")
-    private String descripcion;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pro_producto_presentacion_ingrediente_id", referencedColumnName = "ppi_id")
+    private IngredientePresentacionProducto ingredientePresentacionProducto;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id")
@@ -55,7 +62,5 @@ public class Producto {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id")
     private Empresa empresa;
-
-
 
 }

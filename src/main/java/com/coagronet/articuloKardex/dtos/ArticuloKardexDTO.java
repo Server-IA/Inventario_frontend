@@ -29,7 +29,7 @@ public class ArticuloKardexDTO {
 	private Long kardexId;
 
 	@NotNull(message = "La presentación de producto es obligatoria.")
-	private Long productoPresentacionId;
+	private Long presentacionProductoId;
 
 	@NotNull(message = "El estado es obligatorio.")
 	private Long estadoId;
