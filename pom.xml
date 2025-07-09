@@ -40,7 +40,7 @@
     <dependencies>
         <!--  Dependencias para desarrollo local (comentar cuando se vaya a generar el war y
         desplegar)  -->
-        <!-- <dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
@@ -51,10 +51,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency> -->
+        </dependency>
         <!--  Librerias para despliegue (descomentar para cuando se vaya a generar el war y
         desplegar)  -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <exclusions>
@@ -81,7 +81,7 @@
                     <artifactId>spring-boot-starter-logging</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency> -->
         <!--  Hasta aqui se debe de comentar si se va a construir el war para desplegar  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

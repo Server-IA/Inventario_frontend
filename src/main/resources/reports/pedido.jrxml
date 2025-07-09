@@ -119,8 +119,10 @@ WHERE
 	<title>
 		<band height="65" splitType="Stretch">
 			<image>
-				<reportElement x="63" y="5" width="45" height="40" uuid="70a4ad16-d239-4ed4-a145-5271373e884a"/>
-				<imageExpression><![CDATA[$F{header_empresa_logo} != null ? new java.net.URL($F{header_empresa_logo}) : new java.net.URL("https://static.vecteezy.com/system/resources/previews/002/412/377/non_2x/coffee-cup-logo-coffee-shop-icon-design-free-vector.jpg")]]></imageExpression>
+				<reportElement x="63" y="5" width="45" height="40" uuid="70a4ad16-d239-4ed4-a145-5271373e884a">
+					<printWhenExpression><![CDATA[$F{header_empresa_logo} != null && !$F{header_empresa_logo}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<imageExpression><![CDATA[$F{header_empresa_logo}]]></imageExpression>
 			</image>
 			<staticText>
 				<reportElement mode="Opaque" x="404" y="0" width="130" height="40" forecolor="#000000" backcolor="#FFFFFF" uuid="4a077aa8-bacc-4601-8f31-65b5c0a1081a"/>
