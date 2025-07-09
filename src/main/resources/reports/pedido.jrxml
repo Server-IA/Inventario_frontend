@@ -118,7 +118,7 @@ WHERE
 	</variable>
 	<title>
 		<band height="65" splitType="Stretch">
-			<image>
+			<image onErrorType="Blank">
 				<reportElement x="63" y="5" width="45" height="40" uuid="70a4ad16-d239-4ed4-a145-5271373e884a">
 					<printWhenExpression><![CDATA[$F{header_empresa_logo} != null && !$F{header_empresa_logo}.isEmpty()]]></printWhenExpression>
 				</reportElement>

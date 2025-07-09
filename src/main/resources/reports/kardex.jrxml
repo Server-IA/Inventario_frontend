@@ -187,7 +187,7 @@ JOIN tipo_movimiento tim ON tim.tim_movimiento_id = mov.mov_id
 	</variable>
 	<title>
 		<band height="91">
-			<image>
+			<image onErrorType="Blank">
 				<reportElement x="40" y="11" width="43" height="39" uuid="cc4cf37f-04d4-49c7-8c31-d44b05992cea"/>
 				<imageExpression><![CDATA[$F{header_empresa_logo} != null ? new java.net.URL($F{header_empresa_logo}) : null]]></imageExpression>
 			</image>

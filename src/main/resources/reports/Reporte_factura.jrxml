@@ -222,7 +222,7 @@ ORDER BY A.kai_id]]>
 					<pen lineColor="#3747A1"/>
 				</graphicElement>
 			</rectangle>
-			<image>
+			<image onErrorType="Blank">
 				<reportElement x="60" y="0" width="79" height="39" uuid="cc4cf37f-04d4-49c7-8c31-d44b05992cea"/>
 				<imageExpression><![CDATA[$F{header_empresa_logo} != null ? new java.net.URL($F{header_empresa_logo}) : null]]></imageExpression>
 			</image>

@@ -128,7 +128,7 @@ ORDER BY
 				<textElement textAlignment="Center" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{nombre_empresa}]]></textFieldExpression>
 			</textField>
-			<image hAlign="Center">
+			<image hAlign="Center" onErrorType="Blank">
 				<reportElement x="40" y="0" width="79" height="39" uuid="d2d68152-bedf-40c6-9239-dd17fe2a1cc5"/>
 				<imageExpression><![CDATA[$F{logo_empresa} != null ? new java.net.URL($F{logo_empresa}) : new java.net.URL("https://static.vecteezy.com/system/resources/previews/002/412/377/non_2x/coffee-cup-logo-coffee-shop-icon-design-free-vector.jpg")]]></imageExpression>
 			</image>
