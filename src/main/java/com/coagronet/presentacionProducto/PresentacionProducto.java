@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "producto_presentacion")
+@Table(name = "producto_presentacion", schema = "public")
 public class PresentacionProducto {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prp_generator")
@@ -66,5 +66,8 @@ public class PresentacionProducto {
     @ManyToOne
     @JoinColumn(name = "prp_empresa_id")
     private Empresa empresa;
+
+    @Column(name = "prp_desgregar")
+    private Boolean desgregar;
 
 }
