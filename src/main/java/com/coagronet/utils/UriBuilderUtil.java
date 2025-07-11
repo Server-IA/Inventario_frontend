@@ -154,7 +154,7 @@ public class UriBuilderUtil {
 
 	public URI buildIngredientePresentacionProductoUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/ingrediente-presentacion-producto/{id}").buildAndExpand(id).toUri();
-	} // <-- Added this closing brace
+	}
 
 	public URI buildProductoLocalizacionUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/producto_localizacion/{id}").buildAndExpand(id).toUri();
