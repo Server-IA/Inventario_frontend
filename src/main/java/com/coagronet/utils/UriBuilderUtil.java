@@ -151,4 +151,12 @@ public class UriBuilderUtil {
 	public URI buildEvaluacionUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/evaluacion/{id}").buildAndExpand(id).toUri();
 	}
+
+	public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/variedad/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildTipoFaseUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipp_fase/{id}").buildAndExpand(id).toUri();
+	}
 }
