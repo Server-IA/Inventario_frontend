@@ -3,6 +3,7 @@ package com.coagronet.ingredientePresentacionProducto;
 import java.io.Serializable;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
 import com.coagronet.ingrediente.Ingrediente;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 
@@ -52,6 +53,7 @@ public class IngredientePresentacionProducto implements Serializable {
     @JoinColumn(name = "ppi_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "producto_presentacion_ingrediente_ppi_empresa_id_fkey"))
     private Empresa empresa;
 
-    @Column(name = "ppi_estado_id", nullable = false)
-    private Long estado;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ppi_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "producto_presentacion_ingrediente_ppi_estado_id_fkey"))
+    private Estado estado;
 }
