@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/estadoCategoria_categoria")
+@RequestMapping("/api/v1/estado_categoria")
 @CrossOrigin(origins = "*")
 public class EstadoCategoriaController {
 
