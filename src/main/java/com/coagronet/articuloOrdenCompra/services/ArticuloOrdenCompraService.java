@@ -36,6 +36,13 @@ public class ArticuloOrdenCompraService {
                                 .stream().map(articuloOrdenCompraMapper::toListDTO).collect(Collectors.toList());
         }
 
+        public List<ArticuloOrdenCompraDTO> findAllByOrdenCompraId(Long ordenCompraId) {
+                return articuloOrdenCompraRepository
+                                .findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(
+                                                userEmpresaService.getEmpresaIdFromCurrentRequest(), ordenCompraId)
+                                .stream().map(articuloOrdenCompraMapper::toListDTO).collect(Collectors.toList());
+        }
+
         public Optional<ArticuloOrdenCompraDTO> findById(Long requestedId) {
                 return articuloOrdenCompraRepository
                                 .findByIdAndEmpresaId(requestedId,
