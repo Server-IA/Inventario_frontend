@@ -1,13 +1,11 @@
 package com.coagronet.infrastructure.configuration;
 
-import com.coagronet.infrastructure.security.JwtRequestFilter;
-import com.coagronet.infrastructure.security.JwtService;
-import com.coagronet.infrastructure.security.MyUserDetailsService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,9 +18,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.config.Customizer;
 
-import java.util.List;
+import com.coagronet.infrastructure.security.JwtRequestFilter;
+import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.MyUserDetailsService;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -78,7 +79,8 @@ public class SecurityConfig {
                                                                 "/api/v1/criterio_evaluacion/**",
                                                                 "/api/v1/evaluacion/**",
                                                                 "/api/v1/ingrediente-presentacion-producto/**",
-                                                                "/api/v1/proveedor/**")
+                                                                "/api/v1/proveedor/**",
+                                                                "/api/v1/items/**")
                                                 .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
                                                 .requestMatchers("/api/v2/report/**")
                                                 .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
