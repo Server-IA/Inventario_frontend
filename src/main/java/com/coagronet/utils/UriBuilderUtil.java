@@ -152,14 +152,6 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/evaluacion/{id}").buildAndExpand(id).toUri();
 	}
 
-	public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/variedad/{id}").buildAndExpand(id).toUri();
-	}
-
-	public URI buildTipoFaseUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/tipp_fase/{id}").buildAndExpand(id).toUri();
-	}
-	
 	public URI buildIngredientePresentacionProductoUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/ingrediente-presentacion-producto/{id}").buildAndExpand(id).toUri();
 	}
@@ -167,6 +159,19 @@ public class UriBuilderUtil {
 	public URI buildProductoLocalizacionUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/producto_localizacion/{id}").buildAndExpand(id).toUri();
 	}
+
+	public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/variedad/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildTipoFaseUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipo_fase/{id}").buildAndExpand(id).toUri();
+	}
+	
+	public URI buildFaseUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/fase/{id}").buildAndExpand(id).toUri();
+	}
+	
 }
 	
 
