@@ -1,0 +1,210 @@
+[
+    {
+        "id": "seguridad",
+        "text": "Seguridad",
+        "icon": "People",
+        "children": [
+            {
+                "id": "persona",
+                "text": "Persona",
+                "icon": "PersonIcon"
+            }
+        ]
+    },
+    {
+        "id": "parametrizacion",
+        "text": "Parametrización",
+        "icon": "People",
+        "children": [
+            {
+                "id": "grupo",
+                "text": "Grupo",
+                "icon": "Apartment"
+            },
+            {
+                "id": "tipo_sede",
+                "text": "Tipo Sede",
+                "icon": "Warehouse"
+            },
+            {
+                "id": "sede",
+                "text": "Sede",
+                "icon": "Domain"
+            },
+            {
+                "id": "tipo_bloque",
+                "text": "Tipo Bloque",
+                "icon": "Warehouse"
+            },
+            {
+                "id": "bloque",
+                "text": "Bloque",
+                "icon": "Warehouse"
+            },
+            {
+                "id": "tipo_espacio",
+                "text": "Tipo Espacio",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "espacio",
+                "text": "Espacio",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "almacen",
+                "text": "Almacén",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "Seccion",
+                "text": "Seccion",
+                "icon": "Warehouse"
+            },
+            {
+                "id": "Subseccion",
+                "text": "Subseccion",
+                "icon": "Warehouse"
+            },
+            {
+                "id": "tipo_inventario",
+                "text": " TipoInventario",
+                "icon": "Warehouse"
+            },
+            {
+                "id": "Inventario",
+                "text": "Inventario",
+                "icon": "Warehouse"
+            }
+        ]
+    },
+    {
+        "id": "inventario",
+        "text": "Inventario",
+        "icon": "People",
+        "children": [
+            {
+                "id": "presentacion",
+                "text": "Presentación",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "producto_categoria",
+                "text": "Producto Categoría",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "marca",
+                "text": "Marca",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "Ingrediente",
+                "text": "Ingrediente",
+                "icon": "Settings"
+            },
+            {
+                "id": "tipo_produccion",
+                "text": "Tipo Producción",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "produccion",
+                "text": "Producción",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "Proceso",
+                "text": "Proceso",
+                "icon": "Settings"
+            },
+            {
+                "id": "tipo_movimiento",
+                "text": "Tipo Movimiento",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "Movimiento",
+                "text": "Movimiento",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "unidad",
+                "text": "Unidad",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "presentacion_producto",
+                "text": "PresentacionProducto",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "producto",
+                "text": "Producto",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "proveedor",
+                "text": "Proveedor",
+                "icon": "ProductionQuantityLimitsIcon"
+            },
+            {
+                "id": "r_pedido",
+                "text": "Pedido",
+                "icon": "Settings"
+            },
+            {
+                "id": "OrdenCompra",
+                "text": "Orden Compra",
+                "icon": "Settings"
+            },
+            {
+                "id": "kardex",
+                "text": "Kardex",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "Ocupacion",
+                "text": "Ocupacion",
+                "icon": "Settings"
+            },
+            {
+                "id": "evaluacion_item",
+                "text": "EvaluacionItem",
+                "icon": "Settings"
+            }
+        ]
+    },
+    {
+        "id": "reportes",
+        "text": "Reportes",
+        "icon": "People",
+        "children": [
+            {
+                "id": "r_pedido",
+                "text": "Pedido",
+                "icon": "Settings"
+            },
+            {
+                "id": "OrdenCompra",
+                "text": "Orden Compra",
+                "icon": "Settings"
+            },
+            {
+                "id": "kardex",
+                "text": "Kardex",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "Ocupacion",
+                "text": "Ocupacion",
+                "icon": "Settings"
+            },
+            {
+                "id": "evaluacion_item",
+                "text": "EvaluacionItem",
+                "icon": "Settings"
+            }
+        ]
+    }
+]

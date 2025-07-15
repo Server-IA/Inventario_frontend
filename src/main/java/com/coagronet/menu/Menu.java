@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/menu")
 @CrossOrigin(origins = "*")
 public class Menu {
-    
+
     @GetMapping
     public ResponseEntity<String> getJson(Authentication authentication) throws IOException {
         // Obtener el rol del usuario autenticado
@@ -23,11 +23,13 @@ public class Menu {
 
         // Determinar el archivo JSON según el rol
         String filename = switch (role) {
-            case "ROLE_ADMINISTRADOR_SISTEMA" -> "menu_admin_sistema.json";
+            case "ROLE_ADMINISTRADOR_SISTEMA" -> "menu_administrador_sistema.json";
+            case "ROLE_ADMINISTRADOR_EMPRESA" -> "menu_administrador_empresa.json";
+            case "ROLE_GERENTE" -> "menu_gerente.json";
             case "ROLE_VENDEDOR" -> "menu_vendedor.json";
             case "ROLE_COMPRADOR" -> "menu_comprador.json";
             case "ROLE_ALMACENISTA" -> "menu_almacenista.json";
-            default -> "menu_admin_sistema.json"; // O manejar error
+            default -> "menu_administrador_sistema.json"; // O manejar error
         };
 
         // Leer el archivo JSON correspondiente
