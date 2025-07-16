@@ -1,0 +1,34 @@
+[
+    {
+        "id": "reportes",
+        "text": "Reportes",
+        "icon": "People",
+        "children": [
+            {
+                "id": "r_pedido",
+                "text": "Pedido",
+                "icon": "Settings"
+            },
+            {
+                "id": "OrdenCompra",
+                "text": "Orden Compra",
+                "icon": "Settings"
+            },
+            {
+                "id": "kardex",
+                "text": "Kardex",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "Ocupacion",
+                "text": "Ocupacion",
+                "icon": "Settings"
+            },
+            {
+                "id": "evaluacion_item",
+                "text": "EvaluacionItem",
+                "icon": "Settings"
+            }
+        ]
+    }
+]

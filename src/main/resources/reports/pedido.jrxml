@@ -160,7 +160,7 @@ WHERE
 				<textElement textAlignment="Center" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{header_empresa}]]></textFieldExpression>
 			</textField>
-			<image hAlign="Center">
+			<image hAlign="Center" onErrorType="Blank">
 				<reportElement x="40" y="0" width="79" height="39" uuid="84fd0f45-e0d9-4c0a-949a-34e46b59f98c"/>
 				<imageExpression><![CDATA[$F{header_empresa_logo} != null ? new java.net.URL($F{header_empresa_logo}) : new java.net.URL("https://static.vecteezy.com/system/resources/previews/002/412/377/non_2x/coffee-cup-logo-coffee-shop-icon-design-free-vector.jpg")]]></imageExpression>
 			</image>

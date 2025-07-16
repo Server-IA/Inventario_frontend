@@ -13,4 +13,6 @@ public interface ArticuloOrdenCompraRepository extends JpaRepository<ArticuloOrd
 
     List<ArticuloOrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
+    List<ArticuloOrdenCompra> findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(Long empresaId, Long ordenCompraId);
+
 }
