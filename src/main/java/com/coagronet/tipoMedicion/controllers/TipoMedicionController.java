@@ -22,7 +22,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/tipo_medicion")
+@RequestMapping("/api/v3/tipo_medicion")
 @CrossOrigin("*")
 @RequiredArgsConstructor
 public class TipoMedicionController {
