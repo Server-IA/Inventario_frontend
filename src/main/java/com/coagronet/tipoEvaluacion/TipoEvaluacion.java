@@ -25,4 +25,9 @@ public class TipoEvaluacion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tie_estado_id", referencedColumnName = "est_id")
     private Estado estado;
+
+    // añadir el campo empresa a cada tabla tipo y setear empresaId a 0
+    // @ManyToOne
+    // @JoinColumn(name="tie_empresa_id", referencedColumnName = "emp_id")
+    // private Empresa empresa;
 }

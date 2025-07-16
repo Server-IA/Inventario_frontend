@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.utils.UriBuilderUtil;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.variedad.mappers.VariedadMapper;
 import com.coagronet.variedad.repositories.VariedadRepository;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VariedadService {
 
+    
     private final VariedadRepository variedadRepository;
     private final VariedadMapper variedadMapper;
     private final EstadoRepository estadoRepository;

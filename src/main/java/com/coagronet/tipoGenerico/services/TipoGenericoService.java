@@ -7,9 +7,8 @@ import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.tipoGenerico.dtos.TipoGenericoDTO;
 import com.coagronet.tipoGenerico.registry.TipoGenericoRegistry;
 import com.coagronet.utils.UserEmpresaService;
@@ -23,15 +22,18 @@ public class TipoGenericoService {
     private final JdbcTemplate jdbcTemplate;
     private final TipoGenericoRegistry registry;
     private final UserEmpresaService userEmpresaService;
+    private final EstadoRepository estadoRepository;
 
-    private void validateTable(String table) {
-        if (!registry.isAllowed(table)) {
-            throw new IllegalArgumentException("Tabla no permitida: " + table);
-        }
-    }
+    public static final String urlVersion= "v1";
+    
+
 
     public List<TipoGenericoDTO> findAll(String table) {
-        validateTable(table);
+
+        if (!registry.isAllowed(table)) {
+            throw new BadRequestException("Tabla no permitida o no válida: " + table);
+        }
+        
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
@@ -48,7 +50,11 @@ public class TipoGenericoService {
     }
 
     public Optional<TipoGenericoDTO> findById(String table, Long id) {
-        validateTable(table);
+        
+        if (!registry.isAllowed(table)) {
+            throw new BadRequestException("Tabla no permitida o no válida: " + table);
+        }
+
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
@@ -84,14 +90,21 @@ public class TipoGenericoService {
     }
 
     public TipoGenericoDTO create(String table, TipoGenericoDTO dto) {
-        validateTable(table);
+        
+        if (!registry.isAllowed(table)) {
+            throw new BadRequestException("Tabla no permitida o no válida: " + table);
+        }
+        estadoRepository.findById(dto.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido. "));
+        
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
+        
         String fullTable = schema + "." + table;
 
         dto.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        String sequenceName = fullTable + "_id_seq";
+        String sequenceName = fullTable + "_" + pre + "_id_seq";
         Long id = jdbcTemplate.queryForObject("SELECT nextval(?)", Long.class, sequenceName);
 
         String sql = String.format("""
@@ -102,12 +115,24 @@ public class TipoGenericoService {
         Object[] params = new Object[]{id, dto.getNombre(), dto.getDescripcion(), dto.getEstadoId(), dto.getEmpresaId()};
         jdbcTemplate.update(sql, params);
 
+        
+
         dto.setId(id);
         return dto;
     }
 
     public void update(String table, Long id, TipoGenericoDTO dto) {
-        validateTable(table);
+        
+        if (!registry.isAllowed(table)) {
+            throw new BadRequestException("Tabla no permitida o no válida: " + table);
+        }
+
+        estadoRepository.findById(dto.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido. "));
+
+        if (findById(table, id).isEmpty()) {
+            throw new BadRequestException("No se encontró el registro con id: " + id + " o es inválido para la empresa.");
+        }
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
@@ -125,7 +150,14 @@ public class TipoGenericoService {
     }
 
     public void delete(String table, Long id) {
-        validateTable(table);
+        
+        if (!registry.isAllowed(table)) {
+            throw new BadRequestException("Tabla no permitida o no válida: " + table);
+        }
+
+        if (findById(table, id).isEmpty()){
+            throw new BadRequestException("No se encontró el registro con id: " + id + " o es inválido para la empresa.");
+        }
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
@@ -139,3 +171,7 @@ public class TipoGenericoService {
         jdbcTemplate.update(sql, id, empresaId);
     }
 }
+
+
+
+    
