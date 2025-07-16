@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="tipo_fase", schema = "iot")
+@Table(name="tipo_fase")
 public class TipoFase{
 
     @Id

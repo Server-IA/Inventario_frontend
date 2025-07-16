@@ -1,0 +1,18 @@
+package com.coagronet.tipoMedicion.repositories;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.coagronet.tipoMedicion.TipoMedicion;
+
+@Repository
+public interface TipoMedicionRepository extends JpaRepository<TipoMedicion, Long>{  
+    Optional<TipoMedicion> findByIdAndEmpresaId(Long id, Long empresaId);
+    List<TipoMedicion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+    List<TipoMedicion> findByEmpresaIdAndEstadoIdNotOrderByIdAsc (Long empresaId, Long estadoId);
+
+    
+}
