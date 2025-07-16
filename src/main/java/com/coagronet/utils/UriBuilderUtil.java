@@ -5,6 +5,8 @@ import java.net.URI;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.tipoGenerico.dtos.TipoGenericoDTO;
+
 @Component
 public class UriBuilderUtil {
 
@@ -170,6 +172,14 @@ public class UriBuilderUtil {
 	
 	public URI buildFaseUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v1/fase/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildTipoMedicionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/tipo_medicion/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v1/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 	}
 	
 }
