@@ -15,11 +15,5 @@ public interface TipoFaseRepository extends JpaRepository<TipoFase, Long>{
     List<TipoFase> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
     List<TipoFase> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
-
-
-
-
-
-
     
 }

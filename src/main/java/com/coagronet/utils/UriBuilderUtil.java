@@ -163,23 +163,27 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/variedad/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v3/variedad/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildTipoFaseUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/tipo_fase/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v3/tipo_fase/{id}").buildAndExpand(id).toUri();
 	}
 	
 	public URI buildFaseUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/fase/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v3/fase/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildTipoMedicionUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/tipo_medicion/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v3/tipo_medicion/{id}").buildAndExpand(id).toUri();
+	}
+
+	public URI buildTipoDispositivoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v3/tipo_dispositivo/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
-    return ucb.path("/api/v1/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
+    return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 	}
 	
 }
