@@ -10,11 +10,6 @@ import com.coagronet.tipoEvaluacion.TipoEvaluacion;
 @Repository
 public interface TipoEvaluacionRepository extends JpaRepository<TipoEvaluacion, Long> {
 
-    List<TipoEvaluacion> findByEstadoIdNotOrderByIdAsc(
-            Long estadoId);
-
-    boolean existsByIdAndEstadoIdNot(
-            Long id,
-            Long estadoId);
+        List<TipoEvaluacion> findAllByOrderByIdAsc();
 
 }
