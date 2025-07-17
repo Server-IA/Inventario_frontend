@@ -51,4 +51,6 @@ public class Empresa {
 
     @Column(name = "emp_contacto")
     private String contacto;
+
+    @Column(name = "emp_logo")
 }

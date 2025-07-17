@@ -7,7 +7,11 @@ import org.springframework.stereotype.Repository;
 
 import com.coagronet.empresa.Empresa;
 
+import java.util.Optional;
+
 @Repository
 public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     Page<Empresa> findByEstadoNot(Integer estado, Pageable pageable);
+
+    Optional<Empresa> findByEmp(String empLogoHash);
 }
