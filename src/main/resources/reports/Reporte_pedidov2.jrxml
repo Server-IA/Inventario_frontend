@@ -38,7 +38,8 @@ FROM
     JOIN municipio AS mun ON s.sed_municipio_id = mun.mun_id
     JOIN empresa AS e ON s.sed_empresa_id = e.emp_id
     JOIN persona AS per ON e.emp_persona_id = per.per_id
-    JOIN estado AS est ON p.ped_estado_id = est.est_id AND est.est_estado_categoria_id = $P{CAT_EST_ID}
+    JOIN estado AS est ON p.ped_estado_id = est.est_id 
+	AND est.est_id = $P{CAT_EST_ID}
 
 WHERE 
     e.emp_id = $P{EMP_ID}
