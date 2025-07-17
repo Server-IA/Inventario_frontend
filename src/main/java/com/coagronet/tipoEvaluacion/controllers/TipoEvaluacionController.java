@@ -4,9 +4,9 @@ import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
 import com.coagronet.tipoEvaluacion.services.TipoEvaluacionService;
 import com.coagronet.utils.UriBuilderUtil;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
-@RequestMapping("/api/v1/tipo_evaluacion")
+@RequestMapping("/api/v1/tipo-evaluacion")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class TipoEvaluacionController {
@@ -30,55 +30,39 @@ public class TipoEvaluacionController {
         private final TipoEvaluacionService tipoEvaluacionService;
         private final UriBuilderUtil uriBuilderUtil;
 
-        @GetMapping("/all")
+        @GetMapping
         public ResponseEntity<List<TipoEvaluacionDTO>> findAll() {
                 return ResponseEntity.ok(tipoEvaluacionService.findAll());
         }
 
-        @GetMapping("/available")
-        public ResponseEntity<List<TipoEvaluacionDTO>> findAllAvailable() {
-                return ResponseEntity.ok(tipoEvaluacionService.findAllAvailable());
-        }
-
         @GetMapping("/{requestedId}")
         public ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Long requestedId) {
-                TipoEvaluacionDTO tipoEvaluacionDTO = tipoEvaluacionService.findById(requestedId);
-                if (tipoEvaluacionDTO != null) {
-                        return ResponseEntity.ok(tipoEvaluacionDTO);
-                } else {
-                        return ResponseEntity.notFound().build();
-                }
+                return tipoEvaluacionService.findById(requestedId).map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build());
         }
 
         @PostMapping
         public ResponseEntity<Void> createTipoEvaluacion(
-                        @RequestBody TipoEvaluacionDTO newTipoEvaluacionDTORequest,
+                        @Valid @RequestBody TipoEvaluacionDTO tipoEvaluacionDTO,
                         UriComponentsBuilder ucb) {
-                TipoEvaluacionDTO savedTipoEvaluacion = tipoEvaluacionService.create(
-                                newTipoEvaluacionDTORequest);
-                URI locationOfNewTipoEvaluacion = uriBuilderUtil.buildTipoEvaluacionUri(
-                                savedTipoEvaluacion.getId(),
-                                ucb);
-                return ResponseEntity.created(locationOfNewTipoEvaluacion).build();
+                return ResponseEntity.created(uriBuilderUtil.buildTipoEvaluacionUri(
+                                tipoEvaluacionService.create(
+                                                tipoEvaluacionDTO).getId(),
+                                ucb)).build();
         }
 
         @PutMapping("/{requestedId}")
         public ResponseEntity<Void> updateTipoEvaluacion(
                         @PathVariable Long requestedId,
-                        @RequestBody TipoEvaluacionDTO tipoEvaluacionUpdate) {
-                boolean updated = tipoEvaluacionService.update(requestedId, tipoEvaluacionUpdate);
-                if (updated) {
-                        return ResponseEntity.noContent().build();
-                }
-                return ResponseEntity.notFound().build();
+                        @Valid @RequestBody TipoEvaluacionDTO tipoEvaluacionDTO) {
+                tipoEvaluacionService.update(requestedId, tipoEvaluacionDTO);
+                return ResponseEntity.noContent().build();
         }
 
         @DeleteMapping("/{id}")
         public ResponseEntity<Void> deleteTipoEvaluacion(@PathVariable Long id) {
-                if (tipoEvaluacionService.delete(id)) {
-                        return ResponseEntity.noContent().build();
-                }
-                return ResponseEntity.notFound().build();
+                tipoEvaluacionService.delete(id);
+                return ResponseEntity.noContent().build();
         }
 
 }
