@@ -47,7 +47,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/tipo_identificacion/**",
                                                                 "/api/v1/estado/**",
                                                                 "/api/v1/persona/**",
-                                                                "/api/v1/movimiento/**")
+                                                                "/api/v1/movimiento/**",
+                                                                "/api/v1/tipo-evaluacion/**")
                                                 .hasAnyRole("ADMINISTRADOR_SISTEMA")
                                                 .requestMatchers("/api/v1/pais/**",
                                                                 "/api/v1/departamento/**",
