@@ -43,7 +43,7 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildTipoEvaluacionUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/tipo_evaluacion/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v1/tipo-evaluacion/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildBloqueUri(Long id, UriComponentsBuilder ucb) {
