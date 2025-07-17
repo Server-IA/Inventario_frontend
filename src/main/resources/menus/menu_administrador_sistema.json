@@ -156,6 +156,21 @@
     "icon": "People",
     "children": [
       {
+        "id": "RE_pedido",
+        "text": "Reporte de Pedido",
+        "icon": "Settings"
+      },
+      {
+        "id": "RE_kardex",
+        "text": "Reporte de Kardex",
+        "icon": "LocationCity"
+      },
+      {
+        "id": "RE_pv",
+        "text": "Reporte de productos vencidos",
+        "icon": "LocationCity"
+      },
+      {
         "id": "r_pedido",
         "text": "Pedido",
         "icon": "Settings"
