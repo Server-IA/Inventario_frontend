@@ -20,6 +20,11 @@
         "icon": "PersonIcon"
       },
       {
+        "id": "tipo_evaluacion",
+        "text": "Tipo de evaluación",
+        "icon": "Warehouse"
+      },
+      {
         "id": "empresa",
         "text": "Empresa",
         "icon": "PersonIcon"
