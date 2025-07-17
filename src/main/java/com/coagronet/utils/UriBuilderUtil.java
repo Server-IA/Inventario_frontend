@@ -182,6 +182,10 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v3/tipo_dispositivo/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildSubseccionDispositivoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v3/sub_seccion_dispositivo/{id}").buildAndExpand(id).toUri();
+	}
+
 	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
     return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 	}
