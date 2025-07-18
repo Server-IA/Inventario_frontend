@@ -2,8 +2,8 @@
 <jasperReport name="Reporte_orden_compra" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="dbtest-aws-0.1.1"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<parameter name="emp_id" class="java.lang.Integer"/>
-	<parameter name="ped_id" class="java.lang.Integer"/>
+	<parameter name="empresa_id" class="java.lang.Integer"/>
+	<parameter name="pedido_id" class="java.lang.Integer"/>
 	<parameter name="categoria_estado_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" forPrompting="false" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT 
@@ -44,8 +44,8 @@ FROM
     JOIN estado AS est ON oc.orc_estado_id = est.est_id AND est.est_estado_categoria_id = $P{categoria_estado_id}
 
 WHERE 
-    e1.emp_id = $P{emp_id}
-    AND pe.ped_id = $P{ped_id}]]></query>
+    e1.emp_id = $P{empresa_id}
+    AND pe.ped_id = $P{pedido_id}]]></query>
 	<field name="header_orden_compra" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_orden_compra"/>
 		<property name="com.jaspersoft.studio.field.label" value="header_orden_compra"/>

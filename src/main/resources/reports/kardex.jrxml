@@ -6,12 +6,12 @@
 	<parameter name="fecha_fin" class="java.util.Date"/>
 	<parameter name="EMP_ID" class="java.lang.Integer"/>
 	<parameter name="SED_ID" class="java.lang.Integer"/>
-	<parameter name="BLO_ID" class="java.lang.Integer"/>
-	<parameter name="ESP_ID" class="java.lang.Integer"/>
-	<parameter name="ALM_ID" class="java.lang.Integer"/>
-	<parameter name="MUN_ID" class="java.lang.Integer"/>
-	<parameter name="PRO_ID" class="java.lang.Integer"/>
-	<parameter name="PRO_CAT_ID" class="java.lang.Integer"/>
+	<parameter name="bloque_id" class="java.lang.Integer"/>
+	<parameter name="espacio_id" class="java.lang.Integer"/>
+	<parameter name="almacen_id" class="java.lang.Integer"/>
+	<parameter name="municipio_id" class="java.lang.Integer"/>
+	<parameter name="producto_id" class="java.lang.Integer"/>
+	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT 
     e.emp_id AS header_empresa_id,
@@ -55,14 +55,14 @@ JOIN persona AS per ON e.emp_persona_id = per.per_id
 JOIN producto AS p ON A.prp_producto_id = p.pro_id
 
 WHERE 
-	(CAST($P{PRO_ID} AS BIGINT) IS NULL OR p.pro_id = $P{PRO_ID}) AND
-	(CAST($P{PRO_CAT_ID} AS BIGINT) IS NULL OR p.pro_id = $P{PRO_CAT_ID}) AND
+	(CAST($P{producto_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_id}) AND
+	(CAST($P{producto_categoria_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_categoria_id}) AND
     (CAST($P{EMP_ID} AS BIGINT) IS NULL OR e.emp_id = $P{EMP_ID}) AND
     (CAST($P{SED_ID} AS BIGINT) IS NULL OR s.sed_id = $P{SED_ID}) AND
-    (CAST($P{MUN_ID} AS BIGINT) IS NULL OR m.mun_id = $P{MUN_ID}) AND
-    (CAST($P{BLO_ID} AS BIGINT) IS NULL OR blo.blo_id = $P{BLO_ID}) AND
-    (CAST($P{ESP_ID} AS BIGINT) IS NULL OR esp.esp_id = $P{ESP_ID}) AND
-    (CAST($P{ALM_ID} AS BIGINT) IS NULL OR al.alm_id = $P{ALM_ID}) AND
+    (CAST($P{municipio_id} AS BIGINT) IS NULL OR m.mun_id = $P{municipio_id}) AND
+    (CAST($P{bloque_id} AS BIGINT) IS NULL OR blo.blo_id = $P{bloque_id}) AND
+    (CAST($P{espacio_id} AS BIGINT) IS NULL OR esp.esp_id = $P{espacio_id}) AND
+    (CAST($P{almacen_id} AS BIGINT) IS NULL OR al.alm_id = $P{almacen_id}) AND
     A.kar_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
 
 ORDER BY A.kai_id]]></query>
@@ -327,7 +327,7 @@ ORDER BY A.kai_id]]></query>
 			</box>
 		</element>
 		<element kind="textField" uuid="16edb09d-ba61-4f9d-936d-937f97a810ac" x="363" y="100" width="162" height="20">
-			<expression><![CDATA[" "+$P{ALM_ID}]]></expression>
+			<expression><![CDATA[" "+$P{almacen_id}]]></expression>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
