@@ -1,6 +1,7 @@
 package com.coagronet.empresa.services;
 
 import com.coagronet.utils.Constantes;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -9,13 +10,10 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 
 @Service
+@RequiredArgsConstructor
 public class EmpresaService {
 
     private final EmpresaRepository empresaRepository;
-
-    public EmpresaService(EmpresaRepository empresaRepository) {
-        this.empresaRepository = empresaRepository;
-    }
 
     public Page<Empresa> getAllEmpresas(Pageable pageable) {
         return empresaRepository.findByEstadoNot(2, pageable);
@@ -41,5 +39,13 @@ public class EmpresaService {
                 .orElseThrow(() -> new RuntimeException("Persona not found with id: " + id));
         empresa.getEstado().setId(Constantes.ESTADO_INACTIVO);
         empresaRepository.save(empresa);
+    }
+
+    public String getLogoHashByEmpresaId(Long empresaId){
+       return empresaRepository.findLogoHashByEmpresaId(empresaId);
+    }
+
+    public String findLogoByHash(String hash){
+        return empresaRepository.findLogoByHash(hash);
     }
 }

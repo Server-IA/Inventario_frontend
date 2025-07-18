@@ -53,4 +53,8 @@ public class Empresa {
     private String contacto;
 
     @Column(name = "emp_logo")
+    private String logo;
+
+    @Column(name = "emp_logo_hash")
+    private String logoHash;
 }
