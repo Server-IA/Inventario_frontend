@@ -6,9 +6,9 @@
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="844"/>
 	<parameter name="fecha_inicio" class="java.util.Date"/>
 	<parameter name="fecha_fin" class="java.util.Date"/>
-	<parameter name="EMP_ID" class="java.lang.Integer"/>
-	<parameter name="PRO_ID" class="java.lang.Integer"/>
-	<parameter name="PRO_CAT_ID" class="java.lang.Integer"/>
+	<parameter name="empresa_id" class="java.lang.Integer"/>
+	<parameter name="producto_id" class="java.lang.Integer"/>
+	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
 	<query language="SQL"><![CDATA[SELECT 
     em.emp_nombre AS nombre_empresa,             -- ← agregado
@@ -35,10 +35,10 @@ JOIN espacio e ON e.esp_bloque_id = b.blo_id AND e.esp_empresa_id = em.emp_id
 JOIN almacen a ON a.alm_espacio_id = e.esp_id AND a.alm_empresa_id = em.emp_id
 
 WHERE 
-    em.emp_id = $P{EMP_ID}
+    em.emp_id = $P{empresa_id}
     AND k.kai_fecha_vencimiento BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
-    AND ($P{PRO_ID} IS NULL OR p.pro_id = $P{PRO_ID})
-    AND ($P{PRO_CAT_ID} IS NULL OR p.pro_producto_categoria_id = $P{PRO_CAT_ID})
+    AND ($P{producto_id} IS NULL OR p.pro_id = $P{producto_id})
+    AND ($P{producto_categoria_id} IS NULL OR p.pro_producto_categoria_id = $P{producto_categoria_id})
 
 ORDER BY k.kai_fecha_vencimiento;
 ]]></query>
