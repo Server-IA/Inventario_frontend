@@ -61,9 +61,9 @@ public class ReportService {
             Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogo);
 
             if (Files.exists(rutaLogo)) {
-                parametros.put("header_empresa_logo", rutaLogo.toUri().toURL().toString());
+                parametros.put("logo_empresa", rutaLogo.toUri().toURL().toString());
             } else {
-                parametros.put("header_empresa_logo", "https://ruta-del-logo-por-defecto.png");
+                parametros.put("logo_empresa", "https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png");
             }
             InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
             JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
