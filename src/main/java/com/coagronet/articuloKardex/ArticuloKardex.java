@@ -65,4 +65,7 @@ public class ArticuloKardex {
 	@JoinColumn(name = "kai_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "kardex_item_kai_empresa_id_fkey"))
 	private Empresa empresa;
 
+	@Column(name = "kai_lote")
+	private String lote;
+
 }

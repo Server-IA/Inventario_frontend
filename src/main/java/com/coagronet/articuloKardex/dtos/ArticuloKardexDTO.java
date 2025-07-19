@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,5 +36,8 @@ public class ArticuloKardexDTO {
 	private Long estadoId;
 
 	private Long empresaId;
+
+	@Size(max = 255, message = "El lote no puede superar los 255 caracteres")
+	private String lote;
 
 }
