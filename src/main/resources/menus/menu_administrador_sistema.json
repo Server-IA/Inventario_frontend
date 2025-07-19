@@ -20,6 +20,11 @@
         "icon": "PersonIcon"
       },
       {
+        "id": "tipo_evaluacion",
+        "text": "Tipo de evaluación",
+        "icon": "Warehouse"
+      },
+      {
         "id": "empresa",
         "text": "Empresa",
         "icon": "PersonIcon"
@@ -150,6 +155,21 @@
     "text": "Reportes",
     "icon": "People",
     "children": [
+      {
+        "id": "RE_pedido",
+        "text": "Reporte de Pedido",
+        "icon": "Settings"
+      },
+      {
+        "id": "RE_kardex",
+        "text": "Reporte de Kardex",
+        "icon": "LocationCity"
+      },
+      {
+        "id": "RE_pv",
+        "text": "Reporte de productos vencidos",
+        "icon": "LocationCity"
+      },
       {
         "id": "r_pedido",
         "text": "Pedido",
