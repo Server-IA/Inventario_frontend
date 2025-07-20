@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,10 +26,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "produccion_fase", schema = "iot")
 public class ProduccionFase {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "productoFase_generator")
-    @SequenceGenerator(name = "productoFase_generator", sequenceName = "iot.producto_fase_prf_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "productoFase_generator", sequenceName = "iot.produccion_fase_prf_id_seq", allocationSize = 1)
     @Column(name = "prf_id", nullable = false)
     private Long id;
 
@@ -55,7 +57,7 @@ public class ProduccionFase {
     private Estado estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "prd_empresa_id", referencedColumnName = "emp_id", nullable= false)
+    @JoinColumn(name = "prf_empresa_id", referencedColumnName = "emp_id", nullable= false)
     private Empresa empresa;
     
 }

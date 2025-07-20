@@ -38,6 +38,16 @@ public class ProduccionFaseService {
                 .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .map(produccionFaseMapper::toDto);
     }
+    @Transactional
+    public ProduccionFaseDTO create (ProduccionFaseDTO produccionFaseDTO) {
+        estadoRepository.findById(produccionFaseDTO.getEstadoId())
+                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+        
+        produccionFaseDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+        return produccionFaseMapper.toDto(produccionFaseRepository.save(produccionFaseMapper.toEntity(produccionFaseDTO)));
+
+    }
 
 
     @Transactional
