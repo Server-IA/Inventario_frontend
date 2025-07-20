@@ -1,9 +1,6 @@
 package com.coagronet.articuloInventario;
 
 import java.io.Serializable;
-import java.util.UUID;
-
-import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.coagronet.empresa.Empresa;

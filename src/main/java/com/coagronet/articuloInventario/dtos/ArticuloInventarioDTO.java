@@ -1,7 +1,5 @@
 package com.coagronet.articuloInventario.dtos;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
