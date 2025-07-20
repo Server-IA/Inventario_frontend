@@ -4,8 +4,8 @@
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<parameter name="fecha_inicio" class="java.util.Date"/>
 	<parameter name="fecha_fin" class="java.util.Date"/>
-	<parameter name="EMP_ID" class="java.lang.Integer"/>
-	<parameter name="SED_ID" class="java.lang.Integer"/>
+	<parameter name="empresa_id" class="java.lang.Integer"/>
+	<parameter name="sede_id" class="java.lang.Integer"/>
 	<parameter name="bloque_id" class="java.lang.Integer"/>
 	<parameter name="espacio_id" class="java.lang.Integer"/>
 	<parameter name="almacen_id" class="java.lang.Integer"/>
@@ -57,8 +57,8 @@ JOIN producto AS p ON A.prp_producto_id = p.pro_id
 WHERE 
 	(CAST($P{producto_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_id}) AND
 	(CAST($P{producto_categoria_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_categoria_id}) AND
-    (CAST($P{EMP_ID} AS BIGINT) IS NULL OR e.emp_id = $P{EMP_ID}) AND
-    (CAST($P{SED_ID} AS BIGINT) IS NULL OR s.sed_id = $P{SED_ID}) AND
+    (CAST($P{empresa_id} AS BIGINT) IS NULL OR e.emp_id = $P{empresa_id}) AND
+    (CAST($P{sede_id} AS BIGINT) IS NULL OR s.sed_id = $P{sede_id}) AND
     (CAST($P{municipio_id} AS BIGINT) IS NULL OR m.mun_id = $P{municipio_id}) AND
     (CAST($P{bloque_id} AS BIGINT) IS NULL OR blo.blo_id = $P{bloque_id}) AND
     (CAST($P{espacio_id} AS BIGINT) IS NULL OR esp.esp_id = $P{espacio_id}) AND
