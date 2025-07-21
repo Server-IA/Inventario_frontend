@@ -1,17 +1,5 @@
 package com.coagronet.empresa.services;
 
-import com.coagronet.utils.Constantes;
-import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
-import com.coagronet.empresa.Empresa;
-import com.coagronet.empresa.repositories.EmpresaRepository;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -20,14 +8,27 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.repositories.EmpresaRepository;
+import com.coagronet.utils.Constantes;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
 public class EmpresaService {
 
-    @Value("${PATH_LOGOS}")
+    @Value("${path.logos}")
     private String pathLogos;
 
-    @Value("${PATH_LOGO_COMPANY}")
+    @Value("${path.logo.empresa}")
     private String pathLogoCompany;
 
     private final EmpresaRepository empresaRepository;
