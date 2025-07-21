@@ -34,7 +34,7 @@ public class ReportService {
                         && (key.toLowerCase().contains("fecha") || key.toLowerCase().contains("date"))) {
                     try {
                         Date parsedDate = sdf.parse(string);
-                        parametros.put(key, parsedDate);
+                        parametros.put(key, new java.sql.Timestamp(parsedDate.getTime()));
                     } catch (ParseException e) {
                         throw new RuntimeException("Error al parsear la fecha para el parámetro: " + key, e);
                     }
