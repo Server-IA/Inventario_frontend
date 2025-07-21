@@ -11,7 +11,7 @@
 	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
 	<query language="SQL"><![CDATA[SELECT 
-    em.emp_nombre AS nombre_empresa,             -- ← agregado
+    em.emp_nombre AS nombre_empresa,             
     em.emp_logo AS logo_empresa,                
 
     p.pro_nombre AS nombre_producto,
@@ -25,9 +25,11 @@
     k.kai_fecha_vencimiento AS fecha_vencimiento,
     k.kai_cantidad AS cantidad
 
-FROM producto p
-JOIN kardex_item k ON p.pro_id = k.kai_producto_presentacion_id
+FROM kardex_item k
+JOIN producto_presentacion pp ON k.kai_producto_presentacion_id = pp.prp_id
+JOIN producto p ON pp.prp_producto_id = p.pro_id
 JOIN empresa em ON p.pro_empresa_id = em.emp_id
+
 JOIN municipio m ON m.mun_empresa_id = em.emp_id
 JOIN sede s ON s.sed_municipio_id = m.mun_id AND s.sed_empresa_id = em.emp_id
 JOIN bloque b ON b.blo_sede_id = s.sed_id AND b.blo_empresa_id = em.emp_id
@@ -40,8 +42,7 @@ WHERE
     AND ($P{producto_id} IS NULL OR p.pro_id = $P{producto_id})
     AND ($P{producto_categoria_id} IS NULL OR p.pro_producto_categoria_id = $P{producto_categoria_id})
 
-ORDER BY k.kai_fecha_vencimiento;
-]]></query>
+ORDER BY k.kai_fecha_vencimiento]]></query>
 	<field name="nombre_empresa" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="nombre_empresa"/>
 		<property name="com.jaspersoft.studio.field.label" value="nombre_empresa"/>

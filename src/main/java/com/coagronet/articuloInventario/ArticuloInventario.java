@@ -1,9 +1,8 @@
 package com.coagronet.articuloInventario;
 
 import java.io.Serializable;
-import java.util.UUID;
+import org.hibernate.annotations.UuidGenerator;
 
-import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.inventario.Inventario;
@@ -16,7 +15,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -52,7 +50,8 @@ public class ArticuloInventario implements Serializable {
     @Column(name = "ini_descripcion", length = 2048)
     private String descripcion;
 
-    @Column(name = "ini_uuid", nullable = false, unique = true)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+    @Column(name = "ini_uuid", nullable = false, length = 36)
     private String uuid;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -63,15 +62,7 @@ public class ArticuloInventario implements Serializable {
     @JoinColumn(name = "ini_estado_id", nullable = false)
     private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ini_producto_identificador_id", referencedColumnName = "kai_producto_identificador", insertable = false, updatable = false, nullable = true)
-    private ArticuloKardex articuloKardex;
-
-    @PrePersist
-    public void prePersist() {
-        if (uuid == null || uuid.isBlank()) {
-            this.uuid = UUID.randomUUID().toString();
-        }
-    }
+    @Column(name = "ini_producto_identificador_id")
+    private String identificadorProducto;
 
 }

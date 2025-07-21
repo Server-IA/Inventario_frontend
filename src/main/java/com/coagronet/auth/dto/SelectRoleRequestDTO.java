@@ -1,4 +1,4 @@
-package com.coagronet.user.dtos;
+package com.coagronet.auth.dto;
 
 import lombok.Data;
 

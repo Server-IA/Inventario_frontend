@@ -1,6 +1,7 @@
 package com.coagronet.articuloInventario.dtos;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -14,6 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ArticuloInventarioDTO {
 
     private Long id;    
@@ -21,7 +23,6 @@ public class ArticuloInventarioDTO {
     @Size(max = 2048, message = "La descripción no puede superar 2048 caracteres.")
     private String descripcion;
 
-    @NotBlank(message = "El campo UUID es obligatorio.")
     private String uuid;
 
     private String identificadorProducto;

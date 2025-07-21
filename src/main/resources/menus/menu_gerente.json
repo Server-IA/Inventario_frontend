@@ -5,29 +5,29 @@
         "icon": "People",
         "children": [
             {
-                "id": "r_pedido",
-                "text": "Pedido",
+                "id": "RE_pedido",
+                "text": "Reporte de pedido",
                 "icon": "Settings"
             },
             {
-                "id": "OrdenCompra",
-                "text": "Orden Compra",
-                "icon": "Settings"
-            },
-            {
-                "id": "kardex",
-                "text": "Kardex",
+                "id": "RE_kardex",
+                "text": "Reporte de kardex",
                 "icon": "LocationCity"
             },
             {
-                "id": "Ocupacion",
-                "text": "Ocupacion",
-                "icon": "Settings"
+                "id": "RE_pv",
+                "text": "Reporte de productos vencidos",
+                "icon": "LocationCity"
             },
             {
-                "id": "evaluacion_item",
-                "text": "EvaluacionItem",
-                "icon": "Settings"
+                "id": "RE_fc",
+                "text": "Reporte de factura",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "RE_oc",
+                "text": "Reporte de orden compra",
+                "icon": "LocationCity"
             }
         ]
     }

@@ -1,12 +1,12 @@
-package com.coagronet.user.dtos;
+package com.coagronet.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class ChangePasswordRequestDTO {
-	@NotBlank(message = "La contraseña antigua es obligatoria")
-	private String oldPassword;
+public class ResetPasswordRequestDTO {
+	@NotBlank(message = "El token es obligatorio")
+	private String token;
 
 	@NotBlank(message = "La nueva contraseña es obligatoria")
 	private String newPassword;
