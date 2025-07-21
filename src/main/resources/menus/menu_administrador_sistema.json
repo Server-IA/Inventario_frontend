@@ -157,12 +157,12 @@
     "children": [
       {
         "id": "RE_pedido",
-        "text": "Reporte de Pedido",
+        "text": "Reporte de pedido",
         "icon": "Settings"
       },
       {
         "id": "RE_kardex",
-        "text": "Reporte de Kardex",
+        "text": "Reporte de kardex",
         "icon": "LocationCity"
       },
       {
@@ -171,29 +171,14 @@
         "icon": "LocationCity"
       },
       {
-        "id": "r_pedido",
-        "text": "Pedido",
-        "icon": "Settings"
-      },
-      {
-        "id": "OrdenCompra",
-        "text": "Orden Compra",
-        "icon": "Settings"
-      },
-      {
-        "id": "kardex",
-        "text": "Kardex",
+        "id": "RE_fc",
+        "text": "Reporte de factura",
         "icon": "LocationCity"
       },
       {
-        "id": "Ocupacion",
-        "text": "Ocupacion",
-        "icon": "Settings"
-      },
-      {
-        "id": "evaluacion_item",
-        "text": "EvaluacionItem",
-        "icon": "Settings"
+        "id": "RE_oc",
+        "text": "Reporte de orden compra",
+        "icon": "LocationCity"
       }
     ]
   }
