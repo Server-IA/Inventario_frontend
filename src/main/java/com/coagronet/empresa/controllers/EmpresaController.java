@@ -24,6 +24,7 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.dtos.EmpresaDTO;
 import com.coagronet.empresa.mappers.EmpresaMapper;
 import com.coagronet.empresa.services.EmpresaService;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -100,5 +101,13 @@ public class EmpresaController {
         empresaService.deleteEmpresa(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/logo")
+    public ResponseEntity<String> subirLogoEmpresa(
+                                                   @RequestParam("file") MultipartFile file) {
+        empresaService.subirLogoDesdeEmpresaLogueada(file);
+        return ResponseEntity.ok("Logo subido exitosamente");
+    }
+
 
 }

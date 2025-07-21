@@ -1,26 +1,46 @@
 package com.coagronet.reports.services;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
-import lombok.RequiredArgsConstructor;
-import net.sf.jasperreports.engine.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.stereotype.Service;
+
+import com.coagronet.empresa.services.EmpresaService;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 
 @DependsOnDatabaseInitialization
 @Service
 @RequiredArgsConstructor
 public class ReportService {
 
-    @Autowired
-    private DataSource dataSource;
+    private final DataSource dataSource;
+
+    private final UserEmpresaService userEmpresaService;
+    private final EmpresaService empresaService;
+
+    @Value("${path.logos}")
+    private String pathLogos;
+
+    @Value("${path.logo.empresa}")
+    private String pathLogoCompany;
 
     public byte[] generarReporte(String reportName, Map<String, Object> parametros) {
         try {
@@ -40,7 +60,24 @@ public class ReportService {
                     }
                 }
             }
+            Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+            System.out.println("Empresa actual: " + empresaId); 
+            parametros.put("emp_id", empresaId.intValue());
 
+            String empLogoHash = empresaService.getLogoHashByEmpresaId(empresaId);
+            System.out.println("buscando hash "+ empLogoHash);
+
+            String empLogo = empresaService.findLogoByHash(empLogoHash);
+            System.out.println("emplogo buscado "+ empLogo);
+
+            Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogo);
+            System.out.println("Path buscado "+ rutaLogo);
+
+            if (Files.exists(rutaLogo)) {
+                parametros.put("logo_empresa", rutaLogo.toString());
+            } else {
+                parametros.put("logo_empresa", "https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png");
+            }
             InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
             JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 
