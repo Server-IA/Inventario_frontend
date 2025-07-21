@@ -3,12 +3,7 @@ package com.coagronet.producto.controllers;
 import java.net.URI;
 import java.util.List;
 
-import com.coagronet.producto.services.ProductoService;
-import com.coagronet.utils.UriBuilderUtil;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.producto.dtos.ProductoDTO;
+import com.coagronet.producto.services.ProductoService;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/producto")
 @RequiredArgsConstructor
 public class ProductoController {
