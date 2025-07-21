@@ -66,6 +66,7 @@ public class SecurityConfig {
                                                                 "/api/v1/tipo_produccion/**",
                                                                 "/api/v1/proceso/**",
                                                                 "/api/v1/movimiento/**",
+                                                                "/api/v1/tipo_movimiento/**",
                                                                 "/api/v1/ingrediente/**",
                                                                 "/api/v1/articulo-pedido/**",
                                                                 "/api/v1/articulo-orden-compra/**",
