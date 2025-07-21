@@ -4,69 +4,102 @@
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<parameter name="fecha_inicio" class="java.util.Date"/>
 	<parameter name="fecha_fin" class="java.util.Date"/>
-	<parameter name="EMP_ID" class="java.lang.Integer"/>
-	<parameter name="SED_ID" class="java.lang.Integer"/>
+	<parameter name="empresa_id" class="java.lang.Integer"/>
+	<parameter name="sede_id" class="java.lang.Integer"/>
 	<parameter name="bloque_id" class="java.lang.Integer"/>
 	<parameter name="espacio_id" class="java.lang.Integer"/>
 	<parameter name="almacen_id" class="java.lang.Integer"/>
 	<parameter name="municipio_id" class="java.lang.Integer"/>
 	<parameter name="producto_id" class="java.lang.Integer"/>
 	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
-	<query language="sql"><![CDATA[SELECT 
+	<queryString language="SQL">
+<![CDATA[
+SELECT  
     e.emp_id AS header_empresa_id,
     e.emp_nombre AS header_empresa,
     s.sed_id AS header_sede_id,
     s.sed_nombre AS header_sede,
-    A.alm_id AS header_almacen_id,
+    
+    k.kar_almacen_id AS header_almacen_id,
     al.alm_nombre AS header_almacen,
+    
     m.mun_id AS header_municipio_id,
     m.mun_nombre AS header_municipio,
+    
     e.emp_correo AS header_correo,
     e.emp_contacto AS header_contacto,
     e.emp_logo AS header_empresa_logo,
+    
     CONCAT(per.per_nombre, ' ', per.per_apellido) AS header_responsable,
+    
     esp.esp_id AS header_espacio_id,
     esp.esp_nombre AS header_espacio,
+    
     blo.blo_id AS header_bloque_id,
     blo.blo_nombre AS header_bloque,
+    
     p.pro_id AS item_producto_id,
     p.pro_producto_categoria_id AS item_categoria_producto_id,
-    A.pro_nombre AS item_producto,
-    A.uni_nombre AS item_unidad,
-    A.kar_fecha_hora AS item_fecha,
-    A.kar_tipo_movimiento_id AS item_tipo_movimiento,
-    A.cantidad AS item_cantidad,
-    A.entrada AS item_entrada,
-    A.salida AS item_salida,
+    p.pro_nombre AS item_producto,
+    u.uni_nombre AS item_unidad,
+    
+    k.kar_fecha_hora AS item_fecha,
+    k.kar_tipo_movimiento_id AS item_tipo_movimiento,
+    ki.kai_cantidad AS item_cantidad,
+
+    CASE 
+        WHEN tm.tim_movimiento_id = 1 THEN ki.kai_cantidad
+        ELSE 0 
+    END AS item_entrada,
+
+    CASE 
+        WHEN tm.tim_movimiento_id = 2 THEN ki.kai_cantidad
+        ELSE 0 
+    END AS item_salida,
+
     ki.kai_fecha_vencimiento AS item_fecha_vencimiento,
-    (SELECT SUM(B.cantidad * B.prp_cantidad) 
-     FROM vista_kardex AS B 
-     WHERE B.prp_producto_id = A.prp_producto_id AND B.kai_id <= A.kai_id) AS item_saldo
-FROM vista_kardex AS A
-JOIN kardex_item AS ki ON A.kai_id = ki.kai_id
-JOIN kardex AS k ON ki.kai_kardex_id = k.kar_id
-JOIN almacen AS al ON A.alm_id = al.alm_id
-JOIN espacio AS esp ON al.alm_espacio_id = esp.esp_id
-JOIN bloque AS blo ON esp.esp_bloque_id = blo.blo_id
-JOIN sede AS s ON A.sed_id = s.sed_id
-JOIN empresa AS e ON s.sed_empresa_id = e.emp_id
-JOIN municipio AS m ON s.sed_municipio_id = m.mun_id
-JOIN persona AS per ON e.emp_persona_id = per.per_id
-JOIN producto AS p ON A.prp_producto_id = p.pro_id
+
+    (
+        SELECT SUM(sub_ki.kai_cantidad * pp2.prp_cantidad)
+        FROM kardex_item sub_ki
+        JOIN kardex sub_k ON sub_ki.kai_kardex_id = sub_k.kar_id
+        JOIN producto_presentacion pp2 ON sub_ki.kai_producto_presentacion_id = pp2.prp_id
+        WHERE 
+            pp2.prp_producto_id = pp.prp_producto_id
+            AND sub_ki.kai_id <= ki.kai_id
+    ) AS item_saldo
+
+FROM kardex_item ki
+JOIN kardex k ON ki.kai_kardex_id = k.kar_id
+JOIN tipo_movimiento tm ON k.kar_tipo_movimiento_id = tm.tim_id
+JOIN producto_presentacion pp ON ki.kai_producto_presentacion_id = pp.prp_id
+JOIN producto p ON pp.prp_producto_id = p.pro_id
+JOIN unidad u ON pp.prp_unidad_id = u.uni_id
+
+JOIN almacen al ON k.kar_almacen_id = al.alm_id
+JOIN espacio esp ON al.alm_espacio_id = esp.esp_id
+JOIN bloque blo ON esp.esp_bloque_id = blo.blo_id
+JOIN sede s ON blo.blo_sede_id = s.sed_id
+JOIN municipio m ON s.sed_municipio_id = m.mun_id
+JOIN empresa e ON k.kar_empresa_id = e.emp_id
+JOIN persona per ON e.emp_persona_id = per.per_id
 
 WHERE 
-    (CAST($P{producto_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_id}) AND
-    (CAST($P{producto_categoria_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_categoria_id}) AND
-    (CAST($P{EMP_ID} AS BIGINT) IS NULL OR e.emp_id = $P{EMP_ID}) AND
-    (CAST($P{SED_ID} AS BIGINT) IS NULL OR s.sed_id = $P{SED_ID}) AND
-    (CAST($P{municipio_id} AS BIGINT) IS NULL OR m.mun_id = $P{municipio_id}) AND
-    (CAST($P{bloque_id} AS BIGINT) IS NULL OR blo.blo_id = $P{bloque_id}) AND
-    (CAST($P{espacio_id} AS BIGINT) IS NULL OR esp.esp_id = $P{espacio_id}) AND
-    (CAST($P{almacen_id} AS BIGINT) IS NULL OR al.alm_id = $P{almacen_id}) AND
-    A.kar_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin} AND
-    A.kar_tipo_movimiento_id IN (2, 4, 6)
+    ($P{producto_id} IS NULL OR p.pro_id = CAST($P{producto_id} AS BIGINT)) AND
+    ($P{producto_categoria_id} IS NULL OR p.pro_producto_categoria_id = CAST($P{producto_categoria_id} AS BIGINT)) AND
+    ($P{empresa_id} IS NULL OR e.emp_id = CAST($P{empresa_id} AS BIGINT)) AND
+    ($P{sede_id} IS NULL OR s.sed_id = CAST($P{sede_id} AS BIGINT)) AND
+    ($P{municipio_id} IS NULL OR m.mun_id = CAST($P{municipio_id} AS BIGINT)) AND
+    ($P{bloque_id} IS NULL OR blo.blo_id = CAST($P{bloque_id} AS BIGINT)) AND
+    ($P{espacio_id} IS NULL OR esp.esp_id = CAST($P{espacio_id} AS BIGINT)) AND
+    ($P{almacen_id} IS NULL OR al.alm_id = CAST($P{almacen_id} AS BIGINT)) AND
+    k.kar_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin} AND
+    tm.tim_movimiento_id IN (2)
 
-ORDER BY A.kai_id]]></query>
+ORDER BY ki.kai_id
+]]>
+</queryString>
+
 	<field name="header_empresa_id" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_empresa_id"/>
 		<property name="com.jaspersoft.studio.field.label" value="header_empresa_id"/>
