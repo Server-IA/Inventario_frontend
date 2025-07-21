@@ -37,7 +37,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@Transactional // atomicidad en operaciones
+@Transactional // ensures atomicity of operations
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -49,33 +49,54 @@ public class AuthService {
     private final UserRepository userRepo;
     private final AuthenticationManager authManager;
     private final UserRoleRepository userRoleRepo;
-    private final AuthProperties props; // defaultRole, etc.
+    private final AuthProperties props; // e.g. defaultRole, etc.
 
-    /* ================= REGISTRO ================= */
-
+    /* ================= REGISTRATION ================= */
     public ApiResponse register(@Valid RegisterRequestDTO dto) {
-        if (userRepo.existsByUsername(dto.getUsername()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email ya está en uso");
 
+        /* 1️⃣ Does the user already exist? ---------------------------------- */
+        User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
+
+        if (existing != null) {
+
+            /* 1a. Still pending verification → 409 Conflict + resend email */
+            if (existing.getUsuarioEstado() == UsuarioEstado.PENDIENTE_VERIFICACION) {
+
+                // resend: generate (or reuse) token and send email again
+                String token = emailService.createVerificationToken(existing.getUsername());
+                emailService.sendVerificationEmail(existing.getUsername(), token);
+
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Email already registered but not verified. Verification link has been resent.");
+            }
+
+            /* 1b. Already active/in use → 400 Bad Request */
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Email is already in use");
+        }
+
+        /* 2️⃣ Create a new user ---------------------------------------------- */
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setPassword(encoder.encode(dto.getPassword()));
-        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
+        user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
 
         Role role = roleRepo.findByName(props.getDefaultRole())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
         user.setRoles(Set.of(role));
 
+        /* 3️⃣ Register and send email (listener) ----------------------------- */
         registrationService.registerUser(user);
 
-        String token = emailService.createVerificationToken(user.getUsername());
-        emailService.sendVerificationEmail(user.getUsername(), token);
-
-        return new ApiResponse(true, "Correo de verificación enviado a " + user.getUsername());
+        /* 4️⃣ Success → 201 Created ------------------------------------------ */
+        return new ApiResponse(
+                true,
+                "Verification email sent to " + user.getUsername());
     }
 
-    /* ================= LOGIN – paso 1 ================= */
-
+    /* ================= LOGIN – step 1 ================= */
     public Map<String, Object> preLogin(@Valid LoginRequestDTO dto) {
 
         Authentication auth = authManager.authenticate(
@@ -84,7 +105,7 @@ public class AuthService {
 
         List<UserRole> userRoles = userRoleRepo.findByUser(user);
 
-        List<EmpresaRolDTO> rolesPorEmpresa = userRoles.stream()
+        List<EmpresaRolDTO> rolesByCompany = userRoles.stream()
                 .map(ur -> new EmpresaRolDTO(
                         ur.getEmpresa().getId(),
                         ur.getEmpresa().getNombre(),
@@ -92,19 +113,17 @@ public class AuthService {
                         ur.getRole().getName()))
                 .toList();
 
-        return Map.of("rolesPorEmpresa", rolesPorEmpresa);
-
+        return Map.of("rolesByCompany", rolesByCompany);
     }
 
-    /* ================= LOGIN – paso 2 ================= */
-
+    /* ================= LOGIN – step 2 ================= */
     public Map<String, Object> selectRole(@Valid SelectRoleRequestDTO dto) {
 
         User user = userRepo.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.getEmpresaId(), dto.getRolId())
-                .orElseThrow(() -> new UserRoleForbiddenException("Rol/empresa no asignados al usuario"));
+                .orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
         String token = jwt.generateToken(user.getUsername(), dto.getEmpresaId(), dto.getRolId());
 
@@ -114,53 +133,51 @@ public class AuthService {
                 "rolId", dto.getRolId());
     }
 
-    /* ================= CAMBIO, OLVIDO y RESET de contraseña ================= */
-
+    /* ================= CHANGE, FORGOT, AND RESET PASSWORD ================= */
     public ApiResponse changePassword(@Valid ChangePasswordRequestDTO dto) {
         User user = getCurrentUser();
         if (!encoder.matches(dto.getOldPassword(), user.getPassword()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Contraseña antigua incorrecta");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
 
         user.setPassword(encoder.encode(dto.getNewPassword()));
         userRepo.save(user);
 
-        return new ApiResponse(true, "Contraseña cambiada exitosamente");
+        return new ApiResponse(true, "Password changed successfully");
     }
 
     public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto) {
         User user = userRepo.findByUsername(dto.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         String token = emailService.createVerificationToken(user.getUsername());
         emailService.sendResetPasswordEmail(user.getUsername(), token);
 
-        return new ApiResponse(true, "Correo de recuperación enviado");
+        return new ApiResponse(true, "Recovery email sent");
     }
 
     public ApiResponse resetPassword(@Valid ResetPasswordRequestDTO dto) {
         String username = emailService.getEmailAndInvalidateToken(dto.getToken());
         if (username == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enlace de recuperación inválido o expirado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired reset link");
 
         User user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         user.setPassword(encoder.encode(dto.getNewPassword()));
         userRepo.save(user);
 
-        return new ApiResponse(true, "Contraseña restablecida exitosamente");
+        return new ApiResponse(true, "Password reset successfully");
     }
 
-    /* ================= ACTIVACIÓN ================= */
-
+    /* ================= ACCOUNT VERIFICATION ================= */
     public ApiResponse verifyUser(String token) {
         boolean ok = registrationService.activateUser(token);
-        return ok ? new ApiResponse(true, "Usuario activado correctamente")
-                : new ApiResponse(false, "Enlace de verificación inválido");
+        return ok
+                ? new ApiResponse(true, "User activated successfully")
+                : new ApiResponse(false, "Invalid verification link");
     }
 
     /* ================= LOGOUT (stateless) ================= */
-
     public void logout(HttpServletRequest req, HttpServletResponse res) {
         HttpSession session = req.getSession(false);
         if (session != null)
@@ -168,23 +185,23 @@ public class AuthService {
         res.setStatus(HttpServletResponse.SC_OK);
     }
 
-    /* ================= UTILIDADES ================= */
-
+    /* ================= UTILITIES ================= */
     public Set<String> getCurrentUserRoles() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof UserDetails ud))
             return Set.of();
-        return ud.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+        return ud.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
                 .collect(java.util.stream.Collectors.toSet());
     }
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth
-                .getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado");
+        if (auth == null ||
+                auth.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
 
         return userRepo.findByUsername(auth.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 }
