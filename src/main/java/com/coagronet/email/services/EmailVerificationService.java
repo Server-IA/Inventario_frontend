@@ -36,25 +36,29 @@ public class EmailVerificationService {
     }
 
     public String createVerificationToken(String email) {
+
+        Optional<VerificationToken> existing = verificationTokenRepository.findByEmail(email);
+
+        // ⬇️ NUEVO chequeo de “casi expirado”
+        boolean aboutToExpire = existing.isPresent() &&
+                existing.get().getExpiryDate()
+                        .isBefore(LocalDateTime.now().plusMinutes(15));
+
+        // Si existe, no está expirado y aún le queda más de 15 min de vida → reutilizar
+        if (existing.isPresent() && !existing.get().isExpired() && !aboutToExpire) {
+            return existing.get().getToken();
+        }
+
+        // Caso contrario: crear o renovar el token
         String token = UUID.randomUUID().toString();
-        LocalDateTime expiryDate = LocalDateTime.now().plusHours(24);
 
-        VerificationToken verificationToken = verificationTokenRepository.findByEmail(email)
-                .map(existingToken -> {
-                    existingToken.setToken(token);
-                    existingToken.setExpiryDate(expiryDate);
-                    return existingToken;
-                })
-                .orElse(VerificationToken.builder()
-                        .email(email)
-                        .token(token)
-                        .expiryDate(expiryDate)
-                        .build());
+        VerificationToken entity = existing.orElse(
+                VerificationToken.builder().email(email).build());
 
-        verificationTokenRepository.save(verificationToken);
+        entity.setToken(token);
+        entity.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-        logger.info("Verification token created or updated for email: {}", email);
-
+        verificationTokenRepository.save(entity);
         return token;
     }
 
