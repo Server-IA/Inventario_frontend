@@ -13,7 +13,7 @@ public interface ProduccionMapper {
     @Mapping(source = "espacio.id", target = "espacioId")
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "producto.id", target = "productoId")
-    @Mapping(source = "empresa.id", target = "empresaId")
+    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
     ProduccionDTO toDto(Produccion produccion);
 
     @Mapping(source = "tipoProduccionId", target = "tipoProduccion.id")

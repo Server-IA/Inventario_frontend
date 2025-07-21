@@ -30,8 +30,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+        private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+
+        private static final List<String> ALLOWED_HEADERS = List.of("Authorization", "Content-Type", "Accept",
+                        "Origin");
+
         private final MyUserDetailsService myUserDetailsService;
         private final JwtService jwtService;
+        private final CorsProperties corsProperties;
 
         @Bean
         SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -66,6 +72,7 @@ public class SecurityConfig {
                                                                 "/api/v1/tipo_produccion/**",
                                                                 "/api/v1/proceso/**",
                                                                 "/api/v1/movimiento/**",
+                                                                "/api/v1/tipo_movimiento/**",
                                                                 "/api/v1/ingrediente/**",
                                                                 "/api/v1/articulo-pedido/**",
                                                                 "/api/v1/articulo-orden-compra/**",
@@ -81,7 +88,8 @@ public class SecurityConfig {
                                                                 "/api/v1/evaluacion/**",
                                                                 "/api/v1/ingrediente-presentacion-producto/**",
                                                                 "/api/v1/proveedor/**",
-                                                                "/api/v1/items/**")
+                                                                "/api/v1/items/**",
+                                                                "/api/v1/articulo-inventario/**")
                                                 .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
                                                 .requestMatchers("/api/v2/report/**")
                                                 .hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
@@ -98,11 +106,11 @@ public class SecurityConfig {
         @Bean
         CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(List.of(
-                                "http://localhost:5173, http://inmero.co, http://www.inmero.co, https://inmero.co, https://www.inmero.co, "));
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-                config.setAllowedHeaders(List.of("*"));
-                config.setAllowCredentials(true); // ✅ Solo si estás usando tokens/cookies
+                config.setAllowedOrigins(corsProperties.getAllowedOrigins());
+                config.setAllowedMethods(ALLOWED_METHODS);
+                config.setAllowedHeaders(ALLOWED_HEADERS);
+                config.setAllowCredentials(true);
+                config.setMaxAge(3600L); // 1 h cache pre-flight
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", config);

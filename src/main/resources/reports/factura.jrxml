@@ -4,15 +4,17 @@
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<parameter name="fecha_inicio" class="java.util.Date"/>
 	<parameter name="fecha_fin" class="java.util.Date"/>
-	<parameter name="EMP_ID" class="java.lang.Integer"/>
-	<parameter name="SED_ID" class="java.lang.Integer"/>
+	<parameter name="empresa_id" class="java.lang.Integer"/>
+	<parameter name="sede_id" class="java.lang.Integer"/>
 	<parameter name="bloque_id" class="java.lang.Integer"/>
 	<parameter name="espacio_id" class="java.lang.Integer"/>
 	<parameter name="almacen_id" class="java.lang.Integer"/>
 	<parameter name="municipio_id" class="java.lang.Integer"/>
 	<parameter name="producto_id" class="java.lang.Integer"/>
 	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
-	<query language="sql"><![CDATA[SELECT 
+	<queryString language="SQL">
+<![CDATA[
+SELECT  
     e.emp_id AS header_empresa_id,
     e.emp_nombre AS header_empresa,
     s.sed_id AS header_sede_id,
@@ -46,12 +48,12 @@
     ki.kai_cantidad AS item_cantidad,
 
     CASE 
-        WHEN k.kar_tipo_movimiento_id IN (1, 3) THEN ki.kai_cantidad
+        WHEN tm.tim_movimiento_id = 1 THEN ki.kai_cantidad
         ELSE 0 
     END AS item_entrada,
 
     CASE 
-        WHEN k.kar_tipo_movimiento_id IN (2, 4, 6) THEN ki.kai_cantidad
+        WHEN tm.tim_movimiento_id = 2 THEN ki.kai_cantidad
         ELSE 0 
     END AS item_salida,
 
@@ -69,6 +71,7 @@
 
 FROM kardex_item ki
 JOIN kardex k ON ki.kai_kardex_id = k.kar_id
+JOIN tipo_movimiento tm ON k.kar_tipo_movimiento_id = tm.tim_id
 JOIN producto_presentacion pp ON ki.kai_producto_presentacion_id = pp.prp_id
 JOIN producto p ON pp.prp_producto_id = p.pro_id
 JOIN unidad u ON pp.prp_unidad_id = u.uni_id
@@ -82,19 +85,21 @@ JOIN empresa e ON k.kar_empresa_id = e.emp_id
 JOIN persona per ON e.emp_persona_id = per.per_id
 
 WHERE 
-    (CAST($P{producto_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_id}) AND
-    (CAST($P{producto_categoria_id} AS BIGINT) IS NULL OR p.pro_producto_categoria_id = $P{producto_categoria_id}) AND
-    (CAST($P{empresa_id} AS BIGINT) IS NULL OR e.emp_id = $P{empresa_id}) AND
-    (CAST($P{sede_id} AS BIGINT) IS NULL OR s.sed_id = $P{sede_id}) AND
-    (CAST($P{municipio_id} AS BIGINT) IS NULL OR m.mun_id = $P{municipio_id}) AND
-    (CAST($P{bloque_id} AS BIGINT) IS NULL OR blo.blo_id = $P{bloque_id}) AND
-    (CAST($P{espacio_id} AS BIGINT) IS NULL OR esp.esp_id = $P{espacio_id}) AND
-    (CAST($P{almacen_id} AS BIGINT) IS NULL OR al.alm_id = $P{almacen_id}) AND
+    ($P{producto_id} IS NULL OR p.pro_id = CAST($P{producto_id} AS BIGINT)) AND
+    ($P{producto_categoria_id} IS NULL OR p.pro_producto_categoria_id = CAST($P{producto_categoria_id} AS BIGINT)) AND
+    ($P{empresa_id} IS NULL OR e.emp_id = CAST($P{empresa_id} AS BIGINT)) AND
+    ($P{sede_id} IS NULL OR s.sed_id = CAST($P{sede_id} AS BIGINT)) AND
+    ($P{municipio_id} IS NULL OR m.mun_id = CAST($P{municipio_id} AS BIGINT)) AND
+    ($P{bloque_id} IS NULL OR blo.blo_id = CAST($P{bloque_id} AS BIGINT)) AND
+    ($P{espacio_id} IS NULL OR esp.esp_id = CAST($P{espacio_id} AS BIGINT)) AND
+    ($P{almacen_id} IS NULL OR al.alm_id = CAST($P{almacen_id} AS BIGINT)) AND
     k.kar_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin} AND
-    k.kar_tipo_movimiento_id IN (2, 4, 6)
+    tm.tim_movimiento_id IN (2)
 
 ORDER BY ki.kai_id
-]]></query>
+]]>
+</queryString>
+
 	<field name="header_empresa_id" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_empresa_id"/>
 		<property name="com.jaspersoft.studio.field.label" value="header_empresa_id"/>
