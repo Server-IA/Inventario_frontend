@@ -1,7 +1,5 @@
 package com.coagronet.infrastructure.configuration;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,9 +13,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.infrastructure.security.JwtService;
@@ -30,27 +25,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-        private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-
-        private static final List<String> ALLOWED_HEADERS = List.of("Authorization", "Content-Type", "Accept",
-                        "Origin");
-
         private final MyUserDetailsService myUserDetailsService;
         private final JwtService jwtService;
-        private final CorsProperties corsProperties;
 
         @Bean
         SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
-                                .csrf(AbstractHttpConfigurer::disable)
                                 .cors(Customizer.withDefaults())
+                                .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/v3/api-docs/**",
                                                                 "/swagger-ui.html",
                                                                 "/swagger-ui/**",
                                                                 "/auth/**",
                                                                 "/api/v1/empresas/**",
-                                                                "/api/v1/personas/**")
+                                                                "/api/v1/personas/**",
+                                                                "/api/v1/menu/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/v1/tipo_identificacion/**",
                                                                 "/api/v1/estado/**",
@@ -94,7 +84,6 @@ public class SecurityConfig {
                                                                 "/api/v1/kardex/**",
                                                                 "/api/v1/espacio_ocupacion/**",
                                                                 "/api/v1/inventario_item/**",
-                                                                "/api/v1/menu/**",
                                                                 "/api/v1/pedido/**",
                                                                 "/api/v1/presentacion/**",
                                                                 "/api/v1/producto_presentacion/**",
@@ -114,20 +103,6 @@ public class SecurityConfig {
                 http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
-        }
-
-        @Bean
-        CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(corsProperties.getAllowedOrigins());
-                config.setAllowedMethods(ALLOWED_METHODS);
-                config.setAllowedHeaders(ALLOWED_HEADERS);
-                config.setAllowCredentials(true);
-                config.setMaxAge(3600L); // 1 h cache pre-flight
-
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", config);
-                return source;
         }
 
         @Bean
