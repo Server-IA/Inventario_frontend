@@ -44,12 +44,12 @@ public class InventarioItemService {
 
         @Transactional
         public InventarioItemDTO create(InventarioItemDTO inventarioItemDTO) {
-
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
                 estadoRepository.findById(inventarioItemDTO.getEstadoId())
                                 .orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
 
                 ArticuloKardex articuloKardex = articuloKardexRepository
-                                .findByProductoIdentificador(inventarioItemDTO.getProductoIdentificadorId())
+                                .findByidentificadorProductoAndEmpresaId(inventarioItemDTO.getProductoIdentificadorId(),empresaId)
                                 .orElseThrow(() -> new BadRequestException(
                                                 "ArticuloKardex no encontrado para ese identificador"));
 

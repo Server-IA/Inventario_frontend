@@ -20,4 +20,6 @@ public class EmpresaDTO {
     private Long tipoIdentificacionId;
     private Long personaId;
     private String identificacion;
+    private String logo;
+    private String logoHash;
 }

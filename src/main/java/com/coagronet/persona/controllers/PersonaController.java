@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +22,6 @@ import com.coagronet.persona.dtos.PersonaDTO;
 
 @RestController
 @RequestMapping("/api/v1/persona")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class PersonaController {
 

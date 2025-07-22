@@ -162,6 +162,10 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/producto_localizacion/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildArticuloInventarioUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/articulo-inventario/{id}").buildAndExpand(id).toUri();
+	}
+
 	public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v3/variedad/{id}").buildAndExpand(id).toUri();
 	}
@@ -203,5 +207,3 @@ public class UriBuilderUtil {
 	}
 	
 }
-	
-

@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/control_inventario")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class EmpresaInventarioController {
 

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.coagronet.user.User;
+import com.coagronet.usuarioEstado.UsuarioEstado;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -28,5 +29,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			WHERE u.username = :username
 			""")
 	Optional<User> findByUsernameWithRolesAndEstado(String username);
+
+	boolean existsByUsernameAndUsuarioEstado(String email, UsuarioEstado estado);
+
 
 }

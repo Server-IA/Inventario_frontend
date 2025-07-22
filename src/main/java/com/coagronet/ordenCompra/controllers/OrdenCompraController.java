@@ -7,7 +7,6 @@ import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +23,6 @@ import com.coagronet.ordenCompra.dtos.OrdenCompraDTO;
 
 @RestController
 @RequestMapping("/api/v1/orden_compra")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class OrdenCompraController {
 
