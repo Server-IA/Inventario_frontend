@@ -3,6 +3,7 @@ package com.coagronet.infrastructure.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,6 +31,7 @@ public class SecurityConfig {
         @Bean
         SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
+                                .cors(Customizer.withDefaults())
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/v3/api-docs/**",
@@ -37,7 +39,8 @@ public class SecurityConfig {
                                                                 "/swagger-ui/**",
                                                                 "/auth/**",
                                                                 "/api/v1/empresas/**",
-                                                                "/api/v1/personas/**")
+                                                                "/api/v1/personas/**",
+                                                                "/api/v1/menu/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/v1/tipo_identificacion/**",
                                                                 "/api/v1/estado/**",
@@ -81,7 +84,6 @@ public class SecurityConfig {
                                                                 "/api/v1/kardex/**",
                                                                 "/api/v1/espacio_ocupacion/**",
                                                                 "/api/v1/inventario_item/**",
-                                                                "/api/v1/menu/**",
                                                                 "/api/v1/pedido/**",
                                                                 "/api/v1/presentacion/**",
                                                                 "/api/v1/producto_presentacion/**",
