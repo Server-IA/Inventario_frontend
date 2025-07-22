@@ -1,11 +1,8 @@
 package com.coagronet.infrastructure.configuration;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,9 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.infrastructure.security.JwtService;
@@ -30,20 +24,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-        private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-
-        private static final List<String> ALLOWED_HEADERS = List.of("Authorization", "Content-Type", "Accept",
-                        "Origin");
-
         private final MyUserDetailsService myUserDetailsService;
         private final JwtService jwtService;
-        private final CorsProperties corsProperties;
 
         @Bean
         SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
-                                .cors(Customizer.withDefaults())
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/v3/api-docs/**",
                                                                 "/swagger-ui.html",
@@ -114,20 +101,6 @@ public class SecurityConfig {
                 http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
-        }
-
-        @Bean
-        CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOrigins(corsProperties.getAllowedOrigins());
-                config.setAllowedMethods(ALLOWED_METHODS);
-                config.setAllowedHeaders(ALLOWED_HEADERS);
-                config.setAllowCredentials(true);
-                config.setMaxAge(3600L); // 1 h cache pre-flight
-
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", config);
-                return source;
         }
 
         @Bean
