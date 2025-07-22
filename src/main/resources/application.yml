@@ -1,0 +1,9 @@
+# CORS
+app:
+  cors:
+    allowed-origins:
+      - "http://localhost:5173"
+      - "http://inmero.co"
+      - "http://www.inmero.co"
+      - "https://inmero.co"
+      - "https://www.inmero.co"
