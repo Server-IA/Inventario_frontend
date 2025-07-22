@@ -190,6 +190,10 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v3/produccion_fase/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildDispositivoMedicionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v3/dispositivo_medicion/{id}").buildAndExpand(id).toUri();
+	}
+
 	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
     return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 	}
