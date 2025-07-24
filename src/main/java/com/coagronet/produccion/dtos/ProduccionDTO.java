@@ -20,28 +20,28 @@ public class ProduccionDTO {
 
 	private Long id;
 
-	@NotNull(message = "El nombre no puede ser nulo")
-	@Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
+	@NotNull(message = "nombre must not be null")
+	@Size(max = 100, message = "nombre must not exceed 100 characters")
 	private String nombre;
 
-	@NotNull(message = "El tipo de producción no puede ser nulo")
-	private Long tipoProduccionId;
-
-	@Size(max = 255, message = "La descripción no puede superar los 255 caracteres")
+	@Size(max = 2048, message = "descripcion must not exceed 2048 characters")
 	private String descripcion;
 
 	private LocalDateTime fechaInicio;
 
 	private LocalDateTime fechaFinal;
 
-	@NotNull(message = "El espacio no puede ser nulo")
+	@NotNull(message = "tipoProduccionId must not be null")
+	private Long tipoProduccionId;
+
+	@NotNull(message = "espacioId must not be null")
 	private Long espacioId;
 
-	@NotNull(message = "El estado no puede ser nulo")
-	private Long estadoId;
+	@NotNull(message = "subSeccionId must not be null")
+	private Long subSeccionId;
 
-	@NotNull(message = "El producto no puede ser nulo")
-	private Long productoId;
+	@NotNull(message = "estadoId must not be null")
+	private Long estadoId;
 
 	private Long empresaId;
 
