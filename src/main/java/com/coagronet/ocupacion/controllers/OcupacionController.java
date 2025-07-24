@@ -16,42 +16,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OcupacionController {
 
-    private final OcupacionService ocupacionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final OcupacionService ocupacionService;
 
-    @GetMapping
-    public ResponseEntity<List<OcupacionDTO>> findAll() {
-        return ResponseEntity.ok(ocupacionService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<OcupacionDTO> findById(@PathVariable Long requestedId) {
-        return ocupacionService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<OcupacionDTO>> findAll() {
+		return ResponseEntity.ok(ocupacionService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createOcupacion(
-            @Valid @RequestBody OcupacionDTO ocupacionDTO,
-            UriComponentsBuilder ucb) {
-        return ResponseEntity
-                .created(uriBuilderUtil
-                        .buildOcupacionUri(
-                                (ocupacionService.create(ocupacionDTO)).getId(), ucb))
-                .build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<OcupacionDTO> findById(@PathVariable Long requestedId) {
+		return ocupacionService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateOcupacion(@PathVariable Long requestedId,
-                                                @Valid @RequestBody OcupacionDTO ocupacionDTO) {
-        ocupacionService.update(requestedId, ocupacionDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createOcupacion(@Valid @RequestBody OcupacionDTO ocupacionDTO,
+			UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil.buildOcupacionUri((ocupacionService.create(ocupacionDTO)).getId(), ucb))
+			.build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOcupacion(@PathVariable Long id) {
-        ocupacionService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateOcupacion(@PathVariable Long requestedId,
+			@Valid @RequestBody OcupacionDTO ocupacionDTO) {
+		ocupacionService.update(requestedId, ocupacionDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteOcupacion(@PathVariable Long id) {
+		ocupacionService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

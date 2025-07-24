@@ -24,8 +24,9 @@ public class GlobalExceptionHandler {
 			WebRequest request) {
 		Map<String, String> fieldErrors = new LinkedHashMap<>();
 
-		ex.getBindingResult().getFieldErrors()
-				.forEach(error -> fieldErrors.put(error.getField(), error.getDefaultMessage()));
+		ex.getBindingResult()
+			.getFieldErrors()
+			.forEach(error -> fieldErrors.put(error.getField(), error.getDefaultMessage()));
 
 		ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), "Validation Failed",
 				"Uno o más campos no son válidos.", request.getDescription(false), fieldErrors);
@@ -73,12 +74,9 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(UserRoleForbiddenException.class)
 	public ResponseEntity<ErrorDetails> handleUserRoleForbidden(UserRoleForbiddenException ex, WebRequest request) {
-		ErrorDetails errorDetails = new ErrorDetails(
-				LocalDateTime.now(),
-				"Forbidden",
-				ex.getMessage(),
-				request.getDescription(false),
-				null);
+		ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), "Forbidden", ex.getMessage(),
+				request.getDescription(false), null);
 		return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
 	}
+
 }

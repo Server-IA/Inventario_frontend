@@ -19,48 +19,53 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TipoSedeService {
 
-    private final TipoSedeRepository tipoSedeRepository;
-    private final TipoSedeMapper tipoSedeMapper;
-    private final UserEmpresaService userEmpresaService;
-    private final EstadoRepository estadoRepository;
+	private final TipoSedeRepository tipoSedeRepository;
 
-    public List<TipoSedeDTO> findAll() {
-        return tipoSedeRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream().map(tipoSedeMapper::toListDTO).collect(Collectors.toList());
-    }
+	private final TipoSedeMapper tipoSedeMapper;
 
-    public Optional<TipoSedeDTO> findById(Long id) {
-        return tipoSedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(tipoSedeMapper::toListDTO);
-    }
+	private final UserEmpresaService userEmpresaService;
 
-    @Transactional
-    public TipoSedeDTO create(TipoSedeDTO tipoSedeDTO) {
-        estadoRepository.findById(tipoSedeDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final EstadoRepository estadoRepository;
 
-        tipoSedeDTO.setId(null);
-        tipoSedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<TipoSedeDTO> findAll() {
+		return tipoSedeRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(tipoSedeMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-        return tipoSedeMapper.toDTO(tipoSedeRepository.save(tipoSedeMapper.toEntity(tipoSedeDTO)));
-    }
+	public Optional<TipoSedeDTO> findById(Long id) {
+		return tipoSedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(tipoSedeMapper::toListDTO);
+	}
 
-    @Transactional
-    public void update(Long requestedId, TipoSedeDTO tipoSedeDTO) {
-        tipoSedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
+	@Transactional
+	public TipoSedeDTO create(TipoSedeDTO tipoSedeDTO) {
+		estadoRepository.findById(tipoSedeDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        tipoSedeDTO.setId(requestedId);
-        tipoSedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		tipoSedeDTO.setId(null);
+		tipoSedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        tipoSedeRepository.save(tipoSedeMapper.toEntity(tipoSedeDTO));
-    }
+		return tipoSedeMapper.toDTO(tipoSedeRepository.save(tipoSedeMapper.toEntity(tipoSedeDTO)));
+	}
 
-    public void delete(Long id) {
-        tipoSedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
+	@Transactional
+	public void update(Long requestedId, TipoSedeDTO tipoSedeDTO) {
+		tipoSedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
 
-        tipoSedeRepository.deleteById(id);
-    }
+		tipoSedeDTO.setId(requestedId);
+		tipoSedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		tipoSedeRepository.save(tipoSedeMapper.toEntity(tipoSedeDTO));
+	}
+
+	public void delete(Long id) {
+		tipoSedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
+
+		tipoSedeRepository.deleteById(id);
+	}
 
 }

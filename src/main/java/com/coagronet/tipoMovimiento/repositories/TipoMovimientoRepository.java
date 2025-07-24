@@ -9,13 +9,8 @@ import com.coagronet.tipoMovimiento.TipoMovimiento;
 
 public interface TipoMovimientoRepository extends JpaRepository<TipoMovimiento, Long> {
 
-    List<TipoMovimiento> findByEmpresaIdOrderByIdAsc(
-            Long empresaId);
+	List<TipoMovimiento> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<TipoMovimiento> findByIdAndEmpresaId(
-            Long id,
-            Long empresaId);
-
-
+	Optional<TipoMovimiento> findByIdAndEmpresaId(Long id, Long empresaId);
 
 }

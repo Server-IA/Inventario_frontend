@@ -11,7 +11,8 @@ import java.util.Optional;
 @Repository
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
 
-    Optional<Proveedor> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<Proveedor> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<Proveedor> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Proveedor> findByEmpresaIdOrderByIdAsc(Long empresaId);
+
 }

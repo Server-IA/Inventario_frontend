@@ -9,10 +9,10 @@ import com.coagronet.tipoIdentificacion.dtos.TipoIdentificacionDTO;
 @Mapper(componentModel = "spring")
 public interface TipoIdentificacionMapper {
 
-    @Mapping(source = "estado.id", target = "estadoId")
-    TipoIdentificacionDTO toDTO(TipoIdentificacion tipoIdentificacion);
+	@Mapping(source = "estado.id", target = "estadoId")
+	TipoIdentificacionDTO toDTO(TipoIdentificacion tipoIdentificacion);
 
-    @Mapping(source = "estadoId", target = "estado.id")
-    TipoIdentificacion toEntity(TipoIdentificacionDTO tipoIdentificacionDTO);
+	@Mapping(source = "estadoId", target = "estado.id")
+	TipoIdentificacion toEntity(TipoIdentificacionDTO tipoIdentificacionDTO);
 
 }

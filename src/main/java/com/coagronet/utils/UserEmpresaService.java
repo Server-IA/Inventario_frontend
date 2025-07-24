@@ -14,17 +14,18 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequiredArgsConstructor
 public class UserEmpresaService {
 
-    private final JwtUtil jwtUtil;
+	private final JwtUtil jwtUtil;
 
-    public Long getEmpresaIdFromCurrentRequest() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getRequest();
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalStateException("No se encontró el token JWT en la solicitud.");
-        }
-        String jwtToken = authHeader.substring(7);
-        Claims claims = jwtUtil.extractAllClaims(jwtToken);
-        return claims.get("empresaId", Long.class);
-    }
+	public Long getEmpresaIdFromCurrentRequest() {
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+			.getRequest();
+		String authHeader = request.getHeader("Authorization");
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			throw new IllegalStateException("No se encontró el token JWT en la solicitud.");
+		}
+		String jwtToken = authHeader.substring(7);
+		Claims claims = jwtUtil.extractAllClaims(jwtToken);
+		return claims.get("empresaId", Long.class);
+	}
+
 }

@@ -13,20 +13,17 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TipoInventarioDTO {
 
-    private Long id;
+	private Long id;
 
-    @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
-    private String nombre;
+	@Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
+	private String nombre;
 
-    @Size(max = 2048, message = "La descripcion no puede superar los 2048 caracteres")
-    private String descripcion;
+	@Size(max = 2048, message = "La descripcion no puede superar los 2048 caracteres")
+	private String descripcion;
 
-    @NotNull
-    private Long estadoId;
+	@NotNull
+	private Long estadoId;
 
-    private Long empresaId;
-
-
-
+	private Long empresaId;
 
 }

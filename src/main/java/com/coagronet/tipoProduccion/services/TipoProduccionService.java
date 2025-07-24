@@ -21,57 +21,53 @@ import lombok.RequiredArgsConstructor;
 public class TipoProduccionService {
 
 	private final TipoProduccionMapper tipoProduccionMapper;
+
 	private final TipoProduccionRepository tipoProduccionRepository;
+
 	private final UserEmpresaService userEmpresaService;
+
 	private final EstadoRepository estadoRepository;
 
 	public List<TipoProduccionDTO> findAll() {
-		return tipoProduccionRepository
-				.findByEmpresaIdOrderByIdAsc(
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream().map(tipoProduccionMapper::toListDTO).collect(Collectors.toList());
+		return tipoProduccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(tipoProduccionMapper::toListDTO)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<TipoProduccionDTO> findById(Long requestedId) {
 		return tipoProduccionRepository
-				.findByIdAndEmpresaId(requestedId,
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(tipoProduccionMapper::toListDTO);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(tipoProduccionMapper::toListDTO);
 	}
 
 	public TipoProduccionDTO create(TipoProduccionDTO tipoProduccionDTO) {
 		estadoRepository.findById(tipoProduccionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		tipoProduccionDTO.setId(null);
-		tipoProduccionDTO.setEmpresaId(
-				userEmpresaService.getEmpresaIdFromCurrentRequest());
+		tipoProduccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		return tipoProduccionMapper
-				.toDTO(tipoProduccionRepository.save(tipoProduccionMapper.toEntity(tipoProduccionDTO)));
+			.toDTO(tipoProduccionRepository.save(tipoProduccionMapper.toEntity(tipoProduccionDTO)));
 	}
 
 	public void update(Long requestedId, TipoProduccionDTO tipoProduccionDTO) {
-		tipoProduccionRepository
-				.findByIdAndEmpresaId(requestedId,
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("El tipo de producción no fue encontrado."));
+		tipoProduccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El tipo de producción no fue encontrado."));
 
 		estadoRepository.findById(tipoProduccionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		tipoProduccionDTO.setId(requestedId);
-		tipoProduccionDTO.setEmpresaId(
-				userEmpresaService.getEmpresaIdFromCurrentRequest());
+		tipoProduccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		tipoProduccionRepository.save(tipoProduccionMapper.toEntity(tipoProduccionDTO));
 	}
 
 	public void delete(Long id) {
-		tipoProduccionRepository
-				.findByIdAndEmpresaId(id,
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("El tipo de producción no fue encontrado."));
+		tipoProduccionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El tipo de producción no fue encontrado."));
 
 		tipoProduccionRepository.deleteById(id);
 	}

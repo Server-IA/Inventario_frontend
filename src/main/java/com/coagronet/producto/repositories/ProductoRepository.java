@@ -9,11 +9,8 @@ import com.coagronet.producto.Producto;
 
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
-        Optional<Producto> findByIdAndEmpresaId(
-                        Long id,
-                        Long empresaId);
+	Optional<Producto> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        List<Producto> findByEmpresaIdOrderByIdAsc(
-                        Long empresaId);
+	List<Producto> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

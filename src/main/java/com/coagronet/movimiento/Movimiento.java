@@ -36,7 +36,8 @@ public class Movimiento {
 	private String nombre;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "mov_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "movimiento_mov_estado_id_fkey"))
+	@JoinColumn(name = "mov_estado_id", referencedColumnName = "est_id", nullable = false,
+			foreignKey = @ForeignKey(name = "movimiento_mov_estado_id_fkey"))
 	private Estado estado;
 
 }

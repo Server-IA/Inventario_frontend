@@ -19,63 +19,64 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SeccionService {
 
-        private final UserEmpresaService userEmpresaService;
-        private final SeccionMapper seccionMapper;
-        private final SeccionRepository seccionRepository;
-        private final EstadoRepository estadoRepository;
-        private final EspacioRepository espacioRepository;
+	private final UserEmpresaService userEmpresaService;
 
-        public List<SeccionDTO> findAll() {
-                return seccionRepository
-                                .findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .stream()
-                                .map(seccionMapper::toListDTO)
-                                .collect(Collectors.toList());
-        }
+	private final SeccionMapper seccionMapper;
 
-        public Optional<SeccionDTO> findById(Long requestedId) {
-                return seccionRepository
-                                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .map(seccionMapper::toListDTO);
-        }
+	private final SeccionRepository seccionRepository;
 
-        public SeccionDTO create(SeccionDTO seccionDTO) {
-                espacioRepository
-                                .findByIdAndEmpresaId(seccionDTO.getEspacioId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El espacio no es válido"));
+	private final EstadoRepository estadoRepository;
 
-                estadoRepository.findById(seccionDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final EspacioRepository espacioRepository;
 
-                seccionDTO.setId(null);
-                seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<SeccionDTO> findAll() {
+		return seccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(seccionMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-                return seccionMapper.toDTO(seccionRepository.save(seccionMapper.toEntity(seccionDTO)));
-        }
+	public Optional<SeccionDTO> findById(Long requestedId) {
+		return seccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(seccionMapper::toListDTO);
+	}
 
-        public void update(Long requestedId, SeccionDTO seccionDTO) {
-                seccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException("La sección no fue encontrada."));
+	public SeccionDTO create(SeccionDTO seccionDTO) {
+		espacioRepository
+			.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
 
-                espacioRepository
-                                .findByIdAndEmpresaId(seccionDTO.getEspacioId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El espacio no es válido"));
+		estadoRepository.findById(seccionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-                estadoRepository.findById(seccionDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		seccionDTO.setId(null);
+		seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-                seccionDTO.setId(requestedId);
-                seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return seccionMapper.toDTO(seccionRepository.save(seccionMapper.toEntity(seccionDTO)));
+	}
 
-                seccionRepository.save(seccionMapper.toEntity(seccionDTO));
-        }
+	public void update(Long requestedId, SeccionDTO seccionDTO) {
+		seccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada."));
 
-        public void delete(Long id) {
-                seccionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException("La sección no fue encontrada."));
+		espacioRepository
+			.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
 
-                seccionRepository.deleteById(id);
-        }
+		estadoRepository.findById(seccionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+
+		seccionDTO.setId(requestedId);
+		seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		seccionRepository.save(seccionMapper.toEntity(seccionDTO));
+	}
+
+	public void delete(Long id) {
+		seccionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada."));
+
+		seccionRepository.deleteById(id);
+	}
+
 }

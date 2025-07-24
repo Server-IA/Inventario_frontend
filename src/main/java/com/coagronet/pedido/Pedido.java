@@ -30,32 +30,32 @@ import lombok.NoArgsConstructor;
 @Table(name = "pedido")
 public class Pedido {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pedido_generator")
-    @SequenceGenerator(name = "pedido_generator", sequenceName = "pedido_id_seq", allocationSize = 1)
-    @Column(name = "ped_id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pedido_generator")
+	@SequenceGenerator(name = "pedido_generator", sequenceName = "pedido_id_seq", allocationSize = 1)
+	@Column(name = "ped_id", nullable = false)
+	private Long id;
 
-    @Column(name = "ped_fecha_hora")
-    private LocalDateTime fechaHora;
+	@Column(name = "ped_fecha_hora")
+	private LocalDateTime fechaHora;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ped_almacen_id", referencedColumnName = "alm_id")
-    private Almacen almacen;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ped_almacen_id", referencedColumnName = "alm_id")
+	private Almacen almacen;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ped_produccion_id", referencedColumnName = "pro_id")
-    private Produccion produccion;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ped_produccion_id", referencedColumnName = "pro_id")
+	private Produccion produccion;
 
-    @Column(name = "ped_descripcion", length = 500)
-    private String descripcion;
+	@Column(name = "ped_descripcion", length = 500)
+	private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ped_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ped_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ped_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ped_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
 }

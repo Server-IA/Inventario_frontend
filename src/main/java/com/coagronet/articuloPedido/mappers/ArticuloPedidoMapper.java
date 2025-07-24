@@ -8,7 +8,7 @@ import com.coagronet.articuloPedido.dtos.ArticuloPedidoDTO;
 
 @Mapper(componentModel = "spring")
 public interface ArticuloPedidoMapper {
-	
+
 	@Mapping(source = "pedido.id", target = "pedidoId")
 	@Mapping(source = "presentacionProducto.id", target = "presentacionProductoId")
 	@Mapping(source = "estado.id", target = "estadoId")

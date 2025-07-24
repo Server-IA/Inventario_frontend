@@ -26,47 +26,45 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductoController {
 
-    private final ProductoService productoService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final ProductoService productoService;
 
-    @GetMapping
-    public ResponseEntity<List<ProductoDTO>> findAll() {
-        List<ProductoDTO> productoDTOList = productoService.findAll();
+	private final UriBuilderUtil uriBuilderUtil;
 
-        return productoDTOList.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(productoDTOList);
-    }
+	@GetMapping
+	public ResponseEntity<List<ProductoDTO>> findAll() {
+		List<ProductoDTO> productoDTOList = productoService.findAll();
 
-    @GetMapping("/{requestedId}")
-    private ResponseEntity<ProductoDTO> findById(@PathVariable Long requestedId) {
-        return productoService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+		return productoDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(productoDTOList);
+	}
 
-    @PostMapping
-    private ResponseEntity<ProductoDTO> createProducto(@RequestBody @Valid ProductoDTO newProductoRequest,
-            UriComponentsBuilder ucb) {
-        ProductoDTO savedProductoDTO = productoService.create(newProductoRequest);
+	@GetMapping("/{requestedId}")
+	private ResponseEntity<ProductoDTO> findById(@PathVariable Long requestedId) {
+		return productoService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
-        URI locationOfNewPedido = uriBuilderUtil.buildProductoUri(savedProductoDTO.getId(), ucb);
+	@PostMapping
+	private ResponseEntity<ProductoDTO> createProducto(@RequestBody @Valid ProductoDTO newProductoRequest,
+			UriComponentsBuilder ucb) {
+		ProductoDTO savedProductoDTO = productoService.create(newProductoRequest);
 
-        return ResponseEntity.created(locationOfNewPedido).build();
-    }
+		URI locationOfNewPedido = uriBuilderUtil.buildProductoUri(savedProductoDTO.getId(), ucb);
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putProducto(@PathVariable Long requestedId,
-            @RequestBody @Valid ProductoDTO productoDTOUpdate) {
+		return ResponseEntity.created(locationOfNewPedido).build();
+	}
 
-        productoService.update(requestedId, productoDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putProducto(@PathVariable Long requestedId,
+			@RequestBody @Valid ProductoDTO productoDTOUpdate) {
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteProducto(@PathVariable Long id) {
+		productoService.update(requestedId, productoDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-        productoService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deleteProducto(@PathVariable Long id) {
+
+		productoService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
 }

@@ -10,7 +10,8 @@ import java.util.Optional;
 @Repository
 public interface SubseccionRepository extends JpaRepository<Subseccion, Long> {
 
-    List<Subseccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Subseccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<Subseccion>findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<Subseccion> findByIdAndEmpresaId(Long id, Long empresaId);
+
 }

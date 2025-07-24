@@ -34,35 +34,35 @@ import lombok.Setter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ArticuloInventario implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inventario_item_seq")
-    @SequenceGenerator(name = "inventario_item_seq", sequenceName = "inventario_item_ini_id_seq", allocationSize = 1)
-    @EqualsAndHashCode.Include
-    @Column(name = "ini_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inventario_item_seq")
+	@SequenceGenerator(name = "inventario_item_seq", sequenceName = "inventario_item_ini_id_seq", allocationSize = 1)
+	@EqualsAndHashCode.Include
+	@Column(name = "ini_id")
+	private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ini_inventario_id", nullable = false)
-    private Inventario inventario;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "ini_inventario_id", nullable = false)
+	private Inventario inventario;
 
-    @Column(name = "ini_descripcion", length = 2048)
-    private String descripcion;
+	@Column(name = "ini_descripcion", length = 2048)
+	private String descripcion;
 
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
-    @Column(name = "ini_uuid", nullable = false, length = 36)
-    private String uuid;
+	@UuidGenerator(style = UuidGenerator.Style.RANDOM)
+	@Column(name = "ini_uuid", nullable = false, length = 36)
+	private String uuid;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ini_empresa_id", nullable = false)
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "ini_empresa_id", nullable = false)
+	private Empresa empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ini_estado_id", nullable = false)
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "ini_estado_id", nullable = false)
+	private Estado estado;
 
-    @Column(name = "ini_producto_identificador_id")
-    private String identificadorProducto;
+	@Column(name = "ini_producto_identificador_id")
+	private String identificadorProducto;
 
 }

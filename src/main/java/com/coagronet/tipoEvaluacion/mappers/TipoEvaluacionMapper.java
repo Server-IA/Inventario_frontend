@@ -7,11 +7,12 @@ import com.coagronet.tipoEvaluacion.TipoEvaluacion;
 import com.coagronet.tipoEvaluacion.dtos.TipoEvaluacionDTO;
 
 @Mapper(componentModel = "spring")
-public interface TipoEvaluacionMapper{
+public interface TipoEvaluacionMapper {
 
-    @Mapping(source = "estado.id", target = "estadoId")
-    TipoEvaluacionDTO toDTO(TipoEvaluacion tipoEvaluacion);
+	@Mapping(source = "estado.id", target = "estadoId")
+	TipoEvaluacionDTO toDTO(TipoEvaluacion tipoEvaluacion);
 
-    @Mapping(source = "estadoId", target = "estado.id")
-    TipoEvaluacion toEntity(TipoEvaluacionDTO tipoEvaluacionDTO);
+	@Mapping(source = "estadoId", target = "estado.id")
+	TipoEvaluacion toEntity(TipoEvaluacionDTO tipoEvaluacionDTO);
+
 }

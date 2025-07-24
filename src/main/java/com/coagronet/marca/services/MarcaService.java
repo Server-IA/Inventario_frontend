@@ -20,51 +20,54 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MarcaService {
 
-    private final MarcaRepository marcaRepository;
-    private final MarcaMapper marcaMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final MarcaRepository marcaRepository;
 
-    public List<MarcaDTO> findAll() {
-        return marcaRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(marcaMapper::toListDto)
-                .collect(Collectors.toList());
-    }
+	private final MarcaMapper marcaMapper;
 
-    public Optional<MarcaDTO> findById(Long requestedId) {
-        return marcaRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(marcaMapper::toListDto);
-    }
+	private final EstadoRepository estadoRepository;
 
-    public MarcaDTO create(MarcaDTO marcaDTO) {
-        estadoRepository.findById(marcaDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        marcaDTO.setId(null);
-        marcaDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<MarcaDTO> findAll() {
+		return marcaRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(marcaMapper::toListDto)
+			.collect(Collectors.toList());
+	}
 
-        return marcaMapper.toDTO(marcaRepository.save(marcaMapper.toEntity(marcaDTO)));
-    }
+	public Optional<MarcaDTO> findById(Long requestedId) {
+		return marcaRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(marcaMapper::toListDto);
+	}
 
-    public void update(Long requestedId, MarcaDTO marcaDTO) {
-        marcaRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+	public MarcaDTO create(MarcaDTO marcaDTO) {
+		estadoRepository.findById(marcaDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        estadoRepository.findById(marcaDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		marcaDTO.setId(null);
+		marcaDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        marcaDTO.setId(requestedId);
-        marcaDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return marcaMapper.toDTO(marcaRepository.save(marcaMapper.toEntity(marcaDTO)));
+	}
 
-        marcaRepository.save(marcaMapper.toEntity(marcaDTO));
-    }
+	public void update(Long requestedId, MarcaDTO marcaDTO) {
+		marcaRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Marca no encontrada"));
 
-    public void delete(Long id) {
-        marcaRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+		estadoRepository.findById(marcaDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        marcaRepository.deleteById(id);
-    }
+		marcaDTO.setId(requestedId);
+		marcaDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		marcaRepository.save(marcaMapper.toEntity(marcaDTO));
+	}
+
+	public void delete(Long id) {
+		marcaRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+
+		marcaRepository.deleteById(id);
+	}
 
 }

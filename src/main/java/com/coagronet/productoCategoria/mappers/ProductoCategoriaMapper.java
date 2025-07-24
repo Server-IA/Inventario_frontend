@@ -20,4 +20,5 @@ public interface ProductoCategoriaMapper {
 	@Mapping(source = "estado.id", target = "estadoId")
 	@Mapping(ignore = true, target = "empresaId")
 	ProductoCategoriaDTO toListDto(ProductoCategoria productoCategoria);
+
 }

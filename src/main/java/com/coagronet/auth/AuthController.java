@@ -78,4 +78,5 @@ public class AuthController {
 	public Set<String> roles() {
 		return authService.getCurrentUserRoles();
 	}
+
 }

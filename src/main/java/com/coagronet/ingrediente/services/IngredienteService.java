@@ -20,52 +20,55 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IngredienteService {
 
-    private final IngredienteRepository ingredienteRepository;
-    private final IngredienteMapper ingredienteMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final IngredienteRepository ingredienteRepository;
 
-    public List<IngredienteDTO> findAll() {
-        return ingredienteRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(ingredienteMapper::toListDto)
-                .collect(Collectors.toList());
-    }
+	private final IngredienteMapper ingredienteMapper;
 
-    public Optional<IngredienteDTO> findById(Long requestedId) {
-        return ingredienteRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(ingredienteMapper::toListDto);
-    }
+	private final EstadoRepository estadoRepository;
 
-    public IngredienteDTO create(IngredienteDTO ingredienteDTO) {
-        estadoRepository.findById(ingredienteDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+	private final UserEmpresaService userEmpresaService;
 
-        ingredienteDTO.setId(null);
-        ingredienteDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<IngredienteDTO> findAll() {
+		return ingredienteRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(ingredienteMapper::toListDto)
+			.collect(Collectors.toList());
+	}
 
-        return ingredienteMapper.toDTO(ingredienteRepository.save(ingredienteMapper.toEntity(ingredienteDTO)));
-    }
+	public Optional<IngredienteDTO> findById(Long requestedId) {
+		return ingredienteRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(ingredienteMapper::toListDto);
+	}
 
-    public void update(Long requestedId, IngredienteDTO ingredienteDTO) {
-        ingredienteRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Ingrediente no encontrado."));
+	public IngredienteDTO create(IngredienteDTO ingredienteDTO) {
+		estadoRepository.findById(ingredienteDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-        estadoRepository.findById(ingredienteDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		ingredienteDTO.setId(null);
+		ingredienteDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        ingredienteDTO.setId(requestedId);
-        ingredienteDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return ingredienteMapper.toDTO(ingredienteRepository.save(ingredienteMapper.toEntity(ingredienteDTO)));
+	}
 
-        ingredienteRepository.save(ingredienteMapper.toEntity(ingredienteDTO));
-    }
+	public void update(Long requestedId, IngredienteDTO ingredienteDTO) {
+		ingredienteRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Ingrediente no encontrado."));
 
-    public void delete(Long id) {
-        ingredienteRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Ingrediente no encontrado."));
+		estadoRepository.findById(ingredienteDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-        ingredienteRepository.deleteById(id);
-    }
+		ingredienteDTO.setId(requestedId);
+		ingredienteDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		ingredienteRepository.save(ingredienteMapper.toEntity(ingredienteDTO));
+	}
+
+	public void delete(Long id) {
+		ingredienteRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Ingrediente no encontrado."));
+
+		ingredienteRepository.deleteById(id);
+	}
 
 }

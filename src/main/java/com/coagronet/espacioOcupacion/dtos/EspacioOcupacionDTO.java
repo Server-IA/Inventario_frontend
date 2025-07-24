@@ -13,18 +13,22 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EspacioOcupacionDTO {
-    private Long id;
 
-    @NotNull(message = "El espacio no puede ser nulo")
-    private Long espacioId;
+	private Long id;
 
-    @NotNull(message = "La ocupacion no puede ser nula")
-    private Long ocupacionId;
+	@NotNull(message = "El espacio no puede ser nulo")
+	private Long espacioId;
 
-    private LocalDateTime fechaInicio;
-    private LocalDateTime fechaFin;
+	@NotNull(message = "La ocupacion no puede ser nula")
+	private Long ocupacionId;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
-    private Long empresaId;
+	private LocalDateTime fechaInicio;
+
+	private LocalDateTime fechaFin;
+
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

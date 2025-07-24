@@ -12,22 +12,17 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductoLocalizacionDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotNull(message = "El articulo kardex no puede ser nula")
-    private Long articuloKardexId;
+	@NotNull(message = "El articulo kardex no puede ser nula")
+	private Long articuloKardexId;
 
-    @NotNull(message = "La subseccion no puede ser nula")
-    private Long subseccionId;
+	@NotNull(message = "La subseccion no puede ser nula")
+	private Long subseccionId;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
 
-
-    private Long empresaId;
-
-
-
-
+	private Long empresaId;
 
 }

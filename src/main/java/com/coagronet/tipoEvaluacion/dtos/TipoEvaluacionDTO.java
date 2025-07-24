@@ -12,14 +12,15 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TipoEvaluacionDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "El campo nombre no puede ser nulo.")
-    @Length(max = 100, message = "El campo nombre no puede exceder los 100 caracteres.")
-    private String nombre;
+	@NotBlank(message = "El campo nombre no puede ser nulo.")
+	@Length(max = 100, message = "El campo nombre no puede exceder los 100 caracteres.")
+	private String nombre;
 
-    @Length(max = 2048, message = "El campo descripcion no puede exceder los 2048 caracteres.")
-    private String descripcion;
+	@Length(max = 2048, message = "El campo descripcion no puede exceder los 2048 caracteres.")
+	private String descripcion;
 
-    private Long estadoId;
+	private Long estadoId;
+
 }

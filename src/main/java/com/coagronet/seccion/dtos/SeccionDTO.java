@@ -10,20 +10,21 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SeccionDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "El nombre de la sección no puede estar vacío")
-    @Size(max = 100, message = "El nombre de la sección no puede tener más de 100 caracteres")
-    private String nombre;
+	@NotBlank(message = "El nombre de la sección no puede estar vacío")
+	@Size(max = 100, message = "El nombre de la sección no puede tener más de 100 caracteres")
+	private String nombre;
 
-    @Size(max = 2048, message = "La descripción no puede tener más de 2048 caracteres")
-    private String descripcion;
+	@Size(max = 2048, message = "La descripción no puede tener más de 2048 caracteres")
+	private String descripcion;
 
-    @NotNull(message = "El espacio es obligatorio")
-    private Long espacioId;
+	@NotNull(message = "El espacio es obligatorio")
+	private Long espacioId;
 
-    @NotNull(message = "El estado es obligatorio")
-    private Long estadoId;
+	@NotNull(message = "El estado es obligatorio")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
+
 }

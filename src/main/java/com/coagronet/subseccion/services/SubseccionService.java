@@ -19,55 +19,58 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SubseccionService {
 
-    private final SubseccionRepository subseccionRepository;
-    private final SubseccionMapper subseccionMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final SubseccionRepository subseccionRepository;
 
-    public List<SubseccionDTO> findAll() {
-        return subseccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(subseccionMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final SubseccionMapper subseccionMapper;
 
-    public Optional<SubseccionDTO> findById(Long requestedId) {
-        return subseccionRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(subseccionMapper::toDTO);
-    }
+	private final EstadoRepository estadoRepository;
 
-    @Transactional
-    public SubseccionDTO create(SubseccionDTO subseccionDTO) {
-        estadoRepository.findById(subseccionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        subseccionDTO.setId(null);
-        subseccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<SubseccionDTO> findAll() {
+		return subseccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(subseccionMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        return subseccionMapper.toDTO(subseccionRepository.save(subseccionMapper.toEntity(subseccionDTO)));
-    }
+	public Optional<SubseccionDTO> findById(Long requestedId) {
+		return subseccionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(subseccionMapper::toDTO);
+	}
 
-    @Transactional
-    public void update(Long requestedId, SubseccionDTO subseccionDTO) {
-        subseccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
+	@Transactional
+	public SubseccionDTO create(SubseccionDTO subseccionDTO) {
+		estadoRepository.findById(subseccionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
 
-        estadoRepository.findById(subseccionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		subseccionDTO.setId(null);
+		subseccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        subseccionDTO.setId(requestedId);
-        subseccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return subseccionMapper.toDTO(subseccionRepository.save(subseccionMapper.toEntity(subseccionDTO)));
+	}
 
-        subseccionRepository.save(subseccionMapper.toEntity(subseccionDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, SubseccionDTO subseccionDTO) {
+		subseccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
 
-    @Transactional
-    public void delete(Long requestedId) {
-        subseccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
+		estadoRepository.findById(subseccionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        subseccionRepository.deleteById(requestedId);
-    }
+		subseccionDTO.setId(requestedId);
+		subseccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		subseccionRepository.save(subseccionMapper.toEntity(subseccionDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestedId) {
+		subseccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
+
+		subseccionRepository.deleteById(requestedId);
+	}
 
 }

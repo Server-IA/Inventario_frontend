@@ -8,7 +8,7 @@ import com.coagronet.movimiento.dtos.MovimientoDTO;
 
 @Mapper(componentModel = "spring")
 public interface MovimientoMapper {
-	
+
 	@Mapping(source = "estado.id", target = "estadoId")
 	MovimientoDTO toDTO(Movimiento movimiento);
 

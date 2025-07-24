@@ -18,63 +18,67 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TipoBloqueService {
-    private final TipoBloqueRepository tipoBloqueRepository;
-    private final EstadoRepository estadoRepository;
-    private final TipoBloqueMapper tipoBloqueMapper;
-    private final UserEmpresaService userEmpresaService;
 
-    public Optional<TipoBloqueDTO> findById(Long requestedId) {
-        return tipoBloqueRepository
-                .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
-                .map(tipoBloqueMapper::toDTO);
-    }
+	private final TipoBloqueRepository tipoBloqueRepository;
 
-    public List<TipoBloqueDTO> findAll() {
-        return tipoBloqueRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
-                .stream()
-                .map(tipoBloqueMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public List<TipoBloqueDTO> findAllMinimal() {
-        return tipoBloqueRepository
-                .findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
-                .stream()
-                .map(tipoBloqueMapper::toMinimalDTO)
-                .collect(Collectors.toList());
-    }
+	private final TipoBloqueMapper tipoBloqueMapper;
 
-    @Transactional
-    public TipoBloqueDTO create(TipoBloqueDTO tipoBloqueDTO) {
-        tipoBloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	private final UserEmpresaService userEmpresaService;
 
-        return tipoBloqueMapper.toDTO(tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO)));
-    }
+	public Optional<TipoBloqueDTO> findById(Long requestedId) {
+		return tipoBloqueRepository
+			.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
+			.map(tipoBloqueMapper::toDTO);
+	}
 
-    @Transactional
-    public void update(Long requestedId, TipoBloqueDTO tipoBloqueDTO) {
-        tipoBloqueRepository
-                .findByIdAndEmpresaIdAndEstadoIdNot(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
-                .orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o está inactivo"));
+	public List<TipoBloqueDTO> findAll() {
+		return tipoBloqueRepository
+			.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
+			.stream()
+			.map(tipoBloqueMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        estadoRepository.findById(tipoBloqueDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+	public List<TipoBloqueDTO> findAllMinimal() {
+		return tipoBloqueRepository
+			.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
+			.stream()
+			.map(tipoBloqueMapper::toMinimalDTO)
+			.collect(Collectors.toList());
+	}
 
-        tipoBloqueDTO.setId(requestedId);
-        tipoBloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	@Transactional
+	public TipoBloqueDTO create(TipoBloqueDTO tipoBloqueDTO) {
+		tipoBloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO));
-    }
+		return tipoBloqueMapper.toDTO(tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO)));
+	}
 
-    @Transactional
-    public void delete(Long id) {
-        TipoBloque tipoBloque = tipoBloqueRepository
-                .findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o ya está inactivo"));
+	@Transactional
+	public void update(Long requestedId, TipoBloqueDTO tipoBloqueDTO) {
+		tipoBloqueRepository
+			.findByIdAndEmpresaIdAndEstadoIdNot(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest(), 2)
+			.orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o está inactivo"));
 
-        tipoBloqueRepository.deleteById(tipoBloque.getId());
+		estadoRepository.findById(tipoBloqueDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
-    }
+		tipoBloqueDTO.setId(requestedId);
+		tipoBloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		tipoBloqueRepository.save(tipoBloqueMapper.toEntity(tipoBloqueDTO));
+	}
+
+	@Transactional
+	public void delete(Long id) {
+		TipoBloque tipoBloque = tipoBloqueRepository
+			.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("TipoBloque no encontrado o ya está inactivo"));
+
+		tipoBloqueRepository.deleteById(tipoBloque.getId());
+
+	}
 
 }

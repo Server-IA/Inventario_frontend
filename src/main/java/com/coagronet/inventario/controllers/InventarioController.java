@@ -17,50 +17,48 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventarioController {
 
-    private final InventarioService inventarioService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final InventarioService inventarioService;
 
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping
-    public ResponseEntity<List<InventarioDTO>> findAll(){
-        List<InventarioDTO> inventarioDTOList = inventarioService.findAll();
+	@GetMapping
+	public ResponseEntity<List<InventarioDTO>> findAll() {
+		List<InventarioDTO> inventarioDTOList = inventarioService.findAll();
 
-        return inventarioDTOList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(inventarioDTOList);
-    }
+		return inventarioDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(inventarioDTOList);
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<InventarioDTO> findById(@PathVariable Long requestedId){
-        return inventarioService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<InventarioDTO> findById(@PathVariable Long requestedId) {
+		return inventarioService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PostMapping
-    public ResponseEntity<InventarioDTO> createInventario
-            (@RequestBody @Valid InventarioDTO newInventario, UriComponentsBuilder ucb){
+	@PostMapping
+	public ResponseEntity<InventarioDTO> createInventario(@RequestBody @Valid InventarioDTO newInventario,
+			UriComponentsBuilder ucb) {
 
-        InventarioDTO savedInventarioDTO = inventarioService.create(newInventario);
+		InventarioDTO savedInventarioDTO = inventarioService.create(newInventario);
 
-        URI locationOfNewInventario = uriBuilderUtil.buildInventarioUri(savedInventarioDTO.getId(), ucb);
+		URI locationOfNewInventario = uriBuilderUtil.buildInventarioUri(savedInventarioDTO.getId(), ucb);
 
-        return ResponseEntity.created(locationOfNewInventario).build();
+		return ResponseEntity.created(locationOfNewInventario).build();
 
-    }
+	}
 
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putInventario(@PathVariable Long requestedId,
+			@RequestBody @Valid InventarioDTO inventarioDTOUpdate) {
+		inventarioService.update(requestedId, inventarioDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putInventario(@PathVariable Long requestedId,
-                                               @RequestBody @Valid InventarioDTO inventarioDTOUpdate) {
-        inventarioService.update(requestedId, inventarioDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deleteInventario(@PathVariable Long id) {
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteInventario(@PathVariable Long id) {
+		inventarioService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
-        inventarioService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

@@ -12,24 +12,26 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class KardexDTO {
-    private Long id;
 
-    private LocalDateTime fechaHora;
+	private Long id;
 
-    @NotNull(message = "El id del almacén no puede ser nulo")
-    private Long almacenId;
+	private LocalDateTime fechaHora;
 
-    @NotNull(message = "El id de producción no puede ser nulo")
-    private Long produccionId;
+	@NotNull(message = "El id del almacén no puede ser nulo")
+	private Long almacenId;
 
-    @NotNull(message = "El id del tipo de movimiento no puede ser nulo")
-    private Long tipoMovimientoId;
+	@NotNull(message = "El id de producción no puede ser nulo")
+	private Long produccionId;
 
-    @Size(max = 500, message = "La descripción debe tener máximo 500 caracteres")
-    private String descripcion;
+	@NotNull(message = "El id del tipo de movimiento no puede ser nulo")
+	private Long tipoMovimientoId;
 
-    @NotNull(message = "El id del estado no puede ser nulo")
-    private Long estadoId;
+	@Size(max = 500, message = "La descripción debe tener máximo 500 caracteres")
+	private String descripcion;
 
-    private Long empresaId;
+	@NotNull(message = "El id del estado no puede ser nulo")
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

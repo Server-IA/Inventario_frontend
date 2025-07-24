@@ -26,4 +26,5 @@ public interface MunicipioMapper {
 	@Mapping(target = "empresaId", ignore = true)
 	@Mapping(target = "estadoId", source = "estado.id")
 	MunicipioDTO toListDto(Municipio municipio);
+
 }

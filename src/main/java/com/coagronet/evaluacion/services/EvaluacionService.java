@@ -21,75 +21,73 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EvaluacionService {
 
-    private final UserEmpresaService userEmpresaService;
-    private final EvaluacionMapper evaluacionMapper;
-    private final EvaluacionRepository evaluacionRepository;
-    private final TipoEvaluacionRepository tipoEvaluacionRepository;
-    private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
 
-    public List<EvaluacionDTO> findAll() {
-        return evaluacionRepository
-                .findByEmpresaIdOrderByIdAsc(
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream().map(evaluacionMapper::toListDTO).collect(Collectors.toList());
-    }
+	private final EvaluacionMapper evaluacionMapper;
 
-    public List<EvaluacionDTO> findAllByTipoEvaluacionId(Long tipoEvaluacionId) {
-        return evaluacionRepository
-                .findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(
-                        userEmpresaService.getEmpresaIdFromCurrentRequest(), tipoEvaluacionId)
-                .stream().map(evaluacionMapper::toListDTO).collect(Collectors.toList());
-    }
+	private final EvaluacionRepository evaluacionRepository;
 
-    public Optional<EvaluacionDTO> findById(Long requestedId) {
-        return evaluacionRepository
-                .findByIdAndEmpresaId(requestedId,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(evaluacionMapper::toListDTO);
-    }
+	private final TipoEvaluacionRepository tipoEvaluacionRepository;
 
-    public EvaluacionDTO create(EvaluacionDTO evaluacionDTO) {
-        tipoEvaluacionRepository
-                .findById(evaluacionDTO.getTipoEvaluacionId())
-                .orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es válido."));
+	private final EstadoRepository estadoRepository;
 
-        estadoRepository.findById(evaluacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+	public List<EvaluacionDTO> findAll() {
+		return evaluacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(evaluacionMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-        evaluacionDTO.setId(null);
-        evaluacionDTO.setEmpresaId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<EvaluacionDTO> findAllByTipoEvaluacionId(Long tipoEvaluacionId) {
+		return evaluacionRepository
+			.findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(),
+					tipoEvaluacionId)
+			.stream()
+			.map(evaluacionMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-        return evaluacionMapper
-                .toDTO(evaluacionRepository.save(evaluacionMapper.toEntity(evaluacionDTO)));
-    }
+	public Optional<EvaluacionDTO> findById(Long requestedId) {
+		return evaluacionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(evaluacionMapper::toListDTO);
+	}
 
-    public void update(Long requestedId, EvaluacionDTO evaluacionDTO) {
-        evaluacionRepository
-                .findByIdAndEmpresaId(requestedId,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("La evaluación con el ID: " + requestedId +" no fue encontrada."));
+	public EvaluacionDTO create(EvaluacionDTO evaluacionDTO) {
+		tipoEvaluacionRepository.findById(evaluacionDTO.getTipoEvaluacionId())
+			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es válido."));
 
-        tipoEvaluacionRepository
-                .findById(evaluacionDTO.getTipoEvaluacionId())
-                .orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es válido."));
+		estadoRepository.findById(evaluacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-        estadoRepository.findById(evaluacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El campo 'EstadoId' no es válido."));
+		evaluacionDTO.setId(null);
+		evaluacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        evaluacionDTO.setId(requestedId);
-        evaluacionDTO.setEmpresaId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return evaluacionMapper.toDTO(evaluacionRepository.save(evaluacionMapper.toEntity(evaluacionDTO)));
+	}
 
-        evaluacionRepository.save(evaluacionMapper.toEntity(evaluacionDTO));
-    }
+	public void update(Long requestedId, EvaluacionDTO evaluacionDTO) {
+		evaluacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(
+					() -> new NotFoundException("La evaluación con el ID: " + requestedId + " no fue encontrada."));
 
-    public void delete(Long id) {
-        evaluacionRepository
-                .findByIdAndEmpresaId(id,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("La evaluación con el ID: " + id +" no fue encontrada."));
+		tipoEvaluacionRepository.findById(evaluacionDTO.getTipoEvaluacionId())
+			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es válido."));
 
-        evaluacionRepository.deleteById(id);
-    }
+		estadoRepository.findById(evaluacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo 'EstadoId' no es válido."));
+
+		evaluacionDTO.setId(requestedId);
+		evaluacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		evaluacionRepository.save(evaluacionMapper.toEntity(evaluacionDTO));
+	}
+
+	public void delete(Long id) {
+		evaluacionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("La evaluación con el ID: " + id + " no fue encontrada."));
+
+		evaluacionRepository.deleteById(id);
+	}
+
 }

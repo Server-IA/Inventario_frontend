@@ -30,32 +30,32 @@ import lombok.NoArgsConstructor;
 @Table(name = "orden_compra")
 public class OrdenCompra {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "orden_compra_generator")
-    @SequenceGenerator(name = "orden_compra_generator", sequenceName = "orden_compra_orc_id_seq", allocationSize = 1)
-    @Column(name = "orc_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "orden_compra_generator")
+	@SequenceGenerator(name = "orden_compra_generator", sequenceName = "orden_compra_orc_id_seq", allocationSize = 1)
+	@Column(name = "orc_id")
+	private Long id;
 
-    @Column(name = "orc_fecha_hora")
-    private LocalDateTime fechaHora;
+	@Column(name = "orc_fecha_hora")
+	private LocalDateTime fechaHora;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orc_pedido_id", referencedColumnName = "ped_id")
-    private Pedido pedido;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "orc_pedido_id", referencedColumnName = "ped_id")
+	private Pedido pedido;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orc_proveedor_id", referencedColumnName = "pro_id")
-    private Proveedor proveedor;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "orc_proveedor_id", referencedColumnName = "pro_id")
+	private Proveedor proveedor;
 
-    @Column(name = "orc_descripcion", length = 2048)
-    private String descripcion;
+	@Column(name = "orc_descripcion", length = 2048)
+	private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orc_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "orc_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
 }

@@ -7,16 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.pedido.Pedido;
 
-public interface PedidoRepository extends
-		JpaRepository<Pedido, Long> {
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
 	Optional<Pedido> findByIdAndEmpresaId(Long id, Long empresaId);
 
 	List<Pedido> findByEmpresaIdOrderByIdAsc(Long empresaId);
-
-
-
-
-
 
 }

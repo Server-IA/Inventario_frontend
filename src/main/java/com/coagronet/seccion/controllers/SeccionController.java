@@ -26,38 +26,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SeccionController {
 
-    private final SeccionService seccionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final SeccionService seccionService;
 
-    @GetMapping
-    public ResponseEntity<List<SeccionDTO>> findAll() {
-        return ResponseEntity.ok(seccionService.findAll()); // 200 OK
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<SeccionDTO> findById(@PathVariable Long requestedId) {
-        return ResponseEntity.ok(
-                seccionService.findById(requestedId)
-                        .orElseThrow(() -> new NotFoundException("La sección no fue encontrada"))
-        );
-    }
+	@GetMapping
+	public ResponseEntity<List<SeccionDTO>> findAll() {
+		return ResponseEntity.ok(seccionService.findAll()); // 200 OK
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createSeccion(@Valid @RequestBody SeccionDTO seccionDTO, UriComponentsBuilder ucb) {
-        Long newId = seccionService.create(seccionDTO).getId();
-        return ResponseEntity.created(uriBuilderUtil.buildSeccionUri(newId, ucb)).build(); // 201 Created
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<SeccionDTO> findById(@PathVariable Long requestedId) {
+		return ResponseEntity.ok(seccionService.findById(requestedId)
+			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada")));
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateSeccion(@PathVariable Long requestedId,
-                                              @Valid @RequestBody SeccionDTO seccionDTO) {
-        seccionService.update(requestedId, seccionDTO);
-        return ResponseEntity.noContent().build(); // 204 No Content
-    }
+	@PostMapping
+	public ResponseEntity<Void> createSeccion(@Valid @RequestBody SeccionDTO seccionDTO, UriComponentsBuilder ucb) {
+		Long newId = seccionService.create(seccionDTO).getId();
+		return ResponseEntity.created(uriBuilderUtil.buildSeccionUri(newId, ucb)).build(); // 201
+																							// Created
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSeccion(@PathVariable Long id) {
-        seccionService.delete(id);
-        return ResponseEntity.noContent().build(); // 204 No Content
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateSeccion(@PathVariable Long requestedId,
+			@Valid @RequestBody SeccionDTO seccionDTO) {
+		seccionService.update(requestedId, seccionDTO);
+		return ResponseEntity.noContent().build(); // 204 No Content
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteSeccion(@PathVariable Long id) {
+		seccionService.delete(id);
+		return ResponseEntity.noContent().build(); // 204 No Content
+	}
+
 }

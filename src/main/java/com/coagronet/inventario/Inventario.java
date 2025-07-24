@@ -20,34 +20,35 @@ import java.time.LocalDateTime;
 @Table(name = "inventario")
 public class Inventario {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inventario_seq")
-    @SequenceGenerator(name = "inventario_seq", sequenceName = "inventario_inv_id_seq", allocationSize = 1)
-    @Column(name = "inv_id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inventario_seq")
+	@SequenceGenerator(name = "inventario_seq", sequenceName = "inventario_inv_id_seq", allocationSize = 1)
+	@Column(name = "inv_id", nullable = false)
+	private Long id;
 
-    @Column(name = "inv_nombre")
-    private String nombre;
+	@Column(name = "inv_nombre")
+	private String nombre;
 
-    @Column(name = "inv_descripcion")
-    private String descripcion;
+	@Column(name = "inv_descripcion")
+	private String descripcion;
 
-    @Column(name = "inv_fecha_hora")
-    private LocalDateTime fechaHora;
+	@Column(name = "inv_fecha_hora")
+	private LocalDateTime fechaHora;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inv_tipo_inventario_id", referencedColumnName = "tii_id")
-    private TipoInventario tipoInventario;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "inv_tipo_inventario_id", referencedColumnName = "tii_id")
+	private TipoInventario tipoInventario;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inv_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "inv_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
-    @ManyToOne
-    @JoinColumn(name = "inv_sub_seccion_id", referencedColumnName = "sus_id")
-    private Subseccion subseccion;
+	@ManyToOne
+	@JoinColumn(name = "inv_sub_seccion_id", referencedColumnName = "sus_id")
+	private Subseccion subseccion;
 
-    @ManyToOne
-    @JoinColumn(name = "inv_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne
+	@JoinColumn(name = "inv_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
+
 }

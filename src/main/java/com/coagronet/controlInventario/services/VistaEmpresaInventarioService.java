@@ -12,16 +12,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VistaEmpresaInventarioService {
 
-    private final VistaEmpresaInventarioRepository vistaEmpresaInventarioRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final VistaEmpresaInventarioRepository vistaEmpresaInventarioRepository;
 
-    public List<VistaEmpresaInventario> findByInvEmpresaId() {
-        return vistaEmpresaInventarioRepository.findByInvEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-    }
+	private final UserEmpresaService userEmpresaService;
 
-    public List<VistaEmpresaInventario> findByEmpresaIdAndSubseccionId(Long subSeccionId) {
-        return vistaEmpresaInventarioRepository.findByInvEmpresaIdAndInvSubSeccionId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest(), subSeccionId);
-    }
+	public List<VistaEmpresaInventario> findByInvEmpresaId() {
+		return vistaEmpresaInventarioRepository.findByInvEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	}
+
+	public List<VistaEmpresaInventario> findByEmpresaIdAndSubseccionId(Long subSeccionId) {
+		return vistaEmpresaInventarioRepository
+			.findByInvEmpresaIdAndInvSubSeccionId(userEmpresaService.getEmpresaIdFromCurrentRequest(), subSeccionId);
+	}
 
 }

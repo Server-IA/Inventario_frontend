@@ -9,10 +9,10 @@ import com.coagronet.articuloOrdenCompra.ArticuloOrdenCompra;
 
 public interface ArticuloOrdenCompraRepository extends JpaRepository<ArticuloOrdenCompra, Long> {
 
-    Optional<ArticuloOrdenCompra> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<ArticuloOrdenCompra> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<ArticuloOrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<ArticuloOrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    List<ArticuloOrdenCompra> findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(Long empresaId, Long ordenCompraId);
+	List<ArticuloOrdenCompra> findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(Long empresaId, Long ordenCompraId);
 
 }

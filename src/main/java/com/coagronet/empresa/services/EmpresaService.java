@@ -70,15 +70,11 @@ public class EmpresaService {
 
     public void subirLogoDesdeEmpresaLogueada(MultipartFile file) {
         try {
-
             if (!file.getContentType().equalsIgnoreCase("image/png")) {
                 throw new IllegalArgumentException("Solo se permiten archivos PNG.");
             }
 
-
             Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-
-
             String originalFilename = file.getOriginalFilename(); // ej: logo_empresa.png
 
             // Hash del nombre base (sin extensión)
@@ -89,6 +85,7 @@ public class EmpresaService {
             Path rutaEmpresa = Paths.get(pathLogos, pathLogoCompany, empresaId.toString());
             Files.createDirectories(rutaEmpresa);
 
+            // Nuevo código de develop: Eliminar logo anterior si existe
             String hashAnterior = getLogoHashByEmpresaId(empresaId);
             if (hashAnterior != null) {
                 String logoAnterior = findLogoByHash(hashAnterior);
@@ -100,7 +97,6 @@ public class EmpresaService {
                     }
                 }
             }
-
 
             // Guardar archivo
             Path rutaLogoFinal = rutaEmpresa.resolve(originalFilename);

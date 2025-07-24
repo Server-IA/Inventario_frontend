@@ -11,34 +11,35 @@ import lombok.Data;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PresentacionProductoDTO {
-    private Long id;
 
-    @NotNull
-    private Long productoId;
+	private Long id;
 
-    @NotBlank
-    @Size(max = 255, message = "El nombre no puede tener más de 255 caracteres")
-    private String nombre;
+	@NotNull
+	private Long productoId;
 
-    @NotNull
-    private Long unidadId;
+	@NotBlank
+	@Size(max = 255, message = "El nombre no puede tener más de 255 caracteres")
+	private String nombre;
 
-    @Size(max = 255, message = "La descripcion no puede tener más de 255 caracteres")
-    private String descripcion;
+	@NotNull
+	private Long unidadId;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
+	@Size(max = 255, message = "La descripcion no puede tener más de 255 caracteres")
+	private String descripcion;
 
-    private Double cantidad;
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
 
-    @NotNull(message = "La marca no puede ser nula")
-    private Long marcaId;
+	private Double cantidad;
 
-    @NotNull(message = "La presentacion no puede ser nula")
-    private Long presentacionId;
+	@NotNull(message = "La marca no puede ser nula")
+	private Long marcaId;
 
+	@NotNull(message = "La presentacion no puede ser nula")
+	private Long presentacionId;
 
-    private Long empresaId;
+	private Long empresaId;
 
-    private Boolean desgregar;
+	private Boolean desgregar;
+
 }

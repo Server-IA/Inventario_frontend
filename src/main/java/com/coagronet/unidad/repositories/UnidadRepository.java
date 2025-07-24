@@ -9,11 +9,8 @@ import com.coagronet.unidad.Unidad;
 
 public interface UnidadRepository extends JpaRepository<Unidad, Long> {
 
-    Optional<Unidad> findByIdAndEmpresaId(
-            Long id,
-            Long empresaId);
+	Optional<Unidad> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<Unidad> findByEmpresaIdOrderByIdAsc(
-            Long empresaId);
+	List<Unidad> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

@@ -11,14 +11,10 @@ import com.coagronet.evaluacion.Evaluacion;
 @Repository
 public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
 
-        Optional<Evaluacion> findByIdAndEmpresaId(
-                        Long id,
-                        Long empresaId);
+	Optional<Evaluacion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        List<Evaluacion> findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(
-                        Long empresaId,
-                        Long tipoEvaluacionId);
+	List<Evaluacion> findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(Long empresaId, Long tipoEvaluacionId);
 
-        List<Evaluacion> findByEmpresaIdOrderByIdAsc(
-                        Long empresaId);
+	List<Evaluacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+
 }

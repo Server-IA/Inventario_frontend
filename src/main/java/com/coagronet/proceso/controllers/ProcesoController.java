@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class ProcesoController {
 
 	private final ProcesoService procesoService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -41,7 +42,7 @@ public class ProcesoController {
 	@PostMapping
 	public ResponseEntity<Void> createProceso(@Valid @RequestBody ProcesoDTO procesoDTO, UriComponentsBuilder ucb) {
 		return ResponseEntity.created(uriBuilderUtil.buildProcesoUri((procesoService.create(procesoDTO)).getId(), ucb))
-				.build();
+			.build();
 	}
 
 	@PutMapping("/{requestedId}")

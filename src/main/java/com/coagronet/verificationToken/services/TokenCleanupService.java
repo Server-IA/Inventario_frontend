@@ -13,11 +13,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TokenCleanupService {
 
-    private final VerificationTokenRepository verificationTokenRepository;
+	private final VerificationTokenRepository verificationTokenRepository;
 
-    @Transactional
-    public void deleteExpiredTokens() {
-        verificationTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
-        System.out.println("Tokens caducados eliminados.");
-    }
+	@Transactional
+	public void deleteExpiredTokens() {
+		verificationTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
+	}
+
 }

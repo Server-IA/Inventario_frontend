@@ -26,48 +26,48 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoMovimientoController {
 
-        private final TipoMovimientoService tipoMovimientoService;
-        private final UriBuilderUtil uriBuilderUtil;
+	private final TipoMovimientoService tipoMovimientoService;
 
+	private final UriBuilderUtil uriBuilderUtil;
 
-        @GetMapping
-        public ResponseEntity<List<TipoMovimientoDTO>> findAll () {
-                List<TipoMovimientoDTO> tipoMovimientoDTOList = tipoMovimientoService.findAll();
+	@GetMapping
+	public ResponseEntity<List<TipoMovimientoDTO>> findAll() {
+		List<TipoMovimientoDTO> tipoMovimientoDTOList = tipoMovimientoService.findAll();
 
-                return tipoMovimientoDTOList.isEmpty()?
-                        ResponseEntity.noContent().build()
-                        : ResponseEntity.ok(tipoMovimientoDTOList);
+		return tipoMovimientoDTOList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(tipoMovimientoDTOList);
 
-        }
+	}
 
-        @GetMapping("/{requestedId}")
-        public ResponseEntity<TipoMovimientoDTO> findById (@PathVariable Long requestedId) {
-                return tipoMovimientoService.findById(requestedId).map(ResponseEntity::ok)
-                        .orElse(ResponseEntity.notFound().build());
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<TipoMovimientoDTO> findById(@PathVariable Long requestedId) {
+		return tipoMovimientoService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 
-        }
+	}
 
+	@PostMapping
+	public ResponseEntity<Void> crearTipoMovimiento(@RequestBody @Valid TipoMovimientoDTO tipoMovimientoDTO,
+			UriComponentsBuilder ucb) {
+		TipoMovimientoDTO savedTipoMovimientoDTO = tipoMovimientoService.create(tipoMovimientoDTO);
 
-        @PostMapping
-        public ResponseEntity<Void> crearTipoMovimiento(@RequestBody @Valid TipoMovimientoDTO tipoMovimientoDTO, UriComponentsBuilder ucb) {
-                TipoMovimientoDTO savedTipoMovimientoDTO = tipoMovimientoService.create(tipoMovimientoDTO);
+		URI locationOfNewTipoMovimiento = uriBuilderUtil.buildTipoMovimientoUri(savedTipoMovimientoDTO.getId(), ucb);
+		return ResponseEntity.created(locationOfNewTipoMovimiento).build();
+	}
 
-                URI locationOfNewTipoMovimiento = uriBuilderUtil.buildTipoMovimientoUri(savedTipoMovimientoDTO.getId(), ucb);
-                return ResponseEntity.created(locationOfNewTipoMovimiento).build();
-        }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> actualizarTipoMovimiento(@PathVariable Long requestedId,
+			@RequestBody TipoMovimientoDTO tipoMovimientoDTO) {
 
-        @PutMapping("/{requestedId}")
-        public ResponseEntity<Void> actualizarTipoMovimiento(@PathVariable Long requestedId,
-                                                     @RequestBody TipoMovimientoDTO tipoMovimientoDTO) {
+		tipoMovimientoService.update(requestedId, tipoMovimientoDTO);
+		return ResponseEntity.noContent().build();
+	}
 
-                tipoMovimientoService.update(requestedId, tipoMovimientoDTO);
-                return ResponseEntity.noContent().build();
-        }
-
-        @DeleteMapping("/{requestedId}")
-        public ResponseEntity<Void> eliminarTipoMovimiento(@PathVariable Long requestedId) {
-                tipoMovimientoService.delete(requestedId);
-                return ResponseEntity.noContent().build();
-        }
+	@DeleteMapping("/{requestedId}")
+	public ResponseEntity<Void> eliminarTipoMovimiento(@PathVariable Long requestedId) {
+		tipoMovimientoService.delete(requestedId);
+		return ResponseEntity.noContent().build();
+	}
 
 }

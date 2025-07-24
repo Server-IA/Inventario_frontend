@@ -9,14 +9,14 @@ import com.coagronet.articuloInventario.dtos.ArticuloInventarioDTO;
 @Mapper(componentModel = "spring")
 public interface ArticuloInventarioMapper {
 
-    @Mapping(source = "inventario.id", target = "inventarioId")
-    @Mapping(source = "estado.id", target = "estadoId")
-    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
-    ArticuloInventarioDTO toDTO(ArticuloInventario articuloInventario);
+	@Mapping(source = "inventario.id", target = "inventarioId")
+	@Mapping(source = "estado.id", target = "estadoId")
+	@Mapping(source = "empresa.id", target = "empresaId", ignore = true)
+	ArticuloInventarioDTO toDTO(ArticuloInventario articuloInventario);
 
-    @Mapping(source = "inventarioId", target = "inventario.id")
-    @Mapping(source = "estadoId", target = "estado.id")
-    @Mapping(source = "empresaId", target = "empresa.id")
-    ArticuloInventario toEntity(ArticuloInventarioDTO articuloInventarioDTO);
+	@Mapping(source = "inventarioId", target = "inventario.id")
+	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(source = "empresaId", target = "empresa.id")
+	ArticuloInventario toEntity(ArticuloInventarioDTO articuloInventarioDTO);
 
 }

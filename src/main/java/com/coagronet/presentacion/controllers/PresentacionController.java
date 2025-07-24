@@ -18,55 +18,49 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-
 @RestController
 @RequestMapping("/api/v1/presentacion")
 @RequiredArgsConstructor
 public class PresentacionController {
 
-    private final PresentacionService presentacionService;
+	private final PresentacionService presentacionService;
 
+	@GetMapping("/{requestedId}")
+	private ResponseEntity<PresentacionDTO> findById(@PathVariable Long requestedId) {
+		return presentacionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @GetMapping("/{requestedId}")
-    private ResponseEntity<PresentacionDTO> findById(@PathVariable Long requestedId) {
-        return presentacionService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<PresentacionDTO>> findAll() {
+		List<PresentacionDTO> presentacionDTOList = presentacionService.findAll();
+		return presentacionDTOList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(presentacionDTOList);
+	}
 
-    @GetMapping
-    public ResponseEntity<List<PresentacionDTO>> findAll() {
-        List<PresentacionDTO> presentacionDTOList = presentacionService.findAll();
-        return presentacionDTOList.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(presentacionDTOList);
-    }
+	@PostMapping
+	public ResponseEntity<PresentacionDTO> createPresentacion(
+			@Valid @RequestBody PresentacionDTO newPresentacionRequest, UriComponentsBuilder ucb) {
 
+		PresentacionDTO savedPresentacion = presentacionService.create(newPresentacionRequest);
 
-    @PostMapping
-    public ResponseEntity<PresentacionDTO> createPresentacion(@Valid @RequestBody PresentacionDTO newPresentacionRequest,
-            UriComponentsBuilder ucb) {
+		URI locationOfNewPresentacion = ucb.path("/{id}").buildAndExpand(savedPresentacion.getId()).toUri();
+		return ResponseEntity.created(locationOfNewPresentacion).body(savedPresentacion);
+	}
 
-        PresentacionDTO savedPresentacion = presentacionService.create(newPresentacionRequest);
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putPresentacion(@PathVariable Long requestedId,
+			@Valid @RequestBody PresentacionDTO presentacionUpdate) {
 
-        URI locationOfNewPresentacion = ucb
-                .path("/{id}")
-                .buildAndExpand(savedPresentacion.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewPresentacion).body(savedPresentacion);
-    }
+		presentacionService.update(requestedId, presentacionUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putPresentacion(@PathVariable Long requestedId,
-                                                 @Valid @RequestBody PresentacionDTO presentacionUpdate) {
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deletePresentacion(@PathVariable Long id) {
+		presentacionService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
-        presentacionService.update(requestedId, presentacionUpdate);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deletePresentacion(@PathVariable Long id) {
-        presentacionService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

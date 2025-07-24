@@ -8,6 +8,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class UserMinimalDTO {
-    private Long id;
-    private String username;
+
+	private Long id;
+
+	private String username;
+
 }

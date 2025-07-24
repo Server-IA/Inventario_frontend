@@ -9,8 +9,8 @@ import com.coagronet.produccion.Produccion;
 
 public interface ProduccionRepository extends JpaRepository<Produccion, Long> {
 
+	Optional<Produccion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        Optional<Produccion> findByIdAndEmpresaId(Long id, Long empresaId);
+	List<Produccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-        List<Produccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 }

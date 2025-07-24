@@ -10,7 +10,8 @@ import java.util.Optional;
 @Repository
 public interface TipoInventarioRepository extends JpaRepository<TipoInventario, Long> {
 
-    Optional<TipoInventario> findByIdAndEmpresaId(Long id, Long empresaId);
-    List<TipoInventario> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	Optional<TipoInventario> findByIdAndEmpresaId(Long id, Long empresaId);
+
+	List<TipoInventario> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

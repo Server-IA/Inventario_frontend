@@ -29,7 +29,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "bloque", schema = "public")
 public class Bloque {
-	
+
 	@Id
 	@SequenceGenerator(name = "bloque_generator", sequenceName = "bloque_blo_id_seq", allocationSize = 1)
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bloque_generator")
@@ -69,4 +69,5 @@ public class Bloque {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "blo_empresa_id", referencedColumnName = "emp_id", nullable = false)
 	private Empresa empresa;
+
 }

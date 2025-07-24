@@ -26,48 +26,50 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductoLocalizacionController {
 
-    private final ProductoLocalizacionService productoLocalizacionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final ProductoLocalizacionService productoLocalizacionService;
 
+	private final UriBuilderUtil uriBuilderUtil;
 
+	@GetMapping
+	public ResponseEntity<List<ProductoLocalizacionDTO>> findAll() {
+		List<ProductoLocalizacionDTO> productoLocalizacionDTOList = productoLocalizacionService.findAll();
 
-    @GetMapping
-    public ResponseEntity<List<ProductoLocalizacionDTO>> findAll () {
-        List<ProductoLocalizacionDTO> productoLocalizacionDTOList = productoLocalizacionService.findAll();
+		return productoLocalizacionDTOList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(productoLocalizacionDTOList);
 
-        return productoLocalizacionDTOList.isEmpty()?
-                ResponseEntity.noContent().build()
-                : ResponseEntity.ok(productoLocalizacionDTOList);
+	}
 
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<ProductoLocalizacionDTO> findById(@PathVariable Long requestedId) {
+		return productoLocalizacionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<ProductoLocalizacionDTO> findById (@PathVariable Long requestedId) {
-        return productoLocalizacionService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+	}
 
-    }
+	@PostMapping
+	public ResponseEntity<Void> crearProductoLocalizacion(
+			@RequestBody @Valid ProductoLocalizacionDTO productoLocalizacionDTO, UriComponentsBuilder ucb) {
+		ProductoLocalizacionDTO savedProductoLocalizacionDTO = productoLocalizacionService
+			.create(productoLocalizacionDTO);
 
+		URI locationOfNewProductoLocalizacion = uriBuilderUtil
+			.buildProductoLocalizacionUri(savedProductoLocalizacionDTO.getId(), ucb);
+		return ResponseEntity.created(locationOfNewProductoLocalizacion).build();
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> crearProductoLocalizacion(@RequestBody @Valid ProductoLocalizacionDTO productoLocalizacionDTO, UriComponentsBuilder ucb) {
-        ProductoLocalizacionDTO savedProductoLocalizacionDTO = productoLocalizacionService.create(productoLocalizacionDTO);
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> actualizarProductoLocalizacion(@PathVariable Long requestedId,
+			@RequestBody ProductoLocalizacionDTO productoLocalizacionDTO) {
 
-        URI locationOfNewProductoLocalizacion = uriBuilderUtil.buildProductoLocalizacionUri(savedProductoLocalizacionDTO.getId(), ucb);
-        return ResponseEntity.created(locationOfNewProductoLocalizacion).build();
-    }
+		productoLocalizacionService.update(requestedId, productoLocalizacionDTO);
+		return ResponseEntity.noContent().build();
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> actualizarProductoLocalizacion(@PathVariable Long requestedId,
-                                                    @RequestBody ProductoLocalizacionDTO productoLocalizacionDTO) {
+	@DeleteMapping("/{requestedId}")
+	public ResponseEntity<Void> eliminarProductoLocalizacion(@PathVariable Long requestedId) {
+		productoLocalizacionService.delete(requestedId);
+		return ResponseEntity.noContent().build();
+	}
 
-        productoLocalizacionService.update(requestedId, productoLocalizacionDTO);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{requestedId}")
-    public ResponseEntity<Void> eliminarProductoLocalizacion(@PathVariable Long requestedId) {
-        productoLocalizacionService.delete(requestedId);
-        return ResponseEntity.noContent().build();
-    }
 }

@@ -18,40 +18,38 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PersonaService {
 
-    private final PersonaRepository personaRepository;
-    private final PersonaMapper personaMapper;
+	private final PersonaRepository personaRepository;
 
+	private final PersonaMapper personaMapper;
 
-    public Optional<PersonaDTO> findById(Long id){
-        return personaRepository.findById(id)
-                .map(personaMapper::toDto);
-    }
+	public Optional<PersonaDTO> findById(Long id) {
+		return personaRepository.findById(id).map(personaMapper::toDto);
+	}
 
-    public Page<PersonaDTO> findAll(Pageable pageable){
-        return personaRepository.findByEstadoIdNot(Constantes.ESTADO_INACTIVO, pageable)
-                .map(personaMapper::toDto);
-    }
+	public Page<PersonaDTO> findAll(Pageable pageable) {
+		return personaRepository.findByEstadoIdNot(Constantes.ESTADO_INACTIVO, pageable).map(personaMapper::toDto);
+	}
 
-    @Transactional
-    public PersonaDTO create(PersonaDTO personaDTO){
+	@Transactional
+	public PersonaDTO create(PersonaDTO personaDTO) {
 
-        Persona savedPersona = personaMapper.toEntity(personaDTO);
-        personaRepository.save(savedPersona);
-        return personaMapper.toDto(savedPersona);
-    }
+		Persona savedPersona = personaMapper.toEntity(personaDTO);
+		personaRepository.save(savedPersona);
+		return personaMapper.toDto(savedPersona);
+	}
 
-    public void update(Long requestedId, PersonaDTO personaDTO){
-        personaRepository.findById(requestedId)
-                .orElseThrow(()->new NotFoundException("Persona no encontrada"));
+	public void update(Long requestedId, PersonaDTO personaDTO) {
+		personaRepository.findById(requestedId).orElseThrow(() -> new NotFoundException("Persona no encontrada"));
 
-        personaDTO.setId(requestedId);
+		personaDTO.setId(requestedId);
 
-        personaRepository.save(personaMapper.toEntity(personaDTO));
-    }
+		personaRepository.save(personaMapper.toEntity(personaDTO));
+	}
 
-    public void delete(Long id){
-        Persona persona = personaRepository.findById(id)
-                .orElseThrow(()-> new NotFoundException("Persona no encontrada"));
-        personaRepository.deleteById(persona.getId());
-    }
+	public void delete(Long id) {
+		Persona persona = personaRepository.findById(id)
+			.orElseThrow(() -> new NotFoundException("Persona no encontrada"));
+		personaRepository.deleteById(persona.getId());
+	}
+
 }

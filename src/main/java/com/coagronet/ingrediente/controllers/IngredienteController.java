@@ -25,38 +25,40 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IngredienteController {
 
-    private final IngredienteService ingredienteService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final IngredienteService ingredienteService;
 
-    @GetMapping
-    public ResponseEntity<List<IngredienteDTO>> findAll() {
-        return ResponseEntity.ok(ingredienteService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<IngredienteDTO> findById(@PathVariable Long requestedId) {
-        return ingredienteService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<IngredienteDTO>> findAll() {
+		return ResponseEntity.ok(ingredienteService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createIngrediente(@Valid @RequestBody IngredienteDTO ingredienteDTO,
-            UriComponentsBuilder ucb) {
-        IngredienteDTO savedIngrediente = ingredienteService.create(ingredienteDTO);
-        return ResponseEntity.created(uriBuilderUtil.buildIngredienteUri(savedIngrediente.getId(), ucb)).build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<IngredienteDTO> findById(@PathVariable Long requestedId) {
+		return ingredienteService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateIngrediente(@PathVariable Long requestedId,
-            @Valid @RequestBody IngredienteDTO ingredienteDTO) {
-        ingredienteService.update(requestedId, ingredienteDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createIngrediente(@Valid @RequestBody IngredienteDTO ingredienteDTO,
+			UriComponentsBuilder ucb) {
+		IngredienteDTO savedIngrediente = ingredienteService.create(ingredienteDTO);
+		return ResponseEntity.created(uriBuilderUtil.buildIngredienteUri(savedIngrediente.getId(), ucb)).build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteIngrediente(@PathVariable Long id) {
-        ingredienteService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateIngrediente(@PathVariable Long requestedId,
+			@Valid @RequestBody IngredienteDTO ingredienteDTO) {
+		ingredienteService.update(requestedId, ingredienteDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteIngrediente(@PathVariable Long id) {
+		ingredienteService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }
