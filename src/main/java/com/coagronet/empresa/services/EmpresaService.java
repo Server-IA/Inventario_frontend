@@ -89,6 +89,19 @@ public class EmpresaService {
             Path rutaEmpresa = Paths.get(pathLogos, pathLogoCompany, empresaId.toString());
             Files.createDirectories(rutaEmpresa);
 
+            String hashAnterior = getLogoHashByEmpresaId(empresaId);
+            if (hashAnterior != null) {
+                String logoAnterior = findLogoByHash(hashAnterior);
+                if (logoAnterior != null) {
+                    Path rutaLogoAnterior = rutaEmpresa.resolve(logoAnterior);
+                    System.out.println(logoAnterior);
+                    if (Files.exists(rutaLogoAnterior)) {
+                        Files.delete(rutaLogoAnterior);
+                    }
+                }
+            }
+
+
             // Guardar archivo
             Path rutaLogoFinal = rutaEmpresa.resolve(originalFilename);
             file.transferTo(rutaLogoFinal);
