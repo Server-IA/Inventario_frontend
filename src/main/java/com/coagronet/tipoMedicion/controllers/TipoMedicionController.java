@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v3/tipo_medicion")
 @RequiredArgsConstructor
 public class TipoMedicionController {
-    
     private final TipoMedicionService tipoMedicionService;
     private final UriBuilderUtil uriBuilderUtil;
 
@@ -34,31 +33,31 @@ public class TipoMedicionController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoMedicionDTO> findById(@PathVariable Long requestedId) {
-        return tipoMedicionService.findById(requestedId).map(ResponseEntity::ok)
-            .orElse((ResponseEntity.notFound().build()));
+    public ResponseEntity<TipoMedicionDTO> findById(@PathVariable Long reuestedId) {
+        return tipoMedicionService.findById(reuestedId).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<Void> createTipoMedicion(@Valid @RequestBody TipoMedicionDTO tipoMedicionDTO,
         UriComponentsBuilder ucb) {
             return ResponseEntity
-            .created(uriBuilderUtil
-                    .buildTipoMedicionUri((tipoMedicionService.create(tipoMedicionDTO)).getId(), ucb))
-                    .build();
+                .created(uriBuilderUtil
+                        .buildTipoMedicionUri((tipoMedicionService.create(tipoMedicionDTO)).getId(), ucb))
+                        .build();
         }
     
     @PutMapping("/{requestedId}")
     public ResponseEntity<Void> updateTipoMedicion(@PathVariable Long requestedId,
-        @Valid @RequestBody TipoMedicionDTO tipoMedicionDTO) {
+        @Valid@RequestBody TipoMedicionDTO tipoMedicionDTO) {
             tipoMedicionService.update(requestedId, tipoMedicionDTO);
             return ResponseEntity.noContent().build();
         }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoMedicion(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTipoMedicion(@PathVariable Long id){
         tipoMedicionService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
+    
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.subSeccionDispositivo.dtos.SubseccionDispositivoDTO;
 import com.coagronet.subSeccionDispositivo.mappers.SubseccionDispositivoMapper;
 import com.coagronet.subSeccionDispositivo.repositories.SubseccionDispositivoRepository;
@@ -52,7 +53,7 @@ public class SubseccionDispositivoService {
     @Transactional
     public void update(Long requestId, SubseccionDispositivoDTO subseccionDispositivoDTO) {
         subseccionDispositivoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("La subsección del dispositivo no se encuentra o no es válida."));
+                .orElseThrow(() -> new NotFoundException("La subsección del dispositivo no se encuentra o no es válida."));
         
         estadoRepository.findById(subseccionDispositivoDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));

@@ -9,10 +9,8 @@ import org.springframework.stereotype.Repository;
 import com.coagronet.tipoMedicion.TipoMedicion;
 
 @Repository
-public interface TipoMedicionRepository extends JpaRepository<TipoMedicion, Long>{  
-    Optional<TipoMedicion> findByIdAndEmpresaId(Long id, Long empresaId);
+public interface TipoMedicionRepository extends JpaRepository <TipoMedicion, Long>{
+    Optional<TipoMedicion> findByIdAndEmpresaId (Long id, Long empresaId);
     List<TipoMedicion> findByEmpresaIdOrderByIdAsc(Long empresaId);
-    List<TipoMedicion> findByEmpresaIdAndEstadoIdNotOrderByIdAsc (Long empresaId, Long estadoId);
-
     
 }

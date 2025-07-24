@@ -9,20 +9,20 @@ import com.coagronet.tipoMedicion.dtos.TipoMedicionDTO;
 @Mapper(componentModel = "spring")
 public interface TipoMedicionMapper {
     @Mapping(source = "unidad.id", target = "unidadId")
+    @Mapping(source = "produccion.id", target = "produccionId")
     @Mapping(source = "estado.id", target = "estadoId")
-    @Mapping(source = "empresa.id", target ="empresaId")
+    @Mapping(source = "empresa.id", target = "empresaId")
     TipoMedicionDTO toDto(TipoMedicion tipoMedicion);
 
     @Mapping(source = "unidadId", target = "unidad.id")
+    @Mapping(source = "produccionId", target = "produccion.id")
     @Mapping(source = "estadoId", target = "estado.id")
     @Mapping(source = "empresaId", target = "empresa.id")
     TipoMedicion toEntity(TipoMedicionDTO tipoMedicionDTO);
 
     @Mapping(source = "unidad.id", target = "unidadId")
+    @Mapping(source= "produccion.id", target = "produccionId")
     @Mapping(source = "estado.id", target = "estadoId")
-    @Mapping(source = "empresa.id", target ="empresaId", ignore = true)
+    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
     TipoMedicionDTO toListDTO(TipoMedicion tipoMedicion);
-
-
-    
 }
