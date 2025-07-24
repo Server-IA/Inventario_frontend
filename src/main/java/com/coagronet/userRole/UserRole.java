@@ -27,6 +27,8 @@ import lombok.NoArgsConstructor;
 @IdClass(UserRoleId.class)
 public class UserRole implements Serializable {
 
+	private static final long serialVersionUID = -1706389808605756133L;
+
 	@Id
 	@ManyToOne
 	@JoinColumn(name = "usr_usuario_id")

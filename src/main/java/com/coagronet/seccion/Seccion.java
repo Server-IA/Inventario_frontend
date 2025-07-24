@@ -21,6 +21,8 @@ import jakarta.persistence.Table;
 @Table(name = "seccion", schema = "public")
 public class Seccion implements Serializable {
 
+	private static final long serialVersionUID = -6961216092237302370L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seccion_seq")
 	@SequenceGenerator(name = "seccion_seq", sequenceName = "secciones_sec_id_seq", allocationSize = 1)

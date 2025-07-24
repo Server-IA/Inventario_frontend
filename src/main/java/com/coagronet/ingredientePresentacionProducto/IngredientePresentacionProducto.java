@@ -29,6 +29,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "producto_presentacion_ingrediente", schema = "public")
 public class IngredientePresentacionProducto implements Serializable {
 
+	private static final long serialVersionUID = 2646372266109775341L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ppi_seq_gen")
 	@SequenceGenerator(name = "ppi_seq_gen", sequenceName = "producto_presentacion_ingrediente_ppi_id_seq",

@@ -38,6 +38,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "usuario")
 public class User implements UserDetails {
 
+	private static final long serialVersionUID = -4111948693138979290L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "usu_id")
