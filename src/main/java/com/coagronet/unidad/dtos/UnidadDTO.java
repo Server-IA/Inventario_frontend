@@ -11,14 +11,16 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UnidadDTO {
 
-    private Long id;
-    
-    @NotBlank
-    private String nombre;
+	private Long id;
 
-    @Size(max = 255, message = "La descripcion no debe ser mayor a 255 caracteres")
-    private String descripcion;
+	@NotBlank
+	private String nombre;
 
-    private Long estadoId;
-    private Long empresaId;
+	@Size(max = 255, message = "La descripcion no debe ser mayor a 255 caracteres")
+	private String descripcion;
+
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

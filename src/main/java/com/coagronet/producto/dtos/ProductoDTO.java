@@ -13,26 +13,28 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductoDTO {
-    private Long id;
 
-    @Size(max = 255)
-    @NotNull(message = "El nombre no puede ser nulo")
-    private String nombre;
+	private Long id;
 
-    @NotNull(message = "Producto categoría no puede ser nulo")
-    private Long productoCategoriaId;
+	@Size(max = 255)
+	@NotNull(message = "El nombre no puede ser nulo")
+	private String nombre;
 
-    @NotNull(message = "Producto no puede tener una unidad minima nula")
-    private Long unidadMinimaId;
+	@NotNull(message = "Producto categoría no puede ser nulo")
+	private Long productoCategoriaId;
 
-    @NotNull(message = "el campo ingredientePresentacionProductoId no puede ser nulo")
-    private Long ingredientePresentacionProductoId;
+	@NotNull(message = "Producto no puede tener una unidad minima nula")
+	private Long unidadMinimaId;
 
-    @Size(max = 255)
-    private String descripcion;
+	@NotNull(message = "el campo ingredientePresentacionProductoId no puede ser nulo")
+	private Long ingredientePresentacionProductoId;
 
-    @NotNull
-    private Long estadoId;
+	@Size(max = 255)
+	private String descripcion;
 
-    private Long empresaId;
+	@NotNull
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

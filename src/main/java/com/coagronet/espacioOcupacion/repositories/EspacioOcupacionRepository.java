@@ -9,9 +9,8 @@ import com.coagronet.espacioOcupacion.EspacioOcupacion;
 
 public interface EspacioOcupacionRepository extends JpaRepository<EspacioOcupacion, Long> {
 
-    List<EspacioOcupacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<EspacioOcupacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<EspacioOcupacion> findByIdAndEmpresaId(
-            Long id,
-            Long empresaId);
+	Optional<EspacioOcupacion> findByIdAndEmpresaId(Long id, Long empresaId);
+
 }

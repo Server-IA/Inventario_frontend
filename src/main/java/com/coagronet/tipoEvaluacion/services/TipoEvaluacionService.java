@@ -20,53 +20,51 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoEvaluacionService {
 
-        private final TipoEvaluacionRepository tipoEvaluacionRepository;
-        private final TipoEvaluacionMapper tipoEvaluacionMapper;
-        private final EstadoRepository estadoRepository;
+	private final TipoEvaluacionRepository tipoEvaluacionRepository;
 
-        public List<TipoEvaluacionDTO> findAll() {
-                return tipoEvaluacionRepository.findAllByOrderByIdAsc().stream()
-                                .map(tipoEvaluacionMapper::toDTO)
-                                .collect(Collectors.toList());
-        }
+	private final TipoEvaluacionMapper tipoEvaluacionMapper;
 
-        public Optional<TipoEvaluacionDTO> findById(Long requestedId) {
-                return tipoEvaluacionRepository.findById(requestedId)
-                                .map(tipoEvaluacionMapper::toDTO);
-        }
+	private final EstadoRepository estadoRepository;
 
-        public TipoEvaluacionDTO create(TipoEvaluacionDTO tipoEvaluacionDTO) {
-                estadoRepository.findById(tipoEvaluacionDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+	public List<TipoEvaluacionDTO> findAll() {
+		return tipoEvaluacionRepository.findAllByOrderByIdAsc()
+			.stream()
+			.map(tipoEvaluacionMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-                tipoEvaluacionDTO.setId(null);
+	public Optional<TipoEvaluacionDTO> findById(Long requestedId) {
+		return tipoEvaluacionRepository.findById(requestedId).map(tipoEvaluacionMapper::toDTO);
+	}
 
-                return tipoEvaluacionMapper.toDTO(
-                                tipoEvaluacionRepository.save(
-                                                tipoEvaluacionMapper.toEntity(tipoEvaluacionDTO)));
-        }
+	public TipoEvaluacionDTO create(TipoEvaluacionDTO tipoEvaluacionDTO) {
+		estadoRepository.findById(tipoEvaluacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
 
-        public void update(Long requestedId, TipoEvaluacionDTO tipoEvaluacionDTO) {
-                tipoEvaluacionRepository.findById(requestedId)
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+		tipoEvaluacionDTO.setId(null);
 
-                estadoRepository.findById(tipoEvaluacionDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+		return tipoEvaluacionMapper
+			.toDTO(tipoEvaluacionRepository.save(tipoEvaluacionMapper.toEntity(tipoEvaluacionDTO)));
+	}
 
-                tipoEvaluacionDTO.setId(requestedId);
+	public void update(Long requestedId, TipoEvaluacionDTO tipoEvaluacionDTO) {
+		tipoEvaluacionRepository.findById(requestedId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-                tipoEvaluacionMapper.toDTO(
-                                tipoEvaluacionRepository.save(
-                                                tipoEvaluacionMapper.toEntity(tipoEvaluacionDTO)));
+		estadoRepository.findById(tipoEvaluacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
 
-        }
+		tipoEvaluacionDTO.setId(requestedId);
 
-        public void delete(Long id) {
-                tipoEvaluacionRepository.findById(id)
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+		tipoEvaluacionMapper.toDTO(tipoEvaluacionRepository.save(tipoEvaluacionMapper.toEntity(tipoEvaluacionDTO)));
 
-                tipoEvaluacionRepository.deleteById(id);
+	}
 
-        }
+	public void delete(Long id) {
+		tipoEvaluacionRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+		tipoEvaluacionRepository.deleteById(id);
+
+	}
 
 }

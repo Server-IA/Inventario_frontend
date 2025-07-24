@@ -23,4 +23,5 @@ public interface AlmacenMapper {
 	@Mapping(source = "estado.id", target = "estadoId")
 	@Mapping(ignore = true, target = "empresaId")
 	AlmacenDTO toListDto(Almacen almacen);
+
 }

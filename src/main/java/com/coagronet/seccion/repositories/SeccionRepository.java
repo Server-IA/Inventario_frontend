@@ -10,8 +10,8 @@ import java.util.Optional;
 @Repository
 public interface SeccionRepository extends JpaRepository<Seccion, Long> {
 
-    Optional<Seccion> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<Seccion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<Seccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Seccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

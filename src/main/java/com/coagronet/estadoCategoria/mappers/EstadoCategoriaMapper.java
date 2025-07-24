@@ -7,12 +7,8 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface EstadoCategoriaMapper {
 
+	EstadoCategoriaDTO toDTO(EstadoCategoria estadoCategoria);
 
-    EstadoCategoriaDTO toDTO(EstadoCategoria estadoCategoria);
-
-    EstadoCategoria toEntity(EstadoCategoriaDTO estadoCategoriaDTO);
-
-
-
+	EstadoCategoria toEntity(EstadoCategoriaDTO estadoCategoriaDTO);
 
 }

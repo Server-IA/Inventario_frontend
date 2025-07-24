@@ -28,62 +28,61 @@ import com.coagronet.usuarioEstado.UsuarioEstado;
 @RequestMapping("/api/v1/empresas")
 public class EmpresaUsuarioController {
 
-    @Autowired
-    private EmpresaService empresaService;
+	@Autowired
+	private EmpresaService empresaService;
 
-    @Autowired
-    private JwtService jwtService;
+	@Autowired
+	private JwtService jwtService;
 
-    @Autowired
-    private UserRepository userRepository;
+	@Autowired
+	private UserRepository userRepository;
 
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+	@Autowired
+	private UserRoleRepository userRoleRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+	@Autowired
+	private RoleRepository roleRepository;
 
-    @PostMapping("/empresa-usuario")
-    public ResponseEntity<Map<String, Integer>> createEmpresa(
-            @RequestBody EmpresaDTO empresaDTO,
-            @RequestHeader("Authorization") String authorizationHeader) {
+	@PostMapping("/empresa-usuario")
+	public ResponseEntity<Map<String, Integer>> createEmpresa(@RequestBody EmpresaDTO empresaDTO,
+			@RequestHeader("Authorization") String authorizationHeader) {
 
-        // Extraer el token de la cabecera Authorization
-        String token = authorizationHeader.replace("Bearer ", "").trim();
+		// Extraer el token de la cabecera Authorization
+		String token = authorizationHeader.replace("Bearer ", "").trim();
 
-        // Extraer el username desde el JWT usando la instancia de JwtService
-        String username = jwtService.extractUsername(token);
+		// Extraer el username desde el JWT usando la instancia de JwtService
+		String username = jwtService.extractUsername(token);
 
-        // Obtener el usuario asociado usando el username
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+		// Obtener el usuario asociado usando el username
+		User user = userRepository.findByUsername(username)
+			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Convertir DTO a entidad Empresa
-        Empresa empresa = EmpresaMapper.INSTANCE.toEmpresa(empresaDTO);
+		// Convertir DTO a entidad Empresa
+		Empresa empresa = EmpresaMapper.INSTANCE.toEmpresa(empresaDTO);
 
-        // Asociar la persona al usuario
-        empresa.setPersona(user.getPersona());
+		// Asociar la persona al usuario
+		empresa.setPersona(user.getPersona());
 
-        // Guardar la entidad Empresa
-        Empresa savedEmpresa = empresaService.save(empresa);
+		// Guardar la entidad Empresa
+		Empresa savedEmpresa = empresaService.save(empresa);
 
-        // Cambiar el estado del usuario a "4"
-        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
-        userRepository.save(user);
+		// Cambiar el estado del usuario a "4"
+		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
+		userRepository.save(user);
 
-        // Crear y asignar rol de administrador a la empresa creada
-        Role adminRole = roleRepository.findByName("ROLE_ADMINISTRADOR_EMPRESA")
-                .orElseThrow(() -> new RuntimeException("Rol de administrador no encontrado"));
+		// Crear y asignar rol de administrador a la empresa creada
+		Role adminRole = roleRepository.findByName("ROLE_ADMINISTRADOR_EMPRESA")
+			.orElseThrow(() -> new RuntimeException("Rol de administrador no encontrado"));
 
-        UserRole userRole = new UserRole(user, adminRole, savedEmpresa);
-        userRoleRepository.save(userRole);
+		UserRole userRole = new UserRole(user, adminRole, savedEmpresa);
+		userRoleRepository.save(userRole);
 
-        // Crear el mapa para la respuesta
-        Map<String, Integer> response = new HashMap<>();
-        response.put("usuarioEstado", user.getUsuarioEstado().getId().intValue());
+		// Crear el mapa para la respuesta
+		Map<String, Integer> response = new HashMap<>();
+		response.put("usuarioEstado", user.getUsuarioEstado().getId().intValue());
 
-        // Retornar la respuesta con solo el estado del usuario
-        return ResponseEntity.ok(response);
-    }
+		// Retornar la respuesta con solo el estado del usuario
+		return ResponseEntity.ok(response);
+	}
 
 }

@@ -19,55 +19,58 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductoService {
 
-    private final ProductoRepository productoRepository;
-    private final EstadoRepository estadoRepository;
-    private final ProductoMapper productoMapper;
-    private final UserEmpresaService userEmpresaService;
+	private final ProductoRepository productoRepository;
 
-    public List<ProductoDTO> findAll() {
-        return productoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(productoMapper::toDto)
-                .collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<ProductoDTO> findById(Long requestedId) {
-        return productoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(productoMapper::toDto);
-    }
+	private final ProductoMapper productoMapper;
 
-    @Transactional
-    public ProductoDTO create(ProductoDTO productoDTO) {
-        estadoRepository.findById(productoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        productoDTO.setId(null);
-        productoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<ProductoDTO> findAll() {
+		return productoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(productoMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-        return productoMapper.toDto(productoRepository.save(productoMapper.toEntity(productoDTO)));
+	public Optional<ProductoDTO> findById(Long requestedId) {
+		return productoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(productoMapper::toDto);
+	}
 
-    }
+	@Transactional
+	public ProductoDTO create(ProductoDTO productoDTO) {
+		estadoRepository.findById(productoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
 
-    @Transactional
-    public void update(Long requestedId, ProductoDTO productoDTO) {
-        productoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Producto no encontrado o no válido"));
+		productoDTO.setId(null);
+		productoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        estadoRepository.findById(productoDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
+		return productoMapper.toDto(productoRepository.save(productoMapper.toEntity(productoDTO)));
 
-        productoDTO.setId(requestedId);
-        productoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	}
 
-        productoRepository.save(productoMapper.toEntity(productoDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, ProductoDTO productoDTO) {
+		productoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Producto no encontrado o no válido"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        productoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Producto no encontrado o no válido"));
+		estadoRepository.findById(productoDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
 
-        productoRepository.deleteById(requestId);
-    }
+		productoDTO.setId(requestedId);
+		productoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		productoRepository.save(productoMapper.toEntity(productoDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		productoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Producto no encontrado o no válido"));
+
+		productoRepository.deleteById(requestId);
+	}
 
 }

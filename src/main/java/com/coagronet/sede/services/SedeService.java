@@ -24,38 +24,45 @@ import lombok.RequiredArgsConstructor;
 public class SedeService {
 
 	private final SedeMapper sedeMapper;
+
 	private final SedeRepository sedeRepository;
+
 	private final UserEmpresaService userEmpresaService;
+
 	private final GrupoRepository grupoRepository;
+
 	private final TipoSedeRepository tipoSedeRepository;
+
 	private final MunicipioRepository municipioRepository;
+
 	private final EstadoRepository estadoRepository;
 
 	public List<SedeDTO> findAll() {
-		return sedeRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest()).stream()
-				.map(sedeMapper::toListDto)
-				.collect(Collectors.toList());
+		return sedeRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(sedeMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<SedeDTO> findById(Long requestedId) {
 		return sedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(sedeMapper::toListDto);
+			.map(sedeMapper::toListDto);
 	}
 
 	public SedeDTO create(SedeDTO sedeDTO) {
 		grupoRepository.findByIdAndEmpresaId(sedeDTO.getGrupoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El grupo no es válido"));
+			.orElseThrow(() -> new BadRequestException("El grupo no es válido"));
 
 		tipoSedeRepository
-				.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de sede no es válido"));
+			.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de sede no es válido"));
 
 		municipioRepository
-				.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El municipio no es válido"));
+			.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El municipio no es válido"));
 
 		estadoRepository.findById(sedeDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		sedeDTO.setId(null);
 		sedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -65,21 +72,21 @@ public class SedeService {
 
 	public void update(Long requestedId, SedeDTO sedeDTO) {
 		sedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
 
 		grupoRepository.findByIdAndEmpresaId(sedeDTO.getGrupoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El grupo no es válido"));
+			.orElseThrow(() -> new BadRequestException("El grupo no es válido"));
 
 		tipoSedeRepository
-				.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de sede no es válido"));
+			.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de sede no es válido"));
 
 		municipioRepository
-				.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El municipio no es válido"));
+			.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El municipio no es válido"));
 
 		estadoRepository.findById(sedeDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		sedeDTO.setId(requestedId);
 		sedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -89,7 +96,7 @@ public class SedeService {
 
 	public void delete(Long id) {
 		sedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
 
 		sedeRepository.deleteById(id);
 	}

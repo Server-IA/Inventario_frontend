@@ -19,56 +19,60 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PresentacionProductoService {
 
-    private final PresentacionProductoRepository presentacionProductoRepository;
-    private final EstadoRepository estadoRepository;
-    private final PresentacionProductoMapper presentacionProductoMapper;
-    private final UserEmpresaService userEmpresaService;
+	private final PresentacionProductoRepository presentacionProductoRepository;
 
-    public List<PresentacionProductoDTO> findAll() {
-        return presentacionProductoRepository
-                .findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(presentacionProductoMapper::toDto).collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<PresentacionProductoDTO> findById(Long requestId) {
-        return presentacionProductoRepository
-                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(presentacionProductoMapper::toDto);
-    }
+	private final PresentacionProductoMapper presentacionProductoMapper;
 
-    @Transactional
-    public PresentacionProductoDTO create(PresentacionProductoDTO presentacionProductoDTO) {
-        presentacionProductoDTO.setId(null);
-        presentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	private final UserEmpresaService userEmpresaService;
 
-        return presentacionProductoMapper.toDto(
-                presentacionProductoRepository.save(presentacionProductoMapper.toEntity(presentacionProductoDTO)));
-    }
+	public List<PresentacionProductoDTO> findAll() {
+		return presentacionProductoRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(presentacionProductoMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-    @Transactional
-    public void update(Long requestId, PresentacionProductoDTO presentacionProductoDTO) {
-        presentacionProductoRepository
-                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Producto Presentacion no encontrado"));
+	public Optional<PresentacionProductoDTO> findById(Long requestId) {
+		return presentacionProductoRepository
+			.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(presentacionProductoMapper::toDto);
+	}
 
-        estadoRepository.findById(presentacionProductoDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+	@Transactional
+	public PresentacionProductoDTO create(PresentacionProductoDTO presentacionProductoDTO) {
+		presentacionProductoDTO.setId(null);
+		presentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        presentacionProductoDTO.setId(requestId);
-        presentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return presentacionProductoMapper
+			.toDto(presentacionProductoRepository.save(presentacionProductoMapper.toEntity(presentacionProductoDTO)));
+	}
 
-        presentacionProductoRepository.save(presentacionProductoMapper.toEntity(presentacionProductoDTO));
+	@Transactional
+	public void update(Long requestId, PresentacionProductoDTO presentacionProductoDTO) {
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Producto Presentacion no encontrado"));
 
-    }
+		estadoRepository.findById(presentacionProductoDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        presentacionProductoRepository
-                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Producto Presentacion no encontrada"));
+		presentacionProductoDTO.setId(requestId);
+		presentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        presentacionProductoRepository.deleteById(requestId);
-    }
+		presentacionProductoRepository.save(presentacionProductoMapper.toEntity(presentacionProductoDTO));
+
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Producto Presentacion no encontrada"));
+
+		presentacionProductoRepository.deleteById(requestId);
+	}
 
 }

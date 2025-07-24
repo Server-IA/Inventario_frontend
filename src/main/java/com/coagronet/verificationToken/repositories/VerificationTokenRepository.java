@@ -9,9 +9,10 @@ import com.coagronet.verificationToken.VerificationToken;
 
 public interface VerificationTokenRepository extends JpaRepository<VerificationToken, Long> {
 
-    Optional<VerificationToken> findByEmail(String email);
+	Optional<VerificationToken> findByEmail(String email);
 
-    Optional<VerificationToken> findByToken(String token); // Agrega este método
+	Optional<VerificationToken> findByToken(String token); // Agrega este método
 
-    void deleteByExpiryDateBefore(LocalDateTime dateTime);
+	void deleteByExpiryDateBefore(LocalDateTime dateTime);
+
 }

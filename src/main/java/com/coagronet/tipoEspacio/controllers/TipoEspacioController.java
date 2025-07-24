@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class TipoEspacioController {
 
 	private final TipoEspacioService tipoEspacioService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -41,8 +42,9 @@ public class TipoEspacioController {
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<TipoEspacioDTO> findById(@PathVariable Long requestedId) {
-		return tipoEspacioService.findById(requestedId).map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return tipoEspacioService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping

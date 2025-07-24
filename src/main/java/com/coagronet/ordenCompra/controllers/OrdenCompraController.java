@@ -27,7 +27,9 @@ import com.coagronet.ordenCompra.dtos.OrdenCompraDTO;
 public class OrdenCompraController {
 
 	private final OrdenCompraService ordenCompraService;
+
 	private final ArticuloOrdenCompraService articuloOrdenCompraService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -36,24 +38,23 @@ public class OrdenCompraController {
 	}
 
 	@GetMapping("/{ordenCompraId}/articulos")
-	public ResponseEntity<List<ArticuloOrdenCompraDTO>> findArticulosByOrdenCompra(
-			@PathVariable Long ordenCompraId) {
+	public ResponseEntity<List<ArticuloOrdenCompraDTO>> findArticulosByOrdenCompra(@PathVariable Long ordenCompraId) {
 		return ResponseEntity.ok(articuloOrdenCompraService.findAllByOrdenCompraId(ordenCompraId));
 	}
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<OrdenCompraDTO> findById(@PathVariable Long requestedId) {
-		return ordenCompraService.findById(requestedId).map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return ordenCompraService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
 	public ResponseEntity<Void> createOrdenCompra(@Valid @RequestBody OrdenCompraDTO ordenCompraDTO,
 			UriComponentsBuilder ucb) {
 		return ResponseEntity
-				.created(uriBuilderUtil
-						.buildOrdenCompraUri((ordenCompraService.create(ordenCompraDTO)).getId(), ucb))
-				.build();
+			.created(uriBuilderUtil.buildOrdenCompraUri((ordenCompraService.create(ordenCompraDTO)).getId(), ucb))
+			.build();
 	}
 
 	@PutMapping("/{requestedId}")
@@ -68,4 +69,5 @@ public class OrdenCompraController {
 		ordenCompraService.delete(id);
 		return ResponseEntity.noContent().build();
 	}
+
 }

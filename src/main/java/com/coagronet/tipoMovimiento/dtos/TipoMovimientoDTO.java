@@ -11,20 +11,22 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class TipoMovimientoDTO {
-    private Long id;
 
-    @NotBlank(message = "El nombre no puede ser vacío")
-    @Size(max = 255, message = "El nombre no debe superar los 255 caracteres")
-    private String nombre;
+	private Long id;
 
-    @Size(max = 500, message = "La descripcion no debe superar los 500 caracteres")
-    private String descripcion;
+	@NotBlank(message = "El nombre no puede ser vacío")
+	@Size(max = 255, message = "El nombre no debe superar los 255 caracteres")
+	private String nombre;
 
-    @NotNull(message = "El id del estado no puede ser nulo")
-    private Long estadoId;
+	@Size(max = 500, message = "La descripcion no debe superar los 500 caracteres")
+	private String descripcion;
 
-    private Long empresaId;
+	@NotNull(message = "El id del estado no puede ser nulo")
+	private Long estadoId;
 
-    @NotNull(message = "El id del movimiento no puede ser nulo")
-    private Long movimientoId;
+	private Long empresaId;
+
+	@NotNull(message = "El id del movimiento no puede ser nulo")
+	private Long movimientoId;
+
 }

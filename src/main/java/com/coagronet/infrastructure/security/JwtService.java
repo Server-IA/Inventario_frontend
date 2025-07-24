@@ -18,6 +18,7 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
+
 	@Value("${jwt.secret}")
 	private String secret;
 
@@ -39,8 +40,11 @@ public class JwtService {
 	}
 
 	private Claims extractAllClaims(String token) {
-		return (Claims) Jwts.parser().verifyWith((SecretKey) getSigningKey()).build().parseSignedClaims(token)
-				.getPayload();
+		return (Claims) Jwts.parser()
+			.verifyWith((SecretKey) getSigningKey())
+			.build()
+			.parseSignedClaims(token)
+			.getPayload();
 	}
 
 	private Key getSigningKey() {
@@ -68,4 +72,5 @@ public class JwtService {
 	private Date extractExpiration(String token) {
 		return extractClaim(token, Claims::getExpiration);
 	}
+
 }

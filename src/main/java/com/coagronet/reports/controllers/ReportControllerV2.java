@@ -18,27 +18,23 @@ import com.coagronet.reports.services.ReportService;
 @RequestMapping("/api/v2/report")
 public class ReportControllerV2 {
 
-    private final ReportService reportService;
+	private final ReportService reportService;
 
+	public ReportControllerV2(ReportService reportService) {
+		this.reportService = reportService;
+	}
 
+	@PostMapping("/{reportName}")
+	public ResponseEntity<byte[]> generarReporteSQL(@PathVariable String reportName,
+			@RequestBody Map<String, Object> parametros) {
 
-    public ReportControllerV2(ReportService reportService) {
-        this.reportService = reportService;
-    }
+		byte[] reporte = reportService.generarReporte(reportName, parametros);
 
-    @PostMapping("/{reportName}")
-    public ResponseEntity<byte[]> generarReporteSQL(@PathVariable String reportName,
-                                                    @RequestBody Map<String, Object> parametros) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_PDF);
+		headers.setContentDispositionFormData("reporte", reportName + ".pdf");
 
-        byte[] reporte = reportService.generarReporte(reportName, parametros);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("reporte", reportName + ".pdf");
-
-        return new ResponseEntity<>(reporte, headers, HttpStatus.OK);
-    }
-
-
+		return new ResponseEntity<>(reporte, headers, HttpStatus.OK);
+	}
 
 }

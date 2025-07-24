@@ -15,20 +15,21 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CriterioEvaluacionDTO {
 
-    private Long id;
+	private Long id;
 
-    @Size(max = 100, message = "El nombre debe tener máximo 100 caracteres.")
-    @NotBlank(message = "El nombre no puede estar vacío.")
-    private String nombre;
+	@Size(max = 100, message = "El nombre debe tener máximo 100 caracteres.")
+	@NotBlank(message = "El nombre no puede estar vacío.")
+	private String nombre;
 
-    @Size(max = 2048, message = "La descripción debe tener máximo 2048 caracteres.")
-    private String descripcion;
+	@Size(max = 2048, message = "La descripción debe tener máximo 2048 caracteres.")
+	private String descripcion;
 
-    @NotNull(message = "El ID del tipo de evaluación no puede ser nulo.")
-    private Long tipoEvaluacionId;
+	@NotNull(message = "El ID del tipo de evaluación no puede ser nulo.")
+	private Long tipoEvaluacionId;
 
-    @NotNull(message = "El ID del estado no puede ser nulo.")
-    private Long estadoId;
+	@NotNull(message = "El ID del estado no puede ser nulo.")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
+
 }

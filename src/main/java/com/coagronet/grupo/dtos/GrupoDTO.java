@@ -28,4 +28,5 @@ public class GrupoDTO {
 
 	@NotNull(message = "El estado es obligatorio.")
 	private Long estadoId;
+
 }

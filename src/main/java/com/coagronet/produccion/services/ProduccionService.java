@@ -20,54 +20,57 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProduccionService {
 
-    private final ProduccionRepository produccionRepository;
-    private final ProduccionMapper produccionMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final ProduccionRepository produccionRepository;
 
-    public List<ProduccionDTO> findAll() {
-        return produccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(produccionMapper::toDto)
-                .collect(Collectors.toList());
-    }
+	private final ProduccionMapper produccionMapper;
 
-    public Optional<ProduccionDTO> findById(Long requestedId) {
-        return produccionRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(produccionMapper::toDto);
-    }
+	private final EstadoRepository estadoRepository;
 
-    @Transactional
-    public ProduccionDTO create(ProduccionDTO produccionDTO) {
-        estadoRepository.findById(produccionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        produccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<ProduccionDTO> findAll() {
+		return produccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(produccionMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-        return produccionMapper.toDto(produccionRepository.save(produccionMapper.toEntity(produccionDTO)));
-    }
+	public Optional<ProduccionDTO> findById(Long requestedId) {
+		return produccionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(produccionMapper::toDto);
+	}
 
-    @Transactional
-    public void update(Long requestedId, ProduccionDTO produccionDTO) {
-        produccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Produccion no encontrada o no válida"));
+	@Transactional
+	public ProduccionDTO create(ProduccionDTO produccionDTO) {
+		estadoRepository.findById(produccionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        estadoRepository.findById(produccionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		produccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        produccionDTO.setId(requestedId);
-        produccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return produccionMapper.toDto(produccionRepository.save(produccionMapper.toEntity(produccionDTO)));
+	}
 
-        produccionRepository.save(produccionMapper.toEntity(produccionDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, ProduccionDTO produccionDTO) {
+		produccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Produccion no encontrada o no válida"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        produccionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Produccion no encontrado o no válido"));
+		estadoRepository.findById(produccionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        produccionRepository.deleteById(requestId);
-    }
+		produccionDTO.setId(requestedId);
+		produccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		produccionRepository.save(produccionMapper.toEntity(produccionDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		produccionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Produccion no encontrado o no válido"));
+
+		produccionRepository.deleteById(requestId);
+	}
 
 }

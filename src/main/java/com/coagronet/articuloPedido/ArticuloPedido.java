@@ -39,19 +39,23 @@ public class ArticuloPedido {
 	private Double cantidad;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "pei_pedido_id", referencedColumnName = "ped_id", nullable = false, foreignKey = @ForeignKey(name = "pedido_itempedidoped_id_fkey"))
+	@JoinColumn(name = "pei_pedido_id", referencedColumnName = "ped_id", nullable = false,
+			foreignKey = @ForeignKey(name = "pedido_itempedidoped_id_fkey"))
 	private Pedido pedido;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "pei_producto_presentacion_id", referencedColumnName = "prp_id", nullable = false, foreignKey = @ForeignKey(name = "pedido_itemproducto_presentacionprp_id_fkey"))
+	@JoinColumn(name = "pei_producto_presentacion_id", referencedColumnName = "prp_id", nullable = false,
+			foreignKey = @ForeignKey(name = "pedido_itemproducto_presentacionprp_id_fkey"))
 	private PresentacionProducto presentacionProducto;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "pei_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "pedido_itemestadoest_id_fkey"))
+	@JoinColumn(name = "pei_estado_id", referencedColumnName = "est_id", nullable = false,
+			foreignKey = @ForeignKey(name = "pedido_itemestadoest_id_fkey"))
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "pei_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "pedido_item_pei_empresa_id_fkey"))
+	@JoinColumn(name = "pei_empresa_id", referencedColumnName = "emp_id", nullable = false,
+			foreignKey = @ForeignKey(name = "pedido_item_pei_empresa_id_fkey"))
 	private Empresa empresa;
 
 }

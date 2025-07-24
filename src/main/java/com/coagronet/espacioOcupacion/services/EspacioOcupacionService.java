@@ -19,57 +19,61 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EspacioOcupacionService {
 
-    private final EspacioOcupacionRepository espacioOcupacionRepository;
-    private final EstadoRepository estadoRepository;
-    private final EspacioOcupacionMapper espacioOcupacionMapper;
-    private final UserEmpresaService userEmpresaService;
+	private final EspacioOcupacionRepository espacioOcupacionRepository;
 
-    public List<EspacioOcupacionDTO> findAll() {
-        return espacioOcupacionRepository
-                .findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(espacioOcupacionMapper::toDTO).collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<EspacioOcupacionDTO> findById(Long requestedId) {
-        return espacioOcupacionRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(espacioOcupacionMapper::toDTO);
-    }
+	private final EspacioOcupacionMapper espacioOcupacionMapper;
 
-    @Transactional
-    public EspacioOcupacionDTO create(EspacioOcupacionDTO espacioOcupacionDTO) {
-        estadoRepository.findById(espacioOcupacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        espacioOcupacionDTO.setId(null);
-        espacioOcupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<EspacioOcupacionDTO> findAll() {
+		return espacioOcupacionRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(espacioOcupacionMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        return espacioOcupacionMapper
-                .toDTO(espacioOcupacionRepository.save(espacioOcupacionMapper.toEntity(espacioOcupacionDTO)));
-    }
+	public Optional<EspacioOcupacionDTO> findById(Long requestedId) {
+		return espacioOcupacionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(espacioOcupacionMapper::toDTO);
+	}
 
-    @Transactional
-    public void update(Long requestedId, EspacioOcupacionDTO espacioOcupacionDTO) {
-        espacioOcupacionRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("EspacioOcupacion no encontrada o no válida"));
+	@Transactional
+	public EspacioOcupacionDTO create(EspacioOcupacionDTO espacioOcupacionDTO) {
+		estadoRepository.findById(espacioOcupacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        estadoRepository.findById(espacioOcupacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		espacioOcupacionDTO.setId(null);
+		espacioOcupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        espacioOcupacionDTO.setId(requestedId);
-        espacioOcupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return espacioOcupacionMapper
+			.toDTO(espacioOcupacionRepository.save(espacioOcupacionMapper.toEntity(espacioOcupacionDTO)));
+	}
 
-        espacioOcupacionRepository.save(espacioOcupacionMapper.toEntity(espacioOcupacionDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, EspacioOcupacionDTO espacioOcupacionDTO) {
+		espacioOcupacionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("EspacioOcupacion no encontrada o no válida"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        espacioOcupacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Proveedor no encontrado o no válido"));
+		estadoRepository.findById(espacioOcupacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        espacioOcupacionRepository.deleteById(requestId);
-    }
+		espacioOcupacionDTO.setId(requestedId);
+		espacioOcupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		espacioOcupacionRepository.save(espacioOcupacionMapper.toEntity(espacioOcupacionDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		espacioOcupacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Proveedor no encontrado o no válido"));
+
+		espacioOcupacionRepository.deleteById(requestId);
+	}
 
 }

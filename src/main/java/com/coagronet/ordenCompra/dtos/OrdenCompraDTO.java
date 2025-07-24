@@ -16,21 +16,22 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrdenCompraDTO {
 
-    private Long id;
+	private Long id;
 
-    private LocalDateTime fechaHora;
+	private LocalDateTime fechaHora;
 
-    @NotNull(message = "El ID del pedido no puede ser nulo.")
-    private Long pedidoId;
+	@NotNull(message = "El ID del pedido no puede ser nulo.")
+	private Long pedidoId;
 
-    @NotNull(message = "El ID del proveedor no puede ser nulo.")
-    private Long proveedorId;
+	@NotNull(message = "El ID del proveedor no puede ser nulo.")
+	private Long proveedorId;
 
-    @Size(max = 2048, message = "La descripción debe tener máximo 2048 caracteres.")
-    private String descripcion;
+	@Size(max = 2048, message = "La descripción debe tener máximo 2048 caracteres.")
+	private String descripcion;
 
-    @NotNull(message = "El ID del estado no puede ser nulo.")
-    private Long estadoId;
+	@NotNull(message = "El ID del estado no puede ser nulo.")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
+
 }

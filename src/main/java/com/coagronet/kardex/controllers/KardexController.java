@@ -24,49 +24,43 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class KardexController {
 
-    private final KardexService kardexService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final KardexService kardexService;
 
+	private final UriBuilderUtil uriBuilderUtil;
 
+	@GetMapping
+	public ResponseEntity<List<KardexDTO>> findAll() {
+		List<KardexDTO> kardexDTOList = kardexService.findAll();
 
-    @GetMapping
-    public ResponseEntity<List<KardexDTO>> findAll () {
-        List<KardexDTO> kardexDTOList = kardexService.findAll();
+		return kardexDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(kardexDTOList);
 
-        return kardexDTOList.isEmpty()?
-                ResponseEntity.noContent().build()
-                : ResponseEntity.ok(kardexDTOList);
+	}
 
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<KardexDTO> findById(@PathVariable Long requestedId) {
+		return kardexService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<KardexDTO> findById (@PathVariable Long requestedId) {
-        return kardexService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+	}
 
-    }
+	@PostMapping
+	public ResponseEntity<Void> crearKardex(@RequestBody @Valid KardexDTO kardexDTO, UriComponentsBuilder ucb) {
+		KardexDTO savedKardexDTO = kardexService.create(kardexDTO);
 
+		URI locationOfNewKardex = uriBuilderUtil.buildKardexUri(savedKardexDTO.getId(), ucb);
+		return ResponseEntity.created(locationOfNewKardex).build();
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> crearKardex(@RequestBody @Valid KardexDTO kardexDTO, UriComponentsBuilder ucb) {
-        KardexDTO savedKardexDTO = kardexService.create(kardexDTO);
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> actualizarKardex(@PathVariable Long requestedId, @RequestBody KardexDTO kardexDTO) {
 
-        URI locationOfNewKardex = uriBuilderUtil.buildKardexUri(savedKardexDTO.getId(), ucb);
-        return ResponseEntity.created(locationOfNewKardex).build();
-    }
+		kardexService.update(requestedId, kardexDTO);
+		return ResponseEntity.noContent().build();
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> actualizarKardex(@PathVariable Long requestedId,
-                                                     @RequestBody KardexDTO kardexDTO) {
-
-        kardexService.update(requestedId, kardexDTO);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{requestedId}")
-    public ResponseEntity<Void> eliminarKardex(@PathVariable Long requestedId) {
-        kardexService.delete(requestedId);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{requestedId}")
+	public ResponseEntity<Void> eliminarKardex(@PathVariable Long requestedId) {
+		kardexService.delete(requestedId);
+		return ResponseEntity.noContent().build();
+	}
 
 }

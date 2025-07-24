@@ -11,19 +11,12 @@ import com.coagronet.pais.Pais;
 @Repository
 public interface PaisRepository extends JpaRepository<Pais, Long> {
 
-        Optional<Pais> findByIdAndEmpresaId(
-                        Long id,
-                        Long empresaId);
+	Optional<Pais> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        List<Pais> findByEmpresaIdOrderByIdAsc(
-                        Long empresaId);
+	List<Pais> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-        List<Pais> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
-                        Long empresaId,
-                        Long estadoId);
+	List<Pais> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
 
-        boolean existsByIdAndEmpresaId(
-                        Long id,
-                        Long empresaId);
+	boolean existsByIdAndEmpresaId(Long id, Long empresaId);
 
 }

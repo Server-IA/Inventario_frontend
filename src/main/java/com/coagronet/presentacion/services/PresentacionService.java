@@ -18,54 +18,57 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PresentacionService {
 
-    private final PresentacionRepository presentacionRepository;
-    private final PresentacionMapper presentacionMapper;
-    private final UserEmpresaService userEmpresaService;
-    private final EstadoRepository estadoRepository;
+	private final PresentacionRepository presentacionRepository;
 
-    public List<PresentacionDTO> findAll() {
-        return presentacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(presentacionMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final PresentacionMapper presentacionMapper;
 
-    public Optional<PresentacionDTO> findById(Long requestedId) {
-        return presentacionRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(presentacionMapper::toDTO);
-    }
+	private final UserEmpresaService userEmpresaService;
 
-    @Transactional
-    public PresentacionDTO create(PresentacionDTO presentacionDTO) {
-        presentacionDTO.setId(null);
-        presentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	private final EstadoRepository estadoRepository;
 
-        return presentacionMapper.toDTO(presentacionRepository.save(presentacionMapper.toEntity(presentacionDTO)));
-    }
+	public List<PresentacionDTO> findAll() {
+		return presentacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(presentacionMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-    @Transactional
-    public void update(Long requestId, PresentacionDTO presentacionDTO) {
-        presentacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Presentacion no encontrada."));
+	public Optional<PresentacionDTO> findById(Long requestedId) {
+		return presentacionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(presentacionMapper::toDTO);
+	}
 
-        estadoRepository.findById(presentacionDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+	@Transactional
+	public PresentacionDTO create(PresentacionDTO presentacionDTO) {
+		presentacionDTO.setId(null);
+		presentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        presentacionDTO.setId(requestId);
-        presentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return presentacionMapper.toDTO(presentacionRepository.save(presentacionMapper.toEntity(presentacionDTO)));
+	}
 
-        presentacionRepository.save(presentacionMapper.toEntity(presentacionDTO));
+	@Transactional
+	public void update(Long requestId, PresentacionDTO presentacionDTO) {
+		presentacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Presentacion no encontrada."));
 
-    }
+		estadoRepository.findById(presentacionDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        presentacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Presentacion no encontrada."));
+		presentacionDTO.setId(requestId);
+		presentacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        presentacionRepository.deleteById(requestId);
+		presentacionRepository.save(presentacionMapper.toEntity(presentacionDTO));
 
-    }
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		presentacionRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Presentacion no encontrada."));
+
+		presentacionRepository.deleteById(requestId);
+
+	}
 
 }

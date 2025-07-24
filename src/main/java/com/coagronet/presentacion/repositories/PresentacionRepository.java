@@ -9,9 +9,8 @@ import java.util.Optional;
 
 public interface PresentacionRepository extends JpaRepository<Presentacion, Long> {
 
-    List<Presentacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Presentacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<Presentacion> findByIdAndEmpresaId(Long id, Long empresaId);
-
+	Optional<Presentacion> findByIdAndEmpresaId(Long id, Long empresaId);
 
 }

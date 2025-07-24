@@ -24,88 +24,82 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloInventarioService {
 
-        private final UserEmpresaService userEmpresaService;
-        private final ArticuloInventarioMapper articuloInventarioMapper;
-        private final ArticuloInventarioRepository articuloInventarioRepository;
-        private final InventarioRepository inventarioRepository;
-        private final ArticuloKardexRepository articuloKardexRepository;
-        private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
 
-        public List<ArticuloInventarioDTO> findAll() {
-                return articuloInventarioRepository
-                                .findByEmpresaIdOrderByIdAsc(
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .stream().map(articuloInventarioMapper::toDTO).collect(Collectors.toList());
-        }
+	private final ArticuloInventarioMapper articuloInventarioMapper;
 
-        public Optional<ArticuloInventarioDTO> findById(Long requestedId) {
-                return articuloInventarioRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .map(articuloInventarioMapper::toDTO);
-        }
+	private final ArticuloInventarioRepository articuloInventarioRepository;
 
-        public ArticuloInventarioDTO create(ArticuloInventarioDTO articuloInventarioDTO) {
-                inventarioRepository
-                                .findByIdAndEmpresaId(articuloInventarioDTO.getInventarioId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El campo inventarioId no es válido."));
+	private final InventarioRepository inventarioRepository;
 
-                articuloKardexRepository
-                                .findByidentificadorProductoAndEmpresaId(
-                                                articuloInventarioDTO.getIdentificadorProducto(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException(
-                                                "El campo identificadorProducto no es válido."));
+	private final ArticuloKardexRepository articuloKardexRepository;
 
-                estadoRepository.findById(articuloInventarioDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+	private final EstadoRepository estadoRepository;
 
-                articuloInventarioDTO.setId(null);
-                articuloInventarioDTO.setEmpresaId(
-                                userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<ArticuloInventarioDTO> findAll() {
+		return articuloInventarioRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(articuloInventarioMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-                return articuloInventarioMapper
-                                .toDTO(articuloInventarioRepository
-                                                .save(articuloInventarioMapper.toEntity(articuloInventarioDTO)));
-        }
+	public Optional<ArticuloInventarioDTO> findById(Long requestedId) {
+		return articuloInventarioRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(articuloInventarioMapper::toDTO);
+	}
 
-        public void update(Long requestedId, ArticuloInventarioDTO articuloInventarioDTO) {
-                articuloInventarioRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+	public ArticuloInventarioDTO create(ArticuloInventarioDTO articuloInventarioDTO) {
+		inventarioRepository
+			.findByIdAndEmpresaId(articuloInventarioDTO.getInventarioId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo inventarioId no es válido."));
 
-                inventarioRepository
-                                .findByIdAndEmpresaId(articuloInventarioDTO.getInventarioId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El campo inventarioId no es válido."));
+		articuloKardexRepository
+			.findByidentificadorProductoAndEmpresaId(articuloInventarioDTO.getIdentificadorProducto(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo identificadorProducto no es válido."));
 
-                articuloKardexRepository
-                                .findByidentificadorProductoAndEmpresaId(
-                                                articuloInventarioDTO.getIdentificadorProducto(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException(
-                                                "El campo identificadorProducto no es válido."));
+		estadoRepository.findById(articuloInventarioDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
 
-                estadoRepository.findById(articuloInventarioDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+		articuloInventarioDTO.setId(null);
+		articuloInventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-                articuloInventarioDTO.setId(requestedId);
-                articuloInventarioDTO.setEmpresaId(
-                                userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return articuloInventarioMapper
+			.toDTO(articuloInventarioRepository.save(articuloInventarioMapper.toEntity(articuloInventarioDTO)));
+	}
 
-                articuloInventarioRepository.save(articuloInventarioMapper.toEntity(articuloInventarioDTO));
-        }
+	public void update(Long requestedId, ArticuloInventarioDTO articuloInventarioDTO) {
+		articuloInventarioRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        public void delete(Long id) {
-                articuloInventarioRepository
-                                .findByIdAndEmpresaId(id,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException(
-                                                "El artículo de inventario no fue encontrado."));
+		inventarioRepository
+			.findByIdAndEmpresaId(articuloInventarioDTO.getInventarioId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo inventarioId no es válido."));
 
-                articuloInventarioRepository.deleteById(id);
-        }
+		articuloKardexRepository
+			.findByidentificadorProductoAndEmpresaId(articuloInventarioDTO.getIdentificadorProducto(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo identificadorProducto no es válido."));
+
+		estadoRepository.findById(articuloInventarioDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+
+		articuloInventarioDTO.setId(requestedId);
+		articuloInventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		articuloInventarioRepository.save(articuloInventarioMapper.toEntity(articuloInventarioDTO));
+	}
+
+	public void delete(Long id) {
+		articuloInventarioRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El artículo de inventario no fue encontrado."));
+
+		articuloInventarioRepository.deleteById(id);
+	}
 
 }

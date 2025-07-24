@@ -11,8 +11,8 @@ import com.coagronet.ingrediente.Ingrediente;
 @Repository
 public interface IngredienteRepository extends JpaRepository<Ingrediente, Long> {
 
-    Optional<Ingrediente> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<Ingrediente> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<Ingrediente> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Ingrediente> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

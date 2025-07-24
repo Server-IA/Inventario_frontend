@@ -49,4 +49,5 @@ public class BloqueDTO {
 	private String direccion;
 
 	private Long empresaId;
+
 }

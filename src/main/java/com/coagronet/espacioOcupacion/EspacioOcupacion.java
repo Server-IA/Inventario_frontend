@@ -30,32 +30,33 @@ import lombok.NoArgsConstructor;
 @Table(name = "espacio_ocupacion")
 public class EspacioOcupacion {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "espacio_ocupacion_generator")
-    @SequenceGenerator(name = "espacio_ocupacion_generator", sequenceName = "espacio_ocupacion_eso_id_seq", allocationSize = 1)
-    @Column(name = "eso_id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "espacio_ocupacion_generator")
+	@SequenceGenerator(name = "espacio_ocupacion_generator", sequenceName = "espacio_ocupacion_eso_id_seq",
+			allocationSize = 1)
+	@Column(name = "eso_id", nullable = false)
+	private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eso_espacio_id", referencedColumnName = "esp_id")
-    private Espacio espacio;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eso_espacio_id", referencedColumnName = "esp_id")
+	private Espacio espacio;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eso_actividad_ocupacion_id", referencedColumnName = "aco_id")
-    private Ocupacion ocupacion;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eso_actividad_ocupacion_id", referencedColumnName = "aco_id")
+	private Ocupacion ocupacion;
 
-    @Column(name = "eso_fecha_inicio")
-    private LocalDateTime fechaInicio;
+	@Column(name = "eso_fecha_inicio")
+	private LocalDateTime fechaInicio;
 
-    @Column(name = "eso_fecha_fin")
-    private LocalDateTime fechaFin;
+	@Column(name = "eso_fecha_fin")
+	private LocalDateTime fechaFin;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eso_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eso_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eso_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eso_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
 }

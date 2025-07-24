@@ -29,26 +29,29 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Ingrediente {
 
-    @Id
-    @SequenceGenerator(name = "ingrediente_generator", sequenceName = "ingrediente_ing_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ingrediente_generator")
-    @Column(name = "ing_id")
-    private Long id;
+	@Id
+	@SequenceGenerator(name = "ingrediente_generator", sequenceName = "ingrediente_ing_id_seq", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ingrediente_generator")
+	@Column(name = "ing_id")
+	private Long id;
 
-    @NotBlank
-    @Column(name = "ing_nombre", nullable = false, length = 255)
-    private String nombre;
+	@NotBlank
+	@Column(name = "ing_nombre", nullable = false, length = 255)
+	private String nombre;
 
-    @Column(name = "ing_descripcion", length = 255)
-    private String descripcion;
+	@Column(name = "ing_descripcion", length = 255)
+	private String descripcion;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ing_estado_id", nullable = false, foreignKey = @ForeignKey(name = "ingrediente_ing_estado_id_fkey"))
-    private Estado estado;
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ing_estado_id", nullable = false,
+			foreignKey = @ForeignKey(name = "ingrediente_ing_estado_id_fkey"))
+	private Estado estado;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ing_empresa_id", nullable = false, foreignKey = @ForeignKey(name = "ingrediente_ing_empresa_id_fkey"))
-    private Empresa empresa;
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "ing_empresa_id", nullable = false,
+			foreignKey = @ForeignKey(name = "ingrediente_ing_empresa_id_fkey"))
+	private Empresa empresa;
+
 }

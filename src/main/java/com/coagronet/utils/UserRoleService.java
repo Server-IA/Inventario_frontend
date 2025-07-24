@@ -24,52 +24,55 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserRoleService {
 
-    private static final String BEARER_PREFIX = "Bearer ";
+	private static final String BEARER_PREFIX = "Bearer ";
 
-    private final JwtUtil jwtUtil;
-    private final RoleRepository roleRepository;
+	private final JwtUtil jwtUtil;
 
-    /**
-     * Extrae el JWT de la cabecera Authorization, valida el token,
-     * y retorna el nombre del rol asociado (como String).
-     */
-    public String getRoleFromCurrentRequest() {
-        String token = resolveTokenFromHeader();
-        Claims claims = parseClaims(token);
+	private final RoleRepository roleRepository;
 
-        Long roleId = claims.get("rolId", Long.class);
-        if (roleId == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token sin claim 'rolId'");
-        }
+	/**
+	 * Extrae el JWT de la cabecera Authorization, valida el token, y retorna el nombre
+	 * del rol asociado (como String).
+	 */
+	public String getRoleFromCurrentRequest() {
+		String token = resolveTokenFromHeader();
+		Claims claims = parseClaims(token);
 
-        return roleRepository.findById(roleId)
-                .map(Role::getName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
-    }
+		Long roleId = claims.get("rolId", Long.class);
+		if (roleId == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token sin claim 'rolId'");
+		}
 
-    private String resolveTokenFromHeader() {
-        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs == null) {
-            log.error("No se pudo obtener RequestContext");
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error en contexto de solicitud");
-        }
+		return roleRepository.findById(roleId)
+			.map(Role::getName)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+	}
 
-        HttpServletRequest request = attrs.getRequest();
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+	private String resolveTokenFromHeader() {
+		ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+		if (attrs == null) {
+			log.error("No se pudo obtener RequestContext");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error en contexto de solicitud");
+		}
 
-        if (!StringUtils.hasText(header) || !header.startsWith(BEARER_PREFIX)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Falta o es inválida la cabecera Authorization");
-        }
+		HttpServletRequest request = attrs.getRequest();
+		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        return header.substring(BEARER_PREFIX.length());
-    }
+		if (!StringUtils.hasText(header) || !header.startsWith(BEARER_PREFIX)) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Falta o es inválida la cabecera Authorization");
+		}
 
-    private Claims parseClaims(@NotNull String token) {
-        try {
-            return jwtUtil.extractAllClaims(token);
-        } catch (JwtException ex) {
-            log.warn("JWT inválido o expirado: {}", ex.getMessage());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token JWT inválido o expirado");
-        }
-    }
+		return header.substring(BEARER_PREFIX.length());
+	}
+
+	private Claims parseClaims(@NotNull String token) {
+		try {
+			return jwtUtil.extractAllClaims(token);
+		}
+		catch (JwtException ex) {
+			log.warn("JWT inválido o expirado: {}", ex.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token JWT inválido o expirado");
+		}
+	}
+
 }

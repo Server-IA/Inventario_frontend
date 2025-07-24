@@ -18,100 +18,95 @@ import com.coagronet.verificationToken.repositories.VerificationTokenRepository;
 @Service
 public class EmailVerificationService {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailVerificationService.class);
+	private static final Logger logger = LoggerFactory.getLogger(EmailVerificationService.class);
 
-    private final VerificationTokenRepository verificationTokenRepository;
-    private final JavaMailSender mailSender;
+	private final VerificationTokenRepository verificationTokenRepository;
 
-    @Value("${app.verification-url}")
-    private String verificationUrl;
+	private final JavaMailSender mailSender;
 
-    @Value("${app.reset-password-url}")
-    private String resetPasswordUrl;
+	@Value("${app.verification-url}")
+	private String verificationUrl;
 
-    public EmailVerificationService(VerificationTokenRepository verificationTokenRepository,
-            JavaMailSender mailSender) {
-        this.verificationTokenRepository = verificationTokenRepository;
-        this.mailSender = mailSender;
-    }
+	@Value("${app.reset-password-url}")
+	private String resetPasswordUrl;
 
-    public String createVerificationToken(String email) {
+	public EmailVerificationService(VerificationTokenRepository verificationTokenRepository,
+			JavaMailSender mailSender) {
+		this.verificationTokenRepository = verificationTokenRepository;
+		this.mailSender = mailSender;
+	}
 
-        Optional<VerificationToken> existing = verificationTokenRepository.findByEmail(email);
+	public String createVerificationToken(String email) {
 
-        // ⬇️ NUEVO chequeo de “casi expirado”
-        boolean aboutToExpire = existing.isPresent() &&
-                existing.get().getExpiryDate()
-                        .isBefore(LocalDateTime.now().plusMinutes(15));
+		Optional<VerificationToken> existing = verificationTokenRepository.findByEmail(email);
 
-        // Si existe, no está expirado y aún le queda más de 15 min de vida → reutilizar
-        if (existing.isPresent() && !existing.get().isExpired() && !aboutToExpire) {
-            return existing.get().getToken();
-        }
+		// ⬇️ NUEVO chequeo de “casi expirado”
+		boolean aboutToExpire = existing.isPresent()
+				&& existing.get().getExpiryDate().isBefore(LocalDateTime.now().plusMinutes(15));
 
-        // Caso contrario: crear o renovar el token
-        String token = UUID.randomUUID().toString();
+		// Si existe, no está expirado y aún le queda más de 15 min de vida → reutilizar
+		if (existing.isPresent() && !existing.get().isExpired() && !aboutToExpire) {
+			return existing.get().getToken();
+		}
 
-        VerificationToken entity = existing.orElse(
-                VerificationToken.builder().email(email).build());
+		// Caso contrario: crear o renovar el token
+		String token = UUID.randomUUID().toString();
 
-        entity.setToken(token);
-        entity.setExpiryDate(LocalDateTime.now().plusHours(24));
+		VerificationToken entity = existing.orElse(VerificationToken.builder().email(email).build());
 
-        verificationTokenRepository.save(entity);
-        return token;
-    }
+		entity.setToken(token);
+		entity.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-    public boolean validateToken(String token) {
-        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
+		verificationTokenRepository.save(entity);
+		return token;
+	}
 
-        return tokenOptional
-                .filter(t -> !t.isExpired())
-                .map(t -> {
-                    verificationTokenRepository.delete(t);
-                    logger.info("Token validated and deleted for email: {}", t.getEmail());
-                    return true;
-                })
-                .orElse(false);
-    }
+	public boolean validateToken(String token) {
+		Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
 
-    public String getEmailAndInvalidateToken(String token) {
-        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
+		return tokenOptional.filter(t -> !t.isExpired()).map(t -> {
+			verificationTokenRepository.delete(t);
+			logger.info("Token validated and deleted for email: {}", t.getEmail());
+			return true;
+		}).orElse(false);
+	}
 
-        return tokenOptional
-                .filter(t -> !t.isExpired())
-                .map(t -> {
-                    verificationTokenRepository.delete(t);
-                    logger.info("Token used and deleted for email: {}", t.getEmail());
-                    return t.getEmail();
-                })
-                .orElse(null);
-    }
+	public String getEmailAndInvalidateToken(String token) {
+		Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
 
-    public void sendVerificationEmail(String email, String token) {
-        String subject = "Verify your account";
-        String text = "Click the link to verify your account: " + verificationUrl + "?token=" + token;
-        sendEmail(email, subject, text);
-    }
+		return tokenOptional.filter(t -> !t.isExpired()).map(t -> {
+			verificationTokenRepository.delete(t);
+			logger.info("Token used and deleted for email: {}", t.getEmail());
+			return t.getEmail();
+		}).orElse(null);
+	}
 
-    public void sendResetPasswordEmail(String email, String token) {
-        String subject = "Reset your password";
-        String text = "Click the link to reset your password: " + resetPasswordUrl + "?token=" + token;
-        sendEmail(email, subject, text);
-    }
+	public void sendVerificationEmail(String email, String token) {
+		String subject = "Verify your account";
+		String text = "Click the link to verify your account: " + verificationUrl + "?token=" + token;
+		sendEmail(email, subject, text);
+	}
 
-    private void sendEmail(String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
+	public void sendResetPasswordEmail(String email, String token) {
+		String subject = "Reset your password";
+		String text = "Click the link to reset your password: " + resetPasswordUrl + "?token=" + token;
+		sendEmail(email, subject, text);
+	}
 
-        try {
-            mailSender.send(message);
-            logger.info("Email sent to {} with subject: {}", to, subject);
-        } catch (MailException e) {
-            logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
-            // Podrías lanzar una excepción customizada si quieres que el error suba
-        }
-    }
+	private void sendEmail(String to, String subject, String text) {
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setTo(to);
+		message.setSubject(subject);
+		message.setText(text);
+
+		try {
+			mailSender.send(message);
+			logger.info("Email sent to {} with subject: {}", to, subject);
+		}
+		catch (MailException e) {
+			logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+			// Podrías lanzar una excepción customizada si quieres que el error suba
+		}
+	}
+
 }

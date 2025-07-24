@@ -11,8 +11,8 @@ import com.coagronet.articuloInventario.ArticuloInventario;
 @Repository
 public interface ArticuloInventarioRepository extends JpaRepository<ArticuloInventario, Long> {
 
-    Optional<ArticuloInventario> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<ArticuloInventario> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<ArticuloInventario> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<ArticuloInventario> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

@@ -31,36 +31,36 @@ import lombok.Setter;
 @Table(name = "producto", schema = "public")
 public class Producto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_generator")
-    @SequenceGenerator(name = "producto_generator", sequenceName = "producto_pro_id_seq", allocationSize = 1)
-    @Column(name = "pro_id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_generator")
+	@SequenceGenerator(name = "producto_generator", sequenceName = "producto_pro_id_seq", allocationSize = 1)
+	@Column(name = "pro_id", nullable = false)
+	private Long id;
 
-    @Column(name = "pro_nombre")
-    private String nombre;
+	@Column(name = "pro_nombre")
+	private String nombre;
 
-    @Column(name = "pro_descripcion")
-    private String descripcion;
+	@Column(name = "pro_descripcion")
+	private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_producto_categoria_id", referencedColumnName = "prc_id")
-    private ProductoCategoria productoCategoria;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pro_producto_categoria_id", referencedColumnName = "prc_id")
+	private ProductoCategoria productoCategoria;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_unidad_minima_id", referencedColumnName = "uni_id")
-    private Unidad unidad;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pro_unidad_minima_id", referencedColumnName = "uni_id")
+	private Unidad unidad;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_producto_presentacion_ingrediente_id", referencedColumnName = "ppi_id")
-    private IngredientePresentacionProducto ingredientePresentacionProducto;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pro_producto_presentacion_ingrediente_id", referencedColumnName = "ppi_id")
+	private IngredientePresentacionProducto ingredientePresentacionProducto;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
 }

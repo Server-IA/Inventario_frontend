@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public interface OcupacionRepository extends JpaRepository<Ocupacion, Long> {
 
-    Optional<Ocupacion> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<Ocupacion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<Ocupacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Ocupacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

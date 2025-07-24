@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class SedeController {
 
 	private final SedeService sedeService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping

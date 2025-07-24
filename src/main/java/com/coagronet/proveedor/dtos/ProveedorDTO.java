@@ -17,35 +17,38 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProveedorDTO {
-    private Long id;
 
-    private Long empresaId;
+	private Long id;
 
-    private LocalDateTime fechaCreacion;
+	private Long empresaId;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
+	private LocalDateTime fechaCreacion;
 
-    @NotNull(message = "El tipo de identificación no puede ser nulo")
-    private Long tipoIdentificacionId;
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
 
-    @NotNull(message = "El nombre no puede ser nulo")
-    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
-    private String nombre;
+	@NotNull(message = "El tipo de identificación no puede ser nulo")
+	private Long tipoIdentificacionId;
 
-    @Size(max = 13, message = "El número de celular no puede exceder los 13 caracteres")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "El número de celular debe tener entre 10 y 13 dígitos y puede comenzar con +")
-    private String celular;
+	@NotNull(message = "El nombre no puede ser nulo")
+	@Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
+	private String nombre;
 
-    @Size(max = 255, message = "El nombre del contacto no puede exceder los 255 caracteres")
-    private String contacto;
+	@Size(max = 13, message = "El número de celular no puede exceder los 13 caracteres")
+	@Pattern(regexp = "^\\+?[0-9]{10,15}$",
+			message = "El número de celular debe tener entre 10 y 13 dígitos y puede comenzar con +")
+	private String celular;
 
-    @NotNull
-    @Email(message = "El correo no es válido")
-    @Size(max = 100, message = "El correo no puede exceder los 100 caracteres")
-    private String correo;
+	@Size(max = 255, message = "El nombre del contacto no puede exceder los 255 caracteres")
+	private String contacto;
 
-    @NotNull(message = "La identificación no puede ser nula")
-    @Size(max = 20, message = "La identificación no puede exceder los 20 caracteres")
-    private String identificacion;
+	@NotNull
+	@Email(message = "El correo no es válido")
+	@Size(max = 100, message = "El correo no puede exceder los 100 caracteres")
+	private String correo;
+
+	@NotNull(message = "La identificación no puede ser nula")
+	@Size(max = 20, message = "La identificación no puede exceder los 20 caracteres")
+	private String identificacion;
+
 }

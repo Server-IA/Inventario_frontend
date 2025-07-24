@@ -25,40 +25,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloPedidoController {
 
-    private final ArticuloPedidoService articuloPedidoService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final ArticuloPedidoService articuloPedidoService;
 
-    @GetMapping
-    public ResponseEntity<List<ArticuloPedidoDTO>> findAll() {
-        return ResponseEntity.ok(articuloPedidoService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<ArticuloPedidoDTO> findById(@PathVariable Long requestedId) {
-        return articuloPedidoService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<ArticuloPedidoDTO>> findAll() {
+		return ResponseEntity.ok(articuloPedidoService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createArticuloPedido(@Valid @RequestBody ArticuloPedidoDTO articuloPedidoDTO,
-            UriComponentsBuilder ucb) {
-        return ResponseEntity
-                .created(uriBuilderUtil
-                        .buildArticuloPedidoUri((articuloPedidoService.create(articuloPedidoDTO)).getId(), ucb))
-                .build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<ArticuloPedidoDTO> findById(@PathVariable Long requestedId) {
+		return articuloPedidoService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateArticuloPedido(@PathVariable Long requestedId,
-            @Valid @RequestBody ArticuloPedidoDTO articuloPedidoDTO) {
-        articuloPedidoService.update(requestedId, articuloPedidoDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createArticuloPedido(@Valid @RequestBody ArticuloPedidoDTO articuloPedidoDTO,
+			UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil.buildArticuloPedidoUri((articuloPedidoService.create(articuloPedidoDTO)).getId(),
+					ucb))
+			.build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteArticuloPedido(@PathVariable Long id) {
-        articuloPedidoService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateArticuloPedido(@PathVariable Long requestedId,
+			@Valid @RequestBody ArticuloPedidoDTO articuloPedidoDTO) {
+		articuloPedidoService.update(requestedId, articuloPedidoDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteArticuloPedido(@PathVariable Long id) {
+		articuloPedidoService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

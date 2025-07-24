@@ -26,54 +26,50 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoInventarioController {
 
+	private final TipoInventarioService tipoInventarioService;
 
-    private final TipoInventarioService tipoInventarioService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping
-    public ResponseEntity<List<TipoInventarioDTO>> findAll(){
-        List<TipoInventarioDTO> tipoInventarioDTOList = tipoInventarioService.findAll();
+	@GetMapping
+	public ResponseEntity<List<TipoInventarioDTO>> findAll() {
+		List<TipoInventarioDTO> tipoInventarioDTOList = tipoInventarioService.findAll();
 
-        return tipoInventarioDTOList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(tipoInventarioDTOList);
-    }
+		return tipoInventarioDTOList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(tipoInventarioDTOList);
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoInventarioDTO> findById(@PathVariable Long requestedId){
-        return tipoInventarioService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<TipoInventarioDTO> findById(@PathVariable Long requestedId) {
+		return tipoInventarioService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PostMapping
-    public ResponseEntity<TipoInventarioDTO> createTipoInventario
-            (@RequestBody @Valid TipoInventarioDTO newTipoInventario, UriComponentsBuilder ucb){
+	@PostMapping
+	public ResponseEntity<TipoInventarioDTO> createTipoInventario(
+			@RequestBody @Valid TipoInventarioDTO newTipoInventario, UriComponentsBuilder ucb) {
 
-        TipoInventarioDTO savedTipoInventarioDTO = tipoInventarioService.create(newTipoInventario);
+		TipoInventarioDTO savedTipoInventarioDTO = tipoInventarioService.create(newTipoInventario);
 
-        URI locationOfNewTipoInventario = uriBuilderUtil.buildTipoInventarioUri(savedTipoInventarioDTO.getId(), ucb);
+		URI locationOfNewTipoInventario = uriBuilderUtil.buildTipoInventarioUri(savedTipoInventarioDTO.getId(), ucb);
 
-        return ResponseEntity.created(locationOfNewTipoInventario).build();
+		return ResponseEntity.created(locationOfNewTipoInventario).build();
 
-    }
+	}
 
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putTipoInventario(@PathVariable Long requestedId,
+			@RequestBody @Valid TipoInventarioDTO tipoInventarioDTOUpdate) {
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putTipoInventario(@PathVariable Long requestedId,
-                                             @RequestBody @Valid TipoInventarioDTO tipoInventarioDTOUpdate) {
+		tipoInventarioService.update(requestedId, tipoInventarioDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-        tipoInventarioService.update(requestedId, tipoInventarioDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deleteTipoInventario(@PathVariable Long id) {
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteTipoInventario(@PathVariable Long id) {
-
-        tipoInventarioService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
-
-
+		tipoInventarioService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

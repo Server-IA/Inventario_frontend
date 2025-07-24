@@ -25,42 +25,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloOrdenCompraController {
 
-    private final ArticuloOrdenCompraService articuloOrdenCompraService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final ArticuloOrdenCompraService articuloOrdenCompraService;
 
-    @GetMapping
-    public ResponseEntity<List<ArticuloOrdenCompraDTO>> findAll() {
-        return ResponseEntity.ok(articuloOrdenCompraService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<ArticuloOrdenCompraDTO> findById(@PathVariable Long requestedId) {
-        return articuloOrdenCompraService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<ArticuloOrdenCompraDTO>> findAll() {
+		return ResponseEntity.ok(articuloOrdenCompraService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createArticuloOrdenCompra(
-            @Valid @RequestBody ArticuloOrdenCompraDTO articuloOrdenCompraDTO,
-            UriComponentsBuilder ucb) {
-        return ResponseEntity
-                .created(uriBuilderUtil
-                        .buildArticuloOrdenCompraUri(
-                                (articuloOrdenCompraService.create(articuloOrdenCompraDTO)).getId(), ucb))
-                .build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<ArticuloOrdenCompraDTO> findById(@PathVariable Long requestedId) {
+		return articuloOrdenCompraService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateArticuloOrdenCompra(@PathVariable Long requestedId,
-            @Valid @RequestBody ArticuloOrdenCompraDTO articuloOrdenCompraDTO) {
-        articuloOrdenCompraService.update(requestedId, articuloOrdenCompraDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createArticuloOrdenCompra(
+			@Valid @RequestBody ArticuloOrdenCompraDTO articuloOrdenCompraDTO, UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil
+				.buildArticuloOrdenCompraUri((articuloOrdenCompraService.create(articuloOrdenCompraDTO)).getId(), ucb))
+			.build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteArticuloOrdenCompra(@PathVariable Long id) {
-        articuloOrdenCompraService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateArticuloOrdenCompra(@PathVariable Long requestedId,
+			@Valid @RequestBody ArticuloOrdenCompraDTO articuloOrdenCompraDTO) {
+		articuloOrdenCompraService.update(requestedId, articuloOrdenCompraDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteArticuloOrdenCompra(@PathVariable Long id) {
+		articuloOrdenCompraService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

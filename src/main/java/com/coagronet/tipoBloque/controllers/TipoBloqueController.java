@@ -24,54 +24,48 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoBloqueController {
 
+	private final TipoBloqueService tipoBloqueService;
 
-    private final TipoBloqueService tipoBloqueService;
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<TipoBloqueDTO> findById(@PathVariable Long requestedId) {
+		return tipoBloqueService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
+	@GetMapping
+	public ResponseEntity<List<TipoBloqueDTO>> findAll() {
+		List<TipoBloqueDTO> tipoBloques = tipoBloqueService.findAll();
+		return tipoBloques.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(tipoBloques);
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoBloqueDTO> findById(@PathVariable Long requestedId) {
-        return tipoBloqueService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@PostMapping
+	public ResponseEntity<Void> createTipoBloque(@RequestBody TipoBloqueDTO newTipoBloqueRequest,
+			UriComponentsBuilder ucb) {
+		TipoBloqueDTO savedTipoBloque = tipoBloqueService.create(newTipoBloqueRequest);
+		URI locationOfNewTipoBloque = ucb.path("/api/v1/tipo_bloque/{id}")
+			.buildAndExpand(savedTipoBloque.getId())
+			.toUri();
+		return ResponseEntity.created(locationOfNewTipoBloque).build();
+	}
 
-    @GetMapping
-    public ResponseEntity<List<TipoBloqueDTO>> findAll() {
-        List<TipoBloqueDTO> tipoBloques = tipoBloqueService.findAll();
-        return tipoBloques.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(tipoBloques);
-    }
+	@GetMapping("/minimal")
+	public ResponseEntity<List<TipoBloqueDTO>> findAllMinimal() {
+		List<TipoBloqueDTO> tipoBloqueDTOs = tipoBloqueService.findAllMinimal();
+		return tipoBloqueDTOs.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(tipoBloqueDTOs);
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createTipoBloque(@RequestBody TipoBloqueDTO newTipoBloqueRequest,
-                                                 UriComponentsBuilder ucb) {
-        TipoBloqueDTO savedTipoBloque = tipoBloqueService.create(newTipoBloqueRequest);
-        URI locationOfNewTipoBloque = ucb
-                .path("/api/v1/tipo_bloque/{id}")
-                .buildAndExpand(savedTipoBloque.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewTipoBloque).build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> putTipoBloque(@PathVariable Long requestedId,
+			@RequestBody TipoBloqueDTO tipoBloqueDTOUpdate) {
+		tipoBloqueService.update(requestedId, tipoBloqueDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-    @GetMapping("/minimal")
-    public ResponseEntity<List<TipoBloqueDTO>> findAllMinimal() {
-        List<TipoBloqueDTO> tipoBloqueDTOs = tipoBloqueService.findAllMinimal();
-        return tipoBloqueDTOs.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(tipoBloqueDTOs);
-    }
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteTipoBloque(@PathVariable Long id) {
+		tipoBloqueService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putTipoBloque(@PathVariable Long requestedId,
-            @RequestBody TipoBloqueDTO tipoBloqueDTOUpdate) {
-        tipoBloqueService.update(requestedId, tipoBloqueDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoBloque(@PathVariable Long id) {
-        tipoBloqueService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

@@ -12,13 +12,17 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TipoSedeDTO {
-    private Long id;
 
-    @NotBlank(message = "El nombre es obligatorio.")
-    @Size(max = 60, message = "El nombre no debe superar los 60 caracteres.")
-    private String nombre;
+	private Long id;
 
-    private String descripcion;
-    private Long estadoId;
-    private Long empresaId;
+	@NotBlank(message = "El nombre es obligatorio.")
+	@Size(max = 60, message = "El nombre no debe superar los 60 caracteres.")
+	private String nombre;
+
+	private String descripcion;
+
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

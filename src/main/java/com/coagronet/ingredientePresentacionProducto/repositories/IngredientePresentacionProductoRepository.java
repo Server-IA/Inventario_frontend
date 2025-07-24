@@ -10,10 +10,10 @@ import com.coagronet.ingredientePresentacionProducto.IngredientePresentacionProd
 
 @Repository
 public interface IngredientePresentacionProductoRepository
-        extends JpaRepository<IngredientePresentacionProducto, Long> {
+		extends JpaRepository<IngredientePresentacionProducto, Long> {
 
-    Optional<IngredientePresentacionProducto> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<IngredientePresentacionProducto> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<IngredientePresentacionProducto> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<IngredientePresentacionProducto> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

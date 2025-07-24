@@ -12,10 +12,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VistaKardexService {
 
-    private final VistaKardexRepository vistaKardexRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final VistaKardexRepository vistaKardexRepository;
 
-    public List<VistaKardex> findByProEmpresaId() {
-        return vistaKardexRepository.findByEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-    }
+	private final UserEmpresaService userEmpresaService;
+
+	public List<VistaKardex> findByProEmpresaId() {
+		return vistaKardexRepository.findByEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	}
+
 }

@@ -16,43 +16,44 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secretKeyBase64;
-    private SecretKey secretKey;
+	@Value("${jwt.secret}")
+	private String secretKeyBase64;
 
-    @PostConstruct
-    public void init() {
-        System.out.println("secretKeyBase64: " + secretKeyBase64);
-        byte[] keyBytes = java.util.Base64.getDecoder().decode(secretKeyBase64);
-        secretKey = Keys.hmacShaKeyFor(keyBytes);
-    }
+	private SecretKey secretKey;
 
-    public String generateToken(String username, Long empresaId, Long rolId) {
-        return Jwts.builder()
-                .subject(username)
-                .claim("empresaId", empresaId)
-                .claim("rolId", rolId)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(secretKey)
-                .compact();
-    }
+	@PostConstruct
+	public void init() {
+		System.out.println("secretKeyBase64: " + secretKeyBase64);
+		byte[] keyBytes = java.util.Base64.getDecoder().decode(secretKeyBase64);
+		secretKey = Keys.hmacShaKeyFor(keyBytes);
+	}
 
-    public Claims extractAllClaims(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
-    }
+	public String generateToken(String username, Long empresaId, Long rolId) {
+		return Jwts.builder()
+			.subject(username)
+			.claim("empresaId", empresaId)
+			.claim("rolId", rolId)
+			.issuedAt(new Date())
+			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+			.signWith(secretKey)
+			.compact();
+	}
 
-    public String extractUsername(String token) {
-        return extractAllClaims(token).getSubject();
-    }
+	public Claims extractAllClaims(String token) {
+		return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+	}
 
-    public boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
-    }
+	public String extractUsername(String token) {
+		return extractAllClaims(token).getSubject();
+	}
 
-    public boolean validateToken(String token, String username) {
-        final String extractedUsername = extractUsername(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
-    }
+	public boolean isTokenExpired(String token) {
+		return extractAllClaims(token).getExpiration().before(new Date());
+	}
+
+	public boolean validateToken(String token, String username) {
+		final String extractedUsername = extractUsername(token);
+		return (extractedUsername.equals(username) && !isTokenExpired(token));
+	}
 
 }

@@ -13,11 +13,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final UserRepository userRepository;
+	private final UserRepository userRepository;
 
-    public User getAuthenticatedUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-    }
+	public User getAuthenticatedUser() {
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		return userRepository.findByUsername(username)
+			.orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+	}
+
 }

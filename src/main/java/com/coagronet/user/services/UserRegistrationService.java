@@ -18,37 +18,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserRegistrationService {
 
-    private final UserRepository userRepository;
-    private final VerificationTokenRepository verificationTokenRepository;
-    private final ApplicationEventPublisher publisher;
+	private final UserRepository userRepository;
 
-    @Transactional
-    public void registerUser(User user) {
-        userRepository.save(user);
+	private final VerificationTokenRepository verificationTokenRepository;
 
-        publisher.publishEvent(new OnRegistrationCompleteEvent(user));
-    }
+	private final ApplicationEventPublisher publisher;
 
-    public boolean activateUser(String token) {
-        Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
-        if (tokenOptional.isPresent()) {
-            VerificationToken verificationToken = tokenOptional.get();
+	@Transactional
+	public void registerUser(User user) {
+		userRepository.save(user);
 
-            Optional<User> userOptional = userRepository.findByUsername(verificationToken.getEmail());
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
+		publisher.publishEvent(new OnRegistrationCompleteEvent(user));
+	}
 
-                // Cambiar el estado a 2: Usuario activado, pero no ha llenado información
-                // personal y no se ha asociado a una empresa
-                user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
-                userRepository.save(user);
+	public boolean activateUser(String token) {
+		Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
+		if (tokenOptional.isPresent()) {
+			VerificationToken verificationToken = tokenOptional.get();
 
-                return true; // Activación exitosa
-            } else {
-                throw new RuntimeException("User not found with email: " + verificationToken.getEmail());
-            }
-        } else {
-            return false; // Token no válido o ha expirado
-        }
-    }
+			Optional<User> userOptional = userRepository.findByUsername(verificationToken.getEmail());
+			if (userOptional.isPresent()) {
+				User user = userOptional.get();
+
+				// Cambiar el estado a 2: Usuario activado, pero no ha llenado información
+				// personal y no se ha asociado a una empresa
+				user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
+				userRepository.save(user);
+
+				return true; // Activación exitosa
+			}
+			else {
+				throw new RuntimeException("User not found with email: " + verificationToken.getEmail());
+			}
+		}
+		else {
+			return false; // Token no válido o ha expirado
+		}
+	}
+
 }

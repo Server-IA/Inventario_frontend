@@ -19,55 +19,58 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProveedorService {
 
-    private final ProveedorRepository proveedorRepository;
-    private final EstadoRepository estadoRepository;
-    private final ProveedorMapper proveedorMapper;
-    private final UserEmpresaService userEmpresaService;
+	private final ProveedorRepository proveedorRepository;
 
-    public List<ProveedorDTO> findAll() {
-        return proveedorRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(proveedorMapper::toDto)
-                .collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<ProveedorDTO> findById(Long requestedId) {
-        return proveedorRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(proveedorMapper::toDto);
-    }
+	private final ProveedorMapper proveedorMapper;
 
-    @Transactional
-    public ProveedorDTO create(ProveedorDTO proveedorDTO) {
-        estadoRepository.findById(proveedorDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        proveedorDTO.setId(null);
-        proveedorDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<ProveedorDTO> findAll() {
+		return proveedorRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(proveedorMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-        return proveedorMapper.toDto(proveedorRepository.save(proveedorMapper.toEntity(proveedorDTO)));
-    }
+	public Optional<ProveedorDTO> findById(Long requestedId) {
+		return proveedorRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(proveedorMapper::toDto);
+	}
 
-    @Transactional
-    public void update(Long requestedId, ProveedorDTO proveedorDTO) {
-        proveedorRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Proveedor no encontrada o no válida"));
+	@Transactional
+	public ProveedorDTO create(ProveedorDTO proveedorDTO) {
+		estadoRepository.findById(proveedorDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        estadoRepository.findById(proveedorDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		proveedorDTO.setId(null);
+		proveedorDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        proveedorDTO.setId(requestedId);
-        proveedorDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return proveedorMapper.toDto(proveedorRepository.save(proveedorMapper.toEntity(proveedorDTO)));
+	}
 
-        proveedorRepository.save(proveedorMapper.toEntity(proveedorDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, ProveedorDTO proveedorDTO) {
+		proveedorRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Proveedor no encontrada o no válida"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        proveedorRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Proveedor no encontrado o no válido"));
+		estadoRepository.findById(proveedorDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        proveedorRepository.deleteById(requestId);
-    }
+		proveedorDTO.setId(requestedId);
+		proveedorDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		proveedorRepository.save(proveedorMapper.toEntity(proveedorDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		proveedorRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Proveedor no encontrado o no válido"));
+
+		proveedorRepository.deleteById(requestId);
+	}
 
 }

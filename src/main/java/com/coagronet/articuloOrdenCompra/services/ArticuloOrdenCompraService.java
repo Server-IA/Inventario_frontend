@@ -22,92 +22,91 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloOrdenCompraService {
 
-        private final UserEmpresaService userEmpresaService;
-        private final ArticuloOrdenCompraMapper articuloOrdenCompraMapper;
-        private final ArticuloOrdenCompraRepository articuloOrdenCompraRepository;
-        private final OrdenCompraRepository ordenCompraRepository;
-        private final PresentacionProductoRepository presentacionProductoRepository;
-        private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
 
-        public List<ArticuloOrdenCompraDTO> findAll() {
-                return articuloOrdenCompraRepository
-                                .findByEmpresaIdOrderByIdAsc(
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .stream().map(articuloOrdenCompraMapper::toListDTO).collect(Collectors.toList());
-        }
+	private final ArticuloOrdenCompraMapper articuloOrdenCompraMapper;
 
-        public List<ArticuloOrdenCompraDTO> findAllByOrdenCompraId(Long ordenCompraId) {
-                return articuloOrdenCompraRepository
-                                .findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest(), ordenCompraId)
-                                .stream().map(articuloOrdenCompraMapper::toListDTO).collect(Collectors.toList());
-        }
+	private final ArticuloOrdenCompraRepository articuloOrdenCompraRepository;
 
-        public Optional<ArticuloOrdenCompraDTO> findById(Long requestedId) {
-                return articuloOrdenCompraRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .map(articuloOrdenCompraMapper::toListDTO);
-        }
+	private final OrdenCompraRepository ordenCompraRepository;
 
-        public ArticuloOrdenCompraDTO create(ArticuloOrdenCompraDTO articuloOrdenCompraDTO) {
-                ordenCompraRepository
-                                .findByIdAndEmpresaId(articuloOrdenCompraDTO.getOrdenCompraId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("La orden de compra no es válida."));
+	private final PresentacionProductoRepository presentacionProductoRepository;
 
-                presentacionProductoRepository.findByIdAndEmpresaId(articuloOrdenCompraDTO.getPresentacionProductoId(),
-                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException(
-                                                "La presentación de producto no es válida."));
+	private final EstadoRepository estadoRepository;
 
-                estadoRepository.findById(articuloOrdenCompraDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+	public List<ArticuloOrdenCompraDTO> findAll() {
+		return articuloOrdenCompraRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(articuloOrdenCompraMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-                articuloOrdenCompraDTO.setId(null);
-                articuloOrdenCompraDTO.setEmpresaId(
-                                userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<ArticuloOrdenCompraDTO> findAllByOrdenCompraId(Long ordenCompraId) {
+		return articuloOrdenCompraRepository
+			.findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(),
+					ordenCompraId)
+			.stream()
+			.map(articuloOrdenCompraMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-                return articuloOrdenCompraMapper
-                                .toDTO(articuloOrdenCompraRepository
-                                                .save(articuloOrdenCompraMapper.toEntity(articuloOrdenCompraDTO)));
-        }
+	public Optional<ArticuloOrdenCompraDTO> findById(Long requestedId) {
+		return articuloOrdenCompraRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(articuloOrdenCompraMapper::toListDTO);
+	}
 
-        public void update(Long requestedId, ArticuloOrdenCompraDTO articuloOrdenCompraDTO) {
-                articuloOrdenCompraRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException(
-                                                "El artículo de la orden de compra no fue encontrado."));
+	public ArticuloOrdenCompraDTO create(ArticuloOrdenCompraDTO articuloOrdenCompraDTO) {
+		ordenCompraRepository
+			.findByIdAndEmpresaId(articuloOrdenCompraDTO.getOrdenCompraId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La orden de compra no es válida."));
 
-                ordenCompraRepository
-                                .findByIdAndEmpresaId(articuloOrdenCompraDTO.getOrdenCompraId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("La orden de compra no es válida."));
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(articuloOrdenCompraDTO.getPresentacionProductoId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
-                presentacionProductoRepository.findByIdAndEmpresaId(articuloOrdenCompraDTO.getPresentacionProductoId(),
-                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException(
-                                                "La presentación de producto no es válida."));
+		estadoRepository.findById(articuloOrdenCompraDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-                estadoRepository.findById(articuloOrdenCompraDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		articuloOrdenCompraDTO.setId(null);
+		articuloOrdenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-                articuloOrdenCompraDTO.setId(requestedId);
-                articuloOrdenCompraDTO.setEmpresaId(
-                                userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return articuloOrdenCompraMapper
+			.toDTO(articuloOrdenCompraRepository.save(articuloOrdenCompraMapper.toEntity(articuloOrdenCompraDTO)));
+	}
 
-                articuloOrdenCompraRepository.save(articuloOrdenCompraMapper.toEntity(articuloOrdenCompraDTO));
-        }
+	public void update(Long requestedId, ArticuloOrdenCompraDTO articuloOrdenCompraDTO) {
+		articuloOrdenCompraRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El artículo de la orden de compra no fue encontrado."));
 
-        public void delete(Long id) {
-                articuloOrdenCompraRepository
-                                .findByIdAndEmpresaId(id,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException(
-                                                "El artículo de la orden de compra no fue encontrado."));
+		ordenCompraRepository
+			.findByIdAndEmpresaId(articuloOrdenCompraDTO.getOrdenCompraId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La orden de compra no es válida."));
 
-                articuloOrdenCompraRepository.deleteById(id);
-        }
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(articuloOrdenCompraDTO.getPresentacionProductoId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
+
+		estadoRepository.findById(articuloOrdenCompraDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+
+		articuloOrdenCompraDTO.setId(requestedId);
+		articuloOrdenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		articuloOrdenCompraRepository.save(articuloOrdenCompraMapper.toEntity(articuloOrdenCompraDTO));
+	}
+
+	public void delete(Long id) {
+		articuloOrdenCompraRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El artículo de la orden de compra no fue encontrado."));
+
+		articuloOrdenCompraRepository.deleteById(id);
+	}
 
 }

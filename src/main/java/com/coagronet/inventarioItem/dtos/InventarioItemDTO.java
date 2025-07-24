@@ -15,21 +15,21 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class InventarioItemDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotNull(message = "El id del inventario no puede ser nulo")
-    private Long inventarioId;
+	@NotNull(message = "El id del inventario no puede ser nulo")
+	private Long inventarioId;
 
-    @Size(max = 2048, message = "La descripción no puede tener más de 2048 caracteres")
-    private String descripcion;
+	@Size(max = 2048, message = "La descripción no puede tener más de 2048 caracteres")
+	private String descripcion;
 
-    private String uuid;
+	private String uuid;
 
-    private Long empresaId;
+	private Long empresaId;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
 
-    private String productoIdentificadorId;
+	private String productoIdentificadorId;
 
 }

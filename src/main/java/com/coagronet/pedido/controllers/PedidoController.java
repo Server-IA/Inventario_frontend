@@ -28,29 +28,26 @@ import com.coagronet.pedido.dtos.PedidoDTO;
 public class PedidoController {
 
 	private final PedidoService pedidoService;
+
 	private final ArticuloPedidoService articuloPedidoService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
 	public ResponseEntity<List<PedidoDTO>> findAll() {
 		List<PedidoDTO> pedidoDTOList = pedidoService.findAll();
 
-		return pedidoDTOList.isEmpty()
-				? ResponseEntity.noContent().build()
-				: ResponseEntity.ok(pedidoDTOList);
+		return pedidoDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(pedidoDTOList);
 	}
 
 	@GetMapping("/{pedidoId}/articulos")
-	public ResponseEntity<List<ArticuloPedidoDTO>> findArticulosByPedido(
-			@PathVariable Long pedidoId) {
+	public ResponseEntity<List<ArticuloPedidoDTO>> findArticulosByPedido(@PathVariable Long pedidoId) {
 		return ResponseEntity.ok(articuloPedidoService.findAllByPedidoId(pedidoId));
 	}
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<PedidoDTO> findById(@PathVariable Long requestedId) {
-		return pedidoService.findById(requestedId)
-				.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return pedidoService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping

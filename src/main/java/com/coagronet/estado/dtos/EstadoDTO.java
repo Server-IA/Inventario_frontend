@@ -11,9 +11,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EstadoDTO {
-    private Long id;
-    private String nombre;
-    private String descripcion;
-    private String acronimo;
-    private Long estadoCategoriaId;
+
+	private Long id;
+
+	private String nombre;
+
+	private String descripcion;
+
+	private String acronimo;
+
+	private Long estadoCategoriaId;
+
 }

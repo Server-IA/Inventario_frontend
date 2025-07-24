@@ -17,28 +17,32 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProduccionDTO {
-    private Long id;
 
-    @NotNull(message = "El nombre no puede ser nulo")
-    @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
-    private String nombre;
+	private Long id;
 
-    @NotNull(message = "El tipo de producción no puede ser nulo")
-    private Long tipoProduccionId;
+	@NotNull(message = "El nombre no puede ser nulo")
+	@Size(max = 100, message = "El nombre no puede exceder los 100 caracteres")
+	private String nombre;
 
-    @Size(max = 255, message = "La descripción no puede superar los 255 caracteres")
-    private String descripcion;
-    private LocalDateTime fechaInicio;
-    private LocalDateTime fechaFinal;
+	@NotNull(message = "El tipo de producción no puede ser nulo")
+	private Long tipoProduccionId;
 
-    @NotNull(message = "El espacio no puede ser nulo")
-    private Long espacioId;
+	@Size(max = 255, message = "La descripción no puede superar los 255 caracteres")
+	private String descripcion;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
+	private LocalDateTime fechaInicio;
 
-    @NotNull(message = "El producto no puede ser nulo")
-    private Long productoId;
+	private LocalDateTime fechaFinal;
 
-    private Long empresaId;
+	@NotNull(message = "El espacio no puede ser nulo")
+	private Long espacioId;
+
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
+
+	@NotNull(message = "El producto no puede ser nulo")
+	private Long productoId;
+
+	private Long empresaId;
+
 }
