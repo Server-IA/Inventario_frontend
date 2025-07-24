@@ -23,7 +23,6 @@ public class JwtUtil {
 
 	@PostConstruct
 	public void init() {
-		System.out.println("secretKeyBase64: " + secretKeyBase64);
 		byte[] keyBytes = java.util.Base64.getDecoder().decode(secretKeyBase64);
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}

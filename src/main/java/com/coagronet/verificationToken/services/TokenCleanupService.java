@@ -18,7 +18,6 @@ public class TokenCleanupService {
 	@Transactional
 	public void deleteExpiredTokens() {
 		verificationTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
-		System.out.println("Tokens caducados eliminados.");
 	}
 
 }
