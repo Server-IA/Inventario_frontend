@@ -25,42 +25,43 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IngredientePresentacionProductoController {
 
-    private final IngredientePresentacionProductoService ingredientePresentacionProductoService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final IngredientePresentacionProductoService ingredientePresentacionProductoService;
 
-    @GetMapping
-    public ResponseEntity<List<IngredientePresentacionProductoDTO>> findAll() {
-        return ResponseEntity.ok(ingredientePresentacionProductoService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<IngredientePresentacionProductoDTO> findById(@PathVariable Long requestedId) {
-        return ingredientePresentacionProductoService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<IngredientePresentacionProductoDTO>> findAll() {
+		return ResponseEntity.ok(ingredientePresentacionProductoService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createIngredientePresentacionProducto(
-            @Valid @RequestBody IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO,
-            UriComponentsBuilder ucb) {
-        return ResponseEntity
-                .created(uriBuilderUtil
-                        .buildIngredientePresentacionProductoUri(
-                                (ingredientePresentacionProductoService.create(ingredientePresentacionProductoDTO)).getId(), ucb))
-                .build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<IngredientePresentacionProductoDTO> findById(@PathVariable Long requestedId) {
+		return ingredientePresentacionProductoService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateIngredientePresentacionProducto(@PathVariable Long requestedId,
-            @Valid @RequestBody IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
-        ingredientePresentacionProductoService.update(requestedId, ingredientePresentacionProductoDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createIngredientePresentacionProducto(
+			@Valid @RequestBody IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO,
+			UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil.buildIngredientePresentacionProductoUri(
+					(ingredientePresentacionProductoService.create(ingredientePresentacionProductoDTO)).getId(), ucb))
+			.build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteIngredientePresentacionProducto(@PathVariable Long id) {
-        ingredientePresentacionProductoService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateIngredientePresentacionProducto(@PathVariable Long requestedId,
+			@Valid @RequestBody IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
+		ingredientePresentacionProductoService.update(requestedId, ingredientePresentacionProductoDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteIngredientePresentacionProducto(@PathVariable Long id) {
+		ingredientePresentacionProductoService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

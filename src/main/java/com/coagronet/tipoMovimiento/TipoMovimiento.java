@@ -27,28 +27,29 @@ import lombok.NoArgsConstructor;
 @Table(name = "tipo_movimiento")
 public class TipoMovimiento {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_movimiento_generator")
-    @SequenceGenerator(name = "tipo_movimiento_generator", sequenceName = "tipo_movimiento_tim_id_seq", allocationSize = 1)
-    @Column(name = "tim_id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_movimiento_generator")
+	@SequenceGenerator(name = "tipo_movimiento_generator", sequenceName = "tipo_movimiento_tim_id_seq",
+			allocationSize = 1)
+	@Column(name = "tim_id", nullable = false)
+	private Long id;
 
-    @Column(name = "tim_nombre", length = 255)
-    private String nombre;
+	@Column(name = "tim_nombre", length = 255)
+	private String nombre;
 
-    @Column(name = "tim_descripcion", length = 500)
-    private String descripcion;
+	@Column(name = "tim_descripcion", length = 500)
+	private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tim_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "tim_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tim_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "tim_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tim_movimiento_id", referencedColumnName = "mov_id")
-    private Movimiento movimiento;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "tim_movimiento_id", referencedColumnName = "mov_id")
+	private Movimiento movimiento;
 
 }

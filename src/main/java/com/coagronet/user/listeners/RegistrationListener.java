@@ -12,14 +12,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RegistrationListener {
 
-    private final EmailVerificationService emailService;
+	private final EmailVerificationService emailService;
 
-    @Async
-    @EventListener
-    public void handleRegistrationComplete(OnRegistrationCompleteEvent event) {
-        String email = event.getUser().getUsername();
-        String token = emailService.createVerificationToken(email);
-        emailService.sendVerificationEmail(email, token);
-    }
+	@Async
+	@EventListener
+	public void handleRegistrationComplete(OnRegistrationCompleteEvent event) {
+		String email = event.getUser().getUsername();
+		String token = emailService.createVerificationToken(email);
+		emailService.sendVerificationEmail(email, token);
+	}
 
 }

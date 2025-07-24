@@ -29,24 +29,24 @@ import lombok.Setter;
 @Table(name = "marca")
 public class Marca {
 
-    @Id
-    @SequenceGenerator(name = "marca_generator", sequenceName = "marca_mar_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "marca_generator")
-    @Column(name = "mar_id")
-    private Long id;
+	@Id
+	@SequenceGenerator(name = "marca_generator", sequenceName = "marca_mar_id_seq", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "marca_generator")
+	@Column(name = "mar_id")
+	private Long id;
 
-    @Column(name = "mar_nombre", length = 100, nullable = false)
-    private String nombre;
+	@Column(name = "mar_nombre", length = 100, nullable = false)
+	private String nombre;
 
-    @Column(name = "mar_descripcion", length = 255)
-    private String descripcion;
+	@Column(name = "mar_descripcion", length = 255)
+	private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mar_estado_id", referencedColumnName = "est_id", nullable = false)
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "mar_estado_id", referencedColumnName = "est_id", nullable = false)
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mar_empresa_id", referencedColumnName = "emp_id", nullable = false)
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "mar_empresa_id", referencedColumnName = "emp_id", nullable = false)
+	private Empresa empresa;
 
 }

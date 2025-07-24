@@ -22,31 +22,36 @@ import lombok.RequiredArgsConstructor;
 public class AlmacenService {
 
 	private final AlmacenMapper almacenMapper;
+
 	private final AlmacenRepository almacenRepository;
+
 	private final UserEmpresaService userEmpresaService;
+
 	private final EspacioRepository espacioRepository;
+
 	private final EstadoRepository estadoRepository;
 
 	public List<AlmacenDTO> findAll() {
 
 		return almacenRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream().map(almacenMapper::toListDto)
-				.collect(Collectors.toList());
+			.stream()
+			.map(almacenMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<AlmacenDTO> findById(Long requestedId) {
 
 		return almacenRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(almacenMapper::toListDto);
+			.map(almacenMapper::toListDto);
 	}
 
 	public AlmacenDTO create(AlmacenDTO almacenDTO) {
 		espacioRepository
-				.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
+			.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
 
 		estadoRepository.findById(almacenDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		almacenDTO.setId(null);
 		almacenDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -56,14 +61,14 @@ public class AlmacenService {
 
 	public void update(Long requestedId, AlmacenDTO almacenDTO) {
 		almacenRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
 
 		espacioRepository
-				.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El espacio no es válida"));
+			.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El espacio no es válida"));
 
 		estadoRepository.findById(almacenDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		almacenDTO.setId(requestedId);
 		almacenDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -73,7 +78,7 @@ public class AlmacenService {
 
 	public void delete(Long id) {
 		almacenRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
 
 		almacenRepository.deleteById(id);
 	}

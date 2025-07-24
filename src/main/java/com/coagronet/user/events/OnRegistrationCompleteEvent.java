@@ -5,14 +5,17 @@ import com.coagronet.user.User;
 
 public class OnRegistrationCompleteEvent extends ApplicationEvent {
 
-    private final User user;
+	private static final long serialVersionUID = 6909953127916060942L;
 
-    public OnRegistrationCompleteEvent(User user) {
-        super(user);
-        this.user = user;
-    }
+	private final User user;
 
-    public User getUser() {
-        return user;
-    }
+	public OnRegistrationCompleteEvent(User user) {
+		super(user);
+		this.user = user;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
 }

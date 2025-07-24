@@ -17,50 +17,44 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EmpresaInventarioController {
 
-    private final VistaEmpresaInventarioService vistaEmpresaInventarioService;
-    private final VistaInventarioProductoService vistaInventarioProductoService;
-    private final VistaKardexService vistaKardexService;
+	private final VistaEmpresaInventarioService vistaEmpresaInventarioService;
 
-    @GetMapping("/empresa_inventario")
-    public ResponseEntity<List<VistaEmpresaInventario>> findAllInventariosDeEmpresa() {
+	private final VistaInventarioProductoService vistaInventarioProductoService;
 
-        List<VistaEmpresaInventario> vistaEmpresaInventarioList =
-                vistaEmpresaInventarioService.findByInvEmpresaId();
+	private final VistaKardexService vistaKardexService;
 
-        return vistaEmpresaInventarioList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(vistaEmpresaInventarioList);
-    }
+	@GetMapping("/empresa_inventario")
+	public ResponseEntity<List<VistaEmpresaInventario>> findAllInventariosDeEmpresa() {
 
+		List<VistaEmpresaInventario> vistaEmpresaInventarioList = vistaEmpresaInventarioService.findByInvEmpresaId();
 
-    @GetMapping("/empresa_inventario/subseccion/{subSeccionId}")
-    public ResponseEntity<List<VistaEmpresaInventario>> findInventariosPorSubseccion(@PathVariable Long subSeccionId) {
+		return vistaEmpresaInventarioList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(vistaEmpresaInventarioList);
+	}
 
-        List<VistaEmpresaInventario> vistaEmpresaInventarioList =
-                vistaEmpresaInventarioService.findByEmpresaIdAndSubseccionId(subSeccionId);
+	@GetMapping("/empresa_inventario/subseccion/{subSeccionId}")
+	public ResponseEntity<List<VistaEmpresaInventario>> findInventariosPorSubseccion(@PathVariable Long subSeccionId) {
 
-        return vistaEmpresaInventarioList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(vistaEmpresaInventarioList);
-    }
+		List<VistaEmpresaInventario> vistaEmpresaInventarioList = vistaEmpresaInventarioService
+			.findByEmpresaIdAndSubseccionId(subSeccionId);
 
-    @GetMapping("/inventario_producto")
-    public ResponseEntity<List<VistaInventarioProducto>> findAllInventarioProductos(){
-        List<VistaInventarioProducto> vistaInventarioProductoList =
-                vistaInventarioProductoService.findByProEmpresaId();
+		return vistaEmpresaInventarioList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(vistaEmpresaInventarioList);
+	}
 
-        return vistaInventarioProductoList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(vistaInventarioProductoList);
-    }
+	@GetMapping("/inventario_producto")
+	public ResponseEntity<List<VistaInventarioProducto>> findAllInventarioProductos() {
+		List<VistaInventarioProducto> vistaInventarioProductoList = vistaInventarioProductoService.findByProEmpresaId();
 
-    @GetMapping("/kardex")
-    public ResponseEntity<List<VistaKardex>> findAllKardex(){
-        List<VistaKardex> vistaKardexes =
-                vistaKardexService.findByProEmpresaId();
+		return vistaInventarioProductoList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(vistaInventarioProductoList);
+	}
 
-        return vistaKardexes.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(vistaKardexes);
-    }
+	@GetMapping("/kardex")
+	public ResponseEntity<List<VistaKardex>> findAllKardex() {
+		List<VistaKardex> vistaKardexes = vistaKardexService.findByProEmpresaId();
+
+		return vistaKardexes.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(vistaKardexes);
+	}
+
 }

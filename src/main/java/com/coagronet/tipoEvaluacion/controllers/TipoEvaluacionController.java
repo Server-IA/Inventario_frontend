@@ -25,42 +25,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoEvaluacionController {
 
-        private final TipoEvaluacionService tipoEvaluacionService;
-        private final UriBuilderUtil uriBuilderUtil;
+	private final TipoEvaluacionService tipoEvaluacionService;
 
-        @GetMapping
-        public ResponseEntity<List<TipoEvaluacionDTO>> findAll() {
-                return ResponseEntity.ok(tipoEvaluacionService.findAll());
-        }
+	private final UriBuilderUtil uriBuilderUtil;
 
-        @GetMapping("/{requestedId}")
-        public ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Long requestedId) {
-                return tipoEvaluacionService.findById(requestedId).map(ResponseEntity::ok)
-                                .orElse(ResponseEntity.notFound().build());
-        }
+	@GetMapping
+	public ResponseEntity<List<TipoEvaluacionDTO>> findAll() {
+		return ResponseEntity.ok(tipoEvaluacionService.findAll());
+	}
 
-        @PostMapping
-        public ResponseEntity<Void> createTipoEvaluacion(
-                        @Valid @RequestBody TipoEvaluacionDTO tipoEvaluacionDTO,
-                        UriComponentsBuilder ucb) {
-                return ResponseEntity.created(uriBuilderUtil.buildTipoEvaluacionUri(
-                                tipoEvaluacionService.create(
-                                                tipoEvaluacionDTO).getId(),
-                                ucb)).build();
-        }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<TipoEvaluacionDTO> findById(@PathVariable Long requestedId) {
+		return tipoEvaluacionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-        @PutMapping("/{requestedId}")
-        public ResponseEntity<Void> updateTipoEvaluacion(
-                        @PathVariable Long requestedId,
-                        @Valid @RequestBody TipoEvaluacionDTO tipoEvaluacionDTO) {
-                tipoEvaluacionService.update(requestedId, tipoEvaluacionDTO);
-                return ResponseEntity.noContent().build();
-        }
+	@PostMapping
+	public ResponseEntity<Void> createTipoEvaluacion(@Valid @RequestBody TipoEvaluacionDTO tipoEvaluacionDTO,
+			UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(
+					uriBuilderUtil.buildTipoEvaluacionUri(tipoEvaluacionService.create(tipoEvaluacionDTO).getId(), ucb))
+			.build();
+	}
 
-        @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deleteTipoEvaluacion(@PathVariable Long id) {
-                tipoEvaluacionService.delete(id);
-                return ResponseEntity.noContent().build();
-        }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateTipoEvaluacion(@PathVariable Long requestedId,
+			@Valid @RequestBody TipoEvaluacionDTO tipoEvaluacionDTO) {
+		tipoEvaluacionService.update(requestedId, tipoEvaluacionDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteTipoEvaluacion(@PathVariable Long id) {
+		tipoEvaluacionService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

@@ -15,14 +15,14 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableAsync
 public class AppConfig {
 
-    private Map<String, String> queries;
+	private Map<String, String> queries;
 
-    public Map<String, String> getQueries() {
-        return queries;
-    }
+	public Map<String, String> getQueries() {
+		return queries;
+	}
 
-    public void setQueries(Map<String, String> queries) {
-        this.queries = queries;
-    }
+	public void setQueries(Map<String, String> queries) {
+		this.queries = queries;
+	}
 
 }

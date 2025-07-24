@@ -26,46 +26,47 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProduccionController {
 
-    private final ProduccionService produccionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final ProduccionService produccionService;
 
-    @GetMapping
-    public ResponseEntity<List<ProduccionDTO>> findAll() {
-        List<ProduccionDTO> produccionDTOList = produccionService.findAll();
+	private final UriBuilderUtil uriBuilderUtil;
 
-        return produccionDTOList.isEmpty() ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(produccionDTOList);
+	@GetMapping
+	public ResponseEntity<List<ProduccionDTO>> findAll() {
+		List<ProduccionDTO> produccionDTOList = produccionService.findAll();
 
-    }
+		return produccionDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(produccionDTOList);
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<ProduccionDTO> findById(@PathVariable Long requestedId) {
-        return produccionService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+	}
 
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<ProduccionDTO> findById(@PathVariable Long requestedId) {
+		return produccionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 
-    @PostMapping
-    public ResponseEntity<Void> crearProduccion(@RequestBody @Valid ProduccionDTO produccionDTO,
-            UriComponentsBuilder ucb) {
-        ProduccionDTO savedProduccionDTO = produccionService.create(produccionDTO);
+	}
 
-        URI locationOfNewProduccion = uriBuilderUtil.buildProduccion(savedProduccionDTO.getId(), ucb);
-        return ResponseEntity.created(locationOfNewProduccion).build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> crearProduccion(@RequestBody @Valid ProduccionDTO produccionDTO,
+			UriComponentsBuilder ucb) {
+		ProduccionDTO savedProduccionDTO = produccionService.create(produccionDTO);
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> actualizarProduccion(@PathVariable Long requestedId,
-            @RequestBody ProduccionDTO produccionDTO) {
+		URI locationOfNewProduccion = uriBuilderUtil.buildProduccion(savedProduccionDTO.getId(), ucb);
+		return ResponseEntity.created(locationOfNewProduccion).build();
+	}
 
-        produccionService.update(requestedId, produccionDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> actualizarProduccion(@PathVariable Long requestedId,
+			@RequestBody ProduccionDTO produccionDTO) {
 
-    @DeleteMapping("/{requestedId}")
-    public ResponseEntity<Void> eliminarProduccion(@PathVariable Long requestedId) {
-        produccionService.delete(requestedId);
-        return ResponseEntity.noContent().build();
-    }
+		produccionService.update(requestedId, produccionDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{requestedId}")
+	public ResponseEntity<Void> eliminarProduccion(@PathVariable Long requestedId) {
+		produccionService.delete(requestedId);
+		return ResponseEntity.noContent().build();
+	}
 
 }

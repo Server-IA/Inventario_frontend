@@ -22,89 +22,85 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IngredientePresentacionProductoService {
 
-    private final UserEmpresaService userEmpresaService;
-    private final IngredientePresentacionProductoMapper ingredientePresentacionProductoMapper;
-    private final IngredientePresentacionProductoRepository ingredientePresentacionProductoRepository;
-    private final IngredienteRepository ingredienteRepository;
-    private final PresentacionProductoRepository presentacionProductoRepository;
-    private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
 
-    public List<IngredientePresentacionProductoDTO> findAll() {
-        return ingredientePresentacionProductoRepository
-                .findByEmpresaIdOrderByIdAsc(
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream().map(ingredientePresentacionProductoMapper::toDTO).collect(Collectors.toList());
-    }
+	private final IngredientePresentacionProductoMapper ingredientePresentacionProductoMapper;
 
-    public Optional<IngredientePresentacionProductoDTO> findById(Long requestedId) {
-        return ingredientePresentacionProductoRepository
-                .findByIdAndEmpresaId(requestedId,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(ingredientePresentacionProductoMapper::toDTO);
-    }
+	private final IngredientePresentacionProductoRepository ingredientePresentacionProductoRepository;
 
-    public IngredientePresentacionProductoDTO create(
-            IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
-        ingredienteRepository
-                .findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getIngredienteId(),
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("El campo ingredienteId no es válido."));
+	private final IngredienteRepository ingredienteRepository;
 
-        presentacionProductoRepository
-                .findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getPresentacionProductoId(),
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException(
-                        "El campo presentacionProductoId no es válido."));
+	private final PresentacionProductoRepository presentacionProductoRepository;
 
-        estadoRepository.findById(ingredientePresentacionProductoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+	private final EstadoRepository estadoRepository;
 
-        ingredientePresentacionProductoDTO.setId(null);
-        ingredientePresentacionProductoDTO.setEmpresaId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<IngredientePresentacionProductoDTO> findAll() {
+		return ingredientePresentacionProductoRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(ingredientePresentacionProductoMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        return ingredientePresentacionProductoMapper
-                .toDTO(ingredientePresentacionProductoRepository
-                        .save(ingredientePresentacionProductoMapper.toEntity(ingredientePresentacionProductoDTO)));
-    }
+	public Optional<IngredientePresentacionProductoDTO> findById(Long requestedId) {
+		return ingredientePresentacionProductoRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(ingredientePresentacionProductoMapper::toDTO);
+	}
 
-    public void update(Long requestedId, IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
-        ingredientePresentacionProductoRepository
-                .findByIdAndEmpresaId(requestedId,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException(
-                        "El ID solicitado no fue encontrado."));
+	public IngredientePresentacionProductoDTO create(
+			IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
+		ingredienteRepository
+			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getIngredienteId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo ingredienteId no es válido."));
 
-        ingredienteRepository
-                .findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getIngredienteId(),
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("El campo ingredienteId no es válido."));
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getPresentacionProductoId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo presentacionProductoId no es válido."));
 
-        presentacionProductoRepository
-                .findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getPresentacionProductoId(),
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException(
-                        "El campo presentacionProductoId no es válido."));
+		estadoRepository.findById(ingredientePresentacionProductoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
 
-        estadoRepository.findById(ingredientePresentacionProductoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+		ingredientePresentacionProductoDTO.setId(null);
+		ingredientePresentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        ingredientePresentacionProductoDTO.setId(requestedId);
-        ingredientePresentacionProductoDTO.setEmpresaId(
-                userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return ingredientePresentacionProductoMapper.toDTO(ingredientePresentacionProductoRepository
+			.save(ingredientePresentacionProductoMapper.toEntity(ingredientePresentacionProductoDTO)));
+	}
 
-        ingredientePresentacionProductoRepository
-                .save(ingredientePresentacionProductoMapper.toEntity(ingredientePresentacionProductoDTO));
-    }
+	public void update(Long requestedId, IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
+		ingredientePresentacionProductoRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El ID solicitado no fue encontrado."));
 
-    public void delete(Long id) {
-        ingredientePresentacionProductoRepository
-                .findByIdAndEmpresaId(id,
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException(
-                        "El ID solicitado no fue encontrado."));
+		ingredienteRepository
+			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getIngredienteId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo ingredienteId no es válido."));
 
-        ingredientePresentacionProductoRepository.deleteById(id);
-    }
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getPresentacionProductoId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El campo presentacionProductoId no es válido."));
+
+		estadoRepository.findById(ingredientePresentacionProductoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+
+		ingredientePresentacionProductoDTO.setId(requestedId);
+		ingredientePresentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		ingredientePresentacionProductoRepository
+			.save(ingredientePresentacionProductoMapper.toEntity(ingredientePresentacionProductoDTO));
+	}
+
+	public void delete(Long id) {
+		ingredientePresentacionProductoRepository
+			.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El ID solicitado no fue encontrado."));
+
+		ingredientePresentacionProductoRepository.deleteById(id);
+	}
 
 }

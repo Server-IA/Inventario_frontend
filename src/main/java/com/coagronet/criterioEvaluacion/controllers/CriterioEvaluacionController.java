@@ -26,41 +26,42 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class CriterioEvaluacionController {
 
-    private final CriterioEvaluacionService criterioEvaluacionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final CriterioEvaluacionService criterioEvaluacionService;
 
-    @GetMapping
-    public ResponseEntity<List<CriterioEvaluacionDTO>> findAll() {
-        return ResponseEntity.ok(criterioEvaluacionService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<CriterioEvaluacionDTO> findById(@PathVariable Long requestedId) {
-        return criterioEvaluacionService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<CriterioEvaluacionDTO>> findAll() {
+		return ResponseEntity.ok(criterioEvaluacionService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createCriterioEvaluacion(
-            @Valid @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO,
-            UriComponentsBuilder ucb) {
-        return ResponseEntity
-                .created(uriBuilderUtil
-                        .buildCriterioEvaluacionUri((criterioEvaluacionService.create(criterioEvaluacionDTO)).getId(),
-                                ucb))
-                .build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<CriterioEvaluacionDTO> findById(@PathVariable Long requestedId) {
+		return criterioEvaluacionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateCriterioEvaluacion(@PathVariable Long requestedId,
-            @Valid @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO) {
-        criterioEvaluacionService.update(requestedId, criterioEvaluacionDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createCriterioEvaluacion(
+			@Valid @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO, UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil
+				.buildCriterioEvaluacionUri((criterioEvaluacionService.create(criterioEvaluacionDTO)).getId(), ucb))
+			.build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCriterioEvaluacion(@PathVariable Long id) {
-        criterioEvaluacionService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateCriterioEvaluacion(@PathVariable Long requestedId,
+			@Valid @RequestBody CriterioEvaluacionDTO criterioEvaluacionDTO) {
+		criterioEvaluacionService.update(requestedId, criterioEvaluacionDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteCriterioEvaluacion(@PathVariable Long id) {
+		criterioEvaluacionService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
 }

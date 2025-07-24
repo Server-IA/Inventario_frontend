@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface VistaKardexRepository extends JpaRepository<VistaKardex, Long> {
 
-
-    List<VistaKardex> findByEmpresaId(Long empresaId);
+	List<VistaKardex> findByEmpresaId(Long empresaId);
 
 }

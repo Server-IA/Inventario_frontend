@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface VistaEmpresaInventarioRepository extends JpaRepository<VistaEmpresaInventario, Long> {
 
-    List<VistaEmpresaInventario> findByInvEmpresaId(Long empresaId);
-    List<VistaEmpresaInventario> findByInvEmpresaIdAndInvSubSeccionId(Long empresaId, Long subseccionId);
+	List<VistaEmpresaInventario> findByInvEmpresaId(Long empresaId);
+
+	List<VistaEmpresaInventario> findByInvEmpresaIdAndInvSubSeccionId(Long empresaId, Long subseccionId);
+
 }

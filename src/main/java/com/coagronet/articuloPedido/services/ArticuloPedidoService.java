@@ -22,88 +22,86 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloPedidoService {
 
-        private final UserEmpresaService userEmpresaService;
-        private final ArticuloPedidoMapper articuloPedidoMapper;
-        private final ArticuloPedidoRepository articuloPedidoRepository;
-        private final PedidoRepository pedidoRepository;
-        private final PresentacionProductoRepository presentacionProductoRepository;
-        private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
 
-        public List<ArticuloPedidoDTO> findAll() {
-                return articuloPedidoRepository
-                                .findByEmpresaIdOrderByIdAsc(
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .stream().map(articuloPedidoMapper::toListDTO).collect(Collectors.toList());
-        }
+	private final ArticuloPedidoMapper articuloPedidoMapper;
 
-        public List<ArticuloPedidoDTO> findAllByPedidoId(Long pedidoId) {
-                return articuloPedidoRepository
-                                .findByEmpresaIdAndPedidoIdOrderByIdAsc(
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest(),
-                                                pedidoId)
-                                .stream().map(articuloPedidoMapper::toListDTO).collect(Collectors.toList());
-        }
+	private final ArticuloPedidoRepository articuloPedidoRepository;
 
-        public Optional<ArticuloPedidoDTO> findById(Long requestedId) {
-                return articuloPedidoRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .map(articuloPedidoMapper::toListDTO);
-        }
+	private final PedidoRepository pedidoRepository;
 
-        public ArticuloPedidoDTO create(ArticuloPedidoDTO articuloPedidoDTO) {
-                pedidoRepository.findByIdAndEmpresaId(articuloPedidoDTO.getPedidoId(),
-                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El pedido no es válido."));
+	private final PresentacionProductoRepository presentacionProductoRepository;
 
-                presentacionProductoRepository
-                                .findByIdAndEmpresaId(articuloPedidoDTO.getPresentacionProductoId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException(
-                                                "La presentación de producto no es válida."));
+	private final EstadoRepository estadoRepository;
 
-                estadoRepository.findById(articuloPedidoDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+	public List<ArticuloPedidoDTO> findAll() {
+		return articuloPedidoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(articuloPedidoMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-                articuloPedidoDTO.setId(null);
-                articuloPedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<ArticuloPedidoDTO> findAllByPedidoId(Long pedidoId) {
+		return articuloPedidoRepository
+			.findByEmpresaIdAndPedidoIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pedidoId)
+			.stream()
+			.map(articuloPedidoMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-                return articuloPedidoMapper
-                                .toDTO(articuloPedidoRepository.save(articuloPedidoMapper.toEntity(articuloPedidoDTO)));
-        }
+	public Optional<ArticuloPedidoDTO> findById(Long requestedId) {
+		return articuloPedidoRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(articuloPedidoMapper::toListDTO);
+	}
 
-        public void update(Long requestedId, ArticuloPedidoDTO articuloPedidoDTO) {
-                articuloPedidoRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException("El artículo de pedido no fue encontrado."));
+	public ArticuloPedidoDTO create(ArticuloPedidoDTO articuloPedidoDTO) {
+		pedidoRepository
+			.findByIdAndEmpresaId(articuloPedidoDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El pedido no es válido."));
 
-                pedidoRepository.findByIdAndEmpresaId(articuloPedidoDTO.getPedidoId(),
-                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El pedido no es válido."));
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(articuloPedidoDTO.getPresentacionProductoId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
-                presentacionProductoRepository
-                                .findByIdAndEmpresaId(articuloPedidoDTO.getPresentacionProductoId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException(
-                                                "La presentación de producto no es válida."));
+		estadoRepository.findById(articuloPedidoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-                estadoRepository.findById(articuloPedidoDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		articuloPedidoDTO.setId(null);
+		articuloPedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-                articuloPedidoDTO.setId(requestedId);
-                articuloPedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return articuloPedidoMapper
+			.toDTO(articuloPedidoRepository.save(articuloPedidoMapper.toEntity(articuloPedidoDTO)));
+	}
 
-                articuloPedidoRepository.save(articuloPedidoMapper.toEntity(articuloPedidoDTO));
-        }
+	public void update(Long requestedId, ArticuloPedidoDTO articuloPedidoDTO) {
+		articuloPedidoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El artículo de pedido no fue encontrado."));
 
-        public void delete(Long id) {
-                articuloPedidoRepository
-                                .findByIdAndEmpresaId(id,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException("El artículo de pedido no fue encontrado."));
+		pedidoRepository
+			.findByIdAndEmpresaId(articuloPedidoDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El pedido no es válido."));
 
-                articuloPedidoRepository.deleteById(id);
-        }
+		presentacionProductoRepository
+			.findByIdAndEmpresaId(articuloPedidoDTO.getPresentacionProductoId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
+
+		estadoRepository.findById(articuloPedidoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+
+		articuloPedidoDTO.setId(requestedId);
+		articuloPedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		articuloPedidoRepository.save(articuloPedidoMapper.toEntity(articuloPedidoDTO));
+	}
+
+	public void delete(Long id) {
+		articuloPedidoRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("El artículo de pedido no fue encontrado."));
+
+		articuloPedidoRepository.deleteById(id);
+	}
 
 }

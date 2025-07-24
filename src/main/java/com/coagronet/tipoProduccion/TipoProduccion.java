@@ -28,7 +28,8 @@ import lombok.NoArgsConstructor;
 public class TipoProduccion {
 
 	@Id
-	@SequenceGenerator(name = "tipo_produccion_generator", sequenceName = "tipo_produccion_tip_id_seq", allocationSize = 1)
+	@SequenceGenerator(name = "tipo_produccion_generator", sequenceName = "tipo_produccion_tip_id_seq",
+			allocationSize = 1)
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_produccion_generator")
 	@Column(name = "tip_id")
 	private Long id;
@@ -40,11 +41,13 @@ public class TipoProduccion {
 	private String descripcion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "tip_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "tipo_produccionestadoest_id_fkey"))
+	@JoinColumn(name = "tip_estado_id", referencedColumnName = "est_id", nullable = false,
+			foreignKey = @ForeignKey(name = "tipo_produccionestadoest_id_fkey"))
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "tip_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "tipo_produccion_tip_empresa_fkey"))
+	@JoinColumn(name = "tip_empresa_id", referencedColumnName = "emp_id", nullable = false,
+			foreignKey = @ForeignKey(name = "tipo_produccion_tip_empresa_fkey"))
 	private Empresa empresa;
 
 }

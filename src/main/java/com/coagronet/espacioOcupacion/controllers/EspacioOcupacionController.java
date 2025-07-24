@@ -23,47 +23,49 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class EspacioOcupacionController {
 
-    private final EspacioOcupacionService espacioOcupacionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final EspacioOcupacionService espacioOcupacionService;
 
-    @GetMapping
-    public ResponseEntity<List<EspacioOcupacionDTO>> findAll () {
-        List<EspacioOcupacionDTO> espacioOcupacionDTOList = espacioOcupacionService.findAll();
+	private final UriBuilderUtil uriBuilderUtil;
 
-        return espacioOcupacionDTOList.isEmpty()?
-                ResponseEntity.noContent().build()
-                : ResponseEntity.ok(espacioOcupacionDTOList);
+	@GetMapping
+	public ResponseEntity<List<EspacioOcupacionDTO>> findAll() {
+		List<EspacioOcupacionDTO> espacioOcupacionDTOList = espacioOcupacionService.findAll();
 
-    }
+		return espacioOcupacionDTOList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(espacioOcupacionDTOList);
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<EspacioOcupacionDTO> findById (@PathVariable Long requestedId) {
-        return espacioOcupacionService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+	}
 
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<EspacioOcupacionDTO> findById(@PathVariable Long requestedId) {
+		return espacioOcupacionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> crearEspacioOcupacion(@RequestBody @Valid EspacioOcupacionDTO espacioOcupacionDTO, UriComponentsBuilder ucb) {
-        EspacioOcupacionDTO savedEspacioOcupacionDTO = espacioOcupacionService.create(espacioOcupacionDTO);
+	@PostMapping
+	public ResponseEntity<Void> crearEspacioOcupacion(@RequestBody @Valid EspacioOcupacionDTO espacioOcupacionDTO,
+			UriComponentsBuilder ucb) {
+		EspacioOcupacionDTO savedEspacioOcupacionDTO = espacioOcupacionService.create(espacioOcupacionDTO);
 
-        URI locationOfNewEspacioOcupacion = uriBuilderUtil.buildEspacioOcupacionUri(savedEspacioOcupacionDTO.getId(), ucb);
-        return ResponseEntity.created(locationOfNewEspacioOcupacion).build();
-    }
+		URI locationOfNewEspacioOcupacion = uriBuilderUtil.buildEspacioOcupacionUri(savedEspacioOcupacionDTO.getId(),
+				ucb);
+		return ResponseEntity.created(locationOfNewEspacioOcupacion).build();
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> actualizarEspacioOcupacion(@PathVariable Long requestedId,
-                                                    @RequestBody EspacioOcupacionDTO espacioOcupacionDTO) {
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> actualizarEspacioOcupacion(@PathVariable Long requestedId,
+			@RequestBody EspacioOcupacionDTO espacioOcupacionDTO) {
 
-        espacioOcupacionService.update(requestedId, espacioOcupacionDTO);
-        return ResponseEntity.noContent().build();
-    }
+		espacioOcupacionService.update(requestedId, espacioOcupacionDTO);
+		return ResponseEntity.noContent().build();
+	}
 
-    @DeleteMapping("/{requestedId}")
-    public ResponseEntity<Void> eliminarEspacioOcupacion(@PathVariable Long requestedId) {
-        espacioOcupacionService.delete(requestedId);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{requestedId}")
+	public ResponseEntity<Void> eliminarEspacioOcupacion(@PathVariable Long requestedId) {
+		espacioOcupacionService.delete(requestedId);
+		return ResponseEntity.noContent().build();
+	}
 
 }

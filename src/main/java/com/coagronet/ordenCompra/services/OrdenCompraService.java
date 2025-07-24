@@ -21,75 +21,79 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrdenCompraService {
 
-    private final OrdenCompraRepository ordenCompraRepository;
-    private final OrdenCompraMapper ordenCompraMapper;
-    private final PedidoRepository pedidoRepository;
-    private final ProveedorRepository proveedorRepository;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final OrdenCompraRepository ordenCompraRepository;
 
-    public List<OrdenCompraDTO> findAll() {
-        return ordenCompraRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(ordenCompraMapper::toListDTO)
-                .collect(Collectors.toList());
-    }
+	private final OrdenCompraMapper ordenCompraMapper;
 
-    public Optional<OrdenCompraDTO> findById(Long requestedId) {
-        return ordenCompraRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(ordenCompraMapper::toListDTO);
-    }
+	private final PedidoRepository pedidoRepository;
 
-    @Transactional
-    public OrdenCompraDTO create(OrdenCompraDTO ordenCompraDTO) {
+	private final ProveedorRepository proveedorRepository;
 
-        pedidoRepository
-                .findByIdAndEmpresaId(ordenCompraDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("El pedido no es válido."));
+	private final EstadoRepository estadoRepository;
 
-        proveedorRepository
-                .findByIdAndEmpresaId(ordenCompraDTO.getProveedorId(),
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("El proveedor no es válido."));
+	private final UserEmpresaService userEmpresaService;
 
-        estadoRepository.findById(ordenCompraDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+	public List<OrdenCompraDTO> findAll() {
+		return ordenCompraRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(ordenCompraMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-        ordenCompraDTO.setId(null);
-        ordenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public Optional<OrdenCompraDTO> findById(Long requestedId) {
+		return ordenCompraRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(ordenCompraMapper::toListDTO);
+	}
 
-        return ordenCompraMapper.toDTO(ordenCompraRepository.save(ordenCompraMapper.toEntity(ordenCompraDTO)));
-    }
+	@Transactional
+	public OrdenCompraDTO create(OrdenCompraDTO ordenCompraDTO) {
 
-    @Transactional
-    public void update(Long requestedId, OrdenCompraDTO ordenCompraDTO) {
-        ordenCompraRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Orden de compra no encontrada."));
+		pedidoRepository
+			.findByIdAndEmpresaId(ordenCompraDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El pedido no es válido."));
 
-        pedidoRepository
-                .findByIdAndEmpresaId(ordenCompraDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("El pedido no es válido."));
+		proveedorRepository
+			.findByIdAndEmpresaId(ordenCompraDTO.getProveedorId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El proveedor no es válido."));
 
-        proveedorRepository
-                .findByIdAndEmpresaId(ordenCompraDTO.getProveedorId(),
-                        userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new BadRequestException("El proveedor no es válido."));
+		estadoRepository.findById(ordenCompraDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-        estadoRepository.findById(ordenCompraDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		ordenCompraDTO.setId(null);
+		ordenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        ordenCompraDTO.setId(requestedId);
-        ordenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return ordenCompraMapper.toDTO(ordenCompraRepository.save(ordenCompraMapper.toEntity(ordenCompraDTO)));
+	}
 
-        ordenCompraRepository.save(ordenCompraMapper.toEntity(ordenCompraDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, OrdenCompraDTO ordenCompraDTO) {
+		ordenCompraRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Orden de compra no encontrada."));
 
-    @Transactional
-    public void delete(Long requestId) {
-        ordenCompraRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Orden de compra no encontrada."));
+		pedidoRepository
+			.findByIdAndEmpresaId(ordenCompraDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El pedido no es válido."));
 
-        ordenCompraRepository.deleteById(requestId);
-    }
+		proveedorRepository
+			.findByIdAndEmpresaId(ordenCompraDTO.getProveedorId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El proveedor no es válido."));
+
+		estadoRepository.findById(ordenCompraDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+
+		ordenCompraDTO.setId(requestedId);
+		ordenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		ordenCompraRepository.save(ordenCompraMapper.toEntity(ordenCompraDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		ordenCompraRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Orden de compra no encontrada."));
+
+		ordenCompraRepository.deleteById(requestId);
+	}
+
 }

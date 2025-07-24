@@ -8,20 +8,18 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.cors")
 public class CorsProperties {
 
-    /**
-     * Dominios confiables que pueden consumir la API.
-     */
-    private List<String> allowedOrigins = List.of();
+	/**
+	 * Dominios confiables que pueden consumir la API.
+	 */
+	private List<String> allowedOrigins = List.of();
 
-    public List<String> getAllowedOrigins() {
-        return allowedOrigins;
-    }
+	public List<String> getAllowedOrigins() {
+		return allowedOrigins;
+	}
 
-    public void setAllowedOrigins(List<String> allowedOrigins) {
-        // Trim para evitar errores por espacios accidentales
-        this.allowedOrigins = allowedOrigins.stream()
-                .map(String::trim)
-                .toList();
-    }
+	public void setAllowedOrigins(List<String> allowedOrigins) {
+		// Trim para evitar errores por espacios accidentales
+		this.allowedOrigins = allowedOrigins.stream().map(String::trim).toList();
+	}
 
 }

@@ -29,7 +29,8 @@ import lombok.Setter;
 public class ProductoCategoria {
 
 	@Id
-	@SequenceGenerator(name = "producto_categoria_generator", sequenceName = "producto_categoria_prc_id_seq", allocationSize = 1)
+	@SequenceGenerator(name = "producto_categoria_generator", sequenceName = "producto_categoria_prc_id_seq",
+			allocationSize = 1)
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_categoria_generator")
 	@Column(name = "prc_id")
 	private Long id;
@@ -41,11 +42,13 @@ public class ProductoCategoria {
 	private String descripcion;
 
 	@ManyToOne
-	@JoinColumn(name = "prc_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "producto_categoria_prc_estado_id_fkey"))
+	@JoinColumn(name = "prc_estado_id", referencedColumnName = "est_id", nullable = false,
+			foreignKey = @ForeignKey(name = "producto_categoria_prc_estado_id_fkey"))
 	private Estado estado;
 
 	@ManyToOne
-	@JoinColumn(name = "prc_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "producto_categoria_prc_empresa_id_fkey"))
+	@JoinColumn(name = "prc_empresa_id", referencedColumnName = "emp_id", nullable = false,
+			foreignKey = @ForeignKey(name = "producto_categoria_prc_empresa_id_fkey"))
 	private Empresa empresa;
 
 }

@@ -11,8 +11,8 @@ import java.util.Optional;
 @Repository
 public interface PresentacionProductoRepository extends JpaRepository<PresentacionProducto, Long> {
 
-        List<PresentacionProducto> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<PresentacionProducto> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-        Optional<PresentacionProducto> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<PresentacionProducto> findByIdAndEmpresaId(Long id, Long empresaId);
 
 }

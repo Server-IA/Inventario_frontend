@@ -29,27 +29,27 @@ import lombok.Setter;
 @Table(name = "pais", schema = "public")
 public class Pais {
 
-    @Id
-    @SequenceGenerator(name = "pai_generator", sequenceName = "pais_pai_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pai_generator")
-    @Column(name = "pai_id")
-    private Long id;
+	@Id
+	@SequenceGenerator(name = "pai_generator", sequenceName = "pais_pai_id_seq", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pai_generator")
+	@Column(name = "pai_id")
+	private Long id;
 
-    @Column(name = "pai_nombre", length = 70, nullable = false)
-    private String nombre;
+	@Column(name = "pai_nombre", length = 70, nullable = false)
+	private String nombre;
 
-    @Column(name = "pai_codigo", nullable = false)
-    private Long codigo;
+	@Column(name = "pai_codigo", nullable = false)
+	private Long codigo;
 
-    @Column(name = "pai_acronimo", length = 3, nullable = false)
-    private String acronimo;
+	@Column(name = "pai_acronimo", length = 3, nullable = false)
+	private String acronimo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pai_empresa_id", referencedColumnName = "emp_id", nullable = false)
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pai_empresa_id", referencedColumnName = "emp_id", nullable = false)
+	private Empresa empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pai_estado_id", referencedColumnName = "est_id", nullable = false)
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "pai_estado_id", referencedColumnName = "est_id", nullable = false)
+	private Estado estado;
 
 }

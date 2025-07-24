@@ -14,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProcesoDTO {
-	
+
 	private Long id;
 
 	@NotBlank(message = "El nombre es obligatorio.")
@@ -22,8 +22,8 @@ public class ProcesoDTO {
 	private String nombre;
 
 	@Size(max = 255, message = "La descripción no debe superar los 255 caracteres.")
-	private String descripcion;	
-	
+	private String descripcion;
+
 	@NotNull(message = "El tipo de producción es obligatorio.")
 	private Long tipoProduccionId;
 

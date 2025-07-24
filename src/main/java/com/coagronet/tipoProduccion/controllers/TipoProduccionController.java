@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class TipoProduccionController {
 
 	private final TipoProduccionService tipoProduccionService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -35,17 +36,18 @@ public class TipoProduccionController {
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<TipoProduccionDTO> findById(@PathVariable Long requestedId) {
-		return tipoProduccionService.findById(requestedId).map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return tipoProduccionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
 	public ResponseEntity<Void> createTipoProduccion(@Valid @RequestBody TipoProduccionDTO tipoProduccionDTO,
 			UriComponentsBuilder ucb) {
 		return ResponseEntity
-				.created(uriBuilderUtil
-						.buildTipoProduccionUri((tipoProduccionService.create(tipoProduccionDTO)).getId(), ucb))
-				.build();
+			.created(uriBuilderUtil.buildTipoProduccionUri((tipoProduccionService.create(tipoProduccionDTO)).getId(),
+					ucb))
+			.build();
 	}
 
 	@PutMapping("/{requestedId}")

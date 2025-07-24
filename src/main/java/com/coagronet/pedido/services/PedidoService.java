@@ -18,55 +18,58 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PedidoService {
 
-    private final PedidoRepository pedidoRepository;
-    private final PedidoMapper pedidoMapper;
-    private final UserEmpresaService userEmpresaService;
-    private final EstadoRepository estadoRepository;
+	private final PedidoRepository pedidoRepository;
 
-    public List<PedidoDTO> findAll() {
-        return pedidoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(pedidoMapper::toDto)
-                .collect(Collectors.toList());
-    }
+	private final PedidoMapper pedidoMapper;
 
-    public Optional<PedidoDTO> findById(Long requestId) {
-        return pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(pedidoMapper::toDto);
-    }
+	private final UserEmpresaService userEmpresaService;
 
-    @Transactional
-    public PedidoDTO create(PedidoDTO pedidoDTO) {
-        estadoRepository.findById(pedidoDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
+	private final EstadoRepository estadoRepository;
 
-        pedidoDTO.setId(null);
-        pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<PedidoDTO> findAll() {
+		return pedidoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(pedidoMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-        return pedidoMapper.toDto(pedidoRepository.save(pedidoMapper.toEntity(pedidoDTO)));
-    }
+	public Optional<PedidoDTO> findById(Long requestId) {
+		return pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(pedidoMapper::toDto);
+	}
 
-    @Transactional
-    public void update(Long requestId, PedidoDTO pedidoDTO) {
-        pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Pedido no encontrado o no válido"));
+	@Transactional
+	public PedidoDTO create(PedidoDTO pedidoDTO) {
+		estadoRepository.findById(pedidoDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
 
-        estadoRepository.findById(pedidoDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
+		pedidoDTO.setId(null);
+		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        pedidoDTO.setId(requestId);
-        pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return pedidoMapper.toDto(pedidoRepository.save(pedidoMapper.toEntity(pedidoDTO)));
+	}
 
-        pedidoRepository.save(pedidoMapper.toEntity(pedidoDTO));
-    }
+	@Transactional
+	public void update(Long requestId, PedidoDTO pedidoDTO) {
+		pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Pedido no encontrado o no válido"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Pedido no encontrado o no válido"));
+		estadoRepository.findById(pedidoDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
 
-        pedidoRepository.deleteById(requestId);
+		pedidoDTO.setId(requestId);
+		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-    }
+		pedidoRepository.save(pedidoMapper.toEntity(pedidoDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Pedido no encontrado o no válido"));
+
+		pedidoRepository.deleteById(requestId);
+
+	}
 
 }

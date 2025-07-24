@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class AlmacenController {
 
 	private final AlmacenService almacenService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping

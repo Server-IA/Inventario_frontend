@@ -20,27 +20,26 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "verification_tokens", uniqueConstraints = {
-        @UniqueConstraint(name = "verification_tokens_vet_email_key", columnNames = "email")
-})
+@Table(name = "verification_tokens",
+		uniqueConstraints = { @UniqueConstraint(name = "verification_tokens_vet_email_key", columnNames = "email") })
 public class VerificationToken {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "vet_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "vet_id")
+	private Long id;
 
-    @Column(name = "vet_email", nullable = false, length = 255)
-    private String email;
+	@Column(name = "vet_email", nullable = false, length = 255)
+	private String email;
 
-    @Column(name = "vet_expiry_date", nullable = false)
-    private LocalDateTime expiryDate;
+	@Column(name = "vet_expiry_date", nullable = false)
+	private LocalDateTime expiryDate;
 
-    @Column(name = "vet_token", nullable = false, length = 255)
-    private String token;
+	@Column(name = "vet_token", nullable = false, length = 255)
+	private String token;
 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiryDate);
-    }
+	public boolean isExpired() {
+		return LocalDateTime.now().isAfter(expiryDate);
+	}
 
 }

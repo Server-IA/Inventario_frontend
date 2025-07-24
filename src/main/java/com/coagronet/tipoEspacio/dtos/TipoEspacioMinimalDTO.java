@@ -6,6 +6,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TipoEspacioMinimalDTO {
-    private Integer id;
-    private String nombre;
+
+	private Integer id;
+
+	private String nombre;
+
 }

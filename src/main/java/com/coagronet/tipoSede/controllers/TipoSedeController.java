@@ -24,41 +24,36 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoSedeController {
 
-    private final TipoSedeService tipoSedeService;
+	private final TipoSedeService tipoSedeService;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoSedeDTO> findById(@PathVariable Long requestedId) {
-        return tipoSedeService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<TipoSedeDTO> findById(@PathVariable Long requestedId) {
+		return tipoSedeService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createTipoSede(@RequestBody TipoSedeDTO newTipoSedeRequest,
-            UriComponentsBuilder ucb) {
-        TipoSedeDTO savedTipoSede = tipoSedeService.create(newTipoSedeRequest);
-        URI locationOfNewTipoSede = ucb
-                .path("/api/v1/tipo_sede/{id}")
-                .buildAndExpand(savedTipoSede.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewTipoSede).build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createTipoSede(@RequestBody TipoSedeDTO newTipoSedeRequest, UriComponentsBuilder ucb) {
+		TipoSedeDTO savedTipoSede = tipoSedeService.create(newTipoSedeRequest);
+		URI locationOfNewTipoSede = ucb.path("/api/v1/tipo_sede/{id}").buildAndExpand(savedTipoSede.getId()).toUri();
+		return ResponseEntity.created(locationOfNewTipoSede).build();
+	}
 
-    @GetMapping
-    public ResponseEntity<List<TipoSedeDTO>> findAll() {
-        return ResponseEntity.ok(tipoSedeService.findAll());
-    }
+	@GetMapping
+	public ResponseEntity<List<TipoSedeDTO>> findAll() {
+		return ResponseEntity.ok(tipoSedeService.findAll());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putTipoSede(@PathVariable Long requestedId,
-            @RequestBody TipoSedeDTO tipoSedeDTOUpdate) {
-        tipoSedeService.update(requestedId, tipoSedeDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> putTipoSede(@PathVariable Long requestedId,
+			@RequestBody TipoSedeDTO tipoSedeDTOUpdate) {
+		tipoSedeService.update(requestedId, tipoSedeDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoSede(@PathVariable Long id) {
-        tipoSedeService.delete(id);
-        return ResponseEntity.ok().build();
-    }
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteTipoSede(@PathVariable Long id) {
+		tipoSedeService.delete(id);
+		return ResponseEntity.ok().build();
+	}
+
 }

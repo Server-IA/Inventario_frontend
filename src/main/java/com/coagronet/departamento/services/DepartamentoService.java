@@ -22,31 +22,35 @@ import lombok.RequiredArgsConstructor;
 public class DepartamentoService {
 
 	private final DepartamentoMapper departamentoMapper;
+
 	private final DepartamentoRepository departamentoRepository;
+
 	private final PaisRepository paisRepository;
+
 	private final UserEmpresaService userEmpresaService;
+
 	private final EstadoRepository estadoRepository;
 
 	public List<DepartamentoDTO> findAll() {
 		return departamentoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream()
-				.map(departamentoMapper::toListDto).collect(Collectors.toList());
+			.stream()
+			.map(departamentoMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<DepartamentoDTO> findById(Long requestedId) {
 		return departamentoRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(departamentoMapper::toListDto);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(departamentoMapper::toListDto);
 	}
 
 	public DepartamentoDTO create(DepartamentoDTO departamentoDTO) {
 		paisRepository
-				.findByIdAndEmpresaId(departamentoDTO.getPaisId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(
-						() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
+			.findByIdAndEmpresaId(departamentoDTO.getPaisId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
 
 		estadoRepository.findById(departamentoDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		departamentoDTO.setId(null);
 		departamentoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -56,12 +60,11 @@ public class DepartamentoService {
 
 	public void update(Long requestedId, DepartamentoDTO departamentoDTO) {
 		departamentoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Departamento no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Departamento no encontrado"));
 
 		paisRepository
-				.findByIdAndEmpresaId(departamentoDTO.getPaisId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(
-						() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
+			.findByIdAndEmpresaId(departamentoDTO.getPaisId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
 
 		departamentoDTO.setId(requestedId);
 		departamentoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -71,7 +74,7 @@ public class DepartamentoService {
 
 	public void delete(Long id) {
 		departamentoRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Departamento no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Departamento no encontrado"));
 
 		departamentoRepository.deleteById(id);
 	}

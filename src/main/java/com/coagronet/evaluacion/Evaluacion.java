@@ -32,27 +32,32 @@ import lombok.Setter;
 @Table(name = "evaluacion", schema = "public")
 public class Evaluacion {
 
-    @Id
-    @SequenceGenerator(name = "evaluacion_sequence_generator", sequenceName = "evaluacion_eva_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaluacion_sequence_generator")
-    @Column(name = "eva_id")
-    private Long id;
+	@Id
+	@SequenceGenerator(name = "evaluacion_sequence_generator", sequenceName = "evaluacion_eva_id_seq",
+			allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaluacion_sequence_generator")
+	@Column(name = "eva_id")
+	private Long id;
 
-    @Column(name = "eva_fecha_hora")
-    private LocalDateTime fechaHora;
+	@Column(name = "eva_fecha_hora")
+	private LocalDateTime fechaHora;
 
-    @Column(name = "eva_evaluado")
-    private Integer idEntidadEvaluada;
+	@Column(name = "eva_evaluado")
+	private Integer idEntidadEvaluada;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eva_tipo_evaluacion_id", referencedColumnName = "tie_id", nullable = false, foreignKey = @ForeignKey(name = "evaluacion_eva_tipo_evaluacion_id_fkey"))
-    private TipoEvaluacion tipoEvaluacion;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eva_tipo_evaluacion_id", referencedColumnName = "tie_id", nullable = false,
+			foreignKey = @ForeignKey(name = "evaluacion_eva_tipo_evaluacion_id_fkey"))
+	private TipoEvaluacion tipoEvaluacion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eva_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "evaluacion_eva_estado_fkey"))
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eva_estado_id", referencedColumnName = "est_id", nullable = false,
+			foreignKey = @ForeignKey(name = "evaluacion_eva_estado_fkey"))
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "eva_empresa_id", referencedColumnName = "emp_id", nullable = false, foreignKey = @ForeignKey(name = "evaluacion_eva_empresa_id_fkey"))
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "eva_empresa_id", referencedColumnName = "emp_id", nullable = false,
+			foreignKey = @ForeignKey(name = "evaluacion_eva_empresa_id_fkey"))
+	private Empresa empresa;
+
 }

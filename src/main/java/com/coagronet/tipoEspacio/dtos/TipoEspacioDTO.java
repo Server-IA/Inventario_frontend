@@ -27,4 +27,5 @@ public class TipoEspacioDTO {
 	private Long estadoId;
 
 	private Long empresaId;
+
 }

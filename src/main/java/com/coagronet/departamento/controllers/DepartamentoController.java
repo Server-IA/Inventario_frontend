@@ -26,47 +26,41 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DepartamentoController {
 
-    private final DepartamentoService departamentoService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final DepartamentoService departamentoService;
 
-    @GetMapping
-    public ResponseEntity<List<DepartamentoDTO>> findAll() {
-        return ResponseEntity.ok(departamentoService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<DepartamentoDTO> findById(
-            @PathVariable Long requestedId) {
-        return departamentoService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<DepartamentoDTO>> findAll() {
+		return ResponseEntity.ok(departamentoService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createDepartamento(
-            @Valid @RequestBody DepartamentoDTO departamentoDTO,
-            UriComponentsBuilder ucb) {
-        DepartamentoDTO savedDepartamento = departamentoService.create(
-                departamentoDTO);
-        URI locationOfNewDepartamento = uriBuilderUtil.buildDepartamentoUri(
-                savedDepartamento.getId(),
-                ucb);
-        return ResponseEntity.created(locationOfNewDepartamento).build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<DepartamentoDTO> findById(@PathVariable Long requestedId) {
+		return departamentoService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateDepartamento(
-            @PathVariable Long requestedId,
-            @Valid @RequestBody DepartamentoDTO departamentoDTO) {
-        departamentoService.update(requestedId, departamentoDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createDepartamento(@Valid @RequestBody DepartamentoDTO departamentoDTO,
+			UriComponentsBuilder ucb) {
+		DepartamentoDTO savedDepartamento = departamentoService.create(departamentoDTO);
+		URI locationOfNewDepartamento = uriBuilderUtil.buildDepartamentoUri(savedDepartamento.getId(), ucb);
+		return ResponseEntity.created(locationOfNewDepartamento).build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartamento(
-            @PathVariable Long id) {
-        departamentoService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateDepartamento(@PathVariable Long requestedId,
+			@Valid @RequestBody DepartamentoDTO departamentoDTO) {
+		departamentoService.update(requestedId, departamentoDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteDepartamento(@PathVariable Long id) {
+		departamentoService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

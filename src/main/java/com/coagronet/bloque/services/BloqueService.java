@@ -23,33 +23,39 @@ import lombok.RequiredArgsConstructor;
 public class BloqueService {
 
 	private final BloqueMapper bloqueMapper;
+
 	private final BloqueRepository bloqueRepository;
+
 	private final UserEmpresaService userEmpresaService;
+
 	private final SedeRepository sedeRepository;
+
 	private final TipoBloqueRepository tipoBloqueRepository;
+
 	private final EstadoRepository estadoRepository;
 
 	public List<BloqueDTO> findAll() {
 		return bloqueRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream().map(bloqueMapper::toListDto)
-				.collect(Collectors.toList());
+			.stream()
+			.map(bloqueMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<BloqueDTO> findById(Long requestedId) {
 		return bloqueRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(bloqueMapper::toListDto);
+			.map(bloqueMapper::toListDto);
 	}
 
 	public BloqueDTO create(BloqueDTO bloqueDTO) {
 		sedeRepository.findByIdAndEmpresaId(bloqueDTO.getSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("La sede no es válida"));
+			.orElseThrow(() -> new BadRequestException("La sede no es válida"));
 
 		tipoBloqueRepository
-				.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de bloque no es válido"));
+			.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es válido"));
 
 		estadoRepository.findById(bloqueDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		bloqueDTO.setId(null);
 		bloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -59,17 +65,17 @@ public class BloqueService {
 
 	public void update(Long requestedId, BloqueDTO bloqueDTO) {
 		bloqueRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
 
 		sedeRepository.findByIdAndEmpresaId(bloqueDTO.getSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("La sede no es válida"));
+			.orElseThrow(() -> new BadRequestException("La sede no es válida"));
 
 		tipoBloqueRepository
-				.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de bloque no es válido"));
+			.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es válido"));
 
 		estadoRepository.findById(bloqueDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		bloqueDTO.setId(requestedId);
 		bloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -79,7 +85,7 @@ public class BloqueService {
 
 	public void delete(Long id) {
 		bloqueRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
 
 		bloqueRepository.deleteById(id);
 	}

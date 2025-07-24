@@ -19,50 +19,45 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MovimientoService {
 
-    private final MovimientoMapper movimientoMapper;
-    private final MovimientoRepository movimientoRepository;
-    private final EstadoRepository estadoRepository;
+	private final MovimientoMapper movimientoMapper;
 
-    public List<MovimientoDTO> findAll() {
-        return movimientoRepository
-                .findAll()
-                .stream().map(movimientoMapper::toDTO).collect(Collectors.toList());
-    }
+	private final MovimientoRepository movimientoRepository;
 
-    public Optional<MovimientoDTO> findById(Long requestedId) {
-        return movimientoRepository
-                .findById(requestedId)
-                .map(movimientoMapper::toDTO);
-    }
+	private final EstadoRepository estadoRepository;
 
-    public MovimientoDTO create(MovimientoDTO movimientoDTO) {
-        estadoRepository.findById(movimientoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	public List<MovimientoDTO> findAll() {
+		return movimientoRepository.findAll().stream().map(movimientoMapper::toDTO).collect(Collectors.toList());
+	}
 
-        movimientoDTO.setId(null);
+	public Optional<MovimientoDTO> findById(Long requestedId) {
+		return movimientoRepository.findById(requestedId).map(movimientoMapper::toDTO);
+	}
 
-        return movimientoMapper.toDTO(movimientoRepository.save(movimientoMapper.toEntity(movimientoDTO)));
-    }
+	public MovimientoDTO create(MovimientoDTO movimientoDTO) {
+		estadoRepository.findById(movimientoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-    public void update(Long requestedId, MovimientoDTO movimientoDTO) {
-        movimientoRepository
-                .findById(requestedId)
-                .orElseThrow(() -> new NotFoundException("El movimiento no fue encontrado."));
+		movimientoDTO.setId(null);
 
-        estadoRepository.findById(movimientoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		return movimientoMapper.toDTO(movimientoRepository.save(movimientoMapper.toEntity(movimientoDTO)));
+	}
 
-        movimientoDTO.setId(requestedId);
+	public void update(Long requestedId, MovimientoDTO movimientoDTO) {
+		movimientoRepository.findById(requestedId)
+			.orElseThrow(() -> new NotFoundException("El movimiento no fue encontrado."));
 
-        movimientoRepository.save(movimientoMapper.toEntity(movimientoDTO));
-    }
+		estadoRepository.findById(movimientoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-    public void delete(Long id) {
-        movimientoRepository
-                .findById(id)
-                .orElseThrow(() -> new NotFoundException("El movimiento no fue encontrado."));
+		movimientoDTO.setId(requestedId);
 
-        movimientoRepository.deleteById(id);
-    }
+		movimientoRepository.save(movimientoMapper.toEntity(movimientoDTO));
+	}
+
+	public void delete(Long id) {
+		movimientoRepository.findById(id).orElseThrow(() -> new NotFoundException("El movimiento no fue encontrado."));
+
+		movimientoRepository.deleteById(id);
+	}
 
 }

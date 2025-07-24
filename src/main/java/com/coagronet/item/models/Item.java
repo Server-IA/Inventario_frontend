@@ -6,11 +6,14 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Item {
-    private Long id;
-    private String name;
 
-    public Item(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+	private Long id;
+
+	private String name;
+
+	public Item(Long id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
 }

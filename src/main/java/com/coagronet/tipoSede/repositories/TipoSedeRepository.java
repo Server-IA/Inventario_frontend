@@ -9,24 +9,14 @@ import com.coagronet.tipoSede.TipoSede;
 
 public interface TipoSedeRepository extends JpaRepository<TipoSede, Long> {
 
-    List<TipoSede> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
-            Long empresaId,
-            Long estadoId);
+	List<TipoSede> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
 
-    List<TipoSede> findByEmpresaIdOrderByIdAsc(
-            Long empresaId);
+	List<TipoSede> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<TipoSede> findByIdAndEmpresaIdAndEstadoIdNot(
-            Long id,
-            Long empresaId,
-            Long estadoId);
+	Optional<TipoSede> findByIdAndEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Long estadoId);
 
-    Optional<TipoSede> findByIdAndEmpresaId(
-            Long id,
-            Long empresaId);
+	Optional<TipoSede> findByIdAndEmpresaId(Long id, Long empresaId);
 
+	boolean existsByIdAndEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Long estadoId);
 
-    boolean existsByIdAndEmpresaIdAndEstadoIdNot(Long id,
-            Long empresaId,
-            Long estadoId);
 }

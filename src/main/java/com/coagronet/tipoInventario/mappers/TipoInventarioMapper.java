@@ -8,11 +8,12 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface TipoInventarioMapper {
 
-    @Mapping(source = "estado.id", target = "estadoId")
-    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
-    TipoInventarioDTO toDTO(TipoInventario tipoInventario);
+	@Mapping(source = "estado.id", target = "estadoId")
+	@Mapping(source = "empresa.id", target = "empresaId", ignore = true)
+	TipoInventarioDTO toDTO(TipoInventario tipoInventario);
 
-    @Mapping(source = "estadoId", target = "estado.id")
-    @Mapping(source = "empresaId", target = "empresa.id")
-    TipoInventario toEntity(TipoInventarioDTO tipoInventarioDTO);
+	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(source = "empresaId", target = "empresa.id")
+	TipoInventario toEntity(TipoInventarioDTO tipoInventarioDTO);
+
 }

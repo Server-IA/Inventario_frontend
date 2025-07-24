@@ -19,61 +19,64 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TipoMovimientoService {
 
-    private final TipoMovimientoRepository tipoMovimientoRepository;
-    private final TipoMovimientoMapper tipoMovimientoMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final TipoMovimientoRepository tipoMovimientoRepository;
 
-    public List<TipoMovimientoDTO> findAll() {
+	private final TipoMovimientoMapper tipoMovimientoMapper;
 
-        return tipoMovimientoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(tipoMovimientoMapper::toDto)
-                .collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<TipoMovimientoDTO> findById(Long requestedId) {
+	private final UserEmpresaService userEmpresaService;
 
-        return tipoMovimientoRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(tipoMovimientoMapper::toDto);
-    }
+	public List<TipoMovimientoDTO> findAll() {
 
-    @Transactional
-    public TipoMovimientoDTO create(TipoMovimientoDTO tipoMovimientoDTO) {
+		return tipoMovimientoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(tipoMovimientoMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-        estadoRepository.findById(tipoMovimientoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	public Optional<TipoMovimientoDTO> findById(Long requestedId) {
 
-        tipoMovimientoDTO.setId(null);
-        tipoMovimientoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return tipoMovimientoRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(tipoMovimientoMapper::toDto);
+	}
 
-        return tipoMovimientoMapper
-                .toDto(tipoMovimientoRepository.save(tipoMovimientoMapper.toEntity(tipoMovimientoDTO)));
-    }
+	@Transactional
+	public TipoMovimientoDTO create(TipoMovimientoDTO tipoMovimientoDTO) {
 
-    @Transactional
-    public void update(Long requestedId, TipoMovimientoDTO tipoMovimientoDTO) {
+		estadoRepository.findById(tipoMovimientoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        tipoMovimientoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("TipoMovimiento no encontrada o no válida"));
+		tipoMovimientoDTO.setId(null);
+		tipoMovimientoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        estadoRepository.findById(tipoMovimientoDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		return tipoMovimientoMapper
+			.toDto(tipoMovimientoRepository.save(tipoMovimientoMapper.toEntity(tipoMovimientoDTO)));
+	}
 
-        tipoMovimientoDTO.setId(requestedId);
-        tipoMovimientoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	@Transactional
+	public void update(Long requestedId, TipoMovimientoDTO tipoMovimientoDTO) {
 
-        tipoMovimientoRepository.save(tipoMovimientoMapper.toEntity(tipoMovimientoDTO));
-    }
+		tipoMovimientoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("TipoMovimiento no encontrada o no válida"));
 
-    @Transactional
-    public void delete(Long requestId) {
+		estadoRepository.findById(tipoMovimientoDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        tipoMovimientoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("TipoMovimiento no encontrado o no válido"));
+		tipoMovimientoDTO.setId(requestedId);
+		tipoMovimientoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        tipoMovimientoRepository.deleteById(requestId);
-    }
+		tipoMovimientoRepository.save(tipoMovimientoMapper.toEntity(tipoMovimientoDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+
+		tipoMovimientoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("TipoMovimiento no encontrado o no válido"));
+
+		tipoMovimientoRepository.deleteById(requestId);
+	}
 
 }

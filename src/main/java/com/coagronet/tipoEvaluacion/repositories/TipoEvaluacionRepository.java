@@ -10,6 +10,6 @@ import com.coagronet.tipoEvaluacion.TipoEvaluacion;
 @Repository
 public interface TipoEvaluacionRepository extends JpaRepository<TipoEvaluacion, Long> {
 
-        List<TipoEvaluacion> findAllByOrderByIdAsc();
+	List<TipoEvaluacion> findAllByOrderByIdAsc();
 
 }

@@ -11,17 +11,12 @@ import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 @Repository
 public interface TipoIdentificacionRepository extends JpaRepository<TipoIdentificacion, Long> {
 
-    List<TipoIdentificacion> findByEstadoIdNotOrderByIdAsc(
-            Long estadoId);
+	List<TipoIdentificacion> findByEstadoIdNotOrderByIdAsc(Long estadoId);
 
-    Optional<TipoIdentificacion> findById(
-            Long id);
+	Optional<TipoIdentificacion> findById(Long id);
 
-    boolean existsById(
-            Long id);
+	boolean existsById(Long id);
 
-    boolean existsByIdAndEstadoIdNot(
-            Long id,
-            Long estadoId);
+	boolean existsByIdAndEstadoIdNot(Long id, Long estadoId);
 
 }

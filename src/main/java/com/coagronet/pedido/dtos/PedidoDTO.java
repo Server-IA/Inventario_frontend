@@ -12,20 +12,24 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class PedidoDTO {
-    private Long id;
-    private LocalDateTime fechaHora;
 
-    @NotNull
-    private Long almacenId;
+	private Long id;
 
-    @NotNull
-    private Long produccionId;
+	private LocalDateTime fechaHora;
 
-    @NotNull
-    @Size(max = 2048, message = "La descripcion no puede superar los 2048 caracteres")
-    private String descripcion;
+	@NotNull
+	private Long almacenId;
 
-    @NotNull
-    private Long estadoId;
-    private Long empresaId;
+	@NotNull
+	private Long produccionId;
+
+	@NotNull
+	@Size(max = 2048, message = "La descripcion no puede superar los 2048 caracteres")
+	private String descripcion;
+
+	@NotNull
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

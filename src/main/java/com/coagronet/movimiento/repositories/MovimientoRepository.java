@@ -7,4 +7,5 @@ import com.coagronet.movimiento.Movimiento;
 
 @Repository
 public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
+
 }

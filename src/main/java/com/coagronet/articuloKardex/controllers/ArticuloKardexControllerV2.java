@@ -13,12 +13,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ArticuloKardexControllerV2 {
 
-    private final ArticuloKardexService articuloKardexService;
+	private final ArticuloKardexService articuloKardexService;
 
-    @GetMapping("/kardex/{kardexId}/articulos")
-    public ResponseEntity<List<ArticuloKardexDTO>> findArticulosByKardex(
-            @PathVariable Long kardexId) {
-        return ResponseEntity.ok(articuloKardexService.findAllByKardexId(kardexId));
-    }
+	@GetMapping("/kardex/{kardexId}/articulos")
+	public ResponseEntity<List<ArticuloKardexDTO>> findArticulosByKardex(@PathVariable Long kardexId) {
+		return ResponseEntity.ok(articuloKardexService.findAllByKardexId(kardexId));
+	}
 
 }

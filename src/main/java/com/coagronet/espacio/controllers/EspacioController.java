@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class EspacioController {
 
 	private final EspacioService espacioService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping

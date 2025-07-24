@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class BloqueController {
 
 	private final BloqueService bloqueService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping

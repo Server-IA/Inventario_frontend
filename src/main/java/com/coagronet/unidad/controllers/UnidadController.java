@@ -20,58 +20,46 @@ import com.coagronet.unidad.services.UnidadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-
 @RestController
 @RequestMapping("/api/v1/unidad")
 @RequiredArgsConstructor
 public class UnidadController {
 
-    private final UnidadService unidadService;
+	private final UnidadService unidadService;
 
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<UnidadDTO> findById(@PathVariable Long requestedId) {
+		return unidadService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
+	@GetMapping
+	public ResponseEntity<List<UnidadDTO>> findAll() {
+		List<UnidadDTO> unidadDTOList = unidadService.findAll();
 
+		return unidadDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(unidadDTOList);
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<UnidadDTO> findById(@PathVariable Long requestedId) {
-        return unidadService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@PostMapping
+	public ResponseEntity<Void> createUnidad(@Valid @RequestBody UnidadDTO newUnidadRequest, UriComponentsBuilder ucb) {
 
-    @GetMapping
-    public ResponseEntity<List<UnidadDTO>> findAll() {
-        List<UnidadDTO> unidadDTOList = unidadService.findAll();
+		UnidadDTO savedUnidad = unidadService.create(newUnidadRequest);
 
-        return unidadDTOList.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(unidadDTOList);
-    }
+		URI locationOfNewUnidad = ucb.path("/{id}").buildAndExpand(savedUnidad.getId()).toUri();
+		return ResponseEntity.created(locationOfNewUnidad).build();
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createUnidad(@Valid @RequestBody UnidadDTO newUnidadRequest,
-            UriComponentsBuilder ucb) {
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> putUnidad(@PathVariable Long requestedId,
+			@Valid @RequestBody UnidadDTO unidadDTOUpdate) {
 
-        UnidadDTO savedUnidad = unidadService.create(newUnidadRequest);
+		unidadService.update(requestedId, unidadDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-        URI locationOfNewUnidad = ucb
-                .path("/{id}")
-                .buildAndExpand(savedUnidad.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewUnidad).build();
-    }
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteUnidad(@PathVariable Long id) {
+		unidadService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
-
-
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> putUnidad(@PathVariable Long requestedId, @Valid @RequestBody UnidadDTO unidadDTOUpdate) {
-
-        unidadService.update(requestedId, unidadDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUnidad(@PathVariable Long id) {
-        unidadService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

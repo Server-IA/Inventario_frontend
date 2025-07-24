@@ -10,7 +10,8 @@ import java.util.Optional;
 @Repository
 public interface CriterioEvaluacionRepository extends JpaRepository<CriterioEvaluacion, Long> {
 
-    List<CriterioEvaluacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<CriterioEvaluacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    Optional<CriterioEvaluacion> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<CriterioEvaluacion> findByIdAndEmpresaId(Long id, Long empresaId);
+
 }

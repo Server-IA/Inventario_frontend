@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class ArticuloKardexController {
 
 	private final ArticuloKardexService articuloKardexService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -35,17 +36,18 @@ public class ArticuloKardexController {
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<ArticuloKardexDTO> findById(@PathVariable Long requestedId) {
-		return articuloKardexService.findById(requestedId).map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return articuloKardexService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
 	public ResponseEntity<Void> createArticuloKardex(@Valid @RequestBody ArticuloKardexDTO articuloKardexDTO,
 			UriComponentsBuilder ucb) {
 		return ResponseEntity
-				.created(uriBuilderUtil
-						.buildArticuloKardexUri((articuloKardexService.create(articuloKardexDTO)).getId(), ucb))
-				.build();
+			.created(uriBuilderUtil.buildArticuloKardexUri((articuloKardexService.create(articuloKardexDTO)).getId(),
+					ucb))
+			.build();
 	}
 
 	@PutMapping("/{requestedId}")

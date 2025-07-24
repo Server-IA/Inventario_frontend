@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class MovimientoController {
 
 	private final MovimientoService movimientoService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -35,16 +36,17 @@ public class MovimientoController {
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<MovimientoDTO> findById(@PathVariable Long requestedId) {
-		return movimientoService.findById(requestedId).map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return movimientoService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
 	public ResponseEntity<Void> createMovimiento(@Valid @RequestBody MovimientoDTO movimientoDTO,
 			UriComponentsBuilder ucb) {
 		return ResponseEntity
-				.created(uriBuilderUtil.buildMovimientoUri((movimientoService.create(movimientoDTO)).getId(), ucb))
-				.build();
+			.created(uriBuilderUtil.buildMovimientoUri((movimientoService.create(movimientoDTO)).getId(), ucb))
+			.build();
 	}
 
 	@PutMapping("/{requestedId}")

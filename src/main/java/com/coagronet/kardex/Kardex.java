@@ -31,36 +31,36 @@ import lombok.NoArgsConstructor;
 @Table(name = "kardex")
 public class Kardex {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_generator")
-    @SequenceGenerator(name = "kardex_generator", sequenceName = "kardex_kar_id_seq", allocationSize = 1)
-    @Column(name = "kar_id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_generator")
+	@SequenceGenerator(name = "kardex_generator", sequenceName = "kardex_kar_id_seq", allocationSize = 1)
+	@Column(name = "kar_id", nullable = false)
+	private Long id;
 
-    @Column(name = "kar_fecha_hora")
-    private LocalDateTime fechaHora;
+	@Column(name = "kar_fecha_hora")
+	private LocalDateTime fechaHora;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_almacen_id", referencedColumnName = "alm_id")
-    private Almacen almacen;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_almacen_id", referencedColumnName = "alm_id")
+	private Almacen almacen;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_produccion_id", referencedColumnName = "pro_id")
-    private Produccion produccion;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_produccion_id", referencedColumnName = "pro_id")
+	private Produccion produccion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_tipo_movimiento_id", referencedColumnName = "tim_id")
-    private TipoMovimiento tipoMovimiento;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_tipo_movimiento_id", referencedColumnName = "tim_id")
+	private TipoMovimiento tipoMovimiento;
 
-    @Column(name = "kar_descripcion", length = 500)
-    private String descripcion;
+	@Column(name = "kar_descripcion", length = 500)
+	private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id")
-    private Empresa empresa;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
 
 }

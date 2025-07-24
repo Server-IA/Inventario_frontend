@@ -32,4 +32,5 @@ public class MunicipioDTO {
 
 	@NotNull(message = "El estado es obligatorio.")
 	private Long estadoId;
+
 }
