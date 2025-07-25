@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -17,6 +16,7 @@ import com.coagronet.tipoMedicion.dtos.TipoMedicionDTO;
 import com.coagronet.tipoMedicion.services.TipoMedicionService;
 import com.coagronet.utils.UriBuilderUtil;
 
+import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -33,8 +33,8 @@ public class TipoMedicionController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoMedicionDTO> findById(@PathVariable Long reuestedId) {
-        return tipoMedicionService.findById(reuestedId).map(ResponseEntity::ok)
+    public ResponseEntity<TipoMedicionDTO> findById(@PathVariable Long requestedId) {
+        return tipoMedicionService.findById(requestedId).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -49,7 +49,7 @@ public class TipoMedicionController {
     
     @PutMapping("/{requestedId}")
     public ResponseEntity<Void> updateTipoMedicion(@PathVariable Long requestedId,
-        @Valid@RequestBody TipoMedicionDTO tipoMedicionDTO) {
+        @Valid @RequestBody TipoMedicionDTO tipoMedicionDTO) {
             tipoMedicionService.update(requestedId, tipoMedicionDTO);
             return ResponseEntity.noContent().build();
         }

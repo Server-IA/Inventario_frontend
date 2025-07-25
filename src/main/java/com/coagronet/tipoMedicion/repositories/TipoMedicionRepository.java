@@ -12,5 +12,6 @@ import com.coagronet.tipoMedicion.TipoMedicion;
 public interface TipoMedicionRepository extends JpaRepository <TipoMedicion, Long>{
     Optional<TipoMedicion> findByIdAndEmpresaId (Long id, Long empresaId);
     List<TipoMedicion> findByEmpresaIdOrderByIdAsc(Long empresaId);
-    
+    List<TipoMedicion> findByEstadoId(Long estadoId);
+    List<TipoMedicion> findByUnidadId(Long unidadId);
 }

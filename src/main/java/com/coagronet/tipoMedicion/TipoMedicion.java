@@ -29,7 +29,7 @@ public class TipoMedicion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipoMedicion_generator")
-    @SequenceGenerator(name = "tipoMedicion_generator", sequenceName = "iot.tipo_medicion_tim_id_seq")
+    @SequenceGenerator(name = "tipoMedicion_generator", sequenceName = "iot.tipo_medicion_tim_id_seq", allocationSize = 1)
     @Column(name="tim_id", nullable = false)
     private Long id;
 
@@ -40,7 +40,7 @@ public class TipoMedicion {
     private String descripcion;
 
     @ManyToOne
-    @JoinColumn(name = "tim_unidad_id", nullable = false)
+    @JoinColumn(name = "tim_unidad_id", referencedColumnName = "uni_id",nullable = false)
     private Unidad unidad;
 
     @ManyToOne
