@@ -25,42 +25,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArticuloInventarioController {
 
-    private final ArticuloInventarioService articuloInventarioService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final ArticuloInventarioService articuloInventarioService;
 
-    @GetMapping
-    public ResponseEntity<List<ArticuloInventarioDTO>> findAll() {
-        return ResponseEntity.ok(articuloInventarioService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<ArticuloInventarioDTO> findById(@PathVariable Long requestedId) {
-        return articuloInventarioService.findById(requestedId).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping
+	public ResponseEntity<List<ArticuloInventarioDTO>> findAll() {
+		return ResponseEntity.ok(articuloInventarioService.findAll());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createArticuloInventario(
-            @Valid @RequestBody ArticuloInventarioDTO articuloInventarioDTO,
-            UriComponentsBuilder ucb) {
-        return ResponseEntity
-                .created(uriBuilderUtil
-                        .buildArticuloInventarioUri((articuloInventarioService.create(articuloInventarioDTO)).getId(),
-                                ucb))
-                .build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<ArticuloInventarioDTO> findById(@PathVariable Long requestedId) {
+		return articuloInventarioService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateArticuloInventario(@PathVariable Long requestedId,
-            @Valid @RequestBody ArticuloInventarioDTO articuloInventarioDTO) {
-        articuloInventarioService.update(requestedId, articuloInventarioDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createArticuloInventario(
+			@Valid @RequestBody ArticuloInventarioDTO articuloInventarioDTO, UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil
+				.buildArticuloInventarioUri((articuloInventarioService.create(articuloInventarioDTO)).getId(), ucb))
+			.build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteArticuloInventario(@PathVariable Long id) {
-        articuloInventarioService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateArticuloInventario(@PathVariable Long requestedId,
+			@Valid @RequestBody ArticuloInventarioDTO articuloInventarioDTO) {
+		articuloInventarioService.update(requestedId, articuloInventarioDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteArticuloInventario(@PathVariable Long id) {
+		articuloInventarioService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

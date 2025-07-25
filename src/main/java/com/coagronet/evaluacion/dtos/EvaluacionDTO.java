@@ -15,17 +15,18 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EvaluacionDTO {
 
-    private Long id;
+	private Long id;
 
-    private LocalDateTime fechaHora;
+	private LocalDateTime fechaHora;
 
-    private Integer idEntidadEvaluada;
+	private Integer idEntidadEvaluada;
 
-    @NotNull(message = "El campo 'tipoEvaluacionId' no puede ser nulo")
-    private Long tipoEvaluacionId;
+	@NotNull(message = "El campo 'tipoEvaluacionId' no puede ser nulo")
+	private Long tipoEvaluacionId;
 
-    @NotNull(message = "El campo 'estadoId' no puede ser nulo")
-    private Long estadoId;
+	@NotNull(message = "El campo 'estadoId' no puede ser nulo")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
+
 }

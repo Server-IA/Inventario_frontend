@@ -20,82 +20,77 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OcupacionService {
 
-        private final UserEmpresaService userEmpresaService;
-        private final OcupacionMapper ocupacionMapper;
-        private final OcupacionRepository ocupacionRepository;
-        private final TipoActividadRepository tipoActividadRepository;
-        private final EvaluacionRepository evaluacionRepository;
-        private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
 
-        public List<OcupacionDTO> findAll() {
-                return ocupacionRepository
-                                .findByEmpresaIdOrderByIdAsc(
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .stream().map(ocupacionMapper::toListDTO).collect(Collectors.toList());
-        }
+	private final OcupacionMapper ocupacionMapper;
 
-        public Optional<OcupacionDTO> findById(Long requestedId) {
-                return ocupacionRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .map(ocupacionMapper::toListDTO);
-        }
+	private final OcupacionRepository ocupacionRepository;
 
-        public OcupacionDTO create(OcupacionDTO ocupacionDTO) {
-                tipoActividadRepository
-                                .findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El tipo de actividad no es válido."));
+	private final TipoActividadRepository tipoActividadRepository;
 
-                evaluacionRepository
-                                .findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("La evaluación no es válida."));
+	private final EvaluacionRepository evaluacionRepository;
 
-                estadoRepository.findById(ocupacionDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+	private final EstadoRepository estadoRepository;
 
-                ocupacionDTO.setId(null);
-                ocupacionDTO.setEmpresaId(
-                                userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<OcupacionDTO> findAll() {
+		return ocupacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(ocupacionMapper::toListDTO)
+			.collect(Collectors.toList());
+	}
 
-                return ocupacionMapper
-                                .toDTO(ocupacionRepository.save(ocupacionMapper.toEntity(ocupacionDTO)));
-        }
+	public Optional<OcupacionDTO> findById(Long requestedId) {
+		return ocupacionRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(ocupacionMapper::toListDTO);
+	}
 
-        public void update(Long requestedId, OcupacionDTO ocupacionDTO) {
-                ocupacionRepository
-                                .findByIdAndEmpresaId(requestedId,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException("La ocupación no fue encontrada."));
+	public OcupacionDTO create(OcupacionDTO ocupacionDTO) {
+		tipoActividadRepository
+			.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es válido."));
 
-                tipoActividadRepository
-                                .findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("El tipo de actividad no es válido."));
+		evaluacionRepository
+			.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La evaluación no es válida."));
 
-                evaluacionRepository
-                                .findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(),
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new BadRequestException("La evaluación no es válida."));
+		estadoRepository.findById(ocupacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
-                estadoRepository.findById(ocupacionDTO.getEstadoId())
-                                .orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		ocupacionDTO.setId(null);
+		ocupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-                ocupacionDTO.setId(requestedId);
-                ocupacionDTO.setEmpresaId(
-                                userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return ocupacionMapper.toDTO(ocupacionRepository.save(ocupacionMapper.toEntity(ocupacionDTO)));
+	}
 
-                ocupacionRepository.save(ocupacionMapper.toEntity(ocupacionDTO));
-        }
+	public void update(Long requestedId, OcupacionDTO ocupacionDTO) {
+		ocupacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("La ocupación no fue encontrada."));
 
-        public void delete(Long id) {
-                ocupacionRepository
-                                .findByIdAndEmpresaId(id,
-                                                userEmpresaService.getEmpresaIdFromCurrentRequest())
-                                .orElseThrow(() -> new NotFoundException("La ocupación no fue encontrada."));
+		tipoActividadRepository
+			.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es válido."));
 
-                ocupacionRepository.deleteById(id);
-        }
+		evaluacionRepository
+			.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La evaluación no es válida."));
+
+		estadoRepository.findById(ocupacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+
+		ocupacionDTO.setId(requestedId);
+		ocupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		ocupacionRepository.save(ocupacionMapper.toEntity(ocupacionDTO));
+	}
+
+	public void delete(Long id) {
+		ocupacionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("La ocupación no fue encontrada."));
+
+		ocupacionRepository.deleteById(id);
+	}
 
 }

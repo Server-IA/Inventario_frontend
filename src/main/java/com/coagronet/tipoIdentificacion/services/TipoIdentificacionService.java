@@ -19,58 +19,57 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoIdentificacionService {
 
-    private final TipoIdentificacionRepository tipoIdentificacionRepository;
-    private final TipoIdentificacionMapper tipoIdentificacionMapper;
-    private final EstadoRepository estadoRepository;
+	private final TipoIdentificacionRepository tipoIdentificacionRepository;
 
-    public List<TipoIdentificacionDTO> findAll() {
-        return tipoIdentificacionRepository.findAll()
-                .stream()
-                .map(tipoIdentificacionMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final TipoIdentificacionMapper tipoIdentificacionMapper;
 
-    public List<TipoIdentificacionDTO> findAllAvailable() {
-        return tipoIdentificacionRepository.findByEstadoIdNotOrderByIdAsc(2L)
-                .stream()
-                .map(tipoIdentificacionMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<TipoIdentificacionDTO> findById(Long requestedId) {
-        return tipoIdentificacionRepository.findById(requestedId)
-                .map(tipoIdentificacionMapper::toDTO);
-    }
+	public List<TipoIdentificacionDTO> findAll() {
+		return tipoIdentificacionRepository.findAll()
+			.stream()
+			.map(tipoIdentificacionMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-    public TipoIdentificacionDTO create(TipoIdentificacionDTO tipoIdentificacionDTO) {
-        estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	public List<TipoIdentificacionDTO> findAllAvailable() {
+		return tipoIdentificacionRepository.findByEstadoIdNotOrderByIdAsc(2L)
+			.stream()
+			.map(tipoIdentificacionMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        tipoIdentificacionDTO.setId(null);
+	public Optional<TipoIdentificacionDTO> findById(Long requestedId) {
+		return tipoIdentificacionRepository.findById(requestedId).map(tipoIdentificacionMapper::toDTO);
+	}
 
-        return tipoIdentificacionMapper.toDTO(
-                tipoIdentificacionRepository.save(
-                        tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO)));
-    }
+	public TipoIdentificacionDTO create(TipoIdentificacionDTO tipoIdentificacionDTO) {
+		estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
-    public void update(Long requestedId, TipoIdentificacionDTO tipoIdentificacionDTO) {
-        tipoIdentificacionRepository.findById(requestedId)
-                .orElseThrow(() -> new BadRequestException("El tipo de identificación no existe"));
+		tipoIdentificacionDTO.setId(null);
 
-        estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		return tipoIdentificacionMapper
+			.toDTO(tipoIdentificacionRepository.save(tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO)));
+	}
 
-        tipoIdentificacionDTO.setId(requestedId);
+	public void update(Long requestedId, TipoIdentificacionDTO tipoIdentificacionDTO) {
+		tipoIdentificacionRepository.findById(requestedId)
+			.orElseThrow(() -> new BadRequestException("El tipo de identificaci�n no existe"));
 
-        tipoIdentificacionRepository.save(
-                tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO));
-    }
+		estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
-    public void delete(Long id) {
-        tipoIdentificacionRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("El tipo de identificación no existe"));
+		tipoIdentificacionDTO.setId(requestedId);
 
-        tipoIdentificacionRepository.deleteById(id);
-    }
+		tipoIdentificacionRepository.save(tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO));
+	}
+
+	public void delete(Long id) {
+		tipoIdentificacionRepository.findById(id)
+			.orElseThrow(() -> new NotFoundException("El tipo de identificaci�n no existe"));
+
+		tipoIdentificacionRepository.deleteById(id);
+	}
 
 }

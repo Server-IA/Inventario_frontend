@@ -26,23 +26,27 @@ import lombok.NoArgsConstructor;
 @Table(name = "usuario_rol")
 @IdClass(UserRoleId.class)
 public class UserRole implements Serializable {
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "usr_usuario_id")
-    private User user;
 
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "usr_rol_id")
-    private Role role;
+	private static final long serialVersionUID = -1706389808605756133L;
 
-    @ManyToOne
-    @JoinColumn(name = "usr_empresa_id", referencedColumnName = "emp_id", nullable = true)
-    private Empresa empresa;
+	@Id
+	@ManyToOne
+	@JoinColumn(name = "usr_usuario_id")
+	private User user;
 
-    // getters and setters
+	@Id
+	@ManyToOne
+	@JoinColumn(name = "usr_rol_id")
+	private Role role;
 
-    public String getName() {
-        return role.getName();
-    }
+	@ManyToOne
+	@JoinColumn(name = "usr_empresa_id", referencedColumnName = "emp_id", nullable = true)
+	private Empresa empresa;
+
+	// getters and setters
+
+	public String getName() {
+		return role.getName();
+	}
+
 }

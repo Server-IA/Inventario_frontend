@@ -11,12 +11,13 @@ import com.coagronet.email.services.EmailService;
 @RequestMapping("/api/v1/email")
 public class EmailController {
 
-    @Autowired
-    private EmailService emailService;
+	@Autowired
+	private EmailService emailService;
 
-    @GetMapping("/send")
-    public String sendEmail() {
-        emailService.sendSimpleMessage("juanjosecastrogutierrez@gmail.com", "Prueba backend", "LOrem ipsum dolor.");
-        return "Email sent!";
-    }
+	@GetMapping("/send")
+	public String sendEmail() {
+		emailService.sendSimpleMessage("juanjosecastrogutierrez@gmail.com", "Prueba backend", "LOrem ipsum dolor.");
+		return "Email sent!";
+	}
+
 }

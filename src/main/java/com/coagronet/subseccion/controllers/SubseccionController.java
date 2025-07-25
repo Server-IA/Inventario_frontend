@@ -26,50 +26,48 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SubseccionController {
 
-    private final SubseccionService subseccionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final SubseccionService subseccionService;
 
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping
-    public ResponseEntity<List<SubseccionDTO>> findAll(){
-        List<SubseccionDTO> subseccionDTOList = subseccionService.findAll();
+	@GetMapping
+	public ResponseEntity<List<SubseccionDTO>> findAll() {
+		List<SubseccionDTO> subseccionDTOList = subseccionService.findAll();
 
-        return subseccionDTOList.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(subseccionDTOList);
-    }
+		return subseccionDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(subseccionDTOList);
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<SubseccionDTO> findById(@PathVariable Long requestedId){
-        return subseccionService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<SubseccionDTO> findById(@PathVariable Long requestedId) {
+		return subseccionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PostMapping
-    public ResponseEntity<SubseccionDTO> createSubseccion
-            (@RequestBody @Valid SubseccionDTO newSubseccion, UriComponentsBuilder ucb){
+	@PostMapping
+	public ResponseEntity<SubseccionDTO> createSubseccion(@RequestBody @Valid SubseccionDTO newSubseccion,
+			UriComponentsBuilder ucb) {
 
-        SubseccionDTO savedSubseccionDTO = subseccionService.create(newSubseccion);
+		SubseccionDTO savedSubseccionDTO = subseccionService.create(newSubseccion);
 
-        URI locationOfNewSubseccion = uriBuilderUtil.buildSubseccionUri(savedSubseccionDTO.getId(), ucb);
+		URI locationOfNewSubseccion = uriBuilderUtil.buildSubseccionUri(savedSubseccionDTO.getId(), ucb);
 
-        return ResponseEntity.created(locationOfNewSubseccion).build();
+		return ResponseEntity.created(locationOfNewSubseccion).build();
 
-    }
+	}
 
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putSubseccion(@PathVariable Long requestedId,
+			@RequestBody @Valid SubseccionDTO subseccionDTOUpdate) {
+		subseccionService.update(requestedId, subseccionDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putSubseccion(@PathVariable Long requestedId,
-                                                   @RequestBody @Valid SubseccionDTO subseccionDTOUpdate) {
-        subseccionService.update(requestedId, subseccionDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deleteSubseccion(@PathVariable Long id) {
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteSubseccion(@PathVariable Long id) {
+		subseccionService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
-        subseccionService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
 }

@@ -19,54 +19,57 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InventarioService {
 
-    private final InventarioRepository inventarioRepository;
-    private final EstadoRepository estadoRepository;
-    private final InventarioMapper inventarioMapper;
-    private final UserEmpresaService userEmpresaService;
+	private final InventarioRepository inventarioRepository;
 
-    public List<InventarioDTO> findAll() {
-        return inventarioRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(inventarioMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final EstadoRepository estadoRepository;
 
-    public Optional<InventarioDTO> findById(Long requestedId) {
-        return inventarioRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(inventarioMapper::toDTO);
-    }
+	private final InventarioMapper inventarioMapper;
 
-    @Transactional
-    public InventarioDTO create(InventarioDTO inventarioDTO) {
-        estadoRepository.findById(inventarioDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        inventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<InventarioDTO> findAll() {
+		return inventarioRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(inventarioMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        return inventarioMapper.toDTO(inventarioRepository.save(inventarioMapper.toEntity(inventarioDTO)));
-    }
+	public Optional<InventarioDTO> findById(Long requestedId) {
+		return inventarioRepository
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(inventarioMapper::toDTO);
+	}
 
-    @Transactional
-    public void update(Long requestedId, InventarioDTO inventarioDTO) {
-        inventarioRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Inventario no encontrada en su empresa"));
+	@Transactional
+	public InventarioDTO create(InventarioDTO inventarioDTO) {
+		estadoRepository.findById(inventarioDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
 
-        estadoRepository.findById(inventarioDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		inventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        inventarioDTO.setId(requestedId);
-        inventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return inventarioMapper.toDTO(inventarioRepository.save(inventarioMapper.toEntity(inventarioDTO)));
+	}
 
-        inventarioRepository.save(inventarioMapper.toEntity(inventarioDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, InventarioDTO inventarioDTO) {
+		inventarioRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Inventario no encontrada en su empresa"));
 
-    @Transactional
-    public void delete(Long requestedId) {
-        inventarioRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Inventario no encontrada en su empresa"));
+		estadoRepository.findById(inventarioDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        inventarioRepository.deleteById(requestedId);
-    }
+		inventarioDTO.setId(requestedId);
+		inventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		inventarioRepository.save(inventarioMapper.toEntity(inventarioDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestedId) {
+		inventarioRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Inventario no encontrada en su empresa"));
+
+		inventarioRepository.deleteById(requestedId);
+	}
 
 }

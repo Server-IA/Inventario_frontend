@@ -25,103 +25,117 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmpresaService {
 
-    @Value("${path.logos}")
-    private String pathLogos;
+	@Value("${path.logos}")
+	private String pathLogos;
 
-    @Value("${path.logo.empresa}")
-    private String pathLogoCompany;
+	@Value("${path.logo.empresa}")
+	private String pathLogoCompany;
 
-    private final EmpresaRepository empresaRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final EmpresaRepository empresaRepository;
 
-    public Page<Empresa> getAllEmpresas(Pageable pageable) {
-        return empresaRepository.findByEstadoNot(2, pageable);
-    }
+	private final UserEmpresaService userEmpresaService;
 
-    public Empresa getEmpresaById(Long id) {
-        // Asegúrate de que también se filtren por estado aquí si es necesario
-        Empresa empresa = empresaRepository.findById(id).orElse(null);
+	public Page<Empresa> getAllEmpresas(Pageable pageable) {
+		return empresaRepository.findByEstadoNot(2, pageable);
+	}
 
-        return (empresa != null && empresa.getEstado().getId() != 2) ? empresa : null;
-    }
+	public Empresa getEmpresaById(Long id) {
+		// Asegúrate de que también se filtren por estado aquí si es necesario
+		Empresa empresa = empresaRepository.findById(id).orElse(null);
 
-    public Empresa save(Empresa empresa) {
-        return empresaRepository.save(empresa);
-    }
+		return (empresa != null && empresa.getEstado().getId() != 2) ? empresa : null;
+	}
 
-    public Empresa update(Empresa empresa) {
-        return empresaRepository.save(empresa);
-    }
+	public Empresa save(Empresa empresa) {
+		return empresaRepository.save(empresa);
+	}
 
-    public void deleteEmpresa(Long id) {
-        Empresa empresa = empresaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Persona not found with id: " + id));
-        empresa.getEstado().setId(Constantes.ESTADO_INACTIVO);
-        empresaRepository.save(empresa);
-    }
+	public Empresa update(Empresa empresa) {
+		return empresaRepository.save(empresa);
+	}
 
-    public String getLogoHashByEmpresaId(Long empresaId){
-       return empresaRepository.findLogoHashByEmpresaId(empresaId);
-    }
+	public void deleteEmpresa(Long id) {
+		Empresa empresa = empresaRepository.findById(id)
+			.orElseThrow(() -> new RuntimeException("Persona not found with id: " + id));
+		empresa.getEstado().setId(Constantes.ESTADO_INACTIVO);
+		empresaRepository.save(empresa);
+	}
 
-    public String findLogoByHash(String hash){
-        return empresaRepository.findLogoByHash(hash);
-    }
+	public String getLogoHashByEmpresaId(Long empresaId) {
+		return empresaRepository.findLogoHashByEmpresaId(empresaId);
+	}
 
-    public void subirLogoDesdeEmpresaLogueada(MultipartFile file) {
-        try {
+	public String findLogoByHash(String hash) {
+		return empresaRepository.findLogoByHash(hash);
+	}
 
-            if (!file.getContentType().equalsIgnoreCase("image/png")) {
-                throw new IllegalArgumentException("Solo se permiten archivos PNG.");
-            }
+	public void subirLogoDesdeEmpresaLogueada(MultipartFile file) {
+		try {
+			if (!file.getContentType().equalsIgnoreCase("image/png")) {
+				throw new IllegalArgumentException("Solo se permiten archivos PNG.");
+			}
 
+			Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+			String originalFilename = file.getOriginalFilename(); // ej: logo_empresa.png
 
-            Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+			// Hash del nombre base (sin extensión)
+			String baseName = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
+			String hash = generarHash(baseName);
 
+			// Ruta destino: <PATH_LOGOS>/<PATH_LOGO_COMPANY>/<empresaId>/
+			Path rutaEmpresa = Paths.get(pathLogos, pathLogoCompany, empresaId.toString());
+			Files.createDirectories(rutaEmpresa);
 
-            String originalFilename = file.getOriginalFilename(); // ej: logo_empresa.png
+			// Nuevo código de develop: Eliminar logo anterior si existe
+			String hashAnterior = getLogoHashByEmpresaId(empresaId);
+			if (hashAnterior != null) {
+				String logoAnterior = findLogoByHash(hashAnterior);
+				if (logoAnterior != null) {
+					Path rutaLogoAnterior = rutaEmpresa.resolve(logoAnterior);
+					System.out.println(logoAnterior);
+					if (Files.exists(rutaLogoAnterior)) {
+						Files.delete(rutaLogoAnterior);
+					}
+				}
+			}
 
-            // Hash del nombre base (sin extensión)
-            String baseName = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
-            String hash = generarHash(baseName);
+			// Guardar archivo
+			Path rutaLogoFinal = rutaEmpresa.resolve(originalFilename);
+			file.transferTo(rutaLogoFinal);
 
-            // Ruta destino: <PATH_LOGOS>/<PATH_LOGO_COMPANY>/<empresaId>/
-            Path rutaEmpresa = Paths.get(pathLogos, pathLogoCompany, empresaId.toString());
-            Files.createDirectories(rutaEmpresa);
+			// Actualizar en la base de datos
+			Empresa empresa = empresaRepository.findById(empresaId)
+				.orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
+			empresa.setLogo(originalFilename); // ej: "logo_empresa.png"
+			empresa.setLogoHash(hash);
+			empresaRepository.save(empresa);
 
-            // Guardar archivo
-            Path rutaLogoFinal = rutaEmpresa.resolve(originalFilename);
-            file.transferTo(rutaLogoFinal);
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Error al guardar el logo", e);
+		}
+	}
 
-            // Actualizar en la base de datos
-            Empresa empresa = empresaRepository.findById(empresaId)
-                    .orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
-            empresa.setLogo(originalFilename); // ej: "logo_empresa.png"
-            empresa.setLogoHash(hash);
-            empresaRepository.save(empresa);
+	private String generarHash(String input) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+			return bytesToHex(hashBytes);
+		}
+		catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("No se pudo generar hash", e);
+		}
+	}
 
-        } catch (IOException e) {
-            throw new RuntimeException("Error al guardar el logo", e);
-        }
-    }
+	private String bytesToHex(byte[] bytes) {
+		StringBuilder hexString = new StringBuilder();
+		for (byte b : bytes) {
+			String hex = Integer.toHexString(0xff & b);
+			if (hex.length() == 1)
+				hexString.append('0');
+			hexString.append(hex);
+		}
+		return hexString.toString();
+	}
 
-    private String generarHash(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hashBytes);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("No se pudo generar hash", e);
-        }
-    }
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
 }

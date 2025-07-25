@@ -9,11 +9,8 @@ import com.coagronet.ordenCompra.OrdenCompra;
 
 public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> {
 
-	List<OrdenCompra> findByEmpresaIdOrderByIdAsc(
-			Long empresaId);
+	List<OrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-	Optional<OrdenCompra> findByIdAndEmpresaId(
-			Long id,
-			Long empresaId);
+	Optional<OrdenCompra> findByIdAndEmpresaId(Long id, Long empresaId);
 
 }

@@ -18,18 +18,19 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "rol")
 public class Role {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rol_id")
-    private Long id;
 
-    @Column(name = "rol_nombre")
-    private String name;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "rol_id")
+	private Long id;
 
-    @Column(name = "rol_descripcion")
-    private String description;
+	@Column(name = "rol_nombre")
+	private String name;
 
-    @Column(name = "rol_estado_id", columnDefinition = "integer default 1")
-    private Integer state;
+	@Column(name = "rol_descripcion")
+	private String description;
+
+	@Column(name = "rol_estado_id", columnDefinition = "integer default 1")
+	private Integer state;
 
 }

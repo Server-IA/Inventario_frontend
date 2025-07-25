@@ -12,11 +12,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VistaInventarioProductoService {
 
-    private final VistaInventarioProductoRepository vistaInventarioProductoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final VistaInventarioProductoRepository vistaInventarioProductoRepository;
 
-    public List<VistaInventarioProducto> findByProEmpresaId() {
-        return vistaInventarioProductoRepository
-                .findByProEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-    }
+	private final UserEmpresaService userEmpresaService;
+
+	public List<VistaInventarioProducto> findByProEmpresaId() {
+		return vistaInventarioProductoRepository
+			.findByProEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	}
+
 }

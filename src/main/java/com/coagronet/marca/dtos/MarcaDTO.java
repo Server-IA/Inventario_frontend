@@ -15,18 +15,18 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MarcaDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "El nombre es obligatorio.")
-    @Size(max = 100, message = "El nombre no debe superar los 100 caracteres.")
-    private String nombre;
+	@NotBlank(message = "El nombre es obligatorio.")
+	@Size(max = 100, message = "El nombre no debe superar los 100 caracteres.")
+	private String nombre;
 
-    @Size(max = 255, message = "La descripcion no debe superar los 255 caracteres.")
-    private String descripcion;
+	@Size(max = 255, message = "La descripcion no debe superar los 255 caracteres.")
+	private String descripcion;
 
-    @NotNull(message = "El estado es obligatorio.")
-    private Long estadoId;
+	@NotNull(message = "El estado es obligatorio.")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
 
 }

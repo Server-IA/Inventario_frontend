@@ -15,11 +15,12 @@ import com.coagronet.item.services.ItemService;
 @RequestMapping("/api/v1/items")
 public class ItemController {
 
-    @Autowired
-    private ItemService itemService;
+	@Autowired
+	private ItemService itemService;
 
-    @GetMapping("/{tableName}/{parentId}")
-    public List<Item> getAllItems2Params(@PathVariable String tableName, @PathVariable Long parentId) {
-        return itemService.getAllItems(tableName, parentId);
-    }
+	@GetMapping("/{tableName}/{parentId}")
+	public List<Item> getAllItems2Params(@PathVariable String tableName, @PathVariable Long parentId) {
+		return itemService.getAllItems(tableName, parentId);
+	}
+
 }

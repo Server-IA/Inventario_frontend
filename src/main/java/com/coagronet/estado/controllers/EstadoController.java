@@ -30,60 +30,58 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/estado")
 public class EstadoController {
 
-    private final EstadoMapper estadoMapper;
-    private final EstadoRepository estadoRepository;
+	private final EstadoMapper estadoMapper;
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<Estado> findById(@PathVariable Long requestedId) {
-        return estadoRepository.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+	private final EstadoRepository estadoRepository;
 
-    @GetMapping
-    public ResponseEntity<List<Estado>> findAll(Pageable pageable) {
-        Page<Estado> page = estadoRepository.findAll(pageable);
-        return ResponseEntity.ok(page.getContent());
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<Estado> findById(@PathVariable Long requestedId) {
+		return estadoRepository.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElseGet(() -> ResponseEntity.notFound().build());
+	}
 
-    @GetMapping("/short")
-    public ResponseEntity<List<EstadoDTO>> listadoEstados() {
-        List<Estado> estados = estadoRepository.findAll();
-        List<EstadoDTO> datosListadoEstados = estados.stream()
-                .map(estadoMapper::toShortDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(datosListadoEstados);
-    }
+	@GetMapping
+	public ResponseEntity<List<Estado>> findAll(Pageable pageable) {
+		Page<Estado> page = estadoRepository.findAll(pageable);
+		return ResponseEntity.ok(page.getContent());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createEstado(@RequestBody @Valid EstadoDTO newEstadoRequest, UriComponentsBuilder ucb) {
+	@GetMapping("/short")
+	public ResponseEntity<List<EstadoDTO>> listadoEstados() {
+		List<Estado> estados = estadoRepository.findAll();
+		List<EstadoDTO> datosListadoEstados = estados.stream()
+			.map(estadoMapper::toShortDTO)
+			.collect(Collectors.toList());
+		return ResponseEntity.ok(datosListadoEstados);
+	}
 
-        Estado savedEstado = estadoRepository.save(estadoMapper.toEntity(newEstadoRequest));
-        URI locationOfNewEstado = ucb.path("/api/v1/estados/{id}")
-                .buildAndExpand(savedEstado.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewEstado).build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createEstado(@RequestBody @Valid EstadoDTO newEstadoRequest, UriComponentsBuilder ucb) {
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Object> putEstado(@PathVariable Long requestedId, @RequestBody Estado estadoUpdate) {
-        return estadoRepository.findById(requestedId)
-                .map(estado -> {
-                    estado.setNombre(estadoUpdate.getNombre());
-                    estado.setDescripcion(estadoUpdate.getDescripcion());
-                    estado.setAcronimo(estadoUpdate.getAcronimo());
-                    estadoRepository.save(estado);
-                    return ResponseEntity.noContent().build();
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+		Estado savedEstado = estadoRepository.save(estadoMapper.toEntity(newEstadoRequest));
+		URI locationOfNewEstado = ucb.path("/api/v1/estados/{id}").buildAndExpand(savedEstado.getId()).toUri();
+		return ResponseEntity.created(locationOfNewEstado).build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEstado(@PathVariable Long id) {
-        if (estadoRepository.existsById(id)) {
-            estadoRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Object> putEstado(@PathVariable Long requestedId, @RequestBody Estado estadoUpdate) {
+		return estadoRepository.findById(requestedId).map(estado -> {
+			estado.setNombre(estadoUpdate.getNombre());
+			estado.setDescripcion(estadoUpdate.getDescripcion());
+			estado.setAcronimo(estadoUpdate.getAcronimo());
+			estadoRepository.save(estado);
+			return ResponseEntity.noContent().build();
+		}).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteEstado(@PathVariable Long id) {
+		if (estadoRepository.existsById(id)) {
+			estadoRepository.deleteById(id);
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.notFound().build();
+	}
+
 }

@@ -26,52 +26,47 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoIdentificacionController {
 
-    private final TipoIdentificacionService tipoIdentificacionService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final TipoIdentificacionService tipoIdentificacionService;
 
-    @GetMapping
-    public ResponseEntity<List<TipoIdentificacionDTO>> findAll() {
-        return ResponseEntity.ok(tipoIdentificacionService.findAll());
-    }
+	private final UriBuilderUtil uriBuilderUtil;
 
-    @GetMapping(params = "available=true")
-    public ResponseEntity<List<TipoIdentificacionDTO>> findAllAvailable() {
-        return ResponseEntity.ok(tipoIdentificacionService.findAllAvailable());
-    }
+	@GetMapping
+	public ResponseEntity<List<TipoIdentificacionDTO>> findAll() {
+		return ResponseEntity.ok(tipoIdentificacionService.findAll());
+	}
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoIdentificacionDTO> findById(
-            @PathVariable Long requestedId) {
-        return tipoIdentificacionService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping(params = "available=true")
+	public ResponseEntity<List<TipoIdentificacionDTO>> findAllAvailable() {
+		return ResponseEntity.ok(tipoIdentificacionService.findAllAvailable());
+	}
 
-    @PostMapping
-    public ResponseEntity<Void> createTipoIdentificacion(
-            @Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO,
-            UriComponentsBuilder ucb) {
-        TipoIdentificacionDTO savedTipoIdentificacion = tipoIdentificacionService.create(
-                tipoIdentificacionDTO);
-        URI locationOfNewTipoIdentificacion = uriBuilderUtil.buildTipoIdentificacionUri(
-                savedTipoIdentificacion.getId(),
-                ucb);
-        return ResponseEntity.created(locationOfNewTipoIdentificacion).build();
-    }
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<TipoIdentificacionDTO> findById(@PathVariable Long requestedId) {
+		return tipoIdentificacionService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateTipoIdentificacion(
-            @PathVariable Long requestedId,
-            @Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO) {
-        tipoIdentificacionService.update(requestedId, tipoIdentificacionDTO);
-        return ResponseEntity.noContent().build();
-    }
+	@PostMapping
+	public ResponseEntity<Void> createTipoIdentificacion(
+			@Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO, UriComponentsBuilder ucb) {
+		TipoIdentificacionDTO savedTipoIdentificacion = tipoIdentificacionService.create(tipoIdentificacionDTO);
+		URI locationOfNewTipoIdentificacion = uriBuilderUtil.buildTipoIdentificacionUri(savedTipoIdentificacion.getId(),
+				ucb);
+		return ResponseEntity.created(locationOfNewTipoIdentificacion).build();
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoIdentificacion(
-            @PathVariable Long id) {
-        tipoIdentificacionService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateTipoIdentificacion(@PathVariable Long requestedId,
+			@Valid @RequestBody TipoIdentificacionDTO tipoIdentificacionDTO) {
+		tipoIdentificacionService.update(requestedId, tipoIdentificacionDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteTipoIdentificacion(@PathVariable Long id) {
+		tipoIdentificacionService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 
 }

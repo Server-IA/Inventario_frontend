@@ -28,46 +28,47 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "producto_presentacion", schema = "public")
 public class PresentacionProducto {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prp_generator")
-    @SequenceGenerator(name = "prp_generator", sequenceName = "producto_presentacion_prp_id_seq", allocationSize = 1)
-    @Column(name = "prp_id")
-    private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "prp_producto_id")
-    private Producto producto;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prp_generator")
+	@SequenceGenerator(name = "prp_generator", sequenceName = "producto_presentacion_prp_id_seq", allocationSize = 1)
+	@Column(name = "prp_id")
+	private Long id;
 
-    @Column(name = "prp_nombre")
-    private String nombre;
+	@ManyToOne
+	@JoinColumn(name = "prp_producto_id")
+	private Producto producto;
 
-    @ManyToOne
-    @JoinColumn(name = "prp_unidad_id")
-    private Unidad unidad;
+	@Column(name = "prp_nombre")
+	private String nombre;
 
-    @Column(name = "prp_descripcion")
-    private String descripcion;
+	@ManyToOne
+	@JoinColumn(name = "prp_unidad_id")
+	private Unidad unidad;
 
-    @ManyToOne
-    @JoinColumn(name = "prp_estado_id", referencedColumnName = "est_id")
-    private Estado estado;
+	@Column(name = "prp_descripcion")
+	private String descripcion;
 
-    @Column(name = "prp_cantidad")
-    private Double cantidad;
+	@ManyToOne
+	@JoinColumn(name = "prp_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
 
-    @ManyToOne
-    @JoinColumn(name = "prp_marca_id")
-    private Marca marca;
+	@Column(name = "prp_cantidad")
+	private Double cantidad;
 
-    @ManyToOne
-    @JoinColumn(name = "prp_presentacion_id")
-    private Presentacion presentacion;
+	@ManyToOne
+	@JoinColumn(name = "prp_marca_id")
+	private Marca marca;
 
-    @ManyToOne
-    @JoinColumn(name = "prp_empresa_id")
-    private Empresa empresa;
+	@ManyToOne
+	@JoinColumn(name = "prp_presentacion_id")
+	private Presentacion presentacion;
 
-    @Column(name = "prp_desgregar")
-    private Boolean desgregar;
+	@ManyToOne
+	@JoinColumn(name = "prp_empresa_id")
+	private Empresa empresa;
+
+	@Column(name = "prp_desgregar")
+	private Boolean desgregar;
 
 }

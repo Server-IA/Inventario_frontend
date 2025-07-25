@@ -38,59 +38,60 @@ import lombok.NoArgsConstructor;
 @Table(name = "usuario")
 public class User implements UserDetails {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "usu_id")
-    private Long id;
+	private static final long serialVersionUID = -4111948693138979290L;
 
-    @Email
-    @Column(name = "usu_email", unique = true, nullable = false, length = 255)
-    private String username;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "usu_id")
+	private Long id;
 
-    @Column(name = "usu_password", nullable = false, length = 255)
-    private String password;
+	@Email
+	@Column(name = "usu_email", unique = true, nullable = false, length = 255)
+	private String username;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usu_persona_id", referencedColumnName = "per_id")
-    private Persona persona;
+	@Column(name = "usu_password", nullable = false, length = 255)
+	private String password;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "usuario_rol", joinColumns = @JoinColumn(name = "usr_usuario_id"), inverseJoinColumns = @JoinColumn(name = "usr_rol_id"))
-    private Set<Role> roles;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_persona_id", referencedColumnName = "per_id")
+	private Persona persona;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id")
-    private UsuarioEstado usuarioEstado;
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "usuario_rol", joinColumns = @JoinColumn(name = "usr_usuario_id"),
+			inverseJoinColumns = @JoinColumn(name = "usr_rol_id"))
+	private Set<Role> roles;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .collect(Collectors.toSet());
-    }
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id")
+	private UsuarioEstado usuarioEstado;
 
-    public void setUsuarioEstado(UsuarioEstado usuarioEstado) {
-        this.usuarioEstado = usuarioEstado;
-    }
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toSet());
+	}
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+	public void setUsuarioEstado(UsuarioEstado usuarioEstado) {
+		this.usuarioEstado = usuarioEstado;
+	}
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
 
-    @Override
-    public boolean isEnabled() {
-        return this.usuarioEstado.getId() >= 2;
-    }
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return this.usuarioEstado.getId() >= 2;
+	}
 
 }

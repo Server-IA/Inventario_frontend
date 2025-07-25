@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public interface TipoActividadRepository extends JpaRepository<TipoActividad, Long> {
 
-    Optional<TipoActividad> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<TipoActividad> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<TipoActividad> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<TipoActividad> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
 }

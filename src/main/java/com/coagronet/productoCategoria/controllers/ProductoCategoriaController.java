@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductoCategoriaController {
 
 	private final ProductoCategoriaService productoCategoriaService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping

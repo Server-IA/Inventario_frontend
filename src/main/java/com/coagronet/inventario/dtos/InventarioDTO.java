@@ -18,26 +18,27 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class InventarioDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 100, message = "El nombre no puede tener más de 100 caracteres")
-    private String nombre;
+	@NotBlank(message = "El nombre es obligatorio")
+	@Size(max = 100, message = "El nombre no puede tener más de 100 caracteres")
+	private String nombre;
 
-    @Size(max = 2048, message = "La descripción no puede tener más de 2048 caracteres")
-    private String descripcion;
+	@Size(max = 2048, message = "La descripción no puede tener más de 2048 caracteres")
+	private String descripcion;
 
-    @NotNull(message = "La fecha y hora es obligatoria")
-    private LocalDateTime fechaHora;
+	@NotNull(message = "La fecha y hora es obligatoria")
+	private LocalDateTime fechaHora;
 
-    @NotNull(message = "El tipo de inventario no puede ser nulo")
-    private Long tipoInventarioId;
+	@NotNull(message = "El tipo de inventario no puede ser nulo")
+	private Long tipoInventarioId;
 
-    private Long empresaId;
+	private Long empresaId;
 
-    @NotNull(message = "La subsección no puede ser nula")
-    private Long subseccionId;
+	@NotNull(message = "La subsección no puede ser nula")
+	private Long subseccionId;
 
-    @NotNull(message = "El estado no puede ser nulo")
-    private Long estadoId;
+	@NotNull(message = "El estado no puede ser nulo")
+	private Long estadoId;
+
 }

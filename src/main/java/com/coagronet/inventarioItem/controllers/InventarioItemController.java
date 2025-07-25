@@ -17,47 +17,49 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventarioItemController {
 
-    private final InventarioItemService inventarioItemService;
-    private final UriBuilderUtil uriBuilderUtil;
+	private final InventarioItemService inventarioItemService;
 
-    @GetMapping
-    public ResponseEntity<List<InventarioItemDTO>> findAll() {
-        List<InventarioItemDTO> inventarioItemDTOList = inventarioItemService.findAll();
+	private final UriBuilderUtil uriBuilderUtil;
 
-        return inventarioItemDTOList.isEmpty() ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(inventarioItemDTOList);
-    }
+	@GetMapping
+	public ResponseEntity<List<InventarioItemDTO>> findAll() {
+		List<InventarioItemDTO> inventarioItemDTOList = inventarioItemService.findAll();
 
-    @GetMapping("/{requestedId}")
-    public ResponseEntity<InventarioItemDTO> findById(@PathVariable Long requestedId) {
-        return inventarioItemService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+		return inventarioItemDTOList.isEmpty() ? ResponseEntity.noContent().build()
+				: ResponseEntity.ok(inventarioItemDTOList);
+	}
 
-    @PostMapping
-    public ResponseEntity<InventarioItemDTO> createInventarioItem(
-            @RequestBody @Valid InventarioItemDTO newInventarioItem, UriComponentsBuilder ucb) {
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<InventarioItemDTO> findById(@PathVariable Long requestedId) {
+		return inventarioItemService.findById(requestedId)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-        InventarioItemDTO savedInventarioItemDTO = inventarioItemService.create(newInventarioItem);
+	@PostMapping
+	public ResponseEntity<InventarioItemDTO> createInventarioItem(
+			@RequestBody @Valid InventarioItemDTO newInventarioItem, UriComponentsBuilder ucb) {
 
-        URI locationOfNewInventarioItem = uriBuilderUtil.buildInventarioItemUri(savedInventarioItemDTO.getId(), ucb);
+		InventarioItemDTO savedInventarioItemDTO = inventarioItemService.create(newInventarioItem);
 
-        return ResponseEntity.created(locationOfNewInventarioItem).build();
+		URI locationOfNewInventarioItem = uriBuilderUtil.buildInventarioItemUri(savedInventarioItemDTO.getId(), ucb);
 
-    }
+		return ResponseEntity.created(locationOfNewInventarioItem).build();
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putInventarioItem(@PathVariable Long requestedId,
-            @RequestBody @Valid InventarioItemDTO inventarioItemDTOUpdate) {
-        inventarioItemService.update(requestedId, inventarioItemDTOUpdate);
-        return ResponseEntity.noContent().build();
-    }
+	}
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteInventarioItem(@PathVariable Long id) {
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putInventarioItem(@PathVariable Long requestedId,
+			@RequestBody @Valid InventarioItemDTO inventarioItemDTOUpdate) {
+		inventarioItemService.update(requestedId, inventarioItemDTOUpdate);
+		return ResponseEntity.noContent().build();
+	}
 
-        inventarioItemService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deleteInventarioItem(@PathVariable Long id) {
+
+		inventarioItemService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
 }

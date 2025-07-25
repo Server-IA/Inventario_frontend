@@ -11,22 +11,12 @@ import com.coagronet.tipoBloque.TipoBloque;
 @Repository
 public interface TipoBloqueRepository extends JpaRepository<TipoBloque, Long> {
 
-        List<TipoBloque> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(
-                        Long empresaId,
-                        Integer estadoId);
+	List<TipoBloque> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Integer estadoId);
 
-        Optional<TipoBloque> findByIdAndEmpresaIdAndEstadoIdNot(
-                        Long id,
-                        Long empresaId,
-                        Integer estadoId);
+	Optional<TipoBloque> findByIdAndEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Integer estadoId);
 
-        Optional<TipoBloque> findByIdAndEmpresaId(
-                Long id,
-                Long empresaId);
+	Optional<TipoBloque> findByIdAndEmpresaId(Long id, Long empresaId);
 
-        boolean existsByIdAndEmpresaIdAndEstadoIdNot(
-                        Long id,
-                        Long empresaId,
-                        Integer estadoId);
+	boolean existsByIdAndEmpresaIdAndEstadoIdNot(Long id, Long empresaId, Integer estadoId);
 
 }

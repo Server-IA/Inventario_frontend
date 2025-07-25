@@ -25,42 +25,36 @@ import com.coagronet.persona.dtos.PersonaDTO;
 @RequiredArgsConstructor
 public class PersonaController {
 
-    private final PersonaService personaService;
+	private final PersonaService personaService;
 
-    @GetMapping("/{requestedId}")
-    private ResponseEntity<PersonaDTO> findById(@PathVariable Long requestedId) {
-        return personaService.findById(requestedId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	@GetMapping("/{requestedId}")
+	private ResponseEntity<PersonaDTO> findById(@PathVariable Long requestedId) {
+		return personaService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	}
 
-    @PostMapping
-    private ResponseEntity<Void> createPersona(@RequestBody PersonaDTO newPersonaRequest, UriComponentsBuilder ucb) {
-        PersonaDTO savedPersona = personaService.create(newPersonaRequest);
-        URI locationOfNewPersona = ucb
-                .path("/api/v1/personas/{id}")
-                .buildAndExpand(savedPersona.getId())
-                .toUri();
-        return ResponseEntity.created(locationOfNewPersona).build();
-    }
+	@PostMapping
+	private ResponseEntity<Void> createPersona(@RequestBody PersonaDTO newPersonaRequest, UriComponentsBuilder ucb) {
+		PersonaDTO savedPersona = personaService.create(newPersonaRequest);
+		URI locationOfNewPersona = ucb.path("/api/v1/personas/{id}").buildAndExpand(savedPersona.getId()).toUri();
+		return ResponseEntity.created(locationOfNewPersona).build();
+	}
 
-    @GetMapping
-    private ResponseEntity<Page<PersonaDTO>> findAll(@PageableDefault Pageable pageable) {
-        Page<PersonaDTO> personas = personaService.findAll(pageable);
-        return ResponseEntity.ok(personas);
-    }
+	@GetMapping
+	private ResponseEntity<Page<PersonaDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<PersonaDTO> personas = personaService.findAll(pageable);
+		return ResponseEntity.ok(personas);
+	}
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putPersona(@PathVariable Long requestedId,
-            @RequestBody PersonaDTO personaDTOUpdate) {
-        personaService.update(requestedId, personaDTOUpdate);
-        return ResponseEntity.ok().build();
-    }
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putPersona(@PathVariable Long requestedId, @RequestBody PersonaDTO personaDTOUpdate) {
+		personaService.update(requestedId, personaDTOUpdate);
+		return ResponseEntity.ok().build();
+	}
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deletePersona(@PathVariable Long id) {
-        personaService.delete(id);
-        return ResponseEntity.ok().build();
-    }
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deletePersona(@PathVariable Long id) {
+		personaService.delete(id);
+		return ResponseEntity.ok().build();
+	}
 
 }

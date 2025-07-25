@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class GrupoController {
 
 	private final GrupoService grupoService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping

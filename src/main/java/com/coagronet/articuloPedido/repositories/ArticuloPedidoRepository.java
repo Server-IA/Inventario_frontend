@@ -11,10 +11,10 @@ import com.coagronet.articuloPedido.ArticuloPedido;
 @Repository
 public interface ArticuloPedidoRepository extends JpaRepository<ArticuloPedido, Long> {
 
-    Optional<ArticuloPedido> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<ArticuloPedido> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    List<ArticuloPedido> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<ArticuloPedido> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
-    List<ArticuloPedido> findByEmpresaIdAndPedidoIdOrderByIdAsc(Long empresaId, Long pedidoId);
+	List<ArticuloPedido> findByEmpresaIdAndPedidoIdOrderByIdAsc(Long empresaId, Long pedidoId);
 
 }

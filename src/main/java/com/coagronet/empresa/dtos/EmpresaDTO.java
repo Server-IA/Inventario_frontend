@@ -10,16 +10,29 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmpresaDTO {
-    private Long id;
-    private String nombre;
-    private String descripcion;
-    private Long estadoId;
-    private String celular;
-    private String correo;
-    private String contacto;
-    private Long tipoIdentificacionId;
-    private Long personaId;
-    private String identificacion;
-    private String logo;
-    private String logoHash;
+
+	private Long id;
+
+	private String nombre;
+
+	private String descripcion;
+
+	private Long estadoId;
+
+	private String celular;
+
+	private String correo;
+
+	private String contacto;
+
+	private Long tipoIdentificacionId;
+
+	private Long personaId;
+
+	private String identificacion;
+
+	private String logo;
+
+	private String logoHash;
+
 }

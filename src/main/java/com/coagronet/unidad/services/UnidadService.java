@@ -19,53 +19,56 @@ import java.util.stream.Collectors;
 @Service
 public class UnidadService {
 
-    private final UnidadRepository unidadRepository;
-    private final UnidadMapper unidadMapper;
-    private final UserEmpresaService userEmpresaService;
-    private final EstadoRepository estadoRepository;
+	private final UnidadRepository unidadRepository;
 
-    public List<UnidadDTO> findAll() {
-        return unidadRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(unidadMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+	private final UnidadMapper unidadMapper;
 
-    public Optional<UnidadDTO> findById(Long requestId) {
-        return unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(unidadMapper::toDTO);
-    }
+	private final UserEmpresaService userEmpresaService;
 
-    @Transactional
-    public UnidadDTO create(UnidadDTO unidadDTO) {
-        estadoRepository.findById(unidadDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final EstadoRepository estadoRepository;
 
-        unidadDTO.setId(null);
-        unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<UnidadDTO> findAll() {
+		return unidadRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(unidadMapper::toDTO)
+			.collect(Collectors.toList());
+	}
 
-        return unidadMapper.toDTO(unidadRepository.save(unidadMapper.toEntity(unidadDTO)));
-    }
+	public Optional<UnidadDTO> findById(Long requestId) {
+		return unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(unidadMapper::toDTO);
+	}
 
-    @Transactional
-    public void update(Long requestId, UnidadDTO unidadDTO) {
-        unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
+	@Transactional
+	public UnidadDTO create(UnidadDTO unidadDTO) {
+		estadoRepository.findById(unidadDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        estadoRepository.findById(unidadDTO.getEstadoId())
-                .orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+		unidadDTO.setId(null);
+		unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        unidadDTO.setId(requestId);
-        unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-        unidadRepository.save(unidadMapper.toEntity(unidadDTO));
-    }
+		return unidadMapper.toDTO(unidadRepository.save(unidadMapper.toEntity(unidadDTO)));
+	}
 
-    @Transactional
-    public void delete(Long requestId) {
-        unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
+	@Transactional
+	public void update(Long requestId, UnidadDTO unidadDTO) {
+		unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
 
-        unidadRepository.deleteById(requestId);
-    }
+		estadoRepository.findById(unidadDTO.getEstadoId())
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+
+		unidadDTO.setId(requestId);
+		unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		unidadRepository.save(unidadMapper.toEntity(unidadDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
+
+		unidadRepository.deleteById(requestId);
+	}
 
 }

@@ -24,42 +24,41 @@ import com.coagronet.usuarioEstado.UsuarioEstado;
 @RequestMapping("/api/v1/personas")
 public class PersonaUsuarioController {
 
-    @Autowired
-    private PersonaRepository personaRepository;
+	@Autowired
+	private PersonaRepository personaRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+	@Autowired
+	private UserRepository userRepository;
 
-    // Suponiendo que tienes una instancia de JwtService
-    @Autowired
-    private JwtService jwtService;
+	// Suponiendo que tienes una instancia de JwtService
+	@Autowired
+	private JwtService jwtService;
 
-    @PostMapping("/persona-usuario")
-    public ResponseEntity<Map<String, Integer>> createPersona(
-            @RequestBody PersonaDTO newPersonaRequest,
-            @RequestHeader("Authorization") String authorizationHeader) {
+	@PostMapping("/persona-usuario")
+	public ResponseEntity<Map<String, Integer>> createPersona(@RequestBody PersonaDTO newPersonaRequest,
+			@RequestHeader("Authorization") String authorizationHeader) {
 
-        // Extraer el token de la cabecera Authorization
-        String token = authorizationHeader.replace("Bearer ", "").trim();
+		// Extraer el token de la cabecera Authorization
+		String token = authorizationHeader.replace("Bearer ", "").trim();
 
-        // Extraer el username desde el JWT usando la instancia de JwtService
-        String username = jwtService.extractUsername(token);
+		// Extraer el username desde el JWT usando la instancia de JwtService
+		String username = jwtService.extractUsername(token);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+		User user = userRepository.findByUsername(username)
+			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Persona persona = PersonaMapper.INSTANCE.toEntity(newPersonaRequest);
-        persona = personaRepository.save(persona);
+		Persona persona = PersonaMapper.INSTANCE.toEntity(newPersonaRequest);
+		persona = personaRepository.save(persona);
 
-        user.setPersona(persona);
-        user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
+		user.setPersona(persona);
+		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
 
-        userRepository.save(user);
+		userRepository.save(user);
 
-        // Devolver solo el estado del usuario en la respuesta
-        Map<String, Integer> response = new HashMap<>();
-        response.put("usuarioEstado", user.getUsuarioEstado().getId().intValue());
-        return ResponseEntity.ok(response);
-    }
+		// Devolver solo el estado del usuario en la respuesta
+		Map<String, Integer> response = new HashMap<>();
+		response.put("usuarioEstado", user.getUsuarioEstado().getId().intValue());
+		return ResponseEntity.ok(response);
+	}
 
 }

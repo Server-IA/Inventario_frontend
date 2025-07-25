@@ -20,32 +20,37 @@ import lombok.RequiredArgsConstructor;
 public class TipoEspacioService {
 
 	private final TipoEspacioRepository tipoEspacioRepository;
+
 	private final TipoEspacioMapper tipoEspacioMapper;
+
 	private final EstadoRepository estadoRepository;
+
 	private final UserEmpresaService userEmpresaService;
 
 	public List<TipoEspacioDTO> findAll() {
 		return tipoEspacioRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream()
-				.map(tipoEspacioMapper::toListDto).collect(Collectors.toList());
+			.stream()
+			.map(tipoEspacioMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public List<TipoEspacioDTO> findAllAvailable() {
 		return tipoEspacioRepository
-				.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2L)
-				.stream()
-				.map(tipoEspacioMapper::toListDto).collect(Collectors.toList());
+			.findByEmpresaIdAndEstadoIdNotOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), 2L)
+			.stream()
+			.map(tipoEspacioMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<TipoEspacioDTO> findById(Long requestedId) {
 		return tipoEspacioRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(tipoEspacioMapper::toListDto);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(tipoEspacioMapper::toListDto);
 	}
 
 	public TipoEspacioDTO create(TipoEspacioDTO tipoEspacioDTO) {
 		estadoRepository.findById(tipoEspacioDTO.getEstadoId())
-				.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
 		tipoEspacioDTO.setId(null);
 		tipoEspacioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -55,10 +60,10 @@ public class TipoEspacioService {
 
 	public void update(Long requestedId, TipoEspacioDTO tipoEspacioDTO) {
 		tipoEspacioRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Tipo de espacio no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Tipo de espacio no encontrado"));
 
 		estadoRepository.findById(tipoEspacioDTO.getEstadoId())
-				.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
 		tipoEspacioDTO.setId(requestedId);
 		tipoEspacioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -68,7 +73,7 @@ public class TipoEspacioService {
 
 	public void delete(Long id) {
 		tipoEspacioRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Tipo de espacio no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Tipo de espacio no encontrado"));
 
 		tipoEspacioRepository.deleteById(id);
 	}

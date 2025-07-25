@@ -16,24 +16,24 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IngredientePresentacionProductoDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "El campo nombre no puede estar vacío.")
-    @Length(max = 100, message = "El campo nombre no debe superar los 100 caracteres.")
-    private String nombre;
+	@NotBlank(message = "El campo nombre no puede estar vacío.")
+	@Length(max = 100, message = "El campo nombre no debe superar los 100 caracteres.")
+	private String nombre;
 
-    @Length(max = 2048, message = "El campo descripcion no debe superar los 2048 caracteres.")
-    private String descripcion;
+	@Length(max = 2048, message = "El campo descripcion no debe superar los 2048 caracteres.")
+	private String descripcion;
 
-    @NotNull(message = "El campo ingredienteId no puede ser nulo.")
-    private Long ingredienteId;
+	@NotNull(message = "El campo ingredienteId no puede ser nulo.")
+	private Long ingredienteId;
 
-    @NotNull(message = "El campo presentacionProductoId no puede ser nulo.")
-    private Long presentacionProductoId;
+	@NotNull(message = "El campo presentacionProductoId no puede ser nulo.")
+	private Long presentacionProductoId;
 
-    @NotNull(message = "El campo estadoId no puede ser nulo.")
-    private Long estadoId;
+	@NotNull(message = "El campo estadoId no puede ser nulo.")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
 
 }

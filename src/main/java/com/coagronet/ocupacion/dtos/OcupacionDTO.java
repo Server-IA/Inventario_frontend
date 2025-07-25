@@ -17,20 +17,21 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OcupacionDTO {
 
-    private Long id;
+	private Long id;
 
-    @NotBlank(message = "El nombre es obligatorio.")
-    @Size(max = 100, message = "El nombre no debe superar los 100 caracteres.")
-    private String nombre;
+	@NotBlank(message = "El nombre es obligatorio.")
+	@Size(max = 100, message = "El nombre no debe superar los 100 caracteres.")
+	private String nombre;
 
-    @NotNull(message = "El tipo de actividad es obligatorio.")
-    private Long tipoActividadId;
+	@NotNull(message = "El tipo de actividad es obligatorio.")
+	private Long tipoActividadId;
 
-    @NotNull(message = "La evaluación es obligatoria.")
-    private Long evaluacionId;
+	@NotNull(message = "La evaluación es obligatoria.")
+	private Long evaluacionId;
 
-    @NotNull(message = "El estado es obligatorio.")
-    private Long estadoId;
+	@NotNull(message = "El estado es obligatorio.")
+	private Long estadoId;
 
-    private Long empresaId;
+	private Long empresaId;
+
 }

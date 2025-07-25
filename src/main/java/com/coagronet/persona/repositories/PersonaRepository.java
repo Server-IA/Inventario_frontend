@@ -10,10 +10,10 @@ import com.coagronet.persona.Persona;
 
 public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
-    Page<Persona> findByEstadoIdNot(Long estadoId, Pageable pageable);
+	Page<Persona> findByEstadoIdNot(Long estadoId, Pageable pageable);
 
-    Optional<Persona> findById(Long id);
+	Optional<Persona> findById(Long id);
 
-    boolean existsById(Long id);
+	boolean existsById(Long id);
 
 }

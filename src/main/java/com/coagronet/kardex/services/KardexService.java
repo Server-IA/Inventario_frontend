@@ -19,54 +19,57 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class KardexService {
 
-    private final KardexRepository kardexRepository;
-    private final KardexMapper kardexMapper;
-    private final EstadoRepository estadoRepository;
-    private final UserEmpresaService userEmpresaService;
+	private final KardexRepository kardexRepository;
 
-    public List<KardexDTO> findAll() {
-        return kardexRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .stream()
-                .map(kardexMapper::toDto)
-                .collect(Collectors.toList());
-    }
+	private final KardexMapper kardexMapper;
 
-    public Optional<KardexDTO> findById(Long requestedId) {
-        return kardexRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(kardexMapper::toDto);
-    }
+	private final EstadoRepository estadoRepository;
 
-    @Transactional
-    public KardexDTO create(KardexDTO kardexDTO) {
-        estadoRepository.findById(kardexDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+	private final UserEmpresaService userEmpresaService;
 
-        kardexDTO.setId(null);
-        kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+	public List<KardexDTO> findAll() {
+		return kardexRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(kardexMapper::toDto)
+			.collect(Collectors.toList());
+	}
 
-        return kardexMapper.toDto(kardexRepository.save(kardexMapper.toEntity(kardexDTO)));
-    }
+	public Optional<KardexDTO> findById(Long requestedId) {
+		return kardexRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(kardexMapper::toDto);
+	}
 
-    @Transactional
-    public void update(Long requestedId, KardexDTO kardexDTO) {
-        kardexRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Kardex no encontrada o no válida"));
+	@Transactional
+	public KardexDTO create(KardexDTO kardexDTO) {
+		estadoRepository.findById(kardexDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        estadoRepository.findById(kardexDTO.getEstadoId())
-                .orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		kardexDTO.setId(null);
+		kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        kardexDTO.setId(requestedId);
-        kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		return kardexMapper.toDto(kardexRepository.save(kardexMapper.toEntity(kardexDTO)));
+	}
 
-        kardexRepository.save(kardexMapper.toEntity(kardexDTO));
-    }
+	@Transactional
+	public void update(Long requestedId, KardexDTO kardexDTO) {
+		kardexRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Kardex no encontrada o no válida"));
 
-    @Transactional
-    public void delete(Long requestId) {
-        kardexRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Kardex no encontrado o no válido"));
+		estadoRepository.findById(kardexDTO.getEstadoId())
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-        kardexRepository.deleteById(requestId);
-    }
+		kardexDTO.setId(requestedId);
+		kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+
+		kardexRepository.save(kardexMapper.toEntity(kardexDTO));
+	}
+
+	@Transactional
+	public void delete(Long requestId) {
+		kardexRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("Kardex no encontrado o no válido"));
+
+		kardexRepository.deleteById(requestId);
+	}
 
 }

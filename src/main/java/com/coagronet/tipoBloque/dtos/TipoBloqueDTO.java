@@ -11,11 +11,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TipoBloqueDTO {
-    private Long id;
 
-    @NotBlank
-    private String nombre;
-    private String descripcion;
-    private Long estadoId;
-    private Long empresaId;
+	private Long id;
+
+	@NotBlank
+	private String nombre;
+
+	private String descripcion;
+
+	private Long estadoId;
+
+	private Long empresaId;
+
 }

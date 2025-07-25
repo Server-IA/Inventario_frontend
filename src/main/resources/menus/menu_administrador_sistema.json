@@ -59,6 +59,11 @@
     "icon": "People",
     "children": [
       {
+        "id": "IngredientePresentacionProducto",
+        "text": "Ingrediente Presentacion Producto",
+        "icon": "ProductionQuantityLimitsIcon"
+      },
+      {
         "id": "presentacion",
         "text": "Presentación",
         "icon": "ProductionQuantityLimitsIcon"

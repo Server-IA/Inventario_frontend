@@ -23,75 +23,65 @@ import com.coagronet.user.repositories.UserRepository;
 @RequestMapping("/api/v1/user")
 public class UserController {
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+	private final UserRepository userRepository;
 
-    public UserController(
-            UserRepository userRepository,
-            UserMapper userMapper,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
-    }
+	private final UserMapper userMapper;
 
-    @GetMapping("/{requestedId}")
-    private ResponseEntity<UserDTO> findById(@PathVariable Long requestedId) {
-        return userRepository
-                .findById(requestedId)
-                .map(userMapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+	private final PasswordEncoder passwordEncoder;
 
-    @GetMapping
-    private ResponseEntity<Page<UserDTO>> findAll(@PageableDefault Pageable pageable) {
-        Page<UserDTO> page = userRepository.findByUsuarioEstadoIdGreaterThanEqual(0, pageable)
-                .map(userMapper::toDto);
-        return page.hasContent()
-                ? ResponseEntity.ok(page)
-                : ResponseEntity.noContent().build();
-    }
+	public UserController(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+		this.userRepository = userRepository;
+		this.userMapper = userMapper;
+		this.passwordEncoder = passwordEncoder;
+	}
 
-    @GetMapping("/minimal")
-    private ResponseEntity<Page<UserMinimalDTO>> findAllMinimal(@PageableDefault Pageable pageable) {
-        Page<UserMinimalDTO> page = userRepository.findByUsuarioEstadoIdGreaterThanEqual(0, pageable)
-                .map(userMapper::toMinimalDTO);
-        return page.hasContent()
-                ? ResponseEntity.ok(page)
-                : ResponseEntity.noContent().build();
-    }
+	@GetMapping("/{requestedId}")
+	private ResponseEntity<UserDTO> findById(@PathVariable Long requestedId) {
+		return userRepository.findById(requestedId)
+			.map(userMapper::toDto)
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
+	}
 
-    @PutMapping("/{requestedId}")
-    private ResponseEntity<Void> putUser(@PathVariable Long requestedId, @RequestBody UserDTO userDTOUpdate) {
-        User user = userRepository.findById(requestedId).orElse(null);
-        if (null != user) {
-            String encodedPassword = passwordEncoder.encode(userDTOUpdate.getPassword());
-            UserDTO updatedUserDTO = new UserDTO(
-                    requestedId,
-                    encodedPassword,
-                    userDTOUpdate.getUsername(),
-                    userDTOUpdate.getPersonaId(),
-                    userDTOUpdate.getUsuarioEstadoId());
-            User updatedUser = userMapper.toEntity(updatedUserDTO);
-            userRepository.save(updatedUser);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
+	@GetMapping
+	private ResponseEntity<Page<UserDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<UserDTO> page = userRepository.findByUsuarioEstadoIdGreaterThanEqual(0, pageable).map(userMapper::toDto);
+		return page.hasContent() ? ResponseEntity.ok(page) : ResponseEntity.noContent().build();
+	}
 
-    @DeleteMapping("/{id}")
-    private ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            if (userRepository.existsById(id)) {
-                userRepository.deleteById(id);
-                return ResponseEntity.noContent().build();
-            }
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+	@GetMapping("/minimal")
+	private ResponseEntity<Page<UserMinimalDTO>> findAllMinimal(@PageableDefault Pageable pageable) {
+		Page<UserMinimalDTO> page = userRepository.findByUsuarioEstadoIdGreaterThanEqual(0, pageable)
+			.map(userMapper::toMinimalDTO);
+		return page.hasContent() ? ResponseEntity.ok(page) : ResponseEntity.noContent().build();
+	}
+
+	@PutMapping("/{requestedId}")
+	private ResponseEntity<Void> putUser(@PathVariable Long requestedId, @RequestBody UserDTO userDTOUpdate) {
+		User user = userRepository.findById(requestedId).orElse(null);
+		if (null != user) {
+			String encodedPassword = passwordEncoder.encode(userDTOUpdate.getPassword());
+			UserDTO updatedUserDTO = new UserDTO(requestedId, encodedPassword, userDTOUpdate.getUsername(),
+					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId());
+			User updatedUser = userMapper.toEntity(updatedUserDTO);
+			userRepository.save(updatedUser);
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@DeleteMapping("/{id}")
+	private ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+		try {
+			if (userRepository.existsById(id)) {
+				userRepository.deleteById(id);
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.notFound().build();
+		}
+		catch (Exception e) {
+			return ResponseEntity.internalServerError().build();
+		}
+	}
 
 }
