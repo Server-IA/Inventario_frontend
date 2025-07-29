@@ -41,8 +41,8 @@ public class TipoGenericoRegistry {
 
             // Detecta si la tabla tiene empresa_id
             String colSql = """
-                SELECT 1 FROM information_schema.columns
-                WHERE table_schema = ? AND table_name = ? AND column_name = '%\\_empresa_id'
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = ? AND table_name = ? AND column_name LIKE '%\\_empresa_id' ESCAPE '\\'
             """;
             boolean hasEmpresaId = !jdbcTemplate.queryForList(colSql, schema, table).isEmpty();
             empresaIdMap.put(table, hasEmpresaId);

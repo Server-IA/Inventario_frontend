@@ -25,7 +25,6 @@ public class TipoGenericoDTO {
     @NotNull(message = "El estado no puede ser nulo.")
     private Long estadoId;
 
-    @NotNull(message = "La empresa no puede ser nula.")
     private Long empresaId;
     
 }

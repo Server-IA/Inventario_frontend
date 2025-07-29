@@ -6,7 +6,7 @@ import org.mapstruct.Mapping;
 import com.coagronet.programacion.Programacion;
 import com.coagronet.programacion.dtos.ProgramacionDTO;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface ProgramacionMapper {
     @Mapping(source = "subseccionDispositivo.id", target = "subseccionDispositivoId")
     @Mapping(source = "estado.id", target = "estadoId")
