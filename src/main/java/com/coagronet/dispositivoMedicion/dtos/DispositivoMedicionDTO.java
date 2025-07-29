@@ -27,7 +27,7 @@ public class DispositivoMedicionDTO {
     @NotNull(message = "El valor no puede ser nulo.")
     private Integer valor;
     
-    @NotNull(message = "La fecha no puede estar vacía.")
+    @NotNull(message = "La fecha no puede ser nula.")
     private Timestamp fechaHora;
 
     @NotNull(message = "El dispositivo no puede ser nulo.")
