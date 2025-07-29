@@ -25,153 +25,177 @@ public class TipoGenericoService {
     private final EstadoRepository estadoRepository;
 
     public static final String urlVersion= "v1";
-    
-
 
     public List<TipoGenericoDTO> findAll(String table) {
-
         if (!registry.isAllowed(table)) {
             throw new BadRequestException("Tabla no permitida o no válida: " + table);
         }
-        
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
+        boolean hasEmpresaId = registry.hasEmpresaId(table);
 
-        String sql = String.format("""
-            SELECT %s_id, %s_nombre, %s_descripcion, %s_estado_id, %s_empresa_id
-            FROM %s
-            WHERE %s_empresa_id = ?
-            ORDER BY %s_id ASC
-        """, pre, pre, pre, pre, pre, fullTable, pre, pre);
-
-        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-        return jdbcTemplate.query(sql, (rs, rowNum) -> mapRow(rs), empresaId);
+        String sql;
+        Object[] params;
+        if (hasEmpresaId) {
+            sql = String.format("""
+                SELECT %s_id, %s_nombre, %s_descripcion, %s_estado_id, %s_empresa_id
+                FROM %s
+                WHERE %s_empresa_id = ?
+                ORDER BY %s_id ASC
+            """, pre, pre, pre, pre, pre, fullTable, pre, pre);
+            Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+            params = new Object[]{empresaId};
+        } else {
+            sql = String.format("""
+                SELECT %s_id, %s_nombre, %s_descripcion, %s_estado_id
+                FROM %s
+                ORDER BY %s_id ASC
+            """, pre, pre, pre, pre, fullTable, pre);
+            params = new Object[]{};
+        }
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapRow(rs, pre, hasEmpresaId), params);
     }
 
     public Optional<TipoGenericoDTO> findById(String table, Long id) {
-        
         if (!registry.isAllowed(table)) {
             throw new BadRequestException("Tabla no permitida o no válida: " + table);
         }
-
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
+        boolean hasEmpresaId = registry.hasEmpresaId(table);
 
-        String sql = String.format("""
-            SELECT %s_id, %s_nombre, %s_descripcion, %s_estado_id, %s_empresa_id
-            FROM %s
-            WHERE %s_id = ? AND %s_empresa_id = ?
-        """, pre, pre, pre, pre, pre, fullTable, pre, pre);
-
-        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-        Object[] params = new Object[]{id, empresaId};
-
-        List<TipoGenericoDTO> resultados = jdbcTemplate.query(sql, (rs, rowNum) -> mapRow(rs), params);
+        String sql;
+        Object[] params;
+        if (hasEmpresaId) {
+            sql = String.format("""
+                SELECT %s_id, %s_nombre, %s_descripcion, %s_estado_id, %s_empresa_id
+                FROM %s
+                WHERE %s_id = ? AND %s_empresa_id = ?
+            """, pre, pre, pre, pre, pre, fullTable, pre, pre);
+            Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+            params = new Object[]{id, empresaId};
+        } else {
+            sql = String.format("""
+                SELECT %s_id, %s_nombre, %s_descripcion, %s_estado_id
+                FROM %s
+                WHERE %s_id = ?
+            """, pre, pre, pre, pre, fullTable, pre);
+            params = new Object[]{id};
+        }
+        List<TipoGenericoDTO> resultados = jdbcTemplate.query(sql, (rs, rowNum) -> mapRow(rs, pre, hasEmpresaId), params);
         return resultados.stream().findFirst();
     }
 
-    private TipoGenericoDTO mapRow(ResultSet rs) throws SQLException {
-        Long id = rs.getLong(1);
-        String nombre = rs.getString(2);
-        String descripcion = rs.getString(3);
-        Long estadoId = rs.getLong(4);
-        Long empresaId = rs.getLong(5);
-        if (rs.wasNull()) empresaId = null;
-
-        return TipoGenericoDTO.builder()
-            .id(id)
-            .nombre(nombre)
-            .descripcion(descripcion)
-            .estadoId(estadoId)
-            .empresaId(empresaId)
-            .build();
+    private TipoGenericoDTO mapRow(ResultSet rs, String prefix, boolean hasEmpresaId) throws SQLException {
+        TipoGenericoDTO dto = new TipoGenericoDTO();
+        dto.setId(rs.getLong(prefix + "_id"));
+        dto.setNombre(rs.getString(prefix + "_nombre"));
+        dto.setDescripcion(rs.getString(prefix + "_descripcion"));
+        dto.setEstadoId(rs.getObject(prefix + "_estado_id") != null ? rs.getLong(prefix + "_estado_id") : null);
+        if (hasEmpresaId) {
+            dto.setEmpresaId(rs.getObject(prefix + "_empresa_id") != null ? rs.getLong(prefix + "_empresa_id") : null);
+        }
+        return dto;
     }
 
     public TipoGenericoDTO create(String table, TipoGenericoDTO dto) {
-        
         if (!registry.isAllowed(table)) {
             throw new BadRequestException("Tabla no permitida o no válida: " + table);
         }
         estadoRepository.findById(dto.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido. "));
-        
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
-        
         String fullTable = schema + "." + table;
-
-        dto.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+        boolean hasEmpresaId = registry.hasEmpresaId(table);
 
         String sequenceName = fullTable + "_" + pre + "_id_seq";
         Long id = jdbcTemplate.queryForObject("SELECT nextval(?)", Long.class, sequenceName);
 
-        String sql = String.format("""
-            INSERT INTO %s (%s_id, %s_nombre, %s_descripcion, %s_estado_id, %s_empresa_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, fullTable, pre, pre, pre, pre, pre);
-
-        Object[] params = new Object[]{id, dto.getNombre(), dto.getDescripcion(), dto.getEstadoId(), dto.getEmpresaId()};
+        String sql;
+        Object[] params;
+        if (hasEmpresaId) {
+            dto.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+            sql = String.format("""
+                INSERT INTO %s (%s_id, %s_nombre, %s_descripcion, %s_estado_id, %s_empresa_id)
+                VALUES (?, ?, ?, ?, ?)
+            """, fullTable, pre, pre, pre, pre, pre);
+            params = new Object[]{id, dto.getNombre(), dto.getDescripcion(), dto.getEstadoId(), dto.getEmpresaId()};
+        } else {
+            sql = String.format("""
+                INSERT INTO %s (%s_id, %s_nombre, %s_descripcion, %s_estado_id)
+                VALUES (?, ?, ?, ?)
+            """, fullTable, pre, pre, pre, pre);
+            params = new Object[]{id, dto.getNombre(), dto.getDescripcion(), dto.getEstadoId()};
+        }
         jdbcTemplate.update(sql, params);
-
-        
-
         dto.setId(id);
         return dto;
     }
 
     public void update(String table, Long id, TipoGenericoDTO dto) {
-        
         if (!registry.isAllowed(table)) {
             throw new BadRequestException("Tabla no permitida o no válida: " + table);
         }
-
         estadoRepository.findById(dto.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido. "));
-
         if (findById(table, id).isEmpty()) {
             throw new BadRequestException("No se encontró el registro con id: " + id + " o es inválido para la empresa.");
         }
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
+        boolean hasEmpresaId = registry.hasEmpresaId(table);
 
-        dto.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-
-        String sql = String.format("""
-            UPDATE %s
-            SET %s_nombre = ?, %s_descripcion = ?, %s_estado_id = ?, %s_empresa_id = ?
-            WHERE %s_id = ?
-        """, fullTable, pre, pre, pre, pre, pre);
-        Object[] params = new Object[]{dto.getNombre(), dto.getDescripcion(), dto.getEstadoId(), dto.getEmpresaId(), id};
-
+        String sql;
+        Object[] params;
+        if (hasEmpresaId) {
+            dto.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+            sql = String.format("""
+                UPDATE %s
+                SET %s_nombre = ?, %s_descripcion = ?, %s_estado_id = ?, %s_empresa_id = ?
+                WHERE %s_id = ?
+            """, fullTable, pre, pre, pre, pre, pre);
+            params = new Object[]{dto.getNombre(), dto.getDescripcion(), dto.getEstadoId(), dto.getEmpresaId(), id};
+        } else {
+            sql = String.format("""
+                UPDATE %s
+                SET %s_nombre = ?, %s_descripcion = ?, %s_estado_id = ?
+                WHERE %s_id = ?
+            """, fullTable, pre, pre, pre, pre);
+            params = new Object[]{dto.getNombre(), dto.getDescripcion(), dto.getEstadoId(), id};
+        }
         jdbcTemplate.update(sql, params);
     }
 
     public void delete(String table, Long id) {
-        
         if (!registry.isAllowed(table)) {
             throw new BadRequestException("Tabla no permitida o no válida: " + table);
         }
-
         if (findById(table, id).isEmpty()){
             throw new BadRequestException("No se encontró el registro con id: " + id + " o es inválido para la empresa.");
         }
         String schema = registry.getSchema(table);
         String pre = registry.getPrefix(table);
         String fullTable = schema + "." + table;
+        boolean hasEmpresaId = registry.hasEmpresaId(table);
 
-        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-
-        String sql = String.format("""
-            DELETE FROM %s WHERE %s_id = ? AND %s_empresa_id = ?
-        """, fullTable, pre, pre);
-
-        jdbcTemplate.update(sql, id, empresaId);
+        String sql;
+        Object[] params;
+        if (hasEmpresaId) {
+            Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+            sql = String.format("""
+                DELETE FROM %s WHERE %s_id = ? AND %s_empresa_id = ?
+            """, fullTable, pre, pre);
+            params = new Object[]{id, empresaId};
+        } else {
+            sql = String.format("""
+                DELETE FROM %s WHERE %s_id = ?
+            """, fullTable, pre);
+            params = new Object[]{id};
+        }
+        jdbcTemplate.update(sql, params);
     }
 }
-
-
-
-    

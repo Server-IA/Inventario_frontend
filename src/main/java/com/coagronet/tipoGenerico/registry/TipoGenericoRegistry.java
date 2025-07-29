@@ -22,14 +22,15 @@ public class TipoGenericoRegistry {
     private final Set<String> allowedTables = new HashSet<>();
     private final Map<String, String> prefixMap = new HashMap<>();
     private final Map<String, String> schemaMap = new HashMap<>();
-
+    private final Map<String, Boolean> empresaIdMap = new HashMap<>();
+    
     @PostConstruct
     public void init() {
         String sql = """
             SELECT table_schema, table_name
             FROM information_schema.tables
             WHERE table_schema IN ('iot', 'public')
-              AND table_name LIKE 'tipo\\_%' ESCAPE '\\'
+            AND table_name LIKE 'tipo\\_%' ESCAPE '\\'
         """;
 
         jdbcTemplate.query(sql, rs -> {
@@ -38,11 +39,23 @@ public class TipoGenericoRegistry {
             allowedTables.add(table);
             schemaMap.put(table, schema);
 
+            // Detecta si la tabla tiene empresa_id
+            String colSql = """
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = ? AND table_name = ? AND column_name = '%\\_empresa_id'
+            """;
+            boolean hasEmpresaId = !jdbcTemplate.queryForList(colSql, schema, table).isEmpty();
+            empresaIdMap.put(table, hasEmpresaId);
+
             String prefix = extractPrefixFromTable(schema, table);
             if (prefix != null && !prefix.isEmpty()) {
                 prefixMap.put(table, prefix);
             }
         });
+    }
+
+    public boolean hasEmpresaId(String table) {
+        return empresaIdMap.getOrDefault(table, false);
     }
 
     private String extractPrefixFromTable(String schema, String table) {
