@@ -9,8 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.coagronet.programacion.Programacion;
 
 @Repository
-public interface ProgramacionRepository extends JpaRepository<Programacion, Long>{
+public interface ProgramacionRepository extends JpaRepository  <Programacion, Long>{
     Optional<Programacion> findByIdAndEmpresaId(Long id, Long empresaId);
     List<Programacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
-    
 }

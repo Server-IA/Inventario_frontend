@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Data;
 
 @Data
 @Builder
@@ -25,14 +25,15 @@ public class ProgramacionDTO {
     @Size(max = 255, message = "El comando no puede exceder los 255 carácteres.")
     private String comando;
 
-    @NotNull(message = "La fecha y hora no puede ser nula.")
+    @NotNull(message = "La fecha y hora no pueden ser nulas.")
     private Timestamp fechaHora;
 
-    @NotNull(message = "El dispositivo de la subsección no puede ser nulo.")
+    @NotNull(message = "La subsección del dispositivo no puede ser nulo.")
     private Long subseccionDispositivoId;
 
     @NotNull(message = "El estado no puede ser nulo.")
     private Long estadoId;
 
+    @NotNull(message = "La empresa no puede ser nula.")
     private Long empresaId;
 }
