@@ -211,7 +211,11 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildTipoModeloUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v3/tipo_modelo").buildAndExpand(id).toUri();
+		return ucb.path("/api/v1/tipo_modelo").buildAndExpand(id).toUri();
+	}
+
+	public URI buildModeloUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/modelo").buildAndExpand(id).toUri();
 	}
 
 	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {

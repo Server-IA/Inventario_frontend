@@ -39,7 +39,6 @@ public class TipoGenericoRegistry {
             allowedTables.add(table);
             schemaMap.put(table, schema);
 
-            // Detecta si la tabla tiene empresa_id
             String colSql = """
             SELECT 1 FROM information_schema.columns
             WHERE table_schema = ? AND table_name = ? AND column_name LIKE '%\\_empresa_id' ESCAPE '\\'
@@ -71,7 +70,7 @@ public class TipoGenericoRegistry {
         List<String> columnas = jdbcTemplate.queryForList(sql, String.class, schema, table);
         if (columnas.isEmpty()) return null;
         String col = columnas.get(0);
-        // Ejemplo: "tif_id" -> "tif"
+        
         return col.substring(0, col.length() - 3).toLowerCase();
     }
 

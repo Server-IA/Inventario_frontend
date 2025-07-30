@@ -1,4 +1,4 @@
-package com.coagronet.tipoModelo.controllers;
+package com.coagronet.modelo.controllers;
 
 import java.util.List;
 
@@ -13,51 +13,51 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.tipoModelo.dtos.TipoModeloDTO;
-import com.coagronet.tipoModelo.services.TipoModeloService;
+import com.coagronet.modelo.dtos.ModeloDTO;
+import com.coagronet.modelo.services.ModeloService;
 import com.coagronet.utils.UriBuilderUtil;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/v1/tipo_modelo")
+@RequestMapping("/api/v1/modelo")
 @RequiredArgsConstructor
-public class TipoModeloController {
-    private final TipoModeloService tipoModeloService;
+public class ModeloController {
+    
+    private final ModeloService modeloService;
     private final UriBuilderUtil uriBuilderUtil;
+
     @GetMapping
-    public ResponseEntity<List<TipoModeloDTO>> findAll() {
-        return ResponseEntity.ok(tipoModeloService.findAll());
+    public ResponseEntity<List<ModeloDTO>> findAll() {
+        return ResponseEntity.ok(modeloService.findAll());
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<TipoModeloDTO> findById(@PathVariable Long requestedId) {
-        return tipoModeloService.findById(requestedId).map(ResponseEntity::ok)
+    public ResponseEntity<ModeloDTO> findById(@PathVariable Long requestedId) {
+        return modeloService.findById(requestedId).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Void> createTipoModelo(@Valid @RequestBody TipoModeloDTO tipoModeloDTO,
+    public ResponseEntity<Void> createModelo(@Valid @RequestBody ModeloDTO modeloDTO,
         UriComponentsBuilder ucb) {
             return ResponseEntity
                 .created(uriBuilderUtil
-                        .buildTipoModeloUri((tipoModeloService.create(tipoModeloDTO)).getId(), ucb))
+                        .buildModeloUri((modeloService.create(modeloDTO).getId()), ucb))
                         .build();
         }
 
     @PutMapping("/{requestedId}")
-    public ResponseEntity<Void> updateTipoModelo(@PathVariable Long requestedId,
-        @Valid @RequestBody TipoModeloDTO tipoModeloDTO) {
-            tipoModeloService.update(requestedId, tipoModeloDTO);
+    public ResponseEntity<Void> updateModelo(@PathVariable Long requestedId,
+        @Valid @RequestBody ModeloDTO modeloDTO) {
+            modeloService.update(requestedId, modeloDTO);
             return ResponseEntity.noContent().build();
         }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTipoModelo(@PathVariable Long id) {
-        tipoModeloService.delete(id);
+    public ResponseEntity<Void> deleteModelo(@PathVariable Long id) {
+        modeloService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-
 }

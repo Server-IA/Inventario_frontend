@@ -24,8 +24,6 @@ public class TipoGenericoService {
     private final UserEmpresaService userEmpresaService;
     private final EstadoRepository estadoRepository;
 
-    public static final String urlVersion= "v1";
-
     public List<TipoGenericoDTO> findAll(String table) {
         if (!registry.isAllowed(table)) {
             throw new BadRequestException("Tabla no permitida o no válida: " + table);
@@ -112,7 +110,8 @@ public class TipoGenericoService {
         boolean hasEmpresaId = registry.hasEmpresaId(table);
 
         String sequenceName = fullTable + "_" + pre + "_id_seq";
-        Long id = jdbcTemplate.queryForObject("SELECT nextval(?)", Long.class, sequenceName);
+        String nextValSql = "SELECT nextval('" + sequenceName + "')";
+        Long id = jdbcTemplate.queryForObject(nextValSql, Long.class);
 
         String sql;
         Object[] params;
