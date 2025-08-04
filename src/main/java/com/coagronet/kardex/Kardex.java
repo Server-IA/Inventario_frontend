@@ -63,4 +63,8 @@ public class Kardex {
 	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id")
 	private Empresa empresa;
 
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_cliente_proveedor_id", referencedColumnName = "emp_id")
+	private Empresa clienteProveedor;
 }
