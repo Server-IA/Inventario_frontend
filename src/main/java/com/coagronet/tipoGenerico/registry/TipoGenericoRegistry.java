@@ -29,7 +29,7 @@ public class TipoGenericoRegistry {
         String sql = """
             SELECT table_schema, table_name
             FROM information_schema.tables
-            WHERE table_schema IN ('iot', 'public')
+            WHERE table_schema IN ('iot', 'public','parqueadero')
             AND table_name LIKE 'tipo\\_%' ESCAPE '\\'
         """;
 
