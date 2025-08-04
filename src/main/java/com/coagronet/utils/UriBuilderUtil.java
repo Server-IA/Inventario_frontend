@@ -164,4 +164,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/articulo-inventario/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildCategoriaEstadoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/categoria-estado/{id}").buildAndExpand(id).toUri();
+	}
+
 }
