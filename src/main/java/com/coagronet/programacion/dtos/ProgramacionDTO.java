@@ -1,6 +1,7 @@
 package com.coagronet.programacion.dtos;
 
-import java.sql.Timestamp;
+
+import java.time.OffsetTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +27,7 @@ public class ProgramacionDTO {
     private String comando;
 
     @NotNull(message = "La fecha y hora no pueden ser nulas.")
-    private Timestamp fechaHora;
+    private OffsetTime fechaHora;
 
     @NotNull(message = "La subsección del dispositivo no puede ser nulo.")
     private Long subseccionDispositivoId;

@@ -1,6 +1,7 @@
 package com.coagronet.programacion;
 
-import java.sql.Timestamp;
+
+import java.time.OffsetTime;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
@@ -40,10 +41,10 @@ public class Programacion {
     private String comando;
 
     @Column(name = "pro_fecha_hora", nullable = false)
-    private Timestamp fechaHora;
+    private OffsetTime fechaHora;
     
     @ManyToOne
-    @JoinColumn(name = "pro_sub_seccion_dispositivo", referencedColumnName = "ssd_id", nullable = false)
+    @JoinColumn(name = "pro_sub_seccion_dispositivo_id", referencedColumnName = "ssd_id", nullable = false)
     private SubseccionDispositivo subseccionDispositivo;
 
     @ManyToOne
