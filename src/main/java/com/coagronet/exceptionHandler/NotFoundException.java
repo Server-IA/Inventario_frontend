@@ -1,22 +1,23 @@
 package com.coagronet.exceptionHandler;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-import java.io.Serial;
-
-@ResponseStatus(value = HttpStatus.NOT_FOUND)
 public class NotFoundException extends RuntimeException {
 
-	@Serial
-	private static final long serialVersionUID = 1L;
+	private final String code;
 
-	public NotFoundException(String message) {
-		super(message);
+	private final Object[] args;
+
+	public NotFoundException(String code, Object... args) {
+		super(code);
+		this.code = code;
+		this.args = args;
 	}
 
-	public NotFoundException() {
-		super();
+	public String getCode() {
+		return code;
+	}
+
+	public Object[] getArgs() {
+		return args;
 	}
 
 }

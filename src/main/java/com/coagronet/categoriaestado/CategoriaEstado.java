@@ -34,12 +34,12 @@ public class CategoriaEstado implements Serializable {
 	private Long id;
 
 	@Column(name = "esc_nombre", length = 100)
-	@NotBlank(message = "{validation.categoria.nombre.notblank}")
-	@Length(max = 100, message = "{validation.categoria.nombre.length}")
+	@NotBlank(message = "{validation.nombre.not-blank}")
+	@Length(max = 100, message = "{validation.nombre.length}")
 	private String nombre;
 
 	@Column(name = "esc_descripcion", length = 2048)
-	@Length(max = 2048, message = "{validation.categoria.descripcion.length}")
+	@Length(max = 2048, message = "{validation.descripcion.length}")
 	private String descripcion;
 
 }

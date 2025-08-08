@@ -36,8 +36,7 @@ public class CategoriaEstadoController {
 
 	@GetMapping("/{id}")
 	public ResponseEntity<CategoriaEstado> findById(@PathVariable Long id) {
-		return service.findById(id)
-		.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+		return ResponseEntity.ok(service.findByIdOrThrow(id));
 	}
 
 	@PostMapping
