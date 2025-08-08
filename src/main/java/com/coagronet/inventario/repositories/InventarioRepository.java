@@ -18,5 +18,4 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
 
 	List<Inventario> findByEmpresaIdAndFechaHoraBetweenOrderByFechaHoraAsc(Long empresaId, LocalDateTime inicio,
 			LocalDateTime fin);
-
 }
