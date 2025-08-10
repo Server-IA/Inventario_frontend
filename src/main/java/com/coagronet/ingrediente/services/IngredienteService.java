@@ -1,9 +1,9 @@
 package com.coagronet.ingrediente.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
@@ -28,11 +28,10 @@ public class IngredienteService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<IngredienteDTO> findAll() {
-		return ingredienteRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(ingredienteMapper::toListDto)
-			.collect(Collectors.toList());
+	public Page<IngredienteDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return ingredienteRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(ingredienteMapper::toListDto);
 	}
 
 	public Optional<IngredienteDTO> findById(Long requestedId) {

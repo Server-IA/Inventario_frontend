@@ -1,6 +1,8 @@
 package com.coagronet.ocupacion.repositories;
 
 import com.coagronet.ocupacion.Ocupacion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -10,6 +12,6 @@ public interface OcupacionRepository extends JpaRepository<Ocupacion, Long> {
 
 	Optional<Ocupacion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-	List<Ocupacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	Page<Ocupacion> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
 }

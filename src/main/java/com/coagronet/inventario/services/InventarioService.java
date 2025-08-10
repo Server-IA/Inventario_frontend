@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +32,10 @@ public class InventarioService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<InventarioDTO> findAll() {
-		return inventarioRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(inventarioMapper::toDTO)
-			.collect(Collectors.toList());
+	public Page<InventarioDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return inventarioRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(inventarioMapper::toDTO);
 	}
 
 	public List<InventarioDTO> findByDateBetween(LocalDateTime inicio, LocalDateTime fin) {

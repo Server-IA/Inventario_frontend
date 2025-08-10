@@ -10,6 +10,8 @@ import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.tipoActividad.repositories.TipoActividadRepository;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,11 +34,10 @@ public class OcupacionService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<OcupacionDTO> findAll() {
-		return ocupacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(ocupacionMapper::toListDTO)
-			.collect(Collectors.toList());
+	public Page<OcupacionDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return ocupacionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(ocupacionMapper::toListDTO);
 	}
 
 	public Optional<OcupacionDTO> findById(Long requestedId) {
