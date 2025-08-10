@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
@@ -34,11 +36,10 @@ public class ArticuloKardexService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<ArticuloKardexDTO> findAll() {
-		return articuloKardexRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(articuloKardexMapper::toListDTO)
-			.collect(Collectors.toList());
+	public Page<ArticuloKardexDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return articuloKardexRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(articuloKardexMapper::toListDTO);
 	}
 
 	public List<ArticuloKardexDTO> findAllByKardexId(Long kardexId) {
