@@ -26,7 +26,7 @@ public class OcupacionDTO {
 	@NotNull(message = "El tipo de actividad es obligatorio.")
 	private Long tipoActividadId;
 
-	@NotNull(message = "La evaluación es obligatoria.")
+	@NotNull(message = "La evaluaci�n es obligatoria.")
 	private Long evaluacionId;
 
 	@NotNull(message = "El estado es obligatorio.")

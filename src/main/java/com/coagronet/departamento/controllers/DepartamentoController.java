@@ -1,7 +1,6 @@
 package com.coagronet.departamento.controllers;
 
 import java.net.URI;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +36,7 @@ public class DepartamentoController {
 	public ResponseEntity<Page<DepartamentoDTO>> findAll(@PageableDefault() Pageable pageable) {
 		Page<DepartamentoDTO> page = departamentoService.findAll(pageable);
 
-		if(page.isEmpty()){
+		if (page.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 

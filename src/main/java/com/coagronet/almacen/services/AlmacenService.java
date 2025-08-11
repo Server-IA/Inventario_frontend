@@ -1,8 +1,6 @@
 package com.coagronet.almacen.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,8 +34,7 @@ public class AlmacenService {
 	public Page<AlmacenDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		return almacenRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(almacenMapper::toListDto);
+		return almacenRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(almacenMapper::toListDto);
 	}
 
 	public Optional<AlmacenDTO> findById(Long requestedId) {
@@ -49,10 +46,10 @@ public class AlmacenService {
 	public AlmacenDTO create(AlmacenDTO almacenDTO) {
 		espacioRepository
 			.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
+			.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
 
 		estadoRepository.findById(almacenDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		almacenDTO.setId(null);
 		almacenDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -66,10 +63,10 @@ public class AlmacenService {
 
 		espacioRepository
 			.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es válida"));
+			.orElseThrow(() -> new BadRequestException("El espacio no es v�lida"));
 
 		estadoRepository.findById(almacenDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		almacenDTO.setId(requestedId);
 		almacenDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());

@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,23 +28,23 @@ public class BloqueDTO {
 	@Size(max = 100, message = "El nombre no debe superar los 100 caracteres.")
 	private String nombre;
 
-	@NotNull(message = "El número de pisos es obligatorio.")
-	@Min(value = 1, message = "El número de pisos debe ser al menos 1.")
+	@NotNull(message = "El n�mero de pisos es obligatorio.")
+	@Min(value = 1, message = "El n�mero de pisos debe ser al menos 1.")
 	private Integer numeroPisos;
 
-	@Size(max = 255, message = "La descripción no debe superar los 255 caracteres.")
+	@Size(max = 255, message = "La descripci�n no debe superar los 255 caracteres.")
 	private String descripcion;
 
 	@NotNull(message = "El estado es obligatorio.")
 	private Long estadoId;
 
-	@Size(max = 255, message = "La geolocalización no debe superar los 255 caracteres.")
+	@Size(max = 255, message = "La geolocalizaci�n no debe superar los 255 caracteres.")
 	private String geolocalizacion;
 
 	@Size(max = 255, message = "Las coordenadas no deben superar los 255 caracteres.")
 	private String coordenadas;
 
-	@Size(max = 255, message = "La dirección no debe superar los 255 caracteres.")
+	@Size(max = 255, message = "La direcci�n no debe superar los 255 caracteres.")
 	private String direccion;
 
 	private Long empresaId;

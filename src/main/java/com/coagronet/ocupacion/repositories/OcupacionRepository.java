@@ -1,12 +1,12 @@
 package com.coagronet.ocupacion.repositories;
 
-import com.coagronet.ocupacion.Ocupacion;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-import java.util.Optional;
+import com.coagronet.ocupacion.Ocupacion;
 
 public interface OcupacionRepository extends JpaRepository<Ocupacion, Long> {
 

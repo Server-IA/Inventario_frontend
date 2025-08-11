@@ -1,22 +1,22 @@
 package com.coagronet.ocupacion.services;
 
-import com.coagronet.ocupacion.dtos.OcupacionDTO;
-import com.coagronet.ocupacion.mappers.OcupacionMapper;
-import com.coagronet.ocupacion.repositories.OcupacionRepository;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.evaluacion.repositories.EvaluacionRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
-import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.tipoActividad.repositories.TipoActividadRepository;
-import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.evaluacion.repositories.EvaluacionRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.ocupacion.dtos.OcupacionDTO;
+import com.coagronet.ocupacion.mappers.OcupacionMapper;
+import com.coagronet.ocupacion.repositories.OcupacionRepository;
+import com.coagronet.tipoActividad.repositories.TipoActividadRepository;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +36,7 @@ public class OcupacionService {
 
 	public Page<OcupacionDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return ocupacionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(ocupacionMapper::toListDTO);
+		return ocupacionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(ocupacionMapper::toListDTO);
 	}
 
 	public Optional<OcupacionDTO> findById(Long requestedId) {
@@ -50,14 +49,14 @@ public class OcupacionService {
 		tipoActividadRepository
 			.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
 					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es válido."));
+			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es v�lido."));
 
 		evaluacionRepository
 			.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La evaluación no es válida."));
+			.orElseThrow(() -> new BadRequestException("La evaluaci�n no es v�lida."));
 
 		estadoRepository.findById(ocupacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
 
 		ocupacionDTO.setId(null);
 		ocupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -67,19 +66,19 @@ public class OcupacionService {
 
 	public void update(Long requestedId, OcupacionDTO ocupacionDTO) {
 		ocupacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La ocupación no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La ocupaci�n no fue encontrada."));
 
 		tipoActividadRepository
 			.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
 					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es válido."));
+			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es v�lido."));
 
 		evaluacionRepository
 			.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La evaluación no es válida."));
+			.orElseThrow(() -> new BadRequestException("La evaluaci�n no es v�lida."));
 
 		estadoRepository.findById(ocupacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
 
 		ocupacionDTO.setId(requestedId);
 		ocupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -89,7 +88,7 @@ public class OcupacionService {
 
 	public void delete(Long id) {
 		ocupacionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La ocupación no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La ocupaci�n no fue encontrada."));
 
 		ocupacionRepository.deleteById(id);
 	}

@@ -1,7 +1,6 @@
 package com.coagronet.bloque.controllers;
 
 import java.net.URI;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +33,7 @@ public class BloqueController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<Page<BloqueDTO>> findAll(@PageableDefault()Pageable pageable) {
+	public ResponseEntity<Page<BloqueDTO>> findAll(@PageableDefault() Pageable pageable) {
 		Page<BloqueDTO> page = bloqueService.findAll(pageable);
 
 		if (page.isEmpty()) {
