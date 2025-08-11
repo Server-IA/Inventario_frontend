@@ -1,7 +1,9 @@
 package com.coagronet.articuloKardex.controllers;
 
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +32,12 @@ public class ArticuloKardexController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<ArticuloKardexDTO>> findAll() {
-		return ResponseEntity.ok(articuloKardexService.findAll());
+	public ResponseEntity<Page<ArticuloKardexDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<ArticuloKardexDTO> page = articuloKardexService.findAll(pageable);
+		if(page.isEmpty()){
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")

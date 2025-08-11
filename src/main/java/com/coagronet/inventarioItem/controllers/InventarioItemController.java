@@ -5,12 +5,14 @@ import com.coagronet.inventarioItem.dtos.InventarioItemDTO;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/inventario_item")
@@ -22,11 +24,13 @@ public class InventarioItemController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<InventarioItemDTO>> findAll() {
-		List<InventarioItemDTO> inventarioItemDTOList = inventarioItemService.findAll();
+	public ResponseEntity<Page<InventarioItemDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<InventarioItemDTO> page = inventarioItemService.findAll(pageable);
 
-		return inventarioItemDTOList.isEmpty() ? ResponseEntity.noContent().build()
-				: ResponseEntity.ok(inventarioItemDTOList);
+		if(page.isEmpty()){
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")

@@ -38,7 +38,8 @@ public class SecurityConfig {
 						"/api/v1/empresas/**", "/api/v1/personas/**", "/api/v1/menu/**")
 				.permitAll()
 				.requestMatchers("/api/v1/tipo_identificacion/**", "/api/v1/estado/**", "/api/v1/persona/**",
-						"/api/v1/movimiento/**", "/api/v1/tipo-evaluacion/**", "/api/v1/user/**")
+						"/api/v1/movimiento/**", "/api/v1/tipo-evaluacion/**", "/api/v1/user/**",
+						"/api/v1/categoria-estado/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA")
 				.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**",
 						"/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**", "/api/v1/tipo_sede/**",

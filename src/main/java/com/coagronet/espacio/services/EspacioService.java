@@ -1,9 +1,9 @@
 package com.coagronet.espacio.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.espacio.dtos.EspacioDTO;
@@ -34,11 +34,10 @@ public class EspacioService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<EspacioDTO> findAll() {
-		return espacioRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(espacioMapper::toListDto)
-			.collect(Collectors.toList());
+	public Page<EspacioDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return espacioRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(espacioMapper::toListDto);
 	}
 
 	public Optional<EspacioDTO> findById(Long requestedId) {

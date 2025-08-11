@@ -1,12 +1,14 @@
 package com.coagronet.espacioOcupacion.controllers;
 
 import java.net.URI;
-import java.util.List;
 import com.coagronet.espacioOcupacion.services.EspacioOcupacionService;
 import com.coagronet.espacioOcupacion.dtos.EspacioOcupacionDTO;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,12 +30,13 @@ public class EspacioOcupacionController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<EspacioOcupacionDTO>> findAll() {
-		List<EspacioOcupacionDTO> espacioOcupacionDTOList = espacioOcupacionService.findAll();
+	public ResponseEntity<Page<EspacioOcupacionDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<EspacioOcupacionDTO> page = espacioOcupacionService.findAll(pageable);
 
-		return espacioOcupacionDTOList.isEmpty() ? ResponseEntity.noContent().build()
-				: ResponseEntity.ok(espacioOcupacionDTOList);
-
+		if(page.isEmpty()){
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")

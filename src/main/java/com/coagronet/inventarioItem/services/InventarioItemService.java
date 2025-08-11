@@ -11,12 +11,12 @@ import com.coagronet.inventarioItem.InventarioItem;
 import com.coagronet.inventarioItem.dtos.InventarioItemDTO;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,12 +32,10 @@ public class InventarioItemService {
 
 	private final ArticuloKardexRepository articuloKardexRepository;
 
-	public List<InventarioItemDTO> findAll() {
-
-		return inventarioItemRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(inventarioItemMapper::toDTO)
-			.collect(Collectors.toList());
+	public Page<InventarioItemDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return inventarioItemRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(inventarioItemMapper::toDTO);
 	}
 
 	public Optional<InventarioItemDTO> findById(Long requestedId) {

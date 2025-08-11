@@ -4,6 +4,9 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,10 +37,13 @@ public class InventarioController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<InventarioDTO>> findAll() {
-		List<InventarioDTO> inventarioDTOList = inventarioService.findAll();
+	public ResponseEntity<Page<InventarioDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<InventarioDTO> page = inventarioService.findAll(pageable);
 
-		return inventarioDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(inventarioDTOList);
+		if(page.isEmpty()){
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping(params = { "inicio", "fin" })

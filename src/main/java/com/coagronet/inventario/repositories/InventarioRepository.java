@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +14,7 @@ import com.coagronet.inventario.Inventario;
 @Repository
 public interface InventarioRepository extends JpaRepository<Inventario, Long> {
 
-	List<Inventario> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	Page<Inventario> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
 	Optional<Inventario> findByIdAndEmpresaId(Long id, Long empresaId);
 
