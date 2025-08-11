@@ -16,7 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.coagronet.auth.dto.*;
+import com.coagronet.auth.dto.ApiResponse;
+import com.coagronet.auth.dto.ChangePasswordRequestDTO;
+import com.coagronet.auth.dto.EmpresaRolDTO;
+import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
+import com.coagronet.auth.dto.LoginRequestDTO;
+import com.coagronet.auth.dto.RegisterRequestDTO;
+import com.coagronet.auth.dto.ResetPasswordRequestDTO;
+import com.coagronet.auth.dto.SelectRoleRequestDTO;
 import com.coagronet.auth.props.AuthProperties;
 import com.coagronet.email.services.EmailVerificationService;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
@@ -62,12 +69,12 @@ public class AuthService {
 	/* ================= REGISTRATION ================= */
 	public ApiResponse register(@Valid RegisterRequestDTO dto) {
 
-		/* 1️⃣ Does the user already exist? ---------------------------------- */
+		/* 1?? Does the user already exist? ---------------------------------- */
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
 
 		if (existing != null) {
 
-			/* 1a. Still pending verification → 409 Conflict + resend email */
+			/* 1a. Still pending verification ? 409 Conflict + resend email */
 			if (existing.getUsuarioEstado() == UsuarioEstado.PENDIENTE_VERIFICACION) {
 
 				// resend: generate (or reuse) token and send email again
@@ -78,11 +85,11 @@ public class AuthService {
 						"Email already registered but not verified. Verification link has been resent.");
 			}
 
-			/* 1b. Already active/in use → 400 Bad Request */
+			/* 1b. Already active/in use ? 400 Bad Request */
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already in use");
 		}
 
-		/* 2️⃣ Create a new user ---------------------------------------------- */
+		/* 2?? Create a new user ---------------------------------------------- */
 		User user = new User();
 		user.setUsername(dto.getUsername());
 		user.setPassword(encoder.encode(dto.getPassword()));
@@ -92,14 +99,14 @@ public class AuthService {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
 		user.setRoles(Set.of(role));
 
-		/* 3️⃣ Register and send email (listener) ----------------------------- */
+		/* 3?? Register and send email (listener) ----------------------------- */
 		registrationService.registerUser(user);
 
-		/* 4️⃣ Success → 201 Created ------------------------------------------ */
+		/* 4?? Success ? 201 Created ------------------------------------------ */
 		return new ApiResponse(true, "Verification email sent to " + user.getUsername());
 	}
 
-	/* ================= LOGIN – step 1 ================= */
+	/* ================= LOGIN � step 1 ================= */
 	public Map<String, Object> preLogin(@Valid LoginRequestDTO dto) {
 
 		Authentication auth = authManager
@@ -116,7 +123,7 @@ public class AuthService {
 		return Map.of("rolesByCompany", rolesByCompany);
 	}
 
-	/* ================= LOGIN – step 2 ================= */
+	/* ================= LOGIN � step 2 ================= */
 	public Map<String, Object> selectRole(@Valid SelectRoleRequestDTO dto) {
 
 		User user = userRepo.findByUsername(dto.getUsername())
