@@ -8,12 +8,12 @@ import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +27,10 @@ public class KardexService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<KardexDTO> findAll() {
-		return kardexRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(kardexMapper::toDto)
-			.collect(Collectors.toList());
+	public Page<KardexDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return kardexRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(kardexMapper::toDto);
 	}
 
 	public Optional<KardexDTO> findById(Long requestedId) {

@@ -1,8 +1,10 @@
 package com.coagronet.producto.controllers;
 
 import java.net.URI;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,10 +33,13 @@ public class ProductoController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<ProductoDTO>> findAll() {
-		List<ProductoDTO> productoDTOList = productoService.findAll();
+	public ResponseEntity<Page<ProductoDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<ProductoDTO> page = productoService.findAll(pageable);
 
-		return productoDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(productoDTOList);
+		if(page.isEmpty()){
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")

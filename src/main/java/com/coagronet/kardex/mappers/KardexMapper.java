@@ -13,6 +13,7 @@ public interface KardexMapper {
 	@Mapping(source = "tipoMovimiento.id", target = "tipoMovimientoId")
 	@Mapping(source = "estado.id", target = "estadoId")
 	@Mapping(source = "empresa.id", target = "empresaId")
+	@Mapping(source = "clienteProveedor.id", target = "clienteProveedorId")
 	KardexDTO toDto(Kardex kardex);
 
 	@Mapping(source = "almacenId", target = "almacen.id")
@@ -20,6 +21,6 @@ public interface KardexMapper {
 	@Mapping(source = "tipoMovimientoId", target = "tipoMovimiento.id")
 	@Mapping(source = "estadoId", target = "estado.id")
 	@Mapping(source = "empresaId", target = "empresa.id")
+	@Mapping(source = "clienteProveedorId", target = "clienteProveedor.id")
 	Kardex toEntity(KardexDTO kardexDTO);
-
 }

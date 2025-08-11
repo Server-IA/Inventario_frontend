@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.evaluacion.dtos.EvaluacionDTO;
@@ -31,11 +33,10 @@ public class EvaluacionService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<EvaluacionDTO> findAll() {
-		return evaluacionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(evaluacionMapper::toListDTO)
-			.collect(Collectors.toList());
+	public Page<EvaluacionDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return evaluacionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(evaluacionMapper::toListDTO);
 	}
 
 	public List<EvaluacionDTO> findAllByTipoEvaluacionId(Long tipoEvaluacionId) {

@@ -1,13 +1,15 @@
 package com.coagronet.kardex.controllers;
 
 import java.net.URI;
-import java.util.List;
 
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.services.KardexService;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,10 +31,13 @@ public class KardexController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<KardexDTO>> findAll() {
-		List<KardexDTO> kardexDTOList = kardexService.findAll();
+	public ResponseEntity<Page<KardexDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<KardexDTO> page = kardexService.findAll(pageable);
 
-		return kardexDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(kardexDTOList);
+		if(page.isEmpty()){
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page);
 
 	}
 

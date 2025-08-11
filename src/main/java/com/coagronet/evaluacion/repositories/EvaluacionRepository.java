@@ -3,6 +3,8 @@ package com.coagronet.evaluacion.repositories;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +17,6 @@ public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
 
 	List<Evaluacion> findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(Long empresaId, Long tipoEvaluacionId);
 
-	List<Evaluacion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	Page<Evaluacion> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
 }

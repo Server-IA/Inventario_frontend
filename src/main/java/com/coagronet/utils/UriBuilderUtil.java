@@ -5,6 +5,8 @@ import java.net.URI;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.tipoGenerico.dtos.TipoGenericoDTO;
+
 @Component
 public class UriBuilderUtil {
 
@@ -164,8 +166,62 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/articulo-inventario/{id}").buildAndExpand(id).toUri();
 	}
 
-	public URI buildCategoriaEstadoUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/categoria-estado/{id}").buildAndExpand(id).toUri();
-	}
+public URI buildCategoriaEstadoUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v1/categoria-estado/{id}").buildAndExpand(id).toUri();
+}
 
+public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/variedad/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildTipoFaseUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/tipo_fase/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildFaseUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/fase/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildTipoMedicionUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/tipo_medicion/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildTipoDispositivoUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/tipo_dispositivo/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildSubseccionDispositivoUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/sub_seccion_dispositivo/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildProduccionFaseUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/produccion_fase/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildDispositivoMedicionUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/dispositivo_medicion/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildSectorUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/sector/{id}").buildAndExpand(id).toUri();
+}
+
+public URI buildProduccionDesarrolloUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/produccion_desarrollo").buildAndExpand(id).toUri();
+}
+
+public URI buildProgramacionUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/programacion").buildAndExpand(id).toUri();
+}
+
+public URI buildTipoModeloUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v1/tipo_modelo").buildAndExpand(id).toUri();
+}
+
+public URI buildModeloUri(Long id, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v1/modelo").buildAndExpand(id).toUri();
+}
+
+public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
+    return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 }
