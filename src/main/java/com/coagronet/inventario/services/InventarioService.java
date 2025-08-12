@@ -1,19 +1,22 @@
 package com.coagronet.inventario.services;
 
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
-import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.inventario.mappers.InventarioMapper;
-import com.coagronet.inventario.repositories.InventarioRepository;
-import com.coagronet.inventario.dtos.InventarioDTO;
-import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.inventario.dtos.InventarioDTO;
+import com.coagronet.inventario.mappers.InventarioMapper;
+import com.coagronet.inventario.repositories.InventarioRepository;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,15 @@ public class InventarioService {
 			.collect(Collectors.toList());
 	}
 
+	public List<InventarioDTO> findByDateBetween(LocalDateTime inicio, LocalDateTime fin) {
+		return inventarioRepository
+			.findByEmpresaIdAndFechaHoraBetweenOrderByFechaHoraAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(),
+					inicio, fin)
+			.stream()
+			.map(inventarioMapper::toDTO)
+			.collect(Collectors.toList());
+	}
+
 	public Optional<InventarioDTO> findById(Long requestedId) {
 		return inventarioRepository
 			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
@@ -43,7 +55,7 @@ public class InventarioService {
 	@Transactional
 	public InventarioDTO create(InventarioDTO inventarioDTO) {
 		estadoRepository.findById(inventarioDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no v?lido"));
 
 		inventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
@@ -56,7 +68,7 @@ public class InventarioService {
 			.orElseThrow(() -> new NotFoundException("Inventario no encontrada en su empresa"));
 
 		estadoRepository.findById(inventarioDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v?lido"));
 
 		inventarioDTO.setId(requestedId);
 		inventarioDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());

@@ -7,8 +7,8 @@ import com.coagronet.programacion.Programacion;
 import com.coagronet.programacion.dtos.ProgramacionDTO;
 
 @Mapper(componentModel = "spring")
-public interface ProgramacionMapper{
-    @Mapping(source="subseccionDispositivo.id", target = "subseccionDispositivoId")
+public interface ProgramacionMapper {
+    @Mapping(source = "subseccionDispositivo.id", target = "subseccionDispositivoId")
     @Mapping(source = "estado.id", target = "estadoId")
     @Mapping(source = "empresa.id", target = "empresaId")
     ProgramacionDTO toDto(Programacion programacion);
@@ -20,6 +20,7 @@ public interface ProgramacionMapper{
 
     @Mapping(source = "subseccionDispositivo.id", target = "subseccionDispositivoId")
     @Mapping(source = "estado.id", target = "estadoId")
-    @Mapping(source = "empresa.id", target = "empresaId", ignore = true)
+    @Mapping(source = "empresa.id", target = "empresaId")
     ProgramacionDTO toListDTO(Programacion programacion);
+    
 }

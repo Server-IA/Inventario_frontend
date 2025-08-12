@@ -1,6 +1,7 @@
 package com.coagronet.programacion;
 
-import java.sql.Timestamp;
+
+import java.time.OffsetTime;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
@@ -8,7 +9,6 @@ import com.coagronet.subSeccionDispositivo.SubseccionDispositivo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,7 +28,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Table(name = "programacion", schema = "iot")
 public class Programacion {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "programacion_generator")
     @SequenceGenerator(name = "programacion_generator", sequenceName = "iot.programacion_pro_id_seq", allocationSize = 1)
@@ -42,19 +41,18 @@ public class Programacion {
     private String comando;
 
     @Column(name = "pro_fecha_hora", nullable = false)
-    private Timestamp fechaHora;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    private OffsetTime fechaHora;
+    
+    @ManyToOne
     @JoinColumn(name = "pro_sub_seccion_dispositivo_id", referencedColumnName = "ssd_id", nullable = false)
     private SubseccionDispositivo subseccionDispositivo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id", nullable = false)
     private Estado estado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id", nullable= false)
     private Empresa empresa;
-    
     
 }
