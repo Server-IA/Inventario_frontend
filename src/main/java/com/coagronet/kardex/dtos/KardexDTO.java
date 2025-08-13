@@ -35,6 +35,4 @@ public class KardexDTO {
 	private Long empresaId;
 
 	private Long clienteProveedorId;
-
-
 }

@@ -1,9 +1,10 @@
 package com.coagronet.ocupacion.mappers;
 
-import com.coagronet.ocupacion.Ocupacion;
-import com.coagronet.ocupacion.dtos.OcupacionDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import com.coagronet.ocupacion.Ocupacion;
+import com.coagronet.ocupacion.dtos.OcupacionDTO;
 
 @Mapper(componentModel = "spring")
 public interface OcupacionMapper {

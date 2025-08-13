@@ -2,10 +2,10 @@ package com.coagronet.criterioEvaluacion.services;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.criterioEvaluacion.dtos.CriterioEvaluacionDTO;
@@ -31,12 +31,11 @@ public class CriterioEvaluacionService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<CriterioEvaluacionDTO> findAll() {
+	public Page<CriterioEvaluacionDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return criterioEvaluacionRepository
-			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(criterioEvaluacionMapper::toListDTO)
-			.collect(Collectors.toList());
+			.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(criterioEvaluacionMapper::toListDTO);
 	}
 
 	public Optional<CriterioEvaluacionDTO> findById(Long requestedId) {

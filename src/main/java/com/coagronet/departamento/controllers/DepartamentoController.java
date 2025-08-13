@@ -1,8 +1,10 @@
 package com.coagronet.departamento.controllers;
 
 import java.net.URI;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,8 +33,14 @@ public class DepartamentoController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<DepartamentoDTO>> findAll() {
-		return ResponseEntity.ok(departamentoService.findAll());
+	public ResponseEntity<Page<DepartamentoDTO>> findAll(@PageableDefault() Pageable pageable) {
+		Page<DepartamentoDTO> page = departamentoService.findAll(pageable);
+
+		if (page.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")

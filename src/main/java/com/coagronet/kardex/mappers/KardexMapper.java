@@ -23,5 +23,4 @@ public interface KardexMapper {
 	@Mapping(source = "empresaId", target = "empresa.id")
 	@Mapping(source = "clienteProveedorId", target = "clienteProveedor.id")
 	Kardex toEntity(KardexDTO kardexDTO);
-
 }

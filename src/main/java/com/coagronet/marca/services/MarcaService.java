@@ -1,9 +1,9 @@
 package com.coagronet.marca.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
@@ -28,11 +28,10 @@ public class MarcaService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<MarcaDTO> findAll() {
-		return marcaRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(marcaMapper::toListDto)
-			.collect(Collectors.toList());
+	public Page<MarcaDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return marcaRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(marcaMapper::toListDto);
 	}
 
 	public Optional<MarcaDTO> findById(Long requestedId) {

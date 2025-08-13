@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,7 +24,7 @@ public class DepartamentoDTO {
 	@NotNull(message = "El pais es obligatorio.")
 	private Long paisId;
 
-	@NotNull(message = "El código no puede ser nulo")
+	@NotNull(message = "El c�digo no puede ser nulo")
 	private Integer codigo;
 
 	@NotBlank(message = "El acronimo es obligatorio.")

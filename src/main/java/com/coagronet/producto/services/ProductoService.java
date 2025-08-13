@@ -8,12 +8,12 @@ import com.coagronet.producto.mappers.ProductoMapper;
 import com.coagronet.producto.repositories.ProductoRepository;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +27,10 @@ public class ProductoService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<ProductoDTO> findAll() {
-		return productoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(productoMapper::toDto)
-			.collect(Collectors.toList());
+	public Page<ProductoDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return productoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(productoMapper::toDto);
 	}
 
 	public Optional<ProductoDTO> findById(Long requestedId) {

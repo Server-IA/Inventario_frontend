@@ -166,6 +166,10 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/articulo-inventario/{id}").buildAndExpand(id).toUri();
 	}
 
+	public URI buildCategoriaEstadoUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/categoria-estado/{id}").buildAndExpand(id).toUri();
+	}
+
 	public URI buildVariedadUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v3/variedad/{id}").buildAndExpand(id).toUri();
 	}
@@ -173,7 +177,7 @@ public class UriBuilderUtil {
 	public URI buildTipoFaseUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v3/tipo_fase/{id}").buildAndExpand(id).toUri();
 	}
-	
+
 	public URI buildFaseUri(Long id, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v3/fase/{id}").buildAndExpand(id).toUri();
 	}
@@ -219,7 +223,7 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
-    return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
+		return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 	}
-	
+
 }

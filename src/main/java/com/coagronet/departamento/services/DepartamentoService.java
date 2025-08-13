@@ -1,18 +1,18 @@
 package com.coagronet.departamento.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.departamento.dtos.DepartamentoDTO;
 import com.coagronet.departamento.mappers.DepartamentoMapper;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.pais.repositories.PaisRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.pais.repositories.PaisRepository;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -31,11 +31,11 @@ public class DepartamentoService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<DepartamentoDTO> findAll() {
-		return departamentoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(departamentoMapper::toListDto)
-			.collect(Collectors.toList());
+	public Page<DepartamentoDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+		return departamentoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(departamentoMapper::toListDto);
 	}
 
 	public Optional<DepartamentoDTO> findById(Long requestedId) {
@@ -47,10 +47,10 @@ public class DepartamentoService {
 	public DepartamentoDTO create(DepartamentoDTO departamentoDTO) {
 		paisRepository
 			.findByIdAndEmpresaId(departamentoDTO.getPaisId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
+			.orElseThrow(() -> new BadRequestException("El pa�s no es v�lido para la empresa del usuario autenticado"));
 
 		estadoRepository.findById(departamentoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		departamentoDTO.setId(null);
 		departamentoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -64,7 +64,7 @@ public class DepartamentoService {
 
 		paisRepository
 			.findByIdAndEmpresaId(departamentoDTO.getPaisId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El país no es válido para la empresa del usuario autenticado"));
+			.orElseThrow(() -> new BadRequestException("El pa�s no es v�lido para la empresa del usuario autenticado"));
 
 		departamentoDTO.setId(requestedId);
 		departamentoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());

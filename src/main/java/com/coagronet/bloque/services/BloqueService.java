@@ -1,9 +1,9 @@
 package com.coagronet.bloque.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.bloque.dtos.BloqueDTO;
@@ -34,11 +34,9 @@ public class BloqueService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<BloqueDTO> findAll() {
-		return bloqueRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(bloqueMapper::toListDto)
-			.collect(Collectors.toList());
+	public Page<BloqueDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return bloqueRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(bloqueMapper::toListDto);
 	}
 
 	public Optional<BloqueDTO> findById(Long requestedId) {
@@ -48,14 +46,14 @@ public class BloqueService {
 
 	public BloqueDTO create(BloqueDTO bloqueDTO) {
 		sedeRepository.findByIdAndEmpresaId(bloqueDTO.getSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La sede no es válida"));
+			.orElseThrow(() -> new BadRequestException("La sede no es v�lida"));
 
 		tipoBloqueRepository
 			.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es válido"));
+			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es v�lido"));
 
 		estadoRepository.findById(bloqueDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		bloqueDTO.setId(null);
 		bloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -68,14 +66,14 @@ public class BloqueService {
 			.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
 
 		sedeRepository.findByIdAndEmpresaId(bloqueDTO.getSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La sede no es válida"));
+			.orElseThrow(() -> new BadRequestException("La sede no es v�lida"));
 
 		tipoBloqueRepository
 			.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es válido"));
+			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es v�lido"));
 
 		estadoRepository.findById(bloqueDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		bloqueDTO.setId(requestedId);
 		bloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
