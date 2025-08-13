@@ -1,5 +1,8 @@
 package com.coagronet.auth;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,6 +80,16 @@ public class AuthController {
 	@GetMapping("/roles")
 	public Set<String> roles() {
 		return authService.getCurrentUserRoles();
+	}
+
+	@GetMapping("/debug-login-dto")
+	public ResponseEntity<List<String>> debugLoginDto() {
+		Field[] fields = LoginRequestDTO.class.getDeclaredFields();
+		List<String> fieldNames = new ArrayList<>();
+		for (Field field : fields) {
+			fieldNames.add(field.getName());
+		}
+		return ResponseEntity.ok(fieldNames);
 	}
 
 }
