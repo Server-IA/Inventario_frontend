@@ -14,7 +14,7 @@
     <groupId>com.coagronet</groupId>
     <artifactId>coagronet</artifactId>
     <version>0.3.1</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <name>Coagronet</name>
     <description>Servicio de gestión Coagronet</description>
 
@@ -47,6 +47,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>java-dotenv</artifactId>
+            <version>5.2.2</version>
+        </dependency>
+
+
         <!-- DB -->
         <dependency>
             <groupId>org.postgresql</groupId>
