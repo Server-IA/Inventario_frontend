@@ -15,7 +15,7 @@ RUN mvn dependency:go-offline
 COPY src ./src
 
 # Compilamos la aplicación usando el perfil '''local''' y omitiendo tests
-RUN mvn -Plocal clean package
+RUN mvn -Plocal clean package -DskipTests
 
 # Etapa 2: Ejecución
 # Usamos una imagen de JRE (Java Runtime Environment) más ligera para la ejecución.
