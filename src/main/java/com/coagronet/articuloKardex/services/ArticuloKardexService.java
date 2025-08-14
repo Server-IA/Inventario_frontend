@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.coagronet.articuloKardex.ArticuloKardex;
+import com.coagronet.presentacionProducto.PresentacionProducto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -57,23 +59,62 @@ public class ArticuloKardexService {
 	}
 
 	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		kardexRepository
 			.findByIdAndEmpresaId(articuloKardexDTO.getKardexId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
 			.orElseThrow(() -> new BadRequestException("El kardex no es válido."));
 
-		presentacionProductoRepository
+		estadoRepository.findById(articuloKardexDTO.getEstadoId())
+				.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+
+		PresentacionProducto presentacionProducto = presentacionProductoRepository
 			.findByIdAndEmpresaId(articuloKardexDTO.getPresentacionProductoId(),
 					userEmpresaService.getEmpresaIdFromCurrentRequest())
 			.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
 
-		estadoRepository.findById(articuloKardexDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		if(Boolean.TRUE.equals(presentacionProducto.getDesgregar())){
+			Double cantidad = articuloKardexDTO.getCantidad();
+
+			long unidades = Math.round(cantidad);
+
+			if (Math.abs(cantidad - unidades) > 1e-9) {
+				throw new BadRequestException("Para presentaciones desgregadas, la cantidad debe ser un número entero.");
+			}
+
+			ArticuloKardexDTO ultimoCreado = null;
+
+			for(int i=0; i < unidades; i++){
+				ArticuloKardexDTO item = getArticuloKardexDTO(articuloKardexDTO, empresaId);
+				ArticuloKardex entidad = articuloKardexMapper.toEntity(item);
+				ArticuloKardex guardado = articuloKardexRepository.save(entidad);
+				ultimoCreado = articuloKardexMapper.toDTO(guardado);
+			}
+			return ultimoCreado;
+		}
+
 
 		articuloKardexDTO.setId(null);
-		articuloKardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		articuloKardexDTO.setEmpresaId(empresaId);
 
-		return articuloKardexMapper
-			.toDTO(articuloKardexRepository.save(articuloKardexMapper.toEntity(articuloKardexDTO)));
+		ArticuloKardex entidad = articuloKardexMapper.toEntity(articuloKardexDTO);
+		ArticuloKardex guardado = articuloKardexRepository.save(entidad);
+		return articuloKardexMapper.toDTO(guardado);
+	}
+
+	private static ArticuloKardexDTO getArticuloKardexDTO(ArticuloKardexDTO articuloKardexDTO, Long empresaId) {
+		ArticuloKardexDTO item = new ArticuloKardexDTO();
+		item.setEmpresaId(empresaId);
+		item.setKardexId(articuloKardexDTO.getKardexId());
+		item.setPresentacionProductoId(articuloKardexDTO.getPresentacionProductoId());
+		item.setEstadoId(articuloKardexDTO.getEstadoId());
+
+		item.setCantidad(1.0);
+
+		item.setPrecio(articuloKardexDTO.getPrecio());
+		item.setFechaVencimiento(articuloKardexDTO.getFechaVencimiento());
+		item.setIdentificadorProducto(articuloKardexDTO.getIdentificadorProducto());
+		item.setLote(articuloKardexDTO.getLote());
+		return item;
 	}
 
 	public void update(Long requestedId, ArticuloKardexDTO articuloKardexDTO) {
