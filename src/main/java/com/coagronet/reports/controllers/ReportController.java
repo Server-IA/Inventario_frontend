@@ -14,7 +14,7 @@ import com.coagronet.reports.services.ReportService;
 @RequestMapping("/api/v2/report")
 public class ReportController {
 
-	String version = "2.0.1";
+	private final String version = "2.0.1";
 
 	private final ReportService reportService;
 
