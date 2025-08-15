@@ -82,6 +82,7 @@ public class ReportService {
 				parametros.put("logo_empresa",
 						"https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png");
 			}
+			System.out.println("Parámetros finales: " + parametros);
 			InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
 			JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 
