@@ -64,7 +64,7 @@ public class ReportService {
 			}
 			Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 			System.out.println("Empresa actual: " + empresaId);
-			parametros.put("emp_id", empresaId.intValue());
+			parametros.put("empresa_id", empresaId.intValue());
 
 			String empLogoHash = empresaService.getLogoHashByEmpresaId(empresaId);
 			System.out.println("buscando hash " + empLogoHash);

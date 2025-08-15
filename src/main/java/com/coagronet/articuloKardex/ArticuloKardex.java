@@ -1,23 +1,14 @@
 package com.coagronet.articuloKardex;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -71,5 +62,12 @@ public class ArticuloKardex {
 
 	@Column(name = "kai_lote")
 	private String lote;
+
+	@PrePersist
+	public void prePersist() {
+		if (identificadorProducto == null || identificadorProducto.isBlank()) {
+			this.identificadorProducto = UUID.randomUUID().toString();
+		}
+	}
 
 }
