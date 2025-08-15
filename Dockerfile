@@ -22,6 +22,13 @@ RUN mvn -Plocal clean package -DskipTests
 # Debe coincidir con la versión de Java usada en la etapa de compilación.
 FROM eclipse-temurin:21-jre-jammy
 
+# Instalar fuentes de Microsoft (incluyendo Arial)
+USER root
+RUN apt-get update && \
+    echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && \
+    apt-get install -y ttf-mscorefonts-installer && \
+    rm -rf /var/lib/apt/lists/*
+
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
