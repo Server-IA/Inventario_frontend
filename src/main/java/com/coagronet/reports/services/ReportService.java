@@ -88,6 +88,10 @@ public class ReportService {
 				System.out.println("Logo no encontrado, usando logo por defecto.");
 			}
 
+			System.out.println("Parámetros finales: " + parametros);
+			InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
+
+
 			System.out.println("[4/9] Cargando plantilla de reporte (.jrxml)...");
 			String reportPath = "reports/" + reportName + ".jrxml";
 			InputStream reportStream = getClass().getClassLoader().getResourceAsStream(reportPath);
@@ -99,6 +103,7 @@ public class ReportService {
 			System.out.println("Plantilla encontrada, procediendo a compilar...");
 
 			System.out.println("[5/9] Compilando reporte...");
+
 			JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 			System.out.println("Reporte compilado exitosamente.");
 
