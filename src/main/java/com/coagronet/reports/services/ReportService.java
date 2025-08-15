@@ -89,8 +89,6 @@ public class ReportService {
 			}
 
 			System.out.println("Parámetros finales: " + parametros);
-			InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
-
 
 			System.out.println("[4/9] Cargando plantilla de reporte (.jrxml)...");
 			String reportPath = "reports/" + reportName + ".jrxml";
