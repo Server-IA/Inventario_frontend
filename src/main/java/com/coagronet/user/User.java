@@ -65,6 +65,12 @@ public class User implements UserDetails {
 	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id")
 	private UsuarioEstado usuarioEstado;
 
+	@Column(name = "usu_preferred_empresa_id")
+	private Long preferredEmpresaId;
+
+	@Column(name = "usu_preferred_rol_id")
+	private Long preferredRolId;
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toSet());
