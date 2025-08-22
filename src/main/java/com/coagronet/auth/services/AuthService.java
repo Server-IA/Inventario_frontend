@@ -2,6 +2,7 @@ package com.coagronet.auth.services;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import com.coagronet.auth.dto.LoginRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
 import com.coagronet.auth.dto.SelectRoleRequestDTO;
+import com.coagronet.auth.dto.SwitchContextRequestDTO;
 import com.coagronet.auth.props.AuthProperties;
 import com.coagronet.email.services.EmailVerificationService;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
@@ -106,7 +108,8 @@ public class AuthService {
 		return new ApiResponse(true, "Verification email sent to " + user.getUsername());
 	}
 
-	/* ================= LOGIN � step 1 ================= */
+	/* ================= LOGIN ? step 1 ================= */
+	@Deprecated
 	public Map<String, Object> preLogin(@Valid LoginRequestDTO dto) {
 
 		Authentication auth = authManager
@@ -123,7 +126,8 @@ public class AuthService {
 		return Map.of("rolesByCompany", rolesByCompany);
 	}
 
-	/* ================= LOGIN � step 2 ================= */
+	/* ================= LOGIN ? step 2 ================= */
+	@Deprecated
 	public Map<String, Object> selectRole(@Valid SelectRoleRequestDTO dto) {
 
 		User user = userRepo.findByUsername(dto.getUsername())
@@ -135,6 +139,68 @@ public class AuthService {
 		String token = jwt.generateToken(user.getUsername(), dto.getEmpresaId(), dto.getRolId());
 
 		return Map.of("token", token, "empresaId", dto.getEmpresaId(), "rolId", dto.getRolId());
+	}
+
+	/* ================= LOGIN -> token inmediato ================= */
+	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
+		Authentication auth = authManager
+			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
+		User user = (User) auth.getPrincipal();
+
+		List<UserRole> userRoles = userRoleRepo.findByUser(user);
+		if (userRoles.isEmpty()) {
+			throw new UserRoleForbiddenException("User has no company/role assignments");
+		}
+
+		UserRole current = resolveInitialContext(user, userRoles);
+
+		String token = jwt.generateToken(user.getUsername(), current.getEmpresa().getId(), current.getRole().getId());
+
+		List<EmpresaRolDTO> rolesByCompany = userRoles.stream()
+			.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRole().getId(),
+					ur.getRole().getName()))
+			.toList();
+
+		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
+				"rolesByCompany", rolesByCompany // �til para UI de cambio posterior
+		);
+	}
+
+	/* ================= Cambio opcional de empresa/rol ================= */
+	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
+		User user = userRepo.findByUsername(username)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+		UserRole ur = userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.empresaId(), dto.rolId())
+			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
+
+		String token = jwt.generateToken(user.getUsername(), dto.empresaId(), dto.rolId());
+
+		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
+			user.setPreferredEmpresaId(dto.empresaId());
+			user.setPreferredRolId(dto.rolId());
+			userRepo.save(user);
+		}
+
+		return Map.of("token", token, "empresaId", dto.empresaId(), "rolId", dto.rolId());
+	}
+
+	/* ================= Estrategia para el contexto inicial ================= */
+	private UserRole resolveInitialContext(User user, List<UserRole> userRoles) {
+		// 1) Si hay preferido en User, �salo si existe a�n
+		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
+			Optional<UserRole> preferred = userRoles.stream()
+				.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
+						&& ur.getRole().getId().equals(user.getPreferredRolId()))
+				.findFirst();
+			if (preferred.isPresent())
+				return preferred.get();
+		}
+		// 2) Si solo tiene uno, ese
+		if (userRoles.size() == 1)
+			return userRoles.get(0);
+		// 3) Fallback: el primero (o el de menor id, o por fecha de creaci�n)
+		return userRoles.get(0);
 	}
 
 	/* ================= CHANGE, FORGOT, AND RESET PASSWORD ================= */
