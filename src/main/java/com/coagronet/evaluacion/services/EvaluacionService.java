@@ -34,8 +34,8 @@ public class EvaluacionService {
 	private final EstadoRepository estadoRepository;
 
 	public Page<EvaluacionDTO> findAll(Pageable pageable) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return evaluacionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+		return evaluacionRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
 			.map(evaluacionMapper::toListDTO);
 	}
 
@@ -56,10 +56,10 @@ public class EvaluacionService {
 
 	public EvaluacionDTO create(EvaluacionDTO evaluacionDTO) {
 		tipoEvaluacionRepository.findById(evaluacionDTO.getTipoEvaluacionId())
-			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es válido."));
+			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es v�lido."));
 
 		estadoRepository.findById(evaluacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
 
 		evaluacionDTO.setId(null);
 		evaluacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -70,13 +70,13 @@ public class EvaluacionService {
 	public void update(Long requestedId, EvaluacionDTO evaluacionDTO) {
 		evaluacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
 			.orElseThrow(
-					() -> new NotFoundException("La evaluación con el ID: " + requestedId + " no fue encontrada."));
+					() -> new NotFoundException("La evaluaci�n con el ID: " + requestedId + " no fue encontrada."));
 
 		tipoEvaluacionRepository.findById(evaluacionDTO.getTipoEvaluacionId())
-			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es válido."));
+			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es v�lido."));
 
 		estadoRepository.findById(evaluacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El campo 'EstadoId' no es válido."));
+			.orElseThrow(() -> new BadRequestException("El campo 'EstadoId' no es v�lido."));
 
 		evaluacionDTO.setId(requestedId);
 		evaluacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -86,7 +86,7 @@ public class EvaluacionService {
 
 	public void delete(Long id) {
 		evaluacionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La evaluación con el ID: " + id + " no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La evaluaci�n con el ID: " + id + " no fue encontrada."));
 
 		evaluacionRepository.deleteById(id);
 	}

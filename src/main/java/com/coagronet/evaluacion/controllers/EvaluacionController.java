@@ -1,11 +1,11 @@
 package com.coagronet.evaluacion.controllers;
 
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,11 +23,8 @@ import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/evaluacion")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class EvaluacionController {
 
@@ -37,19 +34,14 @@ public class EvaluacionController {
 
 	@GetMapping
 	public ResponseEntity<Page<EvaluacionDTO>> findAll(@PageableDefault Pageable pageable) {
-		Page<EvaluacionDTO> page = evaluacionService.findAll(pageable);
-
-		if(page.isEmpty()){
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.ok(page);
+		return ResponseEntity.ok(evaluacionService.findAll(pageable));
 	}
 
 	@GetMapping("/tipo/{tipoEvaluacion}")
 	public ResponseEntity<List<EvaluacionDTO>> findByTipoEvaluacion(@PathVariable Long tipoEvaluacion) {
 		List<EvaluacionDTO> list = evaluacionService.findAllByTipoEvaluacionId(tipoEvaluacion);
 
-		if(list.isEmpty()){
+		if (list.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.ok(list);
