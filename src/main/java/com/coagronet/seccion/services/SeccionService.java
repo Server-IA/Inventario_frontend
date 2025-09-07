@@ -9,6 +9,8 @@ import com.coagronet.seccion.mapper.SeccionMapper;
 import com.coagronet.seccion.repositories.SeccionRepository;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,11 +31,11 @@ public class SeccionService {
 
 	private final EspacioRepository espacioRepository;
 
-	public List<SeccionDTO> findAll() {
-		return seccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(seccionMapper::toListDTO)
-			.collect(Collectors.toList());
+	public Page<SeccionDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+		return seccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(seccionMapper::toListDTO);
 	}
 
 	public Optional<SeccionDTO> findById(Long requestedId) {
