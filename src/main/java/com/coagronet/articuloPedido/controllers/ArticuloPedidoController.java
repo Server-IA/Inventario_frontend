@@ -2,6 +2,9 @@ package com.coagronet.articuloPedido.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +33,9 @@ public class ArticuloPedidoController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<ArticuloPedidoDTO>> findAll() {
-		return ResponseEntity.ok(articuloPedidoService.findAll());
+	public ResponseEntity<Page<ArticuloPedidoDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<ArticuloPedidoDTO> page = articuloPedidoService.findAll(pageable);
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")
