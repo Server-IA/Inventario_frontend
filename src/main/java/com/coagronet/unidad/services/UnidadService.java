@@ -8,6 +8,8 @@ import com.coagronet.unidad.mappers.UnidadMapper;
 import com.coagronet.unidad.repositories.UnidadRepository;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +29,10 @@ public class UnidadService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<UnidadDTO> findAll() {
-		return unidadRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(unidadMapper::toDTO)
-			.collect(Collectors.toList());
+	public Page<UnidadDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return unidadRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(unidadMapper::toDTO);
 	}
 
 	public Optional<UnidadDTO> findById(Long requestId) {
