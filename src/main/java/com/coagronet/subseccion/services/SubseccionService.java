@@ -8,12 +8,12 @@ import com.coagronet.subseccion.repositories.SubseccionRepository;
 import com.coagronet.subseccion.dtos.SubseccionDTO;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +27,10 @@ public class SubseccionService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<SubseccionDTO> findAll() {
-		return subseccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(subseccionMapper::toDTO)
-			.collect(Collectors.toList());
+	public Page<SubseccionDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return subseccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(subseccionMapper::toDTO);
 	}
 
 	public Optional<SubseccionDTO> findById(Long requestedId) {
