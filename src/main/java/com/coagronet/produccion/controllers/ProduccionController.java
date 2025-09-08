@@ -3,6 +3,9 @@ package com.coagronet.produccion.controllers;
 import java.net.URI;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,10 +34,10 @@ public class ProduccionController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<ProduccionDTO>> findAll() {
-		List<ProduccionDTO> produccionDTOList = produccionService.findAll();
+	public ResponseEntity<Page<ProduccionDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<ProduccionDTO> produccionDTOList = produccionService.findAll(pageable);
 
-		return produccionDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(produccionDTOList);
+		return ResponseEntity.ok(produccionDTOList);
 
 	}
 
