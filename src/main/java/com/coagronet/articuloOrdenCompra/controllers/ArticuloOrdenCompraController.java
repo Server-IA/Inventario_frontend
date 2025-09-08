@@ -1,7 +1,9 @@
 package com.coagronet.articuloOrdenCompra.controllers;
 
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +32,9 @@ public class ArticuloOrdenCompraController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<ArticuloOrdenCompraDTO>> findAll() {
-		return ResponseEntity.ok(articuloOrdenCompraService.findAll());
+	public ResponseEntity<Page<ArticuloOrdenCompraDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<ArticuloOrdenCompraDTO> page = articuloOrdenCompraService.findAll(pageable);
+		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{requestedId}")

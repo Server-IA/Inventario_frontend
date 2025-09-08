@@ -9,6 +9,9 @@ import com.coagronet.pedido.services.PedidoService;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,10 +37,10 @@ public class PedidoController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<PedidoDTO>> findAll() {
-		List<PedidoDTO> pedidoDTOList = pedidoService.findAll();
+	public ResponseEntity<Page<PedidoDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<PedidoDTO> pedidoDTOList = pedidoService.findAll(pageable);
 
-		return pedidoDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(pedidoDTOList);
+		return ResponseEntity.ok(pedidoDTOList);
 	}
 
 	@GetMapping("/{pedidoId}/articulos")

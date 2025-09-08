@@ -8,6 +8,8 @@ import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepos
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +29,11 @@ public class PresentacionProductoService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<PresentacionProductoDTO> findAll() {
+	public Page<PresentacionProductoDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return presentacionProductoRepository
-			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(presentacionProductoMapper::toDto)
-			.collect(Collectors.toList());
+			.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(presentacionProductoMapper::toDto);
 	}
 
 	public Optional<PresentacionProductoDTO> findById(Long requestId) {

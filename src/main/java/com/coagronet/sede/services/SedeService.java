@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
@@ -37,11 +39,10 @@ public class SedeService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<SedeDTO> findAll() {
-		return sedeRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(sedeMapper::toListDto)
-			.collect(Collectors.toList());
+	public Page<SedeDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return sedeRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(sedeMapper::toListDto);
 	}
 
 	public Optional<SedeDTO> findById(Long requestedId) {

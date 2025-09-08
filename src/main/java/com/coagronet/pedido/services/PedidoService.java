@@ -7,6 +7,8 @@ import com.coagronet.pedido.mappers.PedidoMapper;
 import com.coagronet.pedido.repositories.PedidoRepository;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +28,10 @@ public class PedidoService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<PedidoDTO> findAll() {
-		return pedidoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(pedidoMapper::toDto)
-			.collect(Collectors.toList());
+	public Page<PedidoDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return pedidoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(pedidoMapper::toDto);
 	}
 
 	public Optional<PedidoDTO> findById(Long requestId) {

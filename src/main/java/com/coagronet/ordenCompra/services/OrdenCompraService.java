@@ -10,6 +10,8 @@ import com.coagronet.pedido.repositories.PedidoRepository;
 import com.coagronet.proveedor.repositories.ProveedorRepository;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +35,10 @@ public class OrdenCompraService {
 
 	private final UserEmpresaService userEmpresaService;
 
-	public List<OrdenCompraDTO> findAll() {
-		return ordenCompraRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(ordenCompraMapper::toListDTO)
-			.collect(Collectors.toList());
+	public Page<OrdenCompraDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return ordenCompraRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(ordenCompraMapper::toListDTO);
 	}
 
 	public Optional<OrdenCompraDTO> findById(Long requestedId) {
