@@ -3,6 +3,8 @@ package com.coagronet.articuloOrdenCompra.repositories;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.coagronet.articuloOrdenCompra.ArticuloOrdenCompra;
@@ -11,7 +13,7 @@ public interface ArticuloOrdenCompraRepository extends JpaRepository<ArticuloOrd
 
 	Optional<ArticuloOrdenCompra> findByIdAndEmpresaId(Long id, Long empresaId);
 
-	List<ArticuloOrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	Page<ArticuloOrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
 	List<ArticuloOrdenCompra> findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(Long empresaId, Long ordenCompraId);
 
