@@ -1,21 +1,21 @@
 package com.coagronet.seccion.services;
 
-import com.coagronet.exceptionHandler.BadRequestException;
-import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.espacio.repositories.EspacioRepository;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.seccion.dtos.SeccionDTO;
-import com.coagronet.seccion.mapper.SeccionMapper;
-import com.coagronet.seccion.repositories.SeccionRepository;
-import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.coagronet.espacio.repositories.EspacioRepository;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.seccion.dtos.SeccionDTO;
+import com.coagronet.seccion.mapper.SeccionMapper;
+import com.coagronet.seccion.repositories.SeccionRepository;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +34,7 @@ public class SeccionService {
 	public Page<SeccionDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		return seccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(seccionMapper::toListDTO);
+		return seccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(seccionMapper::toListDTO);
 	}
 
 	public Optional<SeccionDTO> findById(Long requestedId) {
@@ -46,10 +45,10 @@ public class SeccionService {
 	public SeccionDTO create(SeccionDTO seccionDTO) {
 		espacioRepository
 			.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
+			.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
 
 		estadoRepository.findById(seccionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		seccionDTO.setId(null);
 		seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -59,14 +58,14 @@ public class SeccionService {
 
 	public void update(Long requestedId, SeccionDTO seccionDTO) {
 		seccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada."));
 
 		espacioRepository
 			.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es válido"));
+			.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
 
 		estadoRepository.findById(seccionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		seccionDTO.setId(requestedId);
 		seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -76,7 +75,7 @@ public class SeccionService {
 
 	public void delete(Long id) {
 		seccionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada."));
 
 		seccionRepository.deleteById(id);
 	}

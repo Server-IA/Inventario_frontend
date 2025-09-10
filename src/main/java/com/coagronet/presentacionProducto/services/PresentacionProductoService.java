@@ -1,21 +1,20 @@
 package com.coagronet.presentacionProducto.services;
 
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.presentacionProducto.dtos.PresentacionProductoDTO;
-import com.coagronet.presentacionProducto.mappers.PresentacionProductoMapper;
-import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
-import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.presentacionProducto.dtos.PresentacionProductoDTO;
+import com.coagronet.presentacionProducto.mappers.PresentacionProductoMapper;
+import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +30,7 @@ public class PresentacionProductoService {
 
 	public Page<PresentacionProductoDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return presentacionProductoRepository
-			.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+		return presentacionProductoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
 			.map(presentacionProductoMapper::toDto);
 	}
 

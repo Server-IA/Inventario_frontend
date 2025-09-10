@@ -1,20 +1,20 @@
 package com.coagronet.pedido.services;
 
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.pedido.dtos.PedidoDTO;
 import com.coagronet.pedido.mappers.PedidoMapper;
 import com.coagronet.pedido.repositories.PedidoRepository;
 import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +30,7 @@ public class PedidoService {
 
 	public Page<PedidoDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return pedidoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(pedidoMapper::toDto);
+		return pedidoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(pedidoMapper::toDto);
 	}
 
 	public Optional<PedidoDTO> findById(Long requestId) {
@@ -42,7 +41,7 @@ public class PedidoService {
 	@Transactional
 	public PedidoDTO create(PedidoDTO pedidoDTO) {
 		estadoRepository.findById(pedidoDTO.getEstadoId())
-			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no v�lido"));
 
 		pedidoDTO.setId(null);
 		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -53,10 +52,10 @@ public class PedidoService {
 	@Transactional
 	public void update(Long requestId, PedidoDTO pedidoDTO) {
 		pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Pedido no encontrado o no válido"));
+			.orElseThrow(() -> new NotFoundException("Pedido no encontrado o no v�lido"));
 
 		estadoRepository.findById(pedidoDTO.getEstadoId())
-			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
+			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no v�lido"));
 
 		pedidoDTO.setId(requestId);
 		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -67,7 +66,7 @@ public class PedidoService {
 	@Transactional
 	public void delete(Long requestId) {
 		pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Pedido no encontrado o no válido"));
+			.orElseThrow(() -> new NotFoundException("Pedido no encontrado o no v�lido"));
 
 		pedidoRepository.deleteById(requestId);
 
