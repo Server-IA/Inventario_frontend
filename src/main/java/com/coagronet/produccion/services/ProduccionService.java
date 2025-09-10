@@ -1,8 +1,6 @@
 package com.coagronet.produccion.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,8 +42,7 @@ public class ProduccionService {
 
 	public Page<ProduccionDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return produccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(produccionMapper::toDto);
+		return produccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(produccionMapper::toDto);
 	}
 
 	public Optional<ProduccionDTO> findById(Long requestedId) {

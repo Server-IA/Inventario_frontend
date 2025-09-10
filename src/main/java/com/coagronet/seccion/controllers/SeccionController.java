@@ -1,8 +1,5 @@
 package com.coagronet.seccion.controllers;
 
-import java.util.List;
-
-import com.coagronet.kardex.dtos.KardexDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -38,7 +35,7 @@ public class SeccionController {
 	public ResponseEntity<Page<SeccionDTO>> findAll(@PageableDefault Pageable pageable) {
 		Page<SeccionDTO> page = seccionService.findAll(pageable);
 
-		if(page.isEmpty()){
+		if (page.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.ok(page); // 200 OK
@@ -47,7 +44,7 @@ public class SeccionController {
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<SeccionDTO> findById(@PathVariable Long requestedId) {
 		return ResponseEntity.ok(seccionService.findById(requestedId)
-			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada")));
+			.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada")));
 	}
 
 	@PostMapping
