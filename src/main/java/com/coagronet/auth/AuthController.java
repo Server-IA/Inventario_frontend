@@ -18,7 +18,6 @@ import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
 import com.coagronet.auth.dto.LoginRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
-import com.coagronet.auth.dto.SelectRoleRequestDTO;
 import com.coagronet.auth.dto.SwitchContextRequestDTO;
 import com.coagronet.auth.services.AuthService;
 
@@ -39,18 +38,6 @@ public class AuthController {
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO dto) {
 		return ResponseEntity.ok(authService.register(dto));
-	}
-
-	@Deprecated
-	@PostMapping("/login")
-	public ResponseEntity<Map<String, Object>> preLogin(@Valid @RequestBody LoginRequestDTO dto) {
-		return ResponseEntity.ok(authService.preLogin(dto));
-	}
-
-	@Deprecated
-	@PostMapping("/login/seleccion")
-	public ResponseEntity<Map<String, Object>> selectRole(@Valid @RequestBody SelectRoleRequestDTO dto) {
-		return ResponseEntity.ok(authService.selectRole(dto));
 	}
 
 	@PostMapping("/v2/login")

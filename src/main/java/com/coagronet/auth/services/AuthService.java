@@ -24,7 +24,6 @@ import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
 import com.coagronet.auth.dto.LoginRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
-import com.coagronet.auth.dto.SelectRoleRequestDTO;
 import com.coagronet.auth.dto.SwitchContextRequestDTO;
 import com.coagronet.auth.props.AuthProperties;
 import com.coagronet.email.services.EmailVerificationService;
@@ -108,39 +107,6 @@ public class AuthService {
 		return new ApiResponse(true, "Verification email sent to " + user.getUsername());
 	}
 
-	/* ================= LOGIN ? step 1 ================= */
-	@Deprecated
-	public Map<String, Object> preLogin(@Valid LoginRequestDTO dto) {
-
-		Authentication auth = authManager
-			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
-		User user = (User) auth.getPrincipal();
-
-		List<UserRole> userRoles = userRoleRepo.findByUser(user);
-
-		List<EmpresaRolDTO> rolesByCompany = userRoles.stream()
-			.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRole().getId(),
-					ur.getRole().getName()))
-			.toList();
-
-		return Map.of("rolesByCompany", rolesByCompany);
-	}
-
-	/* ================= LOGIN ? step 2 ================= */
-	@Deprecated
-	public Map<String, Object> selectRole(@Valid SelectRoleRequestDTO dto) {
-
-		User user = userRepo.findByUsername(dto.getUsername())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-		userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.getEmpresaId(), dto.getRolId())
-			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
-
-		String token = jwt.generateToken(user.getUsername(), dto.getEmpresaId(), dto.getRolId());
-
-		return Map.of("token", token, "empresaId", dto.getEmpresaId(), "rolId", dto.getRolId());
-	}
-
 	/* ================= LOGIN -> token inmediato ================= */
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 		Authentication auth = authManager
@@ -162,7 +128,7 @@ public class AuthService {
 			.toList();
 
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
-				"rolesByCompany", rolesByCompany // �til para UI de cambio posterior
+				"rolesByCompany", rolesByCompany // ?til para UI de cambio posterior
 		);
 	}
 
@@ -187,7 +153,7 @@ public class AuthService {
 
 	/* ================= Estrategia para el contexto inicial ================= */
 	private UserRole resolveInitialContext(User user, List<UserRole> userRoles) {
-		// 1) Si hay preferido en User, �salo si existe a�n
+		// 1) Si hay preferido en User, ?salo si existe a?n
 		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
 			Optional<UserRole> preferred = userRoles.stream()
 				.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
@@ -199,7 +165,7 @@ public class AuthService {
 		// 2) Si solo tiene uno, ese
 		if (userRoles.size() == 1)
 			return userRoles.get(0);
-		// 3) Fallback: el primero (o el de menor id, o por fecha de creaci�n)
+		// 3) Fallback: el primero (o el de menor id, o por fecha de creaci?n)
 		return userRoles.get(0);
 	}
 
