@@ -2,7 +2,6 @@ package com.coagronet.email.services;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import com.coagronet.verificationToken.TokenPurpose;
 import com.coagronet.verificationToken.VerificationToken;
 import com.coagronet.verificationToken.repositories.VerificationTokenRepository;
 
@@ -25,10 +25,10 @@ public class EmailVerificationService {
 	private final JavaMailSender mailSender;
 
 	@Value("${app.verification-url}")
-	private String verificationUrl;
+	private String verificationUrl; // Debe apuntar al FRONT (ver secci?n 4)
 
 	@Value("${app.reset-password-url}")
-	private String resetPasswordUrl;
+	private String resetPasswordUrl; // Debe apuntar al FRONT
 
 	public EmailVerificationService(VerificationTokenRepository verificationTokenRepository,
 			JavaMailSender mailSender) {
@@ -36,60 +36,70 @@ public class EmailVerificationService {
 		this.mailSender = mailSender;
 	}
 
+	/* ================= TOKENS ================= */
+
 	public String createVerificationToken(String email) {
+		return createToken(email, TokenPurpose.VERIFY, 24);
+	}
 
-		Optional<VerificationToken> existing = verificationTokenRepository.findByEmail(email);
+	public String createResetPasswordToken(String email) {
+		return createToken(email, TokenPurpose.RESET, 1);
+	}
 
-		// ⬇️ NUEVO chequeo de “casi expirado”
+	private String createToken(String email, TokenPurpose purpose, int hoursToExpire) {
+		Optional<VerificationToken> existing = verificationTokenRepository.findByEmailAndPurpose(email, purpose);
+
 		boolean aboutToExpire = existing.isPresent()
 				&& existing.get().getExpiryDate().isBefore(LocalDateTime.now().plusMinutes(15));
 
-		// Si existe, no está expirado y aún le queda más de 15 min de vida → reutilizar
 		if (existing.isPresent() && !existing.get().isExpired() && !aboutToExpire) {
+			logger.info("Reusing {} token for {}", purpose, email);
 			return existing.get().getToken();
 		}
 
-		// Caso contrario: crear o renovar el token
-		String token = UUID.randomUUID().toString();
+		String token = java.util.UUID.randomUUID().toString();
 
-		VerificationToken entity = existing.orElse(VerificationToken.builder().email(email).build());
-
+		VerificationToken entity = existing.orElse(VerificationToken.builder().email(email).purpose(purpose).build());
 		entity.setToken(token);
-		entity.setExpiryDate(LocalDateTime.now().plusHours(24));
+		entity.setExpiryDate(LocalDateTime.now().plusHours(hoursToExpire));
 
 		verificationTokenRepository.save(entity);
 		return token;
 	}
 
-	public boolean validateToken(String token) {
-		Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
-
-		return tokenOptional.filter(t -> !t.isExpired()).map(t -> {
-			verificationTokenRepository.delete(t);
-			logger.info("Token validated and deleted for email: {}", t.getEmail());
-			return true;
-		}).orElse(false);
+	/** Verificaci?n de cuenta: valida consumo de token VERIFY y lo borra */
+	public boolean consumeVerificationToken(String token) {
+		return verificationTokenRepository.findByTokenAndPurpose(token, TokenPurpose.VERIFY)
+			.filter(t -> !t.isExpired())
+			.map(t -> {
+				verificationTokenRepository.delete(t);
+				return true;
+			})
+			.orElse(false);
 	}
 
-	public String getEmailAndInvalidateToken(String token) {
-		Optional<VerificationToken> tokenOptional = verificationTokenRepository.findByToken(token);
-
-		return tokenOptional.filter(t -> !t.isExpired()).map(t -> {
-			verificationTokenRepository.delete(t);
-			logger.info("Token used and deleted for email: {}", t.getEmail());
-			return t.getEmail();
-		}).orElse(null);
+	/** Reset de password: devuelve email si token RESET es v?lido y lo borra */
+	public String consumeResetPasswordToken(String token) {
+		return verificationTokenRepository.findByTokenAndPurpose(token, TokenPurpose.RESET)
+			.filter(t -> !t.isExpired())
+			.map(t -> {
+				verificationTokenRepository.delete(t);
+				return t.getEmail();
+			})
+			.orElse(null);
 	}
+
+	/* ================= EMAILS ================= */
 
 	public void sendVerificationEmail(String email, String token) {
 		String subject = "Verify your account";
-		String text = "Click the link to verify your account: " + verificationUrl + "?token=" + token;
+		String text = "Click to verify your account: " + verificationUrl + "?token=" + token;
 		sendEmail(email, subject, text);
 	}
 
 	public void sendResetPasswordEmail(String email, String token) {
 		String subject = "Reset your password";
-		String text = "Click the link to reset your password: " + resetPasswordUrl + "?token=" + token;
+		String text = "Click to reset your password: " + resetPasswordUrl + "?token=" + token;
 		sendEmail(email, subject, text);
 	}
 
@@ -105,7 +115,6 @@ public class EmailVerificationService {
 		}
 		catch (MailException e) {
 			logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
-			// Podrías lanzar una excepción customizada si quieres que el error suba
 		}
 	}
 

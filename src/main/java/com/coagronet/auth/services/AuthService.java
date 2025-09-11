@@ -107,20 +107,19 @@ public class AuthService {
 		return new ApiResponse(true, "Verification email sent to " + user.getUsername());
 	}
 
-	/* ================= LOGIN -> token inmediato ================= */
+	// LOGIN
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 		Authentication auth = authManager
 			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 		User user = (User) auth.getPrincipal();
 
 		List<UserRole> userRoles = userRoleRepo.findByUser(user);
-		if (userRoles.isEmpty()) {
+		if (userRoles.isEmpty())
 			throw new UserRoleForbiddenException("User has no company/role assignments");
-		}
 
 		UserRole current = resolveInitialContext(user, userRoles);
 
-		String token = jwt.generateToken(user.getUsername(), current.getEmpresa().getId(), current.getRole().getId());
+		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRole().getId()); // <<<
 
 		List<EmpresaRolDTO> rolesByCompany = userRoles.stream()
 			.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRole().getId(),
@@ -128,11 +127,10 @@ public class AuthService {
 			.toList();
 
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
-				"rolesByCompany", rolesByCompany // ?til para UI de cambio posterior
-		);
+				"rolesByCompany", rolesByCompany);
 	}
 
-	/* ================= Cambio opcional de empresa/rol ================= */
+	// SWITCH CONTEXT
 	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
 		User user = userRepo.findByUsername(username)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -140,14 +138,12 @@ public class AuthService {
 		UserRole ur = userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.empresaId(), dto.rolId())
 			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
-		String token = jwt.generateToken(user.getUsername(), dto.empresaId(), dto.rolId());
-
+		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId()); // <<<
 		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
 			user.setPreferredEmpresaId(dto.empresaId());
 			user.setPreferredRolId(dto.rolId());
 			userRepo.save(user);
 		}
-
 		return Map.of("token", token, "empresaId", dto.empresaId(), "rolId", dto.rolId());
 	}
 
@@ -169,30 +165,30 @@ public class AuthService {
 		return userRoles.get(0);
 	}
 
-	/* ================= CHANGE, FORGOT, AND RESET PASSWORD ================= */
+	// CHANGE PASSWORD
 	public ApiResponse changePassword(@Valid ChangePasswordRequestDTO dto) {
 		User user = getCurrentUser();
 		if (!encoder.matches(dto.getOldPassword(), user.getPassword()))
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
 
 		user.setPassword(encoder.encode(dto.getNewPassword()));
+		user.incrementTokenVersion(); // <<<<<< revocar todos los JWT previos
 		userRepo.save(user);
 
 		return new ApiResponse(true, "Password changed successfully");
 	}
 
 	public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto) {
-		User user = userRepo.findByUsername(dto.getEmail())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-		String token = emailService.createVerificationToken(user.getUsername());
-		emailService.sendResetPasswordEmail(user.getUsername(), token);
-
-		return new ApiResponse(true, "Recovery email sent");
+		userRepo.findByUsername(dto.getEmail()).ifPresent(u -> {
+			var token = emailService.createResetPasswordToken(u.getUsername());
+			emailService.sendResetPasswordEmail(u.getUsername(), token);
+		});
+		return new ApiResponse(true, "If the email exists, you will receive a message shortly.");
 	}
 
+	// RESET PASSWORD
 	public ApiResponse resetPassword(@Valid ResetPasswordRequestDTO dto) {
-		String username = emailService.getEmailAndInvalidateToken(dto.getToken());
+		String username = emailService.consumeResetPasswordToken(dto.getToken());
 		if (username == null)
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired reset link");
 
@@ -200,6 +196,7 @@ public class AuthService {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		user.setPassword(encoder.encode(dto.getNewPassword()));
+		user.incrementTokenVersion(); // <<<<<< revocar todos los JWT previos
 		userRepo.save(user);
 
 		return new ApiResponse(true, "Password reset successfully");
@@ -207,6 +204,7 @@ public class AuthService {
 
 	/* ================= ACCOUNT VERIFICATION ================= */
 	public ApiResponse verifyUser(String token) {
+		// Dejamos que RegistrationService active y consuma el token VERIFY
 		boolean ok = registrationService.activateUser(token);
 		return ok ? new ApiResponse(true, "User activated successfully")
 				: new ApiResponse(false, "Invalid verification link");
