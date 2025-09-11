@@ -7,10 +7,11 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.coagronet.user.User;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-
 import jakarta.annotation.PostConstruct;
 
 @Component
@@ -27,6 +28,20 @@ public class JwtUtil {
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
+	public String generateToken(User user, Long empresaId, Long rolId) {
+		return Jwts.builder()
+			.subject(user.getUsername())
+			.claim("empresaId", empresaId)
+			.claim("rolId", rolId)
+			.claim("tver", user.getTokenVersion()) // <<<<<< clave para revocaci�n
+			.issuedAt(new Date())
+			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+			.signWith(secretKey)
+			.compact();
+	}
+
+	// Mant�n el overload antiguo si otros sitios lo usan a�n
+	@Deprecated
 	public String generateToken(String username, Long empresaId, Long rolId) {
 		return Jwts.builder()
 			.subject(username)
@@ -44,6 +59,11 @@ public class JwtUtil {
 
 	public String extractUsername(String token) {
 		return extractAllClaims(token).getSubject();
+	}
+
+	public Integer extractTokenVersion(String token) {
+		Object v = extractAllClaims(token).get("tver");
+		return v == null ? null : ((Number) v).intValue();
 	}
 
 	public boolean isTokenExpired(String token) {

@@ -60,9 +60,9 @@ public class SecurityConfig {
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
 				.anyRequest()
 				.authenticated())
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class); // <<<<<<
 
 		return http.build();
 	}
