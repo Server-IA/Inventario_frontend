@@ -98,6 +98,7 @@ public class ReportService {
 		Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogoNombre);
 		System.out.println("Ruta de logo construida: " + rutaLogo);
 
+		parametros.put("logo_empresa", rutaLogo.toString());
 	}
 
 	private JasperReport compilarReporte(String nombre)throws Exception{
