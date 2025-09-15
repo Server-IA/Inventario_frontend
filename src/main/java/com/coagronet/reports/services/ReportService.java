@@ -11,6 +11,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.stereotype.Service;
@@ -121,4 +123,71 @@ public class ReportService {
 	}
 
 
+	private void procesarCondicion(Map<String, Object> parametros, Long empresaId) {
+		Object raw = parametros.get("condicion");
+		if (raw == null) {
+			parametros.put("CONDICION", ""); // sin filtro extra
+			return;
+		}
+
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode root = mapper.readTree(raw.toString());
+
+			// Ordenar por clave numérica y concatenar
+			StringBuilder sb = new StringBuilder();
+			root.fieldNames().forEachRemaining(field -> {
+			}); // para obtener las claves
+
+			root.fieldNames().forEachRemaining(field -> {
+			}); // nada, solo para iterar
+
+			// Usamos un stream para ordenar las claves numéricamente
+			root.fieldNames().forEachRemaining(k -> {
+			});
+			java.util.List<String> keys = new java.util.ArrayList<>();
+			root.fieldNames().forEachRemaining(keys::add);
+			keys.sort(java.util.Comparator.comparingInt(Integer::parseInt));
+
+			for (String key : keys) {
+				String fragment = root.get(key).asText();
+
+				// Validación básica: evita inyección
+				if (!fragment.matches("[\\w\\s=.<>'\"$%-_]+")) {
+					throw new IllegalArgumentException("Condición inválida en clave " + key);
+				}
+
+				// Reemplazar variable especial
+				fragment = fragment.replace("$EMPRESA_ID$", empresaId.toString());
+				sb.append(' ').append(fragment);
+			}
+
+			parametros.put("CONDICION", sb.toString().trim());
+		} catch (Exception e) {
+			throw new RuntimeException("Error al procesar el filtro de condición", e);
+		}
+
+	}
+
+	public byte[] generarReporteNuevo(String nombreReporte, Map<String, Object> parametros) {
+
+		long inicio = System.currentTimeMillis();
+		try {
+			procesarFechas(parametros);
+			Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+			System.out.println("Empresa actual: " + empresaId);
+
+			parametros.put("empresa_id", empresaId.intValue());
+
+			procesarCondicion(parametros, empresaId);
+
+			agregarLogo(parametros, empresaId);
+
+			JasperReport jasperReport = compilarReporte(nombreReporte);
+			return exportarPdf(jasperReport, parametros, inicio, nombreReporte);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
+		}
+	}
 }
