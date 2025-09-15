@@ -40,7 +40,7 @@ public class ReportController {
 		return new ResponseEntity<>(reporte, headers, HttpStatus.OK);
 	}
 
-	@PostMapping("nuevo/{reportName}")
+	@PostMapping("/nuevo/{reportName}")
 	public ResponseEntity<byte[]> generarReporteDinamico(@PathVariable String reportName,
 													@RequestBody Map<String, Object> parametros) {
 

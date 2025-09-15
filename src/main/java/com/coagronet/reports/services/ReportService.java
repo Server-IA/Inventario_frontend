@@ -6,12 +6,10 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 import javax.sql.DataSource;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
@@ -126,48 +124,28 @@ public class ReportService {
 	private void procesarCondicion(Map<String, Object> parametros, Long empresaId) {
 		Object raw = parametros.get("condicion");
 		if (raw == null) {
-			parametros.put("CONDICION", ""); // sin filtro extra
+			parametros.put("condicion", "");
 			return;
 		}
 
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode root = mapper.readTree(raw.toString());
+		Map<String, Object> condMap = (Map<String, Object>) raw;
 
-			// Ordenar por clave numérica y concatenar
-			StringBuilder sb = new StringBuilder();
-			root.fieldNames().forEachRemaining(field -> {
-			}); // para obtener las claves
+		StringBuilder sb = new StringBuilder();
+		List<String> keys = new ArrayList<>(condMap.keySet());
+		keys.sort(Comparator.comparingInt(Integer::parseInt));
 
-			root.fieldNames().forEachRemaining(field -> {
-			}); // nada, solo para iterar
-
-			// Usamos un stream para ordenar las claves numéricamente
-			root.fieldNames().forEachRemaining(k -> {
-			});
-			java.util.List<String> keys = new java.util.ArrayList<>();
-			root.fieldNames().forEachRemaining(keys::add);
-			keys.sort(java.util.Comparator.comparingInt(Integer::parseInt));
-
-			for (String key : keys) {
-				String fragment = root.get(key).asText();
-
-				// Validación básica: evita inyección
-				if (!fragment.matches("[\\w\\s=.<>'\"$%-_]+")) {
-					throw new IllegalArgumentException("Condición inválida en clave " + key);
-				}
-
-				// Reemplazar variable especial
-				fragment = fragment.replace("$EMPRESA_ID$", empresaId.toString());
-				sb.append(' ').append(fragment);
-			}
-
-			parametros.put("CONDICION", sb.toString().trim());
-		} catch (Exception e) {
-			throw new RuntimeException("Error al procesar el filtro de condición", e);
+		for (String key : keys) {
+			String fragment = condMap.get(key).toString();
+			fragment = fragment.replace("$EMPRESA_ID$", empresaId.toString());
+			fragment = fragment.replace("\"", "'");
+			sb.append(' ').append(fragment);
 		}
 
+		String condicionFinal = sb.toString().trim();
+		parametros.put("condicion", condicionFinal);
+		System.out.println("Condición final para Jasper: " + condicionFinal);
 	}
+
 
 	public byte[] generarReporteNuevo(String nombreReporte, Map<String, Object> parametros) {
 
