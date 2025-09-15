@@ -6,11 +6,11 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 import javax.sql.DataSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.stereotype.Service;
@@ -121,4 +121,51 @@ public class ReportService {
 	}
 
 
+	private void procesarCondicion(Map<String, Object> parametros, Long empresaId) {
+		Object raw = parametros.get("condicion");
+		if (raw == null) {
+			parametros.put("condicion", "");
+			return;
+		}
+
+		Map<String, Object> condMap = (Map<String, Object>) raw;
+
+		StringBuilder sb = new StringBuilder();
+		List<String> keys = new ArrayList<>(condMap.keySet());
+		keys.sort(Comparator.comparingInt(Integer::parseInt));
+
+		for (String key : keys) {
+			String fragment = condMap.get(key).toString();
+			fragment = fragment.replace("$EMPRESA_ID$", empresaId.toString());
+			fragment = fragment.replace("\"", "'");
+			sb.append(' ').append(fragment);
+		}
+
+		String condicionFinal = sb.toString().trim();
+		parametros.put("condicion", condicionFinal);
+		System.out.println("Condición final para Jasper: " + condicionFinal);
+	}
+
+
+	public byte[] generarReporteNuevo(String nombreReporte, Map<String, Object> parametros) {
+
+		long inicio = System.currentTimeMillis();
+		try {
+			procesarFechas(parametros);
+			Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+			System.out.println("Empresa actual: " + empresaId);
+
+			parametros.put("empresa_id", empresaId.intValue());
+
+			procesarCondicion(parametros, empresaId);
+
+			agregarLogo(parametros, empresaId);
+
+			JasperReport jasperReport = compilarReporte(nombreReporte);
+			return exportarPdf(jasperReport, parametros, inicio, nombreReporte);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
+		}
+	}
 }
