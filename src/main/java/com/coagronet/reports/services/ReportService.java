@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class ReportService {
 	private String pathLogoCompany;
 
 	public byte[] generarReporte(String reportName, Map<String, Object> parametros) {
-		System.out.println("--- INICIANDO GENERACION DE REPORTE: " + reportName + " ---");
+
 		long startTime = System.currentTimeMillis();
 
 		try {
@@ -75,17 +76,24 @@ public class ReportService {
 			System.out.println("[3/9] Buscando logo de la empresa...");
 			String empLogoHash = empresaService.getLogoHashByEmpresaId(empresaId);
 			String empLogo = empresaService.findLogoByHash(empLogoHash);
-			Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogo);
-			System.out.println("Ruta de logo construida: " + rutaLogo);
+			System.out.println("Logo hash: "+ empLogoHash + " " + empLogo);
 
-			if (Files.exists(rutaLogo)) {
-				parametros.put("logo_empresa", rutaLogo.toString());
-				System.out.println("Logo encontrado en: " + rutaLogo);
-			}
-			else {
+			if (empLogo == null || empLogo.isBlank()) {
+				System.err.println("No se encontró nombre de logo para empresa " + empresaId);
 				parametros.put("logo_empresa",
 						"https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png");
-				System.out.println("Logo no encontrado, usando logo por defecto.");
+			} else {
+				Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogo);
+				System.out.println("Ruta de logo construida: " + rutaLogo);
+
+				if (Files.exists(rutaLogo)) {
+					parametros.put("logo_empresa", rutaLogo.toString());
+					System.out.println("Logo encontrado en: " + rutaLogo);
+				} else {
+					parametros.put("logo_empresa",
+							"https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png");
+					System.out.println("Logo no encontrado, usando logo por defecto.");
+				}
 			}
 
 			System.out.println("Parámetros finales: " + parametros);
@@ -127,5 +135,6 @@ public class ReportService {
 			throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
 		}
 	}
+
 
 }
