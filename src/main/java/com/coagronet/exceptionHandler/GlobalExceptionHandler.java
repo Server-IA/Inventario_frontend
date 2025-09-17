@@ -109,10 +109,17 @@ public class GlobalExceptionHandler {
 	// fallback opcional
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorDetails> handleGeneric(Exception ex, WebRequest request) {
+		System.err.println("Unhandled exception at " + requestPath(request));
+		ex.printStackTrace(System.err);
+
 		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Internal Server Error",
-				msg("error.internal", null, locale), // agrega key en messages si quieres
-				requestPath(request), null);
+		ErrorDetails body = new ErrorDetails(
+				LocalDateTime.now(),
+				"Internal Server Error",
+				msg(ex.getMessage(), null, locale),
+				requestPath(request),
+				null
+		);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
 	}
 
