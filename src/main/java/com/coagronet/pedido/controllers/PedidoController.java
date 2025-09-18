@@ -1,6 +1,5 @@
 package com.coagronet.pedido.controllers;
 
-import java.net.URI;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -61,14 +60,12 @@ public class PedidoController {
 	@PutMapping("/{requestedId}")
 	public ResponseEntity<Void> updatePedido(@PathVariable Long requestedId, @Valid @RequestBody PedidoDTO pedidoDTO) {
 		pedidoService.update(requestedId, pedidoDTO);
-
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deletePedido(@PathVariable Long id) {
 		pedidoService.delete(id);
-
 		return ResponseEntity.noContent().build();
 	}
 

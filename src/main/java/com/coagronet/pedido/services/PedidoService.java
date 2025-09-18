@@ -54,8 +54,9 @@ public class PedidoService {
 			.findByIdAndEmpresaId(pedidoDTO.getProduccionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
 			.orElseThrow(() -> new NotFoundException("produccion.not-found", pedidoDTO.getProduccionId()));
 
-		estadoRepository.findById(pedidoDTO.getEstadoId())
-			.orElseThrow(() -> new NotFoundException("estado.not-found", pedidoDTO.getEstadoId()));
+		estadoRepository.findByIdAndEstadoCategoriaId(pedidoDTO.getEstadoId(), 2L)
+			.orElseThrow(
+					() -> new NotFoundException("validation.pedido.estado.invalid-category", pedidoDTO.getEstadoId()));
 
 		pedidoDTO.setId(null);
 		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -76,8 +77,9 @@ public class PedidoService {
 			.findByIdAndEmpresaId(pedidoDTO.getProduccionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
 			.orElseThrow(() -> new NotFoundException("produccion.not-found", pedidoDTO.getProduccionId()));
 
-		estadoRepository.findById(pedidoDTO.getEstadoId())
-			.orElseThrow(() -> new NotFoundException("estado.not-found", pedidoDTO.getEstadoId()));
+		estadoRepository.findByIdAndEstadoCategoriaId(pedidoDTO.getEstadoId(), 2L)
+			.orElseThrow(
+					() -> new NotFoundException("validation.pedido.estado.invalid-category", pedidoDTO.getEstadoId()));
 
 		pedidoDTO.setId(requestId);
 		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
