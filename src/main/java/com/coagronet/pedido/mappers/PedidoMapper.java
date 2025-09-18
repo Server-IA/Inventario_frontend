@@ -12,7 +12,7 @@ public interface PedidoMapper {
 	@Mapping(source = "almacen.id", target = "almacenId")
 	@Mapping(source = "produccion.id", target = "produccionId")
 	@Mapping(source = "estado.id", target = "estadoId")
-	@Mapping(source = "empresa.id", target = "empresaId")
+	@Mapping(source = "empresa.id", target = "empresaId", ignore = true)
 	PedidoDTO toDto(Pedido pedido);
 
 	@Mapping(source = "almacenId", target = "almacen.id")

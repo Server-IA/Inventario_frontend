@@ -33,11 +33,14 @@ public class Pedido {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pedido_generator")
 	@SequenceGenerator(name = "pedido_generator", sequenceName = "pedido_id_seq", allocationSize = 1)
-	@Column(name = "ped_id", nullable = false)
+	@Column(name = "ped_id")
 	private Long id;
 
 	@Column(name = "ped_fecha_hora")
 	private LocalDateTime fechaHora;
+
+	@Column(name = "ped_descripcion")
+	private String descripcion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ped_almacen_id", referencedColumnName = "alm_id")
@@ -46,9 +49,6 @@ public class Pedido {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ped_produccion_id", referencedColumnName = "pro_id")
 	private Produccion produccion;
-
-	@Column(name = "ped_descripcion", length = 500)
-	private String descripcion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ped_estado_id", referencedColumnName = "est_id")
