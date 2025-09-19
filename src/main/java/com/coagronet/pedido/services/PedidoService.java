@@ -38,10 +38,10 @@ public class PedidoService {
 			.map(pedidoMapper::toDto);
 	}
 
-	public PedidoDTO findById(Long requestId) {
-		return pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+	public PedidoDTO findById(Long requestedId) {
+		return pedidoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
 			.map(pedidoMapper::toDto)
-			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestId));
+			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestedId));
 	}
 
 	@Transactional
@@ -65,9 +65,9 @@ public class PedidoService {
 	}
 
 	@Transactional
-	public void update(Long requestId, PedidoDTO pedidoDTO) {
-		pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestId));
+	public void update(Long requestedId, PedidoDTO pedidoDTO) {
+		pedidoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestedId));
 
 		almacenRepository
 			.findByIdAndEmpresaId(pedidoDTO.getAlmacenId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
@@ -81,18 +81,18 @@ public class PedidoService {
 			.orElseThrow(
 					() -> new NotFoundException("validation.pedido.estado.invalid-category", pedidoDTO.getEstadoId()));
 
-		pedidoDTO.setId(requestId);
+		pedidoDTO.setId(requestedId);
 		pedidoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		pedidoRepository.save(pedidoMapper.toEntity(pedidoDTO));
 	}
 
 	@Transactional
-	public void delete(Long requestId) {
-		pedidoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestId));
+	public void delete(Long requestedId) {
+		pedidoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestedId));
 
-		pedidoRepository.deleteById(requestId);
+		pedidoRepository.deleteById(requestedId);
 
 	}
 

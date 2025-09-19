@@ -2,6 +2,9 @@ package com.coagronet.ordenCompra.dtos;
 
 import java.time.LocalDateTime;
 
+import com.coagronet.validation.EstadoOrdenCompra;
+import com.coagronet.validation.PedidoExists;
+import com.coagronet.validation.ProveedorExists;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
@@ -18,18 +21,21 @@ public class OrdenCompraDTO {
 
 	private Long id;
 
-	private LocalDateTime fechaHora;
-
-	@NotNull(message = "El ID del pedido no puede ser nulo.")
-	private Long pedidoId;
-
-	@NotNull(message = "El ID del proveedor no puede ser nulo.")
-	private Long proveedorId;
-
-	@Size(max = 2048, message = "La descripción debe tener máximo 2048 caracteres.")
+	@Size(max = 2048, message = "{validation.descripcion.length}")
 	private String descripcion;
 
-	@NotNull(message = "El ID del estado no puede ser nulo.")
+	private LocalDateTime fechaHora;
+
+	@NotNull(message = "{validation.pedido.not-null}")
+	@PedidoExists(message = "{pedido.not-found}")
+	private Long pedidoId;
+
+	@NotNull(message = "{validation.proveedor.not-null}")
+	@ProveedorExists(message = "{proveedor.not-found}")
+	private Long proveedorId;
+
+	@NotNull(message = "{validation.estado.not-null}")
+	@EstadoOrdenCompra(value = 3, message = "{validation.orden-compra.estado.invalid-category}")
 	private Long estadoId;
 
 	private Long empresaId;
