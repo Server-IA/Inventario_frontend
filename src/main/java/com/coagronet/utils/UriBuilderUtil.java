@@ -103,7 +103,7 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildOrdenCompraUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/orden_compra/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v1/orden-compra/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildKardexUri(Long id, UriComponentsBuilder ucb) {

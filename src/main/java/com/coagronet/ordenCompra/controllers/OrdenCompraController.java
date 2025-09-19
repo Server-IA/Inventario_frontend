@@ -2,10 +2,6 @@ package com.coagronet.ordenCompra.controllers;
 
 import java.util.List;
 
-import com.coagronet.ordenCompra.services.OrdenCompraService;
-import com.coagronet.utils.UriBuilderUtil;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -23,9 +19,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.coagronet.articuloOrdenCompra.dtos.ArticuloOrdenCompraDTO;
 import com.coagronet.articuloOrdenCompra.services.ArticuloOrdenCompraService;
 import com.coagronet.ordenCompra.dtos.OrdenCompraDTO;
+import com.coagronet.ordenCompra.services.OrdenCompraService;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/orden_compra")
+@RequestMapping("/api/v1/orden-compra")
 @RequiredArgsConstructor
 public class OrdenCompraController {
 
@@ -47,9 +48,7 @@ public class OrdenCompraController {
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<OrdenCompraDTO> findById(@PathVariable Long requestedId) {
-		return ordenCompraService.findById(requestedId)
-			.map(ResponseEntity::ok)
-			.orElse(ResponseEntity.notFound().build());
+		return ResponseEntity.ok(ordenCompraService.findById(requestedId));
 	}
 
 	@PostMapping

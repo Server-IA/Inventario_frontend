@@ -36,6 +36,9 @@ public class OrdenCompra {
 	@Column(name = "orc_id")
 	private Long id;
 
+	@Column(name = "orc_descripcion")
+	private String descripcion;
+
 	@Column(name = "orc_fecha_hora")
 	private LocalDateTime fechaHora;
 
@@ -46,9 +49,6 @@ public class OrdenCompra {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "orc_proveedor_id", referencedColumnName = "pro_id")
 	private Proveedor proveedor;
-
-	@Column(name = "orc_descripcion", length = 2048)
-	private String descripcion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "orc_estado_id", referencedColumnName = "est_id")
