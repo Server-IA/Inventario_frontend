@@ -80,7 +80,15 @@ public class KardexService {
 		kardexDTO.setId(requestedId);
 		kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-		kardexRepository.save(kardexMapper.toEntity(kardexDTO));
+		Kardex kardex = kardexMapper.toEntity(kardexDTO);
+		if (kardexDTO.getClienteProveedorId() != null) {
+			Empresa clienteProveedor = empresaRepository.findById(kardexDTO.getClienteProveedorId())
+					.orElseThrow(() -> new BadRequestException("Cliente/Proveedor no encontrado"));
+			kardex.setClienteProveedor(clienteProveedor);
+		}
+		Kardex guardado = kardexRepository.save(kardex);
+
+		kardexRepository.save(guardado);
 	}
 
 	@Transactional
