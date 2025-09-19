@@ -20,7 +20,7 @@ public interface KardexMapper {
 	@Mapping(source = "produccionId", target = "produccion.id")
 	@Mapping(source = "tipoMovimientoId", target = "tipoMovimiento.id")
 	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(target = "clienteProveedor", ignore = true)
 	@Mapping(source = "empresaId", target = "empresa.id")
-	@Mapping(source = "clienteProveedorId", target = "clienteProveedor.id")
 	Kardex toEntity(KardexDTO kardexDTO);
 }

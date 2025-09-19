@@ -1,8 +1,11 @@
 package com.coagronet.kardex.services;
 
+import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.kardex.dtos.KardexDTO;
@@ -27,6 +30,8 @@ public class KardexService {
 
 	private final UserEmpresaService userEmpresaService;
 
+	private final EmpresaRepository empresaRepository;
+
 	public Page<KardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return kardexRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
@@ -40,13 +45,28 @@ public class KardexService {
 
 	@Transactional
 	public KardexDTO create(KardexDTO kardexDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		estadoRepository.findById(kardexDTO.getEstadoId())
 			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
-		kardexDTO.setId(null);
-		kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		kardexDTO.setEmpresaId(empresaId);
 
-		return kardexMapper.toDto(kardexRepository.save(kardexMapper.toEntity(kardexDTO)));
+
+		Empresa empresa = empresaRepository.findById(empresaId)
+				.orElseThrow(() -> new BadRequestException("Empresa no encontrada"));
+
+
+		Kardex kardex = kardexMapper.toEntity(kardexDTO);
+		kardex.setEmpresa(empresa);
+
+		if (kardexDTO.getClienteProveedorId() != null) {
+			Empresa clienteProveedor = empresaRepository.findById(kardexDTO.getClienteProveedorId())
+					.orElseThrow(() -> new BadRequestException("Cliente/Proveedor no encontrado"));
+			kardex.setClienteProveedor(clienteProveedor);
+		}
+		Kardex guardado = kardexRepository.save(kardex);
+
+		return kardexMapper.toDto(guardado);
 	}
 
 	@Transactional
