@@ -152,7 +152,7 @@ public class GlobalExceptionHandler {
 
 		Locale locale = LocaleContextHolder.getLocale();
 		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Internal Server Error",
-				msg("error.internal", null, locale), requestPath(request), null);
+				msg(ex.getMessage(), null, locale), requestPath(request), null);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
 	}
 
