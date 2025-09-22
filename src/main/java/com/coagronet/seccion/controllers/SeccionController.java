@@ -1,7 +1,8 @@
 package com.coagronet.seccion.controllers;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,14 +32,19 @@ public class SeccionController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<SeccionDTO>> findAll() {
-		return ResponseEntity.ok(seccionService.findAll()); // 200 OK
+	public ResponseEntity<Page<SeccionDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<SeccionDTO> page = seccionService.findAll(pageable);
+
+		if (page.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(page); // 200 OK
 	}
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<SeccionDTO> findById(@PathVariable Long requestedId) {
 		return ResponseEntity.ok(seccionService.findById(requestedId)
-			.orElseThrow(() -> new NotFoundException("La sección no fue encontrada")));
+			.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada")));
 	}
 
 	@PostMapping

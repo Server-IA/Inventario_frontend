@@ -1,8 +1,10 @@
 package com.coagronet.presentacionProducto.controllers;
 
 import java.net.URI;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,22 +30,21 @@ public class PresentacionProductoController {
 	private final PresentacionProductoService presentacionProductoService;
 
 	@GetMapping
-	private ResponseEntity<List<PresentacionProductoDTO>> findAll() {
-		List<PresentacionProductoDTO> presentacionProductoDTOS = presentacionProductoService.findAll();
+	public ResponseEntity<Page<PresentacionProductoDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<PresentacionProductoDTO> presentacionProductoDTOS = presentacionProductoService.findAll(pageable);
 
-		return presentacionProductoDTOS.isEmpty() ? ResponseEntity.noContent().build()
-				: ResponseEntity.ok(presentacionProductoDTOS);
+		return ResponseEntity.ok(presentacionProductoDTOS);
 	}
 
 	@GetMapping("/{requestedId}")
-	private ResponseEntity<PresentacionProductoDTO> findById(@PathVariable Long requestedId) {
+	public ResponseEntity<PresentacionProductoDTO> findById(@PathVariable Long requestedId) {
 		return presentacionProductoService.findById(requestedId)
 			.map(ResponseEntity::ok)
 			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
-	private ResponseEntity<Void> createPresentacionProducto(
+	public ResponseEntity<Void> createPresentacionProducto(
 			@Valid @RequestBody PresentacionProductoDTO newpresentacionProductoDTO, UriComponentsBuilder ucb) {
 		PresentacionProductoDTO savedPresentacionProducto = presentacionProductoService
 			.create(newpresentacionProductoDTO);
@@ -54,7 +55,7 @@ public class PresentacionProductoController {
 	}
 
 	@PutMapping("/{requestedId}")
-	private ResponseEntity<Void> putPresentacionProducto(@PathVariable Long requestedId,
+	public ResponseEntity<Void> putPresentacionProducto(@PathVariable Long requestedId,
 			@Valid @RequestBody PresentacionProductoDTO presentacionProductoUpdate) {
 
 		presentacionProductoService.update(requestedId, presentacionProductoUpdate);
@@ -62,7 +63,7 @@ public class PresentacionProductoController {
 	}
 
 	@DeleteMapping("/{id}")
-	private ResponseEntity<Void> deletePresentacionProducto(@PathVariable Long id) {
+	public ResponseEntity<Void> deletePresentacionProducto(@PathVariable Long id) {
 
 		presentacionProductoService.delete(id);
 		return ResponseEntity.noContent().build();

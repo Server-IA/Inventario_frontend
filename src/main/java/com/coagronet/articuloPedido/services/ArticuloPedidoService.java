@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.articuloPedido.dtos.ArticuloPedidoDTO;
@@ -34,11 +36,10 @@ public class ArticuloPedidoService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<ArticuloPedidoDTO> findAll() {
-		return articuloPedidoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(articuloPedidoMapper::toListDTO)
-			.collect(Collectors.toList());
+	public Page<ArticuloPedidoDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return articuloPedidoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(articuloPedidoMapper::toListDTO);
 	}
 
 	public List<ArticuloPedidoDTO> findAllByPedidoId(Long pedidoId) {

@@ -1,8 +1,11 @@
 package com.coagronet.unidad.controllers;
 
 import java.net.URI;
-import java.util.List;
 
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,10 +36,10 @@ public class UnidadController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<UnidadDTO>> findAll() {
-		List<UnidadDTO> unidadDTOList = unidadService.findAll();
+	public ResponseEntity<Page<UnidadDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<UnidadDTO> unidadDTOList = unidadService.findAll(pageable);
 
-		return unidadDTOList.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(unidadDTOList);
+		return ResponseEntity.ok(unidadDTOList);
 	}
 
 	@PostMapping

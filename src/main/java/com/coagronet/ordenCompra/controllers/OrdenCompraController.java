@@ -6,6 +6,9 @@ import com.coagronet.ordenCompra.services.OrdenCompraService;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +36,8 @@ public class OrdenCompraController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<OrdenCompraDTO>> findAll() {
-		return ResponseEntity.ok(ordenCompraService.findAll());
+	public ResponseEntity<Page<OrdenCompraDTO>> findAll(@PageableDefault Pageable pageable) {
+		return ResponseEntity.ok(ordenCompraService.findAll(pageable));
 	}
 
 	@GetMapping("/{ordenCompraId}/articulos")

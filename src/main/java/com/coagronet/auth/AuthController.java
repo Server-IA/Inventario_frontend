@@ -2,9 +2,9 @@ package com.coagronet.auth;
 
 import java.util.Map;
 import java.util.Set;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,9 +18,11 @@ import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
 import com.coagronet.auth.dto.LoginRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
-import com.coagronet.auth.dto.SelectRoleRequestDTO;
+import com.coagronet.auth.dto.SwitchContextRequestDTO;
 import com.coagronet.auth.services.AuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,14 +40,16 @@ public class AuthController {
 		return ResponseEntity.ok(authService.register(dto));
 	}
 
-	@PostMapping("/login")
-	public ResponseEntity<Map<String, Object>> preLogin(@Valid @RequestBody LoginRequestDTO dto) {
-		return ResponseEntity.ok(authService.preLogin(dto));
+	@PostMapping("/v2/login")
+	public Map<String, Object> login(@Valid @RequestBody LoginRequestDTO dto) {
+		return authService.login(dto);
 	}
 
-	@PostMapping("/login/seleccion")
-	public ResponseEntity<Map<String, Object>> selectRole(@Valid @RequestBody SelectRoleRequestDTO dto) {
-		return ResponseEntity.ok(authService.selectRole(dto));
+	@PostMapping("/switch-context")
+	public Map<String, Object> switchContext(@Valid @RequestBody SwitchContextRequestDTO dto,
+			Authentication authentication) {
+		String username = authentication.getName();
+		return authService.switchContext(dto, username);
 	}
 
 	@PostMapping("/change-password")
@@ -73,7 +77,7 @@ public class AuthController {
 		authService.logout(req, res);
 	}
 
-	/** sólo utilitario de perfil logeado */
+	/** s?lo utilitario de perfil logeado */
 	@GetMapping("/roles")
 	public Set<String> roles() {
 		return authService.getCurrentUserRoles();

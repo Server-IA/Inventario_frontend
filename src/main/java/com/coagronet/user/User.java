@@ -65,9 +65,23 @@ public class User implements UserDetails {
 	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id")
 	private UsuarioEstado usuarioEstado;
 
+	@Column(name = "usu_preferred_empresa_id")
+	private Long preferredEmpresaId;
+
+	@Column(name = "usu_preferred_rol_id")
+	private Long preferredRolId;
+
+	@Builder.Default
+	@Column(name = "usu_token_version", nullable = false)
+	private Integer tokenVersion = 0;
+
+	public void incrementTokenVersion() {
+		this.tokenVersion = (this.tokenVersion == null ? 1 : this.tokenVersion + 1);
+	}
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toSet());
+		return roles.stream().map(r -> new SimpleGrantedAuthority(r.getName())).collect(Collectors.toSet());
 	}
 
 	public void setUsuarioEstado(UsuarioEstado usuarioEstado) {

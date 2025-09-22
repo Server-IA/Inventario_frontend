@@ -7,3 +7,7 @@ app:
       - "http://www.inmero.co"
       - "https://inmero.co"
       - "https://www.inmero.co"
+      - "http://dev.inmero.co"
+      - "http://www.dev.inmero.co"
+      - "https://dev.inmero.co"
+      - "https://www.dev.inmero.co"

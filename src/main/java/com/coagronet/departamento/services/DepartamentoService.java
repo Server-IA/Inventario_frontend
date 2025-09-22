@@ -1,9 +1,10 @@
 package com.coagronet.departamento.services;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
 import org.springframework.stereotype.Service;
 
 import com.coagronet.departamento.dtos.DepartamentoDTO;
@@ -31,11 +32,13 @@ public class DepartamentoService {
 
 	private final EstadoRepository estadoRepository;
 
-	public Page<DepartamentoDTO> findAll(Pageable pageable) {
+	public List<DepartamentoDTO> findAll() {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		return departamentoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(departamentoMapper::toListDto);
+		return departamentoRepository.findByEmpresaIdOrderByIdAsc(empresaId)
+				.stream()
+			.map(departamentoMapper::toListDto)
+				.collect(Collectors.toList());
 	}
 
 	public Optional<DepartamentoDTO> findById(Long requestedId) {

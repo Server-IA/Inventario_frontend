@@ -1,9 +1,9 @@
 package com.coagronet.produccion.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,11 +40,9 @@ public class ProduccionService {
 
 	/* ---------- READ ---------- */
 
-	public List<ProduccionDTO> findAll() {
-		return produccionRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(produccionMapper::toDto)
-			.collect(Collectors.toList());
+	public Page<ProduccionDTO> findAll(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return produccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(produccionMapper::toDto);
 	}
 
 	public Optional<ProduccionDTO> findById(Long requestedId) {

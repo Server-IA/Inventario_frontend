@@ -22,6 +22,8 @@ import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/articulo-kardex")
 @RequiredArgsConstructor
@@ -31,6 +33,8 @@ public class ArticuloKardexController {
 
 	private final UriBuilderUtil uriBuilderUtil;
 
+	private final String version = "1.5.0";
+
 	@GetMapping
 	public ResponseEntity<Page<ArticuloKardexDTO>> findAll(@PageableDefault Pageable pageable) {
 		Page<ArticuloKardexDTO> page = articuloKardexService.findAll(pageable);
@@ -38,6 +42,11 @@ public class ArticuloKardexController {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.ok(page);
+	}
+
+	@GetMapping("/{kardexId}/articulos")
+	public ResponseEntity<List<ArticuloKardexDTO>> findArticulosByKardex(@PathVariable Long kardexId) {
+		return ResponseEntity.ok(articuloKardexService.findAllByKardexId(kardexId));
 	}
 
 	@GetMapping("/{requestedId}")
@@ -67,6 +76,11 @@ public class ArticuloKardexController {
 	public ResponseEntity<Void> deleteArticuloKardex(@PathVariable Long id) {
 		articuloKardexService.delete(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/version")
+	public ResponseEntity<String> version(){
+		return ResponseEntity.ok("Version del controlador de kardex item " +version);
 	}
 
 }

@@ -1,17 +1,19 @@
 package com.coagronet.seccion.repositories;
 
-import com.coagronet.seccion.Seccion;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.coagronet.seccion.Seccion;
 
 @Repository
 public interface SeccionRepository extends JpaRepository<Seccion, Long> {
 
 	Optional<Seccion> findByIdAndEmpresaId(Long id, Long empresaId);
 
-	List<Seccion> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	Page<Seccion> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
 }

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.articuloOrdenCompra.dtos.ArticuloOrdenCompraDTO;
@@ -34,12 +37,11 @@ public class ArticuloOrdenCompraService {
 
 	private final EstadoRepository estadoRepository;
 
-	public List<ArticuloOrdenCompraDTO> findAll() {
+	public Page<ArticuloOrdenCompraDTO> findAll(@PageableDefault Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return articuloOrdenCompraRepository
-			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(articuloOrdenCompraMapper::toListDTO)
-			.collect(Collectors.toList());
+			.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
+			.map(articuloOrdenCompraMapper::toListDTO);
 	}
 
 	public List<ArticuloOrdenCompraDTO> findAllByOrdenCompraId(Long ordenCompraId) {

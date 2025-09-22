@@ -1,7 +1,6 @@
 package com.coagronet.reports.services;
 
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -43,57 +42,83 @@ public class ReportService {
 	@Value("${path.logo.empresa}")
 	private String pathLogoCompany;
 
-	public byte[] generarReporte(String reportName, Map<String, Object> parametros) {
+	public byte[] generarReporte(String nombreReporte, Map<String, Object> parametros) {
+
+		long inicio = System.currentTimeMillis();
 		try {
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-
-			for (Map.Entry<String, Object> entry : parametros.entrySet()) {
-				String key = entry.getKey();
-				Object value = entry.getValue();
-
-				if (value instanceof String string
-						&& (key.toLowerCase().contains("fecha") || key.toLowerCase().contains("date"))) {
-					try {
-						Date parsedDate = sdf.parse(string);
-						parametros.put(key, new java.sql.Timestamp(parsedDate.getTime()));
-					}
-					catch (ParseException e) {
-						throw new RuntimeException("Error al parsear la fecha para el parámetro: " + key, e);
-					}
-				}
-			}
+			procesarFechas(parametros);
 			Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 			System.out.println("Empresa actual: " + empresaId);
-			parametros.put("emp_id", empresaId.intValue());
 
-			String empLogoHash = empresaService.getLogoHashByEmpresaId(empresaId);
-			System.out.println("buscando hash " + empLogoHash);
+			parametros.put("empresa_id", empresaId.intValue());
 
-			String empLogo = empresaService.findLogoByHash(empLogoHash);
-			System.out.println("emplogo buscado " + empLogo);
+			agregarLogo(parametros, empresaId);
 
-			Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogo);
-			System.out.println("Path buscado " + rutaLogo);
-
-			if (Files.exists(rutaLogo)) {
-				parametros.put("logo_empresa", rutaLogo.toString());
-			}
-			else {
-				parametros.put("logo_empresa",
-						"https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png");
-			}
-			InputStream reportStream = getClass().getResourceAsStream("/reports/" + reportName + ".jrxml");
-			JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
-
-			try (Connection connection = dataSource.getConnection()) {
-				JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parametros, connection);
-				return JasperExportManager.exportReportToPdf(jasperPrint);
-			}
+			JasperReport jasperReport = compilarReporte(nombreReporte);
+			return exportarPdf(jasperReport, parametros, inicio, nombreReporte);
 
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Error al generar el reporte: " + e.getMessage(), e);
 		}
 	}
+
+	private void procesarFechas(Map<String,Object> parametros) throws ParseException{
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+		for (Map.Entry<String, Object> entry : parametros.entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+
+			if (value instanceof String string
+					&& (key.toLowerCase().contains("fecha") || key.toLowerCase().contains("date"))) {
+				try {
+					Date parsedDate = sdf.parse(string);
+					parametros.put(key, new java.sql.Timestamp(parsedDate.getTime()));
+				}
+				catch (ParseException e) {
+					System.err.println("ERROR: Fallo al parsear fecha para el parámetro: " + key);
+					throw new RuntimeException("Error al parsear la fecha para el parámetro: " + key, e);
+				}
+			}
+		}
+	}
+
+	private void agregarLogo(Map<String, Object> parametros, Long empresaId){
+		final String LOGO_POR_DEFECTO = "https://static.vecteezy.com/system/resources/thumbnails/012/986/755/small/abstract-circle-logo-icon-free-png.png";
+
+		String logoHash = empresaService.getLogoHashByEmpresaId(empresaId);
+		String  empLogoNombre = empresaService.findLogoByHash(logoHash);
+
+		if (empLogoNombre == null || empLogoNombre.isBlank()) {
+			parametros.put("logo_empresa", LOGO_POR_DEFECTO);
+			return;
+		}
+
+		Path rutaLogo = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), empLogoNombre);
+		System.out.println("Ruta de logo construida: " + rutaLogo);
+
+		parametros.put("logo_empresa", rutaLogo.toString());
+	}
+
+	private JasperReport compilarReporte(String nombre)throws Exception{
+		String rutaReporte = "reports/"+nombre+".jrxml";
+		try (InputStream stream = getClass().getClassLoader().getResourceAsStream(rutaReporte)){
+			if (stream == null) throw new IllegalStateException("No se encontró: "+ rutaReporte);
+			return JasperCompileManager.compileReport(stream);
+		}
+	}
+
+	private byte[] exportarPdf(JasperReport reporte, Map<String, Object> parametros, long inicio, String nombreReporte) throws Exception{
+		try (Connection connection = dataSource.getConnection()) {
+			JasperPrint jasperPrint = JasperFillManager.fillReport(reporte, parametros, connection);
+			byte[] reportePdf = JasperExportManager.exportReportToPdf(jasperPrint);
+			long fin = System.currentTimeMillis();
+			System.out.println("Reporte " + nombreReporte + " generado en " + (fin-inicio) + " ms.");
+			return reportePdf;
+		}
+
+	}
+
 
 }
