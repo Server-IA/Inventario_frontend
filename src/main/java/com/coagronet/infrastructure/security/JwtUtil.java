@@ -40,6 +40,17 @@ public class JwtUtil {
 			.compact();
 	}
 
+	public String generateToken(User user, Long rolId) {
+		return Jwts.builder()
+			.subject(user.getUsername())
+			.claim("rolId", rolId)
+			.claim("tver", user.getTokenVersion()) // <<<<<< clave para revocaci�n
+			.issuedAt(new Date())
+			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+			.signWith(secretKey)
+			.compact();
+	}
+
 	// Mant�n el overload antiguo si otros sitios lo usan a�n
 	@Deprecated
 	public String generateToken(String username, Long empresaId, Long rolId) {
