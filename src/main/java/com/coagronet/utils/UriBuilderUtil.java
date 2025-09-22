@@ -226,4 +226,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
 	}
 
+	public URI buildFacturacionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/factura").buildAndExpand(id).toUri();
+	}
+
 }
