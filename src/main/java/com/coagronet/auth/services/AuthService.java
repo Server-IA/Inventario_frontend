@@ -113,29 +113,30 @@ public class AuthService {
 				.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 		User user = (User) auth.getPrincipal();
 
-		List<UserRole> userRoles = userRoleRepo.findByUser(user);
+		List<UserRole> userRoles = userRoleRepo.findByUserOrderByUserId(user);
 		if (userRoles.isEmpty())
 			throw new UserRoleForbiddenException("User has no company/role assignments");
 
 		UserRole current = resolveInitialContext(user, userRoles);
 
-		if (current.getEmpresa().getId() == null) {
+		if (current.getEmpresa() == null) {
 
 			String token = jwt.generateToken(user, current.getRole().getId());
 
 			return Map.of("token", token, "rolId", current.getRole().getId());
 
 		}
-
 		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRole().getId()); // <<<
 
 		List<EmpresaRolDTO> rolesByCompany = userRoles.stream()
-				.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRole().getId(),
+				.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(),
+						ur.getRole().getId(),
 						ur.getRole().getName()))
 				.toList();
 
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
 				"rolesByCompany", rolesByCompany);
+
 	}
 
 	// SWITCH CONTEXT

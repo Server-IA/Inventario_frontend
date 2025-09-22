@@ -11,7 +11,9 @@ import com.coagronet.userRole.models.UserRoleId;
 
 public interface UserRoleRepository extends JpaRepository<UserRole, UserRoleId> {
 
-	List<UserRole> findByUser(User user);
+	List<UserRole> findByUserOrderByUserId(User user);
+
+	UserRole findByUser(User user);
 
 	Optional<UserRole> findByUserAndEmpresaIdAndRoleId(User user, Long empresaId, Long roleId);
 

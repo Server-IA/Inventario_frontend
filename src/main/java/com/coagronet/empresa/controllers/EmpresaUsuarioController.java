@@ -16,8 +16,6 @@ import com.coagronet.empresa.dtos.EmpresaDTO;
 import com.coagronet.empresa.mappers.EmpresaMapper;
 import com.coagronet.empresa.services.EmpresaService;
 import com.coagronet.infrastructure.security.JwtService;
-import com.coagronet.role.Role;
-import com.coagronet.role.repositories.RoleRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.userRole.UserRole;
@@ -39,9 +37,6 @@ public class EmpresaUsuarioController {
 
 	@Autowired
 	private UserRoleRepository userRoleRepository;
-
-	@Autowired
-	private RoleRepository roleRepository;
 
 	@PostMapping("/empresa-usuario")
 	public ResponseEntity<Map<String, Integer>> createEmpresa(@RequestBody EmpresaDTO empresaDTO,
@@ -68,13 +63,11 @@ public class EmpresaUsuarioController {
 
 		// Cambiar el estado del usuario a "4"
 		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
-		userRepository.save(user);
+		userRepository.save(user);		
 
-		// Crear y asignar rol de administrador a la empresa creada
-		Role adminRole = roleRepository.findByName("ROLE_ADMINISTRADOR_EMPRESA")
-			.orElseThrow(() -> new RuntimeException("Rol de administrador no encontrado"));
+		UserRole userRole = userRoleRepository.findByUser(user);
 
-		UserRole userRole = new UserRole(user, adminRole, savedEmpresa);
+		userRole.setEmpresa(savedEmpresa);
 		userRoleRepository.save(userRole);
 
 		// Crear el mapa para la respuesta
