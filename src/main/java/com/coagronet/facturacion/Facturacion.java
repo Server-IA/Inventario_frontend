@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +29,8 @@ import lombok.NoArgsConstructor;
 public class Facturacion {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "facturacion_generator")
+	@SequenceGenerator(name = "facturacion_generator", sequenceName = "facturacion_fac_id_seq", allocationSize = 1)
 	@Column(name = "fac_id")
 	private Long id;
 
