@@ -9,6 +9,8 @@ import static com.coagronet.pedido.estados.PedidoEstadoConst.PENDIENTE_COTIZACIO
 import java.util.Arrays;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +76,18 @@ public class PedidoService {
 	}
 
 	/* ================== CRUD b?sico ================== */
+
+	public Page<PedidoDTO> findAll(Pageable pageable) {
+		return pedidoRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
+			.map(pedidoMapper::toDto);
+	}
+
+	public PedidoDTO findById(Long requestedId) {
+		return pedidoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(pedidoMapper::toDto)
+			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestedId));
+	}
 
 	@Transactional
 	public Long create(PedidoDTO dto) {
