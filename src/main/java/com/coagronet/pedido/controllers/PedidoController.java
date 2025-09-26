@@ -53,8 +53,7 @@ public class PedidoController {
 
 	@PostMapping
 	public ResponseEntity<Void> createPedido(@RequestBody @Valid PedidoDTO pedidoDTO, UriComponentsBuilder ucb) {
-		return ResponseEntity.created(uriBuilderUtil.buildPedidoUri(pedidoService.create(pedidoDTO).getId(), ucb))
-			.build();
+		return ResponseEntity.created(uriBuilderUtil.buildPedidoUri(pedidoService.create(pedidoDTO), ucb)).build();
 	}
 
 	@PutMapping("/{requestedId}")
@@ -66,6 +65,36 @@ public class PedidoController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deletePedido(@PathVariable Long id) {
 		pedidoService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	/* ===== Transiciones de estado ===== */
+
+	// ACT -> PCO
+	@PutMapping("/{id}/requiere-cotizacion")
+	public ResponseEntity<Void> requiereCotizacion(@PathVariable Long id) {
+		pedidoService.marcarRequiereCotizacion(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	// ACT/PCO -> OC
+	@PutMapping("/{id}/con-orden-compra")
+	public ResponseEntity<Void> conOrdenCompra(@PathVariable Long id) {
+		pedidoService.marcarConOrdenCompra(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	// ACT/PCO/OC -> ANU
+	@PutMapping("/{id}/anular")
+	public ResponseEntity<Void> anular(@PathVariable Long id) {
+		pedidoService.anular(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	// OC -> CMP (valida requisitos reales v�a InventarioGateway)
+	@PutMapping("/{id}/completar")
+	public ResponseEntity<Void> completar(@PathVariable Long id) {
+		pedidoService.completar(id);
 		return ResponseEntity.noContent().build();
 	}
 

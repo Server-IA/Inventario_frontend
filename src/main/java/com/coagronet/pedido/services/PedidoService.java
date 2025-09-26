@@ -18,6 +18,7 @@ import com.coagronet.almacen.repositories.AlmacenRepository;
 import com.coagronet.estado.support.EstadoResolver;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.inventario.gateway.InventarioGateway;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.pedido.dtos.PedidoDTO;
 import com.coagronet.pedido.mappers.PedidoMapper;
@@ -42,6 +43,8 @@ public class PedidoService {
 	private final EstadoResolver estadoResolver;
 
 	private final UserEmpresaService userEmpresaService;
+
+	private final InventarioGateway inventarioGateway;
 
 	/* ================== Helpers de estado ================== */
 
@@ -152,14 +155,25 @@ public class PedidoService {
 	}
 
 	@Transactional
-	public void completar(Long pedidoId, boolean todosRecibidosVerificadosYAsentados) {
-		if (!todosRecibidosVerificadosYAsentados) {
-			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos",
-					"A?n hay ?tems pendientes por recibir/verificar/registrar en inventario.");
-		}
+	public void completar(Long pedidoId) {
+		// 1) Traer el pedido validando empresa
 		Pedido p = getByIdAndEmpresaOrThrow(pedidoId);
+
+		// 2) Validar requisitos reales (recepci?n f?sica, calidad, kardex) v?a gateway
+		var res = inventarioGateway.validarRequisitosParaCompletar(pedidoId);
+		if (!res.isOk()) {
+			// Mensaje claro y sin caracteres rotos
+			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos", res.getMotivoFallo() != null
+					? res.getMotivoFallo() : "A?n hay ?tems pendientes por recibir/verificar/registrar en inventario.");
+		}
+
+		// 3) Verificar transici?n permitida: OC -> CMP
 		ensureTransition(p, COMPLETADO, CON_ORDEN_COMPRA);
+
+		// 4) Asignar estado destino
 		setEstado(p, COMPLETADO);
+		// No es necesario save() expl?cito si 'p' est? administrado por JPA y est?s en
+		// @Transactional
 	}
 
 	/* ================== Hooks ?tiles (opcionales) ================== */
