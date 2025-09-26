@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface KardexMapper {
@@ -23,4 +24,10 @@ public interface KardexMapper {
 	@Mapping(target = "clienteProveedor", ignore = true)
 	@Mapping(source = "empresaId", target = "empresa.id")
 	Kardex toEntity(KardexDTO kardexDTO);
+
+	@org.mapstruct.BeanMapping(nullValuePropertyMappingStrategy = org.mapstruct.NullValuePropertyMappingStrategy.IGNORE)
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "empresa", ignore = true)
+	@Mapping(target = "clienteProveedor", ignore = true)
+	void updateEntityFromDto(KardexDTO dto, @MappingTarget Kardex entity);
 }
