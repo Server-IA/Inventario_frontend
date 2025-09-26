@@ -1,20 +1,14 @@
 package com.coagronet.ordenCompra.services;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.ordenCompra.dtos.OrdenCompraDTO;
 import com.coagronet.ordenCompra.mappers.OrdenCompraMapper;
 import com.coagronet.ordenCompra.repositories.OrdenCompraRepository;
-import com.coagronet.pedido.repositories.PedidoRepository;
-import com.coagronet.proveedor.repositories.ProveedorRepository;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,73 +21,47 @@ public class OrdenCompraService {
 
 	private final OrdenCompraMapper ordenCompraMapper;
 
-	private final PedidoRepository pedidoRepository;
-
-	private final ProveedorRepository proveedorRepository;
-
-	private final EstadoRepository estadoRepository;
-
 	private final UserEmpresaService userEmpresaService;
 
 	public Page<OrdenCompraDTO> findAll(Pageable pageable) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return ordenCompraRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(ordenCompraMapper::toListDTO);
+		return ordenCompraRepository
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
+			.map(ordenCompraMapper::toDTO);
 	}
 
-	public Optional<OrdenCompraDTO> findById(Long requestedId) {
+	public OrdenCompraDTO findById(Long requestedId) {
 		return ordenCompraRepository
 			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(ordenCompraMapper::toListDTO);
+			.map(ordenCompraMapper::toDTO)
+			.orElseThrow(() -> new NotFoundException("orden-compra.not-found", requestedId));
 	}
 
 	@Transactional
 	public OrdenCompraDTO create(OrdenCompraDTO ordenCompraDTO) {
-
-		pedidoRepository
-			.findByIdAndEmpresaId(ordenCompraDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El pedido no es v�lido."));
-
-		proveedorRepository
-			.findByIdAndEmpresaId(ordenCompraDTO.getProveedorId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El proveedor no es v�lido."));
-
-		estadoRepository.findById(ordenCompraDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
-
 		ordenCompraDTO.setId(null);
 		ordenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-
 		return ordenCompraMapper.toDTO(ordenCompraRepository.save(ordenCompraMapper.toEntity(ordenCompraDTO)));
 	}
 
 	@Transactional
 	public void update(Long requestedId, OrdenCompraDTO ordenCompraDTO) {
-		ordenCompraRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Orden de compra no encontrada."));
+		var empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		pedidoRepository
-			.findByIdAndEmpresaId(ordenCompraDTO.getPedidoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El pedido no es v�lido."));
-
-		proveedorRepository
-			.findByIdAndEmpresaId(ordenCompraDTO.getProveedorId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El proveedor no es v�lido."));
-
-		estadoRepository.findById(ordenCompraDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
+		ordenCompraRepository.findByIdAndEmpresaId(requestedId, empresaId)
+			.orElseThrow(() -> new NotFoundException("orden-compra.not-found", requestedId));
 
 		ordenCompraDTO.setId(requestedId);
-		ordenCompraDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		ordenCompraDTO.setEmpresaId(empresaId);
 
 		ordenCompraRepository.save(ordenCompraMapper.toEntity(ordenCompraDTO));
 	}
 
 	@Transactional
-	public void delete(Long requestId) {
-		ordenCompraRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Orden de compra no encontrada."));
+	public void delete(Long requestedId) {
+		ordenCompraRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("orden-compra.not-found", requestedId));
 
-		ordenCompraRepository.deleteById(requestId);
+		ordenCompraRepository.deleteById(requestedId);
 	}
 
 }

@@ -48,13 +48,14 @@ public class SecurityConfig {
 						"/api/v1/proceso/**", "/api/v1/tipo_movimiento/**", "/api/v1/ingrediente/**",
 						"/api/v1/articulo-pedido/**", "/api/v1/articulo-orden-compra/**", "/api/v1/articulo-kardex/**",
 						"/api/v1/ocupacion/**", "/api/v1/control_inventario/**", "/api/v1/tipo_inventario/**",
-						"/api/v1/inventario/**", "/api/v1/seccion/**", "/api/v1/orden_compra/**",
+						"/api/v1/inventario/**", "/api/v1/seccion/**", "/api/v1/orden-compra/**",
 						"/api/v1/criterio_evaluacion/**", "/api/v1/evaluacion/**",
 						"/api/v1/ingrediente-presentacion-producto/**", "/api/v1/proveedor/**", "/api/v1/items/**",
 						"/api/v1/articulo-inventario/**", "/api/v1/kardex/**", "/api/v1/espacio_ocupacion/**",
 						"/api/v1/inventario_item/**", "/api/v1/pedido/**", "/api/v1/presentacion/**",
 						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v1/producto/**",
-						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**")
+						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
+						"/api/v1/factura/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
 				.requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")

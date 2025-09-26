@@ -103,7 +103,7 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildOrdenCompraUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/orden_compra/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v1/orden-compra/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildKardexUri(Long id, UriComponentsBuilder ucb) {
@@ -224,6 +224,10 @@ public class UriBuilderUtil {
 
 	public URI buildTipoGenericoUri(String table, TipoGenericoDTO dto, UriComponentsBuilder ucb) {
 		return ucb.path("/api/v3/tipo/{table}/{id}").buildAndExpand(table, dto.getId()).toUri();
+	}
+
+	public URI buildFacturacionUri(Long id, UriComponentsBuilder ucb) {
+		return ucb.path("/api/v1/factura").buildAndExpand(id).toUri();
 	}
 
 }
