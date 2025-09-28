@@ -2,18 +2,12 @@ package com.coagronet.ordenCompra.controllers;
 
 import java.util.List;
 
+import com.coagronet.ordenCompra.dtos.OrdenCompraCreateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.articuloOrdenCompra.dtos.ArticuloOrdenCompraDTO;
@@ -52,10 +46,10 @@ public class OrdenCompraController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Void> createOrdenCompra(@Valid @RequestBody OrdenCompraDTO ordenCompraDTO,
+	public ResponseEntity<Void> createOrdenCompra(@Valid @RequestBody OrdenCompraCreateDTO ordenCompraCreateDTO,
 			UriComponentsBuilder ucb) {
 		return ResponseEntity
-			.created(uriBuilderUtil.buildOrdenCompraUri((ordenCompraService.create(ordenCompraDTO)).getId(), ucb))
+			.created(uriBuilderUtil.buildOrdenCompraUri((ordenCompraService.create(ordenCompraCreateDTO)).getId(), ucb))
 			.build();
 	}
 
@@ -63,6 +57,12 @@ public class OrdenCompraController {
 	public ResponseEntity<Void> updateOrdenCompra(@PathVariable Long requestedId,
 			@Valid @RequestBody OrdenCompraDTO ordenCompraDTO) {
 		ordenCompraService.update(requestedId, ordenCompraDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PatchMapping("/enviar-al-proveedor/{ordenCompraId}")
+	public ResponseEntity<Void> enviarOrdenCompraAlProveedor(@PathVariable Long ordenCompraId){
+		ordenCompraService.enviarOrdenCompraAlProveedor(ordenCompraId);
 		return ResponseEntity.noContent().build();
 	}
 
