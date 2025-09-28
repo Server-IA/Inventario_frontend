@@ -3,7 +3,7 @@ package com.coagronet.kardex.services;
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
-import com.coagronet.entidadvalidator.EntidadValidator;
+import com.coagronet.entidadvalidator.EntidadValidatorFacade;
 import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.Kardex;
@@ -29,7 +29,7 @@ public class KardexService {
 	private final KardexMapper kardexMapper;
 	private final UserEmpresaService userEmpresaService;
 	private final EmpresaRepository empresaRepository;
-	private final EntidadValidator entidadValidator;
+	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	public Page<KardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
@@ -48,9 +48,7 @@ public class KardexService {
 
 		kardexDTO.setEmpresaId(empresaId);
 
-		Empresa empresa = entidadValidator.validarEmpresa(empresaId);
 		Kardex kardex = kardexMapper.toEntity(kardexDTO);
-		kardex.setEmpresa(empresa);
 
 		aplicarValidacionesYRelaciones(kardexDTO, kardex, empresaId);
 		Kardex guardado = kardexRepository.save(kardex);
@@ -61,7 +59,7 @@ public class KardexService {
 	public KardexDTO update(Long requestedId, KardexDTO kardexDTO) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		Kardex kardexExistente = entidadValidator.validarKardex(requestedId, empresaId);
+		Kardex kardexExistente = entidadValidatorFacade.validarKardex(requestedId, empresaId);
 		kardexMapper.updateEntityFromDto(kardexDTO, kardexExistente);
 
 		aplicarValidacionesYRelaciones(kardexDTO, kardexExistente, empresaId);
@@ -80,10 +78,10 @@ public class KardexService {
 	}
 
 	private void aplicarValidacionesYRelaciones(KardexDTO kardexDTO, Kardex kardex, Long empresaId) {
-		Estado estado = entidadValidator.validarEstado(kardexDTO.getEstadoId());
-		Almacen almacen = entidadValidator.validarAlmacen(kardexDTO.getAlmacenId(), empresaId);
-		Produccion produccion = entidadValidator.validarProduccion(kardexDTO.getProduccionId(), empresaId);
-		TipoMovimiento tipoMovimiento = entidadValidator.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(), empresaId);
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(kardexDTO.getEstadoId());
+		Almacen almacen = entidadValidatorFacade.validarAlmacen(kardexDTO.getAlmacenId(), empresaId);
+		Produccion produccion = entidadValidatorFacade.validarProduccion(kardexDTO.getProduccionId(), empresaId);
+		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(), empresaId);
 
 		kardex.setEstado(estado);
 		kardex.setAlmacen(almacen);
@@ -91,7 +89,7 @@ public class KardexService {
 		kardex.setTipoMovimiento(tipoMovimiento);
 
 		if (kardexDTO.getClienteProveedorId() != null) {
-			Empresa clienteProveedor = entidadValidator.validarClienteProveedor(kardexDTO.getClienteProveedorId());
+			Empresa clienteProveedor = entidadValidatorFacade.validarClienteProveedor(kardexDTO.getClienteProveedorId());
 			kardex.setClienteProveedor(clienteProveedor);
 		}
 	}

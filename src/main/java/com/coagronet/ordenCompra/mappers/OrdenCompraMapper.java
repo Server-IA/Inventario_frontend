@@ -1,5 +1,6 @@
 package com.coagronet.ordenCompra.mappers;
 
+import com.coagronet.ordenCompra.dtos.OrdenCompraCreateDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -20,5 +21,10 @@ public interface OrdenCompraMapper {
 	@Mapping(source = "estadoId", target = "estado.id")
 	@Mapping(source = "empresaId", target = "empresa.id")
 	OrdenCompra toEntity(OrdenCompraDTO ordenCompraDTO);
+
+	//registro
+	@Mapping(source = "pedidoId", target = "pedido.id")
+	@Mapping(source = "proveedorId", target = "proveedor.id")
+	OrdenCompra toEntity(OrdenCompraCreateDTO ordenCompraCreateDTO);
 
 }
