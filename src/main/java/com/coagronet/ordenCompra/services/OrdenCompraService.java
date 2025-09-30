@@ -113,4 +113,12 @@ public class OrdenCompraService {
 
 	}
 
+	@Transactional
+	public void establecerOrdenCompraPendienteRecibo(Long ordenCompraId){
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
+		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR);
+	}
+
 }
