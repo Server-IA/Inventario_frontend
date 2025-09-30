@@ -1,13 +1,11 @@
 <!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
-<jasperReport name="Reporte_orden_compra" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867" whenNoDataType="AllSectionsNoDetail">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.2.1"/>
+<jasperReport name="Reporte_orden_compra" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<parameter name="fecha_inicio" class="java.sql.Timestamp"/>
-	<parameter name="fecha_fin" class="java.sql.Timestamp"/>
-	<parameter name="empresa_id" class="java.lang.Integer"/>
-	<parameter name="pedido_id" class="java.lang.Integer"/>
-	<parameter name="categoria_estado_id" class="java.lang.Integer"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="357"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="632"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
+	<parameter name="condicion" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT 
     oc.orc_id AS header_orden_compra,
     oc.orc_pedido_id AS header_pedido,
@@ -20,11 +18,11 @@
     blo.blo_nombre AS header_bloque,
     esp.esp_nombre AS header_espacio,
     a.alm_nombre AS header_almacen, 
-    e1.emp_nombre AS header_empresa,
-    e1.emp_contacto AS header_contacto,
-    e1.emp_correo AS header_correo,
-    e1.emp_celular AS header_telefono,
-    e1.emp_logo AS header_empresa_logo,
+    e.emp_nombre AS header_empresa,
+    e.emp_contacto AS header_contacto,
+    e.emp_correo AS header_correo,
+    e.emp_celular AS header_telefono,
+    e.emp_logo AS header_empresa_logo,
     pro.pro_nombre AS header_proveedor,
     CONCAT(per.per_nombre, ' ', per.per_apellido) AS header_responsable,
     est.est_nombre AS header_estado_orden_compra 
@@ -40,17 +38,13 @@ FROM
     JOIN espacio AS esp ON a.alm_espacio_id = esp.esp_id
     JOIN bloque AS blo ON esp.esp_bloque_id = blo.blo_id
     JOIN sede AS s ON blo.blo_sede_id = s.sed_id
-    JOIN empresa AS e1 ON s.sed_empresa_id = e1.emp_id
+    JOIN empresa AS e ON s.sed_empresa_id = e.emp_id
     JOIN proveedor AS pro ON oc.orc_proveedor_id = pro.pro_id
-    JOIN persona AS per ON e1.emp_persona_id = per.per_id
+    JOIN persona AS per ON e.emp_persona_id = per.per_id
     JOIN estado AS est ON oc.orc_estado_id = est.est_id
 
 WHERE 
-    ($P{empresa_id} IS NULL OR e1.emp_id = $P{empresa_id})
-    AND ($P{pedido_id} IS NULL OR pe.ped_id = $P{pedido_id})
-    AND ($P{categoria_estado_id} IS NULL OR est.est_estado_categoria_id = $P{categoria_estado_id})
-    AND oc.orc_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
-
+   		$P!{condicion} 
 
 ]]></query>
 	<field name="header_orden_compra" class="java.lang.Long">
@@ -276,7 +270,7 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="a122b9dc-2b86-4e4f-a9af-2cff4b0b01c2" mode="Opaque" x="290" y="130" width="70" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
+		<element kind="staticText" uuid="a122b9dc-2b86-4e4f-a9af-2cff4b0b01c2" mode="Opaque" x="280" y="130" width="80" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
 			<text><![CDATA[ Correo:]]></text>
 			<box>
 				<pen lineWidth="0.0" lineStyle="Solid"/>
@@ -286,7 +280,7 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="7ba0ac5b-3100-4374-829e-b405759aa4bb" mode="Opaque" x="290" y="160" width="70" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
+		<element kind="staticText" uuid="7ba0ac5b-3100-4374-829e-b405759aa4bb" mode="Opaque" x="280" y="160" width="80" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
 			<text><![CDATA[ Contacto:]]></text>
 			<box>
 				<pen lineWidth="0.0" lineStyle="Solid"/>
@@ -296,7 +290,7 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="22aa4f0d-3dfc-4523-871d-d55f7a6944b3" mode="Opaque" x="290" y="220" width="70" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
+		<element kind="staticText" uuid="22aa4f0d-3dfc-4523-871d-d55f7a6944b3" mode="Opaque" x="280" y="220" width="80" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
 			<text><![CDATA[ Fecha:]]></text>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<box>
@@ -307,7 +301,7 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="103e8830-41c5-4592-b91f-2d33ccee14ff" mode="Opaque" x="290" y="190" width="70" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
+		<element kind="staticText" uuid="103e8830-41c5-4592-b91f-2d33ccee14ff" mode="Opaque" x="280" y="190" width="80" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
 			<text><![CDATA[ Responsable:]]></text>
 			<box>
 				<pen lineWidth="0.0" lineStyle="Solid"/>
@@ -326,7 +320,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="622498db-67a5-4cb0-914e-54a8e280acd1" mode="Opaque" x="290" y="250" width="70" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
+		<element kind="staticText" uuid="622498db-67a5-4cb0-914e-54a8e280acd1" mode="Opaque" x="280" y="250" width="80" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
 			<text><![CDATA[ Pedido Nro:]]></text>
 			<box>
 				<pen lineWidth="0.0" lineStyle="Solid"/>
@@ -373,7 +367,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="8b8787c6-82d2-4b4f-8f0d-bdb1d0faf2de" mode="Opaque" x="290" y="280" width="70" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
+		<element kind="staticText" uuid="8b8787c6-82d2-4b4f-8f0d-bdb1d0faf2de" mode="Opaque" x="280" y="280" width="80" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Bottom">
 			<text><![CDATA[ Proveedor:]]></text>
 			<box>
 				<pen lineWidth="0.0" lineStyle="Solid"/>

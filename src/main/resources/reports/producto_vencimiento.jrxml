@@ -1,45 +1,38 @@
 <!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
-<jasperReport name="producto_vencimiento" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="6842db66-f825-4df7-9130-ffe18d149a3a" whenNoDataType="AllSectionsNoDetail">
+<jasperReport name="producto_vencimiento" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="6842db66-f825-4df7-9130-ffe18d149a3a">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="151"/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="844"/>
-	<parameter name="fecha_inicio" class="java.util.Date"/>
-	<parameter name="fecha_fin" class="java.util.Date"/>
-	<parameter name="empresa_id" class="java.lang.Integer"/>
-	<parameter name="producto_id " class="java.lang.Integer"/>
-	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
+	<parameter name="condicion" class="java.lang.String"/>
 	<query language="SQL"><![CDATA[SELECT 
-	p.pro_id as id,
-	p.pro_producto_categoria_id as id_id,
     em.emp_nombre AS nombre_empresa,
     em.emp_logo AS logo_empresa,                
+
     p.pro_nombre AS nombre_producto,
-    
+
     m.mun_nombre AS nombre_municipio,
     s.sed_nombre AS nombre_sede,
     b.blo_nombre AS nombre_bloque,
     e.esp_nombre AS nombre_espacio,
     a.alm_nombre AS nombre_almacen,
+
     k.kai_fecha_vencimiento AS fecha_vencimiento,
     k.kai_cantidad AS cantidad
+
 FROM producto p
-JOIN producto_presentacion pp ON pp.prp_producto_id = p.pro_id
-JOIN kardex_item k ON k.kai_producto_presentacion_id = pp.prp_id
+JOIN kardex_item k ON p.pro_id = k.kai_producto_presentacion_id
 JOIN empresa em ON p.pro_empresa_id = em.emp_id
 JOIN municipio m ON m.mun_empresa_id = em.emp_id
 JOIN sede s ON s.sed_municipio_id = m.mun_id AND s.sed_empresa_id = em.emp_id
 JOIN bloque b ON b.blo_sede_id = s.sed_id AND b.blo_empresa_id = em.emp_id
 JOIN espacio e ON e.esp_bloque_id = b.blo_id AND e.esp_empresa_id = em.emp_id
 JOIN almacen a ON a.alm_espacio_id = e.esp_id AND a.alm_empresa_id = em.emp_id
-WHERE 
-    em.emp_id = $P{empresa_id}
-    AND k.kai_fecha_vencimiento BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
-    AND ($P{producto_id } IS NULL OR p.pro_id = $P{producto_id })
-    AND ($P{producto_categoria_id} IS NULL OR p.pro_producto_categoria_id = $P{producto_categoria_id})
 
-ORDER BY k.kai_fecha_vencimiento;
+WHERE 
+   		$P!{condicion} 
+
 ]]></query>
 	<field name="nombre_empresa" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="nombre_empresa"/>
