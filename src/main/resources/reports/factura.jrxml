@@ -1,18 +1,9 @@
 <!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
-<jasperReport name="Reporte_factura" language="java" pageWidth="700" pageHeight="900" columnWidth="660" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867" whenNoDataType="AllSectionsNoDetail">
+<jasperReport name="Reporte_factura" language="java" pageWidth="700" pageHeight="900" columnWidth="660" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<parameter name="fecha_inicio" class="java.sql.Timestamp"/>
-	<parameter name="fecha_fin" class="java.sql.Timestamp"/>
-	<parameter name="empresa_id" class="java.lang.Integer"/>
-	<parameter name="sede_id" class="java.lang.Integer"/>
-	<parameter name="bloque_id" class="java.lang.Integer"/>
-	<parameter name="espacio_id" class="java.lang.Integer"/>
-	<parameter name="almacen_id" class="java.lang.Integer"/>
-	<parameter name="municipio_id" class="java.lang.Integer"/>
-	<parameter name="producto_id" class="java.lang.Integer"/>
-	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
+	<parameter name="condicion" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT  
     k.kar_id AS header_id,
     e.emp_id AS header_empresa_id,
@@ -82,32 +73,21 @@
 FROM kardex_item ki
 JOIN kardex k ON ki.kai_kardex_id = k.kar_id
 JOIN tipo_movimiento tm ON k.kar_tipo_movimiento_id = tm.tim_id
-
--- Producto y presentación
 JOIN producto_presentacion pp ON ki.kai_producto_presentacion_id = pp.prp_id
 JOIN producto p ON pp.prp_producto_id = p.pro_id
 JOIN unidad u ON pp.prp_unidad_id = u.uni_id
 JOIN marca m2 ON pp.prp_marca_id = m2.mar_id
-
--- Ubicaciones / organización
 JOIN almacen al ON k.kar_almacen_id = al.alm_id
 JOIN espacio esp ON al.alm_espacio_id = esp.esp_id
 JOIN bloque blo ON esp.esp_bloque_id = blo.blo_id
 JOIN sede s ON blo.blo_sede_id = s.sed_id
 JOIN municipio m ON s.sed_municipio_id = m.mun_id
-
--- Empresa / personas
 JOIN empresa e ON k.kar_empresa_id = e.emp_id
 JOIN persona per ON e.emp_persona_id = per.per_id
-
--- Cliente o proveedor relacionado
 JOIN empresa cp ON k.kar_cliente_proveedor_id = cp.emp_id
 
 WHERE 
-    ( $P{empresa_id} IS NULL OR e.emp_id = $P{empresa_id} )
-    AND ( $P{producto_categoria_id} IS NULL OR p.pro_producto_categoria_id = $P{producto_categoria_id} )
-    
-ORDER BY ki.kai_id;
+   		$P!{condicion} 
 ]]></query>
 	<field name="header_id" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_id"/>
@@ -537,18 +517,6 @@ ORDER BY ki.kai_id;
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 			</box>
 		</element>
-		<element kind="image" uuid="f3140e76-b89c-4701-8e0e-574242a4f958" x="498" y="220" width="110" height="110">
-			<expression><![CDATA["/home/usco/Pictures/app/Qr/508/QR_code.jpg"]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<property name="com.jaspersoft.studio.unit.height" value="px"/>
-			<box>
-				<pen lineColor="#3747A1"/>
-				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
 		<element kind="staticText" uuid="78de1633-ca60-4ef9-a739-13f7e19a7a5d" mode="Opaque" x="270" y="295" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
 			<text><![CDATA[ Cliente-Pro:]]></text>
 			<box>
@@ -569,6 +537,9 @@ ORDER BY ki.kai_id;
 				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 			</box>
+		</element>
+		<element kind="rectangle" uuid="a72baa2b-3b90-4a98-805f-062e695f2430" x="506" y="230" width="124" height="110">
+			<pen lineColor="#3747A1"/>
 		</element>
 	</pageHeader>
 	<detail>
@@ -819,9 +790,6 @@ ORDER BY ki.kai_id;
 			<element kind="rectangle" uuid="6d271059-6942-45f5-9b15-46341d31e640" mode="Transparent" x="471" y="130" width="159" height="120" backcolor="#FFFFFF">
 				<pen lineColor="#3747A1"/>
 			</element>
-			<element kind="image" uuid="8fe0b23a-d431-422c-9937-893a9bd39150" x="30" y="297" width="154" height="77" scaleImage="FillFrame" hImageAlign="Left">
-				<expression><![CDATA["/home/usco/Pictures/app/firma/508/firma_digital.jpg"]]></expression>
-			</element>
 			<element kind="staticText" uuid="4d950d78-c416-4724-8923-53b07ce0f392" mode="Transparent" x="30" y="277" width="124" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
 				<text><![CDATA[ Firma autorizada:]]></text>
 				<box>
@@ -975,6 +943,9 @@ ORDER BY ki.kai_id;
 					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
 					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 				</box>
+			</element>
+			<element kind="rectangle" uuid="131b764f-1e57-45f1-80a2-bd73dd1b29e4" x="30" y="310" width="150" height="50">
+				<pen lineColor="#3747A1"/>
 			</element>
 		</band>
 	</detail>

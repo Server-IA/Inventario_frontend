@@ -1,15 +1,11 @@
 <!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
-<jasperReport name="Reporte_pedido" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867" whenNoDataType="AllSectionsNoDetail">
+<jasperReport name="Reporte_pedido" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="233"/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="761"/>
-	<parameter name="fecha_inicio" class="java.sql.Timestamp"/>
-	<parameter name="fecha_fin" class="java.sql.Timestamp"/>
-	<parameter name="empresa_id" class="java.lang.Integer"/>
-	<parameter name="pedido_id" class="java.lang.Integer"/>
-	<parameter name="categoria_estado_id" class="java.lang.Integer"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
+	<parameter name="condicion" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT 
     p.ped_id AS header_pedido_id, 
     p.ped_fecha_hora AS header_fecha_hora, 
@@ -43,15 +39,7 @@ FROM
     JOIN estado AS est ON p.ped_estado_id = est.est_id
 
 WHERE 
-    e.emp_id = $P{empresa_id}
-    AND ($P{pedido_id} IS NULL OR p.ped_id = $P{pedido_id})
-    AND ($P{categoria_estado_id} IS NULL OR est.est_estado_categoria_id = $P{categoria_estado_id})
-   AND
-    p.ped_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
-
-ORDER BY p.ped_id
-
-
+   		$P!{condicion} 
 ]]></query>
 	<field name="header_pedido_id" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_pedido_id"/>
