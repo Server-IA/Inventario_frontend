@@ -15,24 +15,16 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
 	@Value("${jwt.secret}")
 	private String secret;
 
-	@Autowired
-	private JwtUtil jwtUtil;
-
-	@Autowired
-	private MyUserDetailsService myUserDetailsService;
-
-	public String createJwtToken(String username, Long empresaId, Long rolId) {
-		UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
-
-		return jwtUtil.generateToken(userDetails.getUsername(), empresaId, rolId);
-	}
+	private final JwtUtil jwtUtil;
 
 	private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
 		final Claims claims = extractAllClaims(token);

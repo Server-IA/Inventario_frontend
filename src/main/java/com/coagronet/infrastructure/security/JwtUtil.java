@@ -28,36 +28,25 @@ public class JwtUtil {
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
-	public String generateToken(User user, Long empresaId, Long rolId) {
+	public String generateToken(User user, Long empresaId, Long rolId, Long estado) {
 		return Jwts.builder()
 			.subject(user.getUsername())
 			.claim("empresaId", empresaId)
 			.claim("rolId", rolId)
-			.claim("tver", user.getTokenVersion()) // <<<<<< clave para revocaci�n
+			.claim("tver", user.getTokenVersion())
+			.claim("estado", estado)
 			.issuedAt(new Date())
 			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
 			.signWith(secretKey)
 			.compact();
 	}
 
-	public String generateToken(User user, Long rolId) {
+	public String generateToken(User user, Long rolId, Long estado) {
 		return Jwts.builder()
 			.subject(user.getUsername())
 			.claim("rolId", rolId)
-			.claim("tver", user.getTokenVersion()) // <<<<<< clave para revocaci�n
-			.issuedAt(new Date())
-			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-			.signWith(secretKey)
-			.compact();
-	}
-
-	// Mant�n el overload antiguo si otros sitios lo usan a�n
-	@Deprecated
-	public String generateToken(String username, Long empresaId, Long rolId) {
-		return Jwts.builder()
-			.subject(username)
-			.claim("empresaId", empresaId)
-			.claim("rolId", rolId)
+			.claim("tver", user.getTokenVersion())
+			.claim("estado", estado)
 			.issuedAt(new Date())
 			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
 			.signWith(secretKey)
