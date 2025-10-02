@@ -1,6 +1,6 @@
-package com.coagronet.entidadvalidator.entidades;
+package com.coagronet.validator.parametrizacion.entidades;
 
-import com.coagronet.entidadvalidator.constantes.EstadoCategorias;
+import com.coagronet.validator.parametrizacion.constantes.EstadoCategorias;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;

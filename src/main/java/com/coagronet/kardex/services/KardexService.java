@@ -2,8 +2,7 @@ package com.coagronet.kardex.services;
 
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
-import com.coagronet.empresa.repositories.EmpresaRepository;
-import com.coagronet.entidadvalidator.EntidadValidatorFacade;
+import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.Kardex;
@@ -28,7 +27,6 @@ public class KardexService {
 	private final KardexRepository kardexRepository;
 	private final KardexMapper kardexMapper;
 	private final UserEmpresaService userEmpresaService;
-	private final EmpresaRepository empresaRepository;
 	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	public Page<KardexDTO> findAll(Pageable pageable) {

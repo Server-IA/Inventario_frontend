@@ -1,8 +1,10 @@
-package com.coagronet.entidadvalidator;
+package com.coagronet.validator;
 
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
-import com.coagronet.entidadvalidator.entidades.*;
+import com.coagronet.espacio.Espacio;
+import com.coagronet.subseccion.Subseccion;
+import com.coagronet.tipoProduccion.TipoProduccion;
 import com.coagronet.estado.Estado;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -10,6 +12,11 @@ import com.coagronet.pedido.Pedido;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.proveedor.Proveedor;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
+import com.coagronet.validator.inventario.entidades.*;
+import com.coagronet.validator.parametrizacion.entidades.EstadoValidator;
+import com.coagronet.validator.parametrizacion.entidades.SubseccionValidator;
+import com.coagronet.validator.parametrizacion.entidades.TipoMovimientoValidator;
+import com.coagronet.validator.parametrizacion.entidades.TipoProduccionValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +33,9 @@ public class EntidadValidatorFacade {
     private final OrdenCompraValidator ordenCompraValidator;
     private final PedidoValidator pedidoValidator;
     private final ProveedorValidator proveedorValidator;
+    private final TipoProduccionValidator tipoProduccionValidator;
+    private final EspacioValidator espacioValidator;
+    private final SubseccionValidator subseccionValidator;
 
     public Empresa validarEmpresa(Long empresaId) {
         return empresaValidator.validarEmpresa(empresaId);
@@ -60,6 +70,10 @@ public class EntidadValidatorFacade {
         return produccionValidator.validarProduccion(produccionId, empresaId);
     }
 
+    public void validarFechasProduccion(Produccion produccion){
+        produccionValidator.validarFechasDeProduccion(produccion);
+    }
+
     public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
         return tipoMovimientoValidator.validarTipoMovimiento(tipoMovimientoId, empresaId);
     }
@@ -67,7 +81,6 @@ public class EntidadValidatorFacade {
     public Kardex validarKardex(Long kardexId, Long empresaId) {
         return kardexValidator.validarKardex(kardexId, empresaId);
     }
-
 
     public OrdenCompra validarOrdenCompra(Long ordenCompraId, Long empresaId) {
         return ordenCompraValidator.validarOrdenCompra(ordenCompraId, empresaId);
@@ -80,6 +93,17 @@ public class EntidadValidatorFacade {
         return proveedorValidator.validarProveedor(proveedorId, empresaId);
     }
 
+    public TipoProduccion validarTipoProduccion(Long tipoProduccion, Long empresaId){
+        return tipoProduccionValidator.validarTipoProduccion(tipoProduccion, empresaId);
+    }
+
+    public Espacio validarEspacio(Long espacioId, Long empresaId){
+        return espacioValidator.validarEspacio(espacioId, empresaId);
+    }
+
+    public Subseccion validarSubseccion(Long subseccionId, Long empresaId){
+        return subseccionValidator.validarSubseccion(subseccionId, empresaId);
+    }
 
 
 }

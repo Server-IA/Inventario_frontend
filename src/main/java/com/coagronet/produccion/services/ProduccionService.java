@@ -2,20 +2,23 @@ package com.coagronet.produccion.services;
 
 import java.util.Optional;
 
+import com.coagronet.empresa.Empresa;
+import com.coagronet.espacio.Espacio;
+import com.coagronet.estado.Estado;
+import com.coagronet.produccion.Produccion;
+import com.coagronet.produccion.dtos.ProduccionCreateDTO;
+import com.coagronet.subseccion.Subseccion;
+import com.coagronet.tipoProduccion.TipoProduccion;
+import com.coagronet.validator.EntidadValidatorFacade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.coagronet.espacio.repositories.EspacioRepository;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.produccion.dtos.ProduccionDTO;
 import com.coagronet.produccion.mappers.ProduccionMapper;
 import com.coagronet.produccion.repositories.ProduccionRepository;
-import com.coagronet.subseccion.repositories.SubseccionRepository;
-import com.coagronet.tipoProduccion.repositories.TipoProduccionRepository;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,18 +28,9 @@ import lombok.RequiredArgsConstructor;
 public class ProduccionService {
 
 	private final ProduccionRepository produccionRepository;
-
-	private final TipoProduccionRepository tipoProduccionRepository;
-
-	private final EspacioRepository espacioRepository;
-
-	private final SubseccionRepository subseccionRepository;
-
 	private final ProduccionMapper produccionMapper;
-
-	private final EstadoRepository estadoRepository;
-
 	private final UserEmpresaService userEmpresaService;
+	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	/* ---------- READ ---------- */
 
@@ -54,57 +48,48 @@ public class ProduccionService {
 	/* ---------- CREATE ---------- */
 
 	@Transactional
-	public ProduccionDTO create(ProduccionDTO produccionDTO) {
+	public ProduccionDTO create(ProduccionCreateDTO produccionDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		tipoProduccionRepository
-			.findByIdAndEmpresaId(produccionDTO.getTipoProduccionId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("TipoProduccionId not found"));
+		Empresa empresa = entidadValidatorFacade.validarEmpresa(empresaId);
+		TipoProduccion tipoProduccion = entidadValidatorFacade.validarTipoProduccion(produccionDTO.getTipoProduccionId(), empresaId);
+		Espacio espacio = entidadValidatorFacade.validarEspacio(produccionDTO.getEspacioId(), empresaId);
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(produccionDTO.getEstadoId());
+		Subseccion subseccion = entidadValidatorFacade.validarSubseccion(produccionDTO.getSubSeccionId(), empresaId);
 
-		espacioRepository
-			.findByIdAndEmpresaId(produccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("EspacioId not found"));
+		Produccion produccion = produccionMapper.toEntity(produccionDTO);
+		entidadValidatorFacade.validarFechasProduccion(produccion);
+		produccion.setEmpresa(empresa);
+		produccion.setTipoProduccion(tipoProduccion);
+		produccion.setEspacio(espacio);
+		produccion.setEstado(estado);
+		produccion.setSubSeccion(subseccion);
 
-		subseccionRepository
-			.findByIdAndEmpresaId(produccionDTO.getSubSeccionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("SubSeccionId not found"));
-
-		estadoRepository.findById(produccionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("EstadoId not found"));
-
-		produccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-
-		return produccionMapper.toDto(produccionRepository.save(produccionMapper.toEntity(produccionDTO)));
+		Produccion guardado = produccionRepository.save(produccion);
+		return produccionMapper.toDto(guardado);
 	}
 
 	/* ---------- UPDATE ---------- */
 
 	@Transactional
 	public void update(Long requestedId, ProduccionDTO produccionDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		produccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Produccion not found"));
+		Produccion produccionActual = entidadValidatorFacade.validarProduccion(requestedId, empresaId);
+		TipoProduccion tipoProduccion = entidadValidatorFacade.validarTipoProduccion(produccionDTO.getTipoProduccionId(), empresaId);
+		Espacio espacio = entidadValidatorFacade.validarEspacio(produccionDTO.getEspacioId(), empresaId);
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(produccionDTO.getEstadoId());
+		Subseccion subseccion = entidadValidatorFacade.validarSubseccion(produccionDTO.getSubSeccionId(), empresaId);
 
-		tipoProduccionRepository
-			.findByIdAndEmpresaId(produccionDTO.getTipoProduccionId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("TipoProduccionId not found"));
+		produccionMapper.updateEntityFromDto(produccionDTO, produccionActual);
 
-		espacioRepository
-			.findByIdAndEmpresaId(produccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("EspacioId not found"));
+		produccionActual.setTipoProduccion(tipoProduccion);
+		produccionActual.setEspacio(espacio);
+		produccionActual.setEstado(estado);
+		produccionActual.setSubSeccion(subseccion);
 
-		subseccionRepository
-			.findByIdAndEmpresaId(produccionDTO.getSubSeccionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("SubSeccionId not found"));
-
-		estadoRepository.findById(produccionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("EstadoId not found"));
-
-		produccionDTO.setId(requestedId);
-		produccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-
-		produccionRepository.save(produccionMapper.toEntity(produccionDTO));
+		entidadValidatorFacade.validarFechasProduccion(produccionActual);
+		produccionRepository.save(produccionActual);
 	}
 
 	/* ---------- DELETE ---------- */

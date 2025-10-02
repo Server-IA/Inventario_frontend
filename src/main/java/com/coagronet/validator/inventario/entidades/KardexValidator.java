@@ -1,7 +1,6 @@
-package com.coagronet.entidadvalidator.entidades;
+package com.coagronet.validator.inventario.entidades;
 
-import com.coagronet.entidadvalidator.constantes.MensajesValidaciones;
-import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.repositories.KardexRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,7 @@ public class KardexValidator {
 
     public Kardex validarKardex(Long kardexId, Long empresaId) {
         return kardexRepository.findByIdAndEmpresaId(kardexId, empresaId)
-                .orElseThrow(() -> new BadRequestException(MensajesValidaciones.KARDEX_NO_VALIDO));
+                .orElseThrow(() -> new NotFoundException("kardex.not-found", kardexId));
     }
 
 }

@@ -1,4 +1,4 @@
-package com.coagronet.entidadvalidator.constantes;
+package com.coagronet.validator.parametrizacion.constantes;
 
 public final class EstadoCategorias {
     private EstadoCategorias(){

@@ -7,5 +7,4 @@ public final class OrdenCompraConstantes {
 
     public static final Long ESTADO_ORDEN_COMPRA_INICIAL_ACTIVO = 23L;
     public static final Long ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR = 24L;
-    public static final Long ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR = 24L;
 }
