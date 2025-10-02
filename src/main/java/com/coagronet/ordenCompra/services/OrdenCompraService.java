@@ -1,7 +1,6 @@
 package com.coagronet.ordenCompra.services;
 
 import com.coagronet.empresa.Empresa;
-import com.coagronet.entidadvalidator.EntidadValidatorFacade;
 import com.coagronet.estado.Estado;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.constantes.OrdenCompraConstantes;
@@ -10,6 +9,7 @@ import com.coagronet.ordenCompra.dtos.OrdenCompraCreateDTO;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.pedido.repositories.PedidoRepository;
 import com.coagronet.proveedor.Proveedor;
+import com.coagronet.validator.EntidadValidatorFacade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
