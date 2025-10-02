@@ -22,6 +22,7 @@
     k.kai_cantidad AS cantidad
 
 FROM producto p
+JOIN producto_presentacion pp ON p.pro_id = pp.prp_producto_id
 JOIN kardex_item k ON p.pro_id = k.kai_producto_presentacion_id
 JOIN empresa em ON p.pro_empresa_id = em.emp_id
 JOIN municipio m ON m.mun_empresa_id = em.emp_id
