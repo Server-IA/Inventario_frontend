@@ -1,4 +1,4 @@
-package com.coagronet.entidadvalidator.entidades;
+package com.coagronet.validator.inventario.entidades;
 
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.proveedor.Proveedor;

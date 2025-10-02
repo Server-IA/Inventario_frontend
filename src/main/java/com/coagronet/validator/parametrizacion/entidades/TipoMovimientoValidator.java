@@ -1,6 +1,5 @@
-package com.coagronet.entidadvalidator.entidades;
+package com.coagronet.validator.parametrizacion.entidades;
 
-import com.coagronet.entidadvalidator.constantes.MensajesValidaciones;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
 import com.coagronet.tipoMovimiento.repositories.TipoMovimientoRepository;
@@ -16,6 +15,6 @@ public class TipoMovimientoValidator {
 
     public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
         return tipoMovimientoRepository.findByIdAndEmpresaId(tipoMovimientoId, empresaId)
-                .orElseThrow(() -> new BadRequestException(MensajesValidaciones.TIPO_MOVIMIENTO_NO_VALIDO));
+                .orElseThrow(() -> new BadRequestException("tipo-movimiento.not-found", tipoMovimientoId));
     }
 }

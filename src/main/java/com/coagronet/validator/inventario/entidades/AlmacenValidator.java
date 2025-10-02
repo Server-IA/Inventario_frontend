@@ -1,8 +1,7 @@
-package com.coagronet.entidadvalidator.entidades;
+package com.coagronet.validator.inventario.entidades;
 
 import com.coagronet.almacen.Almacen;
 import com.coagronet.almacen.repositories.AlmacenRepository;
-import com.coagronet.entidadvalidator.constantes.MensajesValidaciones;
 import com.coagronet.exceptionHandler.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +15,6 @@ public class AlmacenValidator {
 
     public Almacen validarAlmacen(Long almacenId, Long empresaId) {
         return almacenRepository.findByIdAndEmpresaId(almacenId, empresaId)
-                .orElseThrow(() -> new BadRequestException(MensajesValidaciones.ALMACEN_NO_VALIDO));
+                .orElseThrow(() -> new BadRequestException("almacen.not-found", almacenId));
     }
 }

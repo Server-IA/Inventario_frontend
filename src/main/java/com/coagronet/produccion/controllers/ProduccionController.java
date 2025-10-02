@@ -2,6 +2,7 @@ package com.coagronet.produccion.controllers;
 
 import java.net.URI;
 
+import com.coagronet.produccion.dtos.ProduccionCreateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -49,8 +50,8 @@ public class ProduccionController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Void> crearProduccion(@RequestBody @Valid ProduccionDTO produccionDTO,
-			UriComponentsBuilder ucb) {
+	public ResponseEntity<Void> crearProduccion(@RequestBody @Valid ProduccionCreateDTO produccionDTO,
+												UriComponentsBuilder ucb) {
 		ProduccionDTO savedProduccionDTO = produccionService.create(produccionDTO);
 
 		URI locationOfNewProduccion = uriBuilderUtil.buildProduccion(savedProduccionDTO.getId(), ucb);

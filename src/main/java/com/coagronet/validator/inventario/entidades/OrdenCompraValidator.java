@@ -1,4 +1,4 @@
-package com.coagronet.entidadvalidator.entidades;
+package com.coagronet.validator.inventario.entidades;
 
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -16,4 +16,6 @@ public class OrdenCompraValidator {
         return ordenCompraRepository.findByIdAndEmpresaId(ordenCompraId, empresaId)
                 .orElseThrow(() -> new NotFoundException("orden-compra.not-found", ordenCompraId));
     }
+
+
 }

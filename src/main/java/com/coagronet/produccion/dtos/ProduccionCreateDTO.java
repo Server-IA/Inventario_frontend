@@ -1,9 +1,6 @@
 package com.coagronet.produccion.dtos;
 
-import java.time.LocalDateTime;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
@@ -12,14 +9,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProduccionDTO {
+public class ProduccionCreateDTO {
 
-	private Long id;
 
 	@NotNull(message = "nombre must not be null")
 	@Size(max = 100, message = "nombre must not exceed 100 characters")
@@ -44,7 +42,4 @@ public class ProduccionDTO {
 
 	@NotNull(message = "estadoId must not be null")
 	private Long estadoId;
-
-	private Long empresaId;
-
 }
