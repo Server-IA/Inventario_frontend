@@ -31,11 +31,11 @@ public interface ArticuloPedidoRepository extends JpaRepository<ArticuloPedido, 
 	List<ArticuloPedido> findByEmpresaIdAndPedidoIdOrderByIdAsc(Long empresaId, Long pedidoId);
 
 	@Query("""
-			  select pi.productoPresentacion.id as presentacionId,
+			  select pi.presentacionProducto.id as presentacionId,
 			         coalesce(sum(pi.cantidad), 0) as cantidad
-			  from PedidoItem pi
+			  from ArticuloPedido pi
 			  where pi.pedido.id = :pedidoId
-			  group by pi.productoPresentacion.id
+			  group by pi.presentacionProducto.id
 			""")
 	List<RowCantidad> sumCantidadesPedidasGroupByPresentacion(@Param("pedidoId") Long pedidoId);
 

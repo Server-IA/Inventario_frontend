@@ -33,22 +33,22 @@ public interface ArticuloKardexRepository extends JpaRepository<ArticuloKardex, 
 	Optional<ArticuloKardex> findByidentificadorProductoAndEmpresaId(String identificadorProducto, Long empresaId);
 
 	@Query("""
-			  select ki.productoPresentacion.id as presentacionId,
+			  select ki.presentacionProducto.id as presentacionId,
 			         coalesce(sum(ki.cantidad), 0)               as cantidad
-			  from KardexItem ki
+			  from ArticuloKardex ki
 			  join ki.kardex k
 			  join k.tipoMovimiento tm
 			  join tm.movimiento mv
 			  where k.pedido.id = :pedidoId
-			    and mv.id = :movId        -- 1=entrada, 2=salida
-			  group by ki.productoPresentacion.id
+			    and mv.id = :movId
+			  group by ki.presentacionProducto.id
 			""")
 	List<RowCantidad> sumCantidadesKardexByPedidoAndMovimientoGroupByPresentacion(@Param("pedidoId") Long pedidoId,
 			@Param("movId") Long movId);
 
 	@Query("""
 			  select case when count(ki.id) > 0 then true else false end
-			  from KardexItem ki
+			  from ArticuloKardex ki
 			  join ki.kardex k
 			  join k.tipoMovimiento tm
 			  join tm.movimiento mv
