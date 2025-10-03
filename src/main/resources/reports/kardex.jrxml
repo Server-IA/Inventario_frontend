@@ -1,18 +1,11 @@
 <!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
-<jasperReport name="Reporte_kardex" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867" whenNoDataType="AllSectionsNoDetail">
+<jasperReport name="Reporte_kardex" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<parameter name="fecha_inicio" class="java.sql.Timestamp"/>
-	<parameter name="fecha_fin" class="java.sql.Timestamp"/>
-	<parameter name="empresa_id" class="java.lang.Integer"/>
-	<parameter name="sede_id" class="java.lang.Integer"/>
-	<parameter name="bloque_id" class="java.lang.Integer"/>
-	<parameter name="espacio_id" class="java.lang.Integer"/>
-	<parameter name="almacen_id" class="java.lang.Integer"/>
-	<parameter name="municipio_id" class="java.lang.Integer"/>
-	<parameter name="producto_id" class="java.lang.Integer"/>
-	<parameter name="producto_categoria_id" class="java.lang.Integer"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="311"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="689"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
+	<parameter name="condicion" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT 
     e.emp_id AS header_empresa_id,
     e.emp_nombre AS header_empresa,
@@ -83,18 +76,8 @@ JOIN municipio m ON s.sed_municipio_id = m.mun_id
 JOIN empresa e ON k.kar_empresa_id = e.emp_id
 JOIN persona per ON e.emp_persona_id = per.per_id
 
-WHERE 
-    (CAST($P{producto_id} AS BIGINT) IS NULL OR p.pro_id = $P{producto_id}) AND
-    (CAST($P{producto_categoria_id} AS BIGINT) IS NULL OR p.pro_producto_categoria_id = $P{producto_categoria_id}) AND
-    (CAST($P{empresa_id} AS BIGINT) IS NULL OR e.emp_id = $P{empresa_id}) AND
-    (CAST($P{sede_id} AS BIGINT) IS NULL OR s.sed_id = $P{sede_id}) AND
-    (CAST($P{municipio_id} AS BIGINT) IS NULL OR m.mun_id = $P{municipio_id}) AND
-    (CAST($P{bloque_id} AS BIGINT) IS NULL OR blo.blo_id = $P{bloque_id}) AND
-    (CAST($P{espacio_id} AS BIGINT) IS NULL OR esp.esp_id = $P{espacio_id}) AND
-    (CAST($P{almacen_id} AS BIGINT) IS NULL OR al.alm_id = $P{almacen_id}) AND
-    k.kar_fecha_hora BETWEEN $P{fecha_inicio} AND $P{fecha_fin}
-
-ORDER BY ki.kai_id]]></query>
+WHERE
+		$P!{condicion}]]></query>
 	<field name="header_empresa_id" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_empresa_id"/>
 		<property name="com.jaspersoft.studio.field.label" value="header_empresa_id"/>
@@ -266,8 +249,8 @@ ORDER BY ki.kai_id]]></query>
 			<expression><![CDATA[new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
 		</element>
 	</title>
-	<pageHeader height="248">
-		<element kind="rectangle" uuid="6d0bfea8-3503-46b8-a64a-4df717dfc882" x="-20" y="0" width="595" height="248" backcolor="#FFFFFF">
+	<pageHeader height="229">
+		<element kind="rectangle" uuid="6d0bfea8-3503-46b8-a64a-4df717dfc882" x="-20" y="0" width="595" height="229" backcolor="#FFFFFF">
 			<pen lineColor="#3747A1"/>
 		</element>
 		<element kind="staticText" uuid="91db920a-6ed2-4181-b718-a8ca2ef009a3" mode="Opaque" x="20" y="70" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
@@ -321,7 +304,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="d8e752bc-ad64-4bac-a291-eed46493fa1c" mode="Opaque" x="20" y="190" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="d8e752bc-ad64-4bac-a291-eed46493fa1c" mode="Opaque" x="290" y="70" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Municipio:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -329,7 +312,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="da65d96c-c127-4321-b565-826b0ad4b2f1" x="90" y="190" width="150" height="20" vTextAlign="Bottom">
+		<element kind="textField" uuid="da65d96c-c127-4321-b565-826b0ad4b2f1" x="360" y="70" width="159" height="20" vTextAlign="Bottom">
 			<expression><![CDATA[" "+$F{header_municipio}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -338,7 +321,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="d2edb052-b680-426e-85d4-2e0a1246c038" mode="Opaque" x="290" y="100" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="d2edb052-b680-426e-85d4-2e0a1246c038" mode="Opaque" x="290" y="130" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Responsable:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -346,7 +329,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="4bef04ab-8922-4025-a3bd-f59288a318da" x="360" y="100" width="162" height="20" vTextAlign="Bottom">
+		<element kind="textField" uuid="4bef04ab-8922-4025-a3bd-f59288a318da" x="360" y="130" width="162" height="20" vTextAlign="Bottom">
 			<expression><![CDATA[" "+$F{header_responsable}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -355,28 +338,8 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="03d7ca4b-989d-4deb-8dcc-9aa901c3605d" x="360" y="130" width="162" height="20" vTextAlign="Bottom">
-			<expression><![CDATA[" "+$P{fecha_inicio}]]></expression>
-			<property name="com.jaspersoft.studio.unit.height" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="49e7f8cb-7a61-4a9f-aae4-b05183bbcf87" x="360" y="160" width="162" height="20" vTextAlign="Bottom">
-			<expression><![CDATA[" "+$P{fecha_fin}]]></expression>
-			<property name="com.jaspersoft.studio.unit.height" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="16edb09d-ba61-4f9d-936d-937f97a810ac" x="360" y="190" width="162" height="20" vTextAlign="Bottom">
-			<expression><![CDATA[" "+$P{almacen_id}]]></expression>
+		<element kind="textField" uuid="16edb09d-ba61-4f9d-936d-937f97a810ac" x="360" y="160" width="162" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{item_producto_id}]]></expression>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -386,23 +349,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="076463ce-798b-4fd7-b72b-7fc0e754b2df" mode="Opaque" x="290" y="130" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
-			<text><![CDATA[ Fecha Inicio:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="d45dbea2-c50c-42a4-9ed5-9325df6dbe21" mode="Opaque" x="290" y="160" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
-			<text><![CDATA[ Fecha Fin:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="cd6a77ea-b603-4bdc-ae36-9a3bb6620b41" mode="Opaque" x="290" y="190" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="cd6a77ea-b603-4bdc-ae36-9a3bb6620b41" mode="Opaque" x="290" y="160" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Id producto:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -410,7 +357,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="421c5203-efcb-4c1b-bf61-13da9901867e" x="360" y="70" width="162" height="20" vTextAlign="Bottom">
+		<element kind="textField" uuid="421c5203-efcb-4c1b-bf61-13da9901867e" x="360" y="100" width="162" height="20" vTextAlign="Bottom">
 			<expression><![CDATA[" "+$F{header_contacto}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -419,7 +366,7 @@ ORDER BY ki.kai_id]]></query>
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="dc619787-6642-4ffa-b6fe-1bf89631f49d" mode="Opaque" x="290" y="70" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="dc619787-6642-4ffa-b6fe-1bf89631f49d" mode="Opaque" x="290" y="100" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Contacto:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>

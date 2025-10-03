@@ -1,14 +1,16 @@
 package com.coagronet.kardex.services;
 
+import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
-import com.coagronet.empresa.repositories.EmpresaRepository;
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.validator.EntidadValidatorFacade;
+import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.kardex.dtos.KardexDTO;
+import com.coagronet.produccion.Produccion;
+import com.coagronet.tipoMovimiento.TipoMovimiento;
 import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,14 +25,9 @@ import java.util.Optional;
 public class KardexService {
 
 	private final KardexRepository kardexRepository;
-
 	private final KardexMapper kardexMapper;
-
-	private final EstadoRepository estadoRepository;
-
 	private final UserEmpresaService userEmpresaService;
-
-	private final EmpresaRepository empresaRepository;
+	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	public Page<KardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
@@ -46,50 +43,29 @@ public class KardexService {
 	@Transactional
 	public KardexDTO create(KardexDTO kardexDTO) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		estadoRepository.findById(kardexDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		kardexDTO.setEmpresaId(empresaId);
 
-
-		Empresa empresa = empresaRepository.findById(empresaId)
-				.orElseThrow(() -> new BadRequestException("Empresa no encontrada"));
-
-
 		Kardex kardex = kardexMapper.toEntity(kardexDTO);
-		kardex.setEmpresa(empresa);
 
-		if (kardexDTO.getClienteProveedorId() != null) {
-			Empresa clienteProveedor = empresaRepository.findById(kardexDTO.getClienteProveedorId())
-					.orElseThrow(() -> new BadRequestException("Cliente/Proveedor no encontrado"));
-			kardex.setClienteProveedor(clienteProveedor);
-		}
+		aplicarValidacionesYRelaciones(kardexDTO, kardex, empresaId);
 		Kardex guardado = kardexRepository.save(kardex);
-
 		return kardexMapper.toDto(guardado);
 	}
 
 	@Transactional
-	public void update(Long requestedId, KardexDTO kardexDTO) {
-		kardexRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Kardex no encontrada o no válida"));
+	public KardexDTO update(Long requestedId, KardexDTO kardexDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		estadoRepository.findById(kardexDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		Kardex kardexExistente = entidadValidatorFacade.validarKardex(requestedId, empresaId);
+		kardexMapper.updateEntityFromDto(kardexDTO, kardexExistente);
 
-		kardexDTO.setId(requestedId);
-		kardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		aplicarValidacionesYRelaciones(kardexDTO, kardexExistente, empresaId);
 
-		Kardex kardex = kardexMapper.toEntity(kardexDTO);
-		if (kardexDTO.getClienteProveedorId() != null) {
-			Empresa clienteProveedor = empresaRepository.findById(kardexDTO.getClienteProveedorId())
-					.orElseThrow(() -> new BadRequestException("Cliente/Proveedor no encontrado"));
-			kardex.setClienteProveedor(clienteProveedor);
-		}
-		Kardex guardado = kardexRepository.save(kardex);
-
-		kardexRepository.save(guardado);
+		Kardex guardado = kardexRepository.save(kardexExistente);
+		return kardexMapper.toDto(guardado);
 	}
+
 
 	@Transactional
 	public void delete(Long requestId) {
@@ -99,4 +75,20 @@ public class KardexService {
 		kardexRepository.deleteById(requestId);
 	}
 
+	private void aplicarValidacionesYRelaciones(KardexDTO kardexDTO, Kardex kardex, Long empresaId) {
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(kardexDTO.getEstadoId());
+		Almacen almacen = entidadValidatorFacade.validarAlmacen(kardexDTO.getAlmacenId(), empresaId);
+		Produccion produccion = entidadValidatorFacade.validarProduccion(kardexDTO.getProduccionId(), empresaId);
+		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(), empresaId);
+
+		kardex.setEstado(estado);
+		kardex.setAlmacen(almacen);
+		kardex.setProduccion(produccion);
+		kardex.setTipoMovimiento(tipoMovimiento);
+
+		if (kardexDTO.getClienteProveedorId() != null) {
+			Empresa clienteProveedor = entidadValidatorFacade.validarClienteProveedor(kardexDTO.getClienteProveedorId());
+			kardex.setClienteProveedor(clienteProveedor);
+		}
+	}
 }

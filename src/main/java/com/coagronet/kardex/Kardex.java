@@ -69,11 +69,11 @@ public class Kardex {
 	@JoinColumn(name = "kar_cliente_proveedor_id", referencedColumnName = "emp_id")
 	private Empresa clienteProveedor;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_pedido_id", referencedColumnName = "ped_id")
 	private Pedido pedido;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
 	private OrdenCompra ordenCompra;
 
