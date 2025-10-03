@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
+import com.coagronet.ordenCompra.OrdenCompra;
+import com.coagronet.pedido.Pedido;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
 
@@ -63,8 +65,15 @@ public class Kardex {
 	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id")
 	private Empresa empresa;
 
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_cliente_proveedor_id", referencedColumnName = "emp_id")
 	private Empresa clienteProveedor;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_pedido_id", referencedColumnName = "ped_id")
+	private Pedido pedido;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
+	private OrdenCompra ordenCompra;
 }
