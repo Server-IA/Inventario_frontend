@@ -52,10 +52,6 @@ public class Producto {
 	private Unidad unidad;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "pro_producto_presentacion_ingrediente_id", referencedColumnName = "ppi_id")
-	private IngredientePresentacionProducto ingredientePresentacionProducto;
-
-	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "pro_estado_id", referencedColumnName = "est_id")
 	private Estado estado;
 

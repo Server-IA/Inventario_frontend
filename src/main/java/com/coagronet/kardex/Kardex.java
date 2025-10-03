@@ -54,7 +54,7 @@ public class Kardex {
 	@JoinColumn(name = "kar_tipo_movimiento_id", referencedColumnName = "tim_id")
 	private TipoMovimiento tipoMovimiento;
 
-	@Column(name = "kar_descripcion", length = 500)
+	@Column(name = "kar_descripcion", length = 2048)
 	private String descripcion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -76,4 +76,5 @@ public class Kardex {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
 	private OrdenCompra ordenCompra;
+
 }

@@ -15,6 +15,8 @@ public interface KardexMapper {
 	@Mapping(source = "estado.id", target = "estadoId")
 	@Mapping(source = "empresa.id", target = "empresaId")
 	@Mapping(source = "clienteProveedor.id", target = "clienteProveedorId")
+	@Mapping(source = "pedido.id", target = "pedidoId")
+	@Mapping(source = "ordenCompra.id", target = "ordenCompraId")
 	KardexDTO toDto(Kardex kardex);
 
 	@Mapping(source = "almacenId", target = "almacen.id")
@@ -23,6 +25,8 @@ public interface KardexMapper {
 	@Mapping(source = "estadoId", target = "estado.id")
 	@Mapping(target = "clienteProveedor", ignore = true)
 	@Mapping(source = "empresaId", target = "empresa.id")
+	@Mapping(source = "pedidoId", target = "pedido.id")
+	@Mapping(source = "ordenCompraId", target = "ordenCompra.id")
 	Kardex toEntity(KardexDTO kardexDTO);
 
 	@org.mapstruct.BeanMapping(nullValuePropertyMappingStrategy = org.mapstruct.NullValuePropertyMappingStrategy.IGNORE)
@@ -30,4 +34,5 @@ public interface KardexMapper {
 	@Mapping(target = "empresa", ignore = true)
 	@Mapping(target = "clienteProveedor", ignore = true)
 	void updateEntityFromDto(KardexDTO dto, @MappingTarget Kardex entity);
+
 }

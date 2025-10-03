@@ -19,17 +19,21 @@ public class KardexDTO {
 
 	private LocalDateTime fechaHora;
 
-	@NotNull(message = "El id del almacén no puede ser nulo")
+	@NotNull(message = "El id del almac�n no puede ser nulo")
 	private Long almacenId;
 
-	@NotNull(message = "El id de producción no puede ser nulo")
+	@NotNull(message = "El id de producci�n no puede ser nulo")
 	private Long produccionId;
 
 	@NotNull(message = "El id del tipo de movimiento no puede ser nulo")
 	private Long tipoMovimientoId;
 
-	@Size(max = 500, message = "La descripción debe tener máximo 500 caracteres")
+	@Size(max = 500, message = "La descripci�n debe tener m�ximo 500 caracteres")
 	private String descripcion;
+
+	private Long pedidoId;
+
+	private Long ordenCompraId;
 
 	@NotNull(message = "El id del estado no puede ser nulo")
 	private Long estadoId;
@@ -37,4 +41,5 @@ public class KardexDTO {
 	private Long empresaId;
 
 	private Long clienteProveedorId;
+
 }
