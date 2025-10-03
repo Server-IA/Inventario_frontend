@@ -2,6 +2,7 @@ package com.coagronet.ordenCompra.services;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.constantes.OrdenCompraConstantes;
 import com.coagronet.ordenCompra.constantes.PedidoConstantes;
@@ -103,9 +104,11 @@ public class OrdenCompraService {
 
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
 		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR);
+		if(!ordenCompra.getEstado().getId().equals(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_INICIAL_ACTIVO)){
+			throw new BadRequestException("Solo las ordenes de compra con estado activo pueden enviarse al proveedor");
+		}
 
 		ordenCompra.setEstado(nuevoEstadoOrdenCompra);
-
 		Pedido pedido = ordenCompra.getPedido();
 		Estado nuevoEstadoPedido = entidadValidatorFacade.validarEstadoParaPedido(PedidoConstantes.ESTADO_CON_ORDEN_COMPRA);
 		pedido.setEstado(nuevoEstadoPedido);
@@ -114,11 +117,14 @@ public class OrdenCompraService {
 	}
 
 	@Transactional
-	public void establecerOrdenCompraPendienteRecibo(Long ordenCompraId){
+	public void entregaParcial(Long ordenCompraId){
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
-		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR);
+		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_PARCIAL);
+
+
+		
 	}
 
 }
