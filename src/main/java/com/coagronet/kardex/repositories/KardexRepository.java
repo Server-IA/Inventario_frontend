@@ -15,6 +15,6 @@ public interface KardexRepository extends JpaRepository<Kardex, Long> {
 
 	Page<Kardex> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
-	List<Kardex> findByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId );
+	Kardex findByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId );
 
 }
