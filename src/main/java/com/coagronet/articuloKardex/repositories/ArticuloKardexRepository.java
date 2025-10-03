@@ -20,7 +20,7 @@ public interface ArticuloKardexRepository extends JpaRepository<ArticuloKardex, 
 
 		Long getPresentacionId();
 
-		BigDecimal getCantidad();
+		Double getCantidad();
 
 	}
 

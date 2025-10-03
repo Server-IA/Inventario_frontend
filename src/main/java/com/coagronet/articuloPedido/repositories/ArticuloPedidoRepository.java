@@ -20,7 +20,7 @@ public interface ArticuloPedidoRepository extends JpaRepository<ArticuloPedido, 
 
 		Long getPresentacionId();
 
-		BigDecimal getCantidad();
+		Double getCantidad();
 
 	}
 

@@ -56,4 +56,9 @@ public class EstadoResolver {
 		cache.clear();
 	}
 
+	@Transactional(readOnly = true)
+	public Estado getRef(Long id) {
+		return estadoRepository.getReferenceById(id);
+	}
+
 }

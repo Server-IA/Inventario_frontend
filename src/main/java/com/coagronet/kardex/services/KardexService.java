@@ -8,6 +8,7 @@ import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
+import com.coagronet.pedido.Pedido;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
@@ -25,14 +26,16 @@ import java.util.Optional;
 public class KardexService {
 
 	private final KardexRepository kardexRepository;
+
 	private final KardexMapper kardexMapper;
+
 	private final UserEmpresaService userEmpresaService;
+
 	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	public Page<KardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return kardexRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(kardexMapper::toDto);
+		return kardexRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(kardexMapper::toDto);
 	}
 
 	public Optional<KardexDTO> findById(Long requestedId) {
@@ -66,11 +69,10 @@ public class KardexService {
 		return kardexMapper.toDto(guardado);
 	}
 
-
 	@Transactional
 	public void delete(Long requestId) {
 		kardexRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Kardex no encontrado o no válido"));
+			.orElseThrow(() -> new NotFoundException("Kardex no encontrado o no v�lido"));
 
 		kardexRepository.deleteById(requestId);
 	}
@@ -79,16 +81,21 @@ public class KardexService {
 		Estado estado = entidadValidatorFacade.validarEstadoGeneral(kardexDTO.getEstadoId());
 		Almacen almacen = entidadValidatorFacade.validarAlmacen(kardexDTO.getAlmacenId(), empresaId);
 		Produccion produccion = entidadValidatorFacade.validarProduccion(kardexDTO.getProduccionId(), empresaId);
-		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(), empresaId);
+		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(),
+				empresaId);
+		Pedido pedido = entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId);
 
 		kardex.setEstado(estado);
 		kardex.setAlmacen(almacen);
 		kardex.setProduccion(produccion);
 		kardex.setTipoMovimiento(tipoMovimiento);
+		kardex.setPedido(pedido);
 
 		if (kardexDTO.getClienteProveedorId() != null) {
-			Empresa clienteProveedor = entidadValidatorFacade.validarClienteProveedor(kardexDTO.getClienteProveedorId());
+			Empresa clienteProveedor = entidadValidatorFacade
+				.validarClienteProveedor(kardexDTO.getClienteProveedorId());
 			kardex.setClienteProveedor(clienteProveedor);
 		}
 	}
+
 }

@@ -73,8 +73,8 @@ public class PedidoService {
 
 	private void setEstado(Pedido p, String acr) {
 		Long tgtId = estadoId(acr);
-		if (p.getEstado() == null || p.getEstado().getId() == null || !p.getEstado().getId().equals(tgtId)) {
-			p.getEstado().setId(tgtId);
+		if (p.getEstado() == null || !tgtId.equals(p.getEstado().getId())) {
+			p.setEstado(estadoResolver.getRef(tgtId));
 		}
 	}
 
@@ -156,24 +156,16 @@ public class PedidoService {
 
 	@Transactional
 	public void completar(Long pedidoId) {
-		// 1) Traer el pedido validando empresa
 		Pedido p = getByIdAndEmpresaOrThrow(pedidoId);
 
-		// 2) Validar requisitos reales (recepci?n f?sica, calidad, kardex) v?a gateway
 		var res = inventarioGateway.validarRequisitosParaCompletar(pedidoId);
 		if (!res.isOk()) {
-			// Mensaje claro y sin caracteres rotos
 			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos", res.getMotivoFallo() != null
-					? res.getMotivoFallo() : "A?n hay ?tems pendientes por recibir/verificar/registrar en inventario.");
+					? res.getMotivoFallo() : "A�n hay �tems pendientes por recibir/verificar/registrar en inventario.");
 		}
 
-		// 3) Verificar transici?n permitida: OC -> CMP
 		ensureTransition(p, COMPLETADO, CON_ORDEN_COMPRA);
-
-		// 4) Asignar estado destino
-		setEstado(p, COMPLETADO);
-		// No es necesario save() expl?cito si 'p' est? administrado por JPA y est?s en
-		// @Transactional
+		setEstado(p, COMPLETADO); // ahora reemplaza la ref, no el id
 	}
 
 	/* ================== Hooks ?tiles (opcionales) ================== */

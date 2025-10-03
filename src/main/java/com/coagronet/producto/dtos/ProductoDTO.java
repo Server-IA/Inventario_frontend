@@ -20,14 +20,11 @@ public class ProductoDTO {
 	@NotNull(message = "El nombre no puede ser nulo")
 	private String nombre;
 
-	@NotNull(message = "Producto categoría no puede ser nulo")
+	@NotNull(message = "Producto categor�a no puede ser nulo")
 	private Long productoCategoriaId;
 
 	@NotNull(message = "Producto no puede tener una unidad minima nula")
 	private Long unidadMinimaId;
-
-	@NotNull(message = "el campo ingredientePresentacionProductoId no puede ser nulo")
-	private Long ingredientePresentacionProductoId;
 
 	@Size(max = 255)
 	private String descripcion;
