@@ -1,235 +1,335 @@
+// src/components/RKardex/Rkardex.jsx
 import React, { useEffect, useState } from "react";
 import {
-  Box, Button, Typography, Grid, TextField,
+  Box, Typography, TextField, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Dialog, DialogTitle, DialogContent, IconButton,
+  Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
-import VistaPreviaPDFKardex from "../Kardex/vistapreviapdfkardex";
-import GridArticuloKardex from "../Kardex/GridArticuloKardex";
 
-export default function RE_kardex() {
+export default function RE_kardexPedido() {
+  const empresaId = localStorage.getItem("empresaId");
   const token = localStorage.getItem("token");
-  const empresaId = token ? JSON.parse(atob(token.split(".")[1]))?.empresaId : null;
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
+  // ===== Utils
+  const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? x?.data ?? []);
+  const getFechaKdx = (o) => o?.karFechaHora ?? o?.fechaHora ?? o?.fecha ?? o?.createdAt ?? null;
+  const toLocal = (val) => {
+    if (!val) return "";
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? String(val) : d.toLocaleString();
+  };
+
+  // "YYYY-MM-DDTHH:mm" -> "YYYY-MM-DD HH:mm"
+  const toDateStr = (val, end = false) => {
+    if (!val) return null;
+    const [d, t] = String(val).split("T");
+    if (!d) return null;
+    const hhmm = t ? t.slice(0, 5) : (end ? "23:59" : "00:00");
+    return `${d} ${hhmm}`;
+  };
+
+  // ===== Filtros (todos opcionales; provienen de /v1/items)
   const [form, setForm] = useState({
-    pais_id: "", departamento_id: "", municipio_id: "", sede_id: "",
-    bloque_id: "", espacio_id: "", almacen_id: "",
-    producto_id: "", producto_categoria_id: "",
-    fecha_inicio: "", fecha_fin: ""
+    municipio_id: "",
+    sede_id: "",
+    bloque_id: "",
+    espacio_id: "",
+    almacen_id: "",
+    producto_id: "",
+    producto_categoria_id: "",
+    fecha_inicio: "",
+    fecha_fin: "",
   });
 
-  const [data, setData] = useState({
-    paises: [], departamentos: [], municipios: [], sedes: [], bloques: [], espacios: [],
-    almacenes: [], productos: [], categorias: [], pedidos: []
+  const handleChange = (name) => (e) => setForm((f) => ({ ...f, [name]: e.target.value }));
+
+  // ===== Catálogos
+  const [items, setItems] = useState({
+    municipios: [], sedes: [], bloques: [], espacios: [],
+    almacenes: [], productos: [], categorias: [],
   });
-
-  const [articulos, setArticulos] = useState([]);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const formatoFecha = (fecha) => fecha ? fecha.replace("T", " ").slice(0, 16) : "";
-
-  const construirParametros = () => ({
-    empresa_id: parseInt(empresaId),
-    fecha_inicio: formatoFecha(form.fecha_inicio),
-    fecha_fin: formatoFecha(form.fecha_fin),
-    logo_empresa: `${import.meta.env.VITE_RUTA_LOGO_EMPRESA}${empresaId}/logo_empresa.jpeg`
-  });
-
-  const buscarKardex = () => {
-    if (!form.fecha_inicio || !form.fecha_fin || !empresaId) {
-      setMessage({ open: true, severity: "warning", text: "Completa todos los campos requeridos." });
-      return;
-    }
-
-    axios.get("/v1/articulo-kardex", {
-      ...headers,
-      params: construirParametros()
-    })
-      .then(res => {
-        setArticulos(Array.isArray(res.data) ? res.data : []);
-        setMessage({ open: true, severity: "success", text: "Datos cargados correctamente." });
-      })
-      .catch(() => {
-        setArticulos([]);
-        setMessage({ open: true, severity: "error", text: "No se pudo obtener el Kardex." });
-      });
-  };
-
-  const verReportePDF = () => {
-    axios.post("/v2/report/kardex", construirParametros(), {
-      ...headers,
-      responseType: "blob"
-    })
-      .then((response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-        setPreviewUrl(url);
-        setDialogOpen(true);
-      })
-      .catch(() => {
-        setMessage({ open: true, severity: "error", text: "Error al generar el PDF." });
-      });
-  };
 
   useEffect(() => {
-    axios.get("/v1/pais", headers).then(res => setData(d => ({ ...d, paises: res.data })));
-    axios.get("/v1/producto", headers).then(res => setData(d => ({ ...d, productos: res.data })));
-    axios.get("/v1/producto_categoria", headers).then(res => setData(d => ({ ...d, categorias: res.data })));
-    axios.get("/v1/pedido", headers).then(res => setData(d => ({ ...d, pedidos: res.data })));
+    Promise.all([
+      axios.get("/v1/items/municipio/0", headers).catch(() => ({ data: [] })),
+      axios.get("/v1/items/sede/0", headers).catch(() => ({ data: [] })),
+      axios.get("/v1/items/bloque/0", headers).catch(() => ({ data: [] })),
+      axios.get("/v1/items/espacio/0", headers).catch(() => ({ data: [] })),
+      axios.get("/v1/items/almacen/0", headers).catch(() => ({ data: [] })),
+      axios.get("/v1/items/producto/0", headers).catch(() => ({ data: [] })),
+      axios.get("/v1/items/producto_categoria/0", headers).catch(() => ({ data: [] })),
+    ])
+      .then(([mun, sed, blo, esp, alm, pro, cat]) => {
+        setItems({
+          municipios: asArray(mun.data),
+          sedes: asArray(sed.data),
+          bloques: asArray(blo.data),
+          espacios: asArray(esp.data),
+          almacenes: asArray(alm.data),
+          productos: asArray(pro.data),
+          categorias: asArray(cat.data),
+        });
+      })
+      .catch(() => setMessage({ open: true, severity: "error", text: "No fue posible cargar los catálogos." }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const limpiarCamposDesde = (campo) => {
-    const orden = ["pais_id", "departamento_id", "municipio_id", "sede_id", "bloque_id", "espacio_id", "almacen_id"];
-    const i = orden.indexOf(campo);
-    const nuevoForm = { ...form };
-    orden.slice(i + 1).forEach(c => nuevoForm[c] = "");
-    setForm(nuevoForm);
+  // ===== Estado UI
+  const [resultados, setResultados] = useState([]);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
+
+  // ===== Listado (igual que Pedido/OC): fetchAll con rutas candidatas + paginado
+  const fetchAllKardex = async () => {
+    const CANDIDATES = [
+      "/v1/kardexpedido",
+      "/v1/kardex_pedido",
+      "/v1/kardex",
+    ];
+    const size = 200;
+    for (const basePath of CANDIDATES) {
+      try {
+        // sin paginación
+        const r0 = await axios.get(basePath, headers);
+        const list0 = asArray(r0.data);
+        if (list0.length) return list0;
+
+        // con paginación
+        let page = 0, acc = [];
+        for (let i = 0; i < 15; i++) {
+          const r = await axios.get(basePath, { params: { page, size }, ...headers });
+          const list = asArray(r.data);
+          if (!list.length) break;
+          acc = acc.concat(list);
+          page += 1;
+        }
+        if (acc.length) return acc;
+      } catch (err) {
+        if (import.meta.env.DEV) console.debug("[fetchAllKardex] fallo", basePath, err?.response?.status);
+        // sigue al siguiente candidato
+      }
+    }
+    const e = new Error("No se encontró endpoint para listar kardex.");
+    e.code = "NO_KARDEX_ENDPOINT";
+    throw e;
   };
 
-  useEffect(() => {
-    if (!form.pais_id) return;
-    limpiarCamposDesde("pais_id");
-    axios.get("/v1/departamento", headers).then(res => {
-      const filtered = res.data.filter(dep => dep.paisId === parseInt(form.pais_id));
-      setData(d => ({ ...d, departamentos: filtered }));
-      if (filtered.length === 1) setForm(f => ({ ...f, departamento_id: filtered[0].id }));
-    });
-  }, [form.pais_id]);
+  // ===== Buscar (misma UX): lista TODO si no hay filtros; aplica rango si hay fechas
+  const buscar = async () => {
+    setResultados([]);
+    try {
+      const all = await fetchAllKardex();
 
-  useEffect(() => {
-    if (!form.departamento_id) return;
-    limpiarCamposDesde("departamento_id");
-    axios.get(`/v1/municipio?departamentoId=${form.departamento_id}`, headers).then(res => {
-      setData(d => ({ ...d, municipios: res.data }));
-      if (res.data.length === 1) setForm(f => ({ ...f, municipio_id: res.data[0].id }));
-    });
-  }, [form.departamento_id]);
+      // filtro por rango de fechas si el usuario lo puso (igual que haces en Pedido)
+      const ini = form.fecha_inicio ? new Date(form.fecha_inicio) : null;
+      const fin = form.fecha_fin ? new Date(form.fecha_fin) : null;
 
-  useEffect(() => {
-    if (!form.municipio_id) return;
-    limpiarCamposDesde("municipio_id");
-    axios.get("/v1/sede", headers).then(res => {
-      const filtered = res.data.filter(s => s.municipioId === parseInt(form.municipio_id));
-      setData(d => ({ ...d, sedes: filtered }));
-      if (filtered.length === 1) setForm(f => ({ ...f, sede_id: filtered[0].id }));
-    });
-  }, [form.municipio_id]);
+      const lista = all.filter((row) => {
+        const f = getFechaKdx(row);
+        if (!f || (!ini && !fin)) return true;
+        const d = new Date(f);
+        if (isNaN(d.getTime())) return true;
+        if (ini && d < ini) return false;
+        if (fin && d > fin) return false;
+        return true;
+      });
 
-  useEffect(() => {
-    if (!form.sede_id) return;
-    limpiarCamposDesde("sede_id");
-    axios.get("/v1/bloque", headers).then(res => {
-      const filtered = res.data.filter(b => b.sedeId === parseInt(form.sede_id));
-      setData(d => ({ ...d, bloques: filtered }));
-      if (filtered.length === 1) setForm(f => ({ ...f, bloque_id: filtered[0].id }));
-    });
-  }, [form.sede_id]);
-
-  useEffect(() => {
-    if (!form.bloque_id) return;
-    limpiarCamposDesde("bloque_id");
-    axios.get("/v1/espacio", headers).then(res => {
-      const filtered = res.data.filter(e => e.bloqueId === parseInt(form.bloque_id));
-      setData(d => ({ ...d, espacios: filtered }));
-      if (filtered.length === 1) setForm(f => ({ ...f, espacio_id: filtered[0].id }));
-    });
-  }, [form.bloque_id]);
-
-  useEffect(() => {
-    if (!form.espacio_id) return;
-    limpiarCamposDesde("espacio_id");
-    axios.get("/v1/almacen", headers).then(res => {
-      const filtered = res.data.filter(a => a.espacioId === parseInt(form.espacio_id));
-      setData(d => ({ ...d, almacenes: filtered }));
-      if (filtered.length === 1) setForm(f => ({ ...f, almacen_id: filtered[0].id }));
-    });
-  }, [form.espacio_id]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+      setResultados(lista);
+      setMessage({ open: true, severity: "info", text: `Mostrando ${lista.length} movimiento(s) de kardex.` });
+    } catch (err) {
+      const msg = err?.code === "NO_KARDEX_ENDPOINT"
+        ? "No se encontró el endpoint de listado de kardex (404)."
+        : "No se pudo cargar el kardex.";
+      console.error(err);
+      setMessage({ open: true, severity: "error", text: msg });
+    }
   };
+
+  // ===== PDF: payload indexado 0..8 EXACTO. Si no hay fechas → rango amplio (para “ver todo”)
+  const buildCondicion = () => {
+    const DEF_INI = "1900-01-01 00:00";
+    const DEF_FIN = "2099-12-31 23:59";
+    const userIni = toDateStr(form.fecha_inicio, false);
+    const userFin = toDateStr(form.fecha_fin, true);
+
+    const c = {};
+    c["0"] = `e.emp_id = $EMPRESA_ID$`;
+    c["1"] = form.municipio_id           ? `AND m.mun_id = ${Number(form.municipio_id)}` : "";
+    c["2"] = form.sede_id                ? `AND s.sed_id = ${Number(form.sede_id)}` : "";
+    c["3"] = form.bloque_id              ? `AND blo.blo_id = ${Number(form.bloque_id)}` : "";
+    c["4"] = form.espacio_id             ? `AND esp.esp_id = ${Number(form.espacio_id)}` : "";
+    c["5"] = form.almacen_id             ? `AND al.alm_id = ${Number(form.almacen_id)}` : "";
+    c["6"] = form.producto_id            ? `AND p.pro_id = ${Number(form.producto_id)}` : "";
+    c["7"] = form.producto_categoria_id  ? `AND p.pro_producto_categoria_id = ${Number(form.producto_categoria_id)}` : "";
+    c["8"] = `AND k.kar_fecha_hora BETWEEN '${userIni ?? DEF_INI}' AND '${userFin ?? DEF_FIN}'`;
+    return c;
+  };
+
+  const requestPDF = async (condicion) => {
+    try {
+      return await axios({
+        url: "/v2/report/nuevo/kardex",
+        method: "POST",
+        data: { condicion, EMPRESA_ID: empresaId },
+        responseType: "blob",
+        ...headers,
+      });
+    } catch (e1) {
+      if (e1?.response?.status !== 404) throw e1;
+      return await axios({
+        url: "/v2/report/nuevo/kardex",
+        method: "POST",
+        data: { condicion, EMPRESA_ID: empresaId },
+        responseType: "blob",
+        ...headers,
+      });
+    }
+  };
+
+  const extractServerError = async (err) => {
+    try {
+      if (err?.response?.data instanceof Blob) {
+        const t = await err.response.data.text();
+        return t?.slice(0, 400) || err.message;
+      }
+    } catch {}
+    return err?.message || "Error desconocido";
+  };
+
+  const generarReporte = async () => {
+    try {
+      const condicion = buildCondicion();
+      const res = await requestPDF(condicion);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const url = window.URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setPreviewOpen(true);
+      setMessage({ open: true, severity: "success", text: "PDF generado." });
+    } catch (err) {
+      const txt = await extractServerError(err);
+      console.error(err);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `No se pudo generar el PDF (HTTP ${err?.response?.status ?? "?"}). ${txt}`,
+      });
+    }
+  };
+
+  // ===== UI
+  const fields = [
+    { name: "municipio_id",          label: "Municipio",          items: items.municipios },
+    { name: "sede_id",               label: "Sede",               items: items.sedes },
+    { name: "bloque_id",             label: "Bloque",             items: items.bloques },
+    { name: "espacio_id",            label: "Espacio",            items: items.espacios },
+    { name: "almacen_id",            label: "Almacén",            items: items.almacenes },
+    { name: "producto_id",           label: "Producto",           items: items.productos },
+    { name: "producto_categoria_id", label: "Categoría Producto", items: items.categorias },
+  ];
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>Reporte de Kardex</Typography>
+      <Typography variant="h4" gutterBottom>Reporte Kardex</Typography>
 
-      <Grid container spacing={2}>
-        {[{ label: "País", name: "pais_id", options: data.paises },
-          { label: "Departamento", name: "departamento_id", options: data.departamentos },
-          { label: "Municipio", name: "municipio_id", options: data.municipios },
-          { label: "Sede", name: "sede_id", options: data.sedes },
-          { label: "Bloque", name: "bloque_id", options: data.bloques },
-          { label: "Espacio", name: "espacio_id", options: data.espacios },
-          { label: "Almacén", name: "almacen_id", options: data.almacenes },
-          { label: "Producto", name: "producto_id", options: data.productos },
-          { label: "Categoría Producto", name: "producto_categoria_id", options: data.categorias }
-        ].map(({ label, name, options }) => (
-          <Grid item xs={6} key={name}>
+      {/* Filtros arriba (mismo patrón) */}
+      <Grid container spacing={2} mb={2}>
+        {fields.map((f) => (
+          <Grid key={f.name} item xs={12} md={6}>
             <FormControl fullWidth>
-              <InputLabel>{label}</InputLabel>
-              <Select name={name} value={form[name]} onChange={handleChange}>
-                {Array.isArray(options) ? (
-                  options.map(opt => (
-                    <MenuItem key={opt.id} value={opt.id}>{opt.nombre}</MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="" disabled>No disponible</MenuItem>
-                )}
+              <InputLabel>{f.label}</InputLabel>
+              <Select
+                label={f.label}
+                value={form[f.name] || ""}
+                onChange={handleChange(f.name)}
+              >
+                <MenuItem value=""><em>Todos</em></MenuItem>
+                {asArray(f.items).map((it) => (
+                  <MenuItem key={it.id} value={String(it.id)}>
+                    {it.nombre ?? it.name ?? `#${it.id}`}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
         ))}
-        <Grid item xs={6}>
+
+        <Grid item xs={12} md={6}>
           <TextField
             label="Fecha Inicio"
             name="fecha_inicio"
             type="datetime-local"
             fullWidth
             value={form.fecha_inicio || ""}
-            onChange={handleChange}
+            onChange={(e) => setForm((s) => ({ ...s, fecha_inicio: e.target.value }))}
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid item xs={6}>
+
+        <Grid item xs={12} md={6}>
           <TextField
             label="Fecha Fin"
             name="fecha_fin"
             type="datetime-local"
             fullWidth
             value={form.fecha_fin || ""}
-            onChange={handleChange}
+            onChange={(e) => setForm((s) => ({ ...s, fecha_fin: e.target.value }))}
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
       </Grid>
 
-      <Box mt={4} display="flex" gap={2}>
-        <Button variant="contained" onClick={buscarKardex}>Buscar</Button>
-        <Button variant="outlined" onClick={verReportePDF}>Ver Reporte</Button>
-      </Box>
+      {/* Acciones (igual que en Pedido/OC) */}
+      <Stack direction="row" spacing={2} mb={3}>
+        <Button variant="contained" onClick={buscar}>Buscar</Button>
+        <Button variant="outlined" onClick={generarReporte}>Generar Reporte</Button>
+      </Stack>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="lg" fullWidth>
-        <DialogTitle>Vista previa PDF Kardex</DialogTitle>
-        <DialogContent dividers>
-          <VistaPreviaPDFKardex url={previewUrl} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cerrar</Button>
-        </DialogActions>
-      </Dialog>
-
-      {articulos.length > 0 && (
+      {/* Tabla resultados (como en RE_pedido) */}
+      {resultados.length > 0 && (
         <Box mt={4}>
-          <VistaPreviaPDFKardex kardex={articulos} />
-          <Typography variant="h6" gutterBottom>Detalle de artículos Kardex</Typography>
-          <GridArticuloKardex items={articulos} />
+          <Typography variant="h6" gutterBottom>Kardex encontrado</Typography>
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Fecha/Hora</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {resultados.map((row, idx) => (
+                  <TableRow key={row.id ?? idx}>
+                    <TableCell>{row.id ?? ""}</TableCell>
+                    <TableCell>{toLocal(getFechaKdx(row))}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
       )}
+
+      {/* Preview PDF */}
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth="lg">
+        <DialogTitle>
+          Vista previa del Reporte
+          <IconButton onClick={() => setPreviewOpen(false)} sx={{ position: "absolute", right: 8, top: 8 }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {previewUrl && (
+            <iframe src={previewUrl} width="100%" height="600" title="PDF" style={{ border: "none" }} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>

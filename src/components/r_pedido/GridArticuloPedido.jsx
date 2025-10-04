@@ -1,52 +1,142 @@
-import { DataGrid } from '@mui/x-data-grid';
-import {
-  Box, Typography, Divider, Button, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField
-} from "@mui/material";
+// src/components/Pedido/GridArticuloPedido.jsx
+import React, { useMemo } from "react";
+import PropTypes from "prop-types";
+import { DataGrid } from "@mui/x-data-grid";
+import { Box } from "@mui/material";
 
 export default function GridArticuloPedido({
-  items,
-  setSelectedRow = () => {},      // para seleccionar uno (editar)
-  setSelectedRows = () => {},     // para seleccionar varios (imprimir)
-  presentaciones = []
+  // Datos
+  items = [],
+  presentaciones = [],
+
+  // Selección (simple + múltiple)
+  selectedRow = null,
+  setSelectedRow = () => {},
+  rowSelectionModel,                 // controlado (ids)
+  onRowSelectionModelChange,         // controlado
+  setSelectedRows = () => {},        // no controlado
+
+  // Paginación server-side (opcional)
+  loading = false,
+  rowCount,
+  paginationModel,                   // { page, pageSize } o { page, size }
+  onPaginationModelChange,
 }) {
-  const columns = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'cantidad', headerName: 'Cantidad', width: 120 },
-    { field: 'pedidoId', headerName: 'Pedido', width: 150 },
-    {
-  field: 'presentacionProductoId',
-  headerName: 'Presentación de producto',
-  width: 200,
-  valueGetter: (params) => {
-    const match = presentaciones.find(p => p.id === params.row.presentacionProductoId);
-    return match ? match.nombre : params.row.presentacionProductoId;
-  }
-},
-    {
-      field: 'estadoId',
-      headerName: 'Estado',
-      width: 120,
-      valueGetter: (params) => params.row.estadoId === 1 ? "Activo" : "Inactivo"
+  /* -------- Lookup presentaciones por id (O(1)) -------- */
+  const presById = useMemo(() => {
+    const m = {};
+    for (const p of presentaciones ?? []) {
+      m[String(p?.id)] = p?.nombre ?? p?.name ?? `Presentación ${p?.id ?? ""}`;
     }
-  ];
+    return m;
+  }, [presentaciones]);
+
+  /* -------- Columnas -------- */
+  const columns = useMemo(() => ([
+    { field: "id", headerName: "ID", width: 90, type: "number" },
+    { field: "cantidad", headerName: "Cantidad", width: 120, type: "number" },
+    { field: "pedidoId", headerName: "Pedido", width: 140, type: "number" },
+    {
+      field: "presentacionProductoId",
+      headerName: "Presentación de producto",
+      width: 240,
+      valueGetter: (p) =>
+        p?.row?.presentacionProducto?.nombre ??
+        p?.row?.presentacionProducto?.name ??
+        presById[String(p?.row?.presentacionProductoId)] ??
+        String(p?.row?.presentacionProductoId ?? ""),
+    },
+    {
+      field: "estadoId",
+      headerName: "Estado",
+      width: 130,
+      valueGetter: (p) =>
+        p?.row?.estado?.nombre ??
+        p?.row?.estado?.name ??
+        (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+    },
+  ]), [presById]);
+
+  /* -------- ¿Server o cliente? -------- */
+  const serverPaging = Boolean(
+    typeof rowCount === "number" &&
+    paginationModel &&
+    (typeof paginationModel.page === "number") &&
+    (typeof (paginationModel.pageSize ?? paginationModel.size) === "number") &&
+    typeof onPaginationModelChange === "function"
+  );
+
+  /* -------- Selección no controlada (fallback) -------- */
+  const handleLocalSelection = (ids) => {
+    const idSet = new Set(ids);
+    const selectedMany = (items ?? []).filter(r => idSet.has(r.id));
+    setSelectedRows(selectedMany);
+    setSelectedRow(selectedMany[0] ?? null);
+  };
 
   return (
-    <Box sx={{ height: 400, width: '100%' }}>
+    <Box sx={{ width: "100%" }}>
       <DataGrid
-        rows={items}
+        rows={Array.isArray(items) ? items : []}
         columns={columns}
-        checkboxSelection
-        pageSizeOptions={[5, 10, 15]}
         getRowId={(row) => row.id}
-        onRowSelectionModelChange={(ids) => {
-          const selectedMultiple = items.filter(row => ids.includes(row.id));
-          const selectedOne = selectedMultiple[0] || null;
+        loading={loading}
+        checkboxSelection
+        disableRowSelectionOnClick
+        autoHeight
 
-          setSelectedRows(selectedMultiple); 
-          setSelectedRow(selectedOne);       
-        }}
+        // Selección controlada / no controlada
+        rowSelectionModel={rowSelectionModel ?? undefined}
+        onRowSelectionModelChange={onRowSelectionModelChange ?? handleLocalSelection}
+        onRowClick={(params) => setSelectedRow?.(params.row)}
+
+        // Paginación
+        paginationMode={serverPaging ? "server" : "client"}
+        {...(serverPaging
+          ? {
+              rowCount,
+              paginationModel: {
+                page: paginationModel.page ?? 0,
+                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
+              },
+              onPaginationModelChange: (model) => {
+                const next = {
+                  page: model.page ?? 0,
+                  pageSize: model.pageSize ?? model.size ?? 10,
+                };
+                // normaliza a {page, size} si tu padre lo usa así
+                onPaginationModelChange?.({
+                  page: next.page,
+                  size: next.pageSize,
+                  pageSize: next.pageSize,
+                });
+              },
+            }
+          : {
+              pageSizeOptions: [5, 10, 15, 20, 50],
+              initialState: { pagination: { paginationModel: { page: 0, pageSize: 5 } } },
+            })}
       />
     </Box>
   );
 }
+
+GridArticuloPedido.propTypes = {
+  items: PropTypes.array,
+  presentaciones: PropTypes.array,
+
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
+  rowSelectionModel: PropTypes.array,
+  onRowSelectionModelChange: PropTypes.func,
+  setSelectedRows: PropTypes.func,
+
+  loading: PropTypes.bool,
+  rowCount: PropTypes.number,
+  paginationModel: PropTypes.shape({
+    page: PropTypes.number,
+    pageSize: PropTypes.number,
+    size: PropTypes.number,
+  }),
+  onPaginationModelChange: PropTypes.func,
+};

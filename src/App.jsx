@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  CssBaseline,
-  Container,
-  Toolbar,
-  Paper,
-} from '@mui/material';
+import { Box, CssBaseline, Container, Toolbar, Paper } from '@mui/material';
 
 import { useThemeToggle } from './components/dashboard/ThemeToggleProvider';
 import { useTranslation } from 'react-i18next';
 import './i18n.js';
 import './index.css';
+import { useLocation } from 'react-router-dom';
 
 import AppBarComponent from './components/dashboard/AppBarComponent.jsx';
 import Copyright from './components/dashboard/Copyright';
@@ -18,7 +13,7 @@ import Inicio from './components/Inicio.jsx';
 import Contenido from './components/dashboard/Contenido.jsx';
 import Navigator2 from './components/dashboard/Navigator2.jsx';
 
-// Importación de los 45 módulos
+// Módulos
 import Persona from "./components/personas/Persona.jsx";
 import Pais from './components/pais/Pais';
 import Departamento from './components/departamento/Departamento';
@@ -64,6 +59,9 @@ import RE_kardex from './components/RKardex/Rkardex.jsx';
 import RE_productoVencimiento from './components/RE_pv/re_pvn.jsx';
 import RE_ordenCompra from './components/RE_oc/re_oc.jsx';
 import RE_fc from './components/RE_fc/re_fc.jsx';
+import Verify from './components/Verify.jsx';
+import FormRegistroPersona from "./components/seguridad/FormRegistroPersona";
+import FormRegistroEmpresa from '../components/seguridad/FormRegistroEmpresa.jsx';
 
 const moduleMap = {
   persona: Persona,
@@ -113,10 +111,12 @@ const moduleMap = {
   re_fc: RE_fc
 };
 
-const App = () => {
-  const { t } = useTranslation();
-  const toggleTheme = useThemeToggle();
+const APPBAR_GREEN = '#0F2327';
 
+const App = () => {
+  useTranslation();
+  useThemeToggle();
+  const location = useLocation();
   const [currentModule, setCurrentModule] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(() => {
@@ -124,90 +124,173 @@ const App = () => {
     return saved ? JSON.parse(saved) : true;
   });
 
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  const expiresAt = localStorage.getItem('token_expiration');
-  const isTokenValid = token && expiresAt && Date.now() < Number(expiresAt);
+  useEffect(() => {
+    const hasValidToken = () => {
+      const token = localStorage.getItem('token');
+      const exp = Number(localStorage.getItem('token_expiration'));
+      return Boolean(token && exp && Date.now() < exp);
+    };
 
-  if (isTokenValid) {
-    setIsAuthenticated(true);
-
-    const savedModule = localStorage.getItem('activeModule'); // <-- ESTA LÍNEA FALTABA
-
-    if (savedModule && moduleMap[savedModule]) {
-      const Component = moduleMap[savedModule];
-      setCurrentModule(<Component />);
-    } else {
-      setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
+    // 1) Verify por URL
+    if (location.pathname.startsWith('/coagronet/auth/verify')) {
+      setIsAuthenticated(false);
+      setCurrentModule(<Verify />);
+      return;
     }
-  } else {
-    localStorage.removeItem('token');
-    localStorage.removeItem('token_expiration');
-    localStorage.removeItem('activeModule');
-    setIsAuthenticated(false);
-    setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />)
-  }
-}, []);
 
+    // 1.1) Onboarding por ruta — SIN MENÚ
+    if (location.pathname.startsWith('/coagronet/onboarding/persona')) {
+      if (hasValidToken()) {
+        setIsAuthenticated(false); // 👈 clave: modo público
+        setCurrentModule(<FormRegistroPersona setCurrentModule={setCurrentModule} />);
+      } else {
+        setIsAuthenticated(false);
+        setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+      }
+      return;
+    }
+
+    if (location.pathname.startsWith('/coagronet/onboarding/empresa')) {
+      if (hasValidToken()) {
+        setIsAuthenticated(false); // 👈 clave: modo público
+        setCurrentModule(<FormRegistroEmpresa setCurrentModule={setCurrentModule} />);
+      } else {
+        setIsAuthenticated(false);
+        setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+      }
+      return;
+    }
+
+    // 2) /dashboard
+    if (location.pathname === '/dashboard') {
+      if (hasValidToken()) {
+        setIsAuthenticated(true);
+        setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
+        return;
+      }
+      setIsAuthenticated(false);
+      setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+      return;
+    }
+
+    // 3) Flujo normal
+    if (hasValidToken()) {
+      const savedModule = localStorage.getItem('activeModule');
+
+      // 🔒 Onboarding sin menú si quedó activo por localStorage
+      if (savedModule === 'form_registro_persona') {
+        setIsAuthenticated(false);
+        setCurrentModule(<FormRegistroPersona setCurrentModule={setCurrentModule} />);
+        return;
+      }
+      if (savedModule === 'form_registro_empresa') {
+        setIsAuthenticated(false);
+        setCurrentModule(<FormRegistroEmpresa setCurrentModule={setCurrentModule} />);
+        return;
+      }
+
+      // ✅ Autenticado normal con menú
+      setIsAuthenticated(true);
+      if (savedModule && moduleMap[savedModule]) {
+        const Component = moduleMap[savedModule];
+        setCurrentModule(<Component setCurrentModule={setCurrentModule} />);
+      } else {
+        setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
+      }
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('token_expiration');
+      localStorage.removeItem('activeModule');
+      setIsAuthenticated(false);
+      setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+    }
+  }, [location.pathname]);
+
+  const isPublic = !isAuthenticated;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <CssBaseline />
-      {isAuthenticated && (
-      <Navigator2
-        setCurrentModuleItem={setCurrentModule}
-        setMenuOpen={setMenuOpen}
-        isAuthenticated={isAuthenticated}
-       />
-    )}
 
+      {/* Menú solo si está autenticado */}
+      {isAuthenticated && (
+        <Navigator2
+          setCurrentModuleItem={setCurrentModule}
+          setMenuOpen={setMenuOpen}
+          isAuthenticated={isAuthenticated}
+        />
+      )}
 
       <Box
+        id="app-main"
         component="main"
         sx={{
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          ml: isAuthenticated ? {
-            xs: menuOpen ? '200px' : '60px',
-            sm: menuOpen ? '220px' : '70px',
-            md: menuOpen ? '250px' : '70px',
-          } : 0,
+          ml: isAuthenticated
+            ? {
+                xs: menuOpen ? '200px' : '60px',
+                sm: menuOpen ? '220px' : '70px',
+                md: menuOpen ? '250px' : '70px',
+              }
+            : 0,
           transition: 'margin-left 0.3s ease',
+          bgcolor: 'transparent',
         }}
       >
         <AppBarComponent
-  key={isAuthenticated}
-  setCurrentModule={setCurrentModule}
-  setIsAuthenticated={setIsAuthenticated}
-  isAuthenticated={isAuthenticated}
-/>
-        <Toolbar />
-          <Container
-          maxWidth="lg"
+          key={isAuthenticated}
+          setCurrentModule={setCurrentModule}
+          setIsAuthenticated={setIsAuthenticated}
+          isAuthenticated={isAuthenticated}
+        />
+
+        <Toolbar
+          disableGutters
           sx={{
-            flex: 1,
-            py: 1,
-            px: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
+            bgcolor: APPBAR_GREEN,
+            boxShadow: 'none',
+            border: 0,
           }}
-        >
-          <Paper
-            elevation={3}
+        />
+
+        {isPublic ? (
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {currentModule}
+            <Box sx={{ py: 2 }}>
+              <Copyright />
+            </Box>
+          </Box>
+        ) : (
+          <Container
+            maxWidth="lg"
+            disableGutters
             sx={{
-              p: 2,
-              width: '100%',
-              overflow: 'auto',
-              minHeight: 'calc(100vh - 160px)',
-              maxWidth: '100%',
+              flex: 1,
+              py: 1,
+              px: { xs: 1, sm: 2 },
+              display: 'flex',
+              flexDirection: 'column',
+              bgcolor: 'transparent',
             }}
           >
-            {currentModule}
-          </Paper>
-          <Copyright sx={{ pt: 2 }} />
-        </Container>
+            <Box
+              sx={{
+                flex: 1,
+                width: '100%',
+                minHeight: 'calc(100vh - 160px)',
+                overflow: 'auto',
+                bgcolor: 'transparent',
+              }}
+            >
+              {currentModule}
+            </Box>
+            <Box sx={{ pt: 2 }}>
+              <Copyright />
+            </Box>
+          </Container>
+        )}
       </Box>
     </Box>
   );
