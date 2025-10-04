@@ -133,6 +133,10 @@ public class OrdenCompraService {
 
 	@Transactional
 	public void validarEstadoDeEntrega(Long ordenCompraId, Long empresaId){
+		if (ordenCompraId == null) {
+			log.info("⏭️ Kardex sin orden de compra asociada, no se valida estado de entrega.");
+			return;
+		}
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
 		Estado estadoEntregaParcial = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_PARCIAL);
 		Estado estadoEntregaTotal = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_TOTAL);
@@ -178,9 +182,8 @@ public class OrdenCompraService {
 
 		if (nuevoEstado != null && !ordenCompra.getEstado().equals(nuevoEstado)) {
 			ordenCompra.setEstado(nuevoEstado);
-			log.info("🔄 Nuevo estado calculado: {}", nuevoEstado != null ? nuevoEstado.getId() : "null");
 			ordenCompraRepository.save(ordenCompra);
-			log.info("✅ Estado de OC actualizado a {}", nuevoEstado.getId());
+			log.info(" Estado de OC actualizado a {}", nuevoEstado.getId());
 
 		}
 

@@ -3,6 +3,7 @@ package com.coagronet.validator;
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
+import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.subseccion.Subseccion;
 import com.coagronet.tipoProduccion.TipoProduccion;
 import com.coagronet.estado.Estado;
@@ -36,6 +37,7 @@ public class EntidadValidatorFacade {
     private final TipoProduccionValidator tipoProduccionValidator;
     private final EspacioValidator espacioValidator;
     private final SubseccionValidator subseccionValidator;
+    private final ProductoPresentacionValidator productoPresentacionValidator;
 
     public Empresa validarEmpresa(Long empresaId) {
         return empresaValidator.validarEmpresa(empresaId);
@@ -107,6 +109,9 @@ public class EntidadValidatorFacade {
 
     public Kardex validarKardexPorOrdenCompra(Long ordenCompraId, Long empresaId){
         return kardexValidator.validarKardexPorOrdenCompra(ordenCompraId, empresaId);
+    }
+    public PresentacionProducto validarProductoPresentacion(Long productoPresentacionId, Long empresaId){
+        return productoPresentacionValidator.validarProductoPresentacion(productoPresentacionId, empresaId);
     }
 
 }
