@@ -47,9 +47,7 @@ public class OrdenCompraService {
 	private final UserEmpresaService userEmpresaService;
 	private final EntidadValidatorFacade entidadValidatorFacade;
 	private final ArticuloOrdenCompraRepository articuloOrdenCompraRepository;
-	private final ArticuloPedidoRepository articuloPedidoRepository;
 	private final ArticuloKardexRepository articuloKardexRepository;
-	private final KardexRepository kardexRepository;
 
 	public Page<OrdenCompraDTO> findAll(Pageable pageable) {
 		return ordenCompraRepository

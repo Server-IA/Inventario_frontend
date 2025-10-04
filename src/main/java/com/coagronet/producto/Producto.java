@@ -2,7 +2,6 @@ package com.coagronet.producto;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
-import com.coagronet.ingredientePresentacionProducto.IngredientePresentacionProducto;
 import com.coagronet.productoCategoria.ProductoCategoria;
 
 import com.coagronet.unidad.Unidad;
