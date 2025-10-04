@@ -2,6 +2,7 @@ package com.coagronet.kardex.services;
 
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
+import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.NotFoundException;
@@ -84,12 +85,14 @@ public class KardexService {
 		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(),
 				empresaId);
 		Pedido pedido = entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId);
+		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(kardexDTO.getOrdenCompraId(), empresaId);
 
 		kardex.setEstado(estado);
 		kardex.setAlmacen(almacen);
 		kardex.setProduccion(produccion);
 		kardex.setTipoMovimiento(tipoMovimiento);
 		kardex.setPedido(pedido);
+		kardex.setOrdenCompra(ordenCompra);
 
 		if (kardexDTO.getClienteProveedorId() != null) {
 			Empresa clienteProveedor = entidadValidatorFacade

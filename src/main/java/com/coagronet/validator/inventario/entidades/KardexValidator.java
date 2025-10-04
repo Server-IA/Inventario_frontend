@@ -17,4 +17,10 @@ public class KardexValidator {
                 .orElseThrow(() -> new NotFoundException("kardex.not-found", kardexId));
     }
 
+    public Kardex validarKardexPorOrdenCompra(Long ordenCompraId, Long empresaId) {
+        return kardexRepository.findByOrdenCompraIdAndEmpresaId(ordenCompraId, empresaId)
+                .orElseThrow(() -> new NotFoundException("kardex.not-found", ordenCompraId));
+    }
+
+
 }

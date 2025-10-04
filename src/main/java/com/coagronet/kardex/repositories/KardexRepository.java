@@ -1,6 +1,6 @@
 package com.coagronet.kardex.repositories;
 
-import java.util.List;
+
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -15,6 +15,6 @@ public interface KardexRepository extends JpaRepository<Kardex, Long> {
 
 	Page<Kardex> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
-	Kardex findByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId );
+	Optional<Kardex> findByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId );
 
 }
