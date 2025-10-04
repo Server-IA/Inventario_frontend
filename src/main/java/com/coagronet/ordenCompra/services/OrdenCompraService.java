@@ -1,8 +1,15 @@
 package com.coagronet.ordenCompra.services;
 
+import com.coagronet.articuloKardex.ArticuloKardex;
+import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
+import com.coagronet.articuloOrdenCompra.ArticuloOrdenCompra;
+import com.coagronet.articuloOrdenCompra.repositories.ArticuloOrdenCompraRepository;
+import com.coagronet.articuloPedido.repositories.ArticuloPedidoRepository;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.kardex.Kardex;
+import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.constantes.OrdenCompraConstantes;
 import com.coagronet.ordenCompra.constantes.PedidoConstantes;
@@ -11,6 +18,7 @@ import com.coagronet.pedido.Pedido;
 import com.coagronet.pedido.repositories.PedidoRepository;
 import com.coagronet.proveedor.Proveedor;
 import com.coagronet.validator.EntidadValidatorFacade;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,17 +32,24 @@ import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class OrdenCompraService {
 
 	private final OrdenCompraRepository ordenCompraRepository;
 	private final PedidoRepository pedidoRepository;
-
 	private final OrdenCompraMapper ordenCompraMapper;
-
 	private final UserEmpresaService userEmpresaService;
 	private final EntidadValidatorFacade entidadValidatorFacade;
+	private final ArticuloOrdenCompraRepository articuloOrdenCompraRepository;
+	private final ArticuloPedidoRepository articuloPedidoRepository;
+	private final ArticuloKardexRepository articuloKardexRepository;
+	private final KardexRepository kardexRepository;
 
 	public Page<OrdenCompraDTO> findAll(Pageable pageable) {
 		return ordenCompraRepository
@@ -117,14 +132,58 @@ public class OrdenCompraService {
 	}
 
 	@Transactional
-	public void entregaParcial(Long ordenCompraId){
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-
+	public void validarEstadoDeEntrega(Long ordenCompraId, Long empresaId){
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
-		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_PARCIAL);
+		Estado estadoEntregaParcial = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_PARCIAL);
+		Estado estadoEntregaTotal = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_TOTAL);
+		Kardex kardex = entidadValidatorFacade.validarKardexPorOrdenCompra(ordenCompraId, empresaId);
+		List<ArticuloOrdenCompra> articulosOC = articuloOrdenCompraRepository.findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(empresaId, ordenCompraId);
+		List<ArticuloKardex> articulosKardex = articuloKardexRepository.findByEmpresaIdAndKardexIdOrderByIdAsc(empresaId, kardex.getId());
+
+		Map<Long, Double> cantidadesRecepcionadas = articulosKardex.stream()
+				.collect(Collectors.groupingBy(
+						ak -> ak.getPresentacionProducto().getId(),
+						Collectors.summingDouble(ArticuloKardex::getCantidad)
+				));
+
+		boolean hayParcial = false;
+		boolean todosCompletos = true;
+		boolean todosEnCero = true;
+
+		log.info("Estado actual OC antes del cambio: {}", ordenCompra.getEstado().getId());
 
 
-		
+		for (ArticuloOrdenCompra aoc : articulosOC) {
+			Double solicitado = aoc.getCantidad();
+			Double recibido = cantidadesRecepcionadas.getOrDefault(aoc.getPresentacionProducto().getId(), 0.0);
+
+			if (recibido > 0) {
+				todosEnCero = false;
+			}
+			if (recibido < solicitado) {
+				todosCompletos = false;
+				if (recibido > 0) {
+					hayParcial = true;
+				}
+			}
+		}
+		log.info("📦 Articulos Kardex encontrados: {}", articulosKardex.size());
+
+		Estado nuevoEstado = null;
+		if (todosCompletos && !todosEnCero) {
+			nuevoEstado = estadoEntregaTotal;
+		} else if (hayParcial) {
+			nuevoEstado = estadoEntregaParcial;
+		}
+
+		if (nuevoEstado != null && !ordenCompra.getEstado().equals(nuevoEstado)) {
+			ordenCompra.setEstado(nuevoEstado);
+			log.info("🔄 Nuevo estado calculado: {}", nuevoEstado != null ? nuevoEstado.getId() : "null");
+			ordenCompraRepository.save(ordenCompra);
+			log.info("✅ Estado de OC actualizado a {}", nuevoEstado.getId());
+
+		}
+
 	}
 
 }

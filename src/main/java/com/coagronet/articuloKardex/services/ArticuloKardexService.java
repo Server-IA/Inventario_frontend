@@ -5,7 +5,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
+import com.coagronet.kardex.Kardex;
+import com.coagronet.ordenCompra.services.OrdenCompraService;
 import com.coagronet.presentacionProducto.PresentacionProducto;
+import com.coagronet.validator.EntidadValidatorFacade;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,22 +25,21 @@ import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class ArticuloKardexService {
 
 	private final UserEmpresaService userEmpresaService;
-
 	private final ArticuloKardexMapper articuloKardexMapper;
-
 	private final ArticuloKardexRepository articuloKardexRepository;
-
 	private final KardexRepository kardexRepository;
-
 	private final PresentacionProductoRepository presentacionProductoRepository;
-
 	private final EstadoRepository estadoRepository;
+	private final ApplicationEventPublisher eventPublisher;
+	private final EntidadValidatorFacade entidadValidatorFacade;
+	private final OrdenCompraService ordenCompraService;
 
 	public Page<ArticuloKardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
@@ -58,6 +61,7 @@ public class ArticuloKardexService {
 			.map(articuloKardexMapper::toListDTO);
 	}
 
+	@Transactional
 	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		kardexRepository
@@ -98,6 +102,9 @@ public class ArticuloKardexService {
 
 		ArticuloKardex entidad = articuloKardexMapper.toEntity(articuloKardexDTO);
 		ArticuloKardex guardado = articuloKardexRepository.save(entidad);
+
+		Kardex kardex = entidadValidatorFacade.validarKardex(guardado.getKardex().getId(), empresaId);
+		ordenCompraService.validarEstadoDeEntrega(kardex.getOrdenCompra().getId(), empresaId);
 		return articuloKardexMapper.toDTO(guardado);
 	}
 

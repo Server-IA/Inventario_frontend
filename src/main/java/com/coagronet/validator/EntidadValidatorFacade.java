@@ -105,6 +105,9 @@ public class EntidadValidatorFacade {
         return subseccionValidator.validarSubseccion(subseccionId, empresaId);
     }
 
+    public Kardex validarKardexPorOrdenCompra(Long ordenCompraId, Long empresaId){
+        return kardexValidator.validarKardexPorOrdenCompra(ordenCompraId, empresaId);
+    }
 
 }
 

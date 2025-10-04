@@ -13,5 +13,6 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
 	Page<OrdenCompra> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
 	Optional<OrdenCompra> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<OrdenCompra> findByPedidoIdAndEmpresaId(Long pedidoId, Long empresaId);
 
 }
