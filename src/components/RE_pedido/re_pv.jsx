@@ -172,7 +172,6 @@ export default function RE_pedido() {
     return Object.fromEntries(parts.map((v, i) => [String(i), v]));
   };
 
-  // ======= GENERAR REPORTE (PDF) -> SOLO /v2/report/nuevo/pedido con { condicion: { ... } } =======
   const generarReporte = async () => {
     if (!validarRango()) return;
 

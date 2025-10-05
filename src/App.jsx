@@ -61,7 +61,7 @@ import RE_ordenCompra from './components/RE_oc/re_oc.jsx';
 import RE_fc from './components/RE_fc/re_fc.jsx';
 import Verify from './components/Verify.jsx';
 import FormRegistroPersona from "./components/seguridad/FormRegistroPersona";
-import FormRegistroEmpresa from '../components/seguridad/FormRegistroEmpresa.jsx';
+import FormRegistroEmpresa from './components/seguridad/FormRegistroEmpresa.jsx';
 
 const moduleMap = {
   persona: Persona,
