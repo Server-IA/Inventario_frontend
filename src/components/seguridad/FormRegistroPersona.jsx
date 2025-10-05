@@ -3,7 +3,7 @@ import {
   Button, TextField, FormControl, InputLabel, MenuItem, Select,
   Typography, Box, Container, useTheme
 } from '@mui/material';
-import FormRegistroEmpresa from './formRegistroEmpresa';
+import FormRegistroEmpresa from "../seguridad/FormRegistroEmpresa";
 import { Grid, Alert } from '@mui/material';
 import axios from "../axiosConfig";
 
