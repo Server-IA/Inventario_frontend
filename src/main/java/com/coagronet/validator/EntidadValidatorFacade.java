@@ -1,8 +1,10 @@
 package com.coagronet.validator;
 
 import com.coagronet.almacen.Almacen;
+import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
+import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.subseccion.Subseccion;
 import com.coagronet.tipoProduccion.TipoProduccion;
@@ -38,6 +40,7 @@ public class EntidadValidatorFacade {
     private final EspacioValidator espacioValidator;
     private final SubseccionValidator subseccionValidator;
     private final ProductoPresentacionValidator productoPresentacionValidator;
+    private final ArticuloKardexValidator articuloKardexValidator;
 
     public Empresa validarEmpresa(Long empresaId) {
         return empresaValidator.validarEmpresa(empresaId);
@@ -112,6 +115,10 @@ public class EntidadValidatorFacade {
     }
     public PresentacionProducto validarProductoPresentacion(Long productoPresentacionId, Long empresaId){
         return productoPresentacionValidator.validarProductoPresentacion(productoPresentacionId, empresaId);
+    }
+
+    public ArticuloKardex validarArticuloKardex(Long articuloKardexId, Long empresaId){
+        return articuloKardexValidator.validarArticuloKardex(articuloKardexId, empresaId);
     }
 
 }

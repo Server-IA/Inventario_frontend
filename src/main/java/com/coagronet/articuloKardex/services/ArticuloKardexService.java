@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
+import com.coagronet.articuloKardex.services.factory.ArticuloKardexFactory;
+import com.coagronet.estado.Estado;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.ordenCompra.services.OrdenCompraService;
 import com.coagronet.presentacionProducto.PresentacionProducto;
@@ -39,6 +41,7 @@ public class ArticuloKardexService {
 	private final EstadoRepository estadoRepository;
 	private final EntidadValidatorFacade entidadValidatorFacade;
 	private final OrdenCompraService ordenCompraService;
+	private final ArticuloKardexFactory articuloKardexFactory;
 
 	public Page<ArticuloKardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
@@ -68,80 +71,32 @@ public class ArticuloKardexService {
 		entidadValidatorFacade.validarEstadoGeneral(articuloKardexDTO.getEstadoId());
 		entidadValidatorFacade.validarProductoPresentacion(articuloKardexDTO.getPresentacionProductoId(), empresaId);
 
-		List<ArticuloKardex> guardados;
+		List<ArticuloKardex> guardados = articuloKardexFactory.crearArticulos(articuloKardexDTO, empresaId);
 
-		if (esDesgregado(articuloKardexDTO, empresaId)) {
-			guardados = crearArticulosDesgregados(articuloKardexDTO, empresaId);
-		} else {
-			articuloKardexDTO.setEmpresaId(empresaId);
-			ArticuloKardex entidad = articuloKardexMapper.toEntity(articuloKardexDTO);
-			guardados = List.of(articuloKardexRepository.save(entidad));
-		}
 		Long ordenCompraId = (kardex.getOrdenCompra() != null) ? kardex.getOrdenCompra().getId() : null;
 		ordenCompraService.validarEstadoDeEntrega(ordenCompraId, empresaId);
 
 		return articuloKardexMapper.toDTO(guardados.getLast());
 	}
 
-	private boolean esDesgregado(ArticuloKardexDTO dto, Long empresaId) {
-		return presentacionProductoRepository.findByIdAndEmpresaId(dto.getPresentacionProductoId(), empresaId)
-				.map(PresentacionProducto::getDesgregar)
-				.orElse(false);
-	}
 
-	private List<ArticuloKardex> crearArticulosDesgregados(ArticuloKardexDTO dto, Long empresaId) {
-		double cantidad = dto.getCantidad();
-		long unidades = Math.round(cantidad);
-
-		if (Math.abs(cantidad - unidades) > 1e-9) {
-			throw new BadRequestException("Para presentaciones desgregadas, la cantidad debe ser un número entero.");
-		}
-
-		List<ArticuloKardex> creados = new ArrayList<>();
-		for (int i = 0; i < unidades; i++) {
-			ArticuloKardexDTO item = construirArticuloKardexUnitario(dto, empresaId);
-			ArticuloKardex entidad = articuloKardexMapper.toEntity(item);
-			creados.add(articuloKardexRepository.save(entidad));
-		}
-		return creados;
-	}
-
-	private static ArticuloKardexDTO construirArticuloKardexUnitario(ArticuloKardexDTO articuloKardexDTO, Long empresaId) {
-		ArticuloKardexDTO item = new ArticuloKardexDTO();
-		item.setEmpresaId(empresaId);
-		item.setKardexId(articuloKardexDTO.getKardexId());
-		item.setPresentacionProductoId(articuloKardexDTO.getPresentacionProductoId());
-		item.setEstadoId(articuloKardexDTO.getEstadoId());
-
-		item.setCantidad(1.0);
-
-		item.setPrecio(articuloKardexDTO.getPrecio());
-		item.setFechaVencimiento(articuloKardexDTO.getFechaVencimiento());
-		item.setIdentificadorProducto(articuloKardexDTO.getIdentificadorProducto());
-		item.setLote(articuloKardexDTO.getLote());
-		return item;
-	}
-
+	@Transactional
 	public void update(Long requestedId, ArticuloKardexDTO articuloKardexDTO) {
-		articuloKardexRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		kardexRepository
-			.findByIdAndEmpresaId(articuloKardexDTO.getKardexId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El kardex no es válido."));
+		ArticuloKardex articuloKardexExistente = entidadValidatorFacade.validarArticuloKardex(requestedId, empresaId);
 
-		presentacionProductoRepository
-			.findByIdAndEmpresaId(articuloKardexDTO.getPresentacionProductoId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La presentación de producto no es válida."));
+		Kardex kardex = entidadValidatorFacade.validarKardex(articuloKardexDTO.getKardexId(), empresaId);
 
-		estadoRepository.findById(articuloKardexDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido."));
+		PresentacionProducto presentacion =entidadValidatorFacade.validarProductoPresentacion(articuloKardexDTO.getPresentacionProductoId(), empresaId);
 
-		articuloKardexDTO.setId(requestedId);
-		articuloKardexDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(articuloKardexDTO.getEstadoId());
 
-		articuloKardexRepository.save(articuloKardexMapper.toEntity(articuloKardexDTO));
+		articuloKardexExistente.setKardex(kardex);
+		articuloKardexExistente.setPresentacionProducto(presentacion);
+		articuloKardexExistente.setEstado(estado);
+
+		articuloKardexRepository.save(articuloKardexExistente);
 	}
 
 	public void delete(Long id) {

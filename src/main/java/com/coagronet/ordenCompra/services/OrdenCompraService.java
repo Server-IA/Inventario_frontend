@@ -4,12 +4,10 @@ import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.articuloOrdenCompra.ArticuloOrdenCompra;
 import com.coagronet.articuloOrdenCompra.repositories.ArticuloOrdenCompraRepository;
-import com.coagronet.articuloPedido.repositories.ArticuloPedidoRepository;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.constantes.OrdenCompraConstantes;
 import com.coagronet.ordenCompra.constantes.PedidoConstantes;
@@ -33,8 +31,6 @@ import com.coagronet.utils.UserEmpresaService;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +44,7 @@ public class OrdenCompraService {
 	private final EntidadValidatorFacade entidadValidatorFacade;
 	private final ArticuloOrdenCompraRepository articuloOrdenCompraRepository;
 	private final ArticuloKardexRepository articuloKardexRepository;
+	private final OrdenCompraEstadoCalculator ordenCompraEstadoCalculator;
 
 	public Page<OrdenCompraDTO> findAll(Pageable pageable) {
 		return ordenCompraRepository
@@ -94,7 +91,6 @@ public class OrdenCompraService {
 		Proveedor proveedor = entidadValidatorFacade.validarProveedor(ordenCompraDTO.getProveedorId(), empresaId);
 		Estado estado = entidadValidatorFacade.validarEstadoParaOrdenCompra(ordenCompraDTO.getEstadoId());
 
-
 		ordenCompra.setDescripcion(ordenCompraDTO.getDescripcion());
 		ordenCompra.setFechaHora(ordenCompraDTO.getFechaHora());
 		ordenCompra.setPedido(pedido);
@@ -136,54 +132,19 @@ public class OrdenCompraService {
 			return;
 		}
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
-		Estado estadoEntregaParcial = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_PARCIAL);
-		Estado estadoEntregaTotal = entidadValidatorFacade.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGA_TOTAL);
 		Kardex kardex = entidadValidatorFacade.validarKardexPorOrdenCompra(ordenCompraId, empresaId);
 		List<ArticuloOrdenCompra> articulosOC = articuloOrdenCompraRepository.findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(empresaId, ordenCompraId);
 		List<ArticuloKardex> articulosKardex = articuloKardexRepository.findByEmpresaIdAndKardexIdOrderByIdAsc(empresaId, kardex.getId());
 
-		Map<Long, Double> cantidadesRecepcionadas = articulosKardex.stream()
-				.collect(Collectors.groupingBy(
-						ak -> ak.getPresentacionProducto().getId(),
-						Collectors.summingDouble(ArticuloKardex::getCantidad)
-				));
-
-		boolean hayParcial = false;
-		boolean todosCompletos = true;
-		boolean todosEnCero = true;
-
-		log.info("Estado actual OC antes del cambio: {}", ordenCompra.getEstado().getId());
-
-
-		for (ArticuloOrdenCompra aoc : articulosOC) {
-			Double solicitado = aoc.getCantidad();
-			Double recibido = cantidadesRecepcionadas.getOrDefault(aoc.getPresentacionProducto().getId(), 0.0);
-
-			if (recibido > 0) {
-				todosEnCero = false;
-			}
-			if (recibido < solicitado) {
-				todosCompletos = false;
-				if (recibido > 0) {
-					hayParcial = true;
-				}
-			}
-		}
-		log.info("📦 Articulos Kardex encontrados: {}", articulosKardex.size());
-
-		Estado nuevoEstado = null;
-		if (todosCompletos && !todosEnCero) {
-			nuevoEstado = estadoEntregaTotal;
-		} else if (hayParcial) {
-			nuevoEstado = estadoEntregaParcial;
-		}
+		Estado nuevoEstado = ordenCompraEstadoCalculator.calcularNuevoEstado(articulosOC, articulosKardex);
 
 		if (nuevoEstado != null && !ordenCompra.getEstado().equals(nuevoEstado)) {
 			ordenCompra.setEstado(nuevoEstado);
 			ordenCompraRepository.save(ordenCompra);
-			log.info(" Estado de OC actualizado a {}", nuevoEstado.getId());
-
+			log.info("✅ Estado de OC actualizado a {}", nuevoEstado.getId());
 		}
+
+
 
 	}
 
