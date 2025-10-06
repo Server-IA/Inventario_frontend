@@ -36,7 +36,7 @@ export default function RE_pedido() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // ===== Hook unificado: ubicación + filtros de pedido (LOS 4 CAMPOS) =====
+  // ===== Hook unificado: ubicación + filtros de pedido (pedido_id, fechas, etc.) =====
   const {
     // ubicación
     form: ubi,
@@ -44,15 +44,16 @@ export default function RE_pedido() {
     data: ubiData,
     resetTodo,
 
-    // pedido (dentro del hook)
+    // pedido (estado local del hook)
     pedido,
     setPedido,
     handlePedidoChange,
     pedidos,
-    categoriasEstado,
+    // ignoraremos 'categoriasEstado' del hook si existiera
   } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
 
-  // ===== estado UI (no filtros)
+  // ===== Estados adicionales de la UI =====
+  const [pedidoEstados, setPedidoEstados] = useState([]);          // <<--- AQUÍ cargamos /v1/items/pedido_estado/0
   const [pedidoData, setPedidoData] = useState(null);
   const [articulos, setArticulos] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
@@ -63,14 +64,19 @@ export default function RE_pedido() {
   const [errors, setErrors] = useState({ fechas_rango: false });
   const [openUbi, setOpenUbi] = useState(false);
 
-  // combos (compatibilidad por si algo no llegó aún del hook; no rompe si ya están)
+  // Cargar combos base
   useEffect(() => {
     if (!pedidos?.length) {
       axios.get("/v1/pedido", headers).catch(() => {});
     }
-    if (!categoriasEstado?.length) {
-      axios.get("/v1/items/pedido_estado/0", headers).catch(() => {});
-    }
+    // Estados del pedido (shape: [{id, name}])
+    axios
+      .get("/v1/items/pedido_estado/0", headers)
+      .then((r) => {
+        const list = Array.isArray(r.data) ? r.data : [];
+        setPedidoEstados(list);
+      })
+      .catch(() => setPedidoEstados([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,7 +107,7 @@ export default function RE_pedido() {
 
     if (!validarRango()) return;
 
-    // Sin pedido -> lista de pedidos en tabla con posible rango de fecha
+    // Sin pedido -> lista
     if (!pedido.pedido_id) {
       try {
         const r = await axios.get("/v1/pedido", headers);
@@ -145,19 +151,22 @@ export default function RE_pedido() {
     }
   };
 
-  // ==== Helper para armar el objeto condicion con índices "0", "1", ... ====
+  // ==== WHERE para el reporte (usa ped_estado_id) ====
   const buildCondicion = () => {
     const parts = [];
-    // 0: empresa obligatoria
+    // 0) empresa obligatoria (el backend reemplaza $EMPRESA_ID$)
     parts.push(`p.ped_empresa_id = $EMPRESA_ID$`);
 
-    // 1: pedido (opcional)
+    // 1) pedido (opcional)
     if (pedido.pedido_id) parts.push(`AND p.ped_id = ${Number(pedido.pedido_id)}`);
 
-    // 2: categoría estado (opcional)
-    if (pedido.categoria_estado_id) parts.push(`AND est.est_estado_categoria_id = ${Number(pedido.categoria_estado_id)}`);
+    // 2) estado del pedido (opcional)
+    if (pedido.pedido_estado_id) {
+      // Ajusta el alias si tu SQL usa otro (ej.: est.est_id) pero normalmente es p.ped_estado_id
+      parts.push(`AND p.ped_estado_id = ${Number(pedido.pedido_estado_id)}`);
+    }
 
-    // 3: fechas (opcional)
+    // 3) fechas (opcional)
     const fIni = fmtDate(pedido.fecha_inicio);
     const fFin = fmtDate(pedido.fecha_fin);
     if (fIni && fFin) {
@@ -168,7 +177,6 @@ export default function RE_pedido() {
       parts.push(`AND p.ped_fecha_hora <= "${fFin}"`);
     }
 
-    // Map a objeto indexado
     return Object.fromEntries(parts.map((v, i) => [String(i), v]));
   };
 
@@ -177,7 +185,7 @@ export default function RE_pedido() {
 
     try {
       const condicion = buildCondicion();
-      const payload = { condicion, EMPRESA_ID: empresaId }; // Si backend reemplaza $EMPRESA_ID$ de forma interna, EMPRESA_ID puede omitirse.
+      const payload = { condicion, EMPRESA_ID: empresaId };
 
       const res = await axios({
         url: "/v2/report/nuevo/pedido",
@@ -203,7 +211,7 @@ export default function RE_pedido() {
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>Reporte de Pedido</Typography>
 
-      {/* 4 campos (provienen del hook) */}
+      {/* Filtros principales */}
       <Grid container spacing={2} mb={2}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
@@ -225,17 +233,17 @@ export default function RE_pedido() {
 
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Categoría de estado</InputLabel>
+            <InputLabel>Estado del pedido</InputLabel>
             <Select
-              name="categoria_estado_id"
-              value={pedido.categoria_estado_id || ""}
-              label="Categoría de estado"
-              onChange={handlePedidoChange("categoria_estado_id")}
+              name="pedido_estado_id"
+              value={pedido.pedido_estado_id || ""}
+              label="Estado del pedido"
+              onChange={handlePedidoChange("pedido_estado_id")}
             >
-              {asArray(categoriasEstado).length ? (
-                asArray(categoriasEstado).map((c) => (
-                  <MenuItem key={c.id} value={String(c.id)}>
-                    {c.nombre ?? `Categoría ${c.id}`}
+              {pedidoEstados.length ? (
+                pedidoEstados.map((e) => (
+                  <MenuItem key={e.id} value={String(e.id)}>
+                    {e.name}
                   </MenuItem>
                 ))
               ) : (
@@ -283,7 +291,7 @@ export default function RE_pedido() {
         <Button variant="text" onClick={() => setOpenUbi(true)}>Filtros (ubicación)</Button>
       </Stack>
 
-      {/* Diálogo: filtros Ubicación + Pedido (reutilizable) */}
+      {/* Diálogo: filtros Ubicación + Pedido */}
       <UbicacionPedidoFilters
         variant="dialog"
         title="Filtros (ubicación + pedido)"
@@ -297,7 +305,7 @@ export default function RE_pedido() {
         // Pedido
         pedido={pedido}
         pedidos={pedidos}
-        categoriasEstado={categoriasEstado}
+        pedidoEstados={pedidoEstados}  
         handlePedidoChange={handlePedidoChange}
         fechasError={errors.fechas_rango}
         // Aplicar
@@ -344,6 +352,7 @@ export default function RE_pedido() {
                 <TableRow>
                   <TableCell>ID</TableCell>
                   <TableCell>Fecha/Hora</TableCell>
+                  <TableCell>Empresa</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
