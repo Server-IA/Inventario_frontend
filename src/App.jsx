@@ -132,10 +132,10 @@ const App = () => {
     };
 
     // 1) Verify por URL
-    if (location.pathname.startsWith('/coagronet/auth/verify')) {
-      setIsAuthenticated(false);
-      setCurrentModule(<Verify />);
-      return;
+    if (/\/auth\/verify(?:\/|$)/.test(location.pathname)) {
+    setIsAuthenticated(false);
+    setCurrentModule(<Verify key={location.search} />);
+    return;
     }
 
     // 1.1) Onboarding por ruta — SIN MENÚ
@@ -204,7 +204,7 @@ const App = () => {
       setIsAuthenticated(false);
       setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const isPublic = !isAuthenticated;
 
