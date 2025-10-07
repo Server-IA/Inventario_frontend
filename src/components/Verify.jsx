@@ -22,7 +22,7 @@ export default function Verify() {
   const [ok, setOk] = useState(null);
   const [msg, setMsg] = useState("");
   const [s, setS] = useState(6);
-  const base = import.meta.env.BASE_URL.replace(/\/$/, ""); // "/" ó "/coagronet"
+  const base = import.meta.env.BASE_URL.replace(/\/$/, ""); // "/"H/ ó "/coagronet"
   const to = (p) => `${base}${p.startsWith("/") ? p : `/${p}`}`;
 
 
@@ -69,7 +69,7 @@ export default function Verify() {
   useEffect(() => {
     if (ok !== true) return;
     const t = setTimeout(() => setS((x) => x - 1), 1000);
-    if (s <= 0) navigate("/login", { replace: true });
+    if (s <= 0) navigate("/coagronet/coagronet/login", { replace: true });
     return () => clearTimeout(t);
   }, [ok, s, navigate]);
 
@@ -88,7 +88,7 @@ export default function Verify() {
             <Alert severity="success" sx={{ width: "100%" }}>{msg}</Alert>
             <Chip label={`Redirigiendo en ${s}s…`} />
             <Stack direction="row" spacing={1}>
-              <Button variant="contained" onClick={() => navigate(to("/login"), { replace: true })}>
+              <Button variant="contained" onClick={() => navigate(to("/coagronet/login"), { replace: true })}>
                 Ir a Iniciar sesión
               </Button>
               <Button variant="text" onClick={() => navigate(to("/"), { replace: true })}>
@@ -103,7 +103,7 @@ export default function Verify() {
               Verifica que el enlace no haya expirado o ya haya sido usado.
             </Typography>
             <Stack direction="row" spacing={1}>
-             <Button variant="contained" onClick={() => navigate(to("/login"), { replace: true })}>
+             <Button variant="contained" onClick={() => navigate(to("/coagronet/login"), { replace: true })}>
                 Ir a Iniciar sesión
               </Button>
               <Button variant="text" onClick={() => navigate(to("/"), { replace: true })}>
