@@ -31,7 +31,6 @@ export default function FormProducto({
     descripcion: "",
     estadoId: "",
     unidadMinimaId: "",
-    ingredientePresentacionProductoId: "",
   }), []);
 
   const [formData, setFormData] = useState(initialForm);
@@ -58,13 +57,9 @@ export default function FormProducto({
       .then(res => setUnidades(toList(res.data)))
       .catch(() => setUnidades([]))
       .finally(() => setLoadingUnidades(false));
-
-    setLoadingIngr(true);
-    axios.get("/v1/items/producto_presentacion_ingrediente/0")
-      .then(res => setIngredientes(toList(res.data)))
-      .catch(() => setIngredientes([]))
-      .finally(() => setLoadingIngr(false));
-  }, []);
+      setLoadingIngr(false);
+      setIngredientes([]);
+      }, []);
 
   // Acciones
   const create = () => {
@@ -122,7 +117,6 @@ export default function FormProducto({
     if (!formData.descripcion.trim()) e.descripcion = "Campo requerido";
     if (!formData.estadoId) e.estadoId = "Campo requerido";
     if (!formData.unidadMinimaId) e.unidadMinimaId = "Campo requerido";
-    if (!formData.ingredientePresentacionProductoId) e.ingredientePresentacionProductoId = "Campo requerido";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -242,27 +236,6 @@ export default function FormProducto({
                     <FormHelperText>{errors.unidadMinimaId}</FormHelperText>
                   </FormControl>
                 </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small" error={!!errors.ingredientePresentacionProductoId}>
-                    <InputLabel>Ingrediente presentación</InputLabel>
-                    <Select
-                      name="ingredientePresentacionProductoId"
-                      value={formData.ingredientePresentacionProductoId}
-                      onChange={handleChange}
-                      label="Ingrediente presentación"
-                      MenuProps={MENU_PROPS}
-                      disabled={loadingIngr}
-                    >
-                      <MenuItem value="">Seleccione...</MenuItem>
-                      {ingredientes.map(i => (
-                        <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>{errors.ingredientePresentacionProductoId}</FormHelperText>
-                  </FormControl>
-                </Grid>
-
                 <Grid item xs={12} sm={4}>
                   <FormControl fullWidth size="small" error={!!errors.estadoId}>
                     <InputLabel>Estado</InputLabel>
