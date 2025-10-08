@@ -1,4 +1,3 @@
-// src/components/Unidad/GridUnidad.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";

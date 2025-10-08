@@ -10,7 +10,7 @@ export default function Marca() {
   const [marcas, setMarcas] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
 
-  // 👇 estados de paginación para DataGrid (0-based)
+  //  estados de paginación para DataGrid (0-based)
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [rowCount, setRowCount] = useState(0);

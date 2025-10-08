@@ -1,4 +1,3 @@
-// src/components/Marca/GridMarca.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid, GridToolbarContainer, GridToolbarFilterButton } from "@mui/x-data-grid";
