@@ -48,7 +48,6 @@ export default function Producto() {
           // ✅ Catálogos completos (no paginados)
           axios.get("/v1/items/producto_categoria/0"),
           axios.get("/v1/items/unidad/0"),
-          axios.get("/v1/items/producto_presentacion_ingrediente/0"),
         ]);
 
         // productos (Spring Page<>)
@@ -58,16 +57,13 @@ export default function Producto() {
         // catálogos (mapeados por name)
         const mapCategorias   = toMap(resCategorias?.data, "id", "name");
         const mapUnidades     = toMap(resUnidades?.data, "id", "name");
-        const mapIngredientes = toMap(resIngredientes?.data, "id", "name");
         const mapEstados = { 1: "Activo", 2: "Inactivo" }; // ajusta si tu backend usa otros IDs
 
         const productosConNombres = lista.map((p) => ({
           ...p,
           productoCategoriaNombre: mapCategorias[p.productoCategoriaId] || "(sin categoría)",
           unidadMinimaNombre: mapUnidades[p.unidadMinimaId] || "(sin unidad)",
-          estadoNombre: mapEstados[p.estadoId] || "(desconocido)",
-          ingredientePresentacionNombre:
-            mapIngredientes[p.ingredientePresentacionProductoId] || "(sin ingrediente)",
+          estadoNombre: mapEstados[p.estadoId] || "(desconocido)"
         }));
 
         setProductos(productosConNombres);

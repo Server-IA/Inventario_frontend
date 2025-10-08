@@ -50,16 +50,6 @@ export default function GridProducto({
         String(p?.row?.unidadMinimaId ?? ""),
     },
     {
-      field: "ingredientePresentacionNombre",
-      headerName: "Ingrediente presentación",
-      width: 240,
-      valueGetter: (p) =>
-        p?.row?.ingredientePresentacionNombre ??
-        p?.row?.ingredientePresentacion?.nombre ??
-        p?.row?.ingredientePresentacion?.name ??
-        String(p?.row?.ingredientePresentacionId ?? ""),
-    },
-    {
       field: "estadoNombre",
       headerName: "Estado",
       width: 140,
