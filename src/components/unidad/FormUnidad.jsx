@@ -7,7 +7,7 @@ import {
 import StackButtons from "../StackButtons";
 import BaseFormCampos from "../common/BaseFormCampos";
 import { validateCamposBase } from "../utils/validations";
-
+//
 export default function FormUnidad({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
