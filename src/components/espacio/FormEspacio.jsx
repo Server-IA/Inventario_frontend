@@ -5,6 +5,7 @@ import {
   Select, MenuItem, FormHelperText
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { validateCamposBase } from "../utils/validations";
 
 export default function FormEspacio({
   open = false,
@@ -99,30 +100,35 @@ export default function FormEspacio({
   // VALIDACIONES
   // ===========================
   const validate = () => {
-    const newErrors = {};
-    
-    // Validación de nombre
-    if (!formData.nombre?.trim()) {
-      newErrors.nombre = "El nombre es obligatorio.";
-    }
-    
-    // Validación de tipo de espacio
+    const e = {};
+
+    // 1) Validación CENTRAL para nombre/descripcion/estado
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estado: formData.estadoId, // el validador espera 'estado'
+    });
+
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors.estado) e.estadoId = baseErrors.estado; // mapear a estadoId
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // 2) Checks locales adicionales
     if (!Number(formData.tipoEspacioId)) {
-      newErrors.tipoEspacioId = "Debe seleccionar un tipo de espacio.";
+      e.tipoEspacioId = "Debe seleccionar un tipo de espacio.";
     }
-    
-    // Validación de bloque
+
     if (!Number(formData.bloqueId)) {
-      newErrors.bloqueId = "Debe seleccionar un bloque.";
+      e.bloqueId = "Debe seleccionar un bloque.";
     }
-    
-    // Validación de estado
+
     if (![1, 2].includes(Number(formData.estadoId))) {
-      newErrors.estadoId = "Debe seleccionar un estado válido.";
+      e.estadoId = e.estadoId || "Debe seleccionar un estado válido.";
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   // ===========================

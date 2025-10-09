@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 
+import { validateCamposBase } from "../utils/validations";
+
 export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
@@ -93,15 +95,37 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
     setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
+
+  
   const validate = () => {
-    const newErrors = {};
-    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio.";
-    if (!formData.descripcion.trim()) newErrors.descripcion = "La descripción es obligatoria.";
-    if (!formData.movimientoId) newErrors.movimientoId = "Debe seleccionar un movimiento.";
-    if (!formData.estado) newErrors.estado = "Debe seleccionar un estado.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e = {};
+
+    // Validación CENTRAL (nombre/descripcion/estado)
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estado: formData.estado,
+    });
+
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors.estado) e.estado = baseErrors.estado; // mapeo directo
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // Checks LOCALES (mantengo tu lógica)
+    if (!formData.nombre.trim()) e.nombre = e.nombre || "El nombre es obligatorio.";
+    if (!formData.descripcion.trim()) e.descripcion = e.descripcion || "La descripción es obligatoria.";
+
+    if (!formData.movimientoId) e.movimientoId = "Debe seleccionar un movimiento.";
+
+    if (!["1", "2"].includes(formData.estado)) {
+      e.estado = e.estado || "Debe seleccionar un estado.";
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
+
 
   const handleSubmit = (event) => {
     event.preventDefault();

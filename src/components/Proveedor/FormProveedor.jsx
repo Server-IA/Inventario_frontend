@@ -4,6 +4,7 @@ import {
   TextField, Button, MenuItem, FormControl, InputLabel, Select, FormHelperText
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { validateCamposBase } from "../utils/validations";
 
 export default function FormProveedor({
   open = false,
@@ -61,7 +62,25 @@ export default function FormProveedor({
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.nombre?.trim()) newErrors.nombre = "Nombre es obligatorio";
+
+    // Mapear estadoId (0/1) al rango del validador (1|2) SOLO para validación.
+    const estadoForBase = String(formData.estadoId) === "1" ? 1 : 2;
+
+    // Validación CENTRAL (nombre/estado + seguridad). Pasamos una descripcion dummy
+    // y desestimamos sus errores porque este form no la usa.
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: "N/A",        // ignoramos error de obligatorio
+      estado: estadoForBase,     // mapeo 0->2, 1->1
+    });
+
+    if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
+    if (baseErrors.estado) newErrors.estadoId = baseErrors.estado; // mostrar en el select
+    if (baseErrors._security) newErrors._security = baseErrors._security;
+    // (Ignoramos baseErrors.descripcion)
+
+    // === Validaciones LOCALES (las mantengo tal cual) ===
+    if (!formData.nombre?.trim()) newErrors.nombre = newErrors.nombre || "Nombre es obligatorio";
     if (!formData.identificacion?.trim()) newErrors.identificacion = "Identificación es obligatoria";
     if (!formData.tipoIdentificacionId) newErrors.tipoIdentificacionId = "Seleccione un tipo de identificación";
     if (!formData.estadoId && formData.estadoId !== 0) newErrors.estadoId = "Seleccione un estado";
@@ -79,7 +98,7 @@ export default function FormProveedor({
       newErrors.fechaCreacion = "Debe seleccionar una fecha válida";
     }
 
-    // Mostrar errores detallados en consola
+    // Log de consola (lo conservé)
     if (Object.keys(newErrors).length > 0) {
       console.warn("Campos inválidos:");
       Object.entries(newErrors).forEach(([campo, mensaje]) => {
@@ -90,6 +109,7 @@ export default function FormProveedor({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const handleSubmit = async () => {
     console.log("Datos a enviar:", formData);

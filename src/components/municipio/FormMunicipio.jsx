@@ -4,6 +4,7 @@ import {
   TextField, Button, MenuItem, FormControl, InputLabel, Select, FormHelperText
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { validateCamposBase } from "../utils/validations";
 
 export default function FormMunicipio({ open=false, setOpen=()=>{}, selectedDepartamento, selectedRow=null, formMode="create", setMessage, reloadData }) {
   const initialData = {
@@ -48,7 +49,21 @@ export default function FormMunicipio({ open=false, setOpen=()=>{}, selectedDepa
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.nombre?.trim()) newErrors.nombre = "El nombre es obligatorio.";
+    // 1) Validación CENTRAL (nombre/estado)
+    //    Pasamos descripcion: "N/A" para no exigir un campo que este form no usa.
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: "N/A",
+      estado: formData.estadoId,
+    });
+
+    if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
+    if (baseErrors.estado) newErrors.estadoId = baseErrors.estado; // mapear a estadoId
+    if (baseErrors._security) newErrors._security = baseErrors._security;
+    // (Ignoramos baseErrors.descripcion)
+
+    // 2) Validaciones LOCALES (mantengo tu lógica)
+    if (!formData.nombre?.trim()) newErrors.nombre = newErrors.nombre || "El nombre es obligatorio.";
     else if (invalidCharsRegex.test(formData.nombre)) newErrors.nombre = "El nombre contiene caracteres no permitidos.";
 
     if (formData.codigo === "" || isNaN(Number(formData.codigo))) {
@@ -58,14 +73,15 @@ export default function FormMunicipio({ open=false, setOpen=()=>{}, selectedDepa
     if (!formData.acronimo?.trim()) newErrors.acronimo = "El acrónimo es obligatorio.";
     else if (invalidCharsRegex.test(formData.acronimo)) newErrors.acronimo = "El acrónimo contiene caracteres no permitidos.";
 
-    if (![1, 2].includes(Number(formData.estadoId))) newErrors.estadoId = "Debe seleccionar un estado válido.";
+    if (![1, 2].includes(Number(formData.estadoId))) newErrors.estadoId = newErrors.estadoId || "Debe seleccionar un estado válido.";
 
-    if (!Number(formData.departamentoId)) newErrors.departamentoId = "Debe seleccionar un departamento.";
+    // (departamentoId viene del filtro/prop; si quisieras, aquí podrías exigirlo)
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  
   const handleSubmit = async () => {
     if (!validate()) return;
 

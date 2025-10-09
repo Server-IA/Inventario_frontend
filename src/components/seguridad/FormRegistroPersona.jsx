@@ -216,6 +216,8 @@ export default function FormRegistroPersona(props) {
       />
     </Grid>
 
+    
+
     <Grid item xs={12} md={6}>
       <TextField
         select
@@ -249,20 +251,27 @@ export default function FormRegistroPersona(props) {
       />
     </Grid>
 
+
     <Grid item xs={12} md={6}>
       <TextField
+        select
         required
         id="estrato"
         name="estrato"
         label="Estrato"
-        type="number"
-        inputProps={{ min: 0 }}
         fullWidth
         variant="outlined"
         size="medium"
         InputLabelProps={{ shrink: true }}
-        defaultValue={props.selectedRow?.estrato ?? 0}
-      />
+        defaultValue={props.selectedRow?.estrato ?? ''}
+      >
+        <MenuItem value="" disabled>Seleccione</MenuItem>
+        {[...Array(10)].map((_, index) => (
+          <MenuItem key={index + 1} value={index + 1}>
+            {index + 1}
+          </MenuItem>
+        ))}
+      </TextField>
     </Grid>
 
     <Grid item xs={12} md={6}>

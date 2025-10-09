@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 
+import { validateCamposBase } from "../utils/validations";
+
 export default function FormPais({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
@@ -71,8 +73,22 @@ export default function FormPais({ selectedRow, setSelectedRow, setMessage, relo
   const validate = () => {
     const newErrors = {};
 
+    // 1) Validación CENTRAL (nombre, estado)
+    //    Pasamos descripcion: "N/A" para no exigir un campo que no existe aquí.
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: "N/A",
+      estado: formData.estado
+    });
+
+    if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
+    if (baseErrors.estado) newErrors.estado = baseErrors.estado; // mapeo a 'estado'
+    if (baseErrors._security) newErrors._security = baseErrors._security;
+    // Ignoramos cualquier error de descripcion porque este form no la usa.
+
+    // 2) Validaciones LOCALES (mantengo tu lógica)
     if (!formData.nombre.trim()) {
-      newErrors.nombre = "El nombre es obligatorio.";
+      newErrors.nombre = newErrors.nombre || "El nombre es obligatorio.";
     } else if (invalidCharsRegex.test(formData.nombre)) {
       newErrors.nombre = "El nombre contiene caracteres no permitidos.";
     }
@@ -90,7 +106,7 @@ export default function FormPais({ selectedRow, setSelectedRow, setMessage, relo
     }
 
     if (!["1", "2"].includes(formData.estado)) {
-      newErrors.estado = "Debe seleccionar un estado válido.";
+      newErrors.estado = newErrors.estado || "Debe seleccionar un estado válido.";
     }
 
     setErrors(newErrors);

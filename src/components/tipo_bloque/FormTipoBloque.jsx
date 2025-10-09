@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 
+import { validateCamposBase } from "../utils/validations";
+
 export default function FormTipoBloque({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = useState(false);
   const [methodName, setMethodName] = useState("");
@@ -78,8 +80,24 @@ export default function FormTipoBloque({ selectedRow, setSelectedRow, setMessage
   const validate = () => {
     const newErrors = {};
 
+    // 1) Validación CENTRAL (nombre/descripcion/estado)
+    //    Nota: no hacemos 'descripcion' obligatoria; si viene vacía, ignoramos ese error.
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion || "",
+      estado: formData.estado
+    });
+
+    if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
+    if (baseErrors.estado) newErrors.estado = baseErrors.estado;
+    if (formData.descripcion?.trim() && baseErrors.descripcion) {
+      newErrors.descripcion = baseErrors.descripcion; // solo si hay texto
+    }
+    if (baseErrors._security) newErrors._security = baseErrors._security;
+
+    // 2) Validaciones LOCALES (manteniendo tu lógica)
     if (!formData.nombre.trim()) {
-      newErrors.nombre = "El nombre es obligatorio.";
+      newErrors.nombre = newErrors.nombre || "El nombre es obligatorio.";
     } else if (invalidCharsRegex.test(formData.nombre)) {
       newErrors.nombre = "El nombre contiene caracteres no permitidos.";
     }
@@ -89,12 +107,13 @@ export default function FormTipoBloque({ selectedRow, setSelectedRow, setMessage
     }
 
     if (!["1", "2"].includes(formData.estado)) {
-      newErrors.estado = "Debe seleccionar un estado válido.";
+      newErrors.estado = newErrors.estado || "Debe seleccionar un estado válido.";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const handleSubmit = (event) => {
     event.preventDefault();

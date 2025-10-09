@@ -5,6 +5,7 @@ import {
   Select, MenuItem, FormHelperText
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { validateCamposBase } from "../utils/validations";
 
 export default function FormBloque({
   open = false,
@@ -101,6 +102,18 @@ export default function FormBloque({
   const validate = () => {
     const e = {};
 
+    // 1) Validación CENTRAL (nombre, descripcion, estado)
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estado: formData.estadoId, // el validador central espera 'estado'
+    });
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors.estado) e.estadoId = baseErrors.estado; // mapear a estadoId
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // 2) Checks LOCALES (sin duplicar nombre/descripcion)
     const checkText = (field, label, required = false) => {
       const val = (formData[field] ?? "").trim();
       if (required && !val) { e[field] = `${label} es obligatorio.`; return; }
@@ -109,8 +122,7 @@ export default function FormBloque({
       }
     };
 
-    checkText("nombre", "El nombre", true);
-    checkText("descripcion", "La descripción", true);
+    // Solo dirección aquí (nombre/descripcion ya los valida la central)
     checkText("direccion", "La dirección", true);
 
     const checkNumericLike = (field, label, required = false) => {
@@ -124,14 +136,17 @@ export default function FormBloque({
       }
     };
 
+    // Requeridos: geo/coords
     checkNumericLike("geolocalizacion", "La geolocalización", true);
     checkNumericLike("coordenadas", "Las coordenadas", true);
 
+    // Entero >= 1
     if (!Number.isFinite(Number(formData.numeroPisos)) || Number(formData.numeroPisos) < 1) {
       e.numeroPisos = "Número de pisos debe ser un entero mayor o igual a 1.";
     }
 
-    if (![1, 2].includes(Number(formData.estadoId))) e.estadoId = "Debe seleccionar un estado válido.";
+    // Selects requeridos
+    if (![1, 2].includes(Number(formData.estadoId))) e.estadoId = e.estadoId || "Debe seleccionar un estado válido.";
     if (!Number(formData.tipoBloqueId)) e.tipoBloqueId = "Debe seleccionar un tipo de bloque.";
     if (!Number(formData.sedeId)) e.sedeId = "Debe seleccionar una sede.";
 
