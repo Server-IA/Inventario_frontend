@@ -7,6 +7,7 @@ import {
   InputLabel, Select, MenuItem, CircularProgress, Box
 } from "@mui/material";
 import StackButtons from "../StackButtons";
+import { validateCamposBase } from "../utils/validations";
 
 /* Helpers para normalizar respuestas */
 const toList = (payload) => {
@@ -115,13 +116,28 @@ export default function FormProceso({ selectedRow, setSelectedRow, setMessage, r
   };
 
   const validate = () => {
-    const newErrors = {};
-    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio.";
-    if (!formData.descripcion.trim()) newErrors.descripcion = "La descripción es obligatoria.";
-    if (!formData.tipoProduccionId) newErrors.tipoProduccionId = "Debe seleccionar un tipo de producción.";
-    if (!formData.estado) newErrors.estado = "Debe seleccionar un estado.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e = {};
+
+    // 1) Validación CENTRAL (nombre/descripcion/estado)
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estado: formData.estado, // el validador espera 'estado'
+    });
+
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors.estado) e.estado = baseErrors.estado; // mapeo directo
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // 2) Checks LOCALES (mantengo tu lógica)
+    if (!formData.nombre.trim()) e.nombre = e.nombre || "El nombre es obligatorio.";
+    if (!formData.descripcion.trim()) e.descripcion = e.descripcion || "La descripción es obligatoria.";
+    if (!formData.tipoProduccionId) e.tipoProduccionId = "Debe seleccionar un tipo de producción.";
+    if (!formData.estado) e.estado = e.estado || "Debe seleccionar un estado.";
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (event) => {

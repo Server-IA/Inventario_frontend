@@ -5,6 +5,8 @@ import {
   Select, MenuItem, FormHelperText
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { validateCamposBase } from "../utils/validations";
+
 
 export default function FormSede({
   open = false,
@@ -148,7 +150,21 @@ export default function FormSede({
   const validate = () => {
     const e = {};
 
-    // Campos de texto: requeridos + anti XSS/SQLi
+    // 1) Validación CENTRAL (nombre, descripcion, estado)
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estado: formData.estadoId, // el validador espera 'estado'
+    });
+
+    // Mapeo de claves del validador central a las usadas en este form
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors.estado) e.estadoId = baseErrors.estado; // mapea a estadoId en este formulario
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // 2) Tus checks locales (evitamos duplicar nombre/descripcion aquí)
+    // Campos de texto adicionales: comuna
     const checkText = (field, label, required = false) => {
       const val = (formData[field] ?? "").trim();
       if (required && !val) {
@@ -160,9 +176,7 @@ export default function FormSede({
       }
     };
 
-    checkText("nombre", "El nombre", true);
     checkText("comuna", "La comuna", false);
-    checkText("descripcion", "La descripción", false);
 
     // Selects requeridos
     if (!Number(formData.grupoId)) e.grupoId = "Debe seleccionar un grupo.";
@@ -188,9 +202,9 @@ export default function FormSede({
     checkNumericLike("coordenadas", "Coordenadas");
     checkNumericLike("geolocalizacion", "Geolocalización");
 
-    // Estado
+    // Estado permitido (mantiene tu lógica, complementa a la central)
     if (![1, 2].includes(Number(formData.estadoId)))
-      e.estadoId = "Debe seleccionar estado.";
+      e.estadoId = e.estadoId || "Debe seleccionar estado.";
 
     setErrors(e);
     return Object.keys(e).length === 0;

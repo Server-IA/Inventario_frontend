@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 
+import { validateCamposBase } from "../utils/validations";
+
 export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
@@ -70,8 +72,35 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+
+  const validate = () => {
+    const e = {};
+
+    // Validación central (nombre/descripcion/estado)
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion || "",
+      estado: formData.estado,
+    });
+
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.estado) e.estado = baseErrors.estado;
+    // Solo mostramos error de descripción si el usuario escribió algo (no la hacemos obligatoria)
+    if (formData.descripcion?.trim() && baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // Rango de estado permitido (refuerzo)
+    if (!["1", "2"].includes(formData.estado)) {
+      e.estado = e.estado || "Debe seleccionar un estado válido.";
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (!validate()) return;
 
     const payload = {
       nombre: formData.nombre,

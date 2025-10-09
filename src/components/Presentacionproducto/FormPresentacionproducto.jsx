@@ -6,6 +6,9 @@ import {
   TextField, Button, FormControl, InputLabel, Select, MenuItem, Grid, FormHelperText
 } from "@mui/material";
 import StackButtons from "../StackButtons";
+import { validateCamposBase } from "../utils/validations";
+
+
 
 export default function FormPresentacionproducto({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = useState(false);
@@ -109,16 +112,33 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
 
   const validate = () => {
     const e = {};
+
+    // Validación CENTRAL (nombre/descripcion/estado)
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estado: formData.estadoId, // el validador espera 'estado'
+    });
+
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (baseErrors.estado) e.estadoId = baseErrors.estado;
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // Checks LOCALES (mantengo tu lógica)
     if (!formData.productoId) e.productoId = "Campo requerido";
-    if (!String(formData.nombre).trim()) e.nombre = "Campo requerido";
+    if (!String(formData.nombre).trim()) e.nombre = e.nombre || "Campo requerido";
     if (!formData.unidadId) e.unidadId = "Campo requerido";
-    if (!String(formData.descripcion).trim()) e.descripcion = "Campo requerido";
+    if (!String(formData.descripcion).trim()) e.descripcion = e.descripcion || "Campo requerido";
     if (formData.cantidad === "" || formData.cantidad === null) e.cantidad = "Campo requerido";
     if (!formData.marcaId) e.marcaId = "Campo requerido";
     if (!formData.presentacionId) e.presentacionId = "Campo requerido";
-    if (!formData.estadoId) e.estadoId = "Campo requerido";
-    return e;
+    if (!formData.estadoId) e.estadoId = e.estadoId || "Campo requerido";
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
+
 
   const handleSubmit = (e) => {
     e.preventDefault();

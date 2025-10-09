@@ -13,6 +13,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { validateCamposBase } from "../utils/validations";
 
 export default function FormDepartamento({
   open = false,
@@ -92,33 +93,47 @@ export default function FormDepartamento({
   const validate = () => {
     const newErrors = {};
 
-    // Validación de nombre
+    // 1) Validación CENTRAL (nombre/estado)
+    //    Pasamos descripcion: "N/A" para no exigir un campo que este form no tiene.
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: "N/A",
+      estado: formData.estadoId,
+    });
+
+    if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
+    if (baseErrors.estado) newErrors.estadoId = baseErrors.estado; // mapear a estadoId
+    if (baseErrors._security) newErrors._security = baseErrors._security;
+    // (Ignoramos baseErrors.descripcion)
+
+    // 2) Validaciones LOCALES (mantengo tu lógica)
+    // Nombre (refuerzo local por caracteres no permitidos)
     if (!formData.nombre?.trim()) {
-      newErrors.nombre = "El nombre es obligatorio.";
+      newErrors.nombre = newErrors.nombre || "El nombre es obligatorio.";
     } else if (invalidCharsRegex.test(formData.nombre)) {
       newErrors.nombre = "El nombre contiene caracteres no permitidos.";
     }
 
-    // Validación de código
+    // Código
     if (!formData.codigo?.toString().trim()) {
       newErrors.codigo = "El código es obligatorio.";
     } else if (invalidCharsRegex.test(formData.codigo.toString())) {
       newErrors.codigo = "El código contiene caracteres no permitidos.";
     }
 
-    // Validación de acrónimo
+    // Acrónimo
     if (!formData.acronimo?.trim()) {
       newErrors.acronimo = "El acrónimo es obligatorio.";
     } else if (invalidCharsRegex.test(formData.acronimo)) {
       newErrors.acronimo = "El acrónimo contiene caracteres no permitidos.";
     }
 
-    // Validación de estado
+    // Estado (rango permitido)
     if (![1, 2].includes(Number(formData.estadoId))) {
-      newErrors.estadoId = "Debe seleccionar un estado válido.";
+      newErrors.estadoId = newErrors.estadoId || "Debe seleccionar un estado válido.";
     }
 
-    // Validación de país
+    // País requerido
     if (!Number(formData.paisId)) {
       newErrors.paisId = "Debe seleccionar un país.";
     }

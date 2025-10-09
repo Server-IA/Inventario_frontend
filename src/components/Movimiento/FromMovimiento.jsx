@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 
+import { validateCamposBase } from "../utils/validations";
+
 export default function FormMovimiento({ selectedRow, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
@@ -72,11 +74,25 @@ export default function FormMovimiento({ selectedRow, setSelectedRow, setMessage
   };
 
   const validate = () => {
-    const newErrors = {};
-    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio.";
-    if (!formData.estado) newErrors.estado = "Debe seleccionar un estado.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e = {};
+
+    // Validación CENTRAL (nombre/estado). Pasamos descripcion "N/A" y la ignoramos.
+    const baseErrors = validateCamposBase({
+      nombre: formData.nombre,
+      descripcion: "N/A",
+      estado: formData.estado,
+    });
+
+    if (baseErrors.nombre) e.nombre = baseErrors.nombre;
+    if (baseErrors.estado) e.estado = baseErrors.estado;
+    if (baseErrors._security) e._security = baseErrors._security;
+
+    // Refuerzo local (mantengo tus mensajes)
+    if (!formData.nombre.trim()) e.nombre = e.nombre || "El nombre es obligatorio.";
+    if (!formData.estado) e.estado = e.estado || "Debe seleccionar un estado.";
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = (event) => {
