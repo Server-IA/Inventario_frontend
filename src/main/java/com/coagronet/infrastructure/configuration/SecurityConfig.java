@@ -55,7 +55,7 @@ public class SecurityConfig {
 						"/api/v1/inventario_item/**", "/api/v1/pedido/**", "/api/v1/presentacion/**",
 						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v1/producto/**",
 						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
-						"/api/v1/factura/**")
+						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
 				.requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")

@@ -20,6 +20,8 @@ import com.coagronet.articuloPedido.dtos.ArticuloPedidoDTO;
 import com.coagronet.articuloPedido.services.ArticuloPedidoService;
 import com.coagronet.pedido.dtos.PedidoDTO;
 import com.coagronet.pedido.services.PedidoService;
+import com.coagronet.pedidocotizacion.dtos.PedidoCotizacionResponseDTO;
+import com.coagronet.pedidocotizacion.services.PedidoCotizacionService;
 import com.coagronet.utils.UriBuilderUtil;
 
 import jakarta.validation.Valid;
@@ -34,6 +36,8 @@ public class PedidoController {
 
 	private final ArticuloPedidoService articuloPedidoService;
 
+	private final PedidoCotizacionService pedidoCotizacionService;
+
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
@@ -44,6 +48,11 @@ public class PedidoController {
 	@GetMapping("/{pedidoId}/articulos")
 	public ResponseEntity<List<ArticuloPedidoDTO>> findArticulosByPedidoId(@PathVariable Long pedidoId) {
 		return ResponseEntity.ok(articuloPedidoService.findAllByPedidoId(pedidoId));
+	}
+
+	@GetMapping("/{pedidoId}/cotizaciones")
+	public ResponseEntity<List<PedidoCotizacionResponseDTO>> findAllByPedidoId(@PathVariable Long pedidoId) {
+		return ResponseEntity.ok(pedidoCotizacionService.findAllByPedidoId(pedidoId));
 	}
 
 	@GetMapping("/{requestedId}")
@@ -77,13 +86,6 @@ public class PedidoController {
 		return ResponseEntity.noContent().build();
 	}
 
-	// ACT/PCO -> OC
-	@PutMapping("/{id}/con-orden-compra")
-	public ResponseEntity<Void> conOrdenCompra(@PathVariable Long id) {
-		pedidoService.marcarConOrdenCompra(id);
-		return ResponseEntity.noContent().build();
-	}
-
 	// ACT/PCO/OC -> ANU
 	@PutMapping("/{id}/anular")
 	public ResponseEntity<Void> anular(@PathVariable Long id) {
@@ -91,7 +93,7 @@ public class PedidoController {
 		return ResponseEntity.noContent().build();
 	}
 
-	// OC -> CMP (valida requisitos reales v�a InventarioGateway)
+	// OC -> CMP (valida requisitos reales v?a InventarioGateway)
 	@PutMapping("/{id}/completar")
 	public ResponseEntity<Void> completar(@PathVariable Long id) {
 		pedidoService.completar(id);

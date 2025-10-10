@@ -141,13 +141,6 @@ public class PedidoService {
 	}
 
 	@Transactional
-	public void marcarConOrdenCompra(Long pedidoId) {
-		Pedido p = getByIdAndEmpresaOrThrow(pedidoId);
-		ensureTransition(p, CON_ORDEN_COMPRA, ACTIVO, PENDIENTE_COTIZACION);
-		setEstado(p, CON_ORDEN_COMPRA);
-	}
-
-	@Transactional
 	public void anular(Long pedidoId) {
 		Pedido p = getByIdAndEmpresaOrThrow(pedidoId);
 		ensureTransition(p, ANULADO, ACTIVO, PENDIENTE_COTIZACION, CON_ORDEN_COMPRA);
@@ -161,18 +154,11 @@ public class PedidoService {
 		var res = inventarioGateway.validarRequisitosParaCompletar(pedidoId);
 		if (!res.isOk()) {
 			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos", res.getMotivoFallo() != null
-					? res.getMotivoFallo() : "A�n hay �tems pendientes por recibir/verificar/registrar en inventario.");
+					? res.getMotivoFallo() : "A?n hay ?tems pendientes por recibir/verificar/registrar en inventario.");
 		}
 
 		ensureTransition(p, COMPLETADO, CON_ORDEN_COMPRA);
 		setEstado(p, COMPLETADO); // ahora reemplaza la ref, no el id
-	}
-
-	/* ================== Hooks ?tiles (opcionales) ================== */
-
-	@Transactional
-	public void onOrdenCompraCreada(Long pedidoId) {
-		marcarConOrdenCompra(pedidoId);
 	}
 
 }
