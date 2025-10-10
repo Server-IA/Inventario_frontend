@@ -14,7 +14,7 @@ import com.coagronet.reports.services.ReportService;
 @RequestMapping("/api/v2/report")
 public class ReportController {
 
-	private final String version = "2.1.0";
+	private static final String VERSION = "2.1.0";
 
 	private final ReportService reportService;
 
@@ -24,7 +24,7 @@ public class ReportController {
 
 	@GetMapping("/version")
 	public ResponseEntity<String> version(){
-		return ResponseEntity.ok("Version del controlador de reportes " +version);
+		return ResponseEntity.ok("Version del controlador de reportes " +VERSION);
 	}
 
 	@PostMapping("/{reportName}")
