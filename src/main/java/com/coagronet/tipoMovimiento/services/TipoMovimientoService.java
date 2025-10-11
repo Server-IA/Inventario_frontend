@@ -7,6 +7,7 @@ import com.coagronet.tipoMovimiento.dtos.TipoMovimientoDTO;
 import com.coagronet.tipoMovimiento.mappers.TipoMovimientoMapper;
 import com.coagronet.tipoMovimiento.repositories.TipoMovimientoRepository;
 import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.validator.EntidadValidatorFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +21,10 @@ import java.util.stream.Collectors;
 public class TipoMovimientoService {
 
 	private final TipoMovimientoRepository tipoMovimientoRepository;
-
 	private final TipoMovimientoMapper tipoMovimientoMapper;
-
 	private final EstadoRepository estadoRepository;
-
 	private final UserEmpresaService userEmpresaService;
+	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	public List<TipoMovimientoDTO> findAll() {
 
@@ -45,10 +44,9 @@ public class TipoMovimientoService {
 	@Transactional
 	public TipoMovimientoDTO create(TipoMovimientoDTO tipoMovimientoDTO) {
 
-		estadoRepository.findById(tipoMovimientoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+		entidadValidatorFacade.validarEstadoGeneral(tipoMovimientoDTO.getEstadoId());
+		entidadValidatorFacade.validarMovimiento(tipoMovimientoDTO.getMovimientoId());
 
-		tipoMovimientoDTO.setId(null);
 		tipoMovimientoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		return tipoMovimientoMapper
