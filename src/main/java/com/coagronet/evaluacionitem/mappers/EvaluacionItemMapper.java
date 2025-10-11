@@ -6,11 +6,11 @@ import com.coagronet.evaluacionitem.dtos.EvaluacionItemResponseDTO;
 import com.coagronet.evaluacionitem.dtos.EvaluacionItemUpdateDTO;
 import org.mapstruct.*;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface EvaluacionItemMapper {
 
-    @Mapping(target = "evaluacion", source = "evaluacionId")
-    @Mapping(target = "criterioEvaluacion", source = "criterioEvaluacionId")
+    @Mapping(target = "evaluacion", ignore = true)
+    @Mapping(target = "criterioEvaluacion", ignore = true)
     @Mapping(target = "estado", ignore = true)
     @Mapping(target = "empresa", ignore = true)
     EvaluacionItem toEntity(EvaluacionItemCreateDTO dto);
@@ -20,7 +20,7 @@ public interface EvaluacionItemMapper {
     @Mapping(target = "empresaId", source = "empresa.id")
     @Mapping(target = "evaluacionId", source = "evaluacion.id")
     @Mapping(target = "criterioEvaluacionId", source = "criterioEvaluacion.id")
-    EvaluacionItemResponseDTO toDto(EvaluacionItem entity);
+    EvaluacionItemResponseDTO toResponseDTO(EvaluacionItem entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "empresa", ignore = true)

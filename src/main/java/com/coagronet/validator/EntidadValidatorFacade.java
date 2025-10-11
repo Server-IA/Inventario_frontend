@@ -1,5 +1,8 @@
 package com.coagronet.validator;
 
+import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
+import com.coagronet.evaluacion.Evaluacion;
+import com.coagronet.evaluacionitem.EvaluacionItem;
 import com.coagronet.validator.inventario.entidades.*;
 import org.springframework.stereotype.Component;
 
@@ -45,96 +48,111 @@ public class EntidadValidatorFacade {
     private final ProductoPresentacionValidator productoPresentacionValidator;
     private final ArticuloKardexValidator articuloKardexValidator;
     private final MovimientoValidator movimientoValidator;
+    private final PedidoCotizacionValidator pedidoCotizacionValidator;
+    private final EvaluacionValidator evaluacionValidator;
+    private final CriterioEvaluacionValidator criterioEvaluacionValidator;
+    private final EvaluacionItemValidator evaluacionItemValidator;
 
-	private final PedidoCotizacionValidator pedidoCotizacionValidator;
+    public Empresa validarEmpresa(Long empresaId) {
+        return empresaValidator.validarEmpresa(empresaId);
+    }
 
-	public Empresa validarEmpresa(Long empresaId) {
-		return empresaValidator.validarEmpresa(empresaId);
-	}
+    public Empresa validarClienteProveedor(Long clienteProveedorId) {
+        return empresaValidator.validarClienteProveedor(clienteProveedorId);
+    }
 
-	public Empresa validarClienteProveedor(Long clienteProveedorId) {
-		return empresaValidator.validarClienteProveedor(clienteProveedorId);
-	}
+    public Estado validarEstadoGeneral(Long estadoId) {
+        return estadoValidator.validarEstadoGeneral(estadoId);
+    }
 
-	public Estado validarEstadoGeneral(Long estadoId) {
-		return estadoValidator.validarEstadoGeneral(estadoId);
-	}
+    public Estado validarEstadoParaOrdenCompra(Long estadoId) {
+        return estadoValidator.validarEstadoParaOrdenCompra(estadoId);
+    }
 
-	public Estado validarEstadoParaOrdenCompra(Long estadoId) {
-		return estadoValidator.validarEstadoParaOrdenCompra(estadoId);
-	}
+    public Estado validarEstadoParaPedido(Long estadoId) {
+        return estadoValidator.validarEstadoParaPedido(estadoId);
 
-	public Estado validarEstadoParaPedido(Long estadoId) {
-		return estadoValidator.validarEstadoParaPedido(estadoId);
+    }
 
-	}
+    public Estado validarEstadoParaFactura(Long estadoId) {
+        return estadoValidator.validarEstadoParaFactura(estadoId);
 
-	public Estado validarEstadoParaFactura(Long estadoId) {
-		return estadoValidator.validarEstadoParaFactura(estadoId);
+    }
 
-	}
+    public Almacen validarAlmacen(Long almacenId, Long empresaId) {
+        return almacenValidator.validarAlmacen(almacenId, empresaId);
+    }
 
-	public Almacen validarAlmacen(Long almacenId, Long empresaId) {
-		return almacenValidator.validarAlmacen(almacenId, empresaId);
-	}
+    public Produccion validarProduccion(Long produccionId, Long empresaId) {
+        return produccionValidator.validarProduccion(produccionId, empresaId);
+    }
 
-	public Produccion validarProduccion(Long produccionId, Long empresaId) {
-		return produccionValidator.validarProduccion(produccionId, empresaId);
-	}
+    public void validarFechasProduccion(Produccion produccion) {
+        produccionValidator.validarFechasDeProduccion(produccion);
+    }
 
-	public void validarFechasProduccion(Produccion produccion) {
-		produccionValidator.validarFechasDeProduccion(produccion);
-	}
+    public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
+        return tipoMovimientoValidator.validarTipoMovimiento(tipoMovimientoId, empresaId);
+    }
 
-	public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
-		return tipoMovimientoValidator.validarTipoMovimiento(tipoMovimientoId, empresaId);
-	}
+    public Kardex validarKardex(Long kardexId, Long empresaId) {
+        return kardexValidator.validarKardex(kardexId, empresaId);
+    }
 
-	public Kardex validarKardex(Long kardexId, Long empresaId) {
-		return kardexValidator.validarKardex(kardexId, empresaId);
-	}
+    public OrdenCompra validarOrdenCompra(Long ordenCompraId, Long empresaId) {
+        return ordenCompraValidator.validarOrdenCompra(ordenCompraId, empresaId);
+    }
 
-	public OrdenCompra validarOrdenCompra(Long ordenCompraId, Long empresaId) {
-		return ordenCompraValidator.validarOrdenCompra(ordenCompraId, empresaId);
-	}
+    public Pedido validarPedido(Long pedidoId, Long empresaId) {
+        return pedidoValidator.validarPedido(pedidoId, empresaId);
+    }
 
-	public Pedido validarPedido(Long pedidoId, Long empresaId) {
-		return pedidoValidator.validarPedido(pedidoId, empresaId);
-	}
+    public Proveedor validarProveedor(Long proveedorId, Long empresaId) {
+        return proveedorValidator.validarProveedor(proveedorId, empresaId);
+    }
 
-	public Proveedor validarProveedor(Long proveedorId, Long empresaId) {
-		return proveedorValidator.validarProveedor(proveedorId, empresaId);
-	}
+    public TipoProduccion validarTipoProduccion(Long tipoProduccion, Long empresaId) {
+        return tipoProduccionValidator.validarTipoProduccion(tipoProduccion, empresaId);
+    }
 
-	public TipoProduccion validarTipoProduccion(Long tipoProduccion, Long empresaId) {
-		return tipoProduccionValidator.validarTipoProduccion(tipoProduccion, empresaId);
-	}
+    public Espacio validarEspacio(Long espacioId, Long empresaId) {
+        return espacioValidator.validarEspacio(espacioId, empresaId);
+    }
 
-	public Espacio validarEspacio(Long espacioId, Long empresaId) {
-		return espacioValidator.validarEspacio(espacioId, empresaId);
-	}
+    public Subseccion validarSubseccion(Long subseccionId, Long empresaId) {
+        return subseccionValidator.validarSubseccion(subseccionId, empresaId);
+    }
 
-	public Subseccion validarSubseccion(Long subseccionId, Long empresaId) {
-		return subseccionValidator.validarSubseccion(subseccionId, empresaId);
-	}
+    public Kardex validarKardexPorOrdenCompra(Long ordenCompraId, Long empresaId) {
+        return kardexValidator.validarKardexPorOrdenCompra(ordenCompraId, empresaId);
+    }
 
-	public Kardex validarKardexPorOrdenCompra(Long ordenCompraId, Long empresaId) {
-		return kardexValidator.validarKardexPorOrdenCompra(ordenCompraId, empresaId);
-	}
+    public PresentacionProducto validarProductoPresentacion(Long productoPresentacionId, Long empresaId) {
+        return productoPresentacionValidator.validarProductoPresentacion(productoPresentacionId, empresaId);
+    }
 
-	public PresentacionProducto validarProductoPresentacion(Long productoPresentacionId, Long empresaId) {
-		return productoPresentacionValidator.validarProductoPresentacion(productoPresentacionId, empresaId);
-	}
+    public ArticuloKardex validarArticuloKardex(Long articuloKardexId, Long empresaId) {
+        return articuloKardexValidator.validarArticuloKardex(articuloKardexId, empresaId);
+    }
 
-	public ArticuloKardex validarArticuloKardex(Long articuloKardexId, Long empresaId) {
-		return articuloKardexValidator.validarArticuloKardex(articuloKardexId, empresaId);
-	}
+    public PedidoCotizacion validarPedidoCotizacion(Long pedidoCotizacionId, Long empresaId) {
+        return pedidoCotizacionValidator.validarPedidoCotizacion(pedidoCotizacionId, empresaId);
+    }
 
-	public PedidoCotizacion validarPedidoCotizacion(Long pedidoCotizacionId, Long empresaId) {
-		return pedidoCotizacionValidator.validarPedidoCotizacion(pedidoCotizacionId, empresaId);
-	}
     public Movimiento validarMovimiento(Long movimientoId) {
         return movimientoValidator.validarMovimiento(movimientoId);
+    }
+
+    public Evaluacion validarEvaluacion(Long evaluacionId, Long empresaId) {
+        return evaluacionValidator.validarEvaluacionPorEmpresa(evaluacionId, empresaId);
+    }
+
+    public EvaluacionItem validarEvaluacionItem(Long evaItemId, Long empresaId) {
+        return evaluacionItemValidator.validarEvaluacionItemPorEmpresa(evaItemId, empresaId);
+    }
+
+    public CriterioEvaluacion validarCriterioEvaluacion(Long criterioEvId, Long empresaId) {
+        return criterioEvaluacionValidator.validarCriterioEvaluacionPorEmpresa(criterioEvId, empresaId);
     }
 
 }

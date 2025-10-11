@@ -1,7 +1,6 @@
 package com.coagronet.validator.inventario.entidades;
 
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.kardex.Kardex;
 import com.coagronet.movimiento.Movimiento;
 import com.coagronet.movimiento.repositories.MovimientoRepository;
 import lombok.RequiredArgsConstructor;

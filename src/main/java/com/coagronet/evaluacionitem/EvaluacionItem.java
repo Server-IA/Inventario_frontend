@@ -19,9 +19,8 @@ import lombok.NoArgsConstructor;
 public class EvaluacionItem {
 
     @Id
-    @SequenceGenerator(name = "evaluacion_item_generator", sequenceName = "evaluacion_item_evi_id_seq",
-    allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaluacion_sequence_generator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaluacion_item_seq")
+    @SequenceGenerator(name = "evaluacion_item_seq", sequenceName = "evaluacion_item_evi_id_seq", allocationSize = 1)
     @Column(name = "evi_id")
     private Long id;
 
