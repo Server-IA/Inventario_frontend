@@ -46,7 +46,7 @@ public class PedidoCotizacionController {
 			@Valid @RequestBody PedidoCotizacionRequestDTO pedidoCotizacionRequestDTO, UriComponentsBuilder ucb) {
 		return ResponseEntity
 			.created(uriBuilderUtil
-				.buildOrdenCompraUri((pedidoCotizacionService.create(pedidoCotizacionRequestDTO)).id(), ucb))
+				.buildPedidoCotizacionUri((pedidoCotizacionService.create(pedidoCotizacionRequestDTO)).id(), ucb))
 			.build();
 	}
 
