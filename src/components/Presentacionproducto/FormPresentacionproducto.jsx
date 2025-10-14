@@ -140,13 +140,21 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
   };
 
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const eVal = validate();
-    if (Object.keys(eVal).length) {
-      setErrors(eVal);
-      return;
-    }
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   const eVal = validate();
+  //   if (Object.keys(eVal).length) {
+  //     setErrors(eVal);
+  //     return;
+  //   }
+
+
+   const handleSubmit = (e) => {
+       e.preventDefault();
+       const isValid = validate();      // validate() ya setea errores y devuelve true/false
+       if (!isValid) return;
+       
+
 
     const payload = {
       ...formData,

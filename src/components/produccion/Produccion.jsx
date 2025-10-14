@@ -55,8 +55,10 @@ export default function Produccion() {
           axios.get("/v1/items/sub_seccion/0"),
         ]);
 
-        const pagePayload = resProduccion?.data ?? {};
-        const lista = toList(pagePayload);
+        // const pagePayload = resProduccion?.data ?? {};
+        // const lista = toList(pagePayload);
+               const pagePayload = resProduccion?.data ?? {};
+       const lista = toList(pagePayload);
 
         const mapTipos      = toMap(resTipos?.data, "id", "name");
         const mapEspacios   = toMap(resEspacios?.data, "id", "name");
@@ -84,13 +86,36 @@ export default function Produccion() {
 
         setProducciones(filas);
 
-        const pageServer = Number.isFinite(pagePayload?.number) ? pagePayload.number : pageQ;
-        const sizeServer = Number.isFinite(pagePayload?.size) ? pagePayload.size : sizeQ;
-        const totalElems = Number.isFinite(pagePayload?.totalElements) ? pagePayload.totalElements : filas.length;
-        const totalPgs   = Number.isFinite(pagePayload?.totalPages)
-          ? pagePayload.totalPages
-          : Math.ceil(totalElems / sizeServer);
+        // const pageServer = Number.isFinite(pagePayload?.number) ? pagePayload.number : pageQ;
+        // const sizeServer = Number.isFinite(pagePayload?.size) ? pagePayload.size : sizeQ;
+        // const totalElems = Number.isFinite(pagePayload?.totalElements) ? pagePayload.totalElements : filas.length;
+        // const totalPgs   = Number.isFinite(pagePayload?.totalPages)
+        //   ? pagePayload.totalPages
+        //   : Math.ceil(totalElems / sizeServer);
+// === Lectura robusta de paginación ===
+       const hdrTotal =
+         Number(resProduccion?.headers?.["x-total-count"]) ??
+         Number(resProduccion?.headers?.["x-total-elements"]) ??
+         Number(resProduccion?.headers?.["x-total"]);
 
+       const pageServer =
+         Number.isFinite(+pagePayload?.number) ? +pagePayload.number :
+         Number.isFinite(+pagePayload?.page?.number) ? +pagePayload.page.number :
+         pageQ;
+
+       const sizeServer =
+         Number.isFinite(+pagePayload?.size) ? +pagePayload.size :
+         Number.isFinite(+pagePayload?.page?.size) ? +pagePayload.page.size :
+         sizeQ;
+
+       const totalElems =
+         Number.isFinite(+pagePayload?.totalElements) ? +pagePayload.totalElements :
+         Number.isFinite(+pagePayload?.page?.totalElements) ? +pagePayload.page.totalElements :
+         Number.isFinite(+pagePayload?.total) ? +pagePayload.total :
+         Number.isFinite(hdrTotal) ? hdrTotal :
+         filas.length;
+
+       const totalPgs = Math.max(1, Math.ceil(totalElems / Math.max(1, sizeServer)));
         setPage(pageServer);
         setSize(sizeServer);
         setTotalElements(totalElems);
