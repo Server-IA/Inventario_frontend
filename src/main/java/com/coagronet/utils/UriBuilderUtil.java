@@ -227,7 +227,7 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildPedidoCotizacionUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/pedido-cotizacion").buildAndExpand(id).toUri();
+		return ucb.path("/api/v1/pedido-cotizacion/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildEvaluacionItemUri(Long id, UriComponentsBuilder ucb) {

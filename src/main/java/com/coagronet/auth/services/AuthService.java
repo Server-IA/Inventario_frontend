@@ -147,13 +147,14 @@ public class AuthService {
 		UserRole ur = userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.empresaId(), dto.rolId())
 			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
-		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId()); // <<<
+		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId(), user.getUsuarioEstado().getId());
 		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
 			user.setPreferredEmpresaId(dto.empresaId());
 			user.setPreferredRolId(dto.rolId());
 			userRepo.save(user);
 		}
-		return Map.of("token", token, "empresaId", dto.empresaId(), "rolId", dto.rolId());
+		return Map.of("token", token, "empresaId", dto.empresaId(), "rolId", dto.rolId(), "estado",
+				user.getUsuarioEstado().getId());
 	}
 
 	/* ================= Estrategia para el contexto inicial ================= */
