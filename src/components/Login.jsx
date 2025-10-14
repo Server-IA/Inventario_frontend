@@ -11,6 +11,8 @@ import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import axios from "axios";
 
+import ForgotPassword from "../ForgotPassword";
+
 
 const decodeJwt = (jwt) => {
   try {
@@ -220,7 +222,7 @@ case 3: {
           maxWidth: 440,
           p: { xs: 3, md: 4 },
           borderRadius: 3,
-          bgcolor: cardBg,
+          bgcolor: cardBg,           // oscuro/white
           boxShadow: "none",
           position: "relative",
           "&:before": {
@@ -233,7 +235,11 @@ case 3: {
           },
         }}
       >
-        <Typography variant="h4" align="center" sx={{ fontWeight: 800, color: titleColor, mb: 0.5, lineHeight: 1.05 }}>
+        <Typography
+          variant="h4"
+          align="center"
+          sx={{ fontWeight: 800, color: titleColor, mb: 0.5, lineHeight: 1.05 }}
+        >
           Inicia sesión
         </Typography>
         <Typography align="center" sx={{ color: textSecondary, mb: 3 }}>
@@ -251,7 +257,10 @@ case 3: {
           fullWidth
           autoFocus
           InputLabelProps={{
-            sx: { color: labelColor, "&.Mui-focused": { color: borderFocus } },
+            sx: {
+              color: labelColor,
+              "&.Mui-focused": { color: borderFocus },
+            },
           }}
           sx={{
             mb: 2,
@@ -278,7 +287,10 @@ case 3: {
           onChange={(e) => setPassword(e.target.value)}
           fullWidth
           InputLabelProps={{
-            sx: { color: labelColor, "&.Mui-focused": { color: borderFocus } },
+            sx: {
+              color: labelColor,
+              "&.Mui-focused": { color: borderFocus },
+            },
           }}
           sx={{
             mb: 2.5,
@@ -298,7 +310,11 @@ case 3: {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">
+                <IconButton
+                  onClick={handleClickShowPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
@@ -324,16 +340,31 @@ case 3: {
         </Button>
 
         <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
-          <Link component={RouterLink} to="/forgot" underline="none">
+          <Button
+            variant="text"
+            onClick={() =>
+              props.setCurrentModule?.(
+                <ForgotPassword setCurrentModule={props.setCurrentModule} />
+              )
+            }
+            sx={{ color: theme.palette.primary.main, textTransform: "none" }}
+          >
             ¿Olvidaste tu contraseña?
-          </Link>
+          </Button>
         </Box>
+
+        <Typography variant="body2" align="center" sx={{ mt: 2, color: textSecondary }}>
+          {t("no_account")}{" "}
+          <Link
+            component={RouterLink}
+            to="/register"
+            sx={{ color: theme.palette.primary.main, textDecoration: "none", fontWeight: 700 }}
+          >
+            {t("register_here")}
+          </Link>
+        </Typography>
       </Box>
     </Box>
   );
-}
 
-Login.propTypes = {
-  setIsAuthenticated: PropTypes.func,
-  setCurrentModule: PropTypes.func,
-};
+} 
