@@ -134,7 +134,9 @@ export default function GridProduccion({
                   size: model.pageSize ?? model.size ?? 10,
                 };
                 setPaginationModel?.(next);
+                
               },
+              pageSizeOptions: [5, 10, 15, 20, 50], // <<< muestra el selector
             }
           : {})}
 
@@ -153,6 +155,7 @@ export default function GridProduccion({
                   onPageChange?.(null, nextPage);
                 }
               },
+              pageSizeOptions: [5, 10, 15, 20, 50], // <<< igual aquí
             }
           : {})}
 

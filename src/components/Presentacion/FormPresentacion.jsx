@@ -39,6 +39,7 @@ export default function FormPresentacion({
   const handleClose = () => {
     setOpen(false);
     setErrors({});
+    setSelectedRow({ id: 0 });
   };
 
   const handleChange = (e) => {
@@ -120,7 +121,14 @@ export default function FormPresentacion({
     <>
       <StackButtons
         methods={{
-          create: () => { setFormData(initialData); setMethodName("Agregar"); setOpen(true); },
+          //create: () => { setFormData(initialData); setMethodName("Agregar"); setOpen(true); },
+               create: () => {
+                   // Limpia la selección para que useEffect no detecte un id y respete "Agregar"
+                   setSelectedRow({ id: 0 });
+                   setFormData(initialData);
+                   setMethodName("Agregar");
+                   setOpen(true);
+                 },
           update: () => {
             if (!selectedRow?.id) {
               setMessage({ open: true, severity: "error", text: "Selecciona una presentación para editar." });
