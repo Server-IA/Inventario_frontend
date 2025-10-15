@@ -19,10 +19,43 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Entidad JPA que representa una cotización asociada a un
+ * {@link com.coagronet.pedido.Pedido}.
+ *
+ * <p>
+ * Una {@code PedidoCotizacion} almacena una descripción libre, una referencia
+ * de archivo
+ * (por ejemplo, URL o nombre de archivo en un bucket) y las asociaciones con el
+ * {@link com.coagronet.pedido.Pedido}, el
+ * {@link com.coagronet.proveedor.Proveedor} y el
+ * {@link com.coagronet.estado.Estado} que describe su estado actual en el
+ * flujo.
+ * </p>
+ *
+ * <p>
+ * Convenciones de persistencia (por ejemplo, nombres de columnas como
+ * {@code pec_id},
+ * {@code pec_descripcion}, {@code pec_archivo}) se configuran mediante
+ * anotaciones JPA y pueden
+ * consultarse en las anotaciones de los campos.
+ * </p>
+ *
+ * <h2>Invariantes y reglas</h2>
+ * <ul>
+ * <li>Cada registro pertenece a una empresa a través del pedido asociado.</li>
+ * <li>Longitudes máximas de texto (por ejemplo, 2048 caracteres) deben
+ * respetarse según el esquema.</li>
+ * <li>Las asociaciones se cargan perezosamente ({@code FetchType.LAZY}).</li>
+ * </ul>
+ *
+ * @author Juan J. Castro
+ * @since 0.3.1
+ */
+
 @Entity
 @Table(name = "pedido_cotizacion", schema = "public")
-@SequenceGenerator(name = "PEQ_SEQ", sequenceName = "pedido_cotizacion_pec_id_seq", schema = "public", initialValue = 1,
-		allocationSize = 1)
+@SequenceGenerator(name = "PEQ_SEQ", sequenceName = "pedido_cotizacion_pec_id_seq", schema = "public", initialValue = 1, allocationSize = 1)
 @Data
 @Builder
 @NoArgsConstructor

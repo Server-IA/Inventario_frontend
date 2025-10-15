@@ -50,6 +50,12 @@ public class PedidoController {
 		return ResponseEntity.ok(articuloPedidoService.findAllByPedidoId(pedidoId));
 	}
 
+	/**
+	 * Lista todas las cotizaciones asociadas a un pedido específico.
+	 *
+	 * @param pedidoId identificador del pedido
+	 * @return lista de DTOs de respuesta
+	 */
 	@GetMapping("/{pedidoId}/cotizaciones")
 	public ResponseEntity<List<PedidoCotizacionResponseDTO>> findAllByPedidoId(@PathVariable Long pedidoId) {
 		return ResponseEntity.ok(pedidoCotizacionService.findAllByPedidoId(pedidoId));
