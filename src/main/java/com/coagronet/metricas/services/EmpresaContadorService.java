@@ -26,7 +26,7 @@ public class EmpresaContadorService {
      *
      * @param entidades Lista opcional de nombres de entidades a contar.
      *                  Si es nula o vacía, se contarán todas las entidades registradas en ConstantesMetricas.
-     * @return DTO con el ID de la empresa y la lista de totales por entidad.
+     * @return DTO con el ID de la empresa, la lista de registros totales por entidad y la lista de entidades inválidas.
      */
 
     public EmpresaTotalResponseDTO contarEntidades(List<String> entidades) {
