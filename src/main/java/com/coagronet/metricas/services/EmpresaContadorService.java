@@ -32,7 +32,6 @@ public class EmpresaContadorService {
     public EmpresaTotalResponseDTO contarEntidades(List<String> entidades) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-        // Si no se especifican entidades, contar todas las disponibles
         List<String> entidadesSolicitadas = (entidades == null || entidades.isEmpty())
                 ? new ArrayList<>(ConstantesMetricas.ENTITY_MAP.keySet())
                 : entidades;
