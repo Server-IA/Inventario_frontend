@@ -1,4 +1,3 @@
-// src/components/OrdenCompra/GridArticuloOrdenCompra.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
@@ -6,6 +5,7 @@ import {
   DataGrid,
   GridToolbarContainer,
   GridToolbarFilterButton,
+  esES,
 } from "@mui/x-data-grid";
 
 function Toolbar() {
@@ -17,20 +17,13 @@ function Toolbar() {
 }
 
 export default function GridArticuloOrdenCompra({
-  // Datos
   items = [],
-
-  // Selección
   selectedRow = null,
   setSelectedRow,
-
-  // Paginación (server-side opcional)
-  paginationModel,        // { page, pageSize } o { page, size }
-  setPaginationModel,     // (model) => void
-  rowCount,               // total en servidor
+  paginationModel,
+  setPaginationModel,
+  rowCount,
   loading = false,
-
-  // Lookups
   presentacionesMap = {},
 }) {
   const columns = useMemo(() => {
@@ -41,21 +34,26 @@ export default function GridArticuloOrdenCompra({
         row?.presentacionId ??
         row?.presentacion?.id ??
         null;
-
       const directName =
         row?.presentacionNombre ??
         row?.presentacion_name ??
         row?.presentacion?.nombre ??
         row?.presentacion?.name;
-
-      return directName ?? (presId != null ? presentacionesMap[Number(presId)] : "") ?? "";
+      return (
+        directName ?? (presId != null ? presentacionesMap[Number(presId)] : "") ?? ""
+      );
     };
 
     return [
       { field: "id", headerName: "ID", width: 90, type: "number" },
       { field: "cantidad", headerName: "Cantidad", width: 120, type: "number" },
       { field: "precio", headerName: "Precio", width: 120, type: "number" },
-      { field: "ordenCompraId", headerName: "Orden Compra", width: 150, type: "number" },
+      {
+        field: "ordenCompraId",
+        headerName: "Orden Compra",
+        width: 150,
+        type: "number",
+      },
       {
         field: "presentacion",
         headerName: "Presentación",
@@ -74,10 +72,8 @@ export default function GridArticuloOrdenCompra({
     ];
   }, [presentacionesMap]);
 
-  // ¿Server o cliente?
-  const serverPagination = Boolean(
-    paginationModel && setPaginationModel && typeof rowCount === "number"
-  );
+  const serverPagination =
+    paginationModel && setPaginationModel && typeof rowCount === "number";
 
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
@@ -85,22 +81,22 @@ export default function GridArticuloOrdenCompra({
         rows={Array.isArray(items) ? items : []}
         columns={columns}
         getRowId={(row) => row.id}
-
-        // Selección (simple y estable)
         onRowClick={(params) => setSelectedRow?.(params.row)}
         rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
-
-        // Toolbar (v5 y v6)
-        components={{ Toolbar: Toolbar }}
+        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+        pagination
+        pageSizeOptions={[5, 10, 20, 50]}
+        components={{ Toolbar }}
         slots={{ toolbar: Toolbar }}
-
-        // Paginación
         paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
         {...(serverPagination
           ? {
-              rowCount,
+              rowCount: Math.max(
+                Number(rowCount ?? 0),
+                Array.isArray(items) ? items.length : 0
+              ),
               paginationModel: {
                 page: paginationModel.page ?? 0,
                 pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
@@ -114,12 +110,10 @@ export default function GridArticuloOrdenCompra({
               },
             }
           : {
-              pageSizeOptions: [5, 10, 20, 50],
               initialState: {
                 pagination: { paginationModel: { page: 0, pageSize: 5 } },
               },
             })}
-
         autoHeight
         sx={{ minWidth: 720 }}
       />
@@ -131,11 +125,7 @@ GridArticuloOrdenCompra.propTypes = {
   items: PropTypes.array,
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func,
-  paginationModel: PropTypes.shape({
-    page: PropTypes.number,
-    pageSize: PropTypes.number,
-    size: PropTypes.number,
-  }),
+  paginationModel: PropTypes.object,
   setPaginationModel: PropTypes.func,
   rowCount: PropTypes.number,
   loading: PropTypes.bool,

@@ -1,6 +1,6 @@
 // src/components/Kardex/GridArticuloKardex.jsx
 import React, { useMemo } from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, esES } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
 
 export default function GridArticuloKardex({
@@ -12,29 +12,23 @@ export default function GridArticuloKardex({
   selectedRow,
   setSelectedRow,
 
-  // Contexto del Kardex
-  kardexId, // <- pásalo desde el padre para filtrar defensivamente
+  // Contexto
+  kardexId,
 
-  // Paginación controlada (server-side). Si no vienen, usa modo cliente.
+  // Paginación server-side (opcional)
   paginationModel,        // { page, size } o { page, pageSize }
   setPaginationModel,     // (model) => void
   rowCount,               // total en servidor
-  loading = false,        // spinner de carga
+  loading = false,
 }) {
-  /* ---------- Mapa de presentaciones por id ---------- */
+  /* ---------- Mapa presentaciones ---------- */
   const presById = useMemo(() => {
     const m = {};
     for (const pr of presentaciones ?? []) {
-      // Etiqueta compuesta y segura
       const composed = [pr?.producto?.nombre, pr?.presentacion?.nombre]
         .filter(Boolean)
         .join(" · ");
-
-      const label =
-        pr?.name ??
-        pr?.nombre ??
-        (composed || `Presentación ${pr?.id ?? ""}`);
-
+      const label = pr?.name ?? pr?.nombre ?? (composed || `Presentación ${pr?.id ?? ""}`);
       if (pr?.id != null) m[String(pr.id)] = label;
     }
     return m;
@@ -69,7 +63,6 @@ export default function GridArticuloKardex({
       valueGetter: (params) =>
         (params?.row?.fechaVencimiento || "").toString().substring(0, 10),
     },
-    // Puedes ocultar el ID del kardex si no quieres mostrarlo
     { field: "kardexId", headerName: "Kardex ID", width: 120, hide: true },
     {
       field: "presentacionProductoId",
@@ -92,10 +85,6 @@ export default function GridArticuloKardex({
     },
   ];
 
-  /* ---------- Modo de paginación ----------
-     - Si recibimos props de paginación (server), activamos paginationMode="server"
-     - Si NO, usamos cliente con pageSize=10
-  ---------------------------------------- */
   const serverPagination = Boolean(
     paginationModel && setPaginationModel && typeof rowCount === "number"
   );
@@ -106,39 +95,40 @@ export default function GridArticuloKardex({
         rows={filteredRows}
         columns={columns}
         getRowId={(row) => row.id}
-        // Selección de fila
         onRowClick={(params) => setSelectedRow?.(params.row)}
         rowSelectionModel={selectedRow ? [selectedRow.id] : []}
 
-        // Paginación
+        // Paginación visible siempre
+        pagination
+        pageSizeOptions={[5, 10, 20, 50]}
+        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+
         paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
-
         {...(serverPagination
           ? {
-              // ----- Server controlled -----
+              rowCount: Math.max(
+                Number(rowCount ?? 0),
+                Array.isArray(filteredRows) ? filteredRows.length : 0
+              ),
               paginationModel: {
                 page: paginationModel.page ?? 0,
                 pageSize:
                   paginationModel.pageSize ??
-                  paginationModel.size ?? // por si tu padre usa {page, size}
+                  paginationModel.size ??
                   10,
               },
               onPaginationModelChange: (model) => {
-                // Normaliza "size" vs "pageSize"
                 const next = {
                   page: model.page ?? 0,
                   size: model.pageSize ?? model.size ?? 10,
                 };
                 setPaginationModel?.(next);
               },
-              rowCount,
             }
           : {
-              // ----- Client fallback -----
-              pageSizeOptions: [5, 10, 15, 20],
               initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
               },
             })}
         autoHeight
