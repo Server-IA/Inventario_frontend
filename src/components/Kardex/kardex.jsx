@@ -23,7 +23,7 @@ export default function Kardex() {
   const [selectedArticulo, setSelectedArticulo] = useState({});
   const [reloadArticulos, setReloadArticulos] = useState(false);
 
-  // Catálogos para resolver nombres en grillas
+  // Catálogos
   const [almacenes, setAlmacenes] = useState([]);
   const [producciones, setProducciones] = useState([]);
   const [tiposMovimiento, setTiposMovimiento] = useState([]);
@@ -60,25 +60,35 @@ export default function Kardex() {
         setTiposMovimiento(toArray(rTmov.data));
         setPresentaciones(toArray(rPres.data));
       } catch (e) {
-        // si algo falla, al menos deja arrays vacíos para no romper el render
         setAlmacenes([]); setProducciones([]); setTiposMovimiento([]); setPresentaciones([]);
       }
     };
     loadCatalogs();
   }, []);
 
-  // ------- CRUD listas -------
+  // ------- Cargar lista de kardex con paginación (rowCount efectivo) -------
   const reloadData = () => {
     setLoadingKardex(true);
+    const { page, size } = kardexPage; // 0-based; si tu API es 1-based: page+1
     axios
-      .get("/v1/kardex", { params: { page: kardexPage.page, size: kardexPage.size } })
+      .get("/v1/kardex", { params: { page, size } })
       .then((res) => {
         const rows = toArray(res.data);
-        const total =
-          Number(res.data?.totalElements ?? res.data?.page?.totalElements ?? rows.length);
+        const rawTotal = Number(res.data?.totalElements ?? res.data?.page?.totalElements);
+        // rowCount robusto: usa total si viene; si no, estima para habilitar flechas
+        const effectiveTotal =
+          Number.isFinite(rawTotal) && rawTotal > 0
+            ? rawTotal
+            : rows.length < size
+            ? page * size + rows.length
+            : (page + 2) * size;
+
         setKardexes(rows);
-        setTotalKardex(total);
+        setTotalKardex(effectiveTotal);
         if (rows.length > 0 && !selectedRow) setSelectedRow(rows[0]);
+        if (rows.length === 0 && page > 0) {
+          setKardexPage((p) => ({ ...p, page: p.page - 1 }));
+        }
       })
       .catch(() => {
         setMessage({ open: true, severity: "error", text: "Error al cargar kardexes" });
@@ -87,19 +97,29 @@ export default function Kardex() {
       .finally(() => setLoadingKardex(false));
   };
 
+  // ------- Cargar artículos del kardex con paginación (rowCount efectivo) -------
   const loadArticulos = (kardexId) => {
     if (!kardexId) { setArticuloItems([]); setTotalArticulos(0); return; }
     setLoadingArticulos(true);
+    const { page, size } = articuloPage;
     axios
-      .get(`/v1/articulo-kardex`, {
-        params: { kardexId, page: articuloPage.page, size: articuloPage.size },
-      })
+      .get(`/v1/articulo-kardex`, { params: { kardexId, page, size } })
       .then((res) => {
         const rows = toArray(res.data);
-        const total =
-          Number(res.data?.totalElements ?? res.data?.page?.totalElements ?? rows.length);
+        const rawTotal = Number(res.data?.totalElements ?? res.data?.page?.totalElements);
+        const effectiveTotal =
+          Number.isFinite(rawTotal) && rawTotal > 0
+            ? rawTotal
+            : rows.length < size
+            ? page * size + rows.length
+            : (page + 2) * size;
+
         setArticuloItems(rows);
-        setTotalArticulos(total);
+        setTotalArticulos(effectiveTotal);
+
+        if (rows.length === 0 && page > 0) {
+          setArticuloPage((p) => ({ ...p, page: p.page - 1 }));
+        }
       })
       .catch(() => { setArticuloItems([]); setTotalArticulos(0); })
       .finally(() => setLoadingArticulos(false));
@@ -181,7 +201,6 @@ export default function Kardex() {
             paginationModel={kardexPage}
             setPaginationModel={setKardexPage}
             rowCount={totalKardex}
-            // 👇 catálogos para mostrar nombres en vez de ids
             almacenes={almacenes}
             producciones={producciones}
             tiposMovimiento={tiposMovimiento}
@@ -212,8 +231,8 @@ export default function Kardex() {
             paginationModel={articuloPage}
             setPaginationModel={setArticuloPage}
             rowCount={totalArticulos}
-            // 👇 catálogo para resolver "Presentación"
             presentaciones={presentaciones}
+            kardexId={selectedRow?.id}
           />
         </Box>
       )}

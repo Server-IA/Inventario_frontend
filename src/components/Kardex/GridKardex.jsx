@@ -1,7 +1,6 @@
-// src/components/Kardex/GridKardex.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, esES } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
 
 export default function GridKardex({
@@ -95,9 +94,7 @@ export default function GridKardex({
       width: 140,
       valueGetter: (p) => {
         const state =
-          p?.row?.estado?.name ??
-          p?.row?.estado?.nombre ??
-          p?.row?.estadoId;
+          p?.row?.estado?.name ?? p?.row?.estado?.nombre ?? p?.row?.estadoId;
         if (state === 1 || state === "1") return "Activo";
         if ([0, "0", 2, "2"].includes(state)) return "Inactivo";
         return String(state ?? "");
@@ -116,18 +113,23 @@ export default function GridKardex({
         rows={Array.isArray(kardexes) ? kardexes : []}
         columns={columns}
         getRowId={(row) => row.id}
-
-        // Selección
         onRowClick={(params) => setSelectedRow?.(params.row)}
         rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
 
-        // Paginación
+        // Paginación visible siempre
+        pagination
+        pageSizeOptions={[5, 10, 20, 50]}
+        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+
         paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
         {...(serverPagination
           ? {
-              // ----- Server controlled -----
+              rowCount: Math.max(
+                Number(rowCount ?? 0),
+                Array.isArray(kardexes) ? kardexes.length : 0
+              ),
               paginationModel: {
                 page: paginationModel.page ?? 0,
                 pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
@@ -137,15 +139,12 @@ export default function GridKardex({
                   page: model.page ?? 0,
                   size: model.pageSize ?? model.size ?? 10,
                 };
-                setPaginationModel?.(next); // el padre hace el fetch con estos valores
+                setPaginationModel?.(next);
               },
-              rowCount,
             }
           : {
-              // ----- Client fallback -----
-              pageSizeOptions: [5, 10, 15, 20, 50],
               initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
               },
             })}
         autoHeight

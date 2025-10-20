@@ -1,4 +1,3 @@
-// src/components/OrdenCompra/GridOrdenCompra.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
@@ -6,6 +5,7 @@ import {
   DataGrid,
   GridToolbarContainer,
   GridToolbarFilterButton,
+  esES,
 } from "@mui/x-data-grid";
 
 function CustomToolbar() {
@@ -17,22 +17,15 @@ function CustomToolbar() {
 }
 
 export default function GridOrdenCompra({
-  // Datos
   ordenes = [],
-
-  // Paginación / orden / filtros (server-side opcional)
-  rowCount,                 // total en servidor
+  rowCount,
   loading = false,
-  paginationModel,          // { page, pageSize } o { page, size }
-  setPaginationModel,       // (next) => void
-  sortModel,                // [{ field, sort }]
-  setSortModel,             // (next) => void
-  setFilterModel,           // (next) => void
-
-  // Selección
+  paginationModel,
+  setPaginationModel,
+  sortModel,
+  setSortModel,
+  setFilterModel,
   setSelectedRow,
-
-  // Lookups
   proveedoresMap = {},
 }) {
   const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
@@ -45,13 +38,11 @@ export default function GridOrdenCompra({
         row?.proveedorIdFk ??
         row?.proveedor?.id ??
         null;
-
       const provName =
         row?.proveedorName ??
         row?.proveedor_name ??
         row?.proveedor?.name ??
         (provId != null ? proveedoresMap[Number(provId)] : undefined);
-
       return provName ?? String(provId ?? "");
     };
 
@@ -83,10 +74,8 @@ export default function GridOrdenCompra({
     ];
   }, [proveedoresMap]);
 
-  // ¿server o cliente?
-  const serverPagination = Boolean(
-    paginationModel && setPaginationModel && typeof rowCount === "number"
-  );
+  const serverPagination =
+    paginationModel && setPaginationModel && typeof rowCount === "number";
 
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
@@ -94,21 +83,21 @@ export default function GridOrdenCompra({
         rows={Array.isArray(ordenes) ? ordenes : []}
         columns={columns}
         getRowId={(row) => row.id}
-
-        // Selección (simple y estable)
         onRowClick={(params) => setSelectedRow?.(params.row)}
         disableRowSelectionOnClick
-
-        // Toolbar (v5 y v6)
+        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+        pagination
+        pageSizeOptions={[5, 10, 20, 50]}
         components={{ Toolbar: CustomToolbar }}
         slots={{ toolbar: CustomToolbar }}
-
-        // Paginación
         paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
         {...(serverPagination
           ? {
-              rowCount,
+              rowCount: Math.max(
+                Number(rowCount ?? 0),
+                Array.isArray(ordenes) ? ordenes.length : 0
+              ),
               paginationModel: {
                 page: paginationModel.page ?? 0,
                 pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
@@ -122,19 +111,15 @@ export default function GridOrdenCompra({
               },
             }
           : {
-              pageSizeOptions: [5, 10, 20, 50],
               initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
               },
             })}
-
-        // Sorting / Filtering (solo si viene control desde el padre)
         sortingMode={setSortModel ? "server" : "client"}
         sortModel={sortModel}
         onSortModelChange={setSortModel}
         filterMode={setFilterModel ? "server" : "client"}
         onFilterModelChange={setFilterModel}
-
         autoHeight
         sx={{ minWidth: 720 }}
       />

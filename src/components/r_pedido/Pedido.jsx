@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react"; 
+// src/components/Pedido/Pedido.jsx
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormPedido from "./FormPedido";
@@ -9,6 +10,9 @@ import RePV from "../RE_pedido/re_pv";
 import { Box, Typography, Button, Dialog, useTheme } from "@mui/material";
 
 export default function Pedido() {
+  const theme = useTheme();
+
+  // -------------------- Estado principal --------------------
   const [pedidos, setPedidos] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -17,125 +21,160 @@ export default function Pedido() {
   const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
+  // Artículos
   const [articuloItems, setArticuloItems] = useState([]);
   const [selectedArticulo, setSelectedArticulo] = useState({});
   const [reloadArticulos, setReloadArticulos] = useState(false);
   const [presentaciones, setPresentaciones] = useState([]);
 
-  // Estados para paginación en servidor (Pedidos)
-  const [pedidoPaginationModel, setPedidoPaginationModel] = useState({ page: 0, pageSize: 5 });
+  // Lookups
+  const [producciones, setProducciones] = useState([]);
+  const [almacenes, setAlmacenes] = useState([]);
+  const [estados, setEstados] = useState([]);
+
+  // -------------------- Paginación (patrón Espacio) --------------------
+  // Pedidos
+  const [pedidoPaginationModel, setPedidoPaginationModel] = useState({ page: 0, size: 5 });
   const [pedidoRowCount, setPedidoRowCount] = useState(0);
   const [pedidoLoading, setPedidoLoading] = useState(false);
 
-  // Estados para paginación en servidor (Artículos)
-  const [articuloPaginationModel, setArticuloPaginationModel] = useState({ page: 0, pageSize: 5 });
+  // Artículos
+  const [articuloPaginationModel, setArticuloPaginationModel] = useState({ page: 0, size: 5 });
   const [articuloRowCount, setArticuloRowCount] = useState(0);
   const [articuloLoading, setArticuloLoading] = useState(false);
 
-  const theme = useTheme();
-
-  // Utilidad para normalizar respuesta pageable o array
+  // -------------------- Utils --------------------
   const normalizePageResponse = (res) => {
-    const isPage = res?.data && typeof res.data === "object" && Array.isArray(res.data.content);
+    const d = res?.data;
+    const isPage = d && typeof d === "object" && Array.isArray(d.content);
     if (isPage) {
       return {
-        rows: res.data.content,
-        total: Number(res.data.totalElements ?? res.data.total ?? 0),
+        rows: d.content,
+        total: Number(d.totalElements ?? d.total ?? 0),
       };
     }
-    // Si es array plano, intenta leer total de header o usa length
-    const headerTotal = Number(res.headers?.["x-total-count"]);
+    const headerTotal = Number(res?.headers?.["x-total-count"]);
     return {
-      rows: Array.isArray(res.data) ? res.data : [],
-      total: Number.isFinite(headerTotal) ? headerTotal : (Array.isArray(res.data) ? res.data.length : 0),
+      rows: Array.isArray(d) ? d : [],
+      total: Number.isFinite(headerTotal) ? headerTotal : (Array.isArray(d) ? d.length : 0),
     };
   };
-  const [producciones, setProducciones] = useState([]);
-  const [almacenes, setAlmacenes] = useState([]);
-  const [estados, setEstados] = useState([]); 
 
+  const toArray = (d) => (Array.isArray(d) ? d : (d?.content ?? d?.items ?? d?.data ?? d?.results ?? []));
+
+  // -------------------- Cargas iniciales --------------------
   useEffect(() => {
-    const toArray = (d) => (Array.isArray(d) ? d : (d?.content ?? d?.items ?? d?.data ?? d?.results ?? []));
     axios.get("/v1/items/almacen/0")
-      .then(r => setAlmacenes(toArray(r.data)))
+      .then((r) => setAlmacenes(toArray(r.data)))
       .catch(() => setAlmacenes([]));
 
     axios.get("/v1/items/produccion/0")
-      .then(r => setProducciones(toArray(r.data)))
+      .then((r) => setProducciones(toArray(r.data)))
       .catch(() => setProducciones([]));
 
-    axios.get("/v1/items/pedido_estado/0")          
-      .then(r => setEstados(toArray(r.data)))
+    axios.get("/v1/items/pedido_estado/0")
+      .then((r) => setEstados(toArray(r.data)))
       .catch(() => setEstados([]));
-  }, []);
 
-  const reloadData = async () => {
-    try {
-      setPedidoLoading(true);
-      const params = {
-        page: pedidoPaginationModel.page,
-        size: pedidoPaginationModel.pageSize,
-        sort: "id,desc", // opcional: ajusta según tu backend
-      };
-      const res = await axios.get("/v1/pedido", { params });
-      const { rows, total } = normalizePageResponse(res);
-      setPedidos(rows);
-      setPedidoRowCount(total);
-
-      // Seleccionar la primera fila si no hay selección
-      if (rows.length > 0 && !selectedRow) {
-        setSelectedRow(rows[0]);
-      }
-    } catch (e) {
-      setMessage({ open: true, severity: "error", text: "Error al cargar pedidos" });
-      setPedidos([]);
-      setPedidoRowCount(0);
-    } finally {
-      setPedidoLoading(false);
-    }
-  };
-
-  const loadArticulos = async (pedidoId) => {
-    if (!pedidoId) {
-      setArticuloItems([]);
-      setArticuloRowCount(0);
-      return;
-    }
-    try {
-      setArticuloLoading(true);
-      const params = {
-        page: articuloPaginationModel.page,
-        size: articuloPaginationModel.pageSize,
-        sort: "id,desc", // opcional
-      };
-      const res = await axios.get(`/v1/pedido/${pedidoId}/articulos`, { params });
-      const { rows, total } = normalizePageResponse(res);
-      setArticuloItems(rows);
-      setArticuloRowCount(total);
-    } catch (e) {
-      setArticuloItems([]);
-      setArticuloRowCount(0);
-    } finally {
-      setArticuloLoading(false);
-    }
-  };
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    reloadData();
     axios.get("/v1/presentacion")
-      .then(res => setPresentaciones(res.data))
+      .then((r) => setPresentaciones(toArray(r.data)))
       .catch(() => setPresentaciones([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recargar pedidos cuando cambia la paginación de pedidos
-  useEffect(() => {
-    reloadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pedidoPaginationModel]);
+  // -------------------- Pedidos: listar con paginación --------------------
+  const reloadPedidos = async () => {
+  try {
+    setPedidoLoading(true);
+    const size = pedidoPaginationModel.size;
+    const page = pedidoPaginationModel.page; // 0-based (si tu API es 1-based usa page+1)
+    const params = { page, size, sort: "id,desc" };
 
-  // Cargar artículos cuando cambia pedido seleccionado o la paginación/flag de recarga
+    const res = await axios.get("/v1/pedido", { params });
+    const { rows, total } = normalizePageResponse(res);
+
+    setPedidos(rows);
+
+    // ----- Cálculo de rowCount efectivo -----
+    const totalNum = Number(total);
+    let effectiveTotal;
+
+    if (Number.isFinite(totalNum) && totalNum > 0) {
+      // Backend nos dio un total correcto
+      effectiveTotal = totalNum;
+    } else {
+      // No hay total fiable. Estimamos:
+      if (rows.length < size) {
+        // Última página: total exacto = filas mostradas hasta aquí
+        effectiveTotal = page * size + rows.length;
+      } else {
+        // Aún puede haber más páginas: anuncia al menos 1 página más
+        effectiveTotal = (page + 2) * size; // “2” => página actual + una más
+      }
+    }
+
+    setPedidoRowCount(effectiveTotal);
+
+    // Selección inicial
+    if (rows.length > 0 && !selectedRow) {
+      setSelectedRow(rows[0]);
+    }
+
+    // Si la página quedó vacía y no es la primera, retrocede
+    if (rows.length === 0 && page > 0) {
+      setPedidoPaginationModel((p) => ({ ...p, page: p.page - 1 }));
+    }
+  } catch (e) {
+    setMessage({ open: true, severity: "error", text: "Error al cargar pedidos" });
+    setPedidos([]);
+    setPedidoRowCount(0);
+  } finally {
+    setPedidoLoading(false);
+  }
+};
+
+  // Montaje y cuando cambia la paginación de pedidos
+  useEffect(() => { reloadPedidos(); /* eslint-disable-next-line */ }, [pedidoPaginationModel]);
+
+  // -------------------- Artículos: listar con paginación --------------------
+const loadArticulos = async (pedidoId) => {
+  if (!pedidoId) {
+    setArticuloItems([]);
+    setArticuloRowCount(0);
+    return;
+  }
+  try {
+    setArticuloLoading(true);
+    const size = articuloPaginationModel.size;
+    const page = articuloPaginationModel.page;
+    const params = { page, size, sort: "id,desc" };
+
+    const res = await axios.get(`/v1/pedido/${pedidoId}/articulos`, { params });
+    const { rows, total } = normalizePageResponse(res);
+
+    setArticuloItems(rows);
+
+    const totalNum = Number(total);
+    let effectiveTotal;
+    if (Number.isFinite(totalNum) && totalNum > 0) {
+      effectiveTotal = totalNum;
+    } else {
+      effectiveTotal = rows.length < size ? page * size + rows.length : (page + 2) * size;
+    }
+    setArticuloRowCount(effectiveTotal);
+
+    if (rows.length === 0 && page > 0) {
+      setArticuloPaginationModel((p) => ({ ...p, page: p.page - 1 }));
+    }
+  } catch (e) {
+    setArticuloItems([]);
+    setArticuloRowCount(0);
+  } finally {
+    setArticuloLoading(false);
+  }
+};
+
+
+  // Cuando cambia pedido seleccionado, paginación de artículos o recarga
   useEffect(() => {
     if (selectedRow?.id) loadArticulos(selectedRow.id);
     else {
@@ -145,18 +184,44 @@ export default function Pedido() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRow, articuloPaginationModel, reloadArticulos]);
 
-  // Estilos contenedores
-  const containerPedidos = {
+  // -------------------- Handlers de paginación (patrón Espacio) --------------------
+  // El grid emite { page, pageSize } → convertimos a { page, size }
+  const onPedidoGridPageChange = (model) => {
+    setPedidoPaginationModel((prev) => {
+      const nextSize = model.pageSize ?? model.size ?? prev.size ?? 5;
+      const sizeChanged = (prev.size ?? prev.pageSize) !== nextSize;
+      return {
+        page: sizeChanged ? 0 : (model.page ?? 0),
+        size: nextSize,
+      };
+    });
+  };
+
+  const onArticuloGridPageChange = (model) => {
+    setArticuloPaginationModel((prev) => {
+      const nextSize = model.pageSize ?? model.size ?? prev.size ?? 5;
+      const sizeChanged = (prev.size ?? prev.pageSize) !== nextSize;
+      return {
+        page: sizeChanged ? 0 : (model.page ?? 0),
+        size: nextSize,
+      };
+    });
+  };
+
+  // -------------------- Estilos --------------------
+  const containerPedidos = useMemo(() => ({
     backgroundColor: theme.palette.mode === "dark" ? "#1e2a2c" : "#c9e6fe",
     padding: 3,
     borderRadius: 2,
-  };
-  const containerArticulos = {
+  }), [theme.palette.mode]);
+
+  const containerArticulos = useMemo(() => ({
     backgroundColor: theme.palette.mode === "dark" ? "#2c383b" : "#caddf3",
     padding: 2,
     borderRadius: 2,
-  };
+  }), [theme.palette.mode]);
 
+  // -------------------- UI --------------------
   return (
     <Box sx={{ p: 2 }}>
       {/* Contenedor principal de Pedidos */}
@@ -193,9 +258,7 @@ export default function Pedido() {
                   await axios.delete(`/v1/pedido/${selectedRow.id}`);
                   setMessage({ open: true, severity: "success", text: "Pedido eliminado correctamente." });
                   setSelectedRow(null);
-                  // Si estabas en una página > 0 y borraste el último, podrías querer retroceder una página
-                  // Aquí lo simple es recargar:
-                  reloadData();
+                  reloadPedidos();
                 } catch {
                   setMessage({ open: true, severity: "error", text: "Error al eliminar el pedido." });
                 }
@@ -213,7 +276,7 @@ export default function Pedido() {
           formMode={formMode}
           selectedRow={selectedRow}
           setSelectedRow={setSelectedRow}
-          reloadData={reloadData}
+          reloadData={reloadPedidos}
           setMessage={setMessage}
           almacenId={selectedRow?.almacenId || ""}
         />
@@ -225,13 +288,16 @@ export default function Pedido() {
             selectedRow={selectedRow}
             setSelectedRow={setSelectedRow}
 
-            // props de paginación en servidor
+            // Server-side
             loading={pedidoLoading}
             rowCount={pedidoRowCount}
-            paginationModel={pedidoPaginationModel}
-            onPaginationModelChange={setPedidoPaginationModel}
-            producciones={producciones}   // <- NUEVO
-            almacenes={almacenes}   
+            // El grid espera { page, pageSize }; convertimos nuestro { page, size }
+            paginationModel={{ page: pedidoPaginationModel.page, pageSize: pedidoPaginationModel.size }}
+            onPaginationModelChange={onPedidoGridPageChange}
+
+            // Extras
+            producciones={producciones}
+            almacenes={almacenes}
             estados={estados}
           />
         </Box>
@@ -248,7 +314,7 @@ export default function Pedido() {
                 pedidoId={selectedRow?.id || ""}
                 setSelectedRow={setSelectedArticulo}
                 setMessage={setMessage}
-                reloadData={() => setReloadArticulos(prev => !prev)}
+                reloadData={() => setReloadArticulos((v) => !v)}
               />
             </Box>
           </Box>
@@ -258,11 +324,11 @@ export default function Pedido() {
             setSelectedRow={setSelectedArticulo}
             presentaciones={presentaciones}
 
-            // props de paginación en servidor
+            // Server-side
             loading={articuloLoading}
             rowCount={articuloRowCount}
-            paginationModel={articuloPaginationModel}
-            onPaginationModelChange={setArticuloPaginationModel}
+            paginationModel={{ page: articuloPaginationModel.page, pageSize: articuloPaginationModel.size }}
+            onPaginationModelChange={onArticuloGridPageChange}
           />
         </Box>
       )}
