@@ -6,12 +6,13 @@ import {
   Typography,
   Switch,
   Box,
-  FormControlLabel
+  FormControlLabel,
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { useTheme, alpha } from "@mui/material/styles";
-import Brightness7Icon from "@mui/icons-material/Brightness7"; 
-import DarkModeIcon from "@mui/icons-material/DarkMode";    
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+
 import Login from "../Login";
 import Register from "../Register";
 import ProfileMenu from "../ProfileMenu";
@@ -19,6 +20,14 @@ import Inicio from "../Inicio.jsx";
 import { useThemeToggle } from "./ThemeToggleProvider";
 
 const APPBAR_GREEN = "#114232";
+
+// Rutas donde NO quieres mostrar Login/Register
+const HIDE_AUTH_BTNS_ROUTES = [
+  "/seguridad/form-registro-persona",
+  "/seguridad/form-registro-empresa",
+  "/registro/persona",
+  "/registro/empresa",
+];
 
 export default function AppBarComponent({
   setCurrentModule,
@@ -61,6 +70,17 @@ export default function AppBarComponent({
     if (location.pathname === "/register") handleRegister();
   }, [location.pathname]);
 
+  // Mostrar UI de perfil (con "Cerrar sesión") si:
+  // - está autenticado
+  // - hay token en localStorage (por recarga)
+  // - está en un formulario de registro (para ocultar Login/Register)
+  const hasAnyToken =
+    !!localStorage.getItem("accessToken") ||
+    !!localStorage.getItem("token");
+
+  const showProfileUI =
+    isAuthenticated || hasAnyToken || HIDE_AUTH_BTNS_ROUTES.includes(location.pathname);
+
   return (
     <AppBar
       position="fixed"
@@ -72,7 +92,7 @@ export default function AppBarComponent({
     >
       <Toolbar>
         {/* Logo / Título */}
-        {!isAuthenticated ? (
+        {!showProfileUI ? (
           <Button
             onClick={handleGoHome}
             color="inherit"
@@ -109,60 +129,59 @@ export default function AppBarComponent({
           </Box>
         )}
 
-<FormControlLabel
-  control={
-    <Switch
-      checked={darkMode}
-      onChange={toggleTheme}
-      sx={{
-        width: 44,
-        height: 24,
-        padding: 0,
-        "& .MuiSwitch-switchBase": {
-          padding: 0.3,
-          "&.Mui-checked": {
-            transform: "translateX(20px)",
-            color: "#fff",
-            "& + .MuiSwitch-track": {
-              backgroundColor: theme.palette.primary.main,
-              opacity: 1,
-            },
-          },
-        },
-        "& .MuiSwitch-thumb": {
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 12,
-        },
-        "& .MuiSwitch-track": {
-          borderRadius: 20,
-          backgroundColor: alpha(theme.palette.common.white, 0.5),
-          opacity: 1,
-        },
-      }}
-      icon={<Brightness7Icon sx={{ fontSize: 20}} />}     // ☀️
-      checkedIcon={<DarkModeIcon sx={{ fontSize: 20}} />} // 🌙
-    />
-  }
-  label={darkMode ? "Modo oscuro" : "Modo claro"}
-  labelPlacement="start"
-  sx={{
-    ml: 2,
-    mr: 2,
-    color: "inherit",
-    display: "flex",
-    alignItems: "center",
-    gap: 1.2, // 👈 separa label y switch (usa theme.spacing)
-    "& .MuiFormControlLabel-label": {
-      fontWeight: 600,
-    },
-  }}
-/>
-        {!isAuthenticated ? (
+        <FormControlLabel
+          control={
+            <Switch
+              checked={darkMode}
+              onChange={toggleTheme}
+              sx={{
+                width: 44,
+                height: 24,
+                padding: 0,
+                "& .MuiSwitch-switchBase": {
+                  padding: 0.3,
+                  "&.Mui-checked": {
+                    transform: "translateX(20px)",
+                    color: "#fff",
+                    "& + .MuiSwitch-track": {
+                      backgroundColor: theme.palette.primary.main,
+                      opacity: 1,
+                    },
+                  },
+                },
+                "& .MuiSwitch-thumb": {
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                },
+                "& .MuiSwitch-track": {
+                  borderRadius: 20,
+                  backgroundColor: alpha(theme.palette.common.white, 0.5),
+                  opacity: 1,
+                },
+              }}
+              icon={<Brightness7Icon sx={{ fontSize: 20 }} />}     // ☀️
+              checkedIcon={<DarkModeIcon sx={{ fontSize: 20 }} />} // 🌙
+            />
+          }
+          label={darkMode ? "Modo oscuro" : "Modo claro"}
+          labelPlacement="start"
+          sx={{
+            ml: 2,
+            mr: 2,
+            color: "inherit",
+            display: "flex",
+            alignItems: "center",
+            gap: 1.2,
+            "& .MuiFormControlLabel-label": { fontWeight: 600 },
+          }}
+        />
+
+        {!showProfileUI ? (
           <>
             <Button color="inherit" onClick={handleLogin}>Login</Button>
             <Button color="inherit" onClick={handleRegister}>Register</Button>

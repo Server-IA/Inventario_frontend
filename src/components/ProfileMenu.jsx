@@ -4,52 +4,69 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import ChangePasswordDialog from "./ChangePasswordDialog";
 import MessageSnackBar from "./MessageSnackBar";
 import Login from "./Login";
-import RoleSwitcherModal from "./RoleSwitcherModal"; 
+import RoleSwitcherModal from "./RoleSwitcherModal";
+import { useLocation } from "react-router-dom";
 
-const ProfileMenu = ({ setCurrentModule, setIsAuthenticated }) => {
+/**
+ * Extra: si algún día quieres forzar que sólo salga "Cerrar Sesión"
+ * desde arriba, puedes pasar la prop optional onlyLogout={true}.
+ */
+const ProfileMenu = ({ setCurrentModule, setIsAuthenticated, onlyLogout = false }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [message, setMessage] = useState({ open: false, severity: "", text: "" });
   const [nombreUsuario, setNombreUsuario] = useState("Mi Perfil");
-  const [openRoleModal, setOpenRoleModal] = useState(false); 
-  const [isSingleCompanyAndRole, setIsSingleCompanyAndRole] = useState(false); // Nuevo estado
+  const [openRoleModal, setOpenRoleModal] = useState(false);
+  const [isSingleCompanyAndRole, setIsSingleCompanyAndRole] = useState(false);
+
+  const location = useLocation();
 
   useEffect(() => {
     const empresaNombre = localStorage.getItem("empresaNombre");
     const rolesByCompany = JSON.parse(localStorage.getItem("rolesByCompany") || "[]");
-
     if (empresaNombre) setNombreUsuario(empresaNombre);
-
-    // Verificar si el usuario tiene solo una empresa y un rol
-    const empresas = [...new Set(rolesByCompany.map(role => role.empresaId))]; // Empresas únicas
+    const empresas = [...new Set(rolesByCompany.map((r) => r.empresaId))];
     if (empresas.length === 1 && rolesByCompany.length === 1) {
-      setIsSingleCompanyAndRole(true); // Si hay solo una empresa y un rol, actualizar estado
+      setIsSingleCompanyAndRole(true);
     }
   }, []);
 
-  const handleClick = (event) => setAnchorEl(event.currentTarget);
+  const handleClick = (e) => setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("empresaNombre");
     localStorage.removeItem("empresaId");
     localStorage.removeItem("rolId");
     localStorage.removeItem("rolesByCompany");
+
     setIsAuthenticated(false);
     setCurrentModule(
-      <Login
-        setIsAuthenticated={setIsAuthenticated}
-        setCurrentModule={setCurrentModule}
-      />
+      <Login setIsAuthenticated={setIsAuthenticated} setCurrentModule={setCurrentModule} />
     );
     handleClose();
   };
 
-  const afterSwitch = () => {
-    // recarga para re-evaluar permisos/menú con el nuevo token
-    window.location.reload();
-  };
+  const afterSwitch = () => window.location.reload();
+
+  // --- AQUÍ ESTÁ LA CLAVE ---
+  // En tu screenshot la ruta es: /coagronet/coagronet/onboarding/persona
+  // Para que funcione con prefijos, usamos "includes" en lugar de igualdad estricta.
+  const path = location.pathname || "";
+
+  const showOnlyLogoutByRoute =
+    path.includes("/onboarding/persona") ||
+    path.includes("/onboarding/empresa") ||
+    path.includes("/registro/persona") ||
+    path.includes("/registro/empresa") ||
+    path.includes("/seguridad/form-registro-persona") ||
+    path.includes("/seguridad/form-registro-empresa");
+
+  // Si viene la prop onlyLogout o la ruta coincide, mostramos solo "Cerrar Sesión".
+  const showOnlyLogout = Boolean(onlyLogout || showOnlyLogoutByRoute);
 
   return (
     <>
@@ -70,18 +87,23 @@ const ProfileMenu = ({ setCurrentModule, setIsAuthenticated }) => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={() => { setPasswordDialogOpen(true); handleClose(); }}>
-          Cambiar Contraseña
-        </MenuItem>
+        {showOnlyLogout ? (
+          <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
+        ) : (
+          <>
+            <MenuItem onClick={() => { setPasswordDialogOpen(true); handleClose(); }}>
+              Cambiar Contraseña
+            </MenuItem>
 
-        {/* Solo mostrar el menú "Cambiar empresa/rol" si no hay solo una empresa y un rol */}
-        {!isSingleCompanyAndRole && (
-          <MenuItem onClick={() => { setOpenRoleModal(true); handleClose(); }}>
-            Cambiar empresa/rol
-          </MenuItem>
+            {!isSingleCompanyAndRole && (
+              <MenuItem onClick={() => { setOpenRoleModal(true); handleClose(); }}>
+                Cambiar empresa/rol
+              </MenuItem>
+            )}
+
+            <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
+          </>
         )}
-
-        <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
       </Menu>
 
       <ChangePasswordDialog
@@ -91,7 +113,6 @@ const ProfileMenu = ({ setCurrentModule, setIsAuthenticated }) => {
       />
       {message.open && <MessageSnackBar {...message} setMessage={setMessage} />}
 
-      {/* Modal Cambiar empresa/rol */}
       <RoleSwitcherModal
         open={openRoleModal}
         onClose={() => setOpenRoleModal(false)}

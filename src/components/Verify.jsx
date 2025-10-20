@@ -1,4 +1,3 @@
-// src/auth/Verify.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box, Paper, Stack, Typography, CircularProgress, Alert, Button, Chip
@@ -26,7 +25,7 @@ export default function Verify() {
   const to = (p) => `${base}${p.startsWith("/") ? p : `/${p}`}`;
 
 
-  // 👇 evita el doble-disparo del efecto (StrictMode)
+  // evita el doble-disparo del efecto (StrictMode)
   const ranRef = useRef(false);
 
   useEffect(() => {

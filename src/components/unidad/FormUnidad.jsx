@@ -8,7 +8,7 @@ import StackButtons from "../StackButtons";
 import BaseFormCampos from "../common/BaseFormCampos";
 import { validateCamposBase } from "../utils/validations";
 //
-export default function FormUnidad({ selectedRow, setSelectedRow, setMessage, reloadData }) {
+export default function FormUnidad({ selectedRow = null, setSelectedRow, setMessage, reloadData }) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
   const [errors, setErrors] = React.useState({});
@@ -46,7 +46,7 @@ export default function FormUnidad({ selectedRow, setSelectedRow, setMessage, re
     axios.delete(`/v1/unidad/${selectedRow.id}`)
       .then(() => {
         setMessage({ open: true, severity: "success", text: "Unidad eliminada correctamente." });
-        setSelectedRow({});
+        setSelectedRow(null);
         reloadData();
       })
       .catch((err) => {
@@ -67,7 +67,7 @@ export default function FormUnidad({ selectedRow, setSelectedRow, setMessage, re
   };
 
   const validate = () => {
-    const newErrors = validateCamposBase(formData); // ✔ usa la validación central (obligatorios + seguridad)
+    const newErrors = validateCamposBase(formData); // ✔ usa la validación central (obligatorios  seguridad)
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -94,7 +94,7 @@ export default function FormUnidad({ selectedRow, setSelectedRow, setMessage, re
           text: `Unidad ${isCreate ? "creada" : "actualizada"} con éxito!`
         });
         handleClose();
-        setSelectedRow({});
+        setSelectedRow(null);
         reloadData();
       })
       .catch((err) => {
@@ -127,8 +127,11 @@ export default function FormUnidad({ selectedRow, setSelectedRow, setMessage, re
 }
 
 FormUnidad.propTypes = {
-  selectedRow: PropTypes.object.isRequired,
+  selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func.isRequired,
   setMessage: PropTypes.func.isRequired,
   reloadData: PropTypes.func.isRequired,
 };
+
+// Nuke defaultProps left from HMR
+FormUnidad.defaultProps = undefined;
