@@ -53,19 +53,12 @@ public class SecurityConfig {
 						"/api/v1/inventario_item/**", "/api/v1/pedido/**", "/api/v1/presentacion/**",
 						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v1/producto/**",
 						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
-						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu")
+						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu", "/api/v1/metricas/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v1/metricas/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
-				.requestMatchers("/api/v2/report/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
-				.anyRequest()
-				.authenticated())
-			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class); // <<<<<<
+		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
