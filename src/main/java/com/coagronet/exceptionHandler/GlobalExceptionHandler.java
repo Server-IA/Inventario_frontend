@@ -1,8 +1,10 @@
 package com.coagronet.exceptionHandler;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -21,6 +24,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @ControllerAdvice
@@ -154,6 +158,20 @@ public class GlobalExceptionHandler {
 		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Internal Server Error",
 				msg(ex.getMessage(), null, locale), requestPath(request), null);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex, HttpServletRequest req) {
+		String message = "Falta el parámetro requerido '" + ex.getParameterName() + "'";
+		if ("tipoAplicacion".equals(ex.getParameterName())) {
+			message += " (valores válidos: web | movil)";
+		}
+
+		Map<String, Object> body = Map.of("timestamp", Instant.now().toString(), "path", req.getRequestURI(), "code",
+				"VALIDATION_ERROR", "message", message, "fieldErrors",
+				List.of(Map.of("field", ex.getParameterName(), "message", "required")));
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
 
 }

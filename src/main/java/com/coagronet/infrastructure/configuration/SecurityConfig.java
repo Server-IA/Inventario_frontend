@@ -31,9 +31,7 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.cors(Customizer.withDefaults())
-			.csrf(AbstractHttpConfigurer::disable)
-			.authorizeHttpRequests(auth -> auth
+		http.cors(Customizer.withDefaults()).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth
 				.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**",
 						"/api/v1/empresas/**", "/api/v1/personas/**", "/api/v1/menu/**")
 				.permitAll()
@@ -55,13 +53,10 @@ public class SecurityConfig {
 						"/api/v1/inventario_item/**", "/api/v1/pedido/**", "/api/v1/presentacion/**",
 						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v1/producto/**",
 						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
-						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
-				.requestMatchers("/api/v2/report/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
-				.anyRequest()
-				.authenticated())
-			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu")
+				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
+				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
+				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class); // <<<<<<
 
