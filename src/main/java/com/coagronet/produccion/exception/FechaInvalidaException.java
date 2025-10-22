@@ -2,7 +2,9 @@ package com.coagronet.produccion.exception;
 
 public class FechaInvalidaException extends RuntimeException {
 
-    public FechaInvalidaException(String mensaje){
-        super(mensaje);
-    }
+	private static final long serialVersionUID = 1L;
+
+	public FechaInvalidaException(String mensaje) {
+		super(mensaje);
+	}
 }

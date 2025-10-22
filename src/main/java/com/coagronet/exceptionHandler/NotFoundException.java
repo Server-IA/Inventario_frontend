@@ -2,6 +2,8 @@ package com.coagronet.exceptionHandler;
 
 public class NotFoundException extends RuntimeException {
 
+	private static final long serialVersionUID = 1L;
+
 	private final String code;
 
 	private final Object[] args;

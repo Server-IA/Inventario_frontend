@@ -97,7 +97,7 @@ public class AuthService {
 		user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
 
 		Role role = roleRepo.findByName(props.getDefaultRole())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
 		user.setRoles(Set.of(role));
 
 		/* 3?? Register and send email (listener) ----------------------------- */
@@ -110,7 +110,7 @@ public class AuthService {
 	// LOGIN
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 		Authentication auth = authManager
-			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
+				.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 		User user = (User) auth.getPrincipal();
 
 		List<UserRole> userRoles = userRoleRepo.findByUserOrderByUserId(user);
@@ -130,10 +130,8 @@ public class AuthService {
 		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRole().getId(),
 				user.getUsuarioEstado().getId());
 
-		List<EmpresaRolDTO> rolesByCompany = userRoles.stream()
-			.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRole().getId(),
-					ur.getRole().getName()))
-			.toList();
+		List<EmpresaRolDTO> rolesByCompany = userRoles.stream().map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(),
+				ur.getEmpresa().getNombre(), ur.getRole().getId(), ur.getRole().getName())).toList();
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId());
 
@@ -142,10 +140,10 @@ public class AuthService {
 	// SWITCH CONTEXT
 	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
 		User user = userRepo.findByUsername(username)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-		UserRole ur = userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.empresaId(), dto.rolId())
-			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
+		userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.empresaId(), dto.rolId())
+				.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
 		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId(), user.getUsuarioEstado().getId());
 		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
@@ -162,9 +160,9 @@ public class AuthService {
 		// 1) Si hay preferido en User, ?salo si existe a?n
 		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
 			Optional<UserRole> preferred = userRoles.stream()
-				.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
-						&& ur.getRole().getId().equals(user.getPreferredRolId()))
-				.findFirst();
+					.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
+							&& ur.getRole().getId().equals(user.getPreferredRolId()))
+					.findFirst();
 			if (preferred.isPresent())
 				return preferred.get();
 		}
@@ -203,7 +201,7 @@ public class AuthService {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired reset link");
 
 		User user = userRepo.findByUsername(username)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		user.setPassword(encoder.encode(dto.getNewPassword()));
 		user.incrementTokenVersion(); // <<<<<< revocar todos los JWT previos
@@ -233,20 +231,18 @@ public class AuthService {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || !(auth.getPrincipal() instanceof UserDetails ud))
 			return Set.of();
-		return ud.getAuthorities()
-			.stream()
-			.map(GrantedAuthority::getAuthority)
-			.collect(java.util.stream.Collectors.toSet());
+		return ud.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+				.collect(java.util.stream.Collectors.toSet());
 	}
 
 	private User getCurrentUser() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || auth
-			.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)
+				.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
 
 		return userRepo.findByUsername(auth.getName())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 }
