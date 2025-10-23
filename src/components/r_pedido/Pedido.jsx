@@ -1,4 +1,3 @@
-// src/components/Pedido/Pedido.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
@@ -76,7 +75,7 @@ export default function Pedido() {
       .then((r) => setEstados(toArray(r.data)))
       .catch(() => setEstados([]));
 
-    axios.get("/v1/presentacion")
+    axios.get("/v1/items/producto_presentacion/0")
       .then((r) => setPresentaciones(toArray(r.data)))
       .catch(() => setPresentaciones([]));
   }, []);
