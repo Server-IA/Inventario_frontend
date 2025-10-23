@@ -14,6 +14,7 @@ import com.coagronet.utils.UserRoleService;
 
 import lombok.RequiredArgsConstructor;
 
+@Deprecated
 @RestController
 @RequestMapping("/api/v1/menu")
 @RequiredArgsConstructor

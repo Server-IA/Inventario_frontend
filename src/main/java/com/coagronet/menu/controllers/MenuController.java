@@ -1,4 +1,4 @@
-package com.coagronet.menu;
+package com.coagronet.menu.controllers;
 
 import java.util.List;
 
