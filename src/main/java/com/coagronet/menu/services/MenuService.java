@@ -19,6 +19,23 @@ import com.coagronet.utils.UserRoleService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Servicio de dominio responsable de construir el menú visible para el usuario.
+ * <p>
+ * Resuelve la empresa y el rol desde el contexto de seguridad, traduce el
+ * {@code tipoAplicacion} a {@link TipoAplicacionEnum}, consulta el repositorio
+ * y agrupa los módulos por subsistema para producir la estructura final del
+ * menú.
+ * </p>
+ *
+ * <p>
+ * <strong>Principios:</strong> SRP (construcción del menú), SoC (consulta en
+ * repository), y uso de {@link ModuloMapper} para separar el mapeo entidad→DTO.
+ * </p>
+ *
+ * @author Juan J. Castro
+ * @since 0.3.1
+ */
 @Service
 @RequiredArgsConstructor
 public class MenuService {
@@ -28,6 +45,29 @@ public class MenuService {
 	private final UserEmpresaService userEmpresaService;
 	private final UserRoleService userRoleService;
 
+	/**
+	 * Obtiene el menú para la empresa actual y el rol actual del usuario, filtrado
+	 * por tipo de aplicación.
+	 * <p>
+	 * Pasos:
+	 * <ol>
+	 * <li>Resuelve {@code empresaId} y {@code roleName} del contexto.</li>
+	 * <li>Convierte {@code tipoAplicacion} a {@link TipoAplicacionEnum} y obtiene
+	 * su ID interno.</li>
+	 * <li>Consulta
+	 * {@link MenuRepository#findSubmodulosByEmpresaTipoAppAndRol(Long, Integer, String)}.</li>
+	 * <li>Agrupa por subsistema (nombre + icono) y mapea cada fila a
+	 * {@link MenuModuloResponseDTO}.</li>
+	 * </ol>
+	 * </p>
+	 *
+	 * @param tipoAplicacion cadena {@code "web"} o {@code "movil"} (no sensible a
+	 *                       mayúsculas)
+	 * @return lista de subsistemas, cada uno con sus módulos, en orden estable (por
+	 *         nombre de subsistema y módulo)
+	 * @throws IllegalArgumentException si {@code tipoAplicacion} no corresponde a
+	 *                                  un valor soportado
+	 */
 	public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		String roleName = userRoleService.getRoleFromCurrentRequest();
