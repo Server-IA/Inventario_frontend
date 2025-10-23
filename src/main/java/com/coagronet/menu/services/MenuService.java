@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.coagronet.menu.dtos.MenuModuloResponseDTO;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
-import com.coagronet.menu.repositories.MenuRepository;
+import com.coagronet.menu.repositories.MenuModuloRepository;
 import com.coagronet.menu.repositories.projections.SubModuloRow;
 import com.coagronet.modulo.mappers.ModuloMapper;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MenuService {
 
-	private final MenuRepository menuRepository;
+	private final MenuModuloRepository menuModuloRepository;
 	private final ModuloMapper moduloMapper;
 	private final UserEmpresaService userEmpresaService;
 	private final UserRoleService userRoleService;
@@ -74,7 +74,7 @@ public class MenuService {
 
 		int tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
 
-		var rows = menuRepository.findSubmodulosByEmpresaTipoAppAndRol(empresaId, tipoAppId, roleName);
+		var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRol(empresaId, tipoAppId, roleName);
 
 		Map<String, List<SubModuloRow>> agrupado = rows.stream().collect(Collectors
 				.groupingBy(r -> r.getSubNombre() + "||" + r.getSubIcon(), LinkedHashMap::new, Collectors.toList()));

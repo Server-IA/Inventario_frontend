@@ -26,7 +26,7 @@ import com.coagronet.modulo.Modulo;
  * @author Juan J. Castro
  * @since 0.3.1
  */
-public interface MenuRepository extends Repository<Modulo, Long> {
+public interface MenuModuloRepository extends Repository<Modulo, Long> {
 
 	/**
 	 * Recupera las filas de submódulos visibles para una empresa, tipo de
