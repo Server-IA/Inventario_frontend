@@ -19,7 +19,7 @@ export default function GridProduccion({
 
   // --- Server-side (estilo B: tu implementación previa) ---
   page = 0,
-  rowsPerPage = 10,
+  rowsPerPage = 5,
   totalElements = 0,
   onPageChange,           // (event, nextPage) => void
   onRowsPerPageChange,    // (nextSize) => void
@@ -36,9 +36,7 @@ export default function GridProduccion({
   /* ---------- Columnas ---------- */
   const columns = useMemo(() => ([
     { field: "id", headerName: "ID", width: 90 },
-    { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 180 },
-    { field: "descripcion", headerName: "Descripción", flex: 1.4, minWidth: 220 },
-    {
+     {
       field: "fechaInicio",
       headerName: "Fecha Inicio",
       flex: 1,
@@ -52,9 +50,8 @@ export default function GridProduccion({
       minWidth: 150,
       valueGetter: (p) => safeDate(p?.row?.fechaFinal),
     },
-
-    // Nombres (no IDs) con fallbacks a objetos anidados o Ids
-    {
+    { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 180 },
+     {
       field: "tipoProduccionNombre",
       headerName: "Tipo Producción",
       flex: 1,
@@ -65,6 +62,7 @@ export default function GridProduccion({
         p?.row?.tipoProduccion?.name ??
         String(p?.row?.tipoProduccionId ?? ""),
     },
+    { field: "descripcion", headerName: "Descripción", flex: 1.4, minWidth: 220 },
     {
       field: "espacioNombre",
       headerName: "Espacio",

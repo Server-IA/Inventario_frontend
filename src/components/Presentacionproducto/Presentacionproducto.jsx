@@ -81,41 +81,46 @@ export default function Presentacionproducto() {
   }, [paginationModel.page, paginationModel.pageSize]);
 
   // Carga inicial + cuando cambie la paginación
-  useEffect(() => {
-    reloadData(paginationModel.page, paginationModel.pageSize);
-  }, [reloadData, paginationModel.page, paginationModel.pageSize]);
+ // Carga inicial + cuando cambie la paginación
+useEffect(() => {
+  reloadData(paginationModel.page, paginationModel.pageSize);
+}, [paginationModel.page, paginationModel.pageSize]);
 
-  const onPageChange = (newModel) => {
-    setPaginationModel(newModel);
-    // reloadData(newModel.page, newModel.pageSize); // no hace falta, lo dispara el efecto
-  };
+// 🔹 Cuando el usuario cambia de página o tamaño
+const handlePaginationChange = (newModel) => {
+  setPaginationModel({
+    page: newModel.page,
+    pageSize: newModel.pageSize,
+  });
+};
 
-  return (
-    <div>
-      <h1>Producto Presentación</h1>
+// 🔹 Render principal
+return (
+  <div>
+    <h1>Producto Presentación</h1>
 
-      <MessageSnackBar message={message} setMessage={setMessage} />
+    <MessageSnackBar message={message} setMessage={setMessage} />
 
-      <FormPresentacionproducto
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        setMessage={setMessage}
-        reloadData={() => reloadData(paginationModel.page, paginationModel.pageSize)}
-      />
+    <FormPresentacionproducto
+      selectedRow={selectedRow}
+      setSelectedRow={setSelectedRow}
+      setMessage={setMessage}
+      reloadData={() => reloadData(paginationModel.page, paginationModel.pageSize)}
+    />
 
-      <GridPresentacionproducto
-        rows={rows}
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        loading={loading}
-        paginationModel={paginationModel}
-        onPaginationModelChange={onPageChange}
-        sortModel={sortModel}
-        setSortModel={setSortModel}
-        filterModel={filterModel}
-        setFilterModel={setFilterModel}
-        rowCount={rowCount}
-      />
-    </div>
-  );
+    <GridPresentacionproducto
+      rows={rows}
+      selectedRow={selectedRow}
+      setSelectedRow={setSelectedRow}
+      loading={loading}
+      paginationModel={paginationModel}
+      onPaginationModelChange={handlePaginationChange}
+      sortModel={sortModel}
+      setSortModel={setSortModel}
+      filterModel={filterModel}
+      setFilterModel={setFilterModel}
+      rowCount={rowCount}
+    />
+  </div>
+);
 }

@@ -86,7 +86,7 @@ export default function RE_ordenCompra() {
   // Respaldos por si el hook aún no cargó combos (no interfiere si ya están)
   useEffect(() => {
     if (!pedidos?.length) axios.get("/v1/pedido", headers).catch(() => {});
-    if (!categoriasEstado?.length) axios.get("/v1/items/pedido_estado/0", headers).catch(() => {});
+    if (!categoriasEstado?.length) axios.get("v1/items/orden_compra_estado/0", headers).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

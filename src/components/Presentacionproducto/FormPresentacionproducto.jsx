@@ -8,32 +8,37 @@ import {
 import StackButtons from "../StackButtons";
 import { validateCamposBase } from "../utils/validations";
 
+export default function FormPresentacionproducto({
+  selectedRow = {},
+  setSelectedRow = () => {},
+  setMessage = () => {},
+  reloadData = () => {},
+}) {
+  // Estado de diálogo y modo
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [methodName, setMethodName] = useState("Crear");
 
-
-export default function FormPresentacionproducto({ selectedRow, setSelectedRow, setMessage, reloadData }) {
-  const [open, setOpen] = useState(false);
-  const [methodName, setMethodName] = useState("");
-
+  // Estado del formulario
   const initialData = {
     productoId: "",
-    nombre: "",                 // ← Nombre de la Presentación
+    nombre: "",              // Nombre de la Presentación
     unidadId: "",
     descripcion: "",
     cantidad: "",
     marcaId: "",
-    presentacionId: "",         // ← Tipo de Presentación
-    estadoId: "",               // 1/2
+    presentacionId: "",      // Tipo de Presentación
+    estadoId: "",            // 1/2
   };
-
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
 
+  // Catálogos
   const [productos, setProductos] = useState([]);
   const [unidades, setUnidades] = useState([]);
   const [marcas, setMarcas] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
 
-  // --- helpers ----
+  // Helpers
   const toList = (res) => {
     const d = res?.data;
     if (Array.isArray(d)) return d;
@@ -61,11 +66,12 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
     axios.get("/v1/presentacion").then(r => setPresentaciones(toList(r))).catch(() => setPresentaciones([]));
   }, []);
 
+  // Acciones CRUD (abre diálogo en modo crear/editar)
   const create = () => {
     setFormData(initialData);
     setErrors({});
     setMethodName("Crear");
-    setOpen(true);
+    setDialogOpen(true);
   };
 
   const update = () => {
@@ -85,7 +91,7 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
     });
     setErrors({});
     setMethodName("Actualizar");
-    setOpen(true);
+    setDialogOpen(true);
   };
 
   const deleteRow = () => {
@@ -104,6 +110,7 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
       });
   };
 
+  // Handlers de formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -113,7 +120,7 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
   const validate = () => {
     const e = {};
 
-    // Validación CENTRAL (nombre/descripcion/estado)
+    // Validación central (usa tu validador común)
     const baseErrors = validateCamposBase({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
@@ -125,7 +132,7 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
     if (baseErrors.estado) e.estadoId = baseErrors.estado;
     if (baseErrors._security) e._security = baseErrors._security;
 
-    // Checks LOCALES (mantengo tu lógica)
+    // Checks locales
     if (!formData.productoId) e.productoId = "Campo requerido";
     if (!String(formData.nombre).trim()) e.nombre = e.nombre || "Campo requerido";
     if (!formData.unidadId) e.unidadId = "Campo requerido";
@@ -139,31 +146,22 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
     return Object.keys(e).length === 0;
   };
 
+  const toInt = v => (v === "" || v == null ? null : parseInt(v, 10));
+  const toFloat = v => (v === "" || v == null ? null : parseFloat(v));
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   const eVal = validate();
-  //   if (Object.keys(eVal).length) {
-  //     setErrors(eVal);
-  //     return;
-  //   }
-
-
-   const handleSubmit = (e) => {
-       e.preventDefault();
-       const isValid = validate();      // validate() ya setea errores y devuelve true/false
-       if (!isValid) return;
-       
-
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const isValid = validate();
+    if (!isValid) return;
 
     const payload = {
       ...formData,
-      productoId: parseInt(formData.productoId),
-      unidadId: parseInt(formData.unidadId),
-      cantidad: parseFloat(formData.cantidad),
-      marcaId: parseInt(formData.marcaId),
-      presentacionId: parseInt(formData.presentacionId),
-      estadoId: parseInt(formData.estadoId),
+      productoId: toInt(formData.productoId),
+      unidadId: toInt(formData.unidadId),
+      cantidad: toFloat(formData.cantidad),
+      marcaId: toInt(formData.marcaId),
+      presentacionId: toInt(formData.presentacionId),
+      estadoId: toInt(formData.estadoId),
       empresaId,
     };
 
@@ -174,7 +172,7 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
     method(url, payload)
       .then(() => {
         setMessage({ open: true, severity: "success", text: isCreate ? "Creado con éxito!" : "Actualizado con éxito!" });
-        setOpen(false);
+        setDialogOpen(false);
         setSelectedRow({});
         reloadData();
       })
@@ -188,14 +186,14 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
     { label: "Producto", name: "productoId", options: productos },
     { label: "Unidad", name: "unidadId", options: unidades },
     { label: "Marca", name: "marcaId", options: marcas },
-    { label: "Tipo de Presentación", name: "presentacionId", options: presentaciones },
+    { label: "Presentación", name: "presentacionId", options: presentaciones },
   ]), [productos, unidades, marcas, presentaciones]);
 
   return (
     <>
       <StackButtons methods={{ create, update, deleteRow }} />
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
         <form onSubmit={handleSubmit}>
           <DialogTitle>{methodName} Producto – Presentación</DialogTitle>
           <DialogContent>
@@ -273,7 +271,7 @@ export default function FormPresentacionproducto({ selectedRow, setSelectedRow, 
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button type="submit">{methodName}</Button>
           </DialogActions>
         </form>
@@ -287,8 +285,4 @@ FormPresentacionproducto.propTypes = {
   setSelectedRow: PropTypes.func.isRequired,
   setMessage: PropTypes.func.isRequired,
   reloadData: PropTypes.func.isRequired,
-};
-
-FormPresentacionproducto.defaultProps = {
-  selectedRow: null,
 };

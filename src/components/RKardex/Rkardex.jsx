@@ -88,8 +88,6 @@ export default function RE_kardexPedido() {
   // ===== Listado (igual que Pedido/OC): fetchAll con rutas candidatas + paginado
   const fetchAllKardex = async () => {
     const CANDIDATES = [
-      "/v1/kardexpedido",
-      "/v1/kardex_pedido",
       "/v1/kardex",
     ];
     const size = 200;

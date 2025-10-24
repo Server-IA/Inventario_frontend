@@ -1,4 +1,3 @@
-// src/components/Presentacionproducto/GridPresentacionproducto.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid, GridToolbarContainer, GridToolbarFilterButton } from "@mui/x-data-grid";
@@ -67,7 +66,7 @@ export default function GridPresentacionproducto({
       },
       {
         field: "nombre",
-        headerName: "Nombre de la Presentación",
+        headerName: "Presentación",
         flex: 1.2,
         minWidth: 200,
       },
@@ -124,68 +123,50 @@ export default function GridPresentacionproducto({
     []
   );
 
-  return (
-    <Box sx={{ width: "100%" }}>
-      <DataGrid
-        rows={safeRows}
-        columns={columns}
-        getRowId={(r) => r.id}
-        loading={loading}
+return (
+  <Box sx={{ width: "100%" }}>
+    <DataGrid
+      rows={safeRows}
+      columns={columns}
+      getRowId={(r) => r.id}
+      loading={loading}
 
-        // Selección controlada
-        onRowClick={(params) => setSelectedRow?.(params.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
+      // Selección controlada
+      onRowClick={(params) => setSelectedRow?.(params.row)}
+      rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
+      disableRowSelectionOnClick
 
-        // Toolbar (v5/v6)
-        components={{ Toolbar }}
-        slots={{ toolbar: Toolbar }}
+      // Toolbar (v5/v6)
+      components={{ Toolbar }}
+      slots={{ toolbar: Toolbar }}
 
-        // Paginación
-        paginationMode={serverPagination ? "server" : "client"}
-        {...(serverPagination
-          ? {
-              rowCount,
-              paginationModel: {
-                page: paginationModel.page ?? 0,
-                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
-              },
-              onPaginationModelChange: handlePaginationChange,
-            }
-          : {
-              pageSizeOptions: [5, 10, 15, 20, 50],
-              initialState: { pagination: { paginationModel: { page: 0, pageSize: 5 } } },
-            })}
+      // ✅ Mostrar siempre el selector "Filas por página"
+      pageSizeOptions={[5, 10, 15, 20]}
 
-        // Sorting / Filtering: server si hay setters, si no, client
-        sortingMode={setSortModel ? "server" : "client"}
-        sortModel={sortModel}
-        onSortModelChange={setSortModel}
-        filterMode={setFilterModel ? "server" : "client"}
-        filterModel={filterModel}
-        onFilterModelChange={setFilterModel}
-        autoHeight
-      />
-    </Box>
-  );
+      // Paginación
+      paginationMode={serverPagination ? "server" : "client"}
+      {...(serverPagination
+        ? {
+            rowCount,
+            paginationModel: {
+              page: paginationModel.page ?? 0,
+              pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
+            },
+            onPaginationModelChange: handlePaginationChange,
+          }
+        : {
+            initialState: { pagination: { paginationModel: { page: 0, pageSize: 5 } } },
+          })}
+
+      // Sorting / Filtering: server si hay setters, si no, client
+      sortingMode={setSortModel ? "server" : "client"}
+      sortModel={sortModel}
+      onSortModelChange={setSortModel}
+      filterMode={setFilterModel ? "server" : "client"}
+      filterModel={filterModel}
+      onFilterModelChange={setFilterModel}
+      autoHeight
+    />
+  </Box>
+);
 }
-
-GridPresentacionproducto.propTypes = {
-  // nuevos
-  rows: PropTypes.array,
-  onPaginationModelChange: PropTypes.func,
-
-  // compat antiguos
-  Presentacionproductoes: PropTypes.array,
-  setPaginationModel: PropTypes.func,
-
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func,
-  loading: PropTypes.bool,
-  paginationModel: PropTypes.shape({ page: PropTypes.number, pageSize: PropTypes.number, size: PropTypes.number }),
-  sortModel: PropTypes.array,
-  setSortModel: PropTypes.func,
-  filterModel: PropTypes.object,
-  setFilterModel: PropTypes.func,
-  rowCount: PropTypes.number,
-};
