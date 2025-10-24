@@ -8,12 +8,11 @@ import com.coagronet.unidad.dtos.UnidadDTO;
 @Mapper(componentModel = "spring")
 public interface UnidadMapper {
 
-	@Mapping(source = "empresa.id", target = "empresaId")
 	@Mapping(source = "estado.id", target = "estadoId")
 	UnidadDTO toDTO(Unidad unidad);
 
-	@Mapping(source = "empresaId", target = "empresa.id")
 	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(source = "tipoUnidadId", target = "tipoUnidad.id")
 	Unidad toEntity(UnidadDTO unidadDTO);
 
 }

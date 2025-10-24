@@ -3,6 +3,7 @@ package com.coagronet.unidad;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
+import com.coagronet.tipounidad.TipoUnidad;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -43,7 +44,8 @@ public class Unidad {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "uni_empresa_id", referencedColumnName = "emp_id")
-	private Empresa empresa;
+	@JoinColumn(name = "uni_tipo_unidad_id", referencedColumnName = "tiu_id")
+	private TipoUnidad tipoUnidad;
+
 
 }
