@@ -1,4 +1,4 @@
-package com.coagronet.unidad.dtos;
+package com.coagronet.tipounidad.dtos;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class UnidadDTO {
+public class TipoUnidadDTO {
 
 	private Long id;
 
@@ -20,7 +20,5 @@ public class UnidadDTO {
 	private String descripcion;
 
 	private Long estadoId;
-	private Long tipoUnidadId;
-
 
 }

@@ -30,12 +30,11 @@ public class UnidadService {
 	private final EstadoRepository estadoRepository;
 
 	public Page<UnidadDTO> findAll(Pageable pageable) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return unidadRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable).map(unidadMapper::toDTO);
+		return unidadRepository.findAllByOrderById(pageable).map(unidadMapper::toDTO);
 	}
 
 	public Optional<UnidadDTO> findById(Long requestId) {
-		return unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+		return unidadRepository.findById(requestId)
 			.map(unidadMapper::toDTO);
 	}
 
@@ -45,27 +44,25 @@ public class UnidadService {
 			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		unidadDTO.setId(null);
-		unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
 		return unidadMapper.toDTO(unidadRepository.save(unidadMapper.toEntity(unidadDTO)));
 	}
 
 	@Transactional
 	public void update(Long requestId, UnidadDTO unidadDTO) {
-		unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+		unidadRepository.findById(requestId)
 			.orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
 
 		estadoRepository.findById(unidadDTO.getEstadoId())
 			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
 		unidadDTO.setId(requestId);
-		unidadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 		unidadRepository.save(unidadMapper.toEntity(unidadDTO));
 	}
 
 	@Transactional
 	public void delete(Long requestId) {
-		unidadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+		unidadRepository.findById(requestId)
 			.orElseThrow(() -> new NotFoundException("Unidad no encontrada"));
 
 		unidadRepository.deleteById(requestId);
