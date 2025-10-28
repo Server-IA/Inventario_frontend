@@ -1,0 +1,527 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="Reporte_espacio" language="java" pageWidth="700" pageHeight="792" columnWidth="660" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="14f1f083-1c89-451b-999e-9142f1b9879d">
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="261"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="734"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.2.1"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<parameter name="condicion" class="java.lang.String"/>
+	<parameter name="logo_empresa" class="java.lang.String"/>
+	<query language="sql"><![CDATA[SELECT 
+    esp.esp_id,
+    esp.esp_bloque_id,
+    esp.esp_tipo_espacio_id,
+    esp.esp_nombre,
+    esp.esp_descripcion,
+    esp.esp_empresa_id,
+    esp.esp_estado_id,
+    esp.esp_direccion,
+
+    emp.emp_id,
+    emp.emp_nombre,
+    emp.emp_estado_id,
+    emp.emp_celular,
+    emp.emp_correo,
+    emp.emp_contacto,
+    emp.emp_logo,
+
+    esa.esa_id,
+    esa.esa_produccion_id,
+    esa.esa_tipo_actividad_id,
+    esa.esa_fecha_hora,
+    esa.esa_cantidad,
+    esa.esa_unidad_id,
+    esa.esa_precio,
+    esa.esa_evaluacion_id,
+    esa.esa_descripcion,
+    esa.esa_estado_id,
+    esa.esa_empresa_id,
+
+    eso.eso_id,
+    eso.eso_espacio_id,
+    eso.eso_actividad_ocupacion_id,
+    eso.eso_fecha_inicio,
+    eso.eso_fecha_fin,
+    eso.eso_estado_id,
+    eso.eso_empresa_id,
+
+    est.est_id,
+    est.est_nombre,
+
+    tie.tie_id,
+    tie.tie_nombre,
+    tie.tie_descripcion,
+    tie.tie_estado_id,
+    tie.tie_empresa_id,
+
+    blo.blo_id,
+    blo.blo_nombre,
+    blo.blo_direccion,
+    
+    alm.alm_id,
+    alm.alm_nombre,
+    
+    sed.sed_id,
+    sed.sed_nombre
+
+FROM espacio esp
+JOIN empresa emp ON esp.esp_empresa_id = emp.emp_id
+LEFT JOIN espacio_actividad esa ON esp.esp_id = esa.esa_estado_id
+LEFT JOIN espacio_ocupacion eso ON esp.esp_id = eso.eso_espacio_id
+LEFT JOIN almacen alm ON alm.alm_espacio_id = esp.esp_id
+JOIN estado est ON esp.esp_estado_id = est.est_id
+JOIN tipo_espacio tie ON esp.esp_tipo_espacio_id = tie.tie_id
+JOIN bloque blo ON esp.esp_bloque_id = blo.blo_id
+JOIN sede sed ON blo.blo_sede_id = sed.sed_id
+
+WHERE 
+
+	$P!{condicion} 
+
+
+]]></query>
+	<field name="esp_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esp_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_bloque_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esp_bloque_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_bloque_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_tipo_espacio_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esp_tipo_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_tipo_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="esp_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_descripcion" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="esp_descripcion"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_descripcion"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_empresa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esp_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_estado_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esp_estado_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_estado_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="esp_direccion" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="esp_direccion"/>
+		<property name="com.jaspersoft.studio.field.label" value="esp_direccion"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="emp_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="emp_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="emp_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="emp_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="emp_estado_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="emp_estado_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_estado_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="emp_celular" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="emp_celular"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_celular"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="emp_correo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="emp_correo"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_correo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="emp_contacto" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="emp_contacto"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_contacto"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="emp_logo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="emp_logo"/>
+		<property name="com.jaspersoft.studio.field.label" value="emp_logo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="esa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_produccion_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_produccion_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_produccion_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_tipo_actividad_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_tipo_actividad_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_tipo_actividad_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_fecha_hora" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="esa_fecha_hora"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_fecha_hora"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_cantidad" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="esa_cantidad"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_cantidad"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_unidad_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_unidad_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_unidad_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_precio" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="esa_precio"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_precio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_evaluacion_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_evaluacion_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_evaluacion_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_descripcion" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="esa_descripcion"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_descripcion"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_estado_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_estado_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_estado_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="esa_empresa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="esa_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="esa_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_actividad"/>
+	</field>
+	<field name="eso_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="eso_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="eso_espacio_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="eso_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="eso_actividad_ocupacion_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="eso_actividad_ocupacion_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_actividad_ocupacion_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="eso_fecha_inicio" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="eso_fecha_inicio"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_fecha_inicio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="eso_fecha_fin" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="eso_fecha_fin"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_fecha_fin"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="eso_estado_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="eso_estado_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_estado_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="eso_empresa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="eso_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="eso_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio_ocupacion"/>
+	</field>
+	<field name="est_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="est_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="est_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="estado"/>
+	</field>
+	<field name="est_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="est_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="est_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="estado"/>
+	</field>
+	<field name="tie_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="tie_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="tie_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="tipo_espacio"/>
+	</field>
+	<field name="tie_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="tie_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="tie_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="tipo_espacio"/>
+	</field>
+	<field name="tie_descripcion" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="tie_descripcion"/>
+		<property name="com.jaspersoft.studio.field.label" value="tie_descripcion"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="tipo_espacio"/>
+	</field>
+	<field name="tie_estado_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="tie_estado_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="tie_estado_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="tipo_espacio"/>
+	</field>
+	<field name="tie_empresa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="tie_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="tie_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="tipo_espacio"/>
+	</field>
+	<field name="blo_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="blo_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="blo_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="blo_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="blo_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="blo_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="blo_direccion" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="blo_direccion"/>
+		<property name="com.jaspersoft.studio.field.label" value="blo_direccion"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="alm_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="alm_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="alm_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="almacen"/>
+	</field>
+	<field name="alm_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="alm_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="alm_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="almacen"/>
+	</field>
+	<field name="sed_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="sed_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="sed_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
+	</field>
+	<field name="sed_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="sed_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="sed_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
+	</field>
+	<background splitType="Stretch"/>
+	<title height="85" splitType="Stretch">
+		<element kind="rectangle" uuid="e22e6cb9-5657-4061-a178-c05aab2d0180" x="-20" y="-20" width="700" height="105" backcolor="#D6E4F0">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineColor="#3747A1"/>
+		</element>
+		<element kind="staticText" uuid="65439d58-a3d0-4c3a-8c72-e9460fb98fa4" x="360" y="0" width="280" height="40" fontName="Arial" fontSize="26.0" bold="true" hTextAlign="Right">
+			<text><![CDATA[ESPACIO]]></text>
+		</element>
+		<element kind="staticText" uuid="13425696-01cf-431a-8103-e6e9816f2f53" mode="Transparent" x="440" y="40" width="110" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[ Fecha de generacion:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="a86b8ae5-1c65-4e95-8e2a-0692cacc9e17" x="550" y="40" width="90" height="20" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA[new java.util.Date()]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="image" uuid="f9ae3c48-8945-47c0-b6fa-8ff355b035de" x="50" y="0" width="70" height="75">
+			<expression><![CDATA[new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
+		</element>
+	</title>
+	<pageHeader height="100" splitType="Stretch">
+		<element kind="rectangle" uuid="d8f49a6b-30e8-4454-9e1d-6406a6be5655" x="-20" y="0" width="700" height="100" backcolor="#FFFFFF">
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineColor="#3747A1"/>
+		</element>
+		<element kind="staticText" uuid="1ae3ef93-2231-4611-b554-afabf157711d" mode="Opaque" x="50" y="30" width="90" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[ Empresa:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid"/>
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="13a3595c-ace6-42de-9689-34d03c4d9524" mode="Opaque" x="50" y="50" width="90" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[ Contacto:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid"/>
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="914c4370-85d9-4018-8e16-b1a2221b07da" x="140" y="30" width="135" height="20" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$F{emp_nombre}]]></expression>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="53051895-2a16-42f9-8130-2053ca641acc" x="140" y="50" width="135" height="20" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$F{emp_contacto}]]></expression>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="e98e9b07-940e-454b-837e-a3c3f6e2e9a6" mode="Opaque" x="375" y="30" width="90" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[ Celular:]]></text>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid"/>
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="df42a5fd-50f3-4564-8e23-67c3e2a77389" mode="Opaque" x="375" y="50" width="90" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[ Correo:]]></text>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid"/>
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="0f1b4e1f-60a7-4d84-8623-cb7327aeeb4e" x="465" y="30" width="135" height="20" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$F{emp_celular}]]></expression>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="034235e2-555a-430b-ac4b-19dcdeb46a01" x="465" y="50" width="135" height="20" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$F{emp_correo}]]></expression>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+	</pageHeader>
+	<columnHeader height="53" splitType="Stretch">
+		<element kind="staticText" uuid="60b8ba56-9a79-4727-a25a-8367f2088b08" mode="Opaque" x="40" y="33" width="75" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Nombre]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="3e88c327-e609-4008-b3be-b311c75e5d6b" mode="Opaque" x="205" y="33" width="75" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Tipo]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="baae43d7-10fe-4404-880e-f52ffcb634e2" mode="Opaque" x="280" y="33" width="75" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Estado]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="4bc956ce-c7c6-4328-a4e1-da234eaab249" mode="Opaque" x="355" y="33" width="110" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Descripcion]]></text>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="c3aeb423-d18a-41c0-a7ad-e5b609735690" mode="Opaque" x="115" y="33" width="90" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Direccion]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="e2e5bf39-97ac-432c-a930-a172eb6b610b" mode="Opaque" x="465" y="33" width="75" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Sede]]></text>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="72cffd0c-3d78-4e6c-858f-f202b84513a7" mode="Opaque" x="540" y="33" width="75" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Bloque]]></text>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<element kind="textField" uuid="ebda3be9-bdd9-4605-a1d5-3b1981c83c49" x="40" y="0" width="75" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{esp_nombre}]]></expression>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="aa6e7ee2-7f91-4643-8ed3-497a4a271187" x="115" y="0" width="90" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{esp_direccion}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="622df99f-5046-4634-8085-562c6d23bab8" x="205" y="0" width="75" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{tie_nombre}]]></expression>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="9ae04e86-85e9-4691-8878-5be027581747" x="280" y="0" width="75" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{est_nombre}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="003d395f-dac1-45cf-a0e4-111c85d89032" x="355" y="0" width="110" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{esp_descripcion}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="87912c85-55cb-4bac-8ab1-3dd289f02738" x="540" y="0" width="75" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{est_nombre}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="a1e3c84d-7443-42d3-a58e-c1a994a07413" x="465" y="0" width="75" height="20" hTextAlign="Center">
+				<expression><![CDATA[$F{est_nombre}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+		</band>
+	</detail>
+	<columnFooter height="45" splitType="Stretch"/>
+	<pageFooter height="50" splitType="Stretch">
+		<element kind="textField" uuid="12102610-b474-41c9-b67f-00fb1294a706" x="510" y="20" width="100" height="30" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+	</pageFooter>
+</jasperReport>
