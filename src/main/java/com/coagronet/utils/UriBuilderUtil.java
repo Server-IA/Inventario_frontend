@@ -83,7 +83,7 @@ public class UriBuilderUtil {
 	}
 
 	public URI buildProductoUri(Long id, UriComponentsBuilder ucb) {
-		return ucb.path("/api/v1/producto/{id}").buildAndExpand(id).toUri();
+		return ucb.path("/api/v2/producto/{id}").buildAndExpand(id).toUri();
 	}
 
 	public URI buildArticuloKardexUri(Long id, UriComponentsBuilder ucb) {

@@ -15,4 +15,6 @@ public interface ProductoCategoriaRepository extends JpaRepository<ProductoCateg
 
 	List<ProductoCategoria> findByEmpresaIdOrderByIdAsc(Long empresaId);
 
+	Optional<ProductoCategoria> findByIdAndEstadoIdAndEmpresaId(Long id, Long estadoid, Long empresaId);
+
 }

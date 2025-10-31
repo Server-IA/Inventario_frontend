@@ -20,6 +20,7 @@ import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.pedidocotizacion.PedidoCotizacion;
 import com.coagronet.produccion.Produccion;
+import com.coagronet.productoCategoria.ProductoCategoria;
 import com.coagronet.proveedor.Proveedor;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
 import com.coagronet.validator.parametrizacion.entidades.EstadoValidator;
@@ -52,6 +53,7 @@ public class EntidadValidatorFacade {
     private final EvaluacionValidator evaluacionValidator;
     private final CriterioEvaluacionValidator criterioEvaluacionValidator;
     private final EvaluacionItemValidator evaluacionItemValidator;
+    private final ProductoCategoriaValidator productoCategoriaValidator;
 
     public Empresa validarEmpresa(Long empresaId) {
         return empresaValidator.validarEmpresa(empresaId);
@@ -155,6 +157,8 @@ public class EntidadValidatorFacade {
         return criterioEvaluacionValidator.validarCriterioEvaluacionPorEmpresa(criterioEvId, empresaId);
     }
 
+    public ProductoCategoria validarProductoCategoria(Long productoCategoriaId, Long empresaId) {
+        return productoCategoriaValidator.validarProductoCategoriaPorEmpresa(productoCategoriaId, empresaId);
+    }
+
 }
-
-

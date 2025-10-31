@@ -2,25 +2,26 @@ package com.coagronet.producto.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.springframework.stereotype.Component;
 
 import com.coagronet.producto.Producto;
-import com.coagronet.producto.dtos.ProductoDTO;
+import com.coagronet.producto.dtos.ProductoRequestDTO;
+import com.coagronet.producto.dtos.ProductoResponseDTO;
 
-@Component
 @Mapper(componentModel = "spring")
 public interface ProductoMapper {
 
-	@Mapping(source = "productoCategoria.id", target = "productoCategoriaId")
-	@Mapping(source = "estado.id", target = "estadoId")
-	@Mapping(source = "empresa.id", target = "empresaId", ignore = true)
-	@Mapping(source = "unidad.id", target = "unidadMinimaId")
-	ProductoDTO toDto(Producto producto);
+	@Mapping(target = "productoCategoriaId", source = "productoCategoria.id")
+	@Mapping(target = "productoCategoriaNombre", source = "productoCategoria.nombre")
+	@Mapping(target = "estadoId", source = "estado.id")
+	@Mapping(target = "estadoNombre", source = "estado.nombre")
+	@Mapping(target = "unidadMinimaId", source = "unidadMinima.id")
+	@Mapping(target = "unidadMinimaNombre", source = "unidadMinima.nombre")
+	ProductoResponseDTO toDto(Producto producto);
 
-	@Mapping(source = "productoCategoriaId", target = "productoCategoria.id")
-	@Mapping(source = "unidadMinimaId", target = "unidad.id")
-	@Mapping(source = "estadoId", target = "estado.id")
-	@Mapping(source = "empresaId", target = "empresa.id")
-	Producto toEntity(ProductoDTO productoDTO);
+	@Mapping(target = "productoCategoria.id", source = "productoCategoriaId")
+	@Mapping(target = "estado.id", source = "estadoId")
+	@Mapping(target = "empresa.id", source = "empresaId")
+	@Mapping(target = "unidadMinima.id", source = "unidadMinimaId")
+	Producto toEntity(ProductoRequestDTO productoRequestDTO);
 
 }

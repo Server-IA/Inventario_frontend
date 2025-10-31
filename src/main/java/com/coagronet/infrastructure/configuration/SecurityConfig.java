@@ -51,7 +51,7 @@ public class SecurityConfig {
 						"/api/v1/ingrediente-presentacion-producto/**", "/api/v1/proveedor/**", "/api/v1/items/**",
 						"/api/v1/articulo-inventario/**", "/api/v1/kardex/**", "/api/v1/espacio_ocupacion/**",
 						"/api/v1/inventario_item/**", "/api/v1/pedido/**", "/api/v1/presentacion/**",
-						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v1/producto/**",
+						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v2/producto/**",
 						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
 						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu", "/api/v1/metricas/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")

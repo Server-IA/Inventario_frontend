@@ -1,19 +1,29 @@
 package com.coagronet.producto.services;
 
-import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
-import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.producto.dtos.ProductoDTO;
-import com.coagronet.producto.mappers.ProductoMapper;
-import com.coagronet.producto.repositories.ProductoRepository;
-import com.coagronet.utils.UserEmpresaService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.repositories.EmpresaRepository;
+import com.coagronet.estado.Estado;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.producto.Producto;
+import com.coagronet.producto.dtos.ProductoRequestDTO;
+import com.coagronet.producto.dtos.ProductoResponseDTO;
+import com.coagronet.producto.mappers.ProductoMapper;
+import com.coagronet.producto.repositories.ProductoRepository;
+import com.coagronet.productoCategoria.ProductoCategoria;
+import com.coagronet.productoCategoria.repositories.ProductoCategoriaRepository;
+import com.coagronet.unidad.Unidad;
+import com.coagronet.unidad.repositories.UnidadRepository;
+import com.coagronet.utils.Constantes;
+import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.validator.EntidadValidatorFacade;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -21,55 +31,89 @@ public class ProductoService {
 
 	private final ProductoRepository productoRepository;
 
-	private final EstadoRepository estadoRepository;
-
 	private final ProductoMapper productoMapper;
 
 	private final UserEmpresaService userEmpresaService;
 
-	public Page<ProductoDTO> findAll(Pageable pageable) {
+	private final EntidadValidatorFacade entidadValidatorFacade;
+
+	private final EmpresaRepository empresaRepository;
+
+	private final UnidadRepository unidadRepository;
+
+	private final ProductoCategoriaRepository productoCategoriaRepository;
+
+	public Page<ProductoResponseDTO> findAllByFilters(Pageable pageable, Long estadoId, Long categoriaId) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return productoRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(productoMapper::toDto);
+		return productoRepository.findByFilters(empresaId, estadoId, categoriaId, pageable)
+				.map(productoMapper::toDto);
 	}
 
-	public Optional<ProductoDTO> findById(Long requestedId) {
+	public ProductoResponseDTO findById(Long requestedId) {
 		return productoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(productoMapper::toDto);
+				.map(productoMapper::toDto).orElseThrow(() -> new NotFoundException("producto.not-found", requestedId));
 	}
 
 	@Transactional
-	public ProductoDTO create(ProductoDTO productoDTO) {
-		estadoRepository.findById(productoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+	public ProductoResponseDTO create(ProductoRequestDTO productoRequestDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		productoDTO.setId(null);
-		productoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		ProductoCategoria productoCategoria = productoCategoriaRepository
+				.findByIdAndEstadoIdAndEmpresaId(productoRequestDTO.productoCategoriaId(), Constantes.ESTADO_ACTIVO,
+						empresaId)
+				.orElseThrow(() -> new BadRequestException("producto-categoria.not-valid"));
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(productoRequestDTO.estadoId());
+		Empresa empresa = empresaRepository.findById(empresaId).orElseThrow();
+		Unidad unidad = unidadRepository
+				.findByIdAndEstadoId(productoRequestDTO.unidadMinimaId(), Constantes.ESTADO_ACTIVO)
+				.orElseThrow(() -> new BadRequestException("unidad.not-valid"));
 
-		return productoMapper.toDto(productoRepository.save(productoMapper.toEntity(productoDTO)));
+		Producto productoWithTenant = productoMapper.toEntity(productoRequestDTO);
+		productoWithTenant.setProductoCategoria(productoCategoria);
+		productoWithTenant.setEstado(estado);
+		productoWithTenant.setEmpresa(empresa);
+		productoWithTenant.setUnidadMinima(unidad);
+
+		Producto saveProducto = productoRepository.save(productoWithTenant);
+
+		return productoMapper.toDto(saveProducto);
 
 	}
 
 	@Transactional
-	public void update(Long requestedId, ProductoDTO productoDTO) {
-		productoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Producto no encontrado o no válido"));
+	public void update(Long requestedId, ProductoRequestDTO productoRequestDTO) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		estadoRepository.findById(productoDTO.getEstadoId())
-			.orElseThrow(() -> new NotFoundException("Estado no encontrado o no válido"));
+		productoRepository.findByIdAndEmpresaId(requestedId, empresaId)
+				.orElseThrow(() -> new NotFoundException("producto.not-found", requestedId));
 
-		productoDTO.setId(requestedId);
-		productoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		ProductoCategoria productoCategoria = productoCategoriaRepository
+				.findByIdAndEstadoIdAndEmpresaId(productoRequestDTO.productoCategoriaId(), Constantes.ESTADO_ACTIVO,
+						empresaId)
+				.orElseThrow(() -> new BadRequestException("producto-categoria.not-valid"));
+		Estado estado = entidadValidatorFacade.validarEstadoGeneral(productoRequestDTO.estadoId());
+		Empresa empresa = empresaRepository.findById(empresaId).orElseThrow();
+		Unidad unidad = unidadRepository
+				.findByIdAndEstadoId(productoRequestDTO.unidadMinimaId(), Constantes.ESTADO_ACTIVO)
+				.orElseThrow(() -> new BadRequestException("unidad.not-valid"));
 
-		productoRepository.save(productoMapper.toEntity(productoDTO));
+		Producto productoWithTenant = productoMapper.toEntity(productoRequestDTO);
+		productoWithTenant.setId(requestedId);
+		productoWithTenant.setProductoCategoria(productoCategoria);
+		productoWithTenant.setEstado(estado);
+		productoWithTenant.setEmpresa(empresa);
+		productoWithTenant.setUnidadMinima(unidad);
+
+		productoRepository.save(productoWithTenant);
 	}
 
 	@Transactional
-	public void delete(Long requestId) {
-		productoRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Producto no encontrado o no válido"));
-
-		productoRepository.deleteById(requestId);
+	public void delete(Long id) {
+		Producto producto = productoRepository
+				.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new NotFoundException("producto.not-found", id));
+		producto.setEstado(Estado.builder().id(Constantes.ESTADO_INACTIVO).build());
+		productoRepository.save(producto);
 	}
 
 }

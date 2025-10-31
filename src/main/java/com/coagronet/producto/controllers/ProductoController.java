@@ -1,7 +1,5 @@
 package com.coagronet.producto.controllers;
 
-import java.net.URI;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -16,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.producto.dtos.ProductoDTO;
+import com.coagronet.producto.dtos.ProductoRequestDTO;
+import com.coagronet.producto.dtos.ProductoResponseDTO;
 import com.coagronet.producto.services.ProductoService;
 import com.coagronet.utils.UriBuilderUtil;
 
@@ -24,7 +23,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/producto")
+@RequestMapping("/api/v2/productos")
 @RequiredArgsConstructor
 public class ProductoController {
 
@@ -33,41 +32,38 @@ public class ProductoController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<Page<ProductoDTO>> findAll(@PageableDefault Pageable pageable) {
-		Page<ProductoDTO> page = productoService.findAll(pageable);
+	public ResponseEntity<Page<ProductoResponseDTO>> findAllByFilters(
+			@PageableDefault Pageable pageable,
+			@org.springframework.web.bind.annotation.RequestParam(required = false) Long estado,
+			@org.springframework.web.bind.annotation.RequestParam(required = false) Long categoria) {
 
-		if(page.isEmpty()){
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.ok(page);
+		return ResponseEntity.ok(productoService.findAllByFilters(pageable, estado, categoria));
 	}
 
 	@GetMapping("/{requestedId}")
-	private ResponseEntity<ProductoDTO> findById(@PathVariable Long requestedId) {
-		return productoService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+	private ResponseEntity<ProductoResponseDTO> findById(@PathVariable Long requestedId) {
+		return ResponseEntity.ok(productoService.findById(requestedId));
 	}
 
 	@PostMapping
-	private ResponseEntity<ProductoDTO> createProducto(@RequestBody @Valid ProductoDTO newProductoRequest,
+	private ResponseEntity<Void> createProducto(@Valid @RequestBody ProductoRequestDTO newProductoRequest,
 			UriComponentsBuilder ucb) {
-		ProductoDTO savedProductoDTO = productoService.create(newProductoRequest);
-
-		URI locationOfNewPedido = uriBuilderUtil.buildProductoUri(savedProductoDTO.getId(), ucb);
-
-		return ResponseEntity.created(locationOfNewPedido).build();
+		return ResponseEntity
+				.created(uriBuilderUtil
+						.buildProductoUri((productoService.create(newProductoRequest)).id(),
+								ucb))
+				.build();
 	}
 
 	@PutMapping("/{requestedId}")
 	private ResponseEntity<Void> putProducto(@PathVariable Long requestedId,
-			@RequestBody @Valid ProductoDTO productoDTOUpdate) {
-
+			@RequestBody @Valid ProductoRequestDTO productoDTOUpdate) {
 		productoService.update(requestedId, productoDTOUpdate);
 		return ResponseEntity.noContent().build();
 	}
 
 	@DeleteMapping("/{id}")
 	private ResponseEntity<Void> deleteProducto(@PathVariable Long id) {
-
 		productoService.delete(id);
 		return ResponseEntity.noContent().build();
 	}
