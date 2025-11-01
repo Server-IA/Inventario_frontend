@@ -2,6 +2,7 @@ package com.coagronet.infrastructure.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -39,6 +40,15 @@ public class SecurityConfig {
 						"/api/v1/movimiento/**", "/api/v1/tipo-evaluacion/**", "/api/v1/user/**",
 						"/api/v1/categoria-estado/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA")
+				//Especifidad para unidad y tipoUnidad
+						.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
+						.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**").authenticated()
+						.requestMatchers(HttpMethod.POST, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers(HttpMethod.PUT, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers(HttpMethod.DELETE, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers(HttpMethod.POST, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers(HttpMethod.PUT, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
 				.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**",
 						"/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**", "/api/v1/tipo_sede/**",
 						"/api/v1/grupo/**", "/api/v1/sede/**", "/api/v1/bloque/**", "/api/v1/espacio/**",
