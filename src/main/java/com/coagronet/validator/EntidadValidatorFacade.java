@@ -3,7 +3,9 @@ package com.coagronet.validator;
 import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
 import com.coagronet.evaluacion.Evaluacion;
 import com.coagronet.evaluacionitem.EvaluacionItem;
+import com.coagronet.tipounidad.TipoUnidad;
 import com.coagronet.validator.inventario.entidades.*;
+import com.coagronet.validator.parametrizacion.entidades.*;
 import org.springframework.stereotype.Component;
 
 import com.coagronet.almacen.Almacen;
@@ -23,10 +25,6 @@ import com.coagronet.produccion.Produccion;
 import com.coagronet.productoCategoria.ProductoCategoria;
 import com.coagronet.proveedor.Proveedor;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
-import com.coagronet.validator.parametrizacion.entidades.EstadoValidator;
-import com.coagronet.validator.parametrizacion.entidades.SubseccionValidator;
-import com.coagronet.validator.parametrizacion.entidades.TipoMovimientoValidator;
-import com.coagronet.validator.parametrizacion.entidades.TipoProduccionValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,6 +52,7 @@ public class EntidadValidatorFacade {
     private final CriterioEvaluacionValidator criterioEvaluacionValidator;
     private final EvaluacionItemValidator evaluacionItemValidator;
     private final ProductoCategoriaValidator productoCategoriaValidator;
+    private final TipoUnidadValidator tipoUnidadValidator;
 
     public Empresa validarEmpresa(Long empresaId) {
         return empresaValidator.validarEmpresa(empresaId);
@@ -159,6 +158,10 @@ public class EntidadValidatorFacade {
 
     public ProductoCategoria validarProductoCategoria(Long productoCategoriaId, Long empresaId) {
         return productoCategoriaValidator.validarProductoCategoriaPorEmpresa(productoCategoriaId, empresaId);
+    }
+
+    public TipoUnidad validarTipoUnidad(Long tipoUnidad){
+        return tipoUnidadValidator.validarTipoUnidad(tipoUnidad);
     }
 
 }

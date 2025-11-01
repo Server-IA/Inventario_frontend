@@ -1,6 +1,5 @@
 package com.coagronet.unidad;
 
-import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
 import com.coagronet.tipounidad.TipoUnidad;

@@ -20,6 +20,7 @@ public class UnidadDTO {
 	private String descripcion;
 
 	private Long estadoId;
+
 	private Long tipoUnidadId;
 
 
