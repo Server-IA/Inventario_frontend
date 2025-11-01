@@ -2,6 +2,9 @@ package com.coagronet.unidad.services;
 
 import java.util.Optional;
 
+import com.coagronet.tipounidad.TipoUnidad;
+import com.coagronet.unidad.Unidad;
+import com.coagronet.validator.EntidadValidatorFacade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,9 +27,7 @@ public class UnidadService {
 	private final UnidadRepository unidadRepository;
 
 	private final UnidadMapper unidadMapper;
-
-	private final UserEmpresaService userEmpresaService;
-
+	private final EntidadValidatorFacade entidadValidatorFacade;
 	private final EstadoRepository estadoRepository;
 
 	public Page<UnidadDTO> findAll(Pageable pageable) {
@@ -43,9 +44,10 @@ public class UnidadService {
 		estadoRepository.findById(unidadDTO.getEstadoId())
 			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
-		unidadDTO.setId(null);
-
-		return unidadMapper.toDTO(unidadRepository.save(unidadMapper.toEntity(unidadDTO)));
+		TipoUnidad tipoUnidad = entidadValidatorFacade.validarTipoUnidad(unidadDTO.getTipoUnidadId());
+		Unidad guardado = unidadMapper.toEntity(unidadDTO);
+		guardado.setTipoUnidad(tipoUnidad);
+		return unidadMapper.toDTO(unidadRepository.save(guardado));
 	}
 
 	@Transactional
