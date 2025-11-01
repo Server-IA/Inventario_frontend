@@ -38,6 +38,21 @@ public class RequestUtils {
                 host = localHost.getHostName();
             }
 
+            else {
+
+                try {
+                    InetAddress remoteAddress = InetAddress.getByName(host);
+                    String resolvedHostName = remoteAddress.getHostName();
+
+
+                    if (!resolvedHostName.equals(host)) {
+                        host = resolvedHostName;
+                    }
+                } catch (Exception ignored) {
+
+                }
+            }
+
             return host;
         } catch (Exception e) {
             return "unknown";
