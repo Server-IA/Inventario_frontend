@@ -1,6 +1,7 @@
 package com.coagronet.articuloKardex;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.coagronet.empresa.Empresa;
@@ -62,6 +63,22 @@ public class ArticuloKardex {
 
 	@Column(name = "kai_lote")
 	private String lote;
+
+	@Column(name = "kai_seg_username")
+	private String username;
+
+	@Column(name = "kai_seg_rol")
+	private String rol;
+
+	@Column(name = "kai_seg_ip")
+	private String ip;
+
+	@Column(name = "kai_seg_host")
+	private String host;
+
+	@Column(name = "kai_seg_fecha_hora", insertable = false, updatable = false)
+	private OffsetDateTime fechaHora;
+
 
 	@PrePersist
 	public void prePersist() {

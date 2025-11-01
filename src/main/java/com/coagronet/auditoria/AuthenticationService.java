@@ -1,4 +1,4 @@
-package com.coagronet.utils;
+package com.coagronet.auditoria;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

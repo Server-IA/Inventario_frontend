@@ -4,6 +4,8 @@ import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
+import com.coagronet.auditoria.AuthenticationService;
+import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
@@ -20,6 +22,8 @@ public class ArticuloKardexFactory {
     private final ArticuloKardexMapper articuloKardexMapper;
     private final ArticuloKardexRepository articuloKardexRepository;
     private final PresentacionProductoRepository presentacionProductoRepository;
+    private final RequestUtils requestUtils;
+    private final AuthenticationService authenticationService;
 
     public List<ArticuloKardex> crearArticulos(ArticuloKardexDTO dto, Long empresaId) {
         if (esDesgregado(dto, empresaId)) {
@@ -27,6 +31,7 @@ public class ArticuloKardexFactory {
         } else {
             dto.setEmpresaId(empresaId);
             ArticuloKardex entidad = articuloKardexMapper.toEntity(dto);
+            asignarDatosAuditoria(entidad);
             return List.of(articuloKardexRepository.save(entidad));
         }
     }
@@ -49,9 +54,17 @@ public class ArticuloKardexFactory {
         for (int i = 0; i < unidades; i++) {
             ArticuloKardexDTO item = construirArticuloKardexUnitario(dto, empresaId);
             ArticuloKardex entidad = articuloKardexMapper.toEntity(item);
+            asignarDatosAuditoria(entidad);
             creados.add(articuloKardexRepository.save(entidad));
         }
         return creados;
+    }
+
+    private void asignarDatosAuditoria(ArticuloKardex entidad){
+        entidad.setIp(requestUtils.getClientIp());
+        entidad.setHost(requestUtils.getClientHost());
+        entidad.setUsername(authenticationService.getAuthenticatedUser().getUsername());
+        entidad.setRol(requestUtils.getAuthenticatedRole());
     }
 
     private static ArticuloKardexDTO construirArticuloKardexUnitario(ArticuloKardexDTO articuloKardexDTO, Long empresaId) {
