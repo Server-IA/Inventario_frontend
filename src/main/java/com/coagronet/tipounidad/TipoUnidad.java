@@ -17,7 +17,7 @@ public class TipoUnidad {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "tipo_unidad_generator")
-	@SequenceGenerator(name = "tipo_unidad_generator", sequenceName = "tipo_unidad_uni_id_seq", allocationSize = 1)
+	@SequenceGenerator(name = "tipo_unidad_generator", sequenceName = "tipo_unidad_tiu_id_seq", allocationSize = 1)
 	@Column(name = "tiu_id", nullable = false)
 	private Long id;
 
