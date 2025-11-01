@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.coagronet.utils.AuthenticationService;
 import com.coagronet.utils.UserEmpresaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.coagronet.infrastructure.configuration.AppConfig;
@@ -22,13 +20,13 @@ public class CustomRepository {
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	@Autowired
-	private AppConfig appConfig;
+	private final AppConfig appConfig;
 
 	private final UserEmpresaService userEmpresaService;
 
-	public CustomRepository(UserEmpresaService userEmpresaService, AuthenticationService authenticationService) {
-		this.userEmpresaService = userEmpresaService;
+	public CustomRepository(AppConfig appConfig, UserEmpresaService userEmpresaService) {
+        this.appConfig = appConfig;
+        this.userEmpresaService = userEmpresaService;
 	}
 
 	public List<Item> findAllItems(String tableName, Long parentId) {
