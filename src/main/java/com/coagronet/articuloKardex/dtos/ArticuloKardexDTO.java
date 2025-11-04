@@ -1,6 +1,7 @@
 package com.coagronet.articuloKardex.dtos;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -41,5 +42,15 @@ public class ArticuloKardexDTO {
 
 	@Size(max = 255, message = "El lote no puede superar los 255 caracteres")
 	private String lote;
+
+	private String username;
+
+	private String rol;
+
+	private String ip;
+
+	private String host;
+
+	private OffsetDateTime fechaHora;
 
 }
