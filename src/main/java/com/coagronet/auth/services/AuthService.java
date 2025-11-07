@@ -130,10 +130,13 @@ public class AuthService {
 		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRole().getId(),
 				user.getUsuarioEstado().getId());
 
+		var nombrePersona = user.getPersona().getNombre() + " " + user.getPersona().getApellido();
+
 		List<EmpresaRolDTO> rolesByCompany = userRoles.stream().map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(),
 				ur.getEmpresa().getNombre(), ur.getRole().getId(), ur.getRole().getName())).toList();
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
-				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId());
+				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
+				nombrePersona);
 
 	}
 
@@ -151,8 +154,11 @@ public class AuthService {
 			user.setPreferredRolId(dto.rolId());
 			userRepo.save(user);
 		}
+
+		var nombrePersona = user.getPersona().getNombre() + " " + user.getPersona().getApellido();
+
 		return Map.of("token", token, "empresaId", dto.empresaId(), "rolId", dto.rolId(), "estado",
-				user.getUsuarioEstado().getId());
+				user.getUsuarioEstado().getId(), "nombrePersona", nombrePersona);
 	}
 
 	/* ================= Estrategia para el contexto inicial ================= */
