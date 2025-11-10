@@ -22,16 +22,6 @@ export default function GridTipoMovimiento({
     { field: "id", headerName: "ID", width: 90, type: "number" },
     { field: "nombre", headerName: "Nombre", width: 200 },
     { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
-
-    {
-      field: "empresaId",
-      headerName: "Empresa",
-      width: 160,
-      valueGetter: (p) =>
-        p?.row?.empresa?.nombre ??
-        p?.row?.empresa?.name ??
-        String(p?.row?.empresaId ?? ""),
-    },
     {
       field: "movimientoNombre",
       headerName: "Movimiento",

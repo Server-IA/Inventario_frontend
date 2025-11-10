@@ -1,275 +1,247 @@
-import React, { useEffect, useMemo, useState } from "react";
-import PropTypes from "prop-types";
+import React, { useEffect, useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, Grid, FormControl, InputLabel,
-  Select, MenuItem, FormHelperText, Typography, Divider, Box
+  Grid, TextField, FormControlLabel, Checkbox, Button,
+  FormControl, InputLabel, Select, MenuItem, FormHelperText, Stack
 } from "@mui/material";
-import axios from "../axiosConfig";
-import StackButtons from "../StackButtons";
+import AddRounded from "@mui/icons-material/AddRounded";
+import SaveRounded from "@mui/icons-material/SaveRounded";
+import CloseRounded from "@mui/icons-material/CloseRounded";
 
-const toList = (data) =>
-  Array.isArray(data) ? data
-  : Array.isArray(data?.content) ? data.content
-  : Array.isArray(data?.data) ? data.data
-  : [];
-
-const MENU_PROPS = { PaperProps: { style: { maxHeight: 48 * 6.5 + 8 } } };
+const emptyForm = {
+  id: null,
+  nombre: "",
+  descripcion: "",
+  productoCategoriaId: "",
+  estadoId: "",
+  unidadMinimaId: "",
+  cantidadMinima: "",
+  esOrganico: false,
+};
 
 export default function FormProducto({
-  selectedRow = null,
-  setSelectedRow,
-  setMessage,
-  reloadData,
+  open,
+  onClose,
+  initialData = emptyForm,
+  onSubmit,
+  categorias = [],
+  unidades = [],
 }) {
-  const [open, setOpen] = useState(false);
-  const [methodName, setMethodName] = useState("");
-
-  const initialForm = useMemo(() => ({
-    nombre: "",
-    productoCategoriaId: "",
-    descripcion: "",
-    estadoId: "",
-    unidadMinimaId: "",
-  }), []);
-
-  const [formData, setFormData] = useState(initialForm);
+  const [formData, setFormData] = useState(emptyForm);
   const [errors, setErrors] = useState({});
 
-  const [categorias, setCategorias] = useState([]);
-  const [unidades, setUnidades] = useState([]);
-  const [ingredientes, setIngredientes] = useState([]);
-
-  const [loadingCats, setLoadingCats] = useState(false);
-  const [loadingUnidades, setLoadingUnidades] = useState(false);
-  const [loadingIngr, setLoadingIngr] = useState(false);
-
-  // Carga de catálogos (por name)
   useEffect(() => {
-    setLoadingCats(true);
-    axios.get("/v1/items/producto_categoria/0")
-      .then(res => setCategorias(toList(res.data)))
-      .catch(() => setCategorias([]))
-      .finally(() => setLoadingCats(false));
-
-    setLoadingUnidades(true);
-    axios.get("/v1/items/unidad/0")
-      .then(res => setUnidades(toList(res.data)))
-      .catch(() => setUnidades([]))
-      .finally(() => setLoadingUnidades(false));
-      setLoadingIngr(false);
-      setIngredientes([]);
-      }, []);
-
-  // Acciones
-  const create = () => {
-    setFormData(initialForm);
+    setFormData({ ...emptyForm, ...(initialData || {}) });
     setErrors({});
-    setMethodName("Crear");
-    setOpen(true);
-  };
+  }, [initialData]);
 
-  const update = () => {
-    if (!selectedRow?.id) {
-      setMessage({ open: true, severity: "error", text: "Selecciona un producto para editar." });
-      return;
-    }
-    setFormData({
-      nombre: selectedRow.nombre || "",
-      productoCategoriaId: selectedRow.productoCategoriaId || "",
-      descripcion: selectedRow.descripcion || "",
-      estadoId: selectedRow.estadoId?.toString() || "",
-      unidadMinimaId: selectedRow.unidadMinimaId || "",
-      ingredientePresentacionProductoId: selectedRow.ingredientePresentacionProductoId || "",
-    });
-    setErrors({});
-    setMethodName("Actualizar");
-    setOpen(true);
-  };
-
-  const deleteRow = () => {
-    if (!selectedRow?.id) {
-      setMessage({ open: true, severity: "error", text: "Selecciona un producto para eliminar." });
-      return;
-    }
-    axios.delete(`/v1/producto/${selectedRow.id}`)
-      .then(() => {
-        setMessage({ open: true, severity: "success", text: "Eliminado correctamente." });
-        setSelectedRow(null);
-        reloadData();
-      })
-      .catch(err => {
-        setMessage({ open: true, severity: "error", text: `Error al eliminar: ${err.message}` });
-      });
-  };
-
-  // Form handlers
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: "" }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validate = () => {
-    const e = {};
-    if (!formData.nombre.trim()) e.nombre = "Campo requerido";
-    if (!formData.productoCategoriaId) e.productoCategoriaId = "Campo requerido";
-    if (!formData.descripcion.trim()) e.descripcion = "Campo requerido";
-    if (!formData.estadoId) e.estadoId = "Campo requerido";
-    if (!formData.unidadMinimaId) e.unidadMinimaId = "Campo requerido";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    const errs = {};
+    if (!formData.nombre) errs.nombre = "Campo requerido";
+    if (!formData.productoCategoriaId) errs.productoCategoriaId = "Campo requerido";
+    if (!formData.estadoId) errs.estadoId = "Campo requerido";
+    if (!formData.unidadMinimaId) errs.unidadMinimaId = "Campo requerido";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const doSubmit = () => {
     if (!validate()) return;
-
     const payload = {
-      ...formData,
-      estadoId: parseInt(formData.estadoId, 10),
-      productoCategoriaId: parseInt(formData.productoCategoriaId, 10),
-      unidadMinimaId: parseInt(formData.unidadMinimaId, 10),
-      ingredientePresentacionProductoId: parseInt(formData.ingredientePresentacionProductoId, 10),
+      nombre: formData.nombre,
+      productoCategoriaId: Number(formData.productoCategoriaId),
+      descripcion: formData.descripcion || "",
+      estadoId: Number(formData.estadoId),
+      unidadMinimaId: Number(formData.unidadMinimaId),
+      cantidadMinima: formData.cantidadMinima === "" ? null : Number(formData.cantidadMinima),
+      esOrganico: Boolean(formData.esOrganico),
+      ...(formData.id ? { id: formData.id } : {}),
     };
-
-    const isCreate = methodName === "Crear";
-    const method = isCreate ? axios.post : axios.put;
-    const url = isCreate ? "/v1/producto" : `/v1/producto/${selectedRow.id}`;
-
-    method(url, payload)
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: isCreate ? "¡Creado con éxito!" : "¡Actualizado con éxito!",
-        });
-        setOpen(false);
-        setSelectedRow(null);
-        reloadData();
-      })
-      .catch(err => {
-        setMessage({ open: true, severity: "error", text: `Error: ${err.message}` });
-      });
+    onSubmit(payload);
   };
+
+  const isEdit = Boolean(formData.id);
 
   return (
-    <>
-      <StackButtons methods={{ create, update, deleteRow }} />
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{isEdit ? "Editar producto" : "Nuevo producto"}</DialogTitle>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-        <form onSubmit={handleSubmit} noValidate>
-          <DialogTitle>
-            {methodName} Producto
-            <Typography variant="body2" color="text.secondary">
-              Completa la información del producto y su configuración base
-            </Typography>
-          </DialogTitle>
+      {/* permite enviar con Enter */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          doSubmit();
+        }}
+      >
+        <DialogContent dividers>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12}>
+              <TextField
+                label="Nombre"
+                fullWidth
+                required
+                name="nombre"
+                value={formData.nombre}
+                onChange={handleChange}
+                error={!!errors.nombre}
+                helperText={errors.nombre}
+              />
+            </Grid>
 
-          <DialogContent dividers sx={{ pt: 2 }}>
-            {/* Sección: Información general */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="overline" color="text.secondary">Información general</Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={8}>
-                  <TextField
-                    fullWidth size="small"
-                    name="nombre" label="Nombre"
-                    value={formData.nombre} onChange={handleChange}
-                    error={!!errors.nombre} helperText={errors.nombre}
+            <Grid item xs={12}>
+              <TextField
+                label="Descripción"
+                fullWidth
+                multiline
+                minRows={2}
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleChange}
+              />
+            </Grid>
+
+            {/* Selector de Categoría */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal" error={!!errors.productoCategoriaId}>
+                <InputLabel>Categoría</InputLabel>
+                <Select
+                  name="productoCategoriaId"
+                  value={formData.productoCategoriaId}
+                  onChange={handleChange}
+                  label="Categoría"
+                >
+                  {categorias.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.nombre ?? c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.productoCategoriaId && (
+                  <FormHelperText>{errors.productoCategoriaId}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            {/* Selector de Estado fijo (Activo/Inactivo) */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  name="estadoId"
+                  value={formData.estadoId}
+                  onChange={handleChange}
+                  label="Estado"
+                >
+                  <MenuItem value={1}>Activo</MenuItem>
+                  <MenuItem value={2}>Inactivo</MenuItem>
+                </Select>
+                {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
+              </FormControl>
+            </Grid>
+
+            {/* Selector de Unidad mínima */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal" error={!!errors.unidadMinimaId}>
+                <InputLabel>Unidad mínima</InputLabel>
+                <Select
+                  name="unidadMinimaId"
+                  value={formData.unidadMinimaId}
+                  onChange={handleChange}
+                  label="Unidad mínima"
+                >
+                  {unidades.map((u) => (
+                    <MenuItem key={u.id} value={u.id}>
+                      {u.nombre ?? u.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.unidadMinimaId && (
+                  <FormHelperText>{errors.unidadMinimaId}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            {/* Campo cantidad mínima */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Cantidad mínima"
+                type="number"
+                fullWidth
+                name="cantidadMinima"
+                value={formData.cantidadMinima}
+                onChange={handleChange}
+              />
+            </Grid>
+
+            {/* Checkbox de orgánico */}
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name="esOrganico"
+                    checked={!!formData.esOrganico}
+                    onChange={handleChange}
                   />
-                </Grid>
+                }
+                label="Es orgánico"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
 
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small" error={!!errors.productoCategoriaId}>
-                    <InputLabel>Categoría</InputLabel>
-                    <Select
-                      name="productoCategoriaId"
-                      value={formData.productoCategoriaId}
-                      onChange={handleChange}
-                      label="Categoría"
-                      MenuProps={MENU_PROPS}
-                      disabled={loadingCats}
-                    >
-                      <MenuItem value="">Seleccione...</MenuItem>
-                      {categorias.map(cat => (
-                        <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>{errors.productoCategoriaId}</FormHelperText>
-                  </FormControl>
-                </Grid>
+        {/* ==== Botonera estilo “Producción” ==== */}
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ width: "100%" }} justifyContent="flex-end">
+            {/* Cancelar (outlined) */}
+            <Button
+              type="button"
+              onClick={onClose}
+              startIcon={<CloseRounded />}
+              sx={(t) => ({
+                borderRadius: 999,
+                px: 2,
+                py: 0.9,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                border: `1px solid ${t.palette.divider}`,
+                color: t.palette.text.secondary,
+              })}
+            >
+              Cancelar
+            </Button>
 
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth size="small" multiline minRows={3}
-                    name="descripcion" label="Descripción"
-                    value={formData.descripcion} onChange={handleChange}
-                    error={!!errors.descripcion} helperText={errors.descripcion}
-                  />
-                </Grid>
-              </Grid>
-            </Box>
-
-            {/* Sección: Configuración */}
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="overline" color="text.secondary">Configuración</Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small" error={!!errors.unidadMinimaId}>
-                    <InputLabel>Unidad mínima</InputLabel>
-                    <Select
-                      name="unidadMinimaId"
-                      value={formData.unidadMinimaId}
-                      onChange={handleChange}
-                      label="Unidad mínima"
-                      MenuProps={MENU_PROPS}
-                      disabled={loadingUnidades}
-                    >
-                      <MenuItem value="">Seleccione...</MenuItem>
-                      {unidades.map(u => (
-                        <MenuItem key={u.id} value={u.id}>{u.name}</MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>{errors.unidadMinimaId}</FormHelperText>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth size="small" error={!!errors.estadoId}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select
-                      name="estadoId"
-                      value={formData.estadoId}
-                      onChange={handleChange}
-                      label="Estado"
-                      MenuProps={MENU_PROPS}
-                    >
-                      <MenuItem value="">Seleccione...</MenuItem>
-                      <MenuItem value="1">Activo</MenuItem>
-                      <MenuItem value="2">Inactivo</MenuItem>
-                    </Select>
-                    <FormHelperText>{errors.estadoId}</FormHelperText>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </Box>
-          </DialogContent>
-
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit" variant="contained">{methodName}</Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </>
+            {/* Crear / Guardar (cápsula blanca con sombra) */}
+            <Button
+              type="submit"
+              startIcon={isEdit ? <SaveRounded /> : <AddRounded />}
+              sx={(t) => ({
+                borderRadius: 999,
+                px: 2.2,
+                py: 0.9,
+                fontWeight: 800,
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+                bgcolor: t.palette.background.paper,
+                color: t.palette.text.primary,
+                boxShadow: 2,
+                border: `1px solid ${t.palette.divider}`,
+                "&:hover": { boxShadow: 3, bgcolor: t.palette.background.paper },
+              })}
+            >
+              {isEdit ? "Guardar" : "Crear"}
+            </Button>
+          </Stack>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 }
-
-FormProducto.propTypes = {
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func.isRequired,
-  setMessage: PropTypes.func.isRequired,
-  reloadData: PropTypes.func.isRequired,
-};

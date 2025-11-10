@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -28,6 +28,24 @@ const HIDE_AUTH_BTNS_ROUTES = [
   "/registro/persona",
   "/registro/empresa",
 ];
+
+// Helper local para leer estado del JWT
+const decodeJwt = (jwt = "") => {
+  try {
+    const [, raw] = jwt.split(".");
+    if (!raw) return {};
+    const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 === 2 ? "==" : b64.length % 4 === 3 ? "=" : "";
+    const json = atob(b64 + pad);
+    const payload = JSON.parse(json);
+    return {
+      ...payload,
+      estado: payload?.estado != null ? Number(payload.estado) : undefined,
+    };
+  } catch {
+    return {};
+  }
+};
 
 export default function AppBarComponent({
   setCurrentModule,
@@ -70,16 +88,52 @@ export default function AppBarComponent({
     if (location.pathname === "/register") handleRegister();
   }, [location.pathname]);
 
-  // Mostrar UI de perfil (con "Cerrar sesión") si:
+  // Mostrar UI de perfil si:
   // - está autenticado
-  // - hay token en localStorage (por recarga)
-  // - está en un formulario de registro (para ocultar Login/Register)
+  // - o hay token en localStorage (por recarga)
+  // - o está en un formulario de registro (para ocultar Login/Register)
   const hasAnyToken =
     !!localStorage.getItem("accessToken") ||
     !!localStorage.getItem("token");
 
   const showProfileUI =
     isAuthenticated || hasAnyToken || HIDE_AUTH_BTNS_ROUTES.includes(location.pathname);
+
+  // ===== Estado para el título dinámico =====
+  const [empresaNombre, setEmpresaNombre] = useState(
+    () => localStorage.getItem("empresaNombre") || ""
+  );
+  const [estadoActivo, setEstadoActivo] = useState(false);
+
+  // Refresca empresa y estado desde localStorage/JWT
+  const refreshTitleState = () => {
+    const name = localStorage.getItem("empresaNombre") || "";
+    setEmpresaNombre(name);
+
+    const token = localStorage.getItem("token") || "";
+    const { estado } = decodeJwt(token);
+    setEstadoActivo(Number(estado) === 4);
+  };
+
+  useEffect(() => {
+    // Inicial
+    refreshTitleState();
+
+    // Actualiza cuando cambie algo relevante
+    const onStorage = () => refreshTitleState();
+    const onAuthUpdated = () => refreshTitleState();
+    const onFocus = () => refreshTitleState();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("auth:updated", onAuthUpdated); // emítelo cuando hagas login/cambio de rol
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("auth:updated", onAuthUpdated);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   return (
     <AppBar
@@ -123,9 +177,20 @@ export default function AppBarComponent({
               alt="Inventario Usco"
               sx={{ width: 28, height: 28, objectFit: "contain" }}
             />
-            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }} component="span">
               Inventario Usco
             </Typography>
+
+            {/* Sufijo con el nombre de la empresa SOLO si estado === 4 y hay nombre */}
+            {estadoActivo && empresaNombre && (
+              <Typography
+                variant="h6"
+                component="span"
+                sx={{ fontWeight: 700, lineHeight: 1, ml: 1 }}
+              >
+                — {empresaNombre}
+              </Typography>
+            )}
           </Box>
         )}
 

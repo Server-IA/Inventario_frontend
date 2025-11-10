@@ -1,7 +1,41 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { DataGrid, esES } from "@mui/x-data-grid";
-import { Box } from "@mui/material";
+import {
+  DataGrid,
+  esES,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
+import { Button } from "@mui/material";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+
+const LS_KEY = "gridKardex:columnVisibility:v1";
+/* ---------- Toolbar personalizada ---------- */
+function KardexToolbar({ onResetColumns }) {
+  return (
+    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
+      <div>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <GridToolbarQuickFilter debounceMs={300} />
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RestartAltIcon />}
+          onClick={onResetColumns}
+        >
+          Restablecer columnas
+        </Button>
+      </div>
+    </GridToolbarContainer>
+  );
+}
 
 export default function GridKardex({
   // Datos
@@ -15,10 +49,11 @@ export default function GridKardex({
   setSelectedRow,
 
   // Paginación (server-side opcional)
+  loading = false,    
+  rowCount,               // total en servidor    // spinner
   paginationModel,        // { page, pageSize } o { page, size }
   setPaginationModel,     // (model) => void
-  rowCount,               // total en servidor
-  loading = false,        // spinner
+  
 }) {
   /* ---------- Mapas de lookup ---------- */
   const almById = useMemo(() => {
@@ -102,44 +137,82 @@ export default function GridKardex({
     },
   ]), [almById, prodById, tmovById]);
 
+ /* -------- Visibilidad de columnas (con persistencia) -------- */
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  // Cargar de localStorage al montar
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      if (saved && typeof saved === "object") {
+        setColumnVisibilityModel(saved);
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  // Guardar cada cambio
+  const handleVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(model));
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleResetColumns = () => {
+    // Limpia storage y vuelve al estado por defecto (todas visibles)
+    localStorage.removeItem(LS_KEY);
+    setColumnVisibilityModel({});
+  };
+
   /* ---------- ¿Server o Cliente? ---------- */
-  const serverPagination = Boolean(
-    paginationModel && setPaginationModel && typeof rowCount === "number"
-  );
+const serverPaging =
+    typeof rowCount === "number" &&
+    paginationModel &&
+    typeof paginationModel.page === "number" &&
+    typeof (paginationModel.pageSize ?? paginationModel.size) === "number" &&
+    typeof onPaginationModelChange === "function";
+
+  const modelPage = paginationModel?.page ?? 0;
+  const modelPageSize = paginationModel?.pageSize ?? paginationModel?.size ?? 10;
+
 
   return (
-    <Box sx={{ width: "100%" }}>
+   <div style={{ width: "100%" }}>
       <DataGrid
-        rows={Array.isArray(kardexes) ? kardexes : []}
+      rows={Array.isArray(kardexes) ? kardexes : []}
         columns={columns}
         getRowId={(row) => row.id}
-        onRowClick={(params) => setSelectedRow?.(params.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
-
-        // Paginación visible siempre
+        loading={loading}
+        autoHeight
         pagination
         pageSizeOptions={[5, 10, 20, 50]}
+        disableRowSelectionOnClick
+        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
+        onRowClick={(params) => setSelectedRow?.(params.row)}
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
-
-        paginationMode={serverPagination ? "server" : "client"}
-        loading={loading}
-        {...(serverPagination
+        paginationMode={serverPaging ? "server" : "client"}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        slots={{ toolbar: KardexToolbar }}
+        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
+        {...(serverPaging
           ? {
               rowCount: Math.max(
                 Number(rowCount ?? 0),
                 Array.isArray(kardexes) ? kardexes.length : 0
               ),
-              paginationModel: {
-                page: paginationModel.page ?? 0,
-                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
-              },
+              paginationModel: { page: modelPage, pageSize: modelPageSize },
               onPaginationModelChange: (model) => {
                 const next = {
                   page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? 10,
+                  pageSize: model.pageSize ?? 10,
+                  size: model.pageSize ?? 10, // compat con padre {page,size}
                 };
-                setPaginationModel?.(next);
+                onPaginationModelChange?.(next);
               },
             }
           : {
@@ -147,9 +220,9 @@ export default function GridKardex({
                 pagination: { paginationModel: { page: 0, pageSize: 10 } },
               },
             })}
-        autoHeight
+        
       />
-    </Box>
+    </div>
   );
 }
 
@@ -165,7 +238,7 @@ GridKardex.propTypes = {
     pageSize: PropTypes.number,
     size: PropTypes.number,
   }),
-  setPaginationModel: PropTypes.func,
+  onPaginationModelChange: PropTypes.func,
   rowCount: PropTypes.number,
   loading: PropTypes.bool,
 };

@@ -60,10 +60,10 @@ export default function FormPresentacionproducto({
   }
 
   useEffect(() => {
-    axios.get("/v1/producto").then(r => setProductos(toList(r))).catch(() => setProductos([]));
-    axios.get("/v1/unidad").then(r => setUnidades(toList(r))).catch(() => setUnidades([]));
-    axios.get("/v1/marca").then(r => setMarcas(toList(r))).catch(() => setMarcas([]));
-    axios.get("/v1/presentacion").then(r => setPresentaciones(toList(r))).catch(() => setPresentaciones([]));
+    axios.get("/v1/items/producto/0").then(r => setProductos(toList(r))).catch(() => setProductos([]));
+    axios.get("/v1/items/unidad/0").then(r => setUnidades(toList(r))).catch(() => setUnidades([]));
+    axios.get("/v1/items/marca/0").then(r => setMarcas(toList(r))).catch(() => setMarcas([]));
+    axios.get("/v1/items/presentacion/0").then(r => setPresentaciones(toList(r))).catch(() => setPresentaciones([]));
   }, []);
 
   // Acciones CRUD (abre diálogo en modo crear/editar)

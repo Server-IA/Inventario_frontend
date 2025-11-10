@@ -4,148 +4,229 @@ import MessageSnackBar from "../MessageSnackBar";
 import FormProducto from "./FormProducto";
 import GridProducto from "./GridProducto";
 
-// Helpers robustos
-const toList = (payload) => {
-  if (payload == null) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.content)) return payload.content; // Spring Page<>
-  if (Array.isArray(payload?.data)) return payload.data;       // { data: [...] }
-  if (typeof payload === "string") {
-    try { return toList(JSON.parse(payload)); } catch { return []; }
-  }
-  return [];
-};
-
-const toMap = (payload, key = "id", label = "name") => {
-  const arr = toList(payload);
-  return Object.fromEntries(arr.map((e) => [e?.[key], e?.[label]]));
-};
+import { Box, Stack, Typography, Button } from "@mui/material";
+import AddRounded from "@mui/icons-material/AddRounded";
+import EditRounded from "@mui/icons-material/EditRounded";
+import DeleteRounded from "@mui/icons-material/DeleteRounded";
 
 export default function Producto() {
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState({});
   const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
-  const [productos, setProductos] = useState([]);
 
-  // --- paginación (0-based como MUI DataGrid) ---
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [rowCount, setRowCount] = useState(0);
+
+  // === catálogos para los selects del form ===
+  const [categorias, setCategorias] = useState([]);
+  const [unidades, setUnidades] = useState([]);
+
+  const loadCatalogos = useCallback(async () => {
+    try {
+      const [cat, uni] = await Promise.all([
+        axios.get("/v1/items/producto_categoria/0"),
+        axios.get("/v1/items/unidad/0"),
+      ]);
+      setCategorias(cat.data ?? []);
+      setUnidades(uni.data ?? []);
+    } catch (e) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `Error cargando catálogos: ${e?.response?.data?.message ?? e.message}`,
+      });
+    }
+  }, []);
+
   const reloadData = useCallback(
-    async (pageArg = page, sizeArg = size) => {
+    async (p = page, s = pageSize) => {
       try {
         setLoading(true);
+        const res = await axios.get("/v2/productos", {
+          params: { page: p, size: s, sort: "id,desc" },
+        });
+        const data = res?.data ?? {};
+        const list = Array.isArray(data) ? data : data.content ?? [];
 
-        // Sanea argumentos (0-based, enteros, límites)
-        const pageQ = Math.max(0, Number.isFinite(+pageArg) ? +pageArg : 0);
-        const sizeQ = Math.max(1, Number.isFinite(+sizeArg) ? +sizeArg : 10);
-
-        const [resProductos, resCategorias, resUnidades, resIngredientes] = await Promise.all([
-          // ✅ Productos paginados (Spring Page)
-          axios.get("/v1/producto", { params: { page: pageQ, size: sizeQ } }),
-          // ✅ Catálogos completos (no paginados)
-          axios.get("/v1/items/producto_categoria/0"),
-          axios.get("/v1/items/unidad/0"),
-        ]);
-
-        // productos (Spring Page<>)
-        const dataProd = resProductos?.data ?? {};
-        const lista = Array.isArray(dataProd?.content) ? dataProd.content : [];
-
-        // catálogos (mapeados por name)
-        const mapCategorias   = toMap(resCategorias?.data, "id", "name");
-        const mapUnidades     = toMap(resUnidades?.data, "id", "name");
-        const mapEstados = { 1: "Activo", 2: "Inactivo" }; // ajusta si tu backend usa otros IDs
-
-        const productosConNombres = lista.map((p) => ({
-          ...p,
-          productoCategoriaNombre: mapCategorias[p.productoCategoriaId] || "(sin categoría)",
-          unidadMinimaNombre: mapUnidades[p.unidadMinimaId] || "(sin unidad)",
-          estadoNombre: mapEstados[p.estadoId] || "(desconocido)"
+        const filas = list.map((it) => ({
+          ...it,
+          productoCategoriaNombre: it.productoCategoriaNombre ?? "",
+          estadoNombre: it.estadoNombre ?? "",
+          unidadMinimaNombre: it.unidadMinimaNombre ?? "",
         }));
+        setProductos(filas);
 
-        setProductos(productosConNombres);
-
-        // metadatos de Page<> (con fallback si no vienen)
-        const pageServer  = Number.isFinite(dataProd?.number) ? dataProd.number : pageQ;
-        const sizeServer  = Number.isFinite(dataProd?.size) ? dataProd.size : sizeQ;
-        const totalElems  = Number.isFinite(dataProd?.totalElements) ? dataProd.totalElements : lista.length;
-        const totalPgs    = Number.isFinite(dataProd?.totalPages)
-          ? dataProd.totalPages
-          : Math.ceil(totalElems / sizeServer);
-
-        setPage(pageServer);
-        setSize(sizeServer);
-        setTotalElements(totalElems);
-        setTotalPages(totalPgs);
-      } catch (err) {
-        const status = err?.response?.status;
-        const body   = err?.response?.data;
-        try {
-          console.error("Error /v1/producto", status, JSON.stringify(body));
-        } catch {
-          console.error("Error /v1/producto", status, body);
+        if (!Array.isArray(data)) {
+          setRowCount(Number(data.totalElements ?? filas.length));
+          setPage(Number(data.number ?? p));
+          setPageSize(Number(data.size ?? s));
+        } else {
+          setRowCount(filas.length);
         }
+      } catch (e) {
         setMessage({
           open: true,
           severity: "error",
-          text: `Error al cargar productos${status ? ` (HTTP ${status})` : ""}`,
+          text: `Error al cargar productos: ${e?.response?.data?.message ?? e.message}`,
         });
-        setProductos([]);
       } finally {
         setLoading(false);
       }
     },
-    [page, size]
+    [page, pageSize]
   );
 
   useEffect(() => {
-    // carga inicial (página 0)
-    reloadData(0, size);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size]);
+    loadCatalogos();
+    reloadData(0, pageSize);
+  }, [loadCatalogos, reloadData, pageSize]);
 
-  // Handlers (DataGrid server-side)
-  const handleChangePage = (_evt, nextPage) => {
-    setPage(nextPage);
-    reloadData(nextPage, size);
+  // === acciones ===
+  const handleCreate = () => {
+    setEditing(null);
+    setFormOpen(true);
   };
 
-  const handleChangeRowsPerPage = (evt) => {
-    const nextSize = parseInt(evt?.target?.value ?? evt, 10) || 10;
-    setSize(nextSize);
-    setPage(0);
-    reloadData(0, nextSize);
+  const handleEdit = () => {
+    if (!selectedRow?.id) {
+      setMessage({ open: true, severity: "warning", text: "Selecciona un producto para editar." });
+      return;
+    }
+    setEditing(selectedRow);
+    setFormOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedRow?.id) return;
+    try {
+      await axios.delete(`/v2/productos/${selectedRow.id}`);
+      setMessage({ open: true, severity: "success", text: "Producto eliminado" });
+      setSelectedRow({});
+      reloadData(page, pageSize);
+    } catch (e) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: e?.response?.data?.message ?? e.message,
+      });
+    }
+  };
+
+  const submitForm = async (payload) => {
+    try {
+      if (payload.id) {
+        await axios.put(`/v2/productos/${payload.id}`, payload);
+        setMessage({ open: true, severity: "success", text: "Producto actualizado" });
+      } else {
+        await axios.post(`/v2/productos`, payload);
+        setMessage({ open: true, severity: "success", text: "Producto creado" });
+      }
+      setFormOpen(false);
+      setSelectedRow({});
+      reloadData(page, pageSize);
+    } catch (e) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: e?.response?.data?.message ?? e.message,
+      });
+    }
   };
 
   return (
-    <div>
-      <h1>Productos</h1>
+    <Box>
+      {/* ===== TÍTULO + BOTONERA (como Producción) ===== */}
+      <Stack direction="row" alignItems="center" sx={{ mb: 2 }}>
+        <h1>Productos</h1>
+        <Box sx={{ flex: 1 }} />
+        <Button
+          onClick={handleCreate}
+          startIcon={<AddRounded />}
+          sx={(t) => ({
+            borderRadius: 999,
+            px: 2.2,
+            py: 0.9,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            bgcolor: t.palette.background.paper,
+            color: t.palette.text.primary,
+            boxShadow: 2,
+            border: `1px solid ${t.palette.divider}`,
+            "&:hover": { boxShadow: 3, bgcolor: t.palette.background.paper },
+            mr: 1,
+          })}
+        >
+          Crear
+        </Button>
+        <Button
+          onClick={handleEdit}
+          startIcon={<EditRounded />}
+          disabled={!selectedRow?.id}
+          sx={(t) => ({
+            borderRadius: 999,
+            px: 2,
+            py: 0.9,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            border: `1px solid ${t.palette.divider}`,
+            color: t.palette.text.secondary,
+            mr: 1,
+            "&.Mui-disabled": { opacity: 0.4 },
+          })}
+        >
+          Editar
+        </Button>
+        <Button
+          onClick={handleDelete}
+          startIcon={<DeleteRounded />}
+          disabled={!selectedRow?.id}
+          sx={(t) => ({
+            borderRadius: 999,
+            px: 2,
+            py: 0.9,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            border: `1px solid ${t.palette.divider}`,
+            color: t.palette.text.secondary,
+            "&.Mui-disabled": { opacity: 0.4 },
+          })}
+        >
+          Eliminar
+        </Button>
+      </Stack>
+
+      {/* ===== GRID ===== */}
+      <GridProducto
+        rows={productos}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        loading={loading}
+        paginationModel={{ page, pageSize }}
+        setPaginationModel={({ page: p, size: s }) => {
+          setPage(p);
+          setPageSize(s);
+          reloadData(p, s);
+        }}
+        rowCount={rowCount}
+      />
+
+      {/* ===== FORM ===== */}
+      <FormProducto
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        initialData={editing ?? undefined}
+        onSubmit={submitForm}
+        categorias={categorias}
+        unidades={unidades}
+      />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
-
-      <FormProducto
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        setMessage={setMessage}
-        reloadData={() => reloadData(page, size)}
-      />
-
-      <GridProducto
-        loading={loading}
-        productos={productos}
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        // Paginación (server-side)
-        page={page}
-        rowsPerPage={size}
-        totalElements={totalElements}
-        totalPages={totalPages}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-    </div>
+    </Box>
   );
 }

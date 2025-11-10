@@ -1,160 +1,161 @@
 // src/components/Producto/GridProducto.jsx
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { Box, LinearProgress } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
+import { Box, Button } from "@mui/material";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+
+const LS_KEY = "gridProducto:columnVisibility:v1";
+
+/* ---------- Toolbar personalizada ---------- */
+function ProductoToolbar({ onResetColumns }) {
+  return (
+    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
+      <div>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <GridToolbarQuickFilter debounceMs={300} />
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RestartAltIcon />}
+          onClick={onResetColumns}
+        >
+          Restablecer columnas
+        </Button>
+      </div>
+    </GridToolbarContainer>
+  );
+}
 
 export default function GridProducto({
-  // Datos
-  productos = [],
+  rows = [],
   loading = false,
+  rowCount = 0,
 
-  // Selección
   selectedRow = null,
-  setSelectedRow,
+  setSelectedRow = () => {},
 
-  // --- Server-side estilo A (MUI v6) ---
-  paginationModel,        // { page, pageSize } o { page, size }
-  setPaginationModel,     // (model) => void
-  rowCount,               // total
-
-  // --- Server-side estilo B (legacy) ---
-  page,
-  rowsPerPage,
-  totalElements,
-  onPageChange,           // (event, nextPage) => void
-  onRowsPerPageChange,    // (nextSize) => void
+  // server-side
+  paginationModel,
+  onPaginationModelChange,
+  sortModel,
+  onSortModelChange,
 }) {
-  /* ---------- Columnas con lookups seguros ---------- */
-  const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 90 },
-    { field: "nombre", headerName: "Nombre", width: 200 },
-    {
-      field: "productoCategoriaNombre",
-      headerName: "Categoría",
-      width: 200,
-      valueGetter: (p) =>
-        p?.row?.productoCategoriaNombre ??
-        p?.row?.categoria?.nombre ??
-        p?.row?.categoria?.name ??
-        String(p?.row?.productoCategoriaId ?? ""),
-    },
-    {
-      field: "unidadMinimaNombre",
-      headerName: "Unidad mínima",
-      width: 180,
-      valueGetter: (p) =>
-        p?.row?.unidadMinimaNombre ??
-        p?.row?.unidadMinima?.nombre ??
-        p?.row?.unidadMinima?.name ??
-        String(p?.row?.unidadMinimaId ?? ""),
-    },
-    {
-      field: "estadoNombre",
-      headerName: "Estado",
-      width: 140,
-      valueGetter: (p) =>
-        p?.row?.estadoNombre ??
-        p?.row?.estado?.nombre ??
-        p?.row?.estado?.name ??
-        (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
-    },
-    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 220 },
-  ]), []);
+  /* ---------- Columnas (todas hideable) ---------- */
+  const columns = useMemo(
+    () => [
+      { field: "id", headerName: "ID", width: 90, type: "number", hideable: true },
+      { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 220, hideable: true },
+      { field: "productoCategoriaId", headerName: "Cat. ID", width: 110, type: "number", hideable: true },
+      { field: "productoCategoriaNombre", headerName: "Categoría", flex: 1, minWidth: 200, hideable: true },
+      { field: "unidadMinimaId", headerName: "Unidad ID", width: 110, type: "number", hideable: true },
+      { field: "unidadMinimaNombre", headerName: "Unidad mínima", width: 180, hideable: true },
+      { field: "cantidadMinima", headerName: "Cant. mínima", width: 140, type: "number", hideable: true },
+      { field: "descripcion", headerName: "Descripción", flex: 1.2, minWidth: 260, hideable: true },
+      {
+        field: "esOrganico",
+        headerName: "Orgánico",
+        width: 120,
+        hideable: true,
+        valueGetter: (params) => {
+          const v = params.value;
+          if (v === true) return "Sí";
+          if (v === false) return "No";
+          return "";
+        },
+        sortComparator: (a, b) => {
+          const va = a === "Sí" ? 1 : a === "No" ? 0 : -1;
+          const vb = b === "Sí" ? 1 : b === "No" ? 0 : -1;
+          return va - vb;
+        },
+      },
+      { field: "estadoId", headerName: "Estado ID", width: 110, type: "number", hideable: true },
+      { field: "estadoNombre", headerName: "Estado", width: 140, hideable: true },
+    ],
+    []
+  );
 
-  /* ---------- ¿Server estilo A o B? ---------- */
-  const hasStyleA = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
-  const hasStyleB = typeof totalElements === "number" && (onPageChange || onRowsPerPageChange);
+  /* ---------- Persistencia visibilidad ---------- */
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      if (saved && typeof saved === "object") setColumnVisibilityModel(saved);
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const handleVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(model));
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleResetColumns = () => {
+    localStorage.removeItem(LS_KEY);
+    setColumnVisibilityModel({});
+  };
 
   return (
-    <Box sx={{ height: 560, width: "100%" }}>
+    <Box sx={{ width: "100%", mt: 1 }}>
       <DataGrid
-        rows={Array.isArray(productos) ? productos : []}
+        rows={Array.isArray(rows) ? rows : []}
         columns={columns}
-        getRowId={(row) => row.id}
+        getRowId={(r) => r.id}
         loading={loading}
+        rowCount={rowCount}
 
-        // Selección controlada
-        onRowClick={(params) => setSelectedRow?.(params.row)}
+        // selección
+        onRowClick={(p) => setSelectedRow(p.row)}
         rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
 
-        // Loading overlay (v5/v6)
-        components={{ LoadingOverlay: LinearProgress }}
-        slots={{ loadingOverlay: LinearProgress }}
+        // server-side
+        paginationMode="server"
+        sortingMode="server"
+        paginationModel={paginationModel}
+        onPaginationModelChange={onPaginationModelChange}
+        sortModel={sortModel}
+        onSortModelChange={onSortModelChange}
 
-        // -------- Server-side estilo A (MUI v6) --------
-        {...(hasStyleA
-          ? {
-              paginationMode: "server",
-              rowCount,
-              paginationModel: {
-                page: paginationModel.page ?? 0,
-                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
-              },
-              onPaginationModelChange: (model) => {
-                const next = {
-                  page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? 10,
-                };
-                setPaginationModel?.(next);
-              },
-            }
-          : {})}
+        // columnas + toolbar
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        slots={{ toolbar: ProductoToolbar }}
+        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
 
-        // -------- Server-side estilo B (legacy) --------
-        {...(!hasStyleA && hasStyleB
-          ? {
-              paginationMode: "server",
-              rowCount: totalElements ?? 0,
-              paginationModel: { page: page ?? 0, pageSize: rowsPerPage ?? 10 },
-              onPaginationModelChange: (model) => {
-                const nextPage = model?.page ?? 0;
-                const nextSize = model?.pageSize ?? rowsPerPage ?? 10;
-                if (nextSize !== rowsPerPage) {
-                  onRowsPerPageChange?.(nextSize);
-                } else if (nextPage !== page) {
-                  onPageChange?.(null, nextPage);
-                }
-              },
-            }
-          : {})}
-
-        // -------- Fallback cliente --------
-        {...(!hasStyleA && !hasStyleB
-          ? {
-              paginationMode: "client",
-              pageSizeOptions: [5, 10, 20, 50],
-              initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
-              },
-            }
-          : {})}
+        // UX
+        autoHeight
+        pageSizeOptions={[5, 10, 20, 50]}
       />
     </Box>
   );
 }
 
 GridProducto.propTypes = {
-  productos: PropTypes.array,
+  rows: PropTypes.array,
   loading: PropTypes.bool,
-
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func.isRequired,
-
-  // Estilo A (MUI v6)
-  paginationModel: PropTypes.shape({
-    page: PropTypes.number,
-    pageSize: PropTypes.number,
-    size: PropTypes.number,
-  }),
-  setPaginationModel: PropTypes.func,
   rowCount: PropTypes.number,
-
-  // Estilo B (legacy)
-  page: PropTypes.number,
-  rowsPerPage: PropTypes.number,
-  totalElements: PropTypes.number,
-  onPageChange: PropTypes.func,
-  onRowsPerPageChange: PropTypes.func,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
+  paginationModel: PropTypes.object.isRequired,
+  onPaginationModelChange: PropTypes.func.isRequired,
+  sortModel: PropTypes.array.isRequired,
+  onSortModelChange: PropTypes.func.isRequired,
 };
