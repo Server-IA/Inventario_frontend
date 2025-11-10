@@ -1,7 +1,42 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { DataGrid, esES } from "@mui/x-data-grid";
-import { Box } from "@mui/material";
+import {
+  DataGrid,
+  esES,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
+import { Box, Button } from "@mui/material";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+
+const LS_KEY = "gridArticuloPedido:columnVisibility:v1";
+
+/* ---------- Toolbar personalizada ---------- */
+function ArticuloToolbar({ onResetColumns }) {
+  return (
+    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
+      <div>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <GridToolbarQuickFilter debounceMs={300} />
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RestartAltIcon />}
+          onClick={onResetColumns}
+        >
+          Restablecer columnas
+        </Button>
+      </div>
+    </GridToolbarContainer>
+  );
+}
 
 export default function GridArticuloPedido({
   // Datos
@@ -24,21 +59,23 @@ export default function GridArticuloPedido({
   /* -------- Lookup presentaciones por id -------- */
   const presById = useMemo(() => {
     const m = {};
-    for (const p of presentaciones ?? [])
+    for (const p of presentaciones ?? []) {
       m[String(p?.id)] = p?.nombre ?? p?.name ?? `Presentación ${p?.id ?? ""}`;
+    }
     return m;
   }, [presentaciones]);
 
-  /* -------- Columnas -------- */
+  /* -------- Columnas (todas hideable para que se puedan elegir) -------- */
   const columns = useMemo(
     () => [
-      { field: "id", headerName: "ID", width: 90, type: "number" },
-      { field: "cantidad", headerName: "Cantidad", width: 120, type: "number" },
-      { field: "pedidoId", headerName: "Pedido", width: 140, type: "number" },
+      { field: "id", headerName: "ID", width: 90, type: "number", hideable: true },
+      { field: "cantidad", headerName: "Cantidad", width: 120, type: "number", hideable: true },
+      { field: "pedidoId", headerName: "Pedido", width: 140, type: "number", hideable: true },
       {
         field: "presentacionProductoId",
         headerName: "Presentación de producto",
         width: 240,
+        hideable: true,
         valueGetter: (p) =>
           p?.row?.presentacionProducto?.nombre ??
           p?.row?.presentacionProducto?.name ??
@@ -49,6 +86,7 @@ export default function GridArticuloPedido({
         field: "estadoId",
         headerName: "Estado",
         width: 130,
+        hideable: true,
         valueGetter: (p) =>
           p?.row?.estado?.nombre ??
           p?.row?.estado?.name ??
@@ -57,6 +95,30 @@ export default function GridArticuloPedido({
     ],
     [presById]
   );
+
+  /* -------- Visibilidad de columnas (persistencia) -------- */
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  // Cargar de localStorage al montar
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      if (saved && typeof saved === "object") setColumnVisibilityModel(saved);
+    } catch { /* noop */ }
+  }, []);
+
+  // Guardar cada cambio
+  const handleVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(model));
+    } catch { /* noop */ }
+  };
+
+  const handleResetColumns = () => {
+    localStorage.removeItem(LS_KEY);
+    setColumnVisibilityModel({}); // todas visibles por defecto
+  };
 
   /* -------- ¿Server o cliente? -------- */
   const serverPaging =
@@ -74,7 +136,6 @@ export default function GridArticuloPedido({
     setSelectedRow(selectedMany[0] ?? null);
   };
 
-  /* -------- Render -------- */
   return (
     <Box sx={{ width: "100%" }}>
       <DataGrid
@@ -86,11 +147,18 @@ export default function GridArticuloPedido({
         disableRowSelectionOnClick
         autoHeight
         pagination
-        pageSizeOptions={[5, 10, 20, 50]} // ✅ visible siempre
+        pageSizeOptions={[5, 10, 20, 50]}
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+        /* ------- selección múltiple controlada / local ------- */
         rowSelectionModel={rowSelectionModel ?? undefined}
         onRowSelectionModelChange={onRowSelectionModelChange ?? handleLocalSelection}
         onRowClick={(params) => setSelectedRow?.(params.row)}
+        /* ------- columnas visibles + toolbar ------- */
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        slots={{ toolbar: ArticuloToolbar }}
+        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
+        /* ------- paginación ------- */
         paginationMode={serverPaging ? "server" : "client"}
         {...(serverPaging
           ? {
@@ -100,16 +168,13 @@ export default function GridArticuloPedido({
               ),
               paginationModel: {
                 page: paginationModel.page ?? 0,
-                pageSize:
-                  paginationModel.pageSize ??
-                  paginationModel.size ??
-                  10,
+                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
               },
               onPaginationModelChange: (model) => {
                 const next = {
                   page: model.page ?? 0,
                   pageSize: model.pageSize ?? 10,
-                  size: model.pageSize ?? 10,
+                  size: model.pageSize ?? 10, // compat con padre {page,size}
                 };
                 onPaginationModelChange?.(next);
               },

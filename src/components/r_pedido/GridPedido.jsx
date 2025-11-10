@@ -1,7 +1,42 @@
-// src/components/r_pedido/GridPedido.jsx
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { DataGrid, esES } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  esES,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
+import { Button } from "@mui/material";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+
+const LS_KEY = "gridPedido:columnVisibility:v1";
+
+/* ---------- Toolbar personalizada ---------- */
+function PedidoToolbar({ onResetColumns }) {
+  return (
+    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
+      <div>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <GridToolbarQuickFilter debounceMs={300} />
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RestartAltIcon />}
+          onClick={onResetColumns}
+        >
+          Restablecer columnas
+        </Button>
+      </div>
+    </GridToolbarContainer>
+  );
+}
 
 export default function GridPedido({
   // Datos
@@ -50,13 +85,14 @@ export default function GridPedido({
   /* -------- Columnas -------- */
   const columns = useMemo(
     () => [
-      { field: "id", headerName: "ID", width: 80, type: "number" },
-      { field: "descripcion", headerName: "Descripción", flex: 1.2, minWidth: 220 },
+      { field: "id", headerName: "ID", width: 80, type: "number", hideable: true },
+      { field: "descripcion", headerName: "Descripción", flex: 1.2, minWidth: 220, hideable: true },
       {
         field: "fechaHora",
         headerName: "Fecha y Hora",
         width: 200,
         valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
+        hideable: true,
       },
       {
         field: "produccionId",
@@ -67,6 +103,7 @@ export default function GridPedido({
           p?.row?.produccion?.name ??
           prodById[String(p?.row?.produccionId)] ??
           String(p?.row?.produccionId ?? ""),
+        hideable: true,
       },
       {
         field: "almacenId",
@@ -77,6 +114,7 @@ export default function GridPedido({
           p?.row?.almacen?.name ??
           almById[String(p?.row?.almacenId)] ??
           String(p?.row?.almacenId ?? ""),
+        hideable: true,
       },
       {
         field: "estadoId",
@@ -91,10 +129,42 @@ export default function GridPedido({
             String(id ?? "")
           );
         },
+        hideable: true,
       },
     ],
     [prodById, almById, estById]
   );
+
+  /* -------- Visibilidad de columnas (con persistencia) -------- */
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  // Cargar de localStorage al montar
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      if (saved && typeof saved === "object") {
+        setColumnVisibilityModel(saved);
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  // Guardar cada cambio
+  const handleVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(model));
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleResetColumns = () => {
+    // Limpia storage y vuelve al estado por defecto (todas visibles)
+    localStorage.removeItem(LS_KEY);
+    setColumnVisibilityModel({});
+  };
 
   /* -------- ¿Server o cliente? -------- */
   const serverPaging =
@@ -122,6 +192,10 @@ export default function GridPedido({
         onRowClick={(params) => setSelectedRow?.(params.row)}
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         paginationMode={serverPaging ? "server" : "client"}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        slots={{ toolbar: PedidoToolbar }}
+        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
         {...(serverPaging
           ? {
               rowCount: Math.max(

@@ -1,4 +1,3 @@
-// src/components/Proceso/GridProceso.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
@@ -79,7 +78,7 @@ export default function GridProceso({
               },
             }
           : {
-              pageSizeOptions: [5, 10, 15, 20, 50],
+              pageSizeOptions: [5, 10, 15, 20],
               initialState: {
                 pagination: { paginationModel: { page: 0, pageSize: 5 } },
               },

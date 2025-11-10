@@ -1,8 +1,6 @@
-// src/components/Proceso.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
-// OJO: si tu archivo se llama FormProceso.jsx, cambia esta ruta a "./FormProceso"
 import FormProceso from "./FromProceso";
 import GridProceso from "./GridProceso";
 
@@ -29,15 +27,28 @@ const toMap = (payload, key = "id", label = "name") => {
 
 export default function Proceso() {
   const [selectedRow, setSelectedRow] = useState(null);
-  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
 
-  const [procesosRaw, setProcesosRaw] = useState([]);
+  // catálogo tipoProduccion
   const [tipoProduccionMap, setTipoProduccionMap] = useState({}); // id -> name
 
-  // Cargar catálogo: tipo_produccion (id, name)
-  const loadTipoProduccion = async () => {
+  // data principal
+  const [procesosRaw, setProcesosRaw] = useState([]);
+
+  // ---- paginación del grid (server-side) ----
+  const [page, setPage] = useState(0);      // DataGrid usa 0-based
+  const [size, setSize] = useState(10);     // rowsPerPage actual
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // carga catálogo tipo_produccion
+  const loadTipoProduccion = useCallback(async () => {
     try {
-      const res = await axios.get("/v1/items/tipo_produccion/0"); // ← usa 'name'
+      const res = await axios.get("/v1/items/tipo_produccion/0"); // devuelve [{id, name}, ...]
       setTipoProduccionMap(toMap(res.data, "id", "name"));
     } catch (e) {
       console.error("No se pudo cargar tipo_produccion:", e);
@@ -48,45 +59,102 @@ export default function Proceso() {
         text: "No se pudo cargar el catálogo de Tipo de Producción.",
       });
     }
-  };
+  }, []);
 
-  // Cargar procesos
-  const loadProcesos = async () => {
-    try {
-      const res = await axios.get("/v1/proceso");
-      setProcesosRaw(toList(res.data));
-    } catch (err) {
-      console.error("Error al cargar procesos:", err);
-      setMessage({ open: true, severity: "error", text: "Error al cargar procesos." });
-    }
-  };
+  // carga procesos paginados
+  const loadProcesos = useCallback(
+    async (pageArg = page, sizeArg = size) => {
+      try {
+        setLoading(true);
 
-  // Public: volver a cargar datos (útil para formularios)
-  const reloadData = async () => {
-    // Primero catálogos (para mapear nombres), luego procesos
+        const safePage = Math.max(0, Number.isFinite(+pageArg) ? +pageArg : 0);
+        const safeSize = Math.max(1, Number.isFinite(+sizeArg) ? +sizeArg : 10);
+
+        // Ejemplo backend tipo Spring Page<Proceso>
+        const res = await axios.get("/v1/proceso", {
+          params: { page: safePage, size: safeSize },
+        });
+
+        const dataPage = res?.data ?? {};
+        const lista = Array.isArray(dataPage?.content)
+          ? dataPage.content
+          : toList(dataPage);
+
+        setProcesosRaw(lista);
+
+        // metadata de paginación
+        const total = Number.isFinite(dataPage?.totalElements)
+          ? dataPage.totalElements
+          : lista.length;
+
+        setTotalElements(total);
+        setPage(
+          Number.isFinite(dataPage?.number) ? dataPage.number : safePage
+        );
+        setSize(
+          Number.isFinite(dataPage?.size) ? dataPage.size : safeSize
+        );
+      } catch (err) {
+        console.error("Error al cargar procesos:", err);
+        setProcesosRaw([]);
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "Error al cargar procesos.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [page, size]
+  );
+
+  // API pública para el formulario (crear/editar/eliminar)
+  const reloadData = useCallback(async () => {
     await loadTipoProduccion();
-    await loadProcesos();
-    setMessage({ open: true, severity: "success", text: "Datos actualizados." });
-  };
+    await loadProcesos(0, size); // cuando recargo después de crear, me voy a la página 0
+    setPage(0);
+    setMessage({
+      open: true,
+      severity: "success",
+      text: "Datos actualizados.",
+    });
+  }, [loadTipoProduccion, loadProcesos, size]);
 
+  // carga inicial
   useEffect(() => {
-    reloadData();
+    (async () => {
+      await loadTipoProduccion();
+      await loadProcesos(page, size);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Enriquecer procesos con el nombre del tipo de producción
+  // Enriquecer procesos con nombre del tipoProduccion
   const procesos = useMemo(() => {
     return (procesosRaw ?? []).map((p) => {
-      // Prioriza si viene anidado { tipoProduccion: { name } }, si no, usa el mapa por id
       const nameDirecto = p?.tipoProduccion?.name;
       const namePorMapa = tipoProduccionMap[String(p?.tipoProduccionId)];
       return {
         ...p,
-        id: p?.id, // asegura id para DataGrid
+        id: p?.id,
         tipoProduccionNombre: nameDirecto ?? namePorMapa ?? "",
       };
     });
   }, [procesosRaw, tipoProduccionMap]);
+
+  // ---- handlers que usará el DataGrid para paginar ----
+  const handleChangePage = (_evt, nextPage) => {
+    setPage(nextPage);
+    loadProcesos(nextPage, size);
+  };
+
+  const handleChangeRowsPerPage = (evt) => {
+    const nextSize = parseInt(evt?.target?.value ?? evt, 10) || 10;
+    setSize(nextSize);
+    setPage(0);
+    loadProcesos(0, nextSize);
+  };
 
   return (
     <div>
@@ -102,9 +170,18 @@ export default function Proceso() {
       />
 
       <GridProceso
+        // datos
         procesos={procesos}
+        loading={loading}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
+
+        // paginación server-side (igual patrón que usamos en Producto.jsx / GridProducto.jsx estilo B)
+        page={page}
+        rowsPerPage={size}
+        totalElements={totalElements}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </div>
   );

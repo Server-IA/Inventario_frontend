@@ -12,68 +12,120 @@ import {
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 
+
 import MenuIcon from "@mui/icons-material/Menu";
-import DnsRoundedIcon from "@mui/icons-material/DnsRounded";
-import HomeIcon from "@mui/icons-material/Home";
-import PeopleIcon from "@mui/icons-material/People";
-import PublicIcon from "@mui/icons-material/Public";
-import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import SettingsIcon from "@mui/icons-material/Settings";
-import ApartmentIcon from "@mui/icons-material/Apartment";
-import ProductionQuantityLimitsIcon from "@mui/icons-material/ProductionQuantityLimits";
-import LockIcon from "@mui/icons-material/Lock";
-import LocationCityIcon from "@mui/icons-material/LocationCity";
-import HomeWorkIcon from "@mui/icons-material/HomeWork";
-import WarehouseIcon from "@mui/icons-material/Warehouse";
-import DomainIcon from "@mui/icons-material/Domain";
-// seguridad
-import HistoryIcon from '@mui/icons-material/History';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import GroupsIcon from '@mui/icons-material/Groups';
-import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
-import AppsIcon from '@mui/icons-material/Apps';
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
-import BusinessIcon from '@mui/icons-material/Business';
-import LinkIcon from '@mui/icons-material/Link';
-import GroupWorkIcon from '@mui/icons-material/GroupWork';
-import PersonIcon from '@mui/icons-material/Person';
-import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-
-// parametrización
-
-//costos
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-
-// inventario
+import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
 import CategoryIcon from '@mui/icons-material/Category';
-import StyleIcon from '@mui/icons-material/Style';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import ScienceIcon from '@mui/icons-material/Science';
-import BiotechIcon from '@mui/icons-material/Biotech';
-import EventNoteIcon from '@mui/icons-material/EventNote';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import FunctionsIcon from '@mui/icons-material/Functions';
+import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import TuneIcon from '@mui/icons-material/Tune';
+import DonutSmallIcon from '@mui/icons-material/DonutSmall';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AppsIcon from '@mui/icons-material/Apps';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
-import HandshakeIcon from '@mui/icons-material/Handshake';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
+import BadgeIcon from '@mui/icons-material/Badge';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import StraightenIcon from '@mui/icons-material/Straighten';
+import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle';
+import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
+import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import EventSeatIcon from '@mui/icons-material/EventSeat';
-import ListAltIcon from '@mui/icons-material/ListAlt';
+import GroupWorkIcon from '@mui/icons-material/GroupWork';
+import SetMealIcon from '@mui/icons-material/SetMeal';
+import BrandingWatermarkIcon from '@mui/icons-material/BrandingWatermark';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import PublicIcon from '@mui/icons-material/Public';
+import LanguageIcon from '@mui/icons-material/Language';
+import PersonIcon from '@mui/icons-material/Person';
+import SlideshowIcon from '@mui/icons-material/Slideshow';
+import CategoryTwoToneIcon from '@mui/icons-material/CategoryTwoTone';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize';
+import ViewQuiltIcon from '@mui/icons-material/ViewQuilt';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import ViewComfyIcon from '@mui/icons-material/ViewComfy';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import PrecisionManufacturingOutlinedIcon from '@mui/icons-material/PrecisionManufacturingOutlined';
+import DomainAddIcon from '@mui/icons-material/DomainAdd';
+import StraightenOutlinedIcon from '@mui/icons-material/StraightenOutlined';
+import DevicesFoldIcon from '@mui/icons-material/DevicesFold';
+import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
+import EventRepeatIcon from '@mui/icons-material/EventRepeat';
+import AutoAwesomeMosaicIcon from '@mui/icons-material/AutoAwesomeMosaic';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import WarehouseIcon from '@mui/icons-material/Warehouse';
+import AppSettingsAltIcon from '@mui/icons-material/AppSettingsAlt';
+import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
+import ChecklistIcon from '@mui/icons-material/Checklist';
+import VillaIcon from '@mui/icons-material/Villa';
+import BusinessIcon from '@mui/icons-material/Business';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
+import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import RequestPageIcon from '@mui/icons-material/RequestPage';
+import KeyIcon from '@mui/icons-material/Key';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import ReorderIcon from '@mui/icons-material/Reorder';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
+import ViewStreamIcon from '@mui/icons-material/ViewStream';
+import SwipeIcon from '@mui/icons-material/Swipe';
+import SchemaIcon from '@mui/icons-material/Schema';
+import ThermostatIcon from '@mui/icons-material/Thermostat';
+import HistoryIcon from '@mui/icons-material/History';
+import SensorsIcon from '@mui/icons-material/Sensors';
+import MapIcon from '@mui/icons-material/Map';
+import SplitscreenIcon from '@mui/icons-material/Splitscreen';
+import SpeedIcon from '@mui/icons-material/Speed';
+import WorkHistoryIcon from '@mui/icons-material/WorkHistory';
+import ViewWeekIcon from '@mui/icons-material/ViewWeek';
+import LockClockIcon from '@mui/icons-material/LockClock';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import PriceChangeIcon from '@mui/icons-material/PriceChange';
+import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
+import EventSeatIcon from '@mui/icons-material/EventSeat';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import ListIcon from '@mui/icons-material/List';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import WidgetsIcon from '@mui/icons-material/Widgets';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
-import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import ReorderIcon from '@mui/icons-material/Reorder';
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import ColorizeIcon from '@mui/icons-material/Colorize';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import AutoGraphIcon from '@mui/icons-material/AutoGraph';
+import StackedLineChartIcon from '@mui/icons-material/StackedLineChart';
+import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import FactoryIcon from '@mui/icons-material/Factory';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+
+
+// no tocar el orden de importación de los componentes
 
 import axios from "../axiosConfig.js";
 import { useTranslation } from "react-i18next";
@@ -99,7 +151,7 @@ import Presentacion from "../Presentacion/Presentacion.jsx";
 import TipoBloque from "../tipo_bloque/Tipobloque.jsx";
 import TipoSedes from "../tipo_sede/TipoSede.jsx";
 import TipoEspacio from "../tipo_espacio/TipoEspacio.jsx";
-import RPedido from "../r_pedido/Pedido.jsx";
+import Pedido from "../r_pedido/Pedido.jsx";
 import kardex from "../Kardex/kardex.jsx";
 import Rol from "../Rol/Rol.jsx";
 import TipoIdentificacion from "../TipoIdentificacion/TipoIdentificacion.jsx";
@@ -184,21 +236,117 @@ import r_factura from "/images/cards/r_factura.webp";
 import prodcutos_vencidos from "/images/cards/prodcutos_vencidos.webp";
 import r_orden_compra from "/images/cards/r_orden_compra.webp";
 
+
 const icons = {
-  DnsRounded: <DnsRoundedIcon />,
-  Home: <HomeIcon />,
-  People: <PeopleIcon />,
+  HistoryToggleOff: <HistoryToggleOffIcon />,
+  Category: <CategoryIcon />,
+  Timeline: <TimelineIcon />,
+  Verified: <VerifiedIcon />,
+  ToggleOn: <ToggleOnIcon />,
+  Functions: <FunctionsIcon />,
+  SyncAlt: <SyncAltIcon />,
+  Tune: <TuneIcon />,
+  DonutSmall: <DonutSmallIcon />,
+  AdminPanelSettings: <AdminPanelSettingsIcon />,
+  Apps: <AppsIcon />,
+  CurrencyExchange: <CurrencyExchangeIcon />,
+  FactCheck: <FactCheckIcon />,
+  Badge: <BadgeIcon />,
+  ViewModule: <ViewModuleIcon />,
+  Straighten: <StraightenIcon />,
+  PersonPinCircle: <PersonPinCircleIcon />,
+  DevicesOther: <DevicesOtherIcon />,
+  TimelineOutlined: <TimelineOutlinedIcon />,
+  CategoryOutlined: <CategoryOutlinedIcon />,
+  BusinessCenter: <BusinessCenterIcon />,
+  ReceiptLong: <ReceiptLongIcon />,
+  RequestQuote: <RequestQuoteIcon />,
+  Receipt: <ReceiptIcon />,
+  GroupWork: <GroupWorkIcon />,
+  SetMeal: <SetMealIcon />,
+  BrandingWatermark: <BrandingWatermarkIcon />,
+  NotificationsActive: <NotificationsActiveIcon />,
   Public: <PublicIcon />,
-  AddShoppingCartIcon: <AddShoppingCartIcon />,
-  Domain: <DomainIcon />,
-  Settings: <SettingsIcon />,
-  Apartment: <ApartmentIcon />,
-  LocationCity: <LocationCityIcon />,
-  ProductionQuantityLimitsIcon: <ProductionQuantityLimitsIcon />,
-  LockIcon: <LockIcon />,
-  PersonIcon: <PersonIcon />,
-  HomeWorkIcon: <HomeWorkIcon />,
+  Language: <LanguageIcon />,
+  Person: <PersonIcon />,
+  Slideshow: <SlideshowIcon />,
+  CategoryTwoTone: <CategoryTwoToneIcon />,
+  Inventory2: <Inventory2Icon />,
+  DashboardCustomize: <DashboardCustomizeIcon />,
+  ViewQuilt: <ViewQuiltIcon />,
+  MonetizationOn: <MonetizationOnIcon />,
+  ViewComfy: <ViewComfyIcon />,
+  Inventory: <InventoryIcon />,
+  PrecisionManufacturing: <PrecisionManufacturingIcon />,
+  NotificationsNone: <NotificationsNoneIcon />,
+  PrecisionManufacturingOutlined: <PrecisionManufacturingOutlinedIcon />,
+  DomainAdd: <DomainAddIcon />,
+  StraightenOutlined: <StraightenOutlinedIcon />,
+  DevicesFold: <DevicesFoldIcon />,
+  ChangeCircle: <ChangeCircleIcon />,
+  EventRepeat: <EventRepeatIcon />,
+  AutoAwesomeMosaic: <AutoAwesomeMosaicIcon />,
+  Construction: <ConstructionIcon />,
+  CalendarMonth: <CalendarMonthIcon />,
   Warehouse: <WarehouseIcon />,
+  AppSettingsAlt: <AppSettingsAltIcon />,
+  Thunderstorm: <ThunderstormIcon />,
+  Checklist: <ChecklistIcon />,
+  Villa: <VillaIcon />,
+  Business: <BusinessIcon />,
+  TaskAlt: <TaskAltIcon />,
+  BusinessCenterOutlined: <BusinessCenterOutlinedIcon />,
+  ConnectWithoutContact: <ConnectWithoutContactIcon />,
+  LocationCity: <LocationCityIcon />,
+  RequestPage: <RequestPageIcon />,
+  Key: <KeyIcon />,
+  AutoMode: <AutoModeIcon />,
+  TrendingUp: <TrendingUpIcon />,
+  LocalShipping: <LocalShippingIcon />,
+  Assessment: <AssessmentIcon />,
+  ViewAgenda: <ViewAgendaIcon />,
+  ViewStream: <ViewStreamIcon />,
+  Swipe: <SwipeIcon />,
+  Schema: <SchemaIcon />,
+  Thermostat: <ThermostatIcon />,
+  History: <HistoryIcon />,
+  Sensors: <SensorsIcon />,
+  Map: <MapIcon />,
+  Splitscreen: <SplitscreenIcon />,
+  Speed: <SpeedIcon />,
+  WorkHistory: <WorkHistoryIcon />,
+  ViewWeek: <ViewWeekIcon />,
+  LockClock: <LockClockIcon />,
+  ListAlt: <ListAltIcon />,
+  WaterDrop: <WaterDropIcon />,
+  PriceChange: <PriceChangeIcon />,
+  SpaceDashboard: <SpaceDashboardIcon />,
+  EventSeat: <EventSeatIcon />,
+  CheckBox: <CheckBoxIcon />,
+  InventoryOutlined: <InventoryOutlinedIcon />,
+  List: <ListIcon />,
+  FormatListNumbered: <FormatListNumberedIcon />,
+  SmartToy: <SmartToyIcon />,
+  Widgets: <WidgetsIcon />,
+  Notifications: <NotificationsIcon />,
+  ShoppingCartCheckout: <ShoppingCartCheckoutIcon />,
+  PlaylistAddCheck: <PlaylistAddCheckIcon />,
+  ShoppingBag: <ShoppingBagIcon />,
+  Reorder: <ReorderIcon />,
+  ShoppingBasket: <ShoppingBasketIcon />,
+  MyLocation: <MyLocationIcon />,
+  Colorize: <ColorizeIcon />,
+  EventNote: <EventNoteIcon />,
+  PersonOutline: <PersonOutlineIcon />,
+  PeopleAlt: <PeopleAltIcon />,
+  AutoGraph: <AutoGraphIcon />,
+  StackedLineChart: <StackedLineChartIcon />,
+  ChangeHistory: <ChangeHistoryIcon />,
+  LocationOn: <LocationOnIcon />,
+  ViewCarousel: <ViewCarouselIcon />,
+  Factory: <FactoryIcon />,
+  InventoryOutlined: <InventoryOutlinedIcon />,
+  ListAltOutlined: <ListAltOutlinedIcon />,
 };
 
 const components = {
@@ -226,19 +374,19 @@ const components = {
   tipo_movimiento: TipoMovimiento,
   tipo_produccion: TipoProduccion,
   persona: Persona,
+  pedido: Pedido,
   empresa: Empresa,
-  r_pedido: RPedido,
   kardex: kardex,
   media_card: MediaCard,
   evaluacion_item: EvaluacionItem,
   OrdenCompra: OrdenCompra,
   Ocupacion: Ocupacion,
   grupo: Grupo,
-  Movimiento: Movimineto,
+  movimiento: Movimineto,
   Proceso: Proceso,
-  Ingrediente: Ingrediente,
-  Seccion: Seccion,
-  Subseccion: Subseccion,
+  ingrediente: Ingrediente,
+  seccion: Seccion,
+  subseccion: Subseccion,
   tipo_inventario: TipoInventario,
   Inventario: Inventario,
   IngredientePresentacionProducto: IngredientePresentacionProducto,
@@ -266,8 +414,8 @@ const moduleImages = {
   tipo_espacio,
   espacio,
   almacen,
-  Seccion: seccion,
-  Subseccion: subseccion,
+  seccion: seccion,
+  subseccion: subseccion,
   tipo_inventario: tip_inventario,
   Inventario: inventario,
   IngredientePresentacionProducto: ingredienteproductopresentacion,
@@ -275,12 +423,12 @@ const moduleImages = {
   presentacion,
   producto_categoria,
   marca,
-  Ingrediente: ingrediente,
+  ingrediente: ingrediente,
   tipo_produccion,
   produccion,
   Proceso: proceso,
   tipo_movimiento,
-  Movimiento: movimiento,
+  movimiento: movimiento,
   unidad,
   producto: productos,
   proveedor,
@@ -295,7 +443,10 @@ const moduleImages = {
   RE_fc: r_factura,
   media_card: img7,
   evaluacion_item: img2,
+  pedido: pedido
 };
+
+
 
 export default function Navigator2({
   setCurrentModuleItem,
@@ -306,12 +457,7 @@ export default function Navigator2({
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
-  // Helper para normalizar ids al comparar con localStorage
-  const toKey = (v) => String(v);
-
-  // ===== TOKENS =====
-  const softBg = isDark ? alpha(theme.palette.primary.light, 0.08) : "#e7f6f7";
-
+  // ===== TOKENS VISUALES =====
   const sidebarBg = isDark
     ? alpha(theme.palette.background.paper, 0.98)
     : theme.palette.background.paper;
@@ -319,34 +465,44 @@ export default function Navigator2({
   const hoverBg = isDark
     ? alpha("#FFFFFF", 0.06)
     : alpha(theme.palette.primary.main, 0.06);
-
-  // Más contraste para dark mode
   const selectedBg = isDark
-    ? alpha("#FFFFFF", 0.15)   // blanco con opacidad para contraste
+    ? alpha("#FFFFFF", 0.15)
     : alpha(theme.palette.primary.main, 0.12);
-
-  const selectedColor = isDark
-     ? "#FFFFFF"
-    : theme.palette.primary.dark;
-
+  const selectedColor = isDark ? "#FFFFFF" : theme.palette.primary.dark;
   const selectedBar = theme.palette.primary.main;
 
-  // tiles
-  const tileBorder = isDark ? alpha("#FFFFFF", 0.12) : alpha(theme.palette.primary.main, 0.28);
+  const tileBorder = isDark
+    ? alpha("#FFFFFF", 0.12)
+    : alpha(theme.palette.primary.main, 0.28);
   const tileOverlayFrom = isDark ? alpha("#000", 0.05) : alpha("#000", 0.0);
   const tileOverlayTo = isDark ? alpha("#000", 0.65) : alpha("#000", 0.55);
-  const tileTitleColor = isDark ? alpha("#fff", 0.95) : theme.palette.common.white;
-  const tileTitleShadow = isDark ? "0 1px 2px rgba(0,0,0,.85)" : "0 1px 2px rgba(0,0,0,.45)";
-  const tileIconBg = isDark ? alpha(theme.palette.primary.light, 0.22) : alpha("#fff", 0.75);
+  const tileTitleColor = isDark
+    ? alpha("#fff", 0.95)
+    : theme.palette.common.white;
+  const tileTitleShadow = isDark
+    ? "0 1px 2px rgba(0,0,0,.85)"
+    : "0 1px 2px rgba(0,0,0,.45)";
+  const tileIconBg = isDark
+    ? alpha(theme.palette.primary.light, 0.22)
+    : alpha("#fff", 0.75);
   const tileIconFg = isDark ? "#fff" : theme.palette.primary.dark;
 
+  // ===== HELPERS =====
+  const toKey = (x) => String(x ?? "").trim();
+  const normalizeTipo = (t) => (t === "movil" ? "movil" : "web");
+
+  // ===== ESTADOS =====
   const [menuItems, setMenuItems] = React.useState([]);
   const [selectedMenu, setSelectedMenu] = React.useState(null);
+  const [tipoAplicacion, setTipoAplicacion] = React.useState(() =>
+    normalizeTipo(localStorage.getItem("tipoAplicacion") || "web")
+  );
   const [open, setOpen] = React.useState(() => {
     const stored = localStorage.getItem("sidebarOpen");
     return stored ? JSON.parse(stored) : true;
   });
 
+  // ===== EFECTOS =====
   React.useEffect(() => {
     setMenuOpen?.(open);
   }, [open]);
@@ -354,26 +510,68 @@ export default function Navigator2({
   React.useEffect(() => {
     if (!isAuthenticated) return;
 
-    axios
-      .get("/v1/menu")
-      .then((response) => {
-        setMenuItems(response.data);
+    const tipo = normalizeTipo(tipoAplicacion);
+    localStorage.setItem("tipoAplicacion", tipo);
 
-        const savedModule = localStorage.getItem("activeModule");
-        if (savedModule && components[savedModule]) {
-          setCurrentModuleItem(React.createElement(components[savedModule]));
-          setSelectedMenu(toKey(savedModule));
+    axios
+      // Endpoint correcto con query param
+      .get("/v2/menu", { params: { tipoAplicacion: tipo } })
+      .then(({ data }) => {
+        // Adaptar la respuesta (SubSistemaResponseDTO)
+        const subsistemas = Array.isArray(data) ? data : [];
+        const adapted = subsistemas.map((ss) => ({
+          id: ss.nombre, // clave del subsistema
+          text: ss.nombre,
+          icon: ss.icono,
+          children: (ss.modulos ?? []).map((m) => ({
+            id: m.id,
+            text: m.nombre,
+            icon: m.icono,
+            url: m.url,
+          })),
+        }));
+        setMenuItems(adapted);
+
+        // Restaurar módulo activo si existe
+        const saved = localStorage.getItem("activeModule");
+        if (saved && components[saved]) {
+          setCurrentModuleItem(React.createElement(components[saved]));
+          setSelectedMenu(toKey(saved));
+          return;
+        }
+
+        // Si no hay guardado, seleccionar el primer subsistema
+        const firstMenu = adapted[0];
+        if (!firstMenu) {
+          setSelectedMenu(null);
+          setCurrentModuleItem(null);
+          return;
+        }
+
+        if (firstMenu?.children?.length) {
+          setSelectedMenu(toKey(firstMenu.id));
+          setCurrentModuleItem(renderSubmenu(firstMenu.children, firstMenu.id));
         } else {
-          const firstMenu = response.data[0];
-          if (firstMenu?.children?.length) {
-            setSelectedMenu(toKey(firstMenu.id));
-            setCurrentModuleItem(renderSubmenu(firstMenu.children, firstMenu.id));
+          const k = toKey(firstMenu.id);
+          const Comp = components[k];
+          setSelectedMenu(k);
+          if (Comp) {
+            localStorage.setItem("activeModule", k);
+            setCurrentModuleItem(<Comp />);
+          } else {
+            setCurrentModuleItem(null);
           }
         }
       })
-      .catch(console.error);
-  }, [isAuthenticated]);
+      .catch((err) => {
+        console.error("[Navigator2] Error cargando menú:", {
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+      });
+  }, [isAuthenticated, tipoAplicacion]);
 
+  // ===== HANDLERS =====
   const toggleDrawer = () => {
     const newOpen = !open;
     setOpen(newOpen);
@@ -384,37 +582,46 @@ export default function Navigator2({
   const handleMenuClick = (menuId) => {
     const key = toKey(menuId);
     setSelectedMenu(key);
-    localStorage.setItem("activeModule", key);
 
     const menu = menuItems.find((item) => toKey(item.id) === key);
     if (menu?.children?.length) {
       setCurrentModuleItem(renderSubmenu(menu.children, menuId));
     } else {
+      localStorage.setItem("activeModule", key);
       const Component = components[key];
       setCurrentModuleItem(Component ? <Component /> : null);
     }
   };
 
-  const handleSubMenuClick = (subMenuId) => {
+  const handleSubMenuClick = (subMenuId, parentMenuId) => {
     const key = toKey(subMenuId);
     localStorage.setItem("activeModule", key);
+    setSelectedMenu(toKey(parentMenuId));
     const Component = components[key];
     setCurrentModuleItem(Component ? <Component /> : null);
   };
 
-  // ======== SOLO CONTAINER 3 ========
+  // ===== RENDER DE SUBMENÚ =====
   const renderSubmenu = (children, parentMenuId) => (
     <Box
       key={theme.palette.mode}
       sx={{
-        bgcolor: (t) => (t.palette.mode === "dark" ? "transparent" : "#e7f6f7"),
+        bgcolor: (t) =>
+          t.palette.mode === "dark" ? "transparent" : "#e7f6f7",
         borderRadius: 3,
         p: { xs: 2, md: 3 },
       }}
     >
       <Grid container spacing={2.5}>
         {children.map(({ id, text, icon }) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={id}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            lg={3}
+            key={`submenu:${toKey(parentMenuId)}:${toKey(id)}`}
+          >
             <Box
               onClick={() => handleSubMenuClick(id, parentMenuId)}
               sx={{
@@ -449,8 +656,7 @@ export default function Navigator2({
                   objectPosition: "50% 35%",
                 }}
               />
-
-              {/* Overlay gradiente */}
+              {/* Overlay */}
               <Box
                 sx={{
                   position: "absolute",
@@ -458,7 +664,6 @@ export default function Navigator2({
                   background: `linear-gradient(180deg, ${tileOverlayFrom} 45%, ${tileOverlayTo} 100%)`,
                 }}
               />
-
               {/* Icono + título */}
               <Box
                 sx={{
@@ -508,6 +713,7 @@ export default function Navigator2({
     </Box>
   );
 
+  // ===== RENDER PRINCIPAL =====
   if (!isAuthenticated) return null;
 
   return (
@@ -525,7 +731,6 @@ export default function Navigator2({
         bgcolor: sidebarBg,
         color: theme.palette.text.primary,
         borderRight: `1px solid ${dividerColor}`,
-        boxShadow: "none",
         transition: "width 0.25s ease",
         zIndex: 1200,
         display: "flex",
@@ -543,7 +748,6 @@ export default function Navigator2({
           py: 1.5,
           borderBottom: `1px solid ${dividerColor}`,
           cursor: "pointer",
-          userSelect: "none",
         }}
       >
         <MenuIcon />
@@ -554,10 +758,14 @@ export default function Navigator2({
         )}
       </Box>
 
-      {/* Lista de módulos */}
+      {/* Lista de subsistemas */}
       <List sx={{ px: 1, py: 1, flex: 1, overflowY: "auto" }}>
         {menuItems.map(({ id, text, icon }) => (
-          <ListItem key={id} disablePadding onClick={() => handleMenuClick(id)}>
+          <ListItem
+            key={`menu:${toKey(id)}`}
+            disablePadding
+            onClick={() => handleMenuClick(id)}
+          >
             <ListItemButton
               selected={selectedMenu === toKey(id)}
               sx={{
@@ -574,10 +782,13 @@ export default function Navigator2({
                     color: selectedColor,
                     fontWeight: 800,
                   },
-                  "&:hover": { bgcolor: selectedBg }, // estable al hover
+                  "&:hover": { bgcolor: selectedBg },
                   position: "relative",
                   boxShadow: isDark
-                    ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.25)}`
+                    ? `inset 0 0 0 1px ${alpha(
+                        theme.palette.primary.main,
+                        0.25
+                      )}`
                     : "none",
                   "&::before": {
                     content: '""',
@@ -593,7 +804,6 @@ export default function Navigator2({
               }}
             >
               <ListItemIcon
-                className="MuiListItemIcon-root"
                 sx={{
                   color: theme.palette.text.primary,
                   minWidth: 0,

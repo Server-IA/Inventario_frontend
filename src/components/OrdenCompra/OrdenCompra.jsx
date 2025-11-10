@@ -1,4 +1,3 @@
-// src/components/OrdenCompra/OrdenCompra.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";

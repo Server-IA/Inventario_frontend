@@ -29,6 +29,7 @@ const ProfileMenu = ({
     text: "",
   });
 
+  // 🔹 Ahora este label muestra el nombre de la persona (no la empresa)
   const [nombreUsuario, setNombreUsuario] = useState("Mi Perfil");
   const [isSingleCompanyAndRole, setIsSingleCompanyAndRole] = useState(false);
 
@@ -40,12 +41,15 @@ const ProfileMenu = ({
   const puedeCambiarLogo = rolId === "1" || rolId === "2";
 
   useEffect(() => {
-    const empresaNombre = localStorage.getItem("empresaNombre");
-    const rolesByCompany = JSON.parse(
-      localStorage.getItem("rolesByCompany") || "[]"
-    );
+    const rolesByCompany = JSON.parse(localStorage.getItem("rolesByCompany") || "[]");
 
-    if (empresaNombre) setNombreUsuario(empresaNombre);
+    // 👉 Mostrar el nombre de la persona en el botón del perfil
+    const nombrePersona = localStorage.getItem("nombrePersona");
+    if (nombrePersona && nombrePersona.trim()) {
+      setNombreUsuario(nombrePersona);
+    } else {
+      setNombreUsuario("Mi Perfil");
+    }
 
     const empresas = [...new Set(rolesByCompany.map((r) => r.empresaId))];
     if (empresas.length === 1 && rolesByCompany.length === 1) {
@@ -64,6 +68,7 @@ const ProfileMenu = ({
     localStorage.removeItem("empresaId");
     localStorage.removeItem("rolId");
     localStorage.removeItem("rolesByCompany");
+    localStorage.removeItem("nombrePersona"); // 🔹 limpiar nombrePersona también
 
     setIsAuthenticated(false);
     setCurrentModule(
@@ -98,7 +103,7 @@ const ProfileMenu = ({
         color="inherit"
         startIcon={<AccountCircle />}
       >
-        {nombreUsuario}
+        {nombreUsuario /* <- ahora muestra nombrePersona */}
       </Button>
 
       <Menu

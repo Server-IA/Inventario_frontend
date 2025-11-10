@@ -13,12 +13,23 @@ import axios from "axios";
 
 import ForgotPassword from "../ForgotPassword";
 
-
-const decodeJwt = (jwt) => {
+// === decodeJwt robusto (base64url + normalización numérica)
+const decodeJwt = (jwt = "") => {
   try {
-    const [, payload] = jwt.split(".");
-    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(json);
+    const [, raw] = jwt.split(".");
+    if (!raw) return {};
+    const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 === 2 ? "==" : b64.length % 4 === 3 ? "=" : "";
+    const json = atob(b64 + pad);
+    const payload = JSON.parse(json);
+    return {
+      ...payload,
+      exp: payload?.exp != null ? Number(payload.exp) : undefined,
+      tver: payload?.tver != null ? Number(payload.tver) : undefined,
+      estado: payload?.estado != null ? Number(payload.estado) : undefined,
+      empresaId: payload?.empresaId != null ? Number(payload.empresaId) : undefined,
+      rolId: payload?.rolId != null ? Number(payload.rolId) : undefined,
+    };
   } catch {
     return {};
   }
@@ -68,6 +79,7 @@ export default function Login(props) {
       localStorage.removeItem("empresaNombre");
       localStorage.removeItem("rolesByCompany");
       localStorage.removeItem("activeModule");
+      localStorage.removeItem("nombrePersona");
     } catch {}
   };
 
@@ -93,12 +105,17 @@ export default function Login(props) {
       "";
     if (inferredName) localStorage.setItem("empresaNombre", inferredName);
   };
-const handleSubmit = async (event) => {
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
     if (!validateEmail(username)) {
       setError(t("invalid_email") || "Correo inválido");
+      return;
+    }
+    if (!password) {
+      setError(t?.("required_password") || "La contraseña es obligatoria");
       return;
     }
 
@@ -117,6 +134,7 @@ const handleSubmit = async (event) => {
         usuarioEstado,
         estadoUsuario,
         estado: estadoPlano,
+        nombrePersona,
       } = data || {};
 
       const { estado: estadoJwt } = decodeJwt(token || "");
@@ -130,6 +148,23 @@ const handleSubmit = async (event) => {
         setError("No se recibió el estado del usuario desde el backend.");
         return;
       }
+
+      // Guarda nombrePersona si llegó
+      if (nombrePersona) {
+        localStorage.setItem("nombrePersona", String(nombrePersona));
+      }
+
+      // Helper: asegurar empresa/rol cuando no vienen planos
+      const ensureEmpresaRol = () => {
+        let empresaIdE = empresaId, rolIdE = rolId, empresaNombreE = empresaNombre;
+        if ((empresaIdE == null || rolIdE == null) && rolesByCompany.length > 0) {
+          const first = rolesByCompany[0];
+          empresaIdE = empresaIdE ?? first?.empresaId;
+          rolIdE = rolIdE ?? first?.rolId;
+          empresaNombreE = empresaNombreE ?? first?.empresaNombre;
+        }
+        return { empresaIdE, rolIdE, empresaNombreE };
+      };
 
       switch (estado) {
         case 0: {
@@ -145,39 +180,37 @@ const handleSubmit = async (event) => {
           break;
         }
         case 2: {
-  if (!token) { 
-    clearAuth(); 
-    setError("No se recibió token válido."); 
-    break; 
-  }
-  persistAuth(token, { empresaId, rolId, empresaNombre, rolesByCompany, decodeJwt });
-  localStorage.setItem("activeModule", "form_registro_persona");
+          if (!token) {
+            clearAuth();
+            setError("No se recibió token válido.");
+            break;
+          }
+          const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+          persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
+          localStorage.setItem("activeModule", "form_registro_persona");
+          navigate("/coagronet/onboarding/persona", { replace: true });
+          break;
+        }
 
-  // 🚀 Ruta de onboarding persona (App la intercepta y muestra solo el formulario)
-  navigate("/coagronet/onboarding/persona", { replace: true });
-  break;
-}
-
-case 3: {
-  if (!token) { 
-    clearAuth(); 
-    setError("No se recibió token válido."); 
-    break; 
-  }
-  persistAuth(token, { empresaId, rolId, empresaNombre, rolesByCompany, decodeJwt });
-  localStorage.setItem("activeModule", "form_registro_empresa");
-
-  // 🚀 Ruta de onboarding empresa (App la intercepta y muestra solo el formulario)
-  navigate("/coagronet/onboarding/empresa", { replace: true });
-  break;
-}
+        case 3: {
+          if (!token) {
+            clearAuth();
+            setError("No se recibió token válido.");
+            break;
+          }
+          const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+          persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
+          localStorage.setItem("activeModule", "form_registro_empresa");
+          navigate("/coagronet/onboarding/empresa", { replace: true });
+          break;
+        }
 
         case 4:
         default: { // Completo
           if (!token) { clearAuth(); setError("No se recibió token válido."); break; }
-          persistAuth(token, { empresaId, rolId, empresaNombre, rolesByCompany, decodeJwt });
+          const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+          persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
           localStorage.removeItem("activeModule");
-          // ✅ Ahora sí, autenticado → mostrará menú en App
           props.setIsAuthenticated?.(true);
           navigate("/coagronet/", { replace: true });
           break;
@@ -195,6 +228,7 @@ case 3: {
       setSubmitting(false);
     }
   };
+
   return (
     <Box
       sx={{
@@ -222,7 +256,7 @@ case 3: {
           maxWidth: 440,
           p: { xs: 3, md: 4 },
           borderRadius: 3,
-          bgcolor: cardBg,           // oscuro/white
+          bgcolor: cardBg,
           boxShadow: "none",
           position: "relative",
           "&:before": {
@@ -353,7 +387,7 @@ case 3: {
           </Button>
         </Box>
 
-        <Typography variant="body2" align="center" sx={{ mt: 2, color: textSecondary }}>
+       <Typography variant="body2" align="center" sx={{ mt: 2, color: textSecondary }}>
           {t("no_account")}{" "}
           <Link
             component={RouterLink}
@@ -366,5 +400,9 @@ case 3: {
       </Box>
     </Box>
   );
+}
 
-} 
+Login.propTypes = {
+  setIsAuthenticated: PropTypes.func,
+  setCurrentModule: PropTypes.func,
+};
