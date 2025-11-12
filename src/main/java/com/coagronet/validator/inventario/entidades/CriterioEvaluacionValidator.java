@@ -3,12 +3,13 @@ package com.coagronet.validator.inventario.entidades;
 import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
 import com.coagronet.criterioEvaluacion.repositirories.CriterioEvaluacionRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CriterioEvaluacionValidator {
+public class CriterioEvaluacionValidator implements BaseValidator {
 
     private final CriterioEvaluacionRepository criterioEvaluacionRepository;
 

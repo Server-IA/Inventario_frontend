@@ -5,12 +5,13 @@ import com.coagronet.articuloOrdenCompra.repositories.ArticuloOrdenCompraReposit
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.repositories.OrdenCompraRepository;
+import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class OrdenCompraValidator {
+public class OrdenCompraValidator implements BaseValidator {
 
     private final OrdenCompraRepository ordenCompraRepository;
     private final ArticuloOrdenCompraRepository articuloOrdenCompraRepository;

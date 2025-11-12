@@ -3,12 +3,13 @@ package com.coagronet.validator.inventario.entidades;
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ArticuloKardexValidator {
+public class ArticuloKardexValidator implements BaseValidator {
     private final ArticuloKardexRepository articuloKardexRepository;
 
 

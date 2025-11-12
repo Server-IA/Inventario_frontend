@@ -1,5 +1,6 @@
 package com.coagronet.validator.parametrizacion.entidades;
 
+import com.coagronet.validator.common.BaseValidator;
 import com.coagronet.validator.parametrizacion.constantes.EstadoCategorias;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EstadoValidator {
+public class EstadoValidator implements BaseValidator {
     private final EstadoRepository estadoRepository;
 
 
