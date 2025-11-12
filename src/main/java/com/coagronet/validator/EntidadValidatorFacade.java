@@ -79,6 +79,10 @@ public class EntidadValidatorFacade {
         return estadoValidator.validarEstadoParaFactura(estadoId);
 
     }
+    public Estado validarEstadoParaCierre(Long estadoId) {
+        return estadoValidator.validarEstadoParaCierre(estadoId);
+
+    }
 
     public Almacen validarAlmacen(Long almacenId, Long empresaId) {
         return almacenValidator.validarAlmacen(almacenId, empresaId);

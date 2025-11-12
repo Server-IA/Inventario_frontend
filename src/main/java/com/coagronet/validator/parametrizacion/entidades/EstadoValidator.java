@@ -46,9 +46,19 @@ public class EstadoValidator {
         );
 
     }
+    public Estado validarEstadoParaCierre(Long estadoId) {
+        return validarEstadoPorCategoria(
+                estadoId,
+                EstadoCategorias.CIERRE,
+                "validation.cierre.estado.invalid-category"
+        );
+
+    }
+
     private Estado validarEstadoPorCategoria(Long estadoId, Long estadoCategoriaId, String mensajeErrorKey) {
         return estadoRepository.findByIdAndEstadoCategoriaId(estadoId, estadoCategoriaId)
                 .orElseThrow(() -> new BadRequestException(
                         mensajeErrorKey, estadoId));
     }
+
 }

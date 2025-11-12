@@ -37,13 +37,10 @@ public class RequestUtils {
                 InetAddress localHost = InetAddress.getLocalHost();
                 host = localHost.getHostName();
             }
-
             else {
-
                 try {
                     InetAddress remoteAddress = InetAddress.getByName(host);
                     String resolvedHostName = remoteAddress.getHostName();
-
 
                     if (!resolvedHostName.equals(host)) {
                         host = resolvedHostName;
@@ -52,7 +49,6 @@ public class RequestUtils {
 
                 }
             }
-
             return host;
         } catch (Exception e) {
             return "unknown";

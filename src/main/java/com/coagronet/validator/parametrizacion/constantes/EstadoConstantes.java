@@ -6,4 +6,7 @@ public final class EstadoConstantes {
     }
 
     public static final Long ESTADO_GENERAL_ACTIVO = 1L;
+
+    public static final Long ESTADO_CIERRE_ABIERTO = 35L;
+    public static final Long ESTADO_CIERRE_CERRADO = 36L;
 }

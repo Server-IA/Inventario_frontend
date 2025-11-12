@@ -9,4 +9,5 @@ public final class EstadoCategorias {
     public static final Long PEDIDO = 2L;
     public static final Long ORDEN_COMPRA = 3L;
     public static final Long FACTURA = 4L;
+    public static final Long CIERRE = 11L;
 }
