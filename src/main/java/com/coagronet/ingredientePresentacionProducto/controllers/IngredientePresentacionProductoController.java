@@ -1,7 +1,8 @@
 package com.coagronet.ingredientePresentacionProducto.controllers;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.coagronet.ingredientePresentacionProducto.dtos.IngredientePresentacionProductoDTO;
+import com.coagronet.ingredientePresentacionProducto.dtos.IngredientePresentacionProductoRequestDTO;
+import com.coagronet.ingredientePresentacionProducto.dtos.IngredientePresentacionProductoResponseDTO;
 import com.coagronet.ingredientePresentacionProducto.services.IngredientePresentacionProductoService;
-import com.coagronet.utils.UriBuilderUtil;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,41 +28,52 @@ public class IngredientePresentacionProductoController {
 
 	private final IngredientePresentacionProductoService ingredientePresentacionProductoService;
 
-	private final UriBuilderUtil uriBuilderUtil;
-
+	// LIST paginado
 	@GetMapping
-	public ResponseEntity<List<IngredientePresentacionProductoDTO>> findAll() {
-		return ResponseEntity.ok(ingredientePresentacionProductoService.findAll());
+	public ResponseEntity<Page<IngredientePresentacionProductoResponseDTO>> list(
+			@PageableDefault(size = 20, sort = "id") Pageable pageable) {
+
+		Page<IngredientePresentacionProductoResponseDTO> page = ingredientePresentacionProductoService.list(pageable);
+
+		return ResponseEntity.ok(page);
 	}
 
-	@GetMapping("/{requestedId}")
-	public ResponseEntity<IngredientePresentacionProductoDTO> findById(@PathVariable Long requestedId) {
-		return ingredientePresentacionProductoService.findById(requestedId)
-			.map(ResponseEntity::ok)
-			.orElse(ResponseEntity.notFound().build());
+	// GET by id
+	@GetMapping("/{id}")
+	public ResponseEntity<IngredientePresentacionProductoResponseDTO> getById(@PathVariable Long id) {
+		return ResponseEntity.ok(ingredientePresentacionProductoService.getById(id));
 	}
 
+	// CREATE
 	@PostMapping
-	public ResponseEntity<Void> createIngredientePresentacionProducto(
-			@Valid @RequestBody IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO,
-			UriComponentsBuilder ucb) {
-		return ResponseEntity
-			.created(uriBuilderUtil.buildIngredientePresentacionProductoUri(
-					(ingredientePresentacionProductoService.create(ingredientePresentacionProductoDTO)).getId(), ucb))
-			.build();
+	public ResponseEntity<IngredientePresentacionProductoResponseDTO> createIngredientePresentacionProducto(
+			@Valid @RequestBody IngredientePresentacionProductoRequestDTO dto,
+			UriComponentsBuilder uriBuilder) {
+
+		IngredientePresentacionProductoResponseDTO created = ingredientePresentacionProductoService.create(dto);
+
+		var uri = uriBuilder
+				.path("/api/v1/ingrediente-presentacion-producto/{id}")
+				.buildAndExpand(created.idIngredientePresentacionProducto())
+				.toUri();
+
+		return ResponseEntity.created(uri).body(created);
 	}
 
+	// UPDATE
 	@PutMapping("/{requestedId}")
-	public ResponseEntity<Void> updateIngredientePresentacionProducto(@PathVariable Long requestedId,
-			@Valid @RequestBody IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
-		ingredientePresentacionProductoService.update(requestedId, ingredientePresentacionProductoDTO);
+	public ResponseEntity<Void> updateIngredientePresentacionProducto(
+			@PathVariable Long requestedId,
+			@Valid @RequestBody IngredientePresentacionProductoRequestDTO dto) {
+
+		ingredientePresentacionProductoService.update(requestedId, dto);
 		return ResponseEntity.noContent().build();
 	}
 
+	// DELETE
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteIngredientePresentacionProducto(@PathVariable Long id) {
 		ingredientePresentacionProductoService.delete(id);
 		return ResponseEntity.noContent().build();
 	}
-
 }

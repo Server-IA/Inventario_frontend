@@ -1,19 +1,29 @@
 package com.coagronet.ingredientePresentacionProducto.services;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.coagronet.ingredientePresentacionProducto.dtos.IngredientePresentacionProductoDTO;
-import com.coagronet.ingredientePresentacionProducto.mappers.IngredientePresentacionProductoMapper;
-import com.coagronet.ingredientePresentacionProducto.repositories.IngredientePresentacionProductoRepository;
+import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.ingrediente.Ingrediente;
 import com.coagronet.ingrediente.repositories.IngredienteRepository;
+import com.coagronet.ingredientePresentacionProducto.IngredientePresentacionProducto;
+import com.coagronet.ingredientePresentacionProducto.dtos.IngredientePresentacionProductoRequestDTO;
+import com.coagronet.ingredientePresentacionProducto.dtos.IngredientePresentacionProductoResponseDTO;
+import com.coagronet.ingredientePresentacionProducto.mappers.IngredientePresentacionProductoMapper;
+import com.coagronet.ingredientePresentacionProducto.repositories.IngredientePresentacionProductoRepository;
+import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
+import com.coagronet.unidad.Unidad;
+import com.coagronet.unidad.repositories.UnidadRepository;
+import com.coagronet.utils.Constantes;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,85 +32,142 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IngredientePresentacionProductoService {
 
-	private final UserEmpresaService userEmpresaService;
-
-	private final IngredientePresentacionProductoMapper ingredientePresentacionProductoMapper;
-
 	private final IngredientePresentacionProductoRepository ingredientePresentacionProductoRepository;
-
 	private final IngredienteRepository ingredienteRepository;
-
 	private final PresentacionProductoRepository presentacionProductoRepository;
-
+	private final UnidadRepository unidadRepository;
 	private final EstadoRepository estadoRepository;
+	private final UserEmpresaService userEmpresaService;
+	private final IngredientePresentacionProductoMapper mapper;
 
-	public List<IngredientePresentacionProductoDTO> findAll() {
-		return ingredientePresentacionProductoRepository
-			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(ingredientePresentacionProductoMapper::toDTO)
-			.collect(Collectors.toList());
+	// -------------------------------------------------------------------------
+	// LIST / GET
+	// -------------------------------------------------------------------------
+
+	@Transactional(readOnly = true)
+	public Page<IngredientePresentacionProductoResponseDTO> list(Pageable pageable) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		Page<IngredientePresentacionProducto> page = ingredientePresentacionProductoRepository
+				.findByEmpresaId(empresaId, pageable);
+		return mapper.toPage(page);
 	}
 
-	public Optional<IngredientePresentacionProductoDTO> findById(Long requestedId) {
-		return ingredientePresentacionProductoRepository
-			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(ingredientePresentacionProductoMapper::toDTO);
+	@Transactional(readOnly = true)
+	public IngredientePresentacionProductoResponseDTO getById(Long id) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+		IngredientePresentacionProducto entity = ingredientePresentacionProductoRepository
+				.findByIdAndEmpresaId(id, empresaId)
+				.orElseThrow(() -> new NotFoundException("ingrediente-presentacion-producto.not-found", id));
+
+		return mapper.toDto(entity);
 	}
 
-	public IngredientePresentacionProductoDTO create(
-			IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
-		ingredienteRepository
-			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getIngredienteId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El campo ingredienteId no es válido."));
+	// -------------------------------------------------------------------------
+	// CREATE
+	// -------------------------------------------------------------------------
 
-		presentacionProductoRepository
-			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getPresentacionProductoId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El campo presentacionProductoId no es válido."));
+	@Transactional
+	public IngredientePresentacionProductoResponseDTO create(IngredientePresentacionProductoRequestDTO dto) {
 
-		estadoRepository.findById(ingredientePresentacionProductoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		ingredientePresentacionProductoDTO.setId(null);
-		ingredientePresentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		// Validar/obtener ingrediente
+		Ingrediente ingrediente = ingredienteRepository
+				.findById(dto.ingredienteId())
+				.orElseThrow(() -> new BadRequestException("ingrediente.not-valid"));
 
-		return ingredientePresentacionProductoMapper.toDTO(ingredientePresentacionProductoRepository
-			.save(ingredientePresentacionProductoMapper.toEntity(ingredientePresentacionProductoDTO)));
+		// Validar/obtener presentación de producto
+		PresentacionProducto presentacionProducto = presentacionProductoRepository
+				.findById(dto.presentacionProductoId())
+				.orElseThrow(() -> new BadRequestException("presentacion-producto.not-valid"));
+
+		// Validar/obtener unidad
+		Unidad unidad = unidadRepository
+				.findById(dto.unidadId())
+				.orElseThrow(() -> new BadRequestException("unidad.not-valid"));
+
+		// Validar/obtener estado
+		Estado estado = estadoRepository
+				.findById(dto.estadoId())
+				.orElseThrow(() -> new BadRequestException("estado.not-valid"));
+
+		Empresa empresa = Empresa.builder().id(empresaId).build();
+
+		IngredientePresentacionProducto entity = new IngredientePresentacionProducto();
+		entity.setIngrediente(ingrediente);
+		entity.setPresentacionProducto(presentacionProducto);
+		entity.setUnidad(unidad);
+		entity.setEstado(estado);
+		entity.setEmpresa(empresa);
+
+		if (dto.cantidad() != null) {
+			entity.setCantidad(BigDecimal.valueOf(dto.cantidad().longValue()));
+		}
+
+		IngredientePresentacionProducto saved = ingredientePresentacionProductoRepository.save(entity);
+
+		return mapper.toDto(saved);
 	}
 
-	public void update(Long requestedId, IngredientePresentacionProductoDTO ingredientePresentacionProductoDTO) {
-		ingredientePresentacionProductoRepository
-			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("El ID solicitado no fue encontrado."));
+	// -------------------------------------------------------------------------
+	// UPDATE
+	// -------------------------------------------------------------------------
 
-		ingredienteRepository
-			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getIngredienteId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El campo ingredienteId no es válido."));
+	@Transactional
+	public void update(Long requestedId, IngredientePresentacionProductoRequestDTO dto) {
 
-		presentacionProductoRepository
-			.findByIdAndEmpresaId(ingredientePresentacionProductoDTO.getPresentacionProductoId(),
-					userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El campo presentacionProductoId no es válido."));
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		estadoRepository.findById(ingredientePresentacionProductoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El campo estadoId no es válido."));
+		IngredientePresentacionProducto entity = ingredientePresentacionProductoRepository
+				.findByIdAndEmpresaId(requestedId, empresaId)
+				.orElseThrow(() -> new NotFoundException("ingrediente-presentacion-producto.not-found", requestedId));
 
-		ingredientePresentacionProductoDTO.setId(requestedId);
-		ingredientePresentacionProductoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
+		// mismas validaciones de create
+		Ingrediente ingrediente = ingredienteRepository
+				.findById(dto.ingredienteId())
+				.orElseThrow(() -> new BadRequestException("ingrediente.not-valid"));
 
-		ingredientePresentacionProductoRepository
-			.save(ingredientePresentacionProductoMapper.toEntity(ingredientePresentacionProductoDTO));
+		PresentacionProducto presentacionProducto = presentacionProductoRepository
+				.findById(dto.presentacionProductoId())
+				.orElseThrow(() -> new BadRequestException("presentacion-producto.not-valid"));
+
+		Unidad unidad = unidadRepository
+				.findById(dto.unidadId())
+				.orElseThrow(() -> new BadRequestException("unidad.not-valid"));
+
+		Estado estado = estadoRepository
+				.findById(dto.estadoId())
+				.orElseThrow(() -> new BadRequestException("estado.not-valid"));
+
+		entity.setIngrediente(ingrediente);
+		entity.setPresentacionProducto(presentacionProducto);
+		entity.setUnidad(unidad);
+		entity.setEstado(estado);
+
+		if (dto.cantidad() != null) {
+			entity.setCantidad(BigDecimal.valueOf(dto.cantidad().longValue()));
+		} else {
+			entity.setCantidad(null);
+		}
+
+		ingredientePresentacionProductoRepository.save(entity);
 	}
 
+	// -------------------------------------------------------------------------
+	// DELETE (lógico) -> estado inactivo
+	// -------------------------------------------------------------------------
+
+	@Transactional
 	public void delete(Long id) {
-		ingredientePresentacionProductoRepository
-			.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("El ID solicitado no fue encontrado."));
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		ingredientePresentacionProductoRepository.deleteById(id);
+		IngredientePresentacionProducto entity = ingredientePresentacionProductoRepository
+				.findByIdAndEmpresaId(id, empresaId)
+				.orElseThrow(() -> new NotFoundException("ingrediente-presentacion-producto.not-found", id));
+
+		entity.setEstado(Estado.builder().id(Constantes.ESTADO_INACTIVO).build());
+
+		ingredientePresentacionProductoRepository.save(entity);
 	}
-
 }
