@@ -15,16 +15,21 @@ public interface IngredientePresentacionProductoMapper {
 	@Mapping(target = "nombreProducto", source = "presentacionProducto.producto.nombre")
 	@Mapping(target = "idPresentacionProducto", source = "presentacionProducto.id")
 	@Mapping(target = "nombrePresentacionProducto", source = "presentacionProducto.nombre")
-	@Mapping(target = "ingrediente", expression = "java(new IngredienteDTO(" +
-			"entity.getIngrediente().getId()," +
-			"entity.getIngrediente().getNombre()," +
-			"entity.getCantidad()," +
-			"(entity.getUnidad() != null ? entity.getUnidad().getId() : null)," +
-			"(entity.getUnidad() != null ? entity.getUnidad().getNombre() : null)," +
-			"entity.getEstado().getId()," +
+	@Mapping(target = "ingrediente", expression = "java(new com.coagronet.ingredientePresentacionProducto.dtos.IngredientesDTO("
+			+
+			"entity.getIngrediente().getId(), " +
+			"entity.getIngrediente().getNombre(), " +
+			"entity.getCantidad(), " +
+			"(entity.getUnidad() != null ? entity.getUnidad().getId() : null), " +
+			"(entity.getUnidad() != null ? entity.getUnidad().getNombre() : null), " +
+			"entity.getEstado().getId(), " +
 			"entity.getEstado().getNombre()" +
 			"))")
 	IngredientePresentacionProductoResponseDTO toDto(IngredientePresentacionProducto entity);
+
+	default Page<IngredientePresentacionProductoResponseDTO> toPage(Page<IngredientePresentacionProducto> page) {
+		return page.map(this::toDto);
+	}
 
 	@Mapping(source = "ingredienteId", target = "ingrediente.id")
 	@Mapping(source = "presentacionProductoId", target = "presentacionProducto.id")
