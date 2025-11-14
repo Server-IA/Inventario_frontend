@@ -1,0 +1,154 @@
+import * as React from "react";
+import PropTypes from "prop-types";
+import axios from "../axiosConfig";
+import {
+  Button, Dialog, DialogActions, DialogContent, DialogTitle
+} from "@mui/material";
+import StackButtons from "../StackButtons";
+import BaseFormCampos from "../common/BaseFormCampos";
+import { validateCamposBase } from "../utils/validations";
+//
+export default function FormTipounida({
+  open,
+  setOpen,
+  selectedRow,
+  setSelectedRow,
+  setMessage,
+  reloadData
+}) {
+  const [methodName, setMethodName] = React.useState("");
+  const initialData = { nombre: "", descripcion: "", estado: "" };
+  const [formData, setFormData] = React.useState(initialData);
+  const [errors, setErrors] = React.useState({});
+
+  React.useEffect(() => {
+    if (open && selectedRow?.id) {
+      setFormData({
+        nombre: selectedRow.nombre || "",
+        descripcion: selectedRow.descripcion || "",
+        estado: selectedRow.estadoId?.toString() || ""
+      });
+      setMethodName("Actualizar");
+    } else {
+      setFormData(initialData);
+      setMethodName("Agregar");
+    }
+    setErrors({});
+  }, [open, selectedRow]);
+
+  const handleClose = () => {
+    setOpen(false);
+    setErrors({});
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const validate = () => {
+    const newErrors = validateCamposBase(formData);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!validate()) return;
+
+    const payload = {
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      estadoId: parseInt(formData.estado, 10)
+    };
+
+    const isCreate = methodName === "Agregar";
+    const method = isCreate ? axios.post : axios.put;
+    const url = isCreate ? "/v1/tipo-unidad" : `/v1/tipo-unidad/${selectedRow.id}`;
+
+    method(url, payload)
+      .then(() => {
+        setMessage({
+          open: true,
+          severity: "success",
+          text: `Tipounida ${isCreate ? "creada" : "actualizada"} con éxito!`
+        });
+        setOpen(false);
+        setSelectedRow({});
+        reloadData();
+      })
+      .catch(err => {
+        setMessage({
+          open: true,
+          severity: "error",
+          text: `Error: ${err.message}`
+        });
+      });
+  };
+
+  const deleteRow = () => {
+    if (!selectedRow?.id) {
+      setMessage({ open: true, severity: "error", text: "Selecciona una Tipounida para eliminar." });
+      return;
+    }
+
+    axios.delete(`/v1/tipo-unidad/${selectedRow.id}`)
+      .then(() => {
+        setMessage({ open: true, severity: "success", text: "Tipounida eliminada correctamente." });
+        setSelectedRow({});
+        reloadData();
+      })
+      .catch((err) => {
+        setMessage({
+          open: true,
+          severity: "error",
+          text: `Error al eliminar: ${err.message}`,
+        });
+      });
+  };
+
+  return (
+    <>
+      <StackButtons
+        methods={{
+          create: () => { setFormData(initialData); setMethodName("Agregar"); setOpen(true); },
+          update: () => {
+            if (!selectedRow?.id) {
+              setMessage({ open: true, severity: "error", text: "Selecciona una Tipounida para editar." });
+              return;
+            }
+            setOpen(true);
+          },
+          deleteRow
+        }}
+      />
+
+      <Dialog open={open} onClose={handleClose}>
+        <form onSubmit={handleSubmit}>
+          <DialogTitle>{methodName} Tipounida</DialogTitle>
+          <DialogContent>
+            <BaseFormCampos
+              formData={formData}
+              errors={errors}
+              handleChange={handleChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancelar</Button>
+            <Button type="submit">{methodName}</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+    </>
+  );
+}
+
+FormTipounida.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  selectedRow: PropTypes.object.isRequired,
+  setSelectedRow: PropTypes.func.isRequired,
+  setMessage: PropTypes.func.isRequired,
+  reloadData: PropTypes.func.isRequired,
+};

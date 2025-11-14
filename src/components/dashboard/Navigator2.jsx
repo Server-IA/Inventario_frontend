@@ -11,8 +11,8 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-
-
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import SecurityIcon from '@mui/icons-material/Security';
 import MenuIcon from "@mui/icons-material/Menu";
 import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -122,6 +122,7 @@ import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import FactoryIcon from '@mui/icons-material/Factory';
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 
+
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
 
@@ -129,7 +130,7 @@ import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
 import axios from "../axiosConfig.js";
 import { useTranslation } from "react-i18next";
-
+import CategoriaEstado from "../categoriaestado/categoria_estado.jsx";
 import Persona from "../personas/Persona.jsx";
 import Pais from "../pais/Pais";
 import Departamento from "../departamento/Departamento";
@@ -175,6 +176,7 @@ import RE_kardex from "../RKardex/Rkardex.jsx";
 import RE_productoVencimiento from "../RE_pv/re_pvn.jsx";
 import RE_ordenCompra from "../RE_oc/re_oc.jsx";
 import RE_fc from "../RE_fc/re_fc.jsx";
+import TipoUnida from "../tipo_unidad/tipounidad.jsx";
 
 // Imágenes
 import img1 from "/images/cards/1.jpg";
@@ -236,6 +238,8 @@ import r_factura from "/images/cards/r_factura.webp";
 import prodcutos_vencidos from "/images/cards/prodcutos_vencidos.webp";
 import r_orden_compra from "/images/cards/r_orden_compra.webp";
 
+import tipo_unidad from "/images/cards/tipo_unidad.webp";
+import categoria_estado from "/images/cards/categoria_estado.webp";
 
 const icons = {
   HistoryToggleOff: <HistoryToggleOffIcon />,
@@ -323,7 +327,6 @@ const icons = {
   SpaceDashboard: <SpaceDashboardIcon />,
   EventSeat: <EventSeatIcon />,
   CheckBox: <CheckBoxIcon />,
-  InventoryOutlined: <InventoryOutlinedIcon />,
   List: <ListIcon />,
   FormatListNumbered: <FormatListNumberedIcon />,
   SmartToy: <SmartToyIcon />,
@@ -347,6 +350,8 @@ const icons = {
   Factory: <FactoryIcon />,
   InventoryOutlined: <InventoryOutlinedIcon />,
   ListAltOutlined: <ListAltOutlinedIcon />,
+  Security: <SecurityIcon />,   
+  Description: <DescriptionOutlinedIcon />,
 };
 
 const components = {
@@ -395,6 +400,10 @@ const components = {
   RE_pv: RE_productoVencimiento,
   RE_oc: RE_ordenCompra,
   RE_fc: RE_fc,
+ tipo_unidad: TipoUnida,
+ CategoriaEstado: CategoriaEstado,
+ rol: Rol,
+
 };
 
 const moduleImages = {
@@ -443,7 +452,9 @@ const moduleImages = {
   RE_fc: r_factura,
   media_card: img7,
   evaluacion_item: img2,
-  pedido: pedido
+  pedido: pedido,
+  tipo_unidad: tipo_unidad,
+  CategoriaEstado: categoria_estado,
 };
 
 
