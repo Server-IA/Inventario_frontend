@@ -7,6 +7,7 @@ import com.coagronet.cierreinventario.dtos.CierreInventarioRequestDTO;
 import com.coagronet.cierreinventario.dtos.CierreInventarioResponseDTO;
 import com.coagronet.cierreinventario.mappers.CierreInventarioMapper;
 import com.coagronet.cierreinventario.repositories.CierreInventarioRepository;
+import com.coagronet.cierreinventariodetalle.services.CierreInventarioDetalleService;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.user.User;
@@ -15,6 +16,7 @@ import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +30,7 @@ public class CierreInventarioService {
     private final UserEmpresaService userEmpresaService;
     private final AuthenticationService authenticationService;
     private final EntidadValidatorFacade entidadValidatorFacade;
+    private final CierreInventarioDetalleService cierreInventarioDetalleService;
 
 
     public List<CierreInventarioResponseDTO> listAll(){
@@ -37,7 +40,7 @@ public class CierreInventarioService {
                 .map(cierreInventarioMapper::toDTO).toList();
     }
 
-
+    @Transactional
     public CierreInventarioResponseDTO create(CierreInventarioRequestDTO dto){
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
         User usuario = authenticationService.getAuthenticatedUser();
@@ -48,16 +51,20 @@ public class CierreInventarioService {
         LocalDate fechaInicio = LocalDate.of(dto.getAnio().intValue(), dto.getMes().intValue(), 1);
         LocalDate fechaCorte = fechaInicio.plusMonths(1).minusDays(1);
 
+        entidadValidatorFacade.validarDuplicadoCierreInventario(empresaId, almacen.getId(), fechaInicio, fechaCorte);
+
         CierreInventario cierre = CierreInventario.builder()
                 .empresa(empresa)
                 .almacen(almacen)
                 .estado(estado)
                 .usuario(usuario)
+                .fechaInicio(fechaInicio)
                 .fechaCorte(fechaCorte)
                 .descripcion("Cierre del mes "+dto.getMes()+ "/"+ dto.getAnio())
                 .build();
 
         cierreInventarioRepository.save(cierre);
+        cierreInventarioDetalleService.generarDetalles(cierre);
         return cierreInventarioMapper.toDTO(cierre);
     }
 }

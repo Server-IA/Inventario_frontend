@@ -11,6 +11,7 @@ public interface CierreInventarioMapper {
 
     CierreInventario toEntity(CierreInventarioRequestDTO cierreInventarioRequestDTO);
 
+
     CierreInventarioResponseDTO toDTO(CierreInventario cierreInventario);
 
 }

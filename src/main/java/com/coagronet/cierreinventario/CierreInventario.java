@@ -30,6 +30,9 @@ public class CierreInventario {
     @Column(name = "cii_fecha_corte")
     private LocalDate fechaCorte;
 
+    @Column(name = "cii_fecha_inicio")
+    private LocalDate fechaInicio;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cii_almacen_id", referencedColumnName = "alm_id")
     private Almacen almacen;

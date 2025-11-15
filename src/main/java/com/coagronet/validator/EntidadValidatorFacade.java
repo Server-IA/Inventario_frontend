@@ -29,6 +29,8 @@ import com.coagronet.tipoMovimiento.TipoMovimiento;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
+
 @Component
 @RequiredArgsConstructor
 public class EntidadValidatorFacade {
@@ -162,6 +164,10 @@ public class EntidadValidatorFacade {
 
     public TipoUnidad validarTipoUnidad(Long tipoUnidad){
         return tipoUnidadValidator.validarTipoUnidad(tipoUnidad);
+    }
+
+    public void validarDuplicadoCierreInventario(Long empresaId, Long almacenId, LocalDate fechaInicio, LocalDate fechaCorte) {
+        validatorRegistry.getValidator(CierreInventarioValidator.class).validarDuplicado(empresaId, almacenId, fechaInicio, fechaCorte);
     }
 
 }
