@@ -36,7 +36,8 @@ public class CierreInventarioService {
     public List<CierreInventarioResponseDTO> listAll(){
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-        return cierreInventarioRepository.findByEmpresaId(empresaId).stream()
+        return cierreInventarioRepository.findByEmpresa_Id(empresaId)
+                .stream()
                 .map(cierreInventarioMapper::toDTO).toList();
     }
 

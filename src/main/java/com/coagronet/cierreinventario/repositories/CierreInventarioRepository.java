@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface CierreInventarioRepository extends JpaRepository<CierreInventario, Long> {
 
-    List<CierreInventario> findByEmpresaId(Long empresaId);
+    List<CierreInventario> findByEmpresa_Id(Long empresaId);
 
     @Query("""
        SELECT COUNT(ci) > 0\s

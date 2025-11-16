@@ -1,25 +1,27 @@
 package com.coagronet.cierreinventario.dtos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CierreInventarioResponseDTO {
 
     private Long id;
 
-    private Long empresaId;
+    private String empresaNombre;
 
-    private Long usuarioId;
+    private String usuarioNombre;
 
-    private Long almacenId;
+    private String almacenNombre;
 
-    private Long anio;
+    private LocalDate fechaCorte;
 
-    private Long mes;
+    private String descripcion;
 }
