@@ -4,6 +4,7 @@ import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
 import com.coagronet.evaluacion.Evaluacion;
 import com.coagronet.evaluacionitem.EvaluacionItem;
 import com.coagronet.tipounidad.TipoUnidad;
+import com.coagronet.validator.common.ValidatorRegistry;
 import com.coagronet.validator.inventario.entidades.*;
 import com.coagronet.validator.parametrizacion.entidades.*;
 import org.springframework.stereotype.Component;
@@ -28,24 +29,21 @@ import com.coagronet.tipoMovimiento.TipoMovimiento;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
+
 @Component
 @RequiredArgsConstructor
 public class EntidadValidatorFacade {
 
-    private final EmpresaValidator empresaValidator;
-    private final EstadoValidator estadoValidator;
-    private final AlmacenValidator almacenValidator;
-    private final ProduccionValidator produccionValidator;
+    private final ValidatorRegistry validatorRegistry;
+
     private final TipoMovimientoValidator tipoMovimientoValidator;
     private final KardexValidator kardexValidator;
-    private final OrdenCompraValidator ordenCompraValidator;
     private final PedidoValidator pedidoValidator;
     private final ProveedorValidator proveedorValidator;
     private final TipoProduccionValidator tipoProduccionValidator;
-    private final EspacioValidator espacioValidator;
     private final SubseccionValidator subseccionValidator;
     private final ProductoPresentacionValidator productoPresentacionValidator;
-    private final ArticuloKardexValidator articuloKardexValidator;
     private final MovimientoValidator movimientoValidator;
     private final PedidoCotizacionValidator pedidoCotizacionValidator;
     private final EvaluacionValidator evaluacionValidator;
@@ -55,41 +53,45 @@ public class EntidadValidatorFacade {
     private final TipoUnidadValidator tipoUnidadValidator;
 
     public Empresa validarEmpresa(Long empresaId) {
-        return empresaValidator.validarEmpresa(empresaId);
+        return validatorRegistry.getValidator(EmpresaValidator.class).validarEmpresa(empresaId);
     }
 
     public Empresa validarClienteProveedor(Long clienteProveedorId) {
-        return empresaValidator.validarClienteProveedor(clienteProveedorId);
+        return validatorRegistry.getValidator(EmpresaValidator.class).validarClienteProveedor(clienteProveedorId);
+
     }
 
     public Estado validarEstadoGeneral(Long estadoId) {
-        return estadoValidator.validarEstadoGeneral(estadoId);
+        return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoGeneral(estadoId);
     }
 
     public Estado validarEstadoParaOrdenCompra(Long estadoId) {
-        return estadoValidator.validarEstadoParaOrdenCompra(estadoId);
+        return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaOrdenCompra(estadoId);
     }
 
     public Estado validarEstadoParaPedido(Long estadoId) {
-        return estadoValidator.validarEstadoParaPedido(estadoId);
+        return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaPedido(estadoId);
 
     }
 
     public Estado validarEstadoParaFactura(Long estadoId) {
-        return estadoValidator.validarEstadoParaFactura(estadoId);
+        return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaFactura(estadoId);
 
+    }
+    public Estado validarEstadoParaCierre(Long estadoId) {
+        return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaCierre(estadoId);
     }
 
     public Almacen validarAlmacen(Long almacenId, Long empresaId) {
-        return almacenValidator.validarAlmacen(almacenId, empresaId);
+        return validatorRegistry.getValidator(AlmacenValidator.class).validarAlmacen(almacenId, empresaId);
     }
 
     public Produccion validarProduccion(Long produccionId, Long empresaId) {
-        return produccionValidator.validarProduccion(produccionId, empresaId);
+        return validatorRegistry.getValidator(ProduccionValidator.class).validarProduccion(produccionId, empresaId);
     }
 
     public void validarFechasProduccion(Produccion produccion) {
-        produccionValidator.validarFechasDeProduccion(produccion);
+        validatorRegistry.getValidator(ProduccionValidator.class).validarFechasDeProduccion(produccion);
     }
 
     public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
@@ -101,7 +103,7 @@ public class EntidadValidatorFacade {
     }
 
     public OrdenCompra validarOrdenCompra(Long ordenCompraId, Long empresaId) {
-        return ordenCompraValidator.validarOrdenCompra(ordenCompraId, empresaId);
+        return validatorRegistry.getValidator(OrdenCompraValidator.class).validarOrdenCompra(ordenCompraId, empresaId);
     }
 
     public Pedido validarPedido(Long pedidoId, Long empresaId) {
@@ -117,7 +119,7 @@ public class EntidadValidatorFacade {
     }
 
     public Espacio validarEspacio(Long espacioId, Long empresaId) {
-        return espacioValidator.validarEspacio(espacioId, empresaId);
+        return validatorRegistry.getValidator(EspacioValidator.class).validarEspacio(espacioId, empresaId);
     }
 
     public Subseccion validarSubseccion(Long subseccionId, Long empresaId) {
@@ -133,7 +135,7 @@ public class EntidadValidatorFacade {
     }
 
     public ArticuloKardex validarArticuloKardex(Long articuloKardexId, Long empresaId) {
-        return articuloKardexValidator.validarArticuloKardex(articuloKardexId, empresaId);
+        return validatorRegistry.getValidator(ArticuloKardexValidator.class).validarArticuloKardex(articuloKardexId, empresaId);
     }
 
     public PedidoCotizacion validarPedidoCotizacion(Long pedidoCotizacionId, Long empresaId) {
@@ -162,6 +164,10 @@ public class EntidadValidatorFacade {
 
     public TipoUnidad validarTipoUnidad(Long tipoUnidad){
         return tipoUnidadValidator.validarTipoUnidad(tipoUnidad);
+    }
+
+    public void validarDuplicadoCierreInventario(Long empresaId, Long almacenId, LocalDate fechaInicio, LocalDate fechaCorte) {
+        validatorRegistry.getValidator(CierreInventarioValidator.class).validarDuplicado(empresaId, almacenId, fechaInicio, fechaCorte);
     }
 
 }

@@ -4,12 +4,13 @@ import com.coagronet.produccion.exception.FechaInvalidaException;
 import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.produccion.repositories.ProduccionRepository;
+import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ProduccionValidator {
+public class ProduccionValidator implements BaseValidator {
 
     private final ProduccionRepository produccionRepository;
 

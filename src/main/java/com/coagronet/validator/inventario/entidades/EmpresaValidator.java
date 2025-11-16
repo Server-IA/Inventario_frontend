@@ -3,12 +3,13 @@ package com.coagronet.validator.inventario.entidades;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EmpresaValidator {
+public class EmpresaValidator implements BaseValidator {
 
     private final EmpresaRepository empresaRepository;
 

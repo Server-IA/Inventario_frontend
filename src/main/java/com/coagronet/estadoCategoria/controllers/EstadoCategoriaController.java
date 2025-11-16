@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/estado_categoria")
-@CrossOrigin(origins = "*")
 public class EstadoCategoriaController {
 
 	private final EstadoCategoriaMapper estadoCategoriaMapper;
@@ -34,7 +34,7 @@ public class EstadoCategoriaController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<EstadoCategoria>> findAll(Pageable pageable) {
+	public ResponseEntity<List<EstadoCategoria>> findAll(@PageableDefault Pageable pageable) {
 		Page<EstadoCategoria> page = estadoCategoriaRepository.findAll(pageable);
 		return ResponseEntity.ok(page.getContent());
 	}
