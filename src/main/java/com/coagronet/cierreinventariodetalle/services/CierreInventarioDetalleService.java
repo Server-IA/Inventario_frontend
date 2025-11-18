@@ -2,11 +2,15 @@ package com.coagronet.cierreinventariodetalle.services;
 
 import com.coagronet.cierreinventario.CierreInventario;
 import com.coagronet.cierreinventariodetalle.CierreInventarioDetalle;
+import com.coagronet.cierreinventariodetalle.dtos.CierreInventarioDetalleResponseDTO;
 import com.coagronet.cierreinventariodetalle.mappers.CierreInventarioDetalleMapper;
 import com.coagronet.cierreinventariodetalle.repositories.CierreInventarioDetalleRepository;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.validator.EntidadValidatorFacade;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,25 @@ public class CierreInventarioDetalleService {
     private final CierreInventarioDetalleRepository cierreInventarioDetalleRepository;
     private final CierreInventarioDetalleMapper cierreInventarioDetalleMapper;
     private final UserEmpresaService userEmpresaService;
+    private final EntidadValidatorFacade entidadValidatorFacade;
+
+
+    public Page<CierreInventarioDetalleResponseDTO> findAll(Pageable pageable){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        return cierreInventarioDetalleRepository.findByEmpresaId(empresaId, pageable)
+                .map(cierreInventarioDetalleMapper::toResponseDTO);
+    }
+
+
+    public CierreInventarioDetalleResponseDTO findById(Long id){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+        CierreInventarioDetalle cierreInventarioDetalle =  entidadValidatorFacade.
+                validarDetalleCierreInventario(id, empresaId);
+
+        return cierreInventarioDetalleMapper.toResponseDTO(cierreInventarioDetalle);
+    }
+
 
 
     @Transactional

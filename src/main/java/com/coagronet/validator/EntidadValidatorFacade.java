@@ -1,5 +1,7 @@
 package com.coagronet.validator;
 
+import com.coagronet.cierreinventario.CierreInventario;
+import com.coagronet.cierreinventariodetalle.CierreInventarioDetalle;
 import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
 import com.coagronet.evaluacion.Evaluacion;
 import com.coagronet.evaluacionitem.EvaluacionItem;
@@ -168,6 +170,14 @@ public class EntidadValidatorFacade {
 
     public void validarDuplicadoCierreInventario(Long empresaId, Long almacenId, LocalDate fechaInicio, LocalDate fechaCorte) {
         validatorRegistry.getValidator(CierreInventarioValidator.class).validarDuplicado(empresaId, almacenId, fechaInicio, fechaCorte);
+    }
+
+    public CierreInventario validarCierreInventario(Long cierreId, Long empresaId) {
+        return validatorRegistry.getValidator(CierreInventarioValidator.class).validarCierreInventario(cierreId, empresaId);
+    }
+
+    public CierreInventarioDetalle validarDetalleCierreInventario(Long detalleId, Long empresaId) {
+        return validatorRegistry.getValidator(CierreInventarioDetalleValidator.class).validarCierreDetalle(detalleId, empresaId);
     }
 
 }
