@@ -1,6 +1,8 @@
 package com.coagronet.validator.inventario.entidades;
 
+import com.coagronet.cierreinventario.CierreInventario;
 import com.coagronet.cierreinventario.repositories.CierreInventarioRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,6 +14,11 @@ import java.time.LocalDate;
 public class CierreInventarioValidator implements BaseValidator {
 
     private final CierreInventarioRepository cierreInventarioRepository;
+
+    public CierreInventario validarCierreInventario(Long cierreInventarioId, Long empresaId){
+        return cierreInventarioRepository.findByIdAndEmpresaId(cierreInventarioId, empresaId)
+                .orElseThrow(()-> new BadRequestException("cierre-inventario.not-found", cierreInventarioId));
+    }
 
     public void validarDuplicado(Long empresaId, Long almacenId, LocalDate fechaInicio, LocalDate fechaCorte) {
 

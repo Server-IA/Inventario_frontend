@@ -6,12 +6,14 @@ import com.coagronet.cierreinventario.services.CierreInventarioService;
 import com.coagronet.utils.UriBuilderUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,9 +25,14 @@ public class CierreInventarioController {
 
 
     @GetMapping
-    public ResponseEntity<List<CierreInventarioResponseDTO>>findAll(){
-        List<CierreInventarioResponseDTO> cierres = cierreInventarioService.listAll();
+    public ResponseEntity<Page<CierreInventarioResponseDTO>>findAll(@PageableDefault Pageable pageable){
+        Page<CierreInventarioResponseDTO> cierres = cierreInventarioService.findAll(pageable);
         return ResponseEntity.ok(cierres);
+    }
+
+    @GetMapping("/{cierreId}")
+    public ResponseEntity<CierreInventarioResponseDTO>findById(@PathVariable Long cierreId){
+        return ResponseEntity.ok(cierreInventarioService.findById(cierreId));
     }
 
     @PostMapping

@@ -1,16 +1,22 @@
 package com.coagronet.cierreinventario.repositories;
 
 import com.coagronet.cierreinventario.CierreInventario;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 
 public interface CierreInventarioRepository extends JpaRepository<CierreInventario, Long> {
 
-    List<CierreInventario> findByEmpresa_Id(Long empresaId);
+    Page<CierreInventario> findByEmpresaId(Long empresaId, Pageable pageable);
+
+    Optional<CierreInventario>findByIdAndEmpresaId(Long id, Long empresaId);
+
+
 
     @Query("""
        SELECT COUNT(ci) > 0\s

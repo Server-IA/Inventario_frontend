@@ -15,11 +15,12 @@ import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +34,19 @@ public class CierreInventarioService {
     private final CierreInventarioDetalleService cierreInventarioDetalleService;
 
 
-    public List<CierreInventarioResponseDTO> listAll(){
+    public Page<CierreInventarioResponseDTO> findAll(Pageable pageable){
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-        return cierreInventarioRepository.findByEmpresa_Id(empresaId)
-                .stream()
-                .map(cierreInventarioMapper::toDTO).toList();
+        return cierreInventarioRepository.findByEmpresaId(empresaId, pageable)
+                .map(cierreInventarioMapper::toDTO);
+    }
+
+    public CierreInventarioResponseDTO findById(Long cierreId){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+        CierreInventario cierre = entidadValidatorFacade
+                .validarCierreInventario(cierreId, empresaId);
+        return cierreInventarioMapper.toDTO(cierre);
     }
 
     @Transactional
