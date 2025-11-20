@@ -12,16 +12,13 @@ export default function FormEspacio({
   setOpen = () => {},
   formMode = "create",
   selectedRow = null,
-  bloqueId = "",                   // puede venir del filtro
-  bloques = [],                    // [{id, nombre}]
-  tiposEspacio = [],              // [{id, nombre}]
+  bloqueId = "",
+  bloques = [],
+  tiposEspacio = [],
   reloadData = () => {},
   setMessage = () => {},
   authHeaders = {},
 }) {
-  // ===========================
-  // ESTADO Y CONFIGURACIÓN INICIAL
-  // ===========================
   const initialData = {
     id: null,
     bloqueId: bloqueId || "",
@@ -35,24 +32,24 @@ export default function FormEspacio({
   const [errors, setErrors] = useState({});
   const [tiposEspacioLocal, setTiposEspacioLocal] = useState([]);
 
-  // ===========================
-  // UTILIDADES Y HELPERS
-  // ===========================
   const asArray = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (payload && Array.isArray(payload.content)) return payload.content;
     return [];
   };
-  
-  const toNum = (v) => (v === "" || v === null || v === undefined ? "" : Number(v));
 
-  // ===========================
-  // EFECTOS
-  // ===========================
+  const toNum = (v) =>
+    v === "" || v === null || v === undefined ? "" : Number(v);
+
+  // Regex de validaciones
+  const lettersOnlyRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$/;
+  const onlyNumbersRegex = /^\d+$/;
+
   useEffect(() => {
     if (!tiposEspacio.length) {
-      axios.get("/v1/tipo_espacio", authHeaders)
-        .then(res => setTiposEspacioLocal(asArray(res.data)))
+      axios
+        .get("/v1/tipo_espacio", authHeaders)
+        .then((res) => setTiposEspacioLocal(asArray(res.data)))
         .catch(() => setTiposEspacioLocal([]));
     }
   }, [tiposEspacio]);
@@ -61,60 +58,73 @@ export default function FormEspacio({
     if (!open) return;
 
     if (formMode === "edit" && selectedRow) {
-      // normaliza numéricos
       setFormData({
         id: selectedRow.id,
         bloqueId: toNum(selectedRow.bloqueId),
         tipoEspacioId: toNum(selectedRow.tipoEspacioId),
         nombre: selectedRow.nombre ?? "",
         descripcion: selectedRow.descripcion ?? "",
-        estadoId: toNum(
-          // si viene 0 desde atrás, mapeamos a 2 para "Inactivo"
-          selectedRow.estadoId === 0 ? 2 : selectedRow.estadoId ?? 1
-        ),
+        estadoId:
+          selectedRow.estadoId === 0
+            ? 2
+            : selectedRow.estadoId ?? 1,
       });
     } else {
       setFormData({
         ...initialData,
-        bloqueId: toNum(bloqueId, ""), // si no hay filtro, obligar a elegir
+        bloqueId: toNum(bloqueId, ""),
       });
     }
     setErrors({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, formMode, selectedRow, bloqueId]);
 
-  // ===========================
-  // HANDLERS DE EVENTOS
-  // ===========================
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // fuerza numérico en selects clave
-    if (["tipoEspacioId", "estadoId", "bloqueId"].includes(name)) {
-      setFormData(prev => ({ ...prev, [name]: toNum(value) }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+    let v = value;
+
+    // Nombre solo letras
+    if (name === "nombre") {
+      v = v.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, "");
     }
+
+    // Descripción: evitar solo números y limpieza básica
+    if (name === "descripcion") {
+      v = v.replace(/[<>/"'`;(){}\[\]\\]/g, "");
+    }
+
+    if (["tipoEspacioId", "estadoId", "bloqueId"].includes(name)) {
+      setFormData((prev) => ({ ...prev, [name]: toNum(v) }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: v }));
   };
 
-  // ===========================
-  // VALIDACIONES
-  // ===========================
   const validate = () => {
     const e = {};
 
-    // 1) Validación CENTRAL para nombre/descripcion/estado
     const baseErrors = validateCamposBase({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
-      estado: formData.estadoId, // el validador espera 'estado'
+      estado: formData.estadoId,
     });
 
     if (baseErrors.nombre) e.nombre = baseErrors.nombre;
     if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
-    if (baseErrors.estado) e.estadoId = baseErrors.estado; // mapear a estadoId
-    if (baseErrors._security) e._security = baseErrors._security;
+    if (baseErrors.estado) e.estadoId = baseErrors.estado;
 
-    // 2) Checks locales adicionales
+    // NOMBRE: obligatorio y solo letras
+    if (!formData.nombre.trim()) {
+      e.nombre = "El nombre es obligatorio.";
+    } else if (!lettersOnlyRegex.test(formData.nombre.trim())) {
+      e.nombre = "El nombre solo debe contener letras.";
+    }
+
+    // DESCRIPCIÓN: no puede ser solo números
+    if (formData.descripcion && onlyNumbersRegex.test(formData.descripcion.trim())) {
+      e.descripcion = "La descripción no puede ser solo números.";
+    }
+
     if (!Number(formData.tipoEspacioId)) {
       e.tipoEspacioId = "Debe seleccionar un tipo de espacio.";
     }
@@ -124,35 +134,45 @@ export default function FormEspacio({
     }
 
     if (![1, 2].includes(Number(formData.estadoId))) {
-      e.estadoId = e.estadoId || "Debe seleccionar un estado válido.";
+      e.estadoId = "Debe seleccionar un estado válido.";
     }
 
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // ===========================
-  // PROCESAMIENTO DE DATOS
-  // ===========================
   const buildPayload = () => ({
     nombre: formData.nombre.trim(),
     descripcion: formData.descripcion?.trim() || "",
     tipoEspacioId: formData.tipoEspacioId,
     bloqueId: formData.bloqueId,
-    estadoId: formData.estadoId, // 1=Activo, 2=Inactivo
+    estadoId: formData.estadoId,
   });
 
   const handleSubmit = async () => {
     if (!validate()) return;
+
     const payload = buildPayload();
 
     try {
       if (formMode === "edit" && formData.id) {
-        await axios.put(`/v1/espacio/${formData.id}`, { id: Number(formData.id), ...payload }, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Espacio actualizado correctamente." });
+        await axios.put(
+          `/v1/espacio/${formData.id}`,
+          { id: Number(formData.id), ...payload },
+          authHeaders
+        );
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Espacio actualizado correctamente.",
+        });
       } else {
         await axios.post("/v1/espacio", payload, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Espacio creado correctamente." });
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Espacio creado correctamente.",
+        });
       }
       setOpen(false);
       reloadData();
@@ -166,20 +186,15 @@ export default function FormEspacio({
     }
   };
 
-  // ===========================
-  // CONFIGURACIONES AUXILIARES
-  // ===========================
   const tipos = tiposEspacio.length ? tiposEspacio : tiposEspacioLocal;
 
-  // ===========================
-  // RENDER
-  // ===========================
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-      <DialogTitle>{formMode === "edit" ? "Editar Espacio" : "Nuevo Espacio"}</DialogTitle>
-      
+      <DialogTitle>
+        {formMode === "edit" ? "Editar Espacio" : "Nuevo Espacio"}
+      </DialogTitle>
+
       <DialogContent>
-        {/* Campo Nombre */}
         <TextField
           fullWidth
           margin="normal"
@@ -191,7 +206,6 @@ export default function FormEspacio({
           helperText={errors.nombre}
         />
 
-        {/* Campo Descripción */}
         <TextField
           fullWidth
           margin="normal"
@@ -199,27 +213,29 @@ export default function FormEspacio({
           name="descripcion"
           value={formData.descripcion}
           onChange={handleChange}
+          error={!!errors.descripcion}
+          helperText={errors.descripcion}
         />
 
-        {/* Selector de Bloque (solo si no hay filtro) */}
-        {!bloqueId && (
-          <FormControl fullWidth margin="normal" error={!!errors.bloqueId}>
-            <InputLabel>Bloque</InputLabel>
-            <Select
-              name="bloqueId"
-              value={formData.bloqueId || ""}
-              onChange={handleChange}
-              label="Bloque"
-            >
-              {Array.isArray(bloques) && bloques.map((b) => (
-                <MenuItem key={b.id} value={b.id}>{b.nombre}</MenuItem>
+        {/* 🔵 Selector de Bloque SIEMPRE visible */}
+        <FormControl fullWidth margin="normal" error={!!errors.bloqueId}>
+          <InputLabel>Bloque</InputLabel>
+          <Select
+            name="bloqueId"
+            value={formData.bloqueId || ""}
+            onChange={handleChange}
+            label="Bloque"
+          >
+            {Array.isArray(bloques) &&
+              bloques.map((b) => (
+                <MenuItem key={b.id} value={b.id}>
+                  {b.nombre}
+                </MenuItem>
               ))}
-            </Select>
-            {errors.bloqueId && <FormHelperText>{errors.bloqueId}</FormHelperText>}
-          </FormControl>
-        )}
+          </Select>
+          <FormHelperText>{errors.bloqueId}</FormHelperText>
+        </FormControl>
 
-        {/* Selector de Tipo de Espacio */}
         <FormControl fullWidth margin="normal" error={!!errors.tipoEspacioId}>
           <InputLabel>Tipo de Espacio</InputLabel>
           <Select
@@ -228,14 +244,15 @@ export default function FormEspacio({
             onChange={handleChange}
             label="Tipo de Espacio"
           >
-            {tipos.map(tipo => (
-              <MenuItem key={tipo.id} value={Number(tipo.id)}>{tipo.nombre}</MenuItem>
+            {tipos.map((t) => (
+              <MenuItem key={t.id} value={Number(t.id)}>
+                {t.nombre}
+              </MenuItem>
             ))}
           </Select>
-          {errors.tipoEspacioId && <FormHelperText>{errors.tipoEspacioId}</FormHelperText>}
+          <FormHelperText>{errors.tipoEspacioId}</FormHelperText>
         </FormControl>
 
-        {/* Selector de Estado */}
         <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
           <InputLabel>Estado</InputLabel>
           <Select
@@ -247,13 +264,15 @@ export default function FormEspacio({
             <MenuItem value={1}>Activo</MenuItem>
             <MenuItem value={2}>Inactivo</MenuItem>
           </Select>
-          {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
+          <FormHelperText>{errors.estadoId}</FormHelperText>
         </FormControl>
       </DialogContent>
-      
+
       <DialogActions>
         <Button onClick={() => setOpen(false)}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>Guardar</Button>
+        <Button variant="contained" onClick={handleSubmit}>
+          Guardar
+        </Button>
       </DialogActions>
     </Dialog>
   );

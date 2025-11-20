@@ -55,9 +55,10 @@ export default function Unidad() {
   }, []);
 
   /* =========================================================================
-     2. Definimos reloadData con useCallback (ESTABLE)
-        - Forzamos al backend a darnos hasta 1000 filas (page=0&size=1000)
+     2. reloadData:
+        - Forzamos al backend a darnos hasta 1000 filas
         - Adaptamos cada unidad para que el grid tenga todos los campos listos
+        - Si el backend SOLO manda un string tipoUnidad ("peso"), lo usamos
      ========================================================================= */
   const reloadData = useCallback(() => {
     setLoading(true);
@@ -66,7 +67,7 @@ export default function Unidad() {
       .get("/v1/unidad", {
         params: {
           page: 0,
-          size: 1000, // <- fuerza traer TODO en una sola llamada grande
+          size: 1000,
         },
       })
       .then((res) => {
@@ -80,43 +81,70 @@ export default function Unidad() {
           : [];
 
         const adaptadas = rawList.map((u) => {
-          // detectar el tipo de unidad de la fila
-          const tipoIdCrudo =
+          /* --------- 1) ID crudo (si lo hay) --------- */
+          let tipoIdCrudo =
             u?.tipoUnidadId ??
             u?.tipoUnidad?.id ??
             u?.tipo_unidad_id ??
             "";
 
-          // buscar el nombre legible en el catálogo
-          const matchTipo = tiposUnidad.find(
-            (tu) => String(tu.id) === String(tipoIdCrudo)
-          );
+          /* --------- 2) Nombre crudo (casos posibles) --------- */
+          let tipoNombreCrudo = "";
 
-          // armar texto bonito para la columna "Tipo de unidad"
+          if (typeof u?.tipoUnidad === "string") {
+            // caso: tipoUnidad: "peso"
+            tipoNombreCrudo = u.tipoUnidad;
+          } else {
+            tipoNombreCrudo =
+              u?.tipoUnidadNombre ??
+              u?.tipoUnidad?.nombre ??
+              u?.tipoUnidad?.name ??
+              u?.tipo_unidad_nombre ??
+              "";
+          }
+
+          /* --------- 3) Si no vino ID pero sí nombre, lo buscamo en el catálogo --------- */
+          if (!tipoIdCrudo && tipoNombreCrudo && tiposUnidad.length > 0) {
+            const matchPorNombre = tiposUnidad.find(
+              (tu) =>
+                String(tu.nombre || "").toLowerCase().trim() ===
+                String(tipoNombreCrudo).toLowerCase().trim()
+            );
+            if (matchPorNombre) {
+              tipoIdCrudo = matchPorNombre.id;
+            }
+          }
+
+          /* --------- 4) Nombre bonito para mostrar en la grid --------- */
+          const matchTipoPorId =
+            tipoIdCrudo &&
+            tiposUnidad.find((tu) => String(tu.id) === String(tipoIdCrudo));
+
           const tipoNombreBonito =
-            matchTipo?.nombre ||
-            u?.tipoUnidad?.nombre ||
-            u?.tipoUnidad?.name ||
-            u?.tipo_unidad_nombre ||
+            matchTipoPorId?.nombre ||
+            tipoNombreCrudo || // si el backend solo manda el string, usamos ese
             (tipoIdCrudo !== "" ? String(tipoIdCrudo) : "—");
 
-          // estado legible
+          /* --------- 5) Estado legible --------- */
+          const estadoIdCrudo = u?.estadoId ?? u?.estado?.id ?? "";
           const estadoNombre =
+            u?.estadoNombre ??
             u?.estado?.nombre ??
             u?.estado?.name ??
-            (String(u?.estadoId) === "1" ? "Activo" : "Inactivo");
+            (String(estadoIdCrudo) === "1" ? "Activo" : "Inactivo");
 
+          /* --------- 6) Objeto final que verá el grid y el formulario --------- */
           return {
             ...u,
-            tipoUnidadId: tipoIdCrudo,
-            tipoUnidadNombre: tipoNombreBonito,
-            estadoId: u?.estado?.id ?? u?.estadoId,
+            tipoUnidadId: tipoIdCrudo,          // para el <Select> al actualizar
+            tipoUnidadNombre: tipoNombreBonito, // para la columna "Tipo de unidad"
+            estadoId: estadoIdCrudo,
             estadoNombre,
           };
         });
 
         setUnidades(adaptadas);
-        // limpiamos selección para que botones tipo "Actualizar" no queden colgados en una fila vieja
+        // limpiamos selección
         setSelectedRow({ id: 0 });
       })
       .catch((err) => {
@@ -131,17 +159,16 @@ export default function Unidad() {
       .finally(() => {
         setLoading(false);
       });
-  }, [tiposUnidad]); // <- depende solo del catálogo. cuando cambie catálogo, esta versión se actualiza
+  }, [tiposUnidad]);
 
   /* =========================================================================
-     3. Cargar unidades cuando ya tengamos el catálogo de tiposUnidad
-        y cada vez que el catálogo cambie (por si cambia orden, etc.)
+     3. Cargar unidades cuando ya tengamos el catálogo
      ========================================================================= */
   useEffect(() => {
-    if (tiposUnidad.length > 0) {
-      reloadData();
-    }
-  }, [tiposUnidad, reloadData]);
+    // si por alguna razón el backend NO depende del catálogo,
+    // igual podrías llamar reloadData incluso con lista vacía
+    reloadData();
+  }, [reloadData]);
 
   /* =========================================================================
      4. Render
@@ -156,7 +183,7 @@ export default function Unidad() {
         selectedRow={selectedRow || { id: 0 }}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
-        reloadData={reloadData} // <- ahora es una función estable gracias a useCallback
+        reloadData={reloadData}
       />
 
       <GridUnidad

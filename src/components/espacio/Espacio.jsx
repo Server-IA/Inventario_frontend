@@ -16,16 +16,20 @@ export default function Espacio() {
   // ===========================
   // ESTADO Y CONFIGURACIÓN
   // ===========================
-  
+
   // Filtros (vía modal) - Para Espacio: País → Depto → Municipio → Sede → Bloque
   const [filters, setFilters] = useState({
-    paisId: "", deptoId: "", municipioId: "", sedeId: "", bloqueId: ""
+    paisId: "",
+    deptoId: "",
+    municipioId: "",
+    sedeId: "",
+    bloqueId: "",
   });
   const [openFilters, setOpenFilters] = useState(false);
 
   // Catálogos "items" (única fuente de nombres)
   const [tiposEspacioItems, setTiposEspacioItems] = useState([]); // [{id, name}]
-  const [bloquesItems, setBloquesItems] = useState([]);           // [{id, name}]
+  const [bloquesItems, setBloquesItems] = useState([]); // [{id, name}]
 
   // Datos principales
   const [espacios, setEspacios] = useState([]);
@@ -34,39 +38,82 @@ export default function Espacio() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
-  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
 
   // ===========================
   // CONFIGURACIÓN Y HELPERS
   // ===========================
-  
+
   // Auth / headers
   const token = localStorage.getItem("token");
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
   // Loaders del modal (usan /v1)
-  const { getPaises, getDepartamentos, getMunicipios, getSedes, getBloques } = makeLoaders(headers);
+  const { getPaises, getDepartamentos, getMunicipios, getSedes, getBloques } =
+    makeLoaders(headers);
 
   // Normalizaciones para los formularios (esperan [{id, nombre}])
-  const tiposEspacioForm = tiposEspacioItems.map(t => ({ id: t.id, nombre: t.name }));
-  const bloquesForm = bloquesItems.map(b => ({ id: b.id, nombre: b.name }));
+  const tiposEspacioForm = tiposEspacioItems.map((t) => ({
+    id: t.id,
+    nombre: t.name,
+  }));
+  const bloquesForm = bloquesItems.map((b) => ({
+    id: b.id,
+    nombre: b.name,
+  }));
 
   // Campos del modal para Espacio
   const fieldsEspacio = [
-    { name: "paisId", label: "País", getOptions: getPaises, clearChildren: ["deptoId", "municipioId", "sedeId", "bloqueId"] },
-    { name: "deptoId", label: "Departamento", getOptions: getDepartamentos, dependsOn: ["paisId"], disabled: (v) => !v.paisId, clearChildren: ["municipioId", "sedeId", "bloqueId"] },
-    { name: "municipioId", label: "Municipio", getOptions: getMunicipios, dependsOn: ["deptoId"], disabled: (v) => !v.deptoId, clearChildren: ["sedeId", "bloqueId"] },
-    { name: "sedeId", label: "Sede", getOptions: getSedes, dependsOn: ["municipioId"], disabled: (v) => !v.municipioId, clearChildren: ["bloqueId"] },
-    { name: "bloqueId", label: "Bloque", getOptions: getBloques, dependsOn: ["sedeId"], disabled: (v) => !v.sedeId },
+    {
+      name: "paisId",
+      label: "País",
+      getOptions: getPaises,
+      clearChildren: ["deptoId", "municipioId", "sedeId", "bloqueId"],
+    },
+    {
+      name: "deptoId",
+      label: "Departamento",
+      getOptions: getDepartamentos,
+      dependsOn: ["paisId"],
+      disabled: (v) => !v.paisId,
+      clearChildren: ["municipioId", "sedeId", "bloqueId"],
+    },
+    {
+      name: "municipioId",
+      label: "Municipio",
+      getOptions: getMunicipios,
+      dependsOn: ["deptoId"],
+      disabled: (v) => !v.deptoId,
+      clearChildren: ["sedeId", "bloqueId"],
+    },
+    {
+      name: "sedeId",
+      label: "Sede",
+      getOptions: getSedes,
+      dependsOn: ["municipioId"],
+      disabled: (v) => !v.municipioId,
+      clearChildren: ["bloqueId"],
+    },
+    {
+      name: "bloqueId",
+      label: "Bloque",
+      getOptions: getBloques,
+      dependsOn: ["sedeId"],
+      disabled: (v) => !v.sedeId,
+    },
   ];
 
   // ===========================
-  // EFECTOS - CARGA DE DATOS
+  // EFECTOS - CARGA DE CATÁLOGOS
   // ===========================
-  
-  // Cargar catálogos (items)
+
+  // Cargar catálogos (tipos de espacio y bloques)
   useEffect(() => {
-    // Tipos de espacio: intentar /v1/items/tipo_espacio/0 y si falla, caer a /v1/tipo_espacio
+    // Tipos de espacio
     (async () => {
       try {
         const r = await axios.get("/v1/items/tipo_espacio/0", headers);
@@ -82,11 +129,12 @@ export default function Espacio() {
             ...headers,
             params: { page: 0, size: 1000 },
           });
-          // normaliza a shape "items"
-          const list = (Array.isArray(data) ? data : data?.content ?? []).map((t) => ({
-            id: t.id,
-            name: t.nombre, // <-- importante
-          }));
+          const list = (Array.isArray(data) ? data : data?.content ?? []).map(
+            (t) => ({
+              id: t.id,
+              name: t.nombre,
+            })
+          );
           setTiposEspacioItems(list);
         } catch {
           setTiposEspacioItems([]);
@@ -94,7 +142,7 @@ export default function Espacio() {
       }
     })();
 
-    // Bloques: intentar /v1/items/bloque/0 y si falla, caer a /v1/bloque
+    // Bloques
     (async () => {
       try {
         const r = await axios.get("/v1/items/bloque/0", headers);
@@ -110,11 +158,12 @@ export default function Espacio() {
             ...headers,
             params: { page: 0, size: 2000 },
           });
-          // normaliza a shape "items"
-          const list = (Array.isArray(data) ? data : data?.content ?? []).map((b) => ({
-            id: b.id,
-            name: b.nombre, // <-- importante
-          }));
+          const list = (Array.isArray(data) ? data : data?.content ?? []).map(
+            (b) => ({
+              id: b.id,
+              name: b.nombre,
+            })
+          );
           setBloquesItems(list);
         } catch {
           setBloquesItems([]);
@@ -123,72 +172,122 @@ export default function Espacio() {
     })();
   }, []);
 
-  // Efectos para recargar espacios
-  useEffect(() => { reloadData(); }, []); // mount
-  useEffect(() => { reloadData(); }, [filters.bloqueId]); // al aplicar filtro de bloque
-  useEffect(() => {
-    if (tiposEspacioItems.length || bloquesItems.length) reloadData();
-  }, [tiposEspacioItems, bloquesItems]);
+  // ===========================
+  // CARGA DE ESPACIOS
+  // ===========================
 
-  // ===========================
-  // FUNCIONES DE DATOS
-  // ===========================
-  
-  // Cargar espacios (CRUD)
   const reloadData = () => {
     const { bloqueId } = filters;
 
     const req = bloqueId
-      ? axios.get("/v1/espacio", { ...headers, params: { bloqueId: Number(bloqueId), page: 0, size: 2000 } })
-      : axios.get("/v1/espacio", { ...headers, params: { page: 0, size: 2000 } });
+      ? axios.get("/v1/espacio", {
+          ...headers,
+          params: { bloqueId: Number(bloqueId), page: 0, size: 2000 },
+        })
+      : axios.get("/v1/espacio", {
+          ...headers,
+          params: { page: 0, size: 2000 },
+        });
 
     req
       .then((res) => {
         const lista = unwrapPage(res.data);
 
-        // Mapear IDs → nombres usando ÚNICAMENTE los catálogos "items"
-        const normalizadas = lista.map((e) => {
-          const tipoId = e.tipoEspacioId ?? e.tipo_espacio_id ?? e.tipoEspacio?.id ?? "";
-          const bloqueIdNum = e.bloqueId ?? e.bloque?.id ?? e.bloque_id ?? "";
+        // Si los catálogos aún NO están listos, no normalizamos, usamos lo que venga de la API
+        if (!tiposEspacioItems.length || !bloquesItems.length) {
+          setEspacios(lista);
+          return;
+        }
 
-          const tipo = tiposEspacioItems.find((t) => Number(t.id) === Number(tipoId));
-          const bloque = bloquesItems.find((b) => Number(b.id) === Number(bloqueIdNum));
+        // Normalizamos solo cuando YA hay catálogos
+        const normalizadas = lista.map((e) => {
+          const tipoId =
+            e.tipoEspacioId ??
+            e.tipo_espacio_id ??
+            e.tipoEspacio?.id ??
+            "";
+          const bloqueIdNum =
+            e.bloqueId ?? e.bloque?.id ?? e.bloque_id ?? "";
+
+          const tipo = tiposEspacioItems.find(
+            (t) => Number(t.id) === Number(tipoId)
+          );
+          const bloque = bloquesItems.find(
+            (b) => Number(b.id) === Number(bloqueIdNum)
+          );
 
           return {
             ...e,
             tipoEspacioId: Number(tipoId) || "",
-            tipoEspacioNombre: tipo?.name ?? "",
+            tipoEspacioNombre:
+              tipo?.name ?? e.tipoEspacioNombre ?? "",
             bloqueId: Number(bloqueIdNum) || "",
-            bloqueNombre: bloque?.name ?? "",
+            bloqueNombre: bloque?.name ?? e.bloqueNombre ?? "",
           };
         });
 
         const final = bloqueId
-          ? normalizadas.filter((e) => Number(e.bloqueId) === Number(bloqueId))
+          ? normalizadas.filter(
+              (e) => Number(e.bloqueId) === Number(bloqueId)
+            )
           : normalizadas;
 
         setEspacios(final);
       })
       .catch(() =>
-        setMessage({ open: true, severity: "error", text: "Error al cargar espacios." })
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "Error al cargar espacios.",
+        })
       );
   };
+
+  // Cargar espacios cuando catálogos estén listos + cambie bloque
+  useEffect(() => {
+    if (tiposEspacioItems.length && bloquesItems.length) {
+      reloadData();
+    }
+  }, [tiposEspacioItems, bloquesItems, filters.bloqueId]);
 
   // ===========================
   // HANDLERS DE EVENTOS
   // ===========================
-  
-  // Acciones CRUD
+
   const handleDelete = async () => {
     if (!selectedRow) return;
-    if (!window.confirm(`¿Eliminar el espacio "${selectedRow.nombre}"?`)) return;
+    if (!window.confirm(`¿Eliminar el espacio "${selectedRow.nombre}"?`))
+      return;
     try {
       await axios.delete(`/v1/espacio/${selectedRow.id}`, headers);
-      setMessage({ open: true, severity: "success", text: "Espacio eliminado correctamente." });
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Espacio eliminado correctamente.",
+      });
       setSelectedRow(null);
       reloadData();
-    } catch {
-      setMessage({ open: true, severity: "error", text: "Error al eliminar espacio." });
+    } catch (err) {
+      const raw = JSON.stringify(err?.response?.data || "").toLowerCase();
+      let txt = "Error al eliminar espacio.";
+
+      if (
+        raw.includes("almacen") ||
+        raw.includes("almacenes") ||
+        raw.includes("seccion") ||
+        raw.includes("secciones") ||
+        raw.includes("foreign key") ||
+        raw.includes("fk")
+      ) {
+        txt =
+          "No se puede eliminar el espacio porque tiene almacenes o secciones asociadas.";
+      }
+
+      setMessage({
+        open: true,
+        severity: "error",
+        text: txt,
+      });
     }
   };
 
@@ -197,7 +296,13 @@ export default function Espacio() {
     setFilters((f) => ({ ...f, [name]: value }));
 
   const handleFiltersClear = () =>
-    setFilters({ paisId: "", deptoId: "", municipioId: "", sedeId: "", bloqueId: "" });
+    setFilters({
+      paisId: "",
+      deptoId: "",
+      municipioId: "",
+      sedeId: "",
+      bloqueId: "",
+    });
 
   const handleFiltersApply = () => {
     setOpenFilters(false);
@@ -210,18 +315,25 @@ export default function Espacio() {
   return (
     <Box sx={{ p: 2 }}>
       {/* Header con título y filtros */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 1 }}
+      >
         <Typography variant="h5">Gestión de Espacios</Typography>
 
         <Stack direction="row" spacing={1}>
           <Button onClick={() => setOpenFilters(true)}>
             Mostrar filtros
           </Button>
-          {Boolean(filters.paisId || filters.deptoId || filters.municipioId || filters.sedeId || filters.bloqueId) && (
-            <Button onClick={handleFiltersClear}>
-              Limpiar filtros
-            </Button>
-          )}
+          {Boolean(
+            filters.paisId ||
+              filters.deptoId ||
+              filters.municipioId ||
+              filters.sedeId ||
+              filters.bloqueId
+          ) && <Button onClick={handleFiltersClear}>Limpiar filtros</Button>}
         </Stack>
       </Stack>
 
@@ -230,7 +342,11 @@ export default function Espacio() {
         <Tooltip title="Crear">
           <Button
             variant="contained"
-            onClick={() => { setFormMode("create"); setSelectedRow(null); setFormOpen(true); }}
+            onClick={() => {
+              setFormMode("create");
+              setSelectedRow(null);
+              setFormOpen(true);
+            }}
             startIcon={<AddIcon />}
           >
             Agregar
@@ -240,7 +356,10 @@ export default function Espacio() {
         <Tooltip title="Editar">
           <Button
             variant="outlined"
-            onClick={() => { setFormMode("edit"); setFormOpen(true); }}
+            onClick={() => {
+              setFormMode("edit");
+              setFormOpen(true);
+            }}
             disabled={!selectedRow}
             startIcon={<EditIcon />}
           >
@@ -272,13 +391,13 @@ export default function Espacio() {
         selectedRow={selectedRow}
         reloadData={reloadData}
         setMessage={setMessage}
-        bloqueId={filters.bloqueId || ""}   // si hay filtro se precarga; si no, el form muestra select de bloque
-        tiposEspacio={tiposEspacioForm}     // items → [{id,nombre}]
-        bloques={bloquesForm}               // items → [{id,nombre}] para el select en el form
+        bloqueId={filters.bloqueId || ""} // si hay filtro se precarga
+        tiposEspacio={tiposEspacioForm} // [{id,nombre}]
+        bloques={bloquesForm} // [{id,nombre}]
         authHeaders={headers}
       />
 
-      {/* Componentes auxiliares */}
+      {/* Snackbar */}
       <MessageSnackBar message={message} setMessage={setMessage} />
 
       {/* Modal de filtros */}

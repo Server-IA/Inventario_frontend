@@ -12,26 +12,29 @@ export default function GridIngrediente({
   selectedRow = null,
   setSelectedRow,
 
-  // Paginación (server-side opcional)
-  paginationModel,        // { page, pageSize } o { page, size }
+  // Paginación (server-side)
+  paginationModel,        // { page, pageSize }
   setPaginationModel,     // (model) => void
   rowCount,               // total en servidor
   loading = false,
 }) {
-  const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 90, type: "number" },
-    { field: "nombre", headerName: "Nombre", width: 220 },
-    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 280 },
-    {
-      field: "estadoId",
-      headerName: "Estado",
-      width: 140,
-      valueGetter: (p) =>
-        p?.row?.estado?.name ??
-        p?.row?.estado?.nombre ??
-        (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
-    },
-  ]), []);
+  const columns = useMemo(
+    () => [
+      { field: "id", headerName: "ID", width: 90, type: "number" },
+      { field: "nombre", headerName: "Nombre", width: 220 },
+      { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 280 },
+      {
+        field: "estadoId",
+        headerName: "Estado",
+        width: 140,
+        valueGetter: (p) =>
+          p?.row?.estado?.name ??
+          p?.row?.estado?.nombre ??
+          (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+      },
+    ],
+    []
+  );
 
   const serverPagination = Boolean(
     paginationModel && setPaginationModel && typeof rowCount === "number"
@@ -49,7 +52,7 @@ export default function GridIngrediente({
         rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
 
-        // Paginación
+        // -------- Paginación --------
         paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
         {...(serverPagination
@@ -57,16 +60,17 @@ export default function GridIngrediente({
               // ----- Server controlled -----
               paginationModel: {
                 page: paginationModel.page ?? 0,
-                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
+                pageSize: paginationModel.pageSize ?? 10,
               },
               onPaginationModelChange: (model) => {
-                const next = {
+                // El padre hará el fetch cuando cambie el modelo
+                setPaginationModel?.({
                   page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? 10,
-                };
-                setPaginationModel?.(next); // el padre hace el fetch con estos valores
+                  pageSize: model.pageSize ?? 10,
+                });
               },
               rowCount,
+              pageSizeOptions: [5, 10, 15, 20, 50],
             }
           : {
               // ----- Client fallback -----
@@ -88,7 +92,6 @@ GridIngrediente.propTypes = {
   paginationModel: PropTypes.shape({
     page: PropTypes.number,
     pageSize: PropTypes.number,
-    size: PropTypes.number,
   }),
   setPaginationModel: PropTypes.func,
   rowCount: PropTypes.number,

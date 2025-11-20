@@ -3,7 +3,11 @@ import * as React from "react";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
 import {
-  Button, Dialog, DialogActions, DialogContent, DialogTitle
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 import BaseFormCampos from "../common/BaseFormCampos";
@@ -24,19 +28,22 @@ export default function FormIngrediente({
 
   React.useEffect(() => {
     if (!open) return;
-    if (selectedRow?.id) {
+
+    // Si hay id y NO estamos forzando modo "Agregar", llenamos para actualizar
+    if (selectedRow?.id && methodName === "Actualizar") {
       setFormData({
         nombre: selectedRow.nombre || "",
         descripcion: selectedRow.descripcion || "",
         estado: selectedRow.estadoId?.toString() || "",
       });
-      setMethodName("Actualizar");
-    } else {
-      setFormData(initialData);
-      setMethodName("Agregar");
     }
+
+    if (!selectedRow?.id && methodName === "Agregar") {
+      setFormData(initialData);
+    }
+
     setErrors({});
-  }, [open, selectedRow]);
+  }, [open, selectedRow, methodName]);
 
   const handleClose = () => {
     setOpen(false);
@@ -51,7 +58,7 @@ export default function FormIngrediente({
   };
 
   const validate = () => {
-    const newErrors = validateCamposBase(formData); // validación centralizada (incluye XSS/SQLi si la agregaste)
+    const newErrors = validateCamposBase(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -67,7 +74,9 @@ export default function FormIngrediente({
     };
 
     const creating = methodName === "Agregar";
-    const url = creating ? "/v1/ingrediente" : `/v1/ingrediente/${selectedRow.id}`;
+    const url = creating
+      ? "/v1/ingrediente"
+      : `/v1/ingrediente/${selectedRow.id}`;
     const req = creating ? axios.post : axios.put;
 
     try {
@@ -75,29 +84,47 @@ export default function FormIngrediente({
       setMessage({
         open: true,
         severity: "success",
-        text: creating ? "Ingrediente creado con éxito!" : "Ingrediente actualizado con éxito!",
+        text: creating
+          ? "Ingrediente creado con éxito!"
+          : "Ingrediente actualizado con éxito!",
       });
       handleClose();
       setSelectedRow({});
       reloadData();
     } catch (err) {
-      setMessage({ open: true, severity: "error", text: `Error: ${err.message || "Network Error"}` });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `Error: ${err.message || "Network Error"}`,
+      });
     }
   };
 
   const deleteRow = async () => {
     if (!selectedRow?.id) {
-      setMessage({ open: true, severity: "error", text: "Selecciona un ingrediente para eliminar." });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Selecciona un ingrediente para eliminar.",
+      });
       return;
     }
     try {
       await axios.delete(`/v1/ingrediente/${selectedRow.id}`);
-      setMessage({ open: true, severity: "success", text: "Ingrediente eliminado correctamente." });
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Ingrediente eliminado correctamente.",
+      });
       setSelectedRow({});
       handleClose();
       reloadData();
     } catch (err) {
-      setMessage({ open: true, severity: "error", text: `Error al eliminar: ${err.message}` });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `Error al eliminar: ${err.message}`,
+      });
     }
   };
 
@@ -105,10 +132,21 @@ export default function FormIngrediente({
     <>
       <StackButtons
         methods={{
-          create: () => { setFormData(initialData); setMethodName("Agregar"); setErrors({}); setOpen(true); },
+          create: () => {
+            // 🔴 IMPORTANTE: limpiar selección para que NO se tome como actualizar
+            setSelectedRow({});
+            setFormData(initialData);
+            setMethodName("Agregar");
+            setErrors({});
+            setOpen(true);
+          },
           update: () => {
             if (!selectedRow?.id) {
-              setMessage({ open: true, severity: "error", text: "Selecciona un ingrediente para editar." });
+              setMessage({
+                open: true,
+                severity: "error",
+                text: "Selecciona un ingrediente para editar.",
+              });
               return;
             }
             setMethodName("Actualizar");

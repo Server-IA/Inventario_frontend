@@ -16,31 +16,34 @@ export default function GridUnidad({
       {
         field: "tipoUnidadNombre",
         headerName: "Tipo de unidad",
-        width: 180,
+        flex: 1,
+        minWidth: 160,
         valueGetter: (params) =>
-          params.row?.tipoUnidadNombre ??
-          params.row?.tipoUnidad?.nombre ??
-          params.row?.tipoUnidad?.name ??
-          params.row?.tipoUnidadId ??
-          "—",
+          params.row?.tipoUnidadNombre ||
+          params.row?.tipoUnidad?.nombre ||
+          "",
       },
 
-      { field: "nombre", headerName: "Nombre", width: 200 },
+      {
+        field: "nombre",
+        headerName: "Nombre",
+        flex: 1,
+        minWidth: 160,
+      },
 
       {
         field: "descripcion",
         headerName: "Descripción",
         flex: 1,
-        minWidth: 260,
+        minWidth: 200,
       },
 
       {
         field: "estadoNombre",
         headerName: "Estado",
-        width: 140,
+        width: 120,
         valueGetter: (params) =>
           params.row?.estadoNombre ??
-          params.row?.estado?.name ??
           params.row?.estado?.nombre ??
           (String(params.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
       },
@@ -48,27 +51,29 @@ export default function GridUnidad({
     []
   );
 
+  const selectedId = selectedRow?.id ?? 0;
+
   return (
-    <Box sx={{ width: "100%", mt: 2 }}>
+    <Box sx={{ mt: 2 }}>
       <DataGrid
         rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(row) => row.id}
-
+        rowSelectionModel={selectedId ? [selectedId] : []}
+        onRowClick={(params) => {
+          if (typeof setSelectedRow === "function") {
+            setSelectedRow(params.row);
+          }
+        }}
         loading={loading}
-
-        // selección
-        onRowClick={(params) => setSelectedRow?.(params.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
-
-        // paginación client-side simple
+        disableRowSelectionOnClick={false}
+        autoHeight
         pageSizeOptions={[5, 10, 20, 50]}
         initialState={{
-          pagination: { paginationModel: { page: 0, pageSize: 10 } },
+          pagination: {
+            paginationModel: { page: 0, pageSize: 10 },
+          },
         }}
-
-        autoHeight
       />
     </Box>
   );

@@ -1,8 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, TextField, FormControlLabel, Checkbox, Button,
-  FormControl, InputLabel, Select, MenuItem, FormHelperText, Stack
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  TextField,
+  FormControlLabel,
+  Checkbox,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+  Stack,
 } from "@mui/material";
 import AddRounded from "@mui/icons-material/AddRounded";
 import SaveRounded from "@mui/icons-material/SaveRounded";
@@ -46,26 +58,41 @@ export default function FormProducto({
 
   const validate = () => {
     const errs = {};
+
     if (!formData.nombre) errs.nombre = "Campo requerido";
     if (!formData.productoCategoriaId) errs.productoCategoriaId = "Campo requerido";
     if (!formData.estadoId) errs.estadoId = "Campo requerido";
     if (!formData.unidadMinimaId) errs.unidadMinimaId = "Campo requerido";
+
+    // 👉 VALIDACIÓN CANTIDAD MÍNIMA (no negativa)
+    if (formData.cantidadMinima !== "") {
+      const n = Number(formData.cantidadMinima);
+      if (Number.isNaN(n)) {
+        errs.cantidadMinima = "Debe ser un número válido";
+      } else if (n < 0) {
+        errs.cantidadMinima = "La cantidad mínima no puede ser negativa";
+      }
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const doSubmit = () => {
     if (!validate()) return;
+
     const payload = {
       nombre: formData.nombre,
       productoCategoriaId: Number(formData.productoCategoriaId),
       descripcion: formData.descripcion || "",
       estadoId: Number(formData.estadoId),
       unidadMinimaId: Number(formData.unidadMinimaId),
-      cantidadMinima: formData.cantidadMinima === "" ? null : Number(formData.cantidadMinima),
+      cantidadMinima:
+        formData.cantidadMinima === "" ? null : Number(formData.cantidadMinima),
       esOrganico: Boolean(formData.esOrganico),
       ...(formData.id ? { id: formData.id } : {}),
     };
+
     onSubmit(payload);
   };
 
@@ -179,6 +206,9 @@ export default function FormProducto({
                 name="cantidadMinima"
                 value={formData.cantidadMinima}
                 onChange={handleChange}
+                inputProps={{ min: 0 }}
+                error={!!errors.cantidadMinima}
+                helperText={errors.cantidadMinima}
               />
             </Grid>
 
@@ -198,10 +228,9 @@ export default function FormProducto({
           </Grid>
         </DialogContent>
 
-        {/* ==== Botonera estilo “Producción” ==== */}
+        {/* ==== Botonera ==== */}
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Stack direction="row" spacing={1} sx={{ width: "100%" }} justifyContent="flex-end">
-            {/* Cancelar (outlined) */}
             <Button
               type="button"
               onClick={onClose}
@@ -219,7 +248,6 @@ export default function FormProducto({
               Cancelar
             </Button>
 
-            {/* Crear / Guardar (cápsula blanca con sombra) */}
             <Button
               type="submit"
               startIcon={isEdit ? <SaveRounded /> : <AddRounded />}
