@@ -6,55 +6,79 @@ import GridIngrediente from "./GridIngrediente";
 
 export default function Ingrediente() {
   const [selectedRow, setSelectedRow] = useState({});
-  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
 
   const [ingredientes, setIngredientes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 👇 estado correcto para el Dialog
+  // Dialog
   const [formOpen, setFormOpen] = useState(false);
 
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  // Paginación server-side (SIEMPRE con page + pageSize)
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
   const [rowCount, setRowCount] = useState(0);
 
-  const reloadData = useCallback(async (p = page, s = pageSize) => {
+  const reloadData = useCallback(async () => {
+    const { page, pageSize } = paginationModel;
+
     try {
       setLoading(true);
-      const res = await axios.get("/v1/ingrediente", { params: { page: p, size: s } });
+
+      const res = await axios.get("/v1/ingrediente", {
+        params: { page, size: pageSize },
+      });
+
       const data = res?.data ?? {};
-      const list = Array.isArray(data) ? data : (data.content ?? []);
-      const filas = list.map(it => ({ ...it, estadoId: it.estado?.id ?? it.estadoId ?? null }));
+      const list = Array.isArray(data) ? data : data.content ?? [];
+
+      const filas = list.map((it) => ({
+        ...it,
+        estadoId: it.estado?.id ?? it.estadoId ?? null,
+      }));
+
       setIngredientes(filas);
 
       if (!Array.isArray(data)) {
         setRowCount(Number(data.page?.totalElements ?? filas.length));
-        setPage(Number(data.page?.number ?? p));
-        setPageSize(Number(data.page?.size ?? s));
       } else {
         setRowCount(filas.length);
       }
-    } catch {
-      setMessage({ open: true, severity: "error", text: "Error al cargar ingredientes" });
+    } catch (err) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Error al cargar ingredientes",
+      });
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize]);
+  }, [paginationModel.page, paginationModel.pageSize]);
 
-  useEffect(() => { reloadData(0, pageSize); }, [reloadData, pageSize]);
+  // Cargar al inicio y cada vez que cambie page/pageSize
+  useEffect(() => {
+    reloadData();
+  }, [reloadData]);
 
   return (
     <div>
       <h1>Ingredientes</h1>
+
       <MessageSnackBar message={message} setMessage={setMessage} />
 
       <FormIngrediente
-        open={formOpen}                
-        setOpen={setFormOpen}           
+        open={formOpen}
+        setOpen={setFormOpen}
         selectedRow={selectedRow || {}}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
-        reloadData={() => reloadData(page, pageSize)}
+        reloadData={reloadData}
       />
 
       <GridIngrediente
@@ -62,12 +86,9 @@ export default function Ingrediente() {
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         loading={loading}
-        page={page}
-        pageSize={pageSize}
+        paginationModel={paginationModel}
+        setPaginationModel={setPaginationModel}
         rowCount={rowCount}
-        paginationMode="server"
-        onPageChange={(newPage) => { setPage(newPage); reloadData(newPage, pageSize); }}
-        onPageSizeChange={(newSize) => { setPageSize(newSize); setPage(0); reloadData(0, newSize); }}
       />
     </div>
   );

@@ -7,15 +7,14 @@ import {
 import axios from "../axiosConfig";
 import { validateCamposBase } from "../utils/validations";
 
-
 export default function FormSede({
   open = false,
   setOpen = () => {},
   formMode = "create",
   selectedRow = null,
-  municipioId = "",        // puede venir del filtro o vacío
-  grupos = [],             // [{id, nombre}]
-  tiposSede = [],          // [{id, nombre}]
+  municipioId = "",
+  grupos = [],
+  tiposSede = [],
   reloadData = () => {},
   setMessage = () => {},
   authHeaders = {},
@@ -36,31 +35,25 @@ export default function FormSede({
 
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
-  const [municipiosOpts, setMunicipiosOpts] = useState([]); // [{id, nombre}]
+  const [municipiosOpts, setMunicipiosOpts] = useState([]);
 
-  // --- Reglas de saneo / validación ---
-  // Bloqueo de caracteres típicos XSS/SQLi
   const invalidCharsRegex = /[<>/"'`;(){}\[\]\\]/g;
-  // Palabras/operadores típicos de SQLi (muy conservador)
-  const sqliWordsRegex = /\b(select|insert|update|delete|drop|union|exec|xp_|information_schema)\b|--|\/\*|\*\//i;
-  // Solo números, punto, coma, guion y espacios (p.ej. "2.9304, -75.2819")
-  const numericLikeRegex = /^[0-9.,\-\s]+$/;
-  // Sanea texto eliminando caracteres peligrosos
+  const sqliWordsRegex =
+    /\b(select|insert|update|delete|drop|union|exec|xp_|information_schema)\b|--|\/\*|\*\//i;
+
   const cleanText = (v = "") => v.replace(invalidCharsRegex, "");
-  // Sanea coord/geo dejando solo números y separadores
-  const cleanNumericLike = (v = "") => v.replace(/[^0-9.,\-\s]/g, "");
-  // helper numérico
-  const toNum = (v) => (v === null || v === undefined || v === "" ? "" : Number(v));
-  // primer id válido
-  const getSafeId = (...candidates) => {
-    for (const c of candidates) {
-      const n = Number(c);
-      if (!Number.isNaN(n) && n > 0) return n;
+
+  const toNum = (v) =>
+    v === null || v === undefined || v === "" ? "" : Number(v);
+
+  const getSafeId = (...values) => {
+    for (const v of values) {
+      const n = Number(v);
+      if (!isNaN(n) && n > 0) return n;
     }
     return "";
   };
 
-  // Cargar MUNICIPIOS (items públicos) y mapear a {id, nombre}
   useEffect(() => {
     if (!open) return;
     axios
@@ -75,35 +68,25 @@ export default function FormSede({
         );
       })
       .catch(() => setMunicipiosOpts([]));
-  }, [open]); // solo al abrir
+  }, [open]);
 
-  // Normaliza datos al abrir/editar
   useEffect(() => {
     if (!open) return;
 
     if (formMode === "edit" && selectedRow) {
-      const muniId = getSafeId(
-        selectedRow.municipioId,
-        selectedRow?.municipio?.id,
-        municipioId
-      );
-      const grpId = getSafeId(
-        selectedRow.grupoId,
-        selectedRow?.grupo?.id,
-        selectedRow?.grupo_id
-      );
-      const tipId = getSafeId(
-        selectedRow.tipoSedeId,
-        selectedRow?.tipoSede?.id,
-        selectedRow?.tipo_sede_id
-      );
-
       setFormData({
         id: toNum(selectedRow.id),
         nombre: selectedRow.nombre ?? "",
-        grupoId: grpId,
-        tipoSedeId: tipId,
-        municipioId: muniId,
+        grupoId: getSafeId(selectedRow.grupoId, selectedRow?.grupo?.id),
+        tipoSedeId: getSafeId(
+          selectedRow.tipoSedeId,
+          selectedRow?.tipoSede?.id
+        ),
+        municipioId: getSafeId(
+          selectedRow.municipioId,
+          selectedRow?.municipio?.id,
+          municipioId
+        ),
         geolocalizacion: selectedRow.geolocalizacion ?? "",
         coordenadas: selectedRow.coordenadas ?? "",
         area: selectedRow.area ?? "",
@@ -117,94 +100,132 @@ export default function FormSede({
         municipioId: getSafeId(municipioId),
       });
     }
+
     setErrors({});
-  }, [open, formMode, selectedRow, municipioId, municipiosOpts, grupos, tiposSede]);
+  }, [open, formMode, selectedRow, municipioId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     let v = value;
 
-    // Saneo por campo
-    if (["nombre", "descripcion", "comuna"].includes(name)) {
+    // Limpiar textos de caracteres especiales peligrosos
+    if (["nombre", "descripcion"].includes(name)) {
       v = cleanText(v);
-    }
-    if (["coordenadas", "geolocalizacion"].includes(name)) {
-      v = cleanNumericLike(v);
-    }
-    if (name === "area") {
-      // mantener solo dígitos, punto y guion (luego validamos número)
-      v = value.replace(/[^0-9.\-]/g, "");
+      if (sqliWordsRegex.test(v)) {
+        // Por si quieres marcar algún error de seguridad:
+        // aquí solo limpiamos, no seteamos error directo
+      }
     }
 
-    const newValue =
+    // Geolocalización: SOLO NÚMEROS (no negativos, sin signos)
+    if (name === "geolocalizacion") {
+      v = value.replace(/[^0-9]/g, "");
+    }
+
+    // Coordenadas: permitir dígitos, punto, coma, espacios y signo -
+    if (name === "coordenadas") {
+      v = value.replace(/[^0-9.,\s-]/g, "");
+    }
+
+    // Área: números y punto, sin signos
+    if (name === "area") {
+      v = value.replace(/[^0-9.]/g, "");
+    }
+
+    // COMUNA como select numérico (1-10)
+    if (name === "comuna") {
+      v = Number(v);
+    }
+
+    const newVal =
       ["estadoId", "grupoId", "tipoSedeId", "municipioId"].includes(name)
         ? toNum(v)
-        : name === "area"
-        ? String(v).replace(",", ".")
         : v;
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    setFormData((prev) => ({ ...prev, [name]: newVal }));
+  };
+
+  const parseCoordinates = (value = "") => {
+    if (!value.trim()) return null;
+    // Separamos por coma o espacio
+    const parts = value.split(/[,\s]+/).filter(Boolean);
+    if (parts.length !== 2) return null;
+
+    const lat = Number(parts[0].replace(",", "."));
+    const lon = Number(parts[1].replace(",", "."));
+
+    if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+    return { lat, lon };
   };
 
   const validate = () => {
     const e = {};
 
-    // 1) Validación CENTRAL (nombre, descripcion, estado)
     const baseErrors = validateCamposBase({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
-      estado: formData.estadoId, // el validador espera 'estado'
+      estado: formData.estadoId,
     });
 
-    // Mapeo de claves del validador central a las usadas en este form
     if (baseErrors.nombre) e.nombre = baseErrors.nombre;
     if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
-    if (baseErrors.estado) e.estadoId = baseErrors.estado; // mapea a estadoId en este formulario
+    if (baseErrors.estado) e.estadoId = baseErrors.estado;
     if (baseErrors._security) e._security = baseErrors._security;
 
-    // 2) Tus checks locales (evitamos duplicar nombre/descripcion aquí)
-    // Campos de texto adicionales: comuna
-    const checkText = (field, label, required = false) => {
-      const val = (formData[field] ?? "").trim();
-      if (required && !val) {
-        e[field] = `${label} es obligatorio.`;
-        return;
-      }
-      if (invalidCharsRegex.test(val) || sqliWordsRegex.test(val)) {
-        e[field] = `${label} contiene caracteres o patrones no permitidos.`;
-      }
-    };
-
-    checkText("comuna", "La comuna", false);
-
-    // Selects requeridos
-    if (!Number(formData.grupoId)) e.grupoId = "Debe seleccionar un grupo.";
-    if (!Number(formData.tipoSedeId)) e.tipoSedeId = "Debe seleccionar un tipo de sede.";
-    if (!Number(formData.municipioId)) e.municipioId = "Municipio no asignado.";
-
-    // Área: numérico válido (si viene)
-    if (formData.area !== "") {
-      const n = Number(String(formData.area));
-      if (Number.isNaN(n)) e.area = "Área debe ser numérica.";
+    // Nombre: obligatorio + NO solo números
+    if (!formData.nombre.trim()) {
+      e.nombre = "El nombre es obligatorio.";
+    } else if (/^\d+$/.test(formData.nombre.trim())) {
+      e.nombre = "El nombre no puede ser solo números.";
     }
 
-    // Coordenadas / Geolocalización: solo caracteres numéricos permitidos
-    const checkNumericLike = (field, label) => {
-      const val = (formData[field] ?? "").trim();
-      if (val && !numericLikeRegex.test(val)) {
-        e[field] = `${label} solo permite números, punto, coma, guion y espacios.`;
-      }
-      if (sqliWordsRegex.test(val)) {
-        e[field] = `${label} contiene patrones no permitidos.`;
-      }
-    };
-    checkNumericLike("coordenadas", "Coordenadas");
-    checkNumericLike("geolocalizacion", "Geolocalización");
+    // Grupo / Tipo Sede / Municipio obligatorios
+    if (!Number(formData.grupoId))
+      e.grupoId = "Debe seleccionar un grupo.";
+    if (!Number(formData.tipoSedeId))
+      e.tipoSedeId = "Debe seleccionar un tipo de sede.";
+    if (!Number(formData.municipioId))
+      e.municipioId = "Debe seleccionar un municipio.";
 
-    // Estado permitido (mantiene tu lógica, complementa a la central)
-    if (![1, 2].includes(Number(formData.estadoId)))
-      e.estadoId = e.estadoId || "Debe seleccionar estado.";
+    // Área: numérica y no negativa
+    if (formData.area !== "") {
+      const n = Number(formData.area);
+      if (isNaN(n)) e.area = "El área debe ser numérica.";
+      else if (n < 0) e.area = "El área no puede ser negativa.";
+    }
+
+    // Geolocalización: solo números (ya limpiada en handleChange)
+    if (formData.geolocalizacion && !/^[0-9]+$/.test(formData.geolocalizacion)) {
+      e.geolocalizacion = "La geolocalización debe contener solo números.";
+    }
+
+    // Coordenadas: formato numérico y rangos de lat/long
+    if (formData.coordenadas) {
+      const coords = parseCoordinates(formData.coordenadas);
+      if (!coords) {
+        e.coordenadas =
+          "Debes ingresar coordenadas numéricas en formato 'latitud, longitud'.";
+      } else {
+        const { lat, lon } = coords;
+        if (lat < -90 || lat > 90) {
+          e.coordenadas = "La latitud debe estar entre -90° y 90°.";
+        } else if (lon < -180 || lon > 180) {
+          e.coordenadas = "La longitud debe estar entre -180° y 180°.";
+        }
+      }
+    }
+
+    // COMUNA → OBLIGATORIA + SOLO 1–10
+    if (!formData.comuna) {
+      e.comuna = "Debe seleccionar la comuna.";
+    } else if (formData.comuna < 1 || formData.comuna > 10) {
+      e.comuna = "La comuna debe estar entre 1 y 10.";
+    }
+
+    // Descripción: no solo números
+    if (formData.descripcion && /^\d+$/.test(formData.descripcion.trim())) {
+      e.descripcion = "La descripción no puede ser solo números.";
+    }
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -221,29 +242,40 @@ export default function FormSede({
       geolocalizacion: formData.geolocalizacion?.trim() || null,
       coordenadas: formData.coordenadas?.trim() || null,
       area: formData.area === "" ? null : Number(formData.area),
-      comuna: formData.comuna?.trim() || null,
+      comuna: Number(formData.comuna),
       descripcion: formData.descripcion?.trim() || null,
       estadoId: Number(formData.estadoId),
     };
 
     try {
       if (formMode === "edit" && formData.id) {
-        await axios.put(`/v1/sede/${formData.id}`, { id: Number(formData.id), ...payload }, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Sede actualizada correctamente." });
+        await axios.put(
+          `/v1/sede/${formData.id}`,
+          { id: Number(formData.id), ...payload },
+          authHeaders
+        );
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Sede actualizada correctamente.",
+        });
       } else {
         await axios.post("/v1/sede", payload, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Sede creada correctamente." });
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Sede creada correctamente.",
+        });
       }
       setOpen(false);
       reloadData();
     } catch (err) {
-      console.error("SEDE SAVE ERR:", err.response?.status, err.response?.data || err.message);
       const api = err.response?.data || {};
       const txt =
         api.message ||
         api.error ||
         (err.response?.status === 409
-          ? "Datos duplicados o restricción de base de datos."
+          ? "Datos duplicados o restricción en BD."
           : "Error al guardar sede.");
       setMessage({ open: true, severity: "error", text: txt });
     }
@@ -251,109 +283,169 @@ export default function FormSede({
 
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-      <DialogTitle>{formMode === "edit" ? "Editar Sede" : "Nueva Sede"}</DialogTitle>
+      <DialogTitle>
+        {formMode === "edit" ? "Editar Sede" : "Nueva Sede"}
+      </DialogTitle>
+
       <DialogContent>
+        {/* Nombre */}
         <TextField
-          fullWidth margin="normal" label="Nombre" name="nombre"
-          value={formData.nombre} onChange={handleChange}
-          error={!!errors.nombre} helperText={errors.nombre}
-          inputProps={{ maxLength: 120 }}
+          fullWidth
+          margin="normal"
+          label="Nombre"
+          name="nombre"
+          value={formData.nombre}
+          onChange={handleChange}
+          error={!!errors.nombre}
+          helperText={errors.nombre}
         />
 
+        {/* Grupo */}
         <FormControl fullWidth margin="normal" error={!!errors.grupoId}>
           <InputLabel>Grupo</InputLabel>
           <Select
             name="grupoId"
-            value={formData.grupoId === "" ? "" : Number(formData.grupoId)}
+            value={formData.grupoId}
             onChange={handleChange}
             label="Grupo"
           >
             {grupos.map((g) => (
-              <MenuItem key={g.id} value={Number(g.id)}>{g.nombre}</MenuItem>
+              <MenuItem key={g.id} value={g.id}>
+                {g.nombre}
+              </MenuItem>
             ))}
           </Select>
-          {errors.grupoId && <FormHelperText>{errors.grupoId}</FormHelperText>}
+          <FormHelperText>{errors.grupoId}</FormHelperText>
         </FormControl>
 
+        {/* Tipo de sede */}
         <FormControl fullWidth margin="normal" error={!!errors.tipoSedeId}>
           <InputLabel>Tipo de Sede</InputLabel>
           <Select
             name="tipoSedeId"
-            value={formData.tipoSedeId === "" ? "" : Number(formData.tipoSedeId)}
+            value={formData.tipoSedeId}
             onChange={handleChange}
             label="Tipo de Sede"
           >
             {tiposSede.map((t) => (
-              <MenuItem key={t.id} value={Number(t.id)}>{t.nombre}</MenuItem>
+              <MenuItem key={t.id} value={t.id}>
+                {t.nombre}
+              </MenuItem>
             ))}
           </Select>
-          {errors.tipoSedeId && <FormHelperText>{errors.tipoSedeId}</FormHelperText>}
+          <FormHelperText>{errors.tipoSedeId}</FormHelperText>
         </FormControl>
 
-        {/* Selector de Municipio (items públicos) */}
+        {/* Municipio */}
         <FormControl fullWidth margin="normal" error={!!errors.municipioId}>
           <InputLabel>Municipio</InputLabel>
           <Select
             name="municipioId"
-            value={formData.municipioId === "" ? "" : Number(formData.municipioId)}
+            value={formData.municipioId}
             onChange={handleChange}
             label="Municipio"
           >
             {municipiosOpts.map((m) => (
-              <MenuItem key={m.id} value={Number(m.id)}>{m.nombre}</MenuItem>
+              <MenuItem key={m.id} value={m.id}>
+                {m.nombre}
+              </MenuItem>
             ))}
           </Select>
-          {errors.municipioId && <FormHelperText>{errors.municipioId}</FormHelperText>}
+          <FormHelperText>{errors.municipioId}</FormHelperText>
         </FormControl>
 
+        {/* Geolocalización */}
         <TextField
-          fullWidth margin="normal" label="Geolocalización" name="geolocalizacion"
-          value={formData.geolocalizacion} onChange={handleChange}
-          error={!!errors.geolocalizacion} helperText={errors.geolocalizacion}
-          placeholder="Ej: 2.9304, -75.2819"
-        />
-        <TextField
-          fullWidth margin="normal" label="Coordenadas" name="coordenadas"
-          value={formData.coordenadas} onChange={handleChange}
-          error={!!errors.coordenadas} helperText={errors.coordenadas}
-          placeholder="Ej: 2.9304, -75.2819"
-        />
-        <TextField
-          fullWidth margin="normal" label="Área" name="area"
-          value={formData.area} onChange={handleChange}
-          error={!!errors.area} helperText={errors.area}
-          placeholder="Ej: 1234.5"
-        />
-        <TextField
-          fullWidth margin="normal" label="Comuna" name="comuna"
-          value={formData.comuna} onChange={handleChange}
-          error={!!errors.comuna} helperText={errors.comuna}
-        />
-        <TextField
-          fullWidth margin="normal" label="Descripción" name="descripcion"
-          value={formData.descripcion} onChange={handleChange}
-          error={!!errors.descripcion} helperText={errors.descripcion}
-          multiline minRows={2}
+          fullWidth
+          margin="normal"
+          label="Geolocalización"
+          name="geolocalizacion"
+          value={formData.geolocalizacion}
+          onChange={handleChange}
+          error={!!errors.geolocalizacion}
+          helperText={errors.geolocalizacion}
         />
 
+        {/* Coordenadas */}
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Coordenadas (lat, lon)"
+          name="coordenadas"
+          value={formData.coordenadas}
+          onChange={handleChange}
+          error={!!errors.coordenadas}
+          helperText={
+            errors.coordenadas ||
+            "Ejemplo: 2.927, -75.281  (latitud, longitud)"
+          }
+        />
+
+        {/* Área */}
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Área"
+          name="area"
+          value={formData.area}
+          onChange={handleChange}
+          error={!!errors.area}
+          helperText={errors.area}
+        />
+
+        {/* Comuna */}
+        <FormControl fullWidth margin="normal" error={!!errors.comuna}>
+          <InputLabel>Comuna</InputLabel>
+          <Select
+            name="comuna"
+            value={formData.comuna}
+            onChange={handleChange}
+            label="Comuna"
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>{errors.comuna}</FormHelperText>
+        </FormControl>
+
+        {/* Descripción */}
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Descripción"
+          name="descripcion"
+          value={formData.descripcion}
+          onChange={handleChange}
+          error={!!errors.descripcion}
+          helperText={errors.descripcion}
+          multiline
+          minRows={2}
+        />
+
+        {/* Estado */}
         <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
           <InputLabel>Estado</InputLabel>
           <Select
             name="estadoId"
-            value={formData.estadoId === "" ? "" : Number(formData.estadoId)}
+            value={formData.estadoId}
             onChange={handleChange}
             label="Estado"
           >
             <MenuItem value={1}>Activo</MenuItem>
             <MenuItem value={2}>Inactivo</MenuItem>
           </Select>
-          {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
+          <FormHelperText>{errors.estadoId}</FormHelperText>
         </FormControl>
       </DialogContent>
 
       <DialogActions>
         <Button onClick={() => setOpen(false)}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>Guardar</Button>
+        <Button variant="contained" onClick={handleSubmit}>
+          Guardar
+        </Button>
       </DialogActions>
     </Dialog>
   );

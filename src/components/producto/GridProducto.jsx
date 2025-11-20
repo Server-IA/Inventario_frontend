@@ -41,75 +41,64 @@ function ProductoToolbar({ onResetColumns }) {
 export default function GridProducto({
   rows = [],
   loading = false,
-  rowCount = 0,
-
   selectedRow = null,
   setSelectedRow = () => {},
-
-  // server-side
-  paginationModel,
-  onPaginationModelChange,
-  sortModel,
-  onSortModelChange,
 }) {
-  /* ---------- Columnas (todas hideable) ---------- */
+  /* ---------- Columnas ---------- */
   const columns = useMemo(
     () => [
-      { field: "id", headerName: "ID", width: 90, type: "number", hideable: true },
-      { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 220, hideable: true },
-      { field: "productoCategoriaId", headerName: "Cat. ID", width: 110, type: "number", hideable: true },
-      { field: "productoCategoriaNombre", headerName: "Categoría", flex: 1, minWidth: 200, hideable: true },
-      { field: "unidadMinimaId", headerName: "Unidad ID", width: 110, type: "number", hideable: true },
-      { field: "unidadMinimaNombre", headerName: "Unidad mínima", width: 180, hideable: true },
-      { field: "cantidadMinima", headerName: "Cant. mínima", width: 140, type: "number", hideable: true },
-      { field: "descripcion", headerName: "Descripción", flex: 1.2, minWidth: 260, hideable: true },
+      { field: "id", headerName: "ID", width: 90, type: "number" },
+      { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 220 },
+      { field: "productoCategoriaId", headerName: "Cat. ID", width: 110, type: "number" },
+      { field: "productoCategoriaNombre", headerName: "Categoría", flex: 1, minWidth: 200 },
+      { field: "unidadMinimaId", headerName: "Unidad ID", width: 110, type: "number" },
+      { field: "unidadMinimaNombre", headerName: "Unidad mínima", width: 180 },
+      { field: "cantidadMinima", headerName: "Cant. mínima", width: 140, type: "number" },
+      { field: "descripcion", headerName: "Descripción", flex: 1.2, minWidth: 260 },
       {
         field: "esOrganico",
         headerName: "Orgánico",
         width: 120,
-        hideable: true,
-        valueGetter: (params) => {
-          const v = params.value;
-          if (v === true) return "Sí";
-          if (v === false) return "No";
-          return "";
-        },
-        sortComparator: (a, b) => {
-          const va = a === "Sí" ? 1 : a === "No" ? 0 : -1;
-          const vb = b === "Sí" ? 1 : b === "No" ? 0 : -1;
-          return va - vb;
-        },
+        valueGetter: (params) => (params.value ? "Sí" : "No"),
       },
-      { field: "estadoId", headerName: "Estado ID", width: 110, type: "number", hideable: true },
-      { field: "estadoNombre", headerName: "Estado", width: 140, hideable: true },
+      { field: "estadoId", headerName: "Estado ID", width: 110, type: "number" },
+      { field: "estadoNombre", headerName: "Estado", width: 140 },
     ],
     []
   );
 
   /* ---------- Persistencia visibilidad ---------- */
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
-
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-      if (saved && typeof saved === "object") setColumnVisibilityModel(saved);
-    } catch {
-      /* noop */
-    }
+      setColumnVisibilityModel(saved);
+    } catch {}
   }, []);
 
   const handleVisibilityChange = (model) => {
     setColumnVisibilityModel(model);
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(model));
-    } catch {
-      /* noop */
-    }
+    localStorage.setItem(LS_KEY, JSON.stringify(model));
   };
 
   const handleResetColumns = () => {
     localStorage.removeItem(LS_KEY);
     setColumnVisibilityModel({});
+  };
+
+  /* ---------- Paginación CONTROLADA ---------- */
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
+
+  const handlePaginationChange = (model) => {
+    // Si cambia el tamaño de página → vuelve siempre a la página 0
+    if (model.pageSize !== paginationModel.pageSize) {
+      setPaginationModel({ page: 0, pageSize: model.pageSize });
+    } else {
+      setPaginationModel(model);
+    }
   };
 
   return (
@@ -119,30 +108,26 @@ export default function GridProducto({
         columns={columns}
         getRowId={(r) => r.id}
         loading={loading}
-        rowCount={rowCount}
 
-        // selección
+        /* selección */
         onRowClick={(p) => setSelectedRow(p.row)}
         rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
 
-        // server-side
-        paginationMode="server"
-        sortingMode="server"
-        paginationModel={paginationModel}
-        onPaginationModelChange={onPaginationModelChange}
-        sortModel={sortModel}
-        onSortModelChange={onSortModelChange}
-
-        // columnas + toolbar
+        /* columnas + toolbar */
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         slots={{ toolbar: ProductoToolbar }}
         slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
 
-        // UX
-        autoHeight
+        /* paginación controlada (cliente) */
+        pagination
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationChange}
         pageSizeOptions={[5, 10, 20, 50]}
+
+        /* altura fija para que funcione la paginación */
+        sx={{ height: 520 }}
       />
     </Box>
   );
@@ -151,11 +136,6 @@ export default function GridProducto({
 GridProducto.propTypes = {
   rows: PropTypes.array,
   loading: PropTypes.bool,
-  rowCount: PropTypes.number,
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func,
-  paginationModel: PropTypes.object.isRequired,
-  onPaginationModelChange: PropTypes.func.isRequired,
-  sortModel: PropTypes.array.isRequired,
-  onSortModelChange: PropTypes.func.isRequired,
 };

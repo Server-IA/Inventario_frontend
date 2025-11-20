@@ -2,57 +2,87 @@ import * as React from "react";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
 import {
-  Button, Dialog, DialogActions, DialogContent,
-  DialogContentText, DialogTitle, TextField, FormControl,
-  InputLabel, Select, MenuItem
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 
 import { validateCamposBase } from "../utils/validations";
 
-export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessage, reloadData }) {
+export default function FormTipoEspacio({
+  selectedRow,
+  setSelectedRow,
+  setMessage,
+  reloadData,
+}) {
   const [open, setOpen] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
 
   const initialData = {
     nombre: "",
     descripcion: "",
-    estado: ""
+    estado: "",
   };
 
   const [formData, setFormData] = React.useState(initialData);
+  const [errors, setErrors] = React.useState({}); // <<-- FALTABA ESTO
 
   const create = () => {
     setFormData(initialData);
+    setErrors({});
     setMethodName("Add");
     setOpen(true);
   };
 
   const update = () => {
     if (!selectedRow?.id) {
-      setMessage({ open: true, severity: "error", text: "Selecciona un tipo de espacio para editar." });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Selecciona un tipo de espacio para editar.",
+      });
       return;
     }
 
     setFormData({
       nombre: selectedRow.nombre || "",
       descripcion: selectedRow.descripcion || "",
-      estado: selectedRow.estadoId?.toString() || ""
+      estado: selectedRow.estadoId?.toString() || "",
     });
 
+    setErrors({});
     setMethodName("Update");
     setOpen(true);
   };
 
   const deleteRow = () => {
     if (!selectedRow?.id) {
-      setMessage({ open: true, severity: "error", text: "Selecciona un tipo de espacio para eliminar." });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Selecciona un tipo de espacio para eliminar.",
+      });
       return;
     }
 
-    axios.delete(`/v1/tipo_espacio/${selectedRow.id}`)
+    axios
+      .delete(`/v1/tipo_espacio/${selectedRow.id}`)
       .then(() => {
-        setMessage({ open: true, severity: "success", text: "Tipo de espacio eliminado correctamente." });
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Tipo de espacio eliminado correctamente.",
+        });
         setSelectedRow({});
         reloadData();
       })
@@ -65,13 +95,15 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
       });
   };
 
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    setErrors({});
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
 
   const validate = () => {
     const e = {};
@@ -86,7 +118,9 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
     if (baseErrors.nombre) e.nombre = baseErrors.nombre;
     if (baseErrors.estado) e.estado = baseErrors.estado;
     // Solo mostramos error de descripción si el usuario escribió algo (no la hacemos obligatoria)
-    if (formData.descripcion?.trim() && baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
+    if (formData.descripcion?.trim() && baseErrors.descripcion) {
+      e.descripcion = baseErrors.descripcion;
+    }
     if (baseErrors._security) e._security = baseErrors._security;
 
     // Rango de estado permitido (refuerzo)
@@ -95,6 +129,12 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
     }
 
     setErrors(e);
+
+    // Si quieres, puedes mostrar errores de seguridad en un snackbar:
+    // if (e._security) {
+    //   setMessage({ open: true, severity: "error", text: e._security });
+    // }
+
     return Object.keys(e).length === 0;
   };
 
@@ -105,28 +145,35 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
     const payload = {
       nombre: formData.nombre,
       descripcion: formData.descripcion,
-      estadoId: parseInt(formData.estado)
+      estadoId: parseInt(formData.estado, 10),
     };
 
     const method = methodName === "Add" ? axios.post : axios.put;
-    const url = methodName === "Add" ? "/v1/tipo_espacio" : `/v1/tipo_espacio/${selectedRow.id}`;
+    const url =
+      methodName === "Add"
+        ? "/v1/tipo_espacio"
+        : `/v1/tipo_espacio/${selectedRow.id}`;
 
     method(url, payload)
       .then(() => {
         setMessage({
           open: true,
           severity: "success",
-          text: methodName === "Add" ? "Tipo de espacio creado!" : "Tipo de espacio actualizado!"
+          text:
+            methodName === "Add"
+              ? "Tipo de espacio creado!"
+              : "Tipo de espacio actualizado!",
         });
         setOpen(false);
         setSelectedRow({});
+        setErrors({});
         reloadData();
       })
-      .catch(err => {
+      .catch((err) => {
         setMessage({
           open: true,
           severity: "error",
-          text: `Error: ${err.message || "Network Error"}`
+          text: `Error: ${err.message || "Network Error"}`,
         });
       });
   };
@@ -135,24 +182,42 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
     <>
       <StackButtons methods={{ create, update, deleteRow }} />
       <Dialog open={open} onClose={handleClose}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <DialogTitle>{methodName} Tipo de Espacio</DialogTitle>
           <DialogContent>
-            <DialogContentText>Formulario para tipo de espacio</DialogContentText>
+            <DialogContentText>
+              Formulario para tipo de espacio
+            </DialogContentText>
 
             <TextField
-              fullWidth margin="dense" required
-              name="nombre" label="Nombre"
+              fullWidth
+              margin="dense"
+              required
+              name="nombre"
+              label="Nombre"
               value={formData.nombre}
               onChange={handleChange}
+              error={!!errors.nombre}
+              helperText={errors.nombre}
             />
+
             <TextField
-              fullWidth margin="dense"
-              name="descripcion" label="Descripción"
+              fullWidth
+              margin="dense"
+              name="descripcion"
+              label="Descripción"
               value={formData.descripcion}
               onChange={handleChange}
+              error={!!errors.descripcion}
+              helperText={errors.descripcion}
             />
-            <FormControl fullWidth margin="normal" required>
+
+            <FormControl
+              fullWidth
+              margin="normal"
+              required
+              error={!!errors.estado}
+            >
               <InputLabel>Estado</InputLabel>
               <Select
                 name="estado"
@@ -164,6 +229,9 @@ export default function FormTipoEspacio({ selectedRow, setSelectedRow, setMessag
                 <MenuItem value="1">Activo</MenuItem>
                 <MenuItem value="2">Inactivo</MenuItem>
               </Select>
+              {errors.estado && (
+                <FormHelperText>{errors.estado}</FormHelperText>
+              )}
             </FormControl>
           </DialogContent>
           <DialogActions>

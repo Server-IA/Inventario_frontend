@@ -1,116 +1,211 @@
-// src/components/IngredientePresentacionProducto/GridIngredientePresentacionP.jsx
-import React, { useMemo } from "react";
+// src/components/IngredientePP/GridIngredientePresentacionP.jsx
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { DataGrid } from "@mui/x-data-grid";
-import { Box } from "@mui/material";
+import {
+  DataGrid,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarQuickFilter,
+} from "@mui/x-data-grid";
 
+const LS_KEY = "gridIngredientePP:columnVisibility:v1";
+
+/* ---------- Toolbar personalizada ---------- */
+function IngredientePPToolbar({ onResetColumns }) {
+  return (
+    <GridToolbarContainer
+      sx={{
+        p: 1,
+        gap: 1,
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <div>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+      </div>
+
+      <GridToolbarQuickFilter debounceMs={300} />
+
+      <button
+        type="button"
+        onClick={onResetColumns}
+        style={{
+          border: "1px solid rgba(0,0,0,.2)",
+          background: "transparent",
+          padding: "4px 8px",
+          borderRadius: 6,
+          cursor: "pointer",
+        }}
+        title="Restablecer columnas"
+      >
+        Restablecer columnas
+      </button>
+    </GridToolbarContainer>
+  );
+}
+
+IngredientePPToolbar.propTypes = {
+  onResetColumns: PropTypes.func,
+};
+
+/* ---------- Grid principal ---------- */
 export default function GridIngredientePresentacionP({
-  // Datos
   rows = [],
-
-  // Selección
   selectedRow = null,
-  setSelectedRow,
-
-  // Catálogos opcionales (id -> name)
-  ingredientesMap = {},
-  presentacionesMap = {},
-
-  // Paginación (server-side opcional)
-  paginationModel,        // { page, pageSize } o { page, size }
-  setPaginationModel,     // (model) => void
-  rowCount,               // total en servidor
+  setSelectedRow = () => {},
   loading = false,
+
+  // paginación server-side (Estilo B)
+  page = 0,
+  rowsPerPage = 10,
+  totalElements = 0,
+  onPageChange = () => {},
+  onRowsPerPageChange = () => {},
 }) {
-  const nombreIngrediente = (row) =>
-    row?.ingredienteNombre ??
-    row?.ingrediente?.name ??
-    row?.ingrediente?.nombre ??
-    ingredientesMap?.[String(row?.ingredienteId)] ??
-    String(row?.ingredienteId ?? "");
-
-  const nombrePresentacion = (row) =>
-    row?.presentacionNombre ??
-    row?.presentacionProducto?.name ??
-    row?.presentacionProducto?.nombre ??
-    presentacionesMap?.[String(row?.presentacionProductoId)] ??
-    String(row?.presentacionProductoId ?? "");
-
-  const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 90 },
-    {
-      field: "ingredienteId",
-      headerName: "Ingrediente",
-      width: 240,
-      valueGetter: (p) => nombreIngrediente(p?.row),
-      sortable: false,
-    },
-    {
-      field: "presentacionProductoId",
-      headerName: "Presentación de producto",
-      width: 280,
-      valueGetter: (p) => nombrePresentacion(p?.row),
-      sortable: false,
-    },
-    { field: "nombre", headerName: "Nombre", width: 200 },
-    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 240 },
-    {
-      field: "estadoId",
-      headerName: "Estado",
-      width: 140,
-      valueGetter: (p) =>
-        p?.row?.estado?.nombre ??
-        p?.row?.estado?.name ??
-        (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
-    },
-  ]), [ingredientesMap, presentacionesMap]);
-
-  // ¿Server o Cliente?
-  const serverPagination = Boolean(
-    paginationModel && setPaginationModel && typeof rowCount === "number"
+  /* ----- Definición de columnas (según DTO del backend / join del padre) ----- */
+  const columns = useMemo(
+    () => [
+      {
+        field: "id",
+        headerName: "ID",
+        width: 90,
+        hideable: true,
+      },
+      {
+        field: "nombreProducto",
+        headerName: "Producto",
+        flex: 1.4,
+        minWidth: 200,
+        valueGetter: (p) =>
+          p?.row?.nombreProducto ??
+          p?.row?.productoNombre ??
+          "",
+        hideable: true,
+      },
+      {
+        field: "presentacionNombre",
+        headerName: "Presentación",
+        flex: 1.2,
+        minWidth: 200,
+        valueGetter: (p) =>
+          p?.row?.presentacionNombre ??
+          p?.row?.nombrePresentacionProducto ??
+          "",
+        hideable: true,
+      },
+      {
+        field: "ingredienteNombre",
+        headerName: "Ingrediente",
+        flex: 1.2,
+        minWidth: 200,
+        valueGetter: (p) =>
+          p?.row?.ingredienteNombre ??
+          p?.row?.ingrediente?.nombreIngrediente ??
+          "",
+        hideable: true,
+      },
+      {
+        field: "cantidad",
+        headerName: "Cantidad",
+        flex: 0.6,
+        minWidth: 100,
+        valueGetter: (p) => p?.row?.cantidad ?? "",
+        hideable: true,
+      },
+      {
+        field: "unidadNombre",
+        headerName: "Unidad",
+        flex: 0.8,
+        minWidth: 120,
+        valueGetter: (p) =>
+          p?.row?.unidadNombre ??
+          p?.row?.ingrediente?.nombreUnidad ??
+          "",
+        hideable: true,
+      },
+      {
+        field: "estadoNombre",
+        headerName: "Estado",
+        flex: 0.7,
+        minWidth: 120,
+        valueGetter: (p) =>
+          p?.row?.estadoNombre ??
+          p?.row?.ingrediente?.nombreEstado ??
+          (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+        hideable: true,
+      },
+    ],
+    []
   );
 
+  /* ----- Column visibility con persistencia en localStorage ----- */
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      if (saved && typeof saved === "object") {
+        setColumnVisibilityModel(saved);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(model));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleResetColumns = () => {
+    localStorage.removeItem(LS_KEY);
+    setColumnVisibilityModel({});
+  };
+
+  /* ----- Handlers de paginación (adaptados a Estilo B del padre) ----- */
+  const handlePaginationModelChange = (model) => {
+    const nextPage = model?.page ?? 0;
+    const nextSize = model?.pageSize ?? rowsPerPage ?? 10;
+
+    if (nextSize !== rowsPerPage) {
+      // El padre espera algo tipo evento o valor, vamos a mandarle un "event-like"
+      onRowsPerPageChange({ target: { value: nextSize } });
+    } else if (nextPage !== page) {
+      onPageChange(null, nextPage);
+    }
+  };
+
   return (
-    <Box sx={{ width: "100%", mt: 2 }}>
+    <div style={{ width: "100%", height: 500 }}>
       <DataGrid
-        autoHeight
         rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(row) => row.id}
-
-        // Selección controlada
-        onRowClick={(params) => setSelectedRow?.(params.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
-
-        // Paginación
-        paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
-        {...(serverPagination
-          ? {
-              // ----- Server controlled -----
-              paginationModel: {
-                page: paginationModel?.page ?? 0,
-                pageSize: paginationModel?.pageSize ?? paginationModel?.size ?? 10,
-              },
-              onPaginationModelChange: (model) => {
-                const next = {
-                  page: model?.page ?? 0,
-                  size: model?.pageSize ?? model?.size ?? 10,
-                };
-                setPaginationModel?.(next); // el padre hace el fetch con estos valores
-              },
-              rowCount,
-            }
-          : {
-              // ----- Client fallback -----
-              pageSizeOptions: [5, 10, 15, 20, 50],
-              initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
-              },
-            })}
+        disableRowSelectionOnClick
+        disableColumnMenu
+        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
+        onRowClick={(params) => setSelectedRow(params.row)}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        slots={{ toolbar: IngredientePPToolbar }}
+        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
+        paginationMode="server"
+        rowCount={totalElements ?? 0}
+        paginationModel={{ page, pageSize: rowsPerPage }}
+        onPaginationModelChange={handlePaginationModelChange}
+        pageSizeOptions={[5, 10, 15, 20, 50]}
       />
-    </Box>
+    </div>
   );
 }
 
@@ -118,14 +213,10 @@ GridIngredientePresentacionP.propTypes = {
   rows: PropTypes.array,
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func,
-  ingredientesMap: PropTypes.object,       // opcional
-  presentacionesMap: PropTypes.object,     // opcional
-  paginationModel: PropTypes.shape({
-    page: PropTypes.number,
-    pageSize: PropTypes.number,
-    size: PropTypes.number,
-  }),
-  setPaginationModel: PropTypes.func,
-  rowCount: PropTypes.number,
   loading: PropTypes.bool,
+  page: PropTypes.number,
+  rowsPerPage: PropTypes.number,
+  totalElements: PropTypes.number,
+  onPageChange: PropTypes.func,
+  onRowsPerPageChange: PropTypes.func,
 };

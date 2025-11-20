@@ -31,7 +31,7 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
         const data = res.data;
         setMovimientos(Array.isArray(data) ? data : []);
       })
-      .catch(err => {
+      .catch(() => {
         setMessage({ open: true, severity: "error", text: "Error al cargar movimientos" });
       });
   };
@@ -71,15 +71,43 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
 
     axios.delete(`/v1/tipo_movimiento/${selectedRow.id}`)
       .then(() => {
-        setMessage({ open: true, severity: "success", text: "Tipo de movimiento eliminado correctamente." });
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Tipo de movimiento eliminado correctamente."
+        });
         setSelectedRow({});
         reloadData();
       })
       .catch(err => {
+        const status = err?.response?.status;
+        const rawData = err?.response?.data;
+        const rawString = JSON.stringify(rawData || "").toLowerCase();
+
+        let userMsg = "Error al eliminar el tipo de movimiento.";
+
+        // Caso típico: referencia en otras tablas → 409 o Foreign Key
+        if (
+          status === 409 ||
+          rawString.includes("foreign key") ||
+          rawString.includes("clave foránea") ||
+          rawString.includes("fk") ||
+          rawString.includes("constraint")
+        ) {
+          userMsg =
+            "No se puede eliminar el tipo de movimiento porque está siendo usado en otros datos (por ejemplo movimientos, kardex u otros registros relacionados).";
+        } else if (typeof rawData === "string" && rawData.trim()) {
+          userMsg = rawData;
+        } else if (rawData?.message) {
+          userMsg = rawData.message;
+        } else if (err.message) {
+          userMsg = err.message;
+        }
+
         setMessage({
           open: true,
           severity: "error",
-          text: `Error al eliminar: ${err.message}`,
+          text: userMsg,
         });
       });
   };
@@ -95,12 +123,10 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
     setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
-
-  
   const validate = () => {
     const e = {};
 
-    // Validación CENTRAL (nombre/descripcion/estado)
+    // Validación central (nombre/descripcion/estado)
     const baseErrors = validateCamposBase({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
@@ -109,10 +135,10 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
 
     if (baseErrors.nombre) e.nombre = baseErrors.nombre;
     if (baseErrors.descripcion) e.descripcion = baseErrors.descripcion;
-    if (baseErrors.estado) e.estado = baseErrors.estado; // mapeo directo
+    if (baseErrors.estado) e.estado = baseErrors.estado;
     if (baseErrors._security) e._security = baseErrors._security;
 
-    // Checks LOCALES (mantengo tu lógica)
+    // Checks locales
     if (!formData.nombre.trim()) e.nombre = e.nombre || "El nombre es obligatorio.";
     if (!formData.descripcion.trim()) e.descripcion = e.descripcion || "La descripción es obligatoria.";
 
@@ -125,7 +151,6 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -144,13 +169,15 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
     const payload = {
       nombre: formData.nombre,
       descripcion: formData.descripcion,
-      estadoId: parseInt(formData.estado),
-      movimientoId: parseInt(formData.movimientoId),
+      estadoId: parseInt(formData.estado, 10),
+      movimientoId: parseInt(formData.movimientoId, 10),
       empresaId
     };
 
     const method = methodName === "Crear" ? axios.post : axios.put;
-    const url = methodName === "Crear" ? "/v1/tipo_movimiento" : `/v1/tipo_movimiento/${selectedRow.id}`;
+    const url = methodName === "Crear"
+      ? "/v1/tipo_movimiento"
+      : `/v1/tipo_movimiento/${selectedRow.id}`;
 
     method(url, payload)
       .then(() => {
@@ -169,7 +196,7 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
         setMessage({
           open: true,
           severity: "error",
-          text: `Error: ${err.message || "Network Error"}`
+          text: `Error: ${err.message || "Network Error"}`,
         });
       });
   };
@@ -181,10 +208,13 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
         <form onSubmit={handleSubmit}>
           <DialogTitle>{methodName} Tipo de Movimiento</DialogTitle>
           <DialogContent>
-            <DialogContentText>Formulario para gestionar tipos de movimiento</DialogContentText>
+            <DialogContentText>
+              {errors._security || "Formulario para gestionar tipos de movimiento"}
+            </DialogContentText>
 
             <TextField
-              fullWidth margin="dense"
+              fullWidth
+              margin="dense"
               name="nombre"
               label="Nombre"
               value={formData.nombre}
@@ -193,7 +223,8 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
               helperText={errors.nombre}
             />
             <TextField
-              fullWidth margin="dense"
+              fullWidth
+              margin="dense"
               name="descripcion"
               label="Descripción"
               value={formData.descripcion}
@@ -211,12 +242,21 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
                 label="Movimiento"
               >
                 <MenuItem value="">Seleccione...</MenuItem>
-                {Array.isArray(movimientos) && movimientos.map((m) => (
-                  <MenuItem key={m.id} value={m.id}>{m.nombre}</MenuItem>
-                ))}
+                {Array.isArray(movimientos) &&
+                  movimientos.map((m) => (
+                    <MenuItem key={m.id} value={m.id}>
+                      {m.nombre}
+                    </MenuItem>
+                  ))}
               </Select>
               {errors.movimientoId && (
-                <p style={{ color: "#d32f2f", margin: "3px 14px 0", fontSize: "0.75rem" }}>
+                <p
+                  style={{
+                    color: "#d32f2f",
+                    margin: "3px 14px 0",
+                    fontSize: "0.75rem",
+                  }}
+                >
                   {errors.movimientoId}
                 </p>
               )}
@@ -235,7 +275,13 @@ export default function FormTipoMovimiento({ selectedRow, setSelectedRow, setMes
                 <MenuItem value="2">Inactivo</MenuItem>
               </Select>
               {errors.estado && (
-                <p style={{ color: "#d32f2f", margin: "3px 14px 0", fontSize: "0.75rem" }}>
+                <p
+                  style={{
+                    color: "#d32f2f",
+                    margin: "3px 14px 0",
+                    fontSize: "0.75rem",
+                  }}
+                >
                   {errors.estado}
                 </p>
               )}

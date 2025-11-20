@@ -177,6 +177,7 @@ import RE_productoVencimiento from "../RE_pv/re_pvn.jsx";
 import RE_ordenCompra from "../RE_oc/re_oc.jsx";
 import RE_fc from "../RE_fc/re_fc.jsx";
 import TipoUnida from "../tipo_unidad/tipounidad.jsx";
+import Estado from "../estado/estado.jsx";
 
 // Imágenes
 import img1 from "/images/cards/1.jpg";
@@ -240,6 +241,7 @@ import r_orden_compra from "/images/cards/r_orden_compra.webp";
 
 import tipo_unidad from "/images/cards/tipo_unidad.webp";
 import categoria_estado from "/images/cards/categoria_estado.webp";
+import { es } from "date-fns/locale";
 
 const icons = {
   HistoryToggleOff: <HistoryToggleOffIcon />,
@@ -355,6 +357,7 @@ const icons = {
 };
 
 const components = {
+  Estado: Estado,
   tipoidentificacion: TipoIdentificacion,
   roll: Rol,
   proveedor: Proveedor,

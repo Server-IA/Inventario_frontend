@@ -1,17 +1,22 @@
+// src/components/Producto/Producto.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormProducto from "./FormProducto";
 import GridProducto from "./GridProducto";
 
-import { Box, Stack, Typography, Button } from "@mui/material";
+import { Box, Stack, Button } from "@mui/material";
 import AddRounded from "@mui/icons-material/AddRounded";
 import EditRounded from "@mui/icons-material/EditRounded";
 import DeleteRounded from "@mui/icons-material/DeleteRounded";
 
 export default function Producto() {
   const [selectedRow, setSelectedRow] = useState({});
-  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
 
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,11 +24,7 @@ export default function Producto() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [rowCount, setRowCount] = useState(0);
-
-  // === catálogos para los selects del form ===
+  // catálogos para selects del formulario
   const [categorias, setCategorias] = useState([]);
   const [unidades, setUnidades] = useState([]);
 
@@ -39,53 +40,60 @@ export default function Producto() {
       setMessage({
         open: true,
         severity: "error",
-        text: `Error cargando catálogos: ${e?.response?.data?.message ?? e.message}`,
+        text: `Error cargando catálogos: ${
+          e?.response?.data?.message ?? e.message
+        }`,
       });
     }
   }, []);
 
-  const reloadData = useCallback(
-    async (p = page, s = pageSize) => {
-      try {
-        setLoading(true);
-        const res = await axios.get("/v2/productos", {
-          params: { page: p, size: s, sort: "id,desc" },
-        });
-        const data = res?.data ?? {};
-        const list = Array.isArray(data) ? data : data.content ?? [];
+  const loadProductos = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        const filas = list.map((it) => ({
-          ...it,
-          productoCategoriaNombre: it.productoCategoriaNombre ?? "",
-          estadoNombre: it.estadoNombre ?? "",
-          unidadMinimaNombre: it.unidadMinimaNombre ?? "",
-        }));
-        setProductos(filas);
+      // pedimos hasta 1000 registros para tener todo y paginar en cliente
+      const res = await axios.get("/v2/productos", {
+        params: { size: 1000 },
+      });
 
-        if (!Array.isArray(data)) {
-          setRowCount(Number(data.totalElements ?? filas.length));
-          setPage(Number(data.number ?? p));
-          setPageSize(Number(data.size ?? s));
-        } else {
-          setRowCount(filas.length);
-        }
-      } catch (e) {
-        setMessage({
-          open: true,
-          severity: "error",
-          text: `Error al cargar productos: ${e?.response?.data?.message ?? e.message}`,
-        });
-      } finally {
-        setLoading(false);
+      const data = res?.data ?? [];
+      let list;
+
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (Array.isArray(data.content)) {
+        list = data.content;
+      } else if (Array.isArray(data.data)) {
+        list = data.data;
+      } else {
+        list = [];
       }
-    },
-    [page, pageSize]
-  );
+
+      const filas = list.map((it) => ({
+        ...it,
+        productoCategoriaNombre: it.productoCategoriaNombre ?? "",
+        estadoNombre: it.estadoNombre ?? "",
+        unidadMinimaNombre: it.unidadMinimaNombre ?? "",
+      }));
+
+      setProductos(filas);
+    } catch (e) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `Error al cargar productos: ${
+          e?.response?.data?.message ?? e.message
+        }`,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadCatalogos();
-    reloadData(0, pageSize);
-  }, [loadCatalogos, reloadData, pageSize]);
+    loadProductos();
+  }, [loadCatalogos, loadProductos]);
 
   // === acciones ===
   const handleCreate = () => {
@@ -95,7 +103,11 @@ export default function Producto() {
 
   const handleEdit = () => {
     if (!selectedRow?.id) {
-      setMessage({ open: true, severity: "warning", text: "Selecciona un producto para editar." });
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona un producto para editar.",
+      });
       return;
     }
     setEditing(selectedRow);
@@ -106,9 +118,13 @@ export default function Producto() {
     if (!selectedRow?.id) return;
     try {
       await axios.delete(`/v2/productos/${selectedRow.id}`);
-      setMessage({ open: true, severity: "success", text: "Producto eliminado" });
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Producto eliminado",
+      });
       setSelectedRow({});
-      reloadData(page, pageSize);
+      loadProductos();
     } catch (e) {
       setMessage({
         open: true,
@@ -122,14 +138,22 @@ export default function Producto() {
     try {
       if (payload.id) {
         await axios.put(`/v2/productos/${payload.id}`, payload);
-        setMessage({ open: true, severity: "success", text: "Producto actualizado" });
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Producto actualizado",
+        });
       } else {
         await axios.post(`/v2/productos`, payload);
-        setMessage({ open: true, severity: "success", text: "Producto creado" });
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Producto creado",
+        });
       }
       setFormOpen(false);
       setSelectedRow({});
-      reloadData(page, pageSize);
+      loadProductos();
     } catch (e) {
       setMessage({
         open: true,
@@ -141,7 +165,7 @@ export default function Producto() {
 
   return (
     <Box>
-      {/* ===== TÍTULO + BOTONERA (como Producción) ===== */}
+      {/* ===== TÍTULO + BOTONERA ===== */}
       <Stack direction="row" alignItems="center" sx={{ mb: 2 }}>
         <h1>Productos</h1>
         <Box sx={{ flex: 1 }} />
@@ -207,13 +231,6 @@ export default function Producto() {
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         loading={loading}
-        paginationModel={{ page, pageSize }}
-        setPaginationModel={({ page: p, size: s }) => {
-          setPage(p);
-          setPageSize(s);
-          reloadData(p, s);
-        }}
-        rowCount={rowCount}
       />
 
       {/* ===== FORM ===== */}
