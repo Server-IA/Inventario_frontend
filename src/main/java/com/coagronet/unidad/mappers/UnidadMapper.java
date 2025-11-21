@@ -9,6 +9,7 @@ import com.coagronet.unidad.dtos.UnidadDTO;
 public interface UnidadMapper {
 
 	@Mapping(source = "estado.id", target = "estadoId")
+    @Mapping(source = "tipoUnidad.id", target = "tipoUnidadId")
 	UnidadDTO toDTO(Unidad unidad);
 
 	@Mapping(source = "estadoId", target = "estado.id")
