@@ -1,4 +1,3 @@
-// src/components/RE_productoVencimiento.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Box, Typography, TextField, Button, Stack, Grid,
@@ -10,7 +9,9 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
+
 import useUbicacionFilters from "../useUbicacionFilters";
+import UbicacionProductoVencimientoFilters from "../UbicacionProductoVencimientoFilters.jsx";
 
 export default function RE_productoVencimiento() {
   // === Auth / empresa
@@ -20,8 +21,6 @@ export default function RE_productoVencimiento() {
 
   // === Helpers
   const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? x?.data ?? []);
-
-  // "YYYY-MM-DDTHH:mm" -> "YYYY-MM-DD HH:mm" (SIN segundos)
   const toMin = (val, end = false) => {
     if (!val) return null;
     const [d, t] = String(val).split("T");
@@ -29,21 +28,20 @@ export default function RE_productoVencimiento() {
     return `${d} ${hhmm}`;
   };
 
-  // === ALIAS EXACTOS según tu JRXML:
-  // empresa   -> em.emp_id
-  // vencimiento -> k.kai_fecha_vencimiento
+  // ALIAS EXACTOS del JRXML
   const ALIAS_EMP = "em.emp_id";
   const ALIAS_VENC = "k.kai_fecha_vencimiento";
 
-  // === Ubicación (si luego la usas en el back)
+  // ===== Hook unificado: ubicación (igual que en RE_pedido) =====
   const {
     form: ubi,
     handleChange: handleUbiChange,
     data: ubiData,
     resetTodo,
+    // si tu hook tiene más cosas, se ignoran aquí
   } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
 
-  // === Filtros
+  // ===== Filtros de producto / fechas =====
   const [filtro, setFiltro] = useState({
     producto_id: "",
     producto_categoria_id: "",
@@ -51,17 +49,21 @@ export default function RE_productoVencimiento() {
     fecha_fin: "",
   });
 
-  // === UI
+  // ===== Estados adicionales de UI =====
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [resultados, setResultados] = useState([]);
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "info",
+    text: "",
+  });
   const [errors, setErrors] = useState({ fechas_rango: false });
   const [openUbi, setOpenUbi] = useState(false);
 
-  // === Cargar catálogos
+  // === Cargar catálogos (productos / categorías) ===
   useEffect(() => {
     Promise.all([
       axios.get("/v1/items/producto/0", headers).catch(() => ({ data: [] })),
@@ -71,7 +73,13 @@ export default function RE_productoVencimiento() {
         setProductos(asArray(pr.data));
         setCategorias(asArray(cat.data));
       })
-      .catch(() => setMessage({ open: true, severity: "error", text: "No se pudieron cargar los catálogos." }));
+      .catch(() =>
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "No se pudieron cargar los catálogos.",
+        })
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -87,50 +95,65 @@ export default function RE_productoVencimiento() {
       const fin = new Date(filtro.fecha_fin);
       if (ini > fin) {
         setErrors({ fechas_rango: true });
-        setMessage({ open: true, severity: "warning", text: "La fecha de inicio no puede ser mayor que la fecha fin." });
+        setMessage({
+          open: true,
+          severity: "warning",
+          text: "La fecha de inicio no puede ser mayor que la fecha fin.",
+        });
         return false;
       }
     }
     return true;
   };
 
-  // === Buscar (demo sencilla en front, opcional)
+  // ===== Buscar (solo UI, igual idea que RE_pedido) =====
   const buscar = useCallback(async () => {
     setResultados([]);
+    setErrors({ fechas_rango: false });
+
     if (!validarRango()) return;
 
     try {
       const r = await axios.get("/v1/items/producto/0", headers);
       let lista = asArray(r.data);
 
+      // Filtro por categoría
       if (filtro.producto_categoria_id) {
         lista = lista.filter((p) =>
-          String(p.productoCategoriaId ?? p.producto_categoria_id ?? p.categoriaId ?? "") ===
-          String(filtro.producto_categoria_id)
+          String(
+            p.productoCategoriaId ??
+              p.producto_categoria_id ??
+              p.categoriaId ??
+              ""
+          ) === String(filtro.producto_categoria_id)
         );
       }
+
+      // Filtro por producto
       if (filtro.producto_id) {
         lista = lista.filter((p) => String(p.id) === String(filtro.producto_id));
       }
 
+      // (Opcional) aquí podrías aplicar filtros por ubicación (ubi.*) si tu API trae esos datos
+
       setResultados(lista);
-      setMessage({ open: true, severity: "info", text: `Mostrando ${lista.length} producto(s).` });
+      setMessage({
+        open: true,
+        severity: "info",
+        text: `Mostrando ${lista.length} producto(s).`,
+      });
     } catch (err) {
       console.error(err);
       setResultados([]);
-      setMessage({ open: true, severity: "error", text: "No se pudieron cargar productos." });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "No se pudieron cargar productos.",
+      });
     }
   }, [filtro, headers]);
 
-  /**
-   * Construye la condición EXACTA para el JRXML:
-   *  - Siempre incluye empresa (ALIAS_EMP).
-   *  - Usa ALIAS_VENC para fechas; si no hay fechas, aplica BETWEEN amplio por defecto
-   *    para que el WHERE nunca quede vacío ni inválido.
-   *  - Producto / Categoría se agregan solo si vienen.
-   * 
-   * Si tu back requiere índices "0","1","2",..."n", mantenemos ese formato.
-   */
+  // ===== WHERE para el reporte (como en RE_pedido, pero con vencimiento) =====
   const buildCondicion = () => {
     const DEF_INI = "1900-01-01 00:00";
     const DEF_FIN = "2099-12-31 23:59";
@@ -141,30 +164,38 @@ export default function RE_productoVencimiento() {
     const out = {};
     let idx = 0;
 
-    // 0) Empresa (obligatoria):
+    // 0) Empresa (obligatoria)
     out[String(idx++)] = `${ALIAS_EMP} = $EMPRESA_ID$`;
 
-    // 1) Producto (opcional):
+    // 1) Producto (opcional)
     if (filtro.producto_id) {
       out[String(idx++)] = `AND p.pro_id = ${Number(filtro.producto_id)}`;
     }
 
-    // 2) Categoría de producto (opcional):
+    // 2) Categoría de producto (opcional)
     if (filtro.producto_categoria_id) {
-      out[String(idx++)] = `AND p.pro_producto_categoria_id = ${Number(filtro.producto_categoria_id)}`;
+      out[String(idx++)] = `AND p.pro_producto_categoria_id = ${Number(
+        filtro.producto_categoria_id
+      )}`;
     }
 
-    // 3) Fechas: si no hay ambas, aplica BETWEEN por defecto
+    // 3) Fechas de vencimiento (si no hay ambas, BETWEEN amplio)
     if (ini && fin) {
       out[String(idx++)] = `AND ${ALIAS_VENC} BETWEEN "${ini}" AND "${fin}"`;
     } else {
       out[String(idx++)] = `AND ${ALIAS_VENC} BETWEEN "${DEF_INI}" AND "${DEF_FIN}"`;
     }
 
+    // (Opcional) aquí puedes agregar condiciones por ubicación usando ubi.*
+    // Ejemplo:
+    // if (ubi.almacen_id) {
+    //   out[String(idx++)] = `AND k.kai_almacen_id = ${Number(ubi.almacen_id)}`;
+    // }
+
     return out;
   };
 
-  // === POST PDF (siempre devuelve WHERE válido)
+  // ===== POST PDF =====
   const generarPDF = async () => {
     if (!validarRango()) return;
 
@@ -182,7 +213,6 @@ export default function RE_productoVencimiento() {
 
       const contentType = res.headers?.["content-type"] || "";
       if (!contentType.includes("pdf")) {
-        // intento leer mensaje del back si vino texto
         try {
           const txt = await res.data.text?.();
           throw new Error(txt || "El servidor no devolvió un PDF.");
@@ -210,9 +240,11 @@ export default function RE_productoVencimiento() {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>Reporte de Vencimiento de Producto</Typography>
+      <Typography variant="h4" gutterBottom>
+        Reporte de Vencimiento de Producto
+      </Typography>
 
-      {/* Filtros */}
+      {/* Filtros principales (como en RE_pedido) */}
       <Grid container spacing={2} mb={2}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
@@ -223,7 +255,9 @@ export default function RE_productoVencimiento() {
               label="Producto"
               onChange={handleFiltroChange("producto_id")}
             >
-              <MenuItem value=""><em>Todos</em></MenuItem>
+              <MenuItem value="">
+                <em>Todos</em>
+              </MenuItem>
               {asArray(productos).map((p) => (
                 <MenuItem key={p.id} value={String(p.id)}>
                   {p.nombre ?? p.name ?? `Producto ${p.id}`}
@@ -242,7 +276,9 @@ export default function RE_productoVencimiento() {
               label="Categoría Producto"
               onChange={handleFiltroChange("producto_categoria_id")}
             >
-              <MenuItem value=""><em>Todas</em></MenuItem>
+              <MenuItem value="">
+                <em>Todas</em>
+              </MenuItem>
               {asArray(categorias).length ? (
                 asArray(categorias).map((c) => (
                   <MenuItem key={c.id} value={String(c.id)}>
@@ -269,9 +305,12 @@ export default function RE_productoVencimiento() {
             onChange={handleFiltroChange("fecha_inicio")}
             InputLabelProps={{ shrink: true }}
             error={errors.fechas_rango}
-            helperText={errors.fechas_rango ? "Inicio no puede ser mayor que fin." : ""}
+            helperText={
+              errors.fechas_rango ? "Inicio no puede ser mayor que fin." : ""
+            }
           />
         </Grid>
+
         <Grid item xs={12} md={6}>
           <TextField
             label="Fecha Fin"
@@ -282,84 +321,85 @@ export default function RE_productoVencimiento() {
             onChange={handleFiltroChange("fecha_fin")}
             InputLabelProps={{ shrink: true }}
             error={errors.fechas_rango}
-            helperText={errors.fechas_rango ? "Fin debe ser >= Inicio." : ""}
+            helperText={
+              errors.fechas_rango ? "Fin debe ser >= Inicio." : ""
+            }
           />
         </Grid>
       </Grid>
 
       {/* Acciones */}
       <Stack direction="row" spacing={2} mb={3}>
-        <Button variant="contained" onClick={buscar}>Buscar</Button>
-        <Button variant="outlined" onClick={generarPDF}>Generar Reporte</Button>
-        <Button variant="text" onClick={() => setOpenUbi(true)}>Filtros (ubicación)</Button>
+        <Button variant="contained" onClick={buscar}>
+          Buscar
+        </Button>
+        <Button variant="outlined" onClick={generarPDF}>
+          Generar Reporte
+        </Button>
+        <Button variant="text" onClick={() => setOpenUbi(true)}>
+          Filtros (ubicación )
+        </Button>
       </Stack>
 
-      {/* Diálogo Ubicación (opcional) */}
-      <Dialog open={openUbi} onClose={() => setOpenUbi(false)} fullWidth maxWidth="md">
-        <DialogTitle>
-          Filtros de Ubicación
-          <IconButton onClick={() => setOpenUbi(false)} sx={{ position: "absolute", right: 8, top: 8 }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            {[
-              ["pais_id", "País", ubiData.paises],
-              ["departamento_id", "Departamento", ubiData.departamentos],
-              ["municipio_id", "Municipio", ubiData.municipios],
-              ["sede_id", "Sede", ubiData.sedes],
-              ["bloque_id", "Bloque", ubiData.bloques],
-              ["espacio_id", "Espacio", ubiData.espacios],
-              ["almacen_id", "Almacén", ubiData.almacenes],
-            ].map(([name, label, list]) => (
-              <Grid item xs={12} md={6} key={name}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>{label}</InputLabel>
-                  <Select
-                    label={label}
-                    value={ubi[name] || ""}
-                    onChange={(e) => handleUbiChange(name)(e.target.value)}
-                  >
-                    {asArray(list).map((it) => (
-                      <MenuItem key={it.id} value={String(it.id)}>
-                        {it.nombre ?? it.name ?? `${label} ${it.id}`}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            ))}
-          </Grid>
-
-          <Stack direction="row" spacing={2} mt={2} justifyContent="flex-end">
-            <Button onClick={resetTodo}>Limpiar ubicación</Button>
-            <Button variant="contained" onClick={() => { setOpenUbi(false); buscar(); }}>
-              Aplicar y buscar
-            </Button>
-          </Stack>
-        </DialogContent>
-      </Dialog>
+      {/* Diálogo: filtros Ubicación + Producto (igual patrón que UbicacionPedidoFilters) */}
+      <UbicacionProductoVencimientoFilters
+        variant="dialog"
+        title="Filtros (ubicación)"
+        open={openUbi}
+        onClose={() => setOpenUbi(false)}
+        // Ubicación
+        ubiForm={ubi}
+        ubiData={ubiData}
+        handleUbiChange={handleUbiChange}
+        onUbiReset={resetTodo}
+        // Producto / fechas
+        filtro={filtro}
+        productos={productos}
+        categorias={categorias}
+        handleFiltroChange={handleFiltroChange}
+        fechasError={errors.fechas_rango}
+        // Aplicar
+        onApply={() => {
+          setOpenUbi(false);
+          buscar();
+        }}
+      />
 
       {/* Vista previa PDF */}
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth="lg">
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        fullWidth
+        maxWidth="lg"
+      >
         <DialogTitle>
           Vista previa del Reporte
-          <IconButton onClick={() => setPreviewOpen(false)} sx={{ position: "absolute", right: 8, top: 8 }}>
+          <IconButton
+            onClick={() => setPreviewOpen(false)}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
           {previewUrl && (
-            <iframe src={previewUrl} width="100%" height="600" title="PDF" style={{ border: "none" }} />
+            <iframe
+              src={previewUrl}
+              width="100%"
+              height="600"
+              title="PDF"
+              style={{ border: "none" }}
+            />
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Resultados (demo) */}
+      {/* Resultados de la búsqueda (demo) */}
       {resultados.length > 0 && (
         <Box mt={4}>
-          <Typography variant="h6" gutterBottom>Productos encontrados</Typography>
+          <Typography variant="h6" gutterBottom>
+            Productos encontrados
+          </Typography>
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
               <TableHead>
@@ -375,7 +415,12 @@ export default function RE_productoVencimiento() {
                   <TableRow key={p.id}>
                     <TableCell>{p.id}</TableCell>
                     <TableCell>{p.nombre ?? p.name ?? ""}</TableCell>
-                    <TableCell>{p.productoCategoriaId ?? p.categoriaId ?? p.producto_categoria_id ?? ""}</TableCell>
+                    <TableCell>
+                      {p.productoCategoriaId ??
+                        p.categoriaId ??
+                        p.producto_categoria_id ??
+                        ""}
+                    </TableCell>
                     <TableCell>{p.descripcion ?? ""}</TableCell>
                   </TableRow>
                 ))}
@@ -389,4 +434,3 @@ export default function RE_productoVencimiento() {
     </Box>
   );
 }
-// ll

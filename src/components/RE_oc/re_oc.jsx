@@ -341,13 +341,13 @@ const buscar = async () => {
       <Stack direction="row" spacing={2} mb={3}>
         <Button variant="contained" onClick={buscar}>Buscar</Button>
         <Button variant="outlined" onClick={generarReporte}>Generar Reporte</Button>
-        <Button variant="text" onClick={() => setOpenUbi(true)}>Filtros (producto + ubicación)</Button>
+        <Button variant="text" onClick={() => setOpenUbi(true)}>Filtros (ubicación)</Button>
       </Stack>
 
       {/* Diálogo de filtros (como pediste) */}
       <UbicacionProductoVencimientoFilters
         variant="dialog"
-        title="Filtros (producto + ubicación)"
+        title="Filtros (ubicación)"
         open={openUbi}
         onClose={() => setOpenUbi(false)}
         onApply={() => { setOpenUbi(false); buscar(); }}

@@ -241,6 +241,7 @@ import r_orden_compra from "/images/cards/r_orden_compra.webp";
 
 import tipo_unidad from "/images/cards/tipo_unidad.webp";
 import categoria_estado from "/images/cards/categoria_estado.webp";
+import estado from "/images/cards/estado.webp";
 import { es } from "date-fns/locale";
 
 const icons = {
@@ -458,6 +459,7 @@ const moduleImages = {
   pedido: pedido,
   tipo_unidad: tipo_unidad,
   CategoriaEstado: categoria_estado,
+  Estado: estado,
 };
 
 
@@ -546,35 +548,47 @@ export default function Navigator2({
         }));
         setMenuItems(adapted);
 
-        // Restaurar módulo activo si existe
-        const saved = localStorage.getItem("activeModule");
-        if (saved && components[saved]) {
-          setCurrentModuleItem(React.createElement(components[saved]));
-          setSelectedMenu(toKey(saved));
+        // 1️⃣ Restaurar CRUD activo si existe
+        const savedModule = localStorage.getItem("activeModule");
+        if (savedModule && components[savedModule]) {
+          const Comp = components[savedModule];
+          setCurrentModuleItem(<Comp />);
+          // no cambiamos menú aquí
           return;
         }
 
-        // Si no hay guardado, seleccionar el primer subsistema
-        const firstMenu = adapted[0];
-        if (!firstMenu) {
+        // 2️⃣ Restaurar MENÚ activo si existe
+        const savedMenu = localStorage.getItem("activeMenu");
+
+        // Elegir el menú correcto:
+        //   • Primero buscamos el último menú guardado
+        //   • Si no existe, usamos el primero
+        const menuToOpen =
+          adapted.find((m) => toKey(m.id) === toKey(savedMenu)) || adapted[0];
+
+        if (!menuToOpen) {
           setSelectedMenu(null);
           setCurrentModuleItem(null);
           return;
         }
 
-        if (firstMenu?.children?.length) {
-          setSelectedMenu(toKey(firstMenu.id));
-          setCurrentModuleItem(renderSubmenu(firstMenu.children, firstMenu.id));
+        // Marcar menú seleccionado
+        setSelectedMenu(toKey(menuToOpen.id));
+
+        // Si el menú tiene submódulos (tarjetas)
+        if (menuToOpen.children?.length) {
+          setCurrentModuleItem(renderSubmenu(menuToOpen.children, menuToOpen.id));
+          return;
+        }
+
+        // Si es un módulo hoja (un CRUD directamente)
+        const k = toKey(menuToOpen.id);
+        const Comp = components[k];
+        if (Comp) {
+          localStorage.setItem("activeModule", k);
+          setCurrentModuleItem(<Comp />);
         } else {
-          const k = toKey(firstMenu.id);
-          const Comp = components[k];
-          setSelectedMenu(k);
-          if (Comp) {
-            localStorage.setItem("activeModule", k);
-            setCurrentModuleItem(<Comp />);
-          } else {
-            setCurrentModuleItem(null);
-          }
+          setCurrentModuleItem(null);
         }
       })
       .catch((err) => {
@@ -593,19 +607,28 @@ export default function Navigator2({
     localStorage.setItem("sidebarOpen", JSON.stringify(newOpen));
   };
 
-  const handleMenuClick = (menuId) => {
-    const key = toKey(menuId);
-    setSelectedMenu(key);
+const handleMenuClick = (menuId) => {
+  const key = toKey(menuId);
 
-    const menu = menuItems.find((item) => toKey(item.id) === key);
-    if (menu?.children?.length) {
-      setCurrentModuleItem(renderSubmenu(menu.children, menuId));
-    } else {
-      localStorage.setItem("activeModule", key);
-      const Component = components[key];
-      setCurrentModuleItem(Component ? <Component /> : null);
-    }
-  };
+  // 👇 Guardar último menú donde estuve
+  localStorage.setItem("activeMenu", key);
+
+  setSelectedMenu(key);
+
+  const menu = menuItems.find((item) => toKey(item.id) === key);
+
+  if (menu?.children?.length) {
+    // Es menú → limpiar CRUD
+    localStorage.removeItem("activeModule");
+    setCurrentModuleItem(renderSubmenu(menu.children, menuId));
+  } else {
+    // Es un CRUD
+    localStorage.setItem("activeModule", key);
+    const Component = components[key];
+    setCurrentModuleItem(Component ? <Component /> : null);
+  }
+};
+
 
   const handleSubMenuClick = (subMenuId, parentMenuId) => {
     const key = toKey(subMenuId);

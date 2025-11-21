@@ -124,87 +124,113 @@ const App = () => {
     return saved ? JSON.parse(saved) : true;
   });
 
-  useEffect(() => {
-    const hasValidToken = () => {
-      const token = localStorage.getItem('token');
-      const exp = Number(localStorage.getItem('token_expiration'));
-      return Boolean(token && exp && Date.now() < exp);
-    };
+useEffect(() => {
+  const hasValidToken = () => {
+    const token = localStorage.getItem("token");
+    const exp = Number(localStorage.getItem("token_expiration"));
+    return Boolean(token && exp && Date.now() < exp);
+  };
 
-    // 1) Verify por URL
-    if (/\/auth\/verify(?:\/|$)/.test(location.pathname)) {
+  // 1) Verify por URL
+  if (/\/auth\/verify(?:\/|$)/.test(location.pathname)) {
     setIsAuthenticated(false);
     setCurrentModule(<Verify key={location.search} />);
     return;
-    }
+  }
 
-    // 1.1) Onboarding por ruta — SIN MENÚ
-    if (location.pathname.startsWith('/coagronet/onboarding/persona')) {
-      if (hasValidToken()) {
-        setIsAuthenticated(false); // 👈 clave: modo público
-        setCurrentModule(<FormRegistroPersona setCurrentModule={setCurrentModule} />);
-      } else {
-        setIsAuthenticated(false);
-        setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
-      }
-      return;
-    }
-
-    if (location.pathname.startsWith('/coagronet/onboarding/empresa')) {
-      if (hasValidToken()) {
-        setIsAuthenticated(false); // 👈 clave: modo público
-        setCurrentModule(<FormRegistroEmpresa setCurrentModule={setCurrentModule} />);
-      } else {
-        setIsAuthenticated(false);
-        setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
-      }
-      return;
-    }
-
-    // 2) /dashboard
-    if (location.pathname === '/dashboard') {
-      if (hasValidToken()) {
-        setIsAuthenticated(true);
-        setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
-        return;
-      }
-      setIsAuthenticated(false);
-      setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
-      return;
-    }
-
-    // 3) Flujo normal
+  // 1.1) Onboarding por ruta — SIN MENÚ
+  if (location.pathname.startsWith("/coagronet/onboarding/persona")) {
     if (hasValidToken()) {
-      const savedModule = localStorage.getItem('activeModule');
-
-      // 🔒 Onboarding sin menú si quedó activo por localStorage
-      if (savedModule === 'form_registro_persona') {
-        setIsAuthenticated(false);
-        setCurrentModule(<FormRegistroPersona setCurrentModule={setCurrentModule} />);
-        return;
-      }
-      if (savedModule === 'form_registro_empresa') {
-        setIsAuthenticated(false);
-        setCurrentModule(<FormRegistroEmpresa setCurrentModule={setCurrentModule} />);
-        return;
-      }
-
-      // ✅ Autenticado normal con menú
-      setIsAuthenticated(true);
-      if (savedModule && moduleMap[savedModule]) {
-        const Component = moduleMap[savedModule];
-        setCurrentModule(<Component setCurrentModule={setCurrentModule} />);
-      } else {
-        setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
-      }
+      setIsAuthenticated(false); // modo público
+      setCurrentModule(
+        <FormRegistroPersona setCurrentModule={setCurrentModule} />
+      );
     } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('token_expiration');
-      localStorage.removeItem('activeModule');
       setIsAuthenticated(false);
       setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
     }
-  }, [location.pathname, location.search]);
+    return;
+  }
+
+  if (location.pathname.startsWith("/coagronet/onboarding/empresa")) {
+    if (hasValidToken()) {
+      setIsAuthenticated(false); // modo público
+      setCurrentModule(
+        <FormRegistroEmpresa setCurrentModule={setCurrentModule} />
+      );
+    } else {
+      setIsAuthenticated(false);
+      setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+    }
+    return;
+  }
+
+  // 2) /dashboard
+  if (location.pathname === "/dashboard") {
+    if (hasValidToken()) {
+      setIsAuthenticated(true);
+      setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
+      return;
+    }
+    setIsAuthenticated(false);
+    setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+    return;
+  }
+
+  // 3) Flujo normal
+  if (hasValidToken()) {
+    const savedModule = localStorage.getItem("activeModule");
+
+    // Onboarding si quedó guardado en localStorage
+    if (savedModule === "form_registro_persona") {
+      setIsAuthenticated(false);
+      setCurrentModule(
+        <FormRegistroPersona setCurrentModule={setCurrentModule} />
+      );
+      return;
+    }
+    if (savedModule === "form_registro_empresa") {
+      setIsAuthenticated(false);
+      setCurrentModule(
+        <FormRegistroEmpresa setCurrentModule={setCurrentModule} />
+      );
+      return;
+    }
+
+    // ✅ Autenticado normal con menú
+    setIsAuthenticated(true);
+
+    // 🔒 Rutas de MENÚ donde NO se debe aplicar el último CRUD
+    const rutasMenu = [
+      "/coagronet/reportes",
+      "/coagronet/inventario",
+      "/coagronet/parametrizacion",
+      "/coagronet/seguridad",
+    ];
+
+    // Si estoy en un menú, NO cargues el último CRUD
+    if (rutasMenu.includes(location.pathname)) {
+      setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
+      return;
+    }
+
+    // Si NO estoy en un menú, entonces sí carga el último módulo guardado
+    if (savedModule && moduleMap[savedModule]) {
+      const Component = moduleMap[savedModule];
+      setCurrentModule(<Component setCurrentModule={setCurrentModule} />);
+    } else {
+      setCurrentModule(<Contenido setCurrentModule={setCurrentModule} />);
+    }
+  } else {
+    // Sin token válido → limpiar y mandar a Inicio
+    localStorage.removeItem("token");
+    localStorage.removeItem("token_expiration");
+    localStorage.removeItem("activeModule");
+    setIsAuthenticated(false);
+    setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+  }
+}, [location.pathname, location.search]);
+
 
   const isPublic = !isAuthenticated;
 
