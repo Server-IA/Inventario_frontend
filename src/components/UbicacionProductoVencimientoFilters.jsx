@@ -1,260 +1,303 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
-  Box, Grid, Dialog, DialogTitle, DialogContent, IconButton,
-  FormControl, InputLabel, Select, MenuItem, TextField, Button,
-  Stack, Typography, FormHelperText
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  IconButton,
+  Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
-/**
- * Filtros combinados: Producto/Categoría/Fechas + Ubicación
- *
- * Props:
- * - variant: "dialog" | "inline"
- * - title, open, onClose
- * - onApply: fn()  // se ejecuta al dar clic en Aplicar
- *
- * Reporte:
- * - formReporte, setFormReporte
- * - productos, categorias
- * - fechasError, tried
- *
- * Ubicación (hook):
- * - ubiForm, ubiData, handleUbiChange, onUbiReset
- */
+// Normaliza a array (por si viene en .content)
+const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? []);
+
 export default function UbicacionProductoVencimientoFilters({
-  variant = "dialog",
-  title = "Filtros (producto + ubicación)",
+  // diálogo
   open = false,
   onClose = () => {},
+  title = "Filtros (ubicación)",
   onApply = () => {},
 
-  // Reporte
-  formReporte,
-  setFormReporte,
-  productos = [],
-  categorias = [],
-  fechasError = false,
-  tried = false,
-
-  // Ubicación
-  ubiForm,
-  ubiData,
-  handleUbiChange,
-  onUbiReset,
+  // ubicación
+  ubiForm = {},
+  ubiData = {},
+  handleUbiChange = () => {},
+  onUbiReset = () => {},
 }) {
-  const isEmpty = (v) => v === "" || v === null || v === undefined;
+  // ====== Listas normalizadas ======
+  const paises = asArray(ubiData.paises);
+  const departamentos = asArray(ubiData.departamentos);
+  const municipios = asArray(ubiData.municipios);
+  const sedes = asArray(ubiData.sedes);
+  const bloques = asArray(ubiData.bloques);
+  const espacios = asArray(ubiData.espacios);
+  const almacenes = asArray(ubiData.almacenes);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const isId = name === "producto_id" || name === "producto_categoria_id";
-    setFormReporte((prev) => ({ ...prev, [name]: isId ? (value === "" ? "" : Number(value)) : value }));
-  };
+  // ====== AUTOSELECCIONAR UBICACIÓN (si solo hay 1 opción) ======
 
-  const getNameById = (arr, id) => {
-    if (isEmpty(id)) return "";
-    const it = arr.find((x) => Number(x.id) === Number(id));
-    return it?.name ?? "";
-  };
+  // País
+  useEffect(() => {
+    if (paises.length === 1 && !ubiForm.pais_id) {
+      const p = paises[0];
+      handleUbiChange("pais_id")({
+        target: { value: String(p.id ?? p.code ?? p.value) },
+      });
+    }
+  }, [paises, ubiForm.pais_id, handleUbiChange]);
 
-  const disabled = {
-    departamento: !ubiForm?.pais_id,
-    municipio: !ubiForm?.departamento_id,
-    sede: !ubiForm?.municipio_id,
-    bloque: !ubiForm?.sede_id,
-    espacio: !ubiForm?.bloque_id,
-    almacen: !ubiForm?.espacio_id,
-  };
+  // Departamento
+  useEffect(() => {
+    if (departamentos.length === 1 && !ubiForm.departamento_id) {
+      const d = departamentos[0];
+      handleUbiChange("departamento_id")({
+        target: { value: String(d.id) },
+      });
+    }
+  }, [departamentos, ubiForm.departamento_id, handleUbiChange]);
 
-  const Content = (
-    <Box sx={{ pt: variant === "dialog" ? 1 : 0 }}>
-      {variant !== "dialog" && <Typography variant="h6" sx={{ mb: 2 }}>{title}</Typography>}
+  // Municipio
+  useEffect(() => {
+    if (municipios.length === 1 && !ubiForm.municipio_id) {
+      const m = municipios[0];
+      handleUbiChange("municipio_id")({
+        target: { value: String(m.id) },
+      });
+    }
+  }, [municipios, ubiForm.municipio_id, handleUbiChange]);
 
-      {/* === Producto / Categoría / Fechas === */}
-      <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-        Filtros del reporte
-      </Typography>
-      <Grid container spacing={2} mb={2}>
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth error={tried && isEmpty(formReporte.producto_id)}>
-            <InputLabel>Producto</InputLabel>
-            <Select
-              label="Producto"
-              name="producto_id"
-              value={formReporte.producto_id}
-              onChange={handleChange}
-              displayEmpty
-              renderValue={(val) =>
-                isEmpty(val) ? <em>Seleccione un producto</em> : getNameById(productos, val)
-              }
-            >
-              <MenuItem value=""><em>Seleccione…</em></MenuItem>
-              {productos.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
-              ))}
-            </Select>
-            {tried && isEmpty(formReporte.producto_id) && (
-              <FormHelperText>Debes seleccionar un producto.</FormHelperText>
+  // Sede
+  useEffect(() => {
+    if (sedes.length === 1 && !ubiForm.sede_id) {
+      const s = sedes[0];
+      handleUbiChange("sede_id")({
+        target: { value: String(s.id) },
+      });
+    }
+  }, [sedes, ubiForm.sede_id, handleUbiChange]);
+
+  // Bloque
+  useEffect(() => {
+    if (bloques.length === 1 && !ubiForm.bloque_id) {
+      const b = bloques[0];
+      handleUbiChange("bloque_id")({
+        target: { value: String(b.id) },
+      });
+    }
+  }, [bloques, ubiForm.bloque_id, handleUbiChange]);
+
+  // Espacio
+  useEffect(() => {
+    if (espacios.length === 1 && !ubiForm.espacio_id) {
+      const e = espacios[0];
+      handleUbiChange("espacio_id")({
+        target: { value: String(e.id) },
+      });
+    }
+  }, [espacios, ubiForm.espacio_id, handleUbiChange]);
+
+  // Almacén
+  useEffect(() => {
+    if (almacenes.length === 1 && !ubiForm.almacen_id) {
+      const a = almacenes[0];
+      handleUbiChange("almacen_id")({
+        target: { value: String(a.id) },
+      });
+    }
+  }, [almacenes, ubiForm.almacen_id, handleUbiChange]);
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle sx={{ pr: 6 }}>
+        {title}
+        <IconButton
+          onClick={onClose}
+          sx={{ position: "absolute", right: 8, top: 8 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        {/* ====== Filtros de Ubicación ====== */}
+        <Box mb={3}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Ubicación
+          </Typography>
+          <Grid container spacing={2}>
+            {/* País */}
+            {paises.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>País</InputLabel>
+                  <Select
+                    name="pais_id"
+                    label="País"
+                    value={ubiForm.pais_id || ""}
+                    onChange={handleUbiChange("pais_id")}
+                  >
+                    {paises.map((p) => (
+                      <MenuItem
+                        key={p.id ?? p.code ?? p.value}
+                        value={String(p.id ?? p.code ?? p.value)}
+                      >
+                        {p.nombre ?? p.name ?? p.label ?? `País ${p.id}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             )}
-          </FormControl>
-        </Grid>
 
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth error={tried && isEmpty(formReporte.producto_categoria_id)}>
-            <InputLabel>Categoría Producto</InputLabel>
-            <Select
-              label="Categoría Producto"
-              name="producto_categoria_id"
-              value={formReporte.producto_categoria_id}
-              onChange={handleChange}
-              displayEmpty
-              renderValue={(val) =>
-                isEmpty(val) ? <em>Seleccione una categoría</em> : getNameById(categorias, val)
-              }
-            >
-              <MenuItem value=""><em>Seleccione…</em></MenuItem>
-              {categorias.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-              ))}
-            </Select>
-            {tried && isEmpty(formReporte.producto_categoria_id) && (
-              <FormHelperText>Debes seleccionar una categoría.</FormHelperText>
+            {/* Departamento */}
+            {departamentos.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Departamento</InputLabel>
+                  <Select
+                    name="departamento_id"
+                    label="Departamento"
+                    value={ubiForm.departamento_id || ""}
+                    onChange={handleUbiChange("departamento_id")}
+                  >
+                    {departamentos.map((d) => (
+                      <MenuItem key={d.id} value={String(d.id)}>
+                        {d.nombre ?? d.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             )}
-          </FormControl>
-        </Grid>
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha Inicio"
-            name="fecha_inicio"
-            type="datetime-local"
-            fullWidth
-            value={formReporte.fecha_inicio || ""}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            error={fechasError || (tried && isEmpty(formReporte.fecha_inicio))}
-            helperText={
-              fechasError ? "Inicio no puede ser mayor que fin." :
-              (tried && isEmpty(formReporte.fecha_inicio)) ? "Selecciona la fecha de inicio." : ""
-            }
-          />
-        </Grid>
+            {/* Municipio */}
+            {municipios.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Municipio</InputLabel>
+                  <Select
+                    name="municipio_id"
+                    label="Municipio"
+                    value={ubiForm.municipio_id || ""}
+                    onChange={handleUbiChange("municipio_id")}
+                  >
+                    {municipios.map((m) => (
+                      <MenuItem key={m.id} value={String(m.id)}>
+                        {m.nombre ?? m.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha Fin"
-            name="fecha_fin"
-            type="datetime-local"
-            fullWidth
-            value={formReporte.fecha_fin || ""}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            error={fechasError || (tried && isEmpty(formReporte.fecha_fin))}
-            helperText={
-              fechasError ? "Fin debe ser >= Inicio." :
-              (tried && isEmpty(formReporte.fecha_fin)) ? "Selecciona la fecha de fin." : ""
-            }
-          />
-        </Grid>
-      </Grid>
+            {/* Sede */}
+            {sedes.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Sede</InputLabel>
+                  <Select
+                    name="sede_id"
+                    label="Sede"
+                    value={ubiForm.sede_id || ""}
+                    onChange={handleUbiChange("sede_id")}
+                  >
+                    {sedes.map((s) => (
+                      <MenuItem key={s.id} value={String(s.id)}>
+                        {s.nombre ?? s.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-      {/* === Ubicación === */}
-      <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-        Filtros de ubicación
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth>
-            <InputLabel>País</InputLabel>
-            <Select value={ubiForm.pais_id || ""} label="País" onChange={handleUbiChange("pais_id")}>
-              {ubiData.paises.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={disabled.departamento}>
-            <InputLabel>Departamento</InputLabel>
-            <Select value={ubiForm.departamento_id || ""} label="Departamento" onChange={handleUbiChange("departamento_id")}>
-              {ubiData.departamentos.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={disabled.municipio}>
-            <InputLabel>Municipio</InputLabel>
-            <Select value={ubiForm.municipio_id || ""} label="Municipio" onChange={handleUbiChange("municipio_id")}>
-              {ubiData.municipios.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={disabled.sede}>
-            <InputLabel>Sede</InputLabel>
-            <Select value={ubiForm.sede_id || ""} label="Sede" onChange={handleUbiChange("sede_id")}>
-              {ubiData.sedes.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={disabled.bloque}>
-            <InputLabel>Bloque</InputLabel>
-            <Select value={ubiForm.bloque_id || ""} label="Bloque" onChange={handleUbiChange("bloque_id")}>
-              {ubiData.bloques.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={disabled.espacio}>
-            <InputLabel>Espacio</InputLabel>
-            <Select value={ubiForm.espacio_id || ""} label="Espacio" onChange={handleUbiChange("espacio_id")}>
-              {ubiData.espacios.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth disabled={disabled.almacen}>
-            <InputLabel>Almacén</InputLabel>
-            <Select value={ubiForm.almacen_id || ""} label="Almacén" onChange={handleUbiChange("almacen_id")}>
-              {ubiData.almacenes.map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+            {/* Bloque */}
+            {bloques.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Bloque</InputLabel>
+                  <Select
+                    name="bloque_id"
+                    label="Bloque"
+                    value={ubiForm.bloque_id || ""}
+                    onChange={handleUbiChange("bloque_id")}
+                  >
+                    {bloques.map((b) => (
+                      <MenuItem key={b.id} value={String(b.id)}>
+                        {b.nombre ?? b.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-      <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-        {onUbiReset && <Button onClick={onUbiReset}>Limpiar</Button>}
-        <Button variant="contained" onClick={onApply}>Aplicar</Button>
-      </Stack>
-    </Box>
+            {/* Espacio */}
+            {espacios.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Espacio</InputLabel>
+                  <Select
+                    name="espacio_id"
+                    label="Espacio"
+                    value={ubiForm.espacio_id || ""}
+                    onChange={handleUbiChange("espacio_id")}
+                  >
+                    {espacios.map((e) => (
+                      <MenuItem key={e.id} value={String(e.id)}>
+                        {e.nombre ?? e.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
+            {/* Almacén */}
+            {almacenes.length >= 1 && (
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Almacén</InputLabel>
+                  <Select
+                    name="almacen_id"
+                    label="Almacén"
+                    value={ubiForm.almacen_id || ""}
+                    onChange={handleUbiChange("almacen_id")}
+                  >
+                    {almacenes.map((a) => (
+                      <MenuItem key={a.id} value={String(a.id)}>
+                        {a.nombre ?? a.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+          </Grid>
+
+          <Box mt={2}>
+            <Button size="small" onClick={onUbiReset}>
+              Limpiar ubicación
+            </Button>
+          </Box>
+        </Box>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={onClose}>Cerrar</Button>
+        <Button variant="contained" onClick={onApply}>
+          Aplicar
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
-
-  if (variant === "dialog") {
-    return (
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          {title}
-          <IconButton onClick={onClose} sx={{ position: "absolute", right: 8, top: 8 }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>{Content}</DialogContent>
-      </Dialog>
-    );
-  }
-
-  return Content;
 }
