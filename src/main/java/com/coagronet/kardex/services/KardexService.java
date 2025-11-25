@@ -84,8 +84,15 @@ public class KardexService {
 		Produccion produccion = entidadValidatorFacade.validarProduccion(kardexDTO.getProduccionId(), empresaId);
 		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(),
 				empresaId);
-		Pedido pedido = entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId);
-		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(kardexDTO.getOrdenCompraId(), empresaId);
+        Pedido pedido = null;
+        if (kardexDTO.getPedidoId() != null) {
+            pedido = entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId);
+        }
+
+        OrdenCompra ordenCompra = null;
+        if (kardexDTO.getOrdenCompraId() != null) {
+            ordenCompra = entidadValidatorFacade.validarOrdenCompra(kardexDTO.getOrdenCompraId(), empresaId);
+        }
 
 		kardex.setEstado(estado);
 		kardex.setAlmacen(almacen);
