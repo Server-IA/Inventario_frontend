@@ -9,8 +9,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.infrastructure.security.JwtUtil;
-import com.coagronet.role.Role;
-import com.coagronet.role.repositories.RoleRepository;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.repositories.RolRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -28,10 +28,11 @@ public class UserRoleService {
 
 	private final JwtUtil jwtUtil;
 
-	private final RoleRepository roleRepository;
+	private final RolRepository roleRepository;
 
 	/**
-	 * Extrae el JWT de la cabecera Authorization, valida el token, y retorna el nombre
+	 * Extrae el JWT de la cabecera Authorization, valida el token, y retorna el
+	 * nombre
 	 * del rol asociado (como String).
 	 */
 	public String getRoleFromCurrentRequest() {
@@ -44,8 +45,8 @@ public class UserRoleService {
 		}
 
 		return roleRepository.findById(roleId)
-			.map(Role::getName)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+				.map(Rol::getNombre)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
 	}
 
 	private String resolveTokenFromHeader() {
@@ -68,8 +69,7 @@ public class UserRoleService {
 	private Claims parseClaims(@NotNull String token) {
 		try {
 			return jwtUtil.extractAllClaims(token);
-		}
-		catch (JwtException ex) {
+		} catch (JwtException ex) {
 			log.warn("JWT inválido o expirado: {}", ex.getMessage());
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token JWT inválido o expirado");
 		}

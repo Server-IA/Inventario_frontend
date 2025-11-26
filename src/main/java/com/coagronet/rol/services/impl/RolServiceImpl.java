@@ -1,0 +1,151 @@
+package com.coagronet.rol.services.impl;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.coagronet.estado.Estado;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.dtos.RolRequestDTO;
+import com.coagronet.rol.dtos.RolResponseDTO;
+import com.coagronet.rol.mappers.RolMapper;
+import com.coagronet.rol.repositories.RolRepository;
+import com.coagronet.rol.services.RolService;
+import com.coagronet.user.User;
+import com.coagronet.utils.AuthenticatedUser;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class RolServiceImpl implements RolService {
+
+    private final RolRepository rolRepository;
+    private final RolMapper rolMapper;
+    private final AuthenticatedUser authenticatedUser;
+
+    // ====================== CREATE =======================
+
+    @Override
+    public RolResponseDTO create(RolRequestDTO request) {
+
+        // Validar nombre único
+        if (rolRepository.existsByNombreIgnoreCase(request.nombre())) {
+            throw new IllegalArgumentException("Ya existe un rol con el nombre: " + request.nombre());
+        }
+
+        Rol rol = rolMapper.toEntity(request);
+
+        // Auditoría
+        rol.setCreatedAt(OffsetDateTime.now());
+
+        Long userId = authenticatedUser.getCurrentUserId();
+        if (userId != null) {
+            User creator = new User();
+            creator.setId(userId);
+            rol.setCreatedBy(creator);
+        }
+
+        Rol saved = rolRepository.save(rol);
+
+        return rolMapper.toDTO(saved);
+    }
+
+    // ====================== UPDATE =======================
+
+    @Override
+    public RolResponseDTO update(Long id, RolRequestDTO request) {
+
+        Rol existing = rolRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
+
+        if (existing.getDeletedAt() != null) {
+            throw new IllegalStateException("No se puede actualizar un rol eliminado.");
+        }
+
+        // Validar nombre único si cambió
+        if (!existing.getNombre().equalsIgnoreCase(request.nombre())
+                && rolRepository.existsByNombreIgnoreCase(request.nombre())) {
+            throw new IllegalArgumentException("Ya existe un rol con el nombre: " + request.nombre());
+        }
+
+        // Actualizar campos
+        existing.setNombre(request.nombre());
+        existing.setDescripcion(request.descripcion());
+
+        // Estado (solo asignamos el id sin volver a BD)
+        if (request.estadoId() != null) {
+            Estado estado = existing.getEstado();
+            if (estado == null) {
+                estado = new Estado();
+            }
+            estado.setId(request.estadoId());
+            existing.setEstado(estado);
+        }
+
+        // Auditoría
+        existing.setUpdatedAt(OffsetDateTime.now());
+
+        Long userId = authenticatedUser.getCurrentUserId();
+        if (userId != null) {
+            User upd = new User();
+            upd.setId(userId);
+            existing.setUpdatedBy(upd);
+        }
+
+        Rol updated = rolRepository.save(existing);
+
+        return rolMapper.toDTO(updated);
+    }
+
+    // ====================== GET BY ID =======================
+
+    @Override
+    @Transactional(readOnly = true)
+    public RolResponseDTO getById(Long id) {
+        Rol rol = rolRepository.findById(id)
+                .filter(r -> r.getDeletedAt() == null)
+                .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
+
+        return rolMapper.toDTO(rol);
+    }
+
+    // ====================== LISTAR =======================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RolResponseDTO> getAll() {
+        return rolRepository.findAll()
+                .stream()
+                .filter(r -> r.getDeletedAt() == null)
+                .map(rolMapper::toDTO)
+                .toList();
+    }
+
+    // ====================== DELETE (borrado lógico) =======================
+
+    @Override
+    public void delete(Long id) {
+        Rol existing = rolRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
+
+        if (existing.getDeletedAt() != null) {
+            return; // ya estaba eliminado
+        }
+
+        existing.setDeletedAt(OffsetDateTime.now());
+
+        Long userId = authenticatedUser.getCurrentUserId();
+        if (userId != null) {
+            User del = new User();
+            del.setId(userId);
+            existing.setDeletedBy(del);
+        }
+
+        rolRepository.save(existing);
+    }
+}

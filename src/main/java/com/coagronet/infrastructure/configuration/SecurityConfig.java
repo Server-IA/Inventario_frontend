@@ -38,17 +38,17 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers("/api/v1/tipo_identificacion/**", "/api/v1/estado/**", "/api/v1/persona/**",
 						"/api/v1/movimiento/**", "/api/v1/tipo-evaluacion/**", "/api/v1/user/**",
-						"/api/v1/categoria-estado/**")
+						"/api/v1/categoria-estado/**", "/api/v1/roles/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA")
-				//Especifidad para unidad y tipoUnidad
-						.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
-						.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**").authenticated()
-						.requestMatchers(HttpMethod.POST, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers(HttpMethod.PUT, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers(HttpMethod.DELETE, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers(HttpMethod.POST, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers(HttpMethod.PUT, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				// Especifidad para unidad y tipoUnidad
+				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**").authenticated()
+				.requestMatchers(HttpMethod.POST, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.PUT, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.DELETE, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.POST, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.PUT, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
 				.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**",
 						"/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**", "/api/v1/tipo_sede/**",
 						"/api/v1/grupo/**", "/api/v1/sede/**", "/api/v1/bloque/**", "/api/v1/espacio/**",

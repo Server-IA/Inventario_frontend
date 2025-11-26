@@ -9,7 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.coagronet.persona.Persona;
-import com.coagronet.role.Role;
+import com.coagronet.rol.Rol;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 
 import jakarta.persistence.Column;
@@ -57,9 +57,13 @@ public class User implements UserDetails {
 	private Persona persona;
 
 	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "usuario_rol", joinColumns = @JoinColumn(name = "usr_usuario_id"),
-			inverseJoinColumns = @JoinColumn(name = "usr_rol_id"))
-	private Set<Role> roles;
+	@JoinTable(name = "usuario_rol", joinColumns = @JoinColumn(name = "usuario_id", // nombre de la columna en
+																					// usuario_rol
+			referencedColumnName = "usu_id" // PK de usuario
+	), inverseJoinColumns = @JoinColumn(name = "rol_id", // nombre de la columna en usuario_rol
+			referencedColumnName = "id" // PK de rol
+	))
+	private Set<Rol> roles;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id")
@@ -81,7 +85,7 @@ public class User implements UserDetails {
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return roles.stream().map(r -> new SimpleGrantedAuthority(r.getName())).collect(Collectors.toSet());
+		return roles.stream().map(r -> new SimpleGrantedAuthority(r.getNombre())).collect(Collectors.toSet());
 	}
 
 	public void setUsuarioEstado(UsuarioEstado usuarioEstado) {
