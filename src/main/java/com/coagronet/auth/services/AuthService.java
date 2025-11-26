@@ -29,14 +29,14 @@ import com.coagronet.auth.props.AuthProperties;
 import com.coagronet.email.services.EmailVerificationService;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.infrastructure.security.JwtUtil;
-import com.coagronet.role.Role;
-import com.coagronet.role.repositories.RoleRepository;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
-import com.coagronet.userRole.UserRole;
-import com.coagronet.userRole.repositories.UserRoleRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuariorol.UsuarioRol;
+import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -51,7 +51,7 @@ public class AuthService {
 
 	private final PasswordEncoder encoder;
 
-	private final RoleRepository roleRepo;
+	private final RolRepository rolRepository;
 
 	private final JwtUtil jwt;
 
@@ -63,7 +63,7 @@ public class AuthService {
 
 	private final AuthenticationManager authManager;
 
-	private final UserRoleRepository userRoleRepo;
+	private final UsuarioRolRepository userRoleRepo;
 
 	private final AuthProperties props; // e.g. defaultRole, etc.
 
@@ -96,7 +96,7 @@ public class AuthService {
 		user.setPassword(encoder.encode(dto.getPassword()));
 		user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
 
-		Role role = roleRepo.findByName(props.getDefaultRole())
+		Rol role = rolRepository.findByNombre(props.getDefaultRole())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
 		user.setRoles(Set.of(role));
 
@@ -113,28 +113,28 @@ public class AuthService {
 				.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 		User user = (User) auth.getPrincipal();
 
-		List<UserRole> userRoles = userRoleRepo.findByUserOrderByUserId(user);
-		if (userRoles.isEmpty())
+		List<UsuarioRol> usuarioRols = userRoleRepo.findByUserOrderByUserId(user);
+		if (usuarioRols.isEmpty())
 			throw new UserRoleForbiddenException("User has no company/role assignments");
 
-		UserRole current = resolveInitialContext(user, userRoles);
+		UsuarioRol current = resolveInitialContext(user, usuarioRols);
 
 		if (current.getEmpresa() == null) {
 
-			String token = jwt.generateToken(user, current.getRole().getId(), user.getUsuarioEstado().getId());
+			String token = jwt.generateToken(user, current.getRol().getId(), user.getUsuarioEstado().getId());
 
-			return Map.of("token", token, "rolId", current.getRole().getId(), "estado",
+			return Map.of("token", token, "rolId", current.getRol().getId(), "estado",
 					user.getUsuarioEstado().getId());
 
 		}
-		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRole().getId(),
+		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
 				user.getUsuarioEstado().getId());
 
 		var nombrePersona = user.getPersona().getNombre() + " " + user.getPersona().getApellido();
 
-		List<EmpresaRolDTO> rolesByCompany = userRoles.stream().map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(),
-				ur.getEmpresa().getNombre(), ur.getRole().getId(), ur.getRole().getName())).toList();
-		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRole().getId(),
+		List<EmpresaRolDTO> rolesByCompany = usuarioRols.stream().map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(),
+				ur.getEmpresa().getNombre(), ur.getRol().getId(), ur.getRol().getNombre())).toList();
+		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRol().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
 				nombrePersona);
 
@@ -145,7 +145,7 @@ public class AuthService {
 		User user = userRepo.findByUsername(username)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-		userRoleRepo.findByUserAndEmpresaIdAndRoleId(user, dto.empresaId(), dto.rolId())
+		userRoleRepo.findByUserAndEmpresaIdAndRolId(user, dto.empresaId(), dto.rolId())
 				.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
 		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId(), user.getUsuarioEstado().getId());
@@ -162,21 +162,21 @@ public class AuthService {
 	}
 
 	/* ================= Estrategia para el contexto inicial ================= */
-	private UserRole resolveInitialContext(User user, List<UserRole> userRoles) {
+	private UsuarioRol resolveInitialContext(User user, List<UsuarioRol> usuarioRols) {
 		// 1) Si hay preferido en User, ?salo si existe a?n
 		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
-			Optional<UserRole> preferred = userRoles.stream()
+			Optional<UsuarioRol> preferred = usuarioRols.stream()
 					.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
-							&& ur.getRole().getId().equals(user.getPreferredRolId()))
+							&& ur.getRol().getId().equals(user.getPreferredRolId()))
 					.findFirst();
 			if (preferred.isPresent())
 				return preferred.get();
 		}
 		// 2) Si solo tiene uno, ese
-		if (userRoles.size() == 1)
-			return userRoles.get(0);
+		if (usuarioRols.size() == 1)
+			return usuarioRols.get(0);
 		// 3) Fallback: el primero (o el de menor id, o por fecha de creaci?n)
-		return userRoles.get(0);
+		return usuarioRols.get(0);
 	}
 
 	// CHANGE PASSWORD

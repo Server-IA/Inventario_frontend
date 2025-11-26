@@ -18,9 +18,9 @@ import com.coagronet.empresa.services.EmpresaService;
 import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
-import com.coagronet.userRole.UserRole;
-import com.coagronet.userRole.repositories.UserRoleRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuariorol.UsuarioRol;
+import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 
 @RestController
 @RequestMapping("/api/v1/empresas")
@@ -36,7 +36,7 @@ public class EmpresaUsuarioController {
 	private UserRepository userRepository;
 
 	@Autowired
-	private UserRoleRepository userRoleRepository;
+	private UsuarioRolRepository usuarioRolRepository;
 
 	@PostMapping("/empresa-usuario")
 	public ResponseEntity<Map<String, Integer>> createEmpresa(@RequestBody EmpresaDTO empresaDTO,
@@ -65,10 +65,10 @@ public class EmpresaUsuarioController {
 		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
 		userRepository.save(user);		
 
-		UserRole userRole = userRoleRepository.findByUser(user);
+		UsuarioRol usuarioRol = usuarioRolRepository.findByUser(user);
 
-		userRole.setEmpresa(savedEmpresa);
-		userRoleRepository.save(userRole);
+		usuarioRol.setEmpresa(savedEmpresa);
+		usuarioRolRepository.save(usuarioRol);
 
 		// Crear el mapa para la respuesta
 		Map<String, Integer> response = new HashMap<>();
