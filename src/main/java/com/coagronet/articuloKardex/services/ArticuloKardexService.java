@@ -22,6 +22,7 @@ import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -54,14 +55,14 @@ public class ArticuloKardexService {
 	}
 
 	@Transactional
-	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO) {
+	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO, HttpServletRequest request) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
 		Kardex kardex = entidadValidatorFacade.validarKardex(articuloKardexDTO.getKardexId(), empresaId);
 		entidadValidatorFacade.validarEstadoGeneral(articuloKardexDTO.getEstadoId());
 		entidadValidatorFacade.validarProductoPresentacion(articuloKardexDTO.getPresentacionProductoId(), empresaId);
 
-		List<ArticuloKardex> guardados = articuloKardexFactory.crearArticulos(articuloKardexDTO, empresaId);
+		List<ArticuloKardex> guardados = articuloKardexFactory.crearArticulos(articuloKardexDTO, empresaId, request);
 
 		Long ordenCompraId = (kardex.getOrdenCompra() != null) ? kardex.getOrdenCompra().getId() : null;
 		ordenCompraService.validarEstadoDeEntrega(ordenCompraId, empresaId);

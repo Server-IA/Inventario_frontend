@@ -24,6 +24,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -172,6 +173,50 @@ public class GlobalExceptionHandler {
 				List.of(Map.of("field", ex.getParameterName(), "message", "required")));
 
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+	}
+
+	@ExceptionHandler(EntityNotFoundException.class)
+	public ResponseEntity<ErrorDetails> handleEntityNotFound(EntityNotFoundException ex, WebRequest request) {
+		Locale locale = LocaleContextHolder.getLocale();
+
+		ErrorDetails body = new ErrorDetails(
+				LocalDateTime.now(),
+				"Not Found",
+				// msg() usa codeOrRaw y si no existe en messages.properties devuelve el mismo
+				// texto
+				msg(ex.getMessage() != null ? ex.getMessage() : "error.not-found", null, locale),
+				requestPath(request),
+				null);
+
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+	}
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorDetails> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+		Locale locale = LocaleContextHolder.getLocale();
+
+		ErrorDetails body = new ErrorDetails(
+				LocalDateTime.now(),
+				"Bad Request",
+				msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", null, locale),
+				requestPath(request),
+				null);
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+	}
+
+	@ExceptionHandler(IllegalStateException.class)
+	public ResponseEntity<ErrorDetails> handleIllegalState(IllegalStateException ex, WebRequest request) {
+		Locale locale = LocaleContextHolder.getLocale();
+
+		ErrorDetails body = new ErrorDetails(
+				LocalDateTime.now(),
+				"Conflict",
+				msg(ex.getMessage() != null ? ex.getMessage() : "error.conflict", null, locale),
+				requestPath(request),
+				null);
+
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
 	}
 
 }
