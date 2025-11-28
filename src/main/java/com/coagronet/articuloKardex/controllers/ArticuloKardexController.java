@@ -1,6 +1,5 @@
 package com.coagronet.articuloKardex.controllers;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -19,6 +18,7 @@ import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.services.ArticuloKardexService;
 import com.coagronet.utils.UriBuilderUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -38,7 +38,7 @@ public class ArticuloKardexController {
 	@GetMapping
 	public ResponseEntity<Page<ArticuloKardexDTO>> findAll(@PageableDefault Pageable pageable) {
 		Page<ArticuloKardexDTO> page = articuloKardexService.findAll(pageable);
-		if(page.isEmpty()){
+		if (page.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.ok(page);
@@ -52,17 +52,20 @@ public class ArticuloKardexController {
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<ArticuloKardexDTO> findById(@PathVariable Long requestedId) {
 		return articuloKardexService.findById(requestedId)
-			.map(ResponseEntity::ok)
-			.orElse(ResponseEntity.notFound().build());
+				.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
-	public ResponseEntity<Void> createArticuloKardex(@Valid @RequestBody ArticuloKardexDTO articuloKardexDTO,
-			UriComponentsBuilder ucb) {
+	public ResponseEntity<Void> createArticuloKardex(
+			@Valid @RequestBody ArticuloKardexDTO articuloKardexDTO,
+			UriComponentsBuilder ucb,
+			HttpServletRequest request) {
+		var creado = articuloKardexService.create(articuloKardexDTO, request);
+
 		return ResponseEntity
-			.created(uriBuilderUtil.buildArticuloKardexUri((articuloKardexService.create(articuloKardexDTO)).getId(),
-					ucb))
-			.build();
+				.created(uriBuilderUtil.buildArticuloKardexUri(creado.getId(), ucb))
+				.build();
 	}
 
 	@PutMapping("/{requestedId}")
@@ -79,8 +82,8 @@ public class ArticuloKardexController {
 	}
 
 	@GetMapping("/version")
-	public ResponseEntity<String> version(){
-		return ResponseEntity.ok("Version del controlador de kardex item " +version);
+	public ResponseEntity<String> version() {
+		return ResponseEntity.ok("Version del controlador de kardex item " + version);
 	}
 
 }

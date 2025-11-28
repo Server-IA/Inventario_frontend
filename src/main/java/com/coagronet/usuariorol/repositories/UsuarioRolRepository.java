@@ -16,4 +16,10 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	Optional<UsuarioRol> findByUserAndEmpresaIdAndRolId(User user, Long empresaId, Long rolId);
 
+	boolean existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(
+			Long userId,
+			Long empresaId,
+			Long rolId,
+			Long estadoId);
+
 }
