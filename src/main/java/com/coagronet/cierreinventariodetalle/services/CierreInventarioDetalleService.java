@@ -79,12 +79,8 @@ public class CierreInventarioDetalleService {
                             .almacen(cierreInventario.getAlmacen())
                             .build()
             );
-
-
         }
         cierreInventarioDetalleRepository.saveAll(detalles);
-
-
 
     }
 }
