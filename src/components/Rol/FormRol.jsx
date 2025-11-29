@@ -1,145 +1,271 @@
-/**
- * @file FormRol.jsx
- * @module FormRol
- * @description Componente de formulario para agregar, editar o eliminar roles. Utiliza Material UI y recibe funciones de manejo desde el componente principal. Ideal para interfaces CRUD simples con JSON local o backend ligero.
- * @author Karla
- */
-
-import React, { useState } from "react";
+// src/components/rol/FormRol.jsx
+import * as React from "react";
 import PropTypes from "prop-types";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import axios from "../axiosConfig";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+} from "@mui/material";
+import StackButtons from "../StackButtons";
 
-/**
- * @typedef {Object} RolData
- * @property {number|string} rol_id - ID del rol
- * @property {string} rol_nombre - Nombre del rol
- * @property {string} rol_descripcion - Descripción del rol
- * @property {number} rol_estado - Estado del rol (1: activo, 0: inactivo)
- */
+export default function FormRol({
+  selectedRow,
+  setSelectedRow,
+  setMessage,
+  reloadData,
+  open,
+  setOpen,
+  estados = [],
+}) {
+  const [methodName, setMethodName] = React.useState("Agregar");
 
-/**
- * @typedef {Object} FormRolProps
- * @property {Function} onAdd - Función para agregar un nuevo rol
- * @property {Function} onUpdate - Función para actualizar un rol existente
- * @property {Function} onDelete - Función para eliminar un rol
- * @property {RolData|null} selectedRow - Rol actualmente seleccionado para edición
- * @property {Function} setSelectedRow - Función para cambiar la fila seleccionada
- */
-
-/**
- * Componente FormRol.
- *
- * @param {FormRolProps} props - Propiedades del componente
- * @returns {JSX.Element}
- */
-export default function FormRol({ onAdd, onUpdate, onDelete, selectedRow, setSelectedRow }) {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    rol_id: "",
-    rol_nombre: "",
-    rol_descripcion: "",
-    rol_estado: 1,
-  });
-
-  const handleOpen = () => {
-    if (selectedRow) {
-      setFormData(selectedRow);
-    } else {
-      setFormData({
-        rol_id: "",
-        rol_nombre: "",
-        rol_descripcion: "",
-        rol_estado: 1,
-      });
-    }
-    setOpen(true);
+  const initialData = {
+    nombre: "",
+    descripcion: "",
+    estadoId: 1, // por defecto Activo
   };
+
+  const [formData, setFormData] = React.useState(initialData);
+  const [errors, setErrors] = React.useState({});
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    if (selectedRow?.id) {
+      // Modo actualizar
+      setFormData({
+        nombre: selectedRow.nombre || "",
+        descripcion: selectedRow.descripcion || "",
+        estadoId: selectedRow.estadoId ?? 1, // si no viene, Activo
+      });
+      setMethodName("Actualizar");
+    } else {
+      // Modo crear
+      setFormData(initialData);
+      setMethodName("Agregar");
+    }
+    setErrors({});
+  }, [open, selectedRow]);
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedRow(null);
+    setSelectedRow({});
+    setFormData(initialData);
+    setErrors({});
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.rol_id) {
-      onUpdate(formData);
+    if (name === "nombre") {
+      // Solo letras y como máximo un "_"
+      let limpio = value.toUpperCase().replace(/[^A-Z_]/g, ""); // solo letras y _
+      const firstUnderscore = limpio.indexOf("_");
+      if (firstUnderscore !== -1) {
+        // deja solo el primer "_" y quita el resto
+        const before = limpio.slice(0, firstUnderscore + 1);
+        const after = limpio.slice(firstUnderscore + 1).replace(/_/g, "");
+        limpio = before + after;
+      }
+      setFormData((prev) => ({ ...prev, [name]: limpio }));
     } else {
-      onAdd({ ...formData, rol_id: Date.now() });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
-    handleClose();
+
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleDelete = () => {
-    if (selectedRow?.rol_id) {
-      onDelete(selectedRow.rol_id);
-      setSelectedRow(null);
+  const validate = () => {
+    const e = {};
+    // Letras + opcional un "_" en medio, sin empezar ni terminar con "_"
+    const rolRegex = /^[A-Z]+(?:_[A-Z]+)?$/;
+
+    // NOMBRE
+    if (!formData.nombre.trim()) {
+      e.nombre = "El nombre del rol es obligatorio.";
+    } else if (!rolRegex.test(formData.nombre.trim())) {
+      e.nombre =
+        "Solo letras mayúsculas y un solo guion bajo en medio. Ej: ROLE_ADMIN.";
+    }
+
+    // DESCRIPCION
+    if (!formData.descripcion.trim()) {
+      e.descripcion = "La descripción es obligatoria.";
+    }
+
+    // ESTADO
+    if (!formData.estadoId) {
+      e.estadoId = "El estado es obligatorio.";
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async (ev) => {
+    ev.preventDefault();
+    if (!validate()) return;
+
+    const payload = {
+      nombre: formData.nombre.trim(),
+      descripcion: formData.descripcion.trim(),
+      estadoId: Number(formData.estadoId),
+    };
+
+    const creating = methodName === "Agregar";
+    const url = creating ? "/v1/roles" : `/v1/roles/${selectedRow.id}`;
+    const req = creating ? axios.post : axios.put;
+
+    try {
+      await req(url, payload);
+      setMessage({
+        open: true,
+        severity: "success",
+        text: creating ? "Rol creado" : "Rol actualizado",
+      });
+      handleClose();
+      reloadData();
+    } catch (err) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: err?.response?.data?.message || "Error al guardar",
+      });
+    }
+  };
+
+  const deleteRow = async () => {
+    if (!selectedRow?.id) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Selecciona un registro para eliminar",
+      });
+      return;
+    }
+    if (!window.confirm(`¿Eliminar el rol "${selectedRow.nombre}"?`)) return;
+
+    try {
+      await axios.delete(`/v1/roles/${selectedRow.id}`);
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Rol eliminado",
+      });
+      handleClose();
+      reloadData();
+    } catch {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "No se pudo eliminar el rol",
+      });
     }
   };
 
   return (
     <>
-      <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-        <Button variant="outlined" color="primary" startIcon={<AddIcon />} onClick={handleOpen}>
-          ADD
-        </Button>
-        <Button variant="outlined" color="secondary" startIcon={<EditIcon />} onClick={handleOpen} disabled={!selectedRow}>
-          UPDATE
-        </Button>
-        <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleDelete} disabled={!selectedRow}>
-          DELETE
-        </Button>
-      </div>
+      <StackButtons
+        methods={{
+          create: () => {
+            setMethodName("Agregar");
+            setSelectedRow({});
+            setFormData(initialData);
+            setErrors({});
+            setOpen(true);
+          },
+          update: () => {
+            if (!selectedRow?.id)
+              return setMessage({
+                open: true,
+                severity: "error",
+                text: "Selecciona un registro",
+              });
+            setMethodName("Actualizar");
+            setErrors({});
+            setOpen(true);
+          },
+          deleteRow,
+        }}
+      />
 
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{selectedRow ? "Editar Rol" : "Agregar Rol"}</DialogTitle>
-        <DialogContent>
-          <TextField
-            name="rol_nombre"
-            label="Nombre"
-            value={formData.rol_nombre}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            name="rol_descripcion"
-            label="Descripción"
-            value={formData.rol_descripcion}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            name="rol_estado"
-            label="Estado (1: Activo, 0: Inactivo)"
-            value={formData.rol_estado}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            type="number"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button type="submit" onClick={handleSubmit}>
-            {selectedRow ? "Actualizar" : "Agregar"}
-          </Button>
-        </DialogActions>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <form onSubmit={handleSubmit}>
+          <DialogTitle>{methodName} Rol</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Formulario para gestionar roles
+            </DialogContentText>
+
+            <TextField
+              fullWidth
+              margin="dense"
+              name="nombre"
+              label="Nombre (ej: ROLE_ADMIN)"
+              value={formData.nombre}
+              onChange={handleChange}
+              error={!!errors.nombre}
+              helperText={errors.nombre}
+            />
+
+            <TextField
+              fullWidth
+              margin="dense"
+              name="descripcion"
+              label="Descripción"
+              value={formData.descripcion}
+              onChange={handleChange}
+              error={!!errors.descripcion}
+              helperText={errors.descripcion}
+            />
+
+            <FormControl fullWidth margin="dense" error={!!errors.estadoId}>
+              <InputLabel id="estadoId-label">Estado</InputLabel>
+              <Select
+                labelId="estadoId-label"
+                label="Estado"
+                name="estadoId"
+                value={formData.estadoId ?? 1}
+                onChange={handleChange}
+              >
+                {estados.map((e) => (
+                  <MenuItem key={e.id} value={e.id}>
+                    {e.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>{errors.estadoId}</FormHelperText>
+            </FormControl>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={handleClose}>Cancelar</Button>
+            <Button type="submit" variant="contained">
+              {methodName}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </>
   );
 }
+
+FormRol.propTypes = {
+  selectedRow: PropTypes.object.isRequired,
+  setSelectedRow: PropTypes.func.isRequired,
+  setMessage: PropTypes.func.isRequired,
+  reloadData: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  estados: PropTypes.array,
+};

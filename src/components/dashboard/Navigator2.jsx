@@ -10,6 +10,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
+
 import { alpha, useTheme } from "@mui/material/styles";
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -178,6 +179,8 @@ import RE_ordenCompra from "../RE_oc/re_oc.jsx";
 import RE_fc from "../RE_fc/re_fc.jsx";
 import TipoUnida from "../tipo_unidad/tipounidad.jsx";
 import Estado from "../estado/estado.jsx";
+import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
+import UsuarioRol from "../usario_rol/usariorol.jsx";
 
 // Imágenes
 import img1 from "/images/cards/1.jpg";
@@ -238,6 +241,8 @@ import r_kardexx from "/images/cards/r_kardexx.webp";
 import r_factura from "/images/cards/r_factura.webp";
 import prodcutos_vencidos from "/images/cards/prodcutos_vencidos.webp";
 import r_orden_compra from "/images/cards/r_orden_compra.webp";
+import pedido_coti from "/images/cards/pedido_coti.webp";
+import usariorol from "/images/cards/usariorol.webp";
 
 import tipo_unidad from "/images/cards/tipo_unidad.webp";
 import categoria_estado from "/images/cards/categoria_estado.webp";
@@ -245,6 +250,7 @@ import estado from "/images/cards/estado.webp";
 import { es } from "date-fns/locale";
 
 const icons = {
+  
   HistoryToggleOff: <HistoryToggleOffIcon />,
   Category: <CategoryIcon />,
   Timeline: <TimelineIcon />,
@@ -358,6 +364,8 @@ const icons = {
 };
 
 const components = {
+  UsuarioRol: UsuarioRol,
+  PedidoCotizacion: PedidoCotizacion,
   Estado: Estado,
   tipoidentificacion: TipoIdentificacion,
   roll: Rol,
@@ -411,6 +419,8 @@ const components = {
 };
 
 const moduleImages = {
+  UsuarioRol: usariorol,
+  PedidoCotizacion:pedido_coti,
   persona,
   rol,
   tipoidentificacion: tipo_identificacion,

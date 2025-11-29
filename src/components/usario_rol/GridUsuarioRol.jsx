@@ -1,4 +1,4 @@
-// src/components/rol/GridRol.jsx
+// src/components/usuarioRol/GridUsuarioRol.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
@@ -12,10 +12,9 @@ import {
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
-const LS_KEY = "gridRol:columnVisibility:v1";
+const LS_KEY = "gridUsuarioRol:columnVisibility:v1";
 
-/* ---------- Toolbar personalizada ---------- */
-function RolToolbar({ onResetColumns }) {
+function UsuarioRolToolbar({ onResetColumns }) {
   return (
     <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
       <div>
@@ -38,34 +37,45 @@ function RolToolbar({ onResetColumns }) {
   );
 }
 
-/* ---------- GridRol ---------- */
-export default function GridRol({
+UsuarioRolToolbar.propTypes = {
+  onResetColumns: PropTypes.func,
+};
+
+export default function GridUsuarioRol({
   rows = [],
   loading = false,
   selectedRow = null,
   setSelectedRow = () => {},
 }) {
-  /* ---------- Columnas ---------- */
   const columns = useMemo(
     () => [
       { field: "id", headerName: "ID", width: 90, type: "number" },
-      { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 220 },
-      { field: "descripcion", headerName: "Descripción", flex: 1.4, minWidth: 260 },
+
+      { field: "usuarioId", headerName: "Usuario ID", width: 110, type: "number" },
+      { field: "usuarioEmail", headerName: "Usuario", flex: 1.2, minWidth: 220 },
+
+      { field: "empresaId", headerName: "Empresa ID", width: 110, type: "number" },
+      { field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 },
+
+      { field: "rolId", headerName: "Rol ID", width: 100, type: "number" },
+      { field: "rolNombre", headerName: "Rol", flex: 1.1, minWidth: 220 },
+
       { field: "estadoId", headerName: "Estado ID", width: 110, type: "number" },
       { field: "estadoNombre", headerName: "Estado", width: 160 },
 
+      { field: "iniciaContratoEn", headerName: "Inicia contrato", width: 210 },
+      { field: "finalizaContratoEn", headerName: "Finaliza contrato", width: 210 },
+
       // Auditoría
-      { field: "createdBy", headerName: "Creado por", width: 130, type: "number" },
-      { field: "createdAt", headerName: "Creado el", width: 200 },
-      { field: "updatedBy", headerName: "Actualizado por", width: 140, type: "number" },
-      { field: "updatedAt", headerName: "Actualizado el", width: 200 },
-      { field: "deletedBy", headerName: "Eliminado por", width: 140, type: "number" },
-      { field: "deletedAt", headerName: "Eliminado el", width: 200 },
+      { field: "createdBy", headerName: "Creado por", width: 180 },
+      { field: "createdAt", headerName: "Creado el", width: 210 },
+      { field: "updatedBy", headerName: "Actualizado por", width: 180 },
+      { field: "updatedAt", headerName: "Actualizado el", width: 210 },
     ],
     []
   );
 
-  /* ---------- Persistencia visibilidad ---------- */
+  // Persistencia visibilidad columnas
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
   useEffect(() => {
@@ -87,7 +97,7 @@ export default function GridRol({
     setColumnVisibilityModel({});
   };
 
-  /* ---------- Paginación CONTROLADA ---------- */
+  // Paginación controlada
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 5,
@@ -108,33 +118,28 @@ export default function GridRol({
         columns={columns}
         getRowId={(r) => r.id}
         loading={loading}
-        /* selección */
         onRowClick={(p) => setSelectedRow(p.row)}
         rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
-        /* columnas + toolbar */
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
-        slots={{ toolbar: RolToolbar }}
+        slots={{ toolbar: UsuarioRolToolbar }}
         slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
-        /* paginación controlada (cliente) */
         pagination
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationChange}
         pageSizeOptions={[5, 10, 20, 50]}
-        /* altura fija para que funcione la paginación */
         autoHeight
-sx={{
-  minHeight: 300,      // evita que se vea muy pequeño
-  '& .MuiDataGrid-virtualScroller': { overflow: 'auto' },
-}}
-
+        sx={{
+          minHeight: 300,
+          "& .MuiDataGrid-virtualScroller": { overflow: "auto" },
+        }}
       />
     </Box>
   );
 }
 
-GridRol.propTypes = {
+GridUsuarioRol.propTypes = {
   rows: PropTypes.array,
   loading: PropTypes.bool,
   selectedRow: PropTypes.object,
