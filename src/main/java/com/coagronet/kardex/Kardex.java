@@ -1,6 +1,7 @@
 package com.coagronet.kardex;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
@@ -76,5 +77,20 @@ public class Kardex {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
 	private OrdenCompra ordenCompra;
+
+    @Column(name = "kar_seg_username")
+    private String username;
+
+    @Column(name = "kar_seg_rol")
+    private String rol;
+
+    @Column(name = "kar_seg_ip")
+    private String ip;
+
+    @Column(name = "kar_seg_host")
+    private String host;
+
+    @Column(name = "kar_seg_fecha_hora", insertable = false)
+    private OffsetDateTime segFechaHora;
 
 }
