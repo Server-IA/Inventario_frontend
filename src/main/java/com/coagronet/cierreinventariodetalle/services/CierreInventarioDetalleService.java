@@ -67,7 +67,7 @@ public class CierreInventarioDetalleService {
         List<CierreInventarioDetalle> detalles = new ArrayList<>();
 
         for(PresentacionProducto prp : productosPresentacion){
-            BigDecimal stock = cierreInventarioDetalleRepository.calcularStock(prp.getId(), almacenId, empresaId, fechaInicio, fechaFin);
+            BigDecimal stock = cierreInventarioDetalleRepository.calcularStock(prp.getId(), almacenId, empresaId, fechaFin);
 
             detalles.add(
                     CierreInventarioDetalle.builder()
