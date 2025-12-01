@@ -15,7 +15,11 @@ export default function Kardex() {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
 
-  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
   // Artículos
@@ -36,14 +40,35 @@ export default function Kardex() {
   const [totalKardex, setTotalKardex] = useState(0);
   const [loadingKardex, setLoadingKardex] = useState(false);
 
-  // Paginación Artículos
-  const [articuloPage, setArticuloPage] = useState({ page: 0, size: 10 });
-  const [totalArticulos, setTotalArticulos] = useState(0);
-  const [loadingArticulos, setLoadingArticulos] = useState(false);
+  // Paginación Artículos (mismo patrón que en Pedido)
+  const [articuloPaginationModel, setArticuloPaginationModel] = useState({
+    page: 0,
+    size: 10,
+  });
+  const [articuloRowCount, setArticuloRowCount] = useState(0);
+  const [articuloLoading, setArticuloLoading] = useState(false);
 
-  // Normalizador
+  // Normalizador base
   const toArray = (d) =>
-    Array.isArray(d) ? d : (d?.content ?? d?.items ?? d?.data ?? d?.results ?? []);
+    Array.isArray(d)
+      ? d
+      : d?.content ??
+        d?.items ??
+        d?.data ??
+        d?.results ??
+        [];
+
+  // Normalizador de página (igual que en Pedido)
+  const normalizePageResponse = (res) => {
+    const data = res?.data ?? {};
+    const rows = toArray(data);
+    const total =
+      data?.totalElements ??
+      data?.page?.totalElements ??
+      data?.total ??
+      rows.length;
+    return { rows, total };
+  };
 
   // ------- Cargar catálogos una vez -------
   useEffect(() => {
@@ -60,7 +85,10 @@ export default function Kardex() {
         setTiposMovimiento(toArray(rTmov.data));
         setPresentaciones(toArray(rPres.data));
       } catch (e) {
-        setAlmacenes([]); setProducciones([]); setTiposMovimiento([]); setPresentaciones([]);
+        setAlmacenes([]);
+        setProducciones([]);
+        setTiposMovimiento([]);
+        setPresentaciones([]);
       }
     };
     loadCatalogs();
@@ -74,7 +102,9 @@ export default function Kardex() {
       .get("/v1/kardex", { params: { page, size } })
       .then((res) => {
         const rows = toArray(res.data);
-        const rawTotal = Number(res.data?.totalElements ?? res.data?.page?.totalElements);
+        const rawTotal = Number(
+          res.data?.totalElements ?? res.data?.page?.totalElements
+        );
         // rowCount robusto: usa total si viene; si no, estima para habilitar flechas
         const effectiveTotal =
           Number.isFinite(rawTotal) && rawTotal > 0
@@ -91,46 +121,83 @@ export default function Kardex() {
         }
       })
       .catch(() => {
-        setMessage({ open: true, severity: "error", text: "Error al cargar kardexes" });
-        setKardexes([]); setTotalKardex(0);
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "Error al cargar kardexes",
+        });
+        setKardexes([]);
+        setTotalKardex(0);
       })
       .finally(() => setLoadingKardex(false));
   };
 
-  // ------- Cargar artículos del kardex con paginación (rowCount efectivo) -------
-  const loadArticulos = (kardexId) => {
-    if (!kardexId) { setArticuloItems([]); setTotalArticulos(0); return; }
-    setLoadingArticulos(true);
-    const { page, size } = articuloPage;
-    axios
-      .get(`/v1/articulo-kardex`, { params: { kardexId, page, size } })
-      .then((res) => {
-        const rows = toArray(res.data);
-        const rawTotal = Number(res.data?.totalElements ?? res.data?.page?.totalElements);
-        const effectiveTotal =
-          Number.isFinite(rawTotal) && rawTotal > 0
-            ? rawTotal
-            : rows.length < size
+  // ------- Cargar artículos del kardex (versión que me diste, adaptada) -------
+  const loadArticulos = async (kardexId) => {
+    if (!kardexId) {
+      setArticuloItems([]);
+      setArticuloRowCount(0);
+      return;
+    }
+    try {
+      setArticuloLoading(true);
+      const size = articuloPaginationModel.size;
+      const page = articuloPaginationModel.page;
+      const params = { page, size, sort: "id,desc" };
+
+      // Endpoint adaptado para kardex
+      const res = await axios.get(
+        `/v1/articulo-kardex/${kardexId}/articulos`,
+        { params }
+      );
+
+      const { rows, total } = normalizePageResponse(res);
+
+      setArticuloItems(rows);
+
+      const totalNum = Number(total);
+      let effectiveTotal;
+      if (Number.isFinite(totalNum) && totalNum > 0) {
+        effectiveTotal = totalNum;
+      } else {
+        effectiveTotal =
+          rows.length < size
             ? page * size + rows.length
             : (page + 2) * size;
+      }
+      setArticuloRowCount(effectiveTotal);
 
-        setArticuloItems(rows);
-        setTotalArticulos(effectiveTotal);
-
-        if (rows.length === 0 && page > 0) {
-          setArticuloPage((p) => ({ ...p, page: p.page - 1 }));
-        }
-      })
-      .catch(() => { setArticuloItems([]); setTotalArticulos(0); })
-      .finally(() => setLoadingArticulos(false));
+      if (rows.length === 0 && page > 0) {
+        setArticuloPaginationModel((p) => ({ ...p, page: p.page - 1 }));
+      }
+    } catch (e) {
+      setArticuloItems([]);
+      setArticuloRowCount(0);
+    } finally {
+      setArticuloLoading(false);
+    }
   };
 
   // Effects
-  useEffect(() => { reloadData(); }, [kardexPage.page, kardexPage.size]);
   useEffect(() => {
-    if (selectedRow) loadArticulos(selectedRow.id);
-    else { setArticuloItems([]); setTotalArticulos(0); }
-  }, [selectedRow, reloadArticulos, articuloPage.page, articuloPage.size]);
+    reloadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kardexPage.page, kardexPage.size]);
+
+  useEffect(() => {
+    if (selectedRow) {
+      loadArticulos(selectedRow.id);
+    } else {
+      setArticuloItems([]);
+      setArticuloRowCount(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedRow,
+    reloadArticulos,
+    articuloPaginationModel.page,
+    articuloPaginationModel.size,
+  ]);
 
   // Estilos
   const containerKardex = {
@@ -148,32 +215,64 @@ export default function Kardex() {
     <Box sx={{ p: 2 }}>
       {/* KARDEX */}
       <Box sx={{ ...containerKardex, mb: 4 }}>
-        <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+        <Box
+          mb={2}
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Typography variant="h5">Gestión de Kardex</Typography>
-          <Button variant="contained" onClick={() => setSearchDialogOpen(true)}>
+          <Button
+            variant="contained"
+            onClick={() => setSearchDialogOpen(true)}
+          >
             Buscar reporte
           </Button>
         </Box>
 
         <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
-          <Button variant="contained" color="primary" onClick={() => { setFormMode("create"); setFormOpen(true); }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setFormMode("create");
+              setFormOpen(true);
+            }}
+          >
             + Agregar
           </Button>
-          <Button variant="outlined" onClick={() => { setFormMode("edit"); setFormOpen(true); }} disabled={!selectedRow}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setFormMode("edit");
+              setFormOpen(true);
+            }}
+            disabled={!selectedRow}
+          >
             Actualizar
           </Button>
           <Button
-            variant="outlined" color="error" disabled={!selectedRow}
+            variant="outlined"
+            color="error"
+            disabled={!selectedRow}
             onClick={async () => {
               if (!selectedRow) return;
               if (!window.confirm("¿Eliminar el Kardex seleccionado?")) return;
               try {
                 await axios.delete(`/v1/kardex/${selectedRow.id}`);
-                setMessage({ open: true, severity: "success", text: "Kardex eliminado correctamente." });
+                setMessage({
+                  open: true,
+                  severity: "success",
+                  text: "Kardex eliminado correctamente.",
+                });
                 setSelectedRow(null);
                 reloadData();
               } catch {
-                setMessage({ open: true, severity: "error", text: "Error al eliminar el Kardex." });
+                setMessage({
+                  open: true,
+                  severity: "error",
+                  text: "Error al eliminar el Kardex.",
+                });
               }
             }}
           >
@@ -192,7 +291,9 @@ export default function Kardex() {
         />
 
         <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" gutterBottom>Lista de Kardex</Typography>
+          <Typography variant="h6" gutterBottom>
+            Lista de Kardex
+          </Typography>
           <GridKardex
             kardexes={kardexes}
             selectedRow={selectedRow}
@@ -211,8 +312,15 @@ export default function Kardex() {
       {/* ARTÍCULOS */}
       {selectedRow && (
         <Box sx={{ ...containerArticulos, mt: 4 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Artículos del Kardex seleccionado</Typography>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">
+              Artículos del Kardex seleccionado
+            </Typography>
             <Box display="flex" gap={2}>
               <FormArticuloKardex
                 selectedRow={selectedArticulo}
@@ -227,17 +335,22 @@ export default function Kardex() {
           <GridArticuloKardex
             items={articuloItems}
             setSelectedRow={setSelectedArticulo}
-            loading={loadingArticulos}
-            paginationModel={articuloPage}
-            setPaginationModel={setArticuloPage}
-            rowCount={totalArticulos}
+            loading={articuloLoading}
+            paginationModel={articuloPaginationModel}
+            setPaginationModel={setArticuloPaginationModel}
+            rowCount={articuloRowCount}
             presentaciones={presentaciones}
             kardexId={selectedRow?.id}
           />
         </Box>
       )}
 
-      <Dialog open={searchDialogOpen} onClose={() => setSearchDialogOpen(false)} fullWidth maxWidth="lg">
+      <Dialog
+        open={searchDialogOpen}
+        onClose={() => setSearchDialogOpen(false)}
+        fullWidth
+        maxWidth="lg"
+      >
         <ReKardex setOpen={setSearchDialogOpen} />
       </Dialog>
 
