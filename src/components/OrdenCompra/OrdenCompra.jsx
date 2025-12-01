@@ -233,17 +233,20 @@ export default function OrdenCompra() {
             Lista de Órdenes de Compra
           </Typography>
           <GridOrdenCompra
-            ordenes={ordenes}
-            rowCount={rowCount}
-            loading={loading}
-            paginationModel={{ page: paginationModel.page, pageSize: paginationModel.size }}
-            setPaginationModel={onOcGridPaginationChange}
-            sortModel={sortModel}
-            setSortModel={setSortModel}
-            setFilterModel={setFilterModel}
-            setSelectedRow={setSelectedRow}
-            proveedoresMap={proveedoresMap}
-          />
+  ordenes={ordenes}
+  rowCount={rowCount}
+  loading={loading}
+  paginationModel={paginationModel}
+  setPaginationModel={setPaginationModel}
+  sortModel={sortModel}
+  setSortModel={setSortModel}
+  setFilterModel={setFilterModel}
+  setSelectedRow={setSelectedRow}
+  proveedoresMap={proveedoresMap}
+  setMessage={setMessage}
+  reloadData={reloadData} 
+/>
+
         </Box>
       </Box>
 

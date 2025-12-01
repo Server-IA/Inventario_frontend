@@ -1,3 +1,4 @@
+// 🔥 ESTE ES EL FORMULARIO FINAL SIN LÓGICA DE “ENVIAR AL PROVEEDOR”
 import * as React from "react";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
@@ -28,10 +29,11 @@ const toArray = (data) =>
     ? data.data
     : [];
 
-// Helper para validar números requeridos (acepta "" y lo transforma a undefined)
 const numberRequired = (msg) =>
   Yup.number()
-    .transform((v, orig) => (orig === "" || orig === null ? undefined : Number(orig)))
+    .transform((v, orig) =>
+      orig === "" || orig === null ? undefined : Number(orig)
+    )
     .typeError(msg)
     .required(msg);
 
@@ -41,9 +43,10 @@ const OrdenCompraSchema = Yup.object().shape({
   pedidoId: numberRequired("El pedido es obligatorio."),
   proveedorId: numberRequired("El proveedor es obligatorio."),
   descripcion: Yup.string(),
-  // Ya NO validamos contra 0/1. Ahora es catálogo dinámico:
   estadoId: numberRequired("El estado es obligatorio."),
 });
+
+const ESTADO_ACTIVO_ID = 23;
 
 export default function FormOrdenCompra({
   setMessage,
@@ -55,7 +58,7 @@ export default function FormOrdenCompra({
   const [methodName, setMethodName] = React.useState("");
   const [pedidos, setPedidos] = React.useState([]);
   const [proveedores, setProveedores] = React.useState([]);
-  const [estados, setEstados] = React.useState([]); // 👈 Nuevos estados dinámicos
+  const [estados, setEstados] = React.useState([]);
 
   /* ========== Acciones CRUD del toolbar ========== */
   const create = () => {
@@ -65,14 +68,14 @@ export default function FormOrdenCompra({
       pedidoId: "",
       proveedorId: "",
       descripcion: "",
-      estadoId: "", // 👈 vacío; el usuario debe seleccionar
+      estadoId: ESTADO_ACTIVO_ID, // siempre ACTIVA
     });
     setMethodName("Agregar");
     setOpen(true);
   };
 
   const update = () => {
-    if (!selectedRow || !selectedRow.id) {
+    if (!selectedRow?.id) {
       setMessage({
         open: true,
         severity: "error",
@@ -127,12 +130,23 @@ export default function FormOrdenCompra({
       .then((res) => setProveedores(toArray(res.data)))
       .catch(() => setProveedores([]));
 
-    // 👇 Estados dinámicos
     axios
       .get("/v1/items/orden_compra_estado/0")
       .then((res) => setEstados(toArray(res.data)))
       .catch(() => setEstados([]));
   }, []);
+
+  const getEstadoLabel = (id) => {
+    if (!id) return "";
+    const idNum = Number(id);
+    const found = estados.find((e) => Number(e.id) === idNum);
+    return (
+      found?.nombre ||
+      found?.name ||
+      found?.descripcion ||
+      (idNum === ESTADO_ACTIVO_ID ? "Activo" : `Estado ${idNum}`)
+    );
+  };
 
   return (
     <>
@@ -145,22 +159,30 @@ export default function FormOrdenCompra({
             pedidoId: selectedRow?.pedidoId ?? "",
             proveedorId: selectedRow?.proveedorId ?? "",
             descripcion: selectedRow?.descripcion || "",
-            estadoId: selectedRow?.estadoId ?? "", // 👈 sin default 0/1
+            estadoId:
+              selectedRow?.estadoId ??
+              (methodName === "Agregar" ? ESTADO_ACTIVO_ID : ""),
           }}
           enableReinitialize
           validationSchema={OrdenCompraSchema}
           onSubmit={(values, { setSubmitting }) => {
             const id = selectedRow?.id || 0;
+
             const url =
-              methodName === "Agregar" ? "/v1/orden-compra" : `/v1/orden-compra/${id}`;
+              methodName === "Agregar"
+                ? "/v1/orden-compra" // <- YA SIN createOrdenCompraNUEVO
+                : `/v1/orden-compra/${id}`;
+
             const method = methodName === "Agregar" ? axios.post : axios.put;
 
-            // Asegurar tipos numéricos en ids
-            const payload = {
+            let payload = {
               ...values,
               pedidoId: Number(values.pedidoId),
               proveedorId: Number(values.proveedorId),
-              estadoId: Number(values.estadoId),
+              estadoId:
+                methodName === "Agregar"
+                  ? ESTADO_ACTIVO_ID
+                  : Number(values.estadoId),
             };
 
             method(url, payload)
@@ -177,17 +199,25 @@ export default function FormOrdenCompra({
                 reloadData();
               })
               .catch((error) => {
-                const errorMessage = error.response?.data?.message || error.message;
+                const msg =
+                  error.response?.data?.message || error.message;
                 setMessage({
                   open: true,
                   severity: "error",
-                  text: `Error al guardar: ${errorMessage}`,
+                  text: `Error al guardar: ${msg}`,
                 });
                 setSubmitting(false);
               });
           }}
         >
-          {({ values, errors, touched, handleChange, setFieldValue, isSubmitting }) => (
+          {({
+            values,
+            errors,
+            touched,
+            handleChange,
+            setFieldValue,
+            isSubmitting,
+          }) => (
             <Form>
               <DialogTitle>{methodName} Orden de Compra</DialogTitle>
 
@@ -207,23 +237,24 @@ export default function FormOrdenCompra({
                   />
                 </FormControl>
 
-                <FormControl fullWidth margin="normal" error={touched.pedidoId && Boolean(errors.pedidoId)}>
+                <FormControl
+                  fullWidth
+                  margin="normal"
+                  error={touched.pedidoId && Boolean(errors.pedidoId)}
+                >
                   <InputLabel id="pedidoId-label">Pedido</InputLabel>
                   <Select
                     labelId="pedidoId-label"
-                    label="Pedido"
                     name="pedidoId"
+                    label="Pedido"
                     value={values.pedidoId}
-                    onChange={(e) => setFieldValue("pedidoId", Number(e.target.value))}
+                    onChange={(e) =>
+                      setFieldValue("pedidoId", Number(e.target.value))
+                    }
                   >
-                    {pedidos.length === 0 && (
-                      <MenuItem disabled value="">
-                        (No hay pedidos disponibles)
-                      </MenuItem>
-                    )}
                     {pedidos.map((p) => (
                       <MenuItem key={p.id} value={p.id}>
-                        {p.descripcion ?? `#${p.id}`}
+                        {p.descripcion ?? `Pedido ${p.id}`}
                       </MenuItem>
                     ))}
                   </Select>
@@ -237,16 +268,13 @@ export default function FormOrdenCompra({
                   <InputLabel id="proveedorId-label">Proveedor</InputLabel>
                   <Select
                     labelId="proveedorId-label"
-                    label="Proveedor"
                     name="proveedorId"
+                    label="Proveedor"
                     value={values.proveedorId}
-                    onChange={(e) => setFieldValue("proveedorId", Number(e.target.value))}
+                    onChange={(e) =>
+                      setFieldValue("proveedorId", Number(e.target.value))
+                    }
                   >
-                    {proveedores.length === 0 && (
-                      <MenuItem disabled value="">
-                        (No hay proveedores)
-                      </MenuItem>
-                    )}
                     {proveedores.map((p) => (
                       <MenuItem key={p.id} value={p.id}>
                         {p.name ?? p.nombre ?? `Proveedor ${p.id}`}
@@ -261,37 +289,38 @@ export default function FormOrdenCompra({
                     label="Descripción"
                     value={values.descripcion}
                     onChange={handleChange}
-                    error={touched.descripcion && Boolean(errors.descripcion)}
-                    helperText={touched.descripcion && errors.descripcion}
                   />
                 </FormControl>
 
-                {/* ====== Estado dinámico ====== */}
-                <FormControl
-                  fullWidth
-                  margin="normal"
-                  error={touched.estadoId && Boolean(errors.estadoId)}
-                >
-                  <InputLabel id="estadoId-label">Estado</InputLabel>
-                  <Select
-                    labelId="estadoId-label"
-                    label="Estado"
-                    name="estadoId"
-                    value={values.estadoId}
-                    onChange={(e) => setFieldValue("estadoId", Number(e.target.value))}
-                  >
-                    {estados.length === 0 && (
-                      <MenuItem disabled value="">
-                        (No hay estados configurados)
-                      </MenuItem>
-                    )}
-                    {estados.map((it) => (
-                      <MenuItem key={it.id} value={it.id}>
-                        {it.nombre ?? it.name ?? it.descripcion ?? `Estado ${it.id}`}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                {/* Estado solo lectura en crear */}
+                {methodName === "Agregar" ? (
+                  <FormControl fullWidth margin="normal">
+                    <TextField
+                      label="Estado"
+                      value={getEstadoLabel(ESTADO_ACTIVO_ID)}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </FormControl>
+                ) : (
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel id="estadoId-label">Estado</InputLabel>
+                    <Select
+                      labelId="estadoId-label"
+                      name="estadoId"
+                      label="Estado"
+                      value={values.estadoId}
+                      onChange={(e) =>
+                        setFieldValue("estadoId", Number(e.target.value))
+                      }
+                    >
+                      {estados.map((e) => (
+                        <MenuItem key={e.id} value={e.id}>
+                          {e.nombre ?? e.name ?? `Estado ${e.id}`}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
               </DialogContent>
 
               <DialogActions>

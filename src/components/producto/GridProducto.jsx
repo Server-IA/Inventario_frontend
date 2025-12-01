@@ -89,7 +89,7 @@ export default function GridProducto({
   /* ---------- Paginación CONTROLADA ---------- */
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
-    pageSize: 10,
+    pageSize: 5,
   });
 
   const handlePaginationChange = (model) => {
@@ -126,8 +126,12 @@ export default function GridProducto({
         onPaginationModelChange={handlePaginationChange}
         pageSizeOptions={[5, 10, 20, 50]}
 
-        /* altura fija para que funcione la paginación */
-        sx={{ height: 520 }}
+       autoHeight
+        sx={{
+          minHeight: 300,      // evita que se vea muy pequeño
+          '& .MuiDataGrid-virtualScroller': { overflow: 'auto' },
+        }}
+
       />
     </Box>
   );

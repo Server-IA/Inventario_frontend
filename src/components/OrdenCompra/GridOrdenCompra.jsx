@@ -1,12 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import {
   DataGrid,
   GridToolbarContainer,
   GridToolbarFilterButton,
   esES,
 } from "@mui/x-data-grid";
+import axios from "../axiosConfig";
 
 function CustomToolbar() {
   return (
@@ -27,9 +28,76 @@ export default function GridOrdenCompra({
   setFilterModel,
   setSelectedRow,
   proveedoresMap = {},
+  setMessage = () => {},
+  reloadData = () => {},
 }) {
   const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
 
+  /* ================== Handler cambio de estado 23 ↔ 24 ================== */
+  const handleEnviarOrdenCompra = useCallback(
+    (row) => {
+      if (!row?.id) {
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "No se encontró el ID de la orden de compra.",
+        });
+        return;
+      }
+
+      const estadoActual = Number(row?.estadoId ?? row?.estado?.id);
+
+      // Solo permitimos toggle entre ACTIVO (23) y ENTREGADO AL PROVEEDOR (24)
+      if (estadoActual !== 23 && estadoActual !== 24) {
+        setMessage({
+          open: true,
+          severity: "warning",
+          text: "Solo se puede cambiar entre estados ACTIVO y ENTREGADO AL PROVEEDOR.",
+        });
+        return;
+      }
+
+      const esActivo = estadoActual === 23;
+      const nuevoEstadoId = esActivo ? 24 : 23;
+      const textoAccion = esActivo
+        ? "enviada al proveedor"
+        : "devuelta a estado ACTIVO";
+
+      // ✅ Usamos el MISMO endpoint que el form: PUT /v1/orden-compra/{id}
+      const url = `/v1/orden-compra/${row.id}`;
+
+      // Payload compatible con FormOrdenCompra
+      const payload = {
+        fechaHora: row.fechaHora,
+        pedidoId: Number(row.pedidoId),
+        proveedorId: Number(row.proveedorId),
+        descripcion: row.descripcion ?? "",
+        estadoId: nuevoEstadoId,
+      };
+
+      axios
+        .put(url, payload)
+        .then(() => {
+          setMessage({
+            open: true,
+            severity: "success",
+            text: `Orden de compra ${textoAccion} con éxito.`,
+          });
+          reloadData?.();
+        })
+        .catch((error) => {
+          const errorMessage = error.response?.data?.message || error.message;
+          setMessage({
+            open: true,
+            severity: "error",
+            text: `Error al cambiar estado: ${errorMessage}`,
+          });
+        });
+    },
+    [setMessage, reloadData]
+  );
+
+  /* ================== Columnas ================== */
   const columns = useMemo(() => {
     const proveedorValueGetter = ({ row }) => {
       const provId =
@@ -38,16 +106,39 @@ export default function GridOrdenCompra({
         row?.proveedorIdFk ??
         row?.proveedor?.id ??
         null;
+
       const provName =
         row?.proveedorName ??
         row?.proveedor_name ??
         row?.proveedor?.name ??
         (provId != null ? proveedoresMap[Number(provId)] : undefined);
+
       return provName ?? String(provId ?? "");
     };
 
+    const estadoValueGetter = ({ row }) => {
+      const rawId = row?.estadoId ?? row?.estado?.id;
+      if (rawId == null) return "";
+      const id = Number(rawId);
+
+      switch (id) {
+        case 23:
+          return "Activo";
+        case 24:
+          return "Entregado al proveedor";
+        case 25:
+          return "Entrega Parcial";
+        case 26:
+          return "Entrada total";
+        case 45:
+          return "mm";
+        default:
+          return `Estado ${id}`;
+      }
+    };
+
     return [
-      { field: "id", headerName: "ID", width: 90, type: "number" },
+      { field: "id", headerName: "ID", width: 80, type: "number" },
       {
         field: "fechaHora",
         headerName: "Fecha y Hora",
@@ -58,25 +149,75 @@ export default function GridOrdenCompra({
       {
         field: "proveedor",
         headerName: "Proveedor",
-        width: 240,
+        width: 220,
         valueGetter: proveedorValueGetter,
       },
-      { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
+      {
+        field: "descripcion",
+        headerName: "Descripción",
+        flex: 1,
+        minWidth: 260,
+      },
       {
         field: "estadoId",
         headerName: "Estado",
-        width: 140,
-        valueGetter: ({ row }) =>
-          row?.estado?.nombre ??
-          row?.estado?.name ??
-          (String(row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+        width: 190,
+        valueGetter: estadoValueGetter,
+      },
+      // ===== Columna Acciones con botón toggle + color =====
+      {
+        field: "acciones",
+        headerName: "Acciones",
+        width: 250,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const row = params.row;
+          const estadoId = Number(row?.estadoId ?? row?.estado?.id);
+
+          const esActivo = estadoId === 23;
+          const esEntregado = estadoId === 24;
+          const habilitado = esActivo || esEntregado;
+
+          const label = esActivo
+            ? "ENVIAR AL PROVEEDOR"
+            : esEntregado
+            ? "VOLVER A ACTIVO"
+            : "CAMBIAR ESTADO";
+
+          const color = esActivo
+            ? "primary" // azul
+            : esEntregado
+            ? "warning" // amarillo
+            : "inherit"; // gris
+
+          return (
+            <Button
+              variant="contained"
+              size="small"
+              disabled={!habilitado}
+              color={color}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEnviarOrdenCompra(row);
+              }}
+              sx={{
+                fontWeight: "bold",
+                color: esEntregado ? "#000" : "white",
+              }}
+            >
+              {label}
+            </Button>
+          );
+        },
       },
     ];
-  }, [proveedoresMap]);
+  }, [proveedoresMap, handleEnviarOrdenCompra]);
 
   const serverPagination =
     paginationModel && setPaginationModel && typeof rowCount === "number";
 
+  /* ================== Render ================== */
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
       <DataGrid
@@ -88,10 +229,9 @@ export default function GridOrdenCompra({
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         pagination
         pageSizeOptions={[5, 10, 20, 50]}
-        components={{ Toolbar: CustomToolbar }}
         slots={{ toolbar: CustomToolbar }}
-        paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
+        paginationMode={serverPagination ? "server" : "client"}
         {...(serverPagination
           ? {
               rowCount: Math.max(
@@ -105,7 +245,7 @@ export default function GridOrdenCompra({
               onPaginationModelChange: (model) => {
                 const next = {
                   page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? 10,
+                  size: model.pageSize ?? 10,
                 };
                 setPaginationModel?.(next);
               },
@@ -138,4 +278,6 @@ GridOrdenCompra.propTypes = {
   setFilterModel: PropTypes.func,
   setSelectedRow: PropTypes.func.isRequired,
   proveedoresMap: PropTypes.object,
+  setMessage: PropTypes.func,
+  reloadData: PropTypes.func,
 };

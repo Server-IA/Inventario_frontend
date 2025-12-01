@@ -1,44 +1,42 @@
-// src/components/rol/Rol.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
-import FormRol from "./FormRol.jsx";
-import GridRol from "./GridRol.jsx";
+import FormUsuarioRol from "./FormUsuarioRol.jsx";
+import GridUsuarioRol from "./GridUsuarioRol.jsx";
 
-const ESTADOS_ROL = [
+const ESTADOS_USUARIO_ROL = [
   { id: 1, nombre: "Activo" },
   { id: 2, nombre: "Inactivo" },
 ];
 
-export default function Rol() {
+export default function UsuarioRol() {
   const [selectedRow, setSelectedRow] = useState({});
   const [message, setMessage] = useState({
     open: false,
     severity: "success",
     text: "",
   });
-
   const [rows, setRows] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
 
-  // Traer todos los roles
+  // Cargar usuario-roles
   const reloadData = useCallback(async () => {
     try {
-      const res = await axios.get("/v1/roles", {
+      const res = await axios.get("/v1/admin/usuario-roles", {
         params: { page: 0, size: 1000 },
       });
 
       const data = res?.data ?? [];
       const list = Array.isArray(data) ? data : data.content ?? [];
 
-      console.log("Roles recibidos:", list.length);
+      console.log("Usuario-Roles recibidos:", list.length);
       setRows(list);
     } catch (error) {
       console.error(error);
       setMessage({
         open: true,
         severity: "error",
-        text: "Error al cargar roles",
+        text: "Error al cargar usuario-roles",
       });
     }
   }, []);
@@ -49,21 +47,23 @@ export default function Rol() {
 
   return (
     <div>
-      <h1>Gestión de Rol</h1>
+      <h1>Gestión de Usuario-Rol</h1>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
-      <FormRol
+      <FormUsuarioRol
         open={formOpen}
         setOpen={setFormOpen}
         selectedRow={selectedRow || {}}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
         reloadData={reloadData}
-        estados={ESTADOS_ROL}
+        estados={ESTADOS_USUARIO_ROL}
+        // Si más adelante tienes combos de usuarios/empresas/roles,
+        // aquí los puedes pasar como props: usuarios, empresas, roles
       />
 
-      <GridRol rows={rows} setSelectedRow={setSelectedRow} />
+      <GridUsuarioRol rows={rows} setSelectedRow={setSelectedRow} />
     </div>
   );
 }
