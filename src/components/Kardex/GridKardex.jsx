@@ -13,6 +13,7 @@ import { Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const LS_KEY = "gridKardex:columnVisibility:v1";
+
 /* ---------- Toolbar personalizada ---------- */
 function KardexToolbar({ onResetColumns }) {
   return (
@@ -49,11 +50,10 @@ export default function GridKardex({
   setSelectedRow,
 
   // Paginación (server-side opcional)
-  loading = false,    
-  rowCount,               // total en servidor    // spinner
-  paginationModel,        // { page, pageSize } o { page, size }
-  setPaginationModel,     // (model) => void
-  
+  loading = false,
+  rowCount,
+  paginationModel,    // { page, pageSize } o { page, size }
+  setPaginationModel, // (model) => void
 }) {
   /* ---------- Mapas de lookup ---------- */
   const almById = useMemo(() => {
@@ -83,64 +83,78 @@ export default function GridKardex({
   const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
 
   /* ---------- Columnas ---------- */
-  const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 90 },
-    {
-      field: "fechaHora",
-      headerName: "Fecha/Hora",
-      width: 180,
-      valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
-    },
-    {
-      field: "almacenId",
-      headerName: "Almacén",
-      width: 200,
-      valueGetter: (p) =>
-        p?.row?.almacen?.name ??
-        p?.row?.almacen?.nombre ??
-        almById[String(p?.row?.almacenId)] ??
-        String(p?.row?.almacenId ?? ""),
-    },
-    {
-      field: "produccionId",
-      headerName: "Producción",
-      width: 200,
-      valueGetter: (p) =>
-        p?.row?.produccion?.name ??
-        p?.row?.produccion?.nombre ??
-        prodById[String(p?.row?.produccionId)] ??
-        String(p?.row?.produccionId ?? ""),
-    },
-    {
-      field: "tipoMovimientoId",
-      headerName: "Tipo Movimiento",
-      width: 220,
-      valueGetter: (p) =>
-        p?.row?.tipoMovimiento?.name ??
-        p?.row?.tipoMovimiento?.nombre ??
-        tmovById[String(p?.row?.tipoMovimientoId)] ??
-        String(p?.row?.tipoMovimientoId ?? ""),
-    },
-    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
-    { field: "empresaId", headerName: "Empresa", width: 120 },
-    {
-      field: "estadoId",
-      headerName: "Estado",
-      width: 140,
-      valueGetter: (p) => {
-        const state =
-          p?.row?.estado?.name ?? p?.row?.estado?.nombre ?? p?.row?.estadoId;
-        if (state === 1 || state === "1") return "Activo";
-        if ([0, "0", 2, "2"].includes(state)) return "Inactivo";
-        return String(state ?? "");
+  const columns = useMemo(
+    () => [
+      { field: "id", headerName: "ID", width: 90 },
+      {
+        field: "fechaHora",
+        headerName: "Fecha/Hora",
+        width: 180,
+        valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
       },
-    },
-  ]), [almById, prodById, tmovById]);
+      {
+        field: "almacenId",
+        headerName: "Almacén",
+        width: 200,
+        valueGetter: (p) =>
+          p?.row?.almacen?.name ??
+          p?.row?.almacen?.nombre ??
+          almById[String(p?.row?.almacenId)] ??
+          String(p?.row?.almacenId ?? ""),
+      },
+      {
+        field: "produccionId",
+        headerName: "Producción",
+        width: 200,
+        valueGetter: (p) =>
+          p?.row?.produccion?.name ??
+          p?.row?.produccion?.nombre ??
+          prodById[String(p?.row?.produccionId)] ??
+          String(p?.row?.produccionId ?? ""),
+      },
+      {
+        field: "tipoMovimientoId",
+        headerName: "Tipo Movimiento",
+        width: 220,
+        valueGetter: (p) =>
+          p?.row?.tipoMovimiento?.name ??
+          p?.row?.tipoMovimiento?.nombre ??
+          tmovById[String(p?.row?.tipoMovimientoId)] ??
+          String(p?.row?.tipoMovimientoId ?? ""),
+      },
 
- /* -------- Visibilidad de columnas (con persistencia) -------- */
+      // 🔹 NUEVOS CAMPOS
+      { field: "pedidoId", headerName: "Pedido", width: 120 },
+      { field: "ordenCompraId", headerName: "Orden compra", width: 140 },
+      {
+        field: "clienteProveedorId",
+        headerName: "Cliente/Proveedor",
+        width: 160,
+      },
+
+      { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
+      { field: "empresaId", headerName: "Empresa", width: 120 },
+      {
+        field: "estadoId",
+        headerName: "Estado",
+        width: 140,
+        valueGetter: (p) => {
+          const state =
+            p?.row?.estado?.name ??
+            p?.row?.estado?.nombre ??
+            p?.row?.estadoId;
+          if (state === 1 || state === "1") return "Activo";
+          if ([0, "0", 2, "2"].includes(state)) return "Inactivo";
+          return String(state ?? "");
+        },
+      },
+    ],
+    [almById, prodById, tmovById]
+  );
+
+  /* -------- Visibilidad de columnas (con persistencia) -------- */
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
-  // Cargar de localStorage al montar
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
@@ -152,7 +166,6 @@ export default function GridKardex({
     }
   }, []);
 
-  // Guardar cada cambio
   const handleVisibilityChange = (model) => {
     setColumnVisibilityModel(model);
     try {
@@ -163,27 +176,26 @@ export default function GridKardex({
   };
 
   const handleResetColumns = () => {
-    // Limpia storage y vuelve al estado por defecto (todas visibles)
     localStorage.removeItem(LS_KEY);
     setColumnVisibilityModel({});
   };
 
   /* ---------- ¿Server o Cliente? ---------- */
-const serverPaging =
+  const serverPaging =
     typeof rowCount === "number" &&
     paginationModel &&
     typeof paginationModel.page === "number" &&
     typeof (paginationModel.pageSize ?? paginationModel.size) === "number" &&
-    typeof onPaginationModelChange === "function";
+    typeof setPaginationModel === "function";
 
   const modelPage = paginationModel?.page ?? 0;
-  const modelPageSize = paginationModel?.pageSize ?? paginationModel?.size ?? 10;
-
+  const modelPageSize =
+    paginationModel?.pageSize ?? paginationModel?.size ?? 10;
 
   return (
-   <div style={{ width: "100%" }}>
+    <div style={{ width: "100%" }}>
       <DataGrid
-      rows={Array.isArray(kardexes) ? kardexes : []}
+        rows={Array.isArray(kardexes) ? kardexes : []}
         columns={columns}
         getRowId={(row) => row.id}
         loading={loading}
@@ -210,9 +222,9 @@ const serverPaging =
                 const next = {
                   page: model.page ?? 0,
                   pageSize: model.pageSize ?? 10,
-                  size: model.pageSize ?? 10, // compat con padre {page,size}
+                  size: model.pageSize ?? 10,
                 };
-                onPaginationModelChange?.(next);
+                setPaginationModel?.(next);
               },
             }
           : {
@@ -220,7 +232,6 @@ const serverPaging =
                 pagination: { paginationModel: { page: 0, pageSize: 10 } },
               },
             })}
-        
       />
     </div>
   );
@@ -238,7 +249,7 @@ GridKardex.propTypes = {
     pageSize: PropTypes.number,
     size: PropTypes.number,
   }),
-  onPaginationModelChange: PropTypes.func,
+  setPaginationModel: PropTypes.func,
   rowCount: PropTypes.number,
   loading: PropTypes.bool,
 };
