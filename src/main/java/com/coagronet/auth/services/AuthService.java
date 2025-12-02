@@ -68,6 +68,7 @@ public class AuthService {
 	private final AuthProperties props; // e.g. defaultRole, etc.
 
 	/* ================= REGISTRATION ================= */
+	@Transactional
 	public ApiResponse register(@Valid RegisterRequestDTO dto) {
 
 		/* 1?? Does the user already exist? ---------------------------------- */
