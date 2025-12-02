@@ -24,8 +24,8 @@ import lombok.NoArgsConstructor;
 public class ArticuloKardex {
 
 	@Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_item_generator")
 	@SequenceGenerator(name = "kardex_item_generator", sequenceName = "kardex_item_kai_id_seq", allocationSize = 1)
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_item_generator")
 	@Column(name = "kai_id")
 	private Long id;
 
