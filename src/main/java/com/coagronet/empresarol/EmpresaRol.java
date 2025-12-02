@@ -3,12 +3,18 @@ package com.coagronet.empresarol;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.rol.Rol;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(schema = "public", name = "empresa_rol")
 public class EmpresaRol {
 
