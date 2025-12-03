@@ -33,7 +33,7 @@ export default function GridOrdenCompra({
 }) {
   const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
 
-  /* ================== Handler cambio de estado 23 ↔ 24 ================== */
+  /* =============== TOGGLE ESTADO 23 ↔ 24 CON PUT =============== */
   const handleEnviarOrdenCompra = useCallback(
     (row) => {
       if (!row?.id) {
@@ -47,7 +47,7 @@ export default function GridOrdenCompra({
 
       const estadoActual = Number(row?.estadoId ?? row?.estado?.id);
 
-      // Solo permitimos toggle entre ACTIVO (23) y ENTREGADO AL PROVEEDOR (24)
+      // Solo permitimos toggle entre ACTIVO (23) y ENTREGADO (24)
       if (estadoActual !== 23 && estadoActual !== 24) {
         setMessage({
           open: true,
@@ -63,10 +63,8 @@ export default function GridOrdenCompra({
         ? "enviada al proveedor"
         : "devuelta a estado ACTIVO";
 
-      // ✅ Usamos el MISMO endpoint que el form: PUT /v1/orden-compra/{id}
       const url = `/v1/orden-compra/${row.id}`;
 
-      // Payload compatible con FormOrdenCompra
       const payload = {
         fechaHora: row.fechaHora,
         pedidoId: Number(row.pedidoId),
@@ -97,7 +95,7 @@ export default function GridOrdenCompra({
     [setMessage, reloadData]
   );
 
-  /* ================== Columnas ================== */
+  /* ================== COLUMNAS ================== */
   const columns = useMemo(() => {
     const proveedorValueGetter = ({ row }) => {
       const provId =
@@ -130,8 +128,6 @@ export default function GridOrdenCompra({
           return "Entrega Parcial";
         case 26:
           return "Entrada total";
-        case 45:
-          return "mm";
         default:
           return `Estado ${id}`;
       }
@@ -164,7 +160,6 @@ export default function GridOrdenCompra({
         width: 190,
         valueGetter: estadoValueGetter,
       },
-      // ===== Columna Acciones con botón toggle + color =====
       {
         field: "acciones",
         headerName: "Acciones",
@@ -217,7 +212,6 @@ export default function GridOrdenCompra({
   const serverPagination =
     paginationModel && setPaginationModel && typeof rowCount === "number";
 
-  /* ================== Render ================== */
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
       <DataGrid
