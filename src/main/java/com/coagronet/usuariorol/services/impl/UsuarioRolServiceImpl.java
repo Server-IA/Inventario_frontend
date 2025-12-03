@@ -24,6 +24,7 @@ import com.coagronet.usuariorol.mappers.UsuarioRolMapper;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 import com.coagronet.usuariorol.services.UsuarioRolService;
 import com.coagronet.utils.AuthenticatedUser;
+import com.coagronet.utils.UserEmpresaService;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +48,8 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         private final AuthenticatedUser authenticatedUser;
         private final RequestUtils requestUtils;
 
+        private final UserEmpresaService userEmpresaService;
+
         @Override
         @Transactional(readOnly = true)
         public Page<UsuarioRolResponseDTO> findAll(Pageable pageable) {
@@ -57,8 +60,27 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
 
         @Override
         @Transactional(readOnly = true)
+        public Page<UsuarioRolResponseDTO> findAllByEmpresaId(Pageable pageable) {
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+                return usuarioRolRepository
+                                .findAllByEmpresaId(pageable, empresaId)
+                                .map(usuarioRolMapper::toResponse);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
         public UsuarioRolResponseDTO findById(Long id) {
                 UsuarioRol entity = usuarioRolRepository.findById(id)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id));
+                return usuarioRolMapper.toResponse(entity);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public UsuarioRolResponseDTO findByIdAndEmpresaId(Long id) {
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+                UsuarioRol entity = usuarioRolRepository.findByIdAndEmpresaId(id, empresaId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
                 return usuarioRolMapper.toResponse(entity);
@@ -245,4 +267,20 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
 
                 usuarioRolRepository.save(entity);
         }
+
+        @Override
+        public void deleteByEmpresaId(Long id) {
+                User currentUser = authenticatedUser.getCurrentUser();
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+                UsuarioRol entity = usuarioRolRepository.findByIdAndEmpresaId(id, empresaId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id));
+
+                entity.setDeletedAt(OffsetDateTime.now());
+                entity.setDeletedBy(currentUser);
+
+                usuarioRolRepository.save(entity);
+        }
+
 }
