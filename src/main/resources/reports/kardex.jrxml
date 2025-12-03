@@ -1,35 +1,26 @@
-<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<!-- Created with Jaspersoft Studio version 7.0.2.final using JasperReports Library version 7.0.2-31532122640f516c6d17238ae0e41a08113d5ac0  -->
 <jasperReport name="Reporte_kardex" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.2"/>
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="311"/>
-	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="689"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
 	<parameter name="condicion" class="java.lang.String"/>
 	<query language="sql"><![CDATA[SELECT 
     e.emp_id AS header_empresa_id,
     e.emp_nombre AS header_empresa,
-    
     s.sed_id AS header_sede_id,
     s.sed_nombre AS header_sede,
-    
     k.kar_almacen_id AS header_almacen_id,
     al.alm_nombre AS header_almacen,
-    
     m.mun_id AS header_municipio_id,
     m.mun_nombre AS header_municipio,
-    
     e.emp_correo AS header_correo,
     e.emp_contacto AS header_contacto,
-    
     CONCAT(per.per_nombre, ' ', per.per_apellido) AS header_responsable,
-    
     esp.esp_id AS header_espacio_id,
     esp.esp_nombre AS header_espacio,
-    
     blo.blo_id AS header_bloque_id,
     blo.blo_nombre AS header_bloque,
-    
+
     p.pro_id AS item_producto_id,
     p.pro_producto_categoria_id AS item_categoria_producto_id,
     p.pro_nombre AS item_producto,
@@ -37,47 +28,56 @@
 
     k.kar_fecha_hora AS item_fecha,
     k.kar_tipo_movimiento_id AS item_tipo_movimiento,
-    
+
+    -- cantidad en presentaciones (sin signo)
     ki.kai_cantidad AS item_cantidad,
 
+    -- entrada (presentaciones)
     CASE 
-        WHEN k.kar_tipo_movimiento_id IN (1, 3) THEN ki.kai_cantidad
-        ELSE 0 
+        WHEN mov.mov_nombre = 'Entrada' THEN ki.kai_cantidad
+        ELSE 0::double precision
     END AS item_entrada,
 
+    -- salida (presentaciones)
     CASE 
-        WHEN k.kar_tipo_movimiento_id IN (2, 4) THEN ki.kai_cantidad
-        ELSE 0 
+        WHEN mov.mov_nombre = 'Salida' THEN ki.kai_cantidad
+        ELSE 0::double precision
     END AS item_salida,
 
     ki.kai_fecha_vencimiento AS item_fecha_vencimiento,
 
-    (
-        SELECT SUM(sub_ki.kai_cantidad * pp2.prp_cantidad)
-        FROM kardex_item sub_ki
-        JOIN kardex sub_k ON sub_ki.kai_kardex_id = sub_k.kar_id
-        JOIN producto_presentacion pp2 ON sub_ki.kai_producto_presentacion_id = pp2.prp_id
-        WHERE 
-            pp2.prp_producto_id = pp.prp_producto_id
-            AND sub_ki.kai_id <= ki.kai_id
+    -- saldo acumulado por empresa + almacén + producto, ordenado por fecha/movimiento
+    SUM(
+        CASE
+            WHEN mov.mov_nombre = 'Entrada' THEN ki.kai_cantidad
+            WHEN mov.mov_nombre = 'Salida'  THEN -ki.kai_cantidad
+            ELSE 0
+        END
+    ) OVER (
+        PARTITION BY e.emp_id, k.kar_almacen_id, p.pro_id
+        ORDER BY k.kar_fecha_hora, ki.kai_id
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
     ) AS item_saldo
 
 FROM kardex_item ki
-JOIN kardex k ON ki.kai_kardex_id = k.kar_id
+JOIN kardex k                ON ki.kai_kardex_id = k.kar_id
 JOIN producto_presentacion pp ON ki.kai_producto_presentacion_id = pp.prp_id
-JOIN producto p ON pp.prp_producto_id = p.pro_id
-JOIN unidad u ON pp.prp_unidad_id = u.uni_id
+JOIN producto p              ON pp.prp_producto_id = p.pro_id
+JOIN unidad u                ON pp.prp_unidad_id = u.uni_id
+JOIN almacen al              ON k.kar_almacen_id = al.alm_id
+JOIN espacio esp             ON al.alm_espacio_id = esp.esp_id
+JOIN bloque blo              ON esp.esp_bloque_id = blo.blo_id
+JOIN sede s                  ON blo.blo_sede_id = s.sed_id
+JOIN municipio m             ON s.sed_municipio_id = m.mun_id
+JOIN empresa e               ON k.kar_empresa_id = e.emp_id
+JOIN persona per             ON e.emp_persona_id = per.per_id
+JOIN tipo_movimiento tm      ON tm.tim_id = k.kar_tipo_movimiento_id
+JOIN movimiento mov          ON mov.mov_id = tm.tim_movimiento_id
 
-JOIN almacen al ON k.kar_almacen_id = al.alm_id
-JOIN espacio esp ON al.alm_espacio_id = esp.esp_id
-JOIN bloque blo ON esp.esp_bloque_id = blo.blo_id
-JOIN sede s ON blo.blo_sede_id = s.sed_id
-JOIN municipio m ON s.sed_municipio_id = m.mun_id
-JOIN empresa e ON k.kar_empresa_id = e.emp_id
-JOIN persona per ON e.emp_persona_id = per.per_id
-
-WHERE
-		$P!{condicion}]]></query>
+WHERE 
+    $P!{condicion}
+ORDER BY ki.kai_id;
+]]></query>
 	<field name="header_empresa_id" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.name" value="header_empresa_id"/>
 		<property name="com.jaspersoft.studio.field.label" value="header_empresa_id"/>
@@ -249,8 +249,8 @@ WHERE
 			<expression><![CDATA[new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
 		</element>
 	</title>
-	<pageHeader height="229">
-		<element kind="rectangle" uuid="6d0bfea8-3503-46b8-a64a-4df717dfc882" x="-20" y="0" width="595" height="229" backcolor="#FFFFFF">
+	<pageHeader height="248">
+		<element kind="rectangle" uuid="6d0bfea8-3503-46b8-a64a-4df717dfc882" x="-20" y="0" width="595" height="248" backcolor="#FFFFFF">
 			<pen lineColor="#3747A1"/>
 		</element>
 		<element kind="staticText" uuid="91db920a-6ed2-4181-b718-a8ca2ef009a3" mode="Opaque" x="20" y="70" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
@@ -287,7 +287,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="04bfb93a-179f-4895-91a8-a12a732eb051" mode="Opaque" x="290" y="40" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="04bfb93a-179f-4895-91a8-a12a732eb051" mode="Opaque" x="279" y="70" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Correo:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -295,7 +295,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="5c05a5e2-d01e-4a7d-99d9-180a217c5dde" x="360" y="40" width="162" height="20" vTextAlign="Bottom">
+		<element kind="textField" uuid="5c05a5e2-d01e-4a7d-99d9-180a217c5dde" x="359" y="70" width="162" height="20" vTextAlign="Bottom">
 			<expression><![CDATA[" "+$F{header_correo}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -304,7 +304,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="d8e752bc-ad64-4bac-a291-eed46493fa1c" mode="Opaque" x="290" y="70" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="d8e752bc-ad64-4bac-a291-eed46493fa1c" mode="Opaque" x="280" y="40" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Municipio:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -312,7 +312,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="textField" uuid="da65d96c-c127-4321-b565-826b0ad4b2f1" x="360" y="70" width="159" height="20" vTextAlign="Bottom">
+		<element kind="textField" uuid="da65d96c-c127-4321-b565-826b0ad4b2f1" x="360" y="40" width="160" height="20" vTextAlign="Bottom">
 			<expression><![CDATA[" "+$F{header_municipio}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -321,7 +321,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="d2edb052-b680-426e-85d4-2e0a1246c038" mode="Opaque" x="290" y="130" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="d2edb052-b680-426e-85d4-2e0a1246c038" mode="Opaque" x="280" y="130" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Responsable:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -349,7 +349,7 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="cd6a77ea-b603-4bdc-ae36-9a3bb6620b41" mode="Opaque" x="290" y="160" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="cd6a77ea-b603-4bdc-ae36-9a3bb6620b41" mode="Opaque" x="280" y="160" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Id producto:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -366,7 +366,7 @@ WHERE
 				<rightPen lineWidth="0.0"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="dc619787-6642-4ffa-b6fe-1bf89631f49d" mode="Opaque" x="290" y="100" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+		<element kind="staticText" uuid="dc619787-6642-4ffa-b6fe-1bf89631f49d" mode="Opaque" x="280" y="100" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
 			<text><![CDATA[ Contacto:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -427,19 +427,19 @@ WHERE
 		</element>
 	</pageHeader>
 	<columnHeader height="50">
-		<element kind="staticText" uuid="ec4d6625-1f8e-49fc-980b-836072de5671" mode="Opaque" x="22" y="30" width="100" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+		<element kind="staticText" uuid="ec4d6625-1f8e-49fc-980b-836072de5671" mode="Opaque" x="34" y="30" width="76" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
 			<text><![CDATA[Fecha]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="2f18ad61-a971-42dc-8774-cb097e461303" mode="Opaque" x="122" y="30" width="100" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+		<element kind="staticText" uuid="2f18ad61-a971-42dc-8774-cb097e461303" mode="Opaque" x="110" y="30" width="78" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
 			<text><![CDATA[Producto]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="f801345a-166c-4ad3-8946-84f668545271" mode="Opaque" x="222" y="30" width="48" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+		<element kind="staticText" uuid="f801345a-166c-4ad3-8946-84f668545271" mode="Opaque" x="188" y="30" width="82" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
 			<text><![CDATA[Unidad]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -472,19 +472,19 @@ WHERE
 	</columnHeader>
 	<detail>
 		<band height="20">
-			<element kind="textField" uuid="d1b3ed0a-a577-4d28-8936-de9928371a64" stretchType="ContainerHeight" x="22" y="0" width="100" height="20" hTextAlign="Center">
+			<element kind="textField" uuid="d1b3ed0a-a577-4d28-8936-de9928371a64" stretchType="ContainerHeight" x="34" y="0" width="76" height="20" hTextAlign="Center">
 				<expression><![CDATA[" "+$F{item_fecha}]]></expression>
 				<box>
 					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
 				</box>
 			</element>
-			<element kind="textField" uuid="8db288f6-b430-4cf4-b07b-ce66d97590bb" x="122" y="0" width="100" height="20" hTextAlign="Center">
+			<element kind="textField" uuid="8db288f6-b430-4cf4-b07b-ce66d97590bb" x="110" y="0" width="78" height="20" hTextAlign="Center">
 				<expression><![CDATA[" "+$F{item_producto}]]></expression>
 				<box>
 					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
 				</box>
 			</element>
-			<element kind="textField" uuid="30732894-64a2-4a38-89a6-2048cb1b4360" x="222" y="0" width="48" height="20" hTextAlign="Center">
+			<element kind="textField" uuid="30732894-64a2-4a38-89a6-2048cb1b4360" x="188" y="0" width="82" height="20" hTextAlign="Center">
 				<expression><![CDATA[" "+$F{item_unidad}]]></expression>
 				<box>
 					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
@@ -516,8 +516,8 @@ WHERE
 			</element>
 		</band>
 	</detail>
-	<columnFooter height="30">
-		<element kind="staticText" uuid="6f9a4d9d-88ea-4d8b-a62f-48ad63a3402d" mode="Opaque" x="222" y="0" width="48" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Right">
+	<columnFooter height="20">
+		<element kind="staticText" uuid="6f9a4d9d-88ea-4d8b-a62f-48ad63a3402d" mode="Opaque" x="200" y="0" width="70" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Right">
 			<text><![CDATA[TOTALES:]]></text>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
