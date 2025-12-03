@@ -3,6 +3,7 @@ package com.coagronet.sede.dtos;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -36,6 +37,7 @@ public class SedeDTO {
 	@Size(max = 30, message = "Las coordenadas no debe superar los 30 caracteres.")
 	private String coordenadas;
 
+    @PositiveOrZero(message = "El área debe ser mayor que cero.")
 	private Double area;
 
 	@Size(max = 100, message = "La comuna no debe superar los 100 caracteres.")

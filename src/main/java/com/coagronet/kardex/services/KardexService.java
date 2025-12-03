@@ -1,6 +1,8 @@
 package com.coagronet.kardex.services;
 
 import com.coagronet.almacen.Almacen;
+import com.coagronet.auditoria.AuthenticationService;
+import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.validator.EntidadValidatorFacade;
@@ -14,6 +16,7 @@ import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
 import com.coagronet.utils.UserEmpresaService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,12 +30,12 @@ import java.util.Optional;
 public class KardexService {
 
 	private final KardexRepository kardexRepository;
-
 	private final KardexMapper kardexMapper;
-
 	private final UserEmpresaService userEmpresaService;
-
 	private final EntidadValidatorFacade entidadValidatorFacade;
+    private final RequestUtils requestUtils;
+    private final AuthenticationService authenticationService;
+    private final HttpServletRequest request;
 
 	public Page<KardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
@@ -84,8 +87,21 @@ public class KardexService {
 		Produccion produccion = entidadValidatorFacade.validarProduccion(kardexDTO.getProduccionId(), empresaId);
 		TipoMovimiento tipoMovimiento = entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(),
 				empresaId);
-		Pedido pedido = entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId);
-		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(kardexDTO.getOrdenCompraId(), empresaId);
+        Pedido pedido = null;
+        if (kardexDTO.getPedidoId() != null) {
+            pedido = entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId);
+        }
+
+        OrdenCompra ordenCompra = null;
+        if (kardexDTO.getOrdenCompraId() != null) {
+            ordenCompra = entidadValidatorFacade.validarOrdenCompra(kardexDTO.getOrdenCompraId(), empresaId);
+        }
+
+        if (kardexDTO.getClienteProveedorId() != null) {
+            Empresa clienteProveedor = entidadValidatorFacade
+                    .validarClienteProveedor(kardexDTO.getClienteProveedorId());
+            kardex.setClienteProveedor(clienteProveedor);
+        }
 
 		kardex.setEstado(estado);
 		kardex.setAlmacen(almacen);
@@ -94,11 +110,20 @@ public class KardexService {
 		kardex.setPedido(pedido);
 		kardex.setOrdenCompra(ordenCompra);
 
-		if (kardexDTO.getClienteProveedorId() != null) {
-			Empresa clienteProveedor = entidadValidatorFacade
-				.validarClienteProveedor(kardexDTO.getClienteProveedorId());
-			kardex.setClienteProveedor(clienteProveedor);
-		}
+        asignarDatosAuditoria(kardex);
+
 	}
+
+    private void asignarDatosAuditoria(Kardex kardex) {
+
+        kardex.setIp(requestUtils.getClientIp(request));
+        kardex.setHost(requestUtils.getClientHost(request));
+
+        kardex.setUsername(authenticationService
+                .getAuthenticatedUser()
+                .getUsername());
+
+        kardex.setRol(requestUtils.getAuthenticatedRole());
+    }
 
 }

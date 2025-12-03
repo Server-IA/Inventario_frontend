@@ -16,7 +16,6 @@ import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.unidad.dtos.UnidadDTO;
 import com.coagronet.unidad.mappers.UnidadMapper;
 import com.coagronet.unidad.repositories.UnidadRepository;
-import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
 

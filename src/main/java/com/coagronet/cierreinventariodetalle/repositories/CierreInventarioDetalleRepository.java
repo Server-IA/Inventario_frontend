@@ -38,13 +38,12 @@ public interface CierreInventarioDetalleRepository extends JpaRepository<CierreI
 
 
 
-    @Query(value = "SELECT fn_calcular_stock_corte(:presentacionId, :almacenId, :empresaId, :fechaInicio, :fechaCorte)",
+    @Query(value = "SELECT fn_calcular_stock_cierre(:presentacionId, :almacenId, :empresaId, :fechaCorte)",
             nativeQuery = true)
     BigDecimal calcularStock(
             @Param("presentacionId") Long presentacionId,
             @Param("almacenId") Long almacenId,
             @Param("empresaId") Long empresaId,
-            @Param("fechaInicio") LocalDate fechaInicio,
             @Param("fechaCorte") LocalDate fechaCorte);
 
 }
