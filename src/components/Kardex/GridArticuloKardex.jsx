@@ -37,11 +37,12 @@ function ArticuloToolbar({ onResetColumns }) {
     </GridToolbarContainer>
   );
 }
+
 export default function GridArticuloKardex({
   // Datos
   items = [],
   presentaciones = [],
-kardexId,
+  kardexId,
   // Selección (simple + múltiple)
   selectedRow = null,
   setSelectedRow = () => {},
@@ -62,7 +63,8 @@ kardexId,
       const composed = [pr?.producto?.nombre, pr?.presentacion?.nombre]
         .filter(Boolean)
         .join(" · ");
-      const label = pr?.name ?? pr?.nombre ?? (composed || `Presentación ${pr?.id ?? ""}`);
+      const label =
+        pr?.name ?? pr?.nombre ?? (composed || `Presentación ${pr?.id ?? ""}`);
       if (pr?.id != null) m[String(pr.id)] = label;
     }
     return m;
@@ -97,6 +99,12 @@ kardexId,
       valueGetter: (params) =>
         (params?.row?.fechaVencimiento || "").toString().substring(0, 10),
     },
+    {
+      field: "identificadorProducto",
+      headerName: "Identificador producto",
+      width: 260,
+      valueGetter: (params) => params?.row?.identificadorProducto ?? "",
+    },
     { field: "kardexId", headerName: "Kardex ID", width: 120, hide: true },
     {
       field: "presentacionProductoId",
@@ -119,7 +127,7 @@ kardexId,
     },
   ];
 
-/* -------- Visibilidad de columnas (persistencia) -------- */
+  /* -------- Visibilidad de columnas (persistencia) -------- */
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
   // Cargar de localStorage al montar
@@ -127,7 +135,9 @@ kardexId,
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
       if (saved && typeof saved === "object") setColumnVisibilityModel(saved);
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, []);
 
   // Guardar cada cambio
@@ -135,7 +145,9 @@ kardexId,
     setColumnVisibilityModel(model);
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(model));
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   };
 
   const handleResetColumns = () => {
@@ -154,16 +166,15 @@ kardexId,
   /* -------- Selección no controlada (fallback) -------- */
   const handleLocalSelection = (ids) => {
     const idSet = new Set(ids);
-    const selectedMany = (items ?? []).filter((r) => idSet.has(r.id));
+    const selectedMany = (filteredRows ?? []).filter((r) => idSet.has(r.id));
     setSelectedRows(selectedMany);
     setSelectedRow(selectedMany[0] ?? null);
   };
 
-
   return (
     <Box sx={{ width: "100%" }}>
       <DataGrid
-        rows={Array.isArray(items) ? items : []}
+        rows={Array.isArray(filteredRows) ? filteredRows : []}
         columns={columns}
         getRowId={(row) => row.id}
         loading={loading}
@@ -186,35 +197,38 @@ kardexId,
         paginationMode={serverPaging ? "server" : "client"}
         {...(serverPaging
           ? {
-        rowCount: Math.max(
-                        Number(rowCount ?? 0),
-                        Array.isArray(items) ? items.length : 0
-                      ),
-                      paginationModel: {
-                        page: paginationModel.page ?? 0,
-                        pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
-                      },
-                      onPaginationModelChange: (model) => {
-                        const next = {
-                          page: model.page ?? 0,
-                          pageSize: model.pageSize ?? 10,
-                          size: model.pageSize ?? 10, // compat con padre {page,size}
-                        };
-                        onPaginationModelChange?.(next);
-                      },
-                    }
-                  : {
-                      initialState: {
-                        pagination: { paginationModel: { page: 0, pageSize: 5 } },
-                      },
-                    })}
-              />
-            </Box>
-          );
-        }
+              rowCount: Math.max(
+                Number(rowCount ?? 0),
+                Array.isArray(filteredRows) ? filteredRows.length : 0
+              ),
+              paginationModel: {
+                page: paginationModel.page ?? 0,
+                pageSize:
+                  paginationModel.pageSize ?? paginationModel.size ?? 10,
+              },
+              onPaginationModelChange: (model) => {
+                const next = {
+                  page: model.page ?? 0,
+                  pageSize: model.pageSize ?? 10,
+                  size: model.pageSize ?? 10, // compat con padre {page,size}
+                };
+                onPaginationModelChange?.(next);
+              },
+            }
+          : {
+              initialState: {
+                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+              },
+            })}
+      />
+    </Box>
+  );
+}
+
 GridArticuloKardex.propTypes = {
   items: PropTypes.array,
   presentaciones: PropTypes.array,
+  kardexId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func,
   rowSelectionModel: PropTypes.array,
