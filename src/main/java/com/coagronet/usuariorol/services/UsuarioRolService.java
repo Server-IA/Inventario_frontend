@@ -19,4 +19,10 @@ public interface UsuarioRolService {
     UsuarioRolResponseDTO update(Long id, UsuarioRolRequestDTO request, HttpServletRequest httpRequest);
 
     void delete(Long id);
+
+    Page<UsuarioRolResponseDTO> findAllByEmpresaId(Pageable pageable);
+
+    void deleteByEmpresaId(Long id);
+
+    UsuarioRolResponseDTO findByIdAndEmpresaId(Long id);
 }
