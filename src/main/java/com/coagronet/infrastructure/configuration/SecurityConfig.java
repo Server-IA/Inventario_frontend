@@ -64,7 +64,7 @@ public class SecurityConfig {
 						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v2/producto/**",
 						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
 						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu", "/api/v1/metricas/**",
-						"/api/v1/estado_categoria/**")
+						"/api/v1/estado_categoria/**", "/api/v1/empresa-rol/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
