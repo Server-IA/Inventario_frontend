@@ -18,7 +18,7 @@ function Toolbar() {
 
 export default function GridArticuloOrdenCompra({
   items = [],
-  selectedRow = null,
+  selectedRow = null,        // lo puedes seguir recibiendo si lo usas en el padre
   setSelectedRow,
   paginationModel,
   setPaginationModel,
@@ -34,13 +34,17 @@ export default function GridArticuloOrdenCompra({
         row?.presentacionId ??
         row?.presentacion?.id ??
         null;
+
       const directName =
         row?.presentacionNombre ??
         row?.presentacion_name ??
         row?.presentacion?.nombre ??
         row?.presentacion?.name;
+
       return (
-        directName ?? (presId != null ? presentacionesMap[Number(presId)] : "") ?? ""
+        directName ??
+        (presId != null ? presentacionesMap[Number(presId)] : "") ??
+        ""
       );
     };
 
@@ -81,13 +85,14 @@ export default function GridArticuloOrdenCompra({
         rows={Array.isArray(items) ? items : []}
         columns={columns}
         getRowId={(row) => row.id}
+        // ✅ dejamos que el DataGrid maneje la selección y solo notificamos al padre
         onRowClick={(params) => setSelectedRow?.(params.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
+        // ❌ ya no usamos selección controlada ni la desactivamos
+        // rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
+        // disableRowSelectionOnClick
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         pagination
         pageSizeOptions={[5, 10, 20, 50]}
-        components={{ Toolbar }}
         slots={{ toolbar: Toolbar }}
         paginationMode={serverPagination ? "server" : "client"}
         loading={loading}
