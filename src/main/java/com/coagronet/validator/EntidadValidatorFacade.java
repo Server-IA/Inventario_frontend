@@ -3,12 +3,16 @@ package com.coagronet.validator;
 import com.coagronet.cierreinventario.CierreInventario;
 import com.coagronet.cierreinventariodetalle.CierreInventarioDetalle;
 import com.coagronet.criterioEvaluacion.CriterioEvaluacion;
+import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.evaluacion.Evaluacion;
 import com.coagronet.evaluacionitem.EvaluacionItem;
+import com.coagronet.rol.Rol;
 import com.coagronet.tipounidad.TipoUnidad;
 import com.coagronet.validator.common.ValidatorRegistry;
 import com.coagronet.validator.inventario.entidades.*;
 import com.coagronet.validator.parametrizacion.entidades.*;
+import com.coagronet.validator.seguridad.EmpresaRolValidator;
+import com.coagronet.validator.seguridad.RolValidator;
 import org.springframework.stereotype.Component;
 
 import com.coagronet.almacen.Almacen;
@@ -178,6 +182,14 @@ public class EntidadValidatorFacade {
 
     public CierreInventarioDetalle validarDetalleCierreInventario(Long detalleId, Long empresaId) {
         return validatorRegistry.getValidator(CierreInventarioDetalleValidator.class).validarCierreDetalle(detalleId, empresaId);
+    }
+
+    public EmpresaRol validarEmpresaRol(Long empresaRolId, Long empresaId){
+        return validatorRegistry.getValidator(EmpresaRolValidator.class).validarEmpresaRol(empresaRolId, empresaId);
+    }
+
+    public Rol validarRol(Long rolId){
+        return validatorRegistry.getValidator(RolValidator.class).validarRol(rolId);
     }
 
 }

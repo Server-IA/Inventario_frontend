@@ -238,4 +238,8 @@ public class UriBuilderUtil {
 		return ucb.path("/api/v1/cierre-inventario/{id}").buildAndExpand(id).toUri();
 	}
 
+    public URI buildEmpresaRolUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/empresa-rol/{id}").buildAndExpand(id).toUri();
+    }
+
 }
