@@ -68,6 +68,7 @@ public class AuthService {
 	private final AuthProperties props; // e.g. defaultRole, etc.
 
 	/* ================= REGISTRATION ================= */
+	@Transactional
 	public ApiResponse register(@Valid RegisterRequestDTO dto) {
 
 		/* 1?? Does the user already exist? ---------------------------------- */
@@ -83,11 +84,11 @@ public class AuthService {
 				emailService.sendVerificationEmail(existing.getUsername(), token);
 
 				throw new ResponseStatusException(HttpStatus.CONFLICT,
-						"Email already registered but not verified. Verification link has been resent.");
+						"El correo electrónico ya está registrado, pero no verificado. Se ha reenviado el enlace de verificación.");
 			}
 
 			/* 1b. Already active/in use ? 400 Bad Request */
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already in use");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso.");
 		}
 
 		/* 2?? Create a new user ---------------------------------------------- */
@@ -97,14 +98,14 @@ public class AuthService {
 		user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
 
 		Rol role = rolRepository.findByNombre(props.getDefaultRole())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
 		user.setRoles(Set.of(role));
 
 		/* 3?? Register and send email (listener) ----------------------------- */
 		registrationService.registerUser(user);
 
 		/* 4?? Success ? 201 Created ------------------------------------------ */
-		return new ApiResponse(true, "Verification email sent to " + user.getUsername());
+		return new ApiResponse(true, "Correo electrónico de verificación enviado a " + user.getUsername());
 	}
 
 	// LOGIN
@@ -115,7 +116,7 @@ public class AuthService {
 
 		List<UsuarioRol> usuarioRols = userRoleRepo.findByUserOrderByUserId(user);
 		if (usuarioRols.isEmpty())
-			throw new UserRoleForbiddenException("User has no company/role assignments");
+			throw new UserRoleForbiddenException("El usuario no tiene asignado ningún rol dentro de una empresa.");
 
 		UsuarioRol current = resolveInitialContext(user, usuarioRols);
 

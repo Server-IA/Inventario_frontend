@@ -38,7 +38,7 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers("/api/v1/tipo_identificacion/**", "/api/v1/estado/**", "/api/v1/persona/**",
 						"/api/v1/movimiento/**", "/api/v1/tipo-evaluacion/**", "/api/v1/user/**",
-						"/api/v1/categoria-estado/**", "/api/v1/roles/**", "/api/v1/admin/usuario-roles/**")
+						"/api/v1/categoria-estado/**", "/api/v1/roles/**", "/api/v1/system/usuario-roles/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA")
 				// Especifidad para unidad y tipoUnidad
 				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
@@ -64,7 +64,7 @@ public class SecurityConfig {
 						"/api/v1/producto_presentacion/**", "/api/v1/produccion/**", "/api/v2/producto/**",
 						"/api/v1/producto_localizacion/**", "/api/v1/subseccion/**", "/api/report/**",
 						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu", "/api/v1/metricas/**",
-						"/api/v1/estado_categoria/**", "/api/v1/empresa-rol/**")
+						"/api/v1/estado_categoria/**", "/api/v1/empresa-rol/**", "/api/v1/usuario-roles/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

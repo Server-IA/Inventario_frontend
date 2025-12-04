@@ -1,7 +1,6 @@
 package com.coagronet.kardex.services;
 
 import com.coagronet.almacen.Almacen;
-import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.empresa.Empresa;
