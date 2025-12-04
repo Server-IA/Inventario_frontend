@@ -46,8 +46,10 @@ export default function RE_kardexPedido() {
 
   // ===== Filtros de kardex (producto, categoría, fechas)
   const [kdxFiltro, setKdxFiltro] = useState({
-    producto_id: "",
     producto_categoria_id: "",
+    producto_id: "",
+    produccion_id: "",
+    producto_presentacion_id: "",
     fecha_inicio: "",
     fecha_fin: "",
   });
@@ -58,8 +60,12 @@ export default function RE_kardexPedido() {
   };
 
   // ===== Catálogos de producto / categoría (ubicación la maneja el hook)
-  const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [producciones, setProducciones] = useState([]);
+  const [presentaciones, setPresentaciones] = useState([]);
+
+
 
   useEffect(() => {
     Promise.all([
@@ -67,10 +73,18 @@ export default function RE_kardexPedido() {
       axios
         .get("/v1/items/producto_categoria/0", headers)
         .catch(() => ({ data: [] })),
+      axios
+        .get("/v1/items/produccion/0", headers)              // NUEVO
+        .catch(() => ({ data: [] })),
+      axios
+        .get("/v1/items/producto_presentacion/0", headers)   // NUEVO
+        .catch(() => ({ data: [] })),
     ])
-      .then(([pro, cat]) => {
+      .then(([pro, cat, prod, pres]) => {                    // NUEVO destructuring
         setProductos(asArray(pro.data));
         setCategorias(asArray(cat.data));
+        setProducciones(asArray(prod.data));                 // NUEVO
+        setPresentaciones(asArray(pres.data));               // NUEVO
       })
       .catch(() =>
         setMessage({
@@ -81,6 +95,7 @@ export default function RE_kardexPedido() {
       );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   // ===== Estado UI
   const [resultados, setResultados] = useState([]);
@@ -213,12 +228,19 @@ export default function RE_kardexPedido() {
       : "";
     c["7"] = kdxFiltro.producto_categoria_id
       ? `AND p.pro_producto_categoria_id = ${Number(
-          kdxFiltro.producto_categoria_id
-        )}`
+        kdxFiltro.producto_categoria_id
+      )}`
       : "";
-    c["8"] = `AND k.kar_fecha_hora BETWEEN '${
-      userIni ?? DEF_INI
-    }' AND '${userFin ?? DEF_FIN}'`;
+    c["9"] = kdxFiltro.produccion_id
+      ? `AND pr.pro_id = ${Number(kdxFiltro.produccion_id)}`
+      : "";
+
+    // NUEVO: filtrar por producto_presentacion
+    c["10"] = kdxFiltro.producto_presentacion_id
+      ? `AND pp.prp_id = ${Number(kdxFiltro.producto_presentacion_id)}`
+      : "";
+    c["8"] = `AND k.kar_fecha_hora BETWEEN '${userIni ?? DEF_INI
+      }' AND '${userFin ?? DEF_FIN}'`;
     return c;
   };
 
@@ -249,7 +271,7 @@ export default function RE_kardexPedido() {
         const t = await err.response.data.text();
         return t?.slice(0, 400) || err.message;
       }
-    } catch {}
+    } catch { }
     return err?.message || "Error desconocido";
   };
 
@@ -269,9 +291,8 @@ export default function RE_kardexPedido() {
       setMessage({
         open: true,
         severity: "error",
-        text: `No se pudo generar el PDF (HTTP ${
-          err?.response?.status ?? "?"
-        }). ${txt}`,
+        text: `No se pudo generar el PDF (HTTP ${err?.response?.status ?? "?"
+          }). ${txt}`,
       });
     }
   };
@@ -284,6 +305,27 @@ export default function RE_kardexPedido() {
 
       {/* Filtros principales (producto, categoría, fechas) */}
       <Grid container spacing={2} mb={2}>
+
+      <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Categoría Producto</InputLabel>
+            <Select
+              label="Categoría Producto"
+              value={kdxFiltro.producto_categoria_id || ""}
+              onChange={handleFiltroChange("producto_categoria_id")}
+            >
+              <MenuItem value="">
+                <em>Todas</em>
+              </MenuItem>
+              {asArray(categorias).map((it) => (
+                <MenuItem key={it.id} value={String(it.id)}>
+                  {it.nombre ?? it.name ?? `#${it.id}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>Producto</InputLabel>
@@ -304,18 +346,42 @@ export default function RE_kardexPedido() {
           </FormControl>
         </Grid>
 
+       
+
+        {/* NUEVO: Producción */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Categoría Producto</InputLabel>
+            <InputLabel>Producción</InputLabel>
             <Select
-              label="Categoría Producto"
-              value={kdxFiltro.producto_categoria_id || ""}
-              onChange={handleFiltroChange("producto_categoria_id")}
+              label="Producción"
+              value={kdxFiltro.produccion_id || ""}
+              onChange={handleFiltroChange("produccion_id")}
             >
               <MenuItem value="">
                 <em>Todas</em>
               </MenuItem>
-              {asArray(categorias).map((it) => (
+              {asArray(producciones).map((it) => (
+                <MenuItem key={it.id} value={String(it.id)}>
+                  {it.nombre ?? it.name ?? `#${it.id}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* NUEVO: Producto Presentación */}
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Presentación</InputLabel>
+            <Select
+              label="Presentación"
+              value={kdxFiltro.producto_presentacion_id || ""}
+              onChange={handleFiltroChange("producto_presentacion_id")}
+            >
+              <MenuItem value="">
+                <em>Todas</em>
+              </MenuItem>
+              {asArray(presentaciones).map((it) => (
                 <MenuItem key={it.id} value={String(it.id)}>
                   {it.nombre ?? it.name ?? `#${it.id}`}
                 </MenuItem>
