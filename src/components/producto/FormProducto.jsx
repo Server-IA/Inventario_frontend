@@ -34,7 +34,7 @@ const emptyForm = {
 export default function FormProducto({
   open,
   onClose,
-  initialData = emptyForm,
+  initialData = null,
   onSubmit,
   categorias = [],
   unidades = [],
@@ -42,10 +42,13 @@ export default function FormProducto({
   const [formData, setFormData] = useState(emptyForm);
   const [errors, setErrors] = useState({});
 
+  // 🔧 Resetear el form cada vez que se abre el modal
   useEffect(() => {
-    setFormData({ ...emptyForm, ...(initialData || {}) });
-    setErrors({});
-  }, [initialData]);
+    if (open) {
+      setFormData({ ...emptyForm, ...(initialData || {}) });
+      setErrors({});
+    }
+  }, [open, initialData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,7 +67,6 @@ export default function FormProducto({
     if (!formData.estadoId) errs.estadoId = "Campo requerido";
     if (!formData.unidadMinimaId) errs.unidadMinimaId = "Campo requerido";
 
-    // 👉 VALIDACIÓN CANTIDAD MÍNIMA (no negativa)
     if (formData.cantidadMinima !== "") {
       const n = Number(formData.cantidadMinima);
       if (Number.isNaN(n)) {
@@ -102,7 +104,6 @@ export default function FormProducto({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{isEdit ? "Editar producto" : "Nuevo producto"}</DialogTitle>
 
-      {/* permite enviar con Enter */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -136,7 +137,6 @@ export default function FormProducto({
               />
             </Grid>
 
-            {/* Selector de Categoría */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal" error={!!errors.productoCategoriaId}>
                 <InputLabel>Categoría</InputLabel>
@@ -158,7 +158,6 @@ export default function FormProducto({
               </FormControl>
             </Grid>
 
-            {/* Selector de Estado fijo (Activo/Inactivo) */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
                 <InputLabel>Estado</InputLabel>
@@ -175,7 +174,6 @@ export default function FormProducto({
               </FormControl>
             </Grid>
 
-            {/* Selector de Unidad mínima */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal" error={!!errors.unidadMinimaId}>
                 <InputLabel>Unidad mínima</InputLabel>
@@ -197,7 +195,6 @@ export default function FormProducto({
               </FormControl>
             </Grid>
 
-            {/* Campo cantidad mínima */}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Cantidad mínima"
@@ -212,7 +209,6 @@ export default function FormProducto({
               />
             </Grid>
 
-            {/* Checkbox de orgánico */}
             <Grid item xs={12}>
               <FormControlLabel
                 control={
@@ -228,7 +224,6 @@ export default function FormProducto({
           </Grid>
         </DialogContent>
 
-        {/* ==== Botonera ==== */}
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Stack direction="row" spacing={1} sx={{ width: "100%" }} justifyContent="flex-end">
             <Button

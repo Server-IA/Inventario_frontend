@@ -24,10 +24,10 @@ export const ThemeToggleProvider = ({ children }) => {
       createTheme({
         palette: {
           mode: darkMode ? 'dark' : 'light',
-          primary: { main: BRAND_GREEN },               // verde de marca
+          primary: { main: BRAND_GREEN },
           background: {
             default: darkMode ? BRAND_GREEN : '#E7F6F7',
-            paper:   darkMode ? '#1B1F22' : '#FFFFFF',
+            paper: darkMode ? '#1B1F22' : '#FFFFFF',
           },
           text: {
             primary: darkMode ? '#E0E0E0' : '#2B3445',
@@ -37,7 +37,7 @@ export const ThemeToggleProvider = ({ children }) => {
             active: darkMode ? '#FFFFFF' : '#000000',
             hover: darkMode ? alpha('#FFFFFF', 0.12) : alpha('#000000', 0.08),
             disabled: darkMode ? alpha('#FFFFFF', 0.26) : alpha('#000000', 0.26),
-            selected: darkMode ? alpha('#FFFFFF', 0.08) : alpha('#000000', 0.12),
+            selected: darkMode ? alpha('#FFFFFF', 0.16) : alpha('#000000', 0.12),
           },
         },
         components: {
@@ -91,24 +91,45 @@ export const ThemeToggleProvider = ({ children }) => {
                 : {},
             },
           },
-          MuiDataGrid: {
-            styleOverrides: {
-              root: {
-                border: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`, // borde externo
-              },
-              columnHeaders: {
-                borderBottom: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`, // borde encabezados
-              },
-              cell: {
-                borderBottom: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`, // borde filas
-                //borderRight: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`,
-              },
-              columnSeparator: {
-                color: darkMode ? '#FFFFFF' : '#000000', // borde entre columnas
-                display: 'none', // opcional: ocultar el separador nativo
-              },
-            },
-          },
+MuiDataGrid: {
+  styleOverrides: {
+    root: {
+      border: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`,
+
+      // 🔹 AQUÍ forzamos el estilo de cualquier fila seleccionada en cualquier grid
+      '& .MuiDataGrid-row.Mui-selected': {
+        backgroundColor: darkMode
+          ? alpha('#4FC3F7', 0.35)     // color vistoso en oscuro
+          : alpha(BRAND_GREEN, 0.12),  // color en claro
+        // si tienes muchas sobreescrituras y aún no se nota:
+        // backgroundColor: darkMode ? alpha('#4FC3F7', 0.35) + ' !important' : alpha(BRAND_GREEN, 0.12) + ' !important',
+      },
+
+      '& .MuiDataGrid-row.Mui-selected:hover': {
+        backgroundColor: darkMode
+          ? alpha('#4FC3F7', 0.5)
+          : alpha(BRAND_GREEN, 0.18),
+      },
+
+      // opcional: color de texto en seleccionado (útil en oscuro)
+      '& .MuiDataGrid-row.Mui-selected .MuiDataGrid-cell': {
+        color: darkMode ? '#FFFFFF' : undefined,
+      },
+    },
+
+    columnHeaders: {
+      borderBottom: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`,
+    },
+    cell: {
+      borderBottom: `1px solid ${darkMode ? '#FFFFFF' : '#000000'}`,
+    },
+    columnSeparator: {
+      color: darkMode ? '#FFFFFF' : '#000000',
+      display: 'none',
+    },
+  },
+},
+
         },
       }),
     [darkMode]

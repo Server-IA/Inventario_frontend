@@ -219,7 +219,8 @@ export default function GridOrdenCompra({
         columns={columns}
         getRowId={(row) => row.id}
         onRowClick={(params) => setSelectedRow?.(params.row)}
-        disableRowSelectionOnClick
+        // 🔹 IMPORTANTE: quitamos disableRowSelectionOnClick
+        // disableRowSelectionOnClick
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         pagination
         pageSizeOptions={[5, 10, 20, 50]}

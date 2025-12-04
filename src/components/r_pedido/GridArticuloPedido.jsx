@@ -65,7 +65,7 @@ export default function GridArticuloPedido({
     return m;
   }, [presentaciones]);
 
-  /* -------- Columnas (todas hideable para que se puedan elegir) -------- */
+  /* -------- Columnas -------- */
   const columns = useMemo(
     () => [
       { field: "id", headerName: "ID", width: 90, type: "number", hideable: true },
@@ -99,25 +99,27 @@ export default function GridArticuloPedido({
   /* -------- Visibilidad de columnas (persistencia) -------- */
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
-  // Cargar de localStorage al montar
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
       if (saved && typeof saved === "object") setColumnVisibilityModel(saved);
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, []);
 
-  // Guardar cada cambio
   const handleVisibilityChange = (model) => {
     setColumnVisibilityModel(model);
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(model));
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   };
 
   const handleResetColumns = () => {
     localStorage.removeItem(LS_KEY);
-    setColumnVisibilityModel({}); // todas visibles por defecto
+    setColumnVisibilityModel({}); // todas visibles
   };
 
   /* -------- ¿Server o cliente? -------- */
@@ -128,7 +130,7 @@ export default function GridArticuloPedido({
     typeof (paginationModel.pageSize ?? paginationModel.size) === "number" &&
     typeof onPaginationModelChange === "function";
 
-  /* -------- Selección no controlada (fallback) -------- */
+  /* -------- Selección local si no viene controlada -------- */
   const handleLocalSelection = (ids) => {
     const idSet = new Set(ids);
     const selectedMany = (items ?? []).filter((r) => idSet.has(r.id));
@@ -144,14 +146,17 @@ export default function GridArticuloPedido({
         getRowId={(row) => row.id}
         loading={loading}
         checkboxSelection
-        disableRowSelectionOnClick
+        // ❌ QUITAMOS ESTO PARA QUE EL CLICK EN LA FILA SÍ LA SELECCIONE
+        // disableRowSelectionOnClick
         autoHeight
         pagination
         pageSizeOptions={[5, 10, 20, 50]}
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         /* ------- selección múltiple controlada / local ------- */
         rowSelectionModel={rowSelectionModel ?? undefined}
-        onRowSelectionModelChange={onRowSelectionModelChange ?? handleLocalSelection}
+        onRowSelectionModelChange={
+          onRowSelectionModelChange ?? handleLocalSelection
+        }
         onRowClick={(params) => setSelectedRow?.(params.row)}
         /* ------- columnas visibles + toolbar ------- */
         columnVisibilityModel={columnVisibilityModel}

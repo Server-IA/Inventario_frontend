@@ -117,7 +117,7 @@ export default function GridPresentacionproducto({
           String(p?.row?.unidadId ?? ""),
       },
       { field: "descripcion", headerName: "Descripción", flex: 1.4, minWidth: 220, hideable: true },
-      { field: "cantidad", headerName: "Cantidad", type: "number", width: 120, hideable: true },
+      { field: "cantidad", headerName: "Cantidad Presentacion", type: "number", width: 180, hideable: true },
       {
         field: "marcaNombre",
         headerName: "Marca",
