@@ -33,7 +33,7 @@ export default function GridOrdenCompra({
 }) {
   const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
 
-  /* =============== TOGGLE ESTADO 23 ↔ 24 CON PUT =============== */
+  /* =============== ENVIAR ORDEN AL PROVEEDOR (PATCH) =============== */
   const handleEnviarOrdenCompra = useCallback(
     (row) => {
       if (!row?.id) {
@@ -47,39 +47,25 @@ export default function GridOrdenCompra({
 
       const estadoActual = Number(row?.estadoId ?? row?.estado?.id);
 
-      // Solo permitimos toggle entre ACTIVO (23) y ENTREGADO (24)
-      if (estadoActual !== 23 && estadoActual !== 24) {
+      // Solo permitimos enviar si está ACTIVO (23)
+      if (estadoActual !== 23) {
         setMessage({
           open: true,
           severity: "warning",
-          text: "Solo se puede cambiar entre estados ACTIVO y ENTREGADO AL PROVEEDOR.",
+          text: "Solo se puede enviar al proveedor cuando la orden está en estado ACTIVO.",
         });
         return;
       }
 
-      const esActivo = estadoActual === 23;
-      const nuevoEstadoId = esActivo ? 24 : 23;
-      const textoAccion = esActivo
-        ? "enviada al proveedor"
-        : "devuelta a estado ACTIVO";
-
-      const url = `/v1/orden-compra/${row.id}`;
-
-      const payload = {
-        fechaHora: row.fechaHora,
-        pedidoId: Number(row.pedidoId),
-        proveedorId: Number(row.proveedorId),
-        descripcion: row.descripcion ?? "",
-        estadoId: nuevoEstadoId,
-      };
+      const url = `/v1/orden-compra/enviar-al-proveedor/${row.id}`;
 
       axios
-        .put(url, payload)
+        .patch(url)
         .then(() => {
           setMessage({
             open: true,
             severity: "success",
-            text: `Orden de compra ${textoAccion} con éxito.`,
+            text: "Orden de compra enviada al proveedor con éxito.",
           });
           reloadData?.();
         })
@@ -88,7 +74,7 @@ export default function GridOrdenCompra({
           setMessage({
             open: true,
             severity: "error",
-            text: `Error al cambiar estado: ${errorMessage}`,
+            text: `Error al enviar al proveedor: ${errorMessage}`,
           });
         });
     },
@@ -171,20 +157,10 @@ export default function GridOrdenCompra({
           const estadoId = Number(row?.estadoId ?? row?.estado?.id);
 
           const esActivo = estadoId === 23;
-          const esEntregado = estadoId === 24;
-          const habilitado = esActivo || esEntregado;
+          const habilitado = esActivo;
 
-          const label = esActivo
-            ? "ENVIAR AL PROVEEDOR"
-            : esEntregado
-            ? "VOLVER A ACTIVO"
-            : "CAMBIAR ESTADO";
-
-          const color = esActivo
-            ? "primary" // azul
-            : esEntregado
-            ? "warning" // amarillo
-            : "inherit"; // gris
+          const label = "ENVIAR AL PROVEEDOR";
+          const color = "primary";
 
           return (
             <Button
@@ -198,7 +174,7 @@ export default function GridOrdenCompra({
               }}
               sx={{
                 fontWeight: "bold",
-                color: esEntregado ? "#000" : "white",
+                color: "white",
               }}
             >
               {label}
