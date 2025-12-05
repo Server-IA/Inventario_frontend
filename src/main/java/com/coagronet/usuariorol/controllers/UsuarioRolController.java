@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.coagronet.usuariorol.dtos.UsuarioRolRequestDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolRequestForCurrentEmpresaDTO;
 import com.coagronet.usuariorol.dtos.UsuarioRolResponseDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolResponseForCurrentEmpresaDTO;
 import com.coagronet.usuariorol.services.UsuarioRolService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,14 +37,14 @@ public class UsuarioRolController {
 
     // Lista TODAS las asignaciones usuario-rol (todas las empresas)
     @GetMapping("/system/usuario-roles")
-    public ResponseEntity<Page<UsuarioRolResponseDTO>> getAll(Pageable pageable) {
+    public ResponseEntity<Page<UsuarioRolResponseDTO>> findAll(Pageable pageable) {
         Page<UsuarioRolResponseDTO> page = usuarioRolService.findAll(pageable);
         return ResponseEntity.ok(page);
     }
 
     // Obtiene una asignación por id (scope global)
     @GetMapping("/system/usuario-roles/{id}")
-    public ResponseEntity<UsuarioRolResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<UsuarioRolResponseDTO> findById(@PathVariable Long id) {
         UsuarioRolResponseDTO response = usuarioRolService.findById(id);
         return ResponseEntity.ok(response);
     }
@@ -82,20 +84,40 @@ public class UsuarioRolController {
 
     // Lista asignaciones usuario-rol SOLO de la empresa del token
     @GetMapping("/usuario-roles")
-    public ResponseEntity<Page<UsuarioRolResponseDTO>> getAllByEmpresa(Pageable pageable) {
-        Page<UsuarioRolResponseDTO> page = usuarioRolService.findAllByEmpresaId(pageable);
+    public ResponseEntity<Page<UsuarioRolResponseForCurrentEmpresaDTO>> findAllForCurrentEmpresa(Pageable pageable) {
+        Page<UsuarioRolResponseForCurrentEmpresaDTO> page = usuarioRolService.findAllForCurrentEmpresa(pageable);
         return ResponseEntity.ok(page);
     }
 
     @GetMapping("/usuario-roles/{id}")
-    public ResponseEntity<UsuarioRolResponseDTO> getByIdAndEmpresa(@PathVariable Long id) {
-        UsuarioRolResponseDTO response = usuarioRolService.findByIdAndEmpresaId(id);
+    public ResponseEntity<UsuarioRolResponseForCurrentEmpresaDTO> findByIdForCurrentEmpresa(@PathVariable Long id) {
+        UsuarioRolResponseForCurrentEmpresaDTO response = usuarioRolService.findByIdForCurrentEmpresa(id);
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/usuario-roles")
+    public ResponseEntity<Void> createForCurrentEmpresa(
+            @Valid @RequestBody UsuarioRolRequestForCurrentEmpresaDTO requestDTO,
+            HttpServletRequest httpRequest) {
+
+        UsuarioRolResponseDTO created = usuarioRolService.createForCurrentEmpresa(requestDTO, httpRequest);
+        URI location = URI.create(String.format("/api/v1/usuario-roles/%d", created.id()));
+        return ResponseEntity.created(location).build();
+    }
+
+    @PutMapping("/usuario-roles/{id}")
+    public ResponseEntity<Void> updateForCurrentEmpresa(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioRolRequestForCurrentEmpresaDTO requestDTO,
+            HttpServletRequest httpRequest) {
+
+        usuarioRolService.updateForCurrentEmpresa(id, requestDTO, httpRequest);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/usuario-roles/{id}")
-    public ResponseEntity<Void> deleteByEmpresa(@PathVariable Long id) {
-        usuarioRolService.deleteByEmpresaId(id);
+    public ResponseEntity<Void> deleteForCurrentEmpresa(@PathVariable Long id) {
+        usuarioRolService.deleteForCurrentEmpresa(id);
         return ResponseEntity.noContent().build();
     }
 }
