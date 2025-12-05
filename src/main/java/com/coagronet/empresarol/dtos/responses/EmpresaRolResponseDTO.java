@@ -1,4 +1,4 @@
-package com.coagronet.empresarol.dtos;
+package com.coagronet.empresarol.dtos.responses;
 
 
 import lombok.*;
@@ -15,7 +15,7 @@ public class EmpresaRolResponseDTO {
 
     private String rolNombre;
 
-    private String estado;
+    private String estadoNombre;
 
 
 }

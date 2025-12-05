@@ -242,4 +242,8 @@ public class UriBuilderUtil {
         return ucb.path("/api/v1/empresa-rol/{id}").buildAndExpand(id).toUri();
     }
 
+    public URI buildEmpresaRolSystemUri(Long id, UriComponentsBuilder ucb) {
+        return ucb.path("/api/v1/system/empresa-rol/{id}").buildAndExpand(id).toUri();
+    }
+
 }

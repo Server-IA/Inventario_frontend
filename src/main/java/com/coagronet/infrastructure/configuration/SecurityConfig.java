@@ -38,7 +38,7 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers("/api/v1/tipo_identificacion/**", "/api/v1/estado/**", "/api/v1/persona/**",
 						"/api/v1/movimiento/**", "/api/v1/tipo-evaluacion/**", "/api/v1/user/**",
-						"/api/v1/categoria-estado/**", "/api/v1/roles/**", "/api/v1/system/usuario-roles/**")
+						"/api/v1/categoria-estado/**", "/api/v1/roles/**", "/api/v1/system/usuario-roles/**", "/api/v1/system/empresa-rol/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA")
 				// Especifidad para unidad y tipoUnidad
 				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()

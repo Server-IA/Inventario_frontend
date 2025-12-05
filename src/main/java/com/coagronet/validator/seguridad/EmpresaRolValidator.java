@@ -15,6 +15,11 @@ public class EmpresaRolValidator implements BaseValidator {
 
     public EmpresaRol validarEmpresaRol(Long empresaRolId, Long empresaId){
         return empresaRolRepository.findByIdAndEmpresaId(empresaRolId, empresaId)
-                .orElseThrow(()-> new NotFoundException("La empresa-rol no fue encontrada en esta empresa."));
+                .orElseThrow(()-> new NotFoundException("La empresa-rol no fue encontrada para esta empresa."));
+    }
+
+    public EmpresaRol validarEmpresaRolAdmin(Long empresaRolId){
+        return empresaRolRepository.findById(empresaRolId)
+                .orElseThrow(()-> new NotFoundException("La empresa-rol no fue encontrada."));
     }
 }
