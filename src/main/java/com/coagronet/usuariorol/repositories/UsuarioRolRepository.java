@@ -12,9 +12,9 @@ import com.coagronet.usuariorol.UsuarioRol;
 
 public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
-	Page<UsuarioRol> findAllByEmpresaId(Pageable pageable, Long empresaId);
+	Page<UsuarioRol> findAllByEmpresaIdAndDeletedAtIsNullOrderByIdDesc(Pageable pageable, Long empresaId);
 
-	Optional<UsuarioRol> findByIdAndEmpresaId(Long id, Long empresaId);
+	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNull(Long id, Long empresaId);
 
 	List<UsuarioRol> findByUserOrderByUserId(User user);
 
@@ -27,5 +27,9 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 			Long empresaId,
 			Long rolId,
 			Long estadoId);
+
+	Page<UsuarioRol> findByDeletedAtIsNullOrderByIdDesc(Pageable pageable);
+
+	Optional<UsuarioRol> findByIdAndDeletedAtIsNull(Long id);
 
 }

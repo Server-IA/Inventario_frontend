@@ -9,7 +9,9 @@ import org.mapstruct.ReportingPolicy;
 
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.dtos.UsuarioRolRequestDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolRequestForCurrentEmpresaDTO;
 import com.coagronet.usuariorol.dtos.UsuarioRolResponseDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolResponseForCurrentEmpresaDTO;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UsuarioRolMapper {
@@ -26,6 +28,16 @@ public interface UsuarioRolMapper {
     @Mapping(target = "updatedBy", source = "updatedBy.username")
     UsuarioRolResponseDTO toResponse(UsuarioRol entity);
 
+    @Mapping(target = "usuarioId", source = "user.id")
+    @Mapping(target = "usuarioEmail", source = "user.username")
+    @Mapping(target = "rolId", source = "rol.id")
+    @Mapping(target = "rolNombre", source = "rol.nombre")
+    @Mapping(target = "estadoId", source = "estado.id")
+    @Mapping(target = "estadoNombre", source = "estado.nombre")
+    @Mapping(target = "createdBy", source = "createdBy.username")
+    @Mapping(target = "updatedBy", source = "updatedBy.username")
+    UsuarioRolResponseForCurrentEmpresaDTO toResponseForCurrentEmpresa(UsuarioRol entity);
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "empresa", ignore = true)
@@ -40,6 +52,17 @@ public interface UsuarioRolMapper {
     @Mapping(target = "requestHost", ignore = true)
     @Mapping(target = "requestIp", ignore = true)
     UsuarioRol toEntity(UsuarioRolRequestDTO request);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "deletedBy", ignore = true)
+    @Mapping(target = "requestIp", ignore = true)
+    @Mapping(target = "requestHost", ignore = true)
+    UsuarioRol toEntity(UsuarioRolRequestForCurrentEmpresaDTO dto);
 
     // ====== REQUEST -> ENTITY EXISTENTE (UPDATE REAL, NO PATCH) ======
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
@@ -58,4 +81,15 @@ public interface UsuarioRolMapper {
     @Mapping(target = "requestHost", ignore = true)
     @Mapping(target = "requestIp", ignore = true)
     void updateEntityFromRequest(UsuarioRolRequestDTO request, @MappingTarget UsuarioRol entity);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "deletedBy", ignore = true)
+    @Mapping(target = "requestIp", ignore = true)
+    @Mapping(target = "requestHost", ignore = true)
+    void updateEntityFromDTO(UsuarioRolRequestForCurrentEmpresaDTO dto, @MappingTarget UsuarioRol entity);
 }

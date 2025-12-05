@@ -4,7 +4,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.coagronet.usuariorol.dtos.UsuarioRolRequestDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolRequestForCurrentEmpresaDTO;
 import com.coagronet.usuariorol.dtos.UsuarioRolResponseDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolResponseForCurrentEmpresaDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -20,9 +22,16 @@ public interface UsuarioRolService {
 
     void delete(Long id);
 
-    Page<UsuarioRolResponseDTO> findAllByEmpresaId(Pageable pageable);
+    Page<UsuarioRolResponseForCurrentEmpresaDTO> findAllForCurrentEmpresa(Pageable pageable);
 
-    void deleteByEmpresaId(Long id);
+    UsuarioRolResponseForCurrentEmpresaDTO findByIdForCurrentEmpresa(Long id);
 
-    UsuarioRolResponseDTO findByIdAndEmpresaId(Long id);
+    UsuarioRolResponseDTO createForCurrentEmpresa(UsuarioRolRequestForCurrentEmpresaDTO request,
+            HttpServletRequest httpRequest);
+
+    UsuarioRolResponseDTO updateForCurrentEmpresa(Long id, UsuarioRolRequestForCurrentEmpresaDTO request,
+            HttpServletRequest httpRequest);
+
+    void deleteForCurrentEmpresa(Long id);
+
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
+import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.rol.Rol;
@@ -19,7 +20,9 @@ import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.dtos.UsuarioRolRequestDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolRequestForCurrentEmpresaDTO;
 import com.coagronet.usuariorol.dtos.UsuarioRolResponseDTO;
+import com.coagronet.usuariorol.dtos.UsuarioRolResponseForCurrentEmpresaDTO;
 import com.coagronet.usuariorol.mappers.UsuarioRolMapper;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 import com.coagronet.usuariorol.services.UsuarioRolService;
@@ -44,6 +47,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         private final RolRepository rolRepository;
         private final EmpresaRepository empresaRepository;
         private final EstadoRepository estadoRepository;
+        private final EmpresaRolRepository empresaRolRepository;
 
         private final AuthenticatedUser authenticatedUser;
         private final RequestUtils requestUtils;
@@ -54,23 +58,23 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         @Transactional(readOnly = true)
         public Page<UsuarioRolResponseDTO> findAll(Pageable pageable) {
                 return usuarioRolRepository
-                                .findAll(pageable)
+                                .findByDeletedAtIsNullOrderByIdDesc(pageable)
                                 .map(usuarioRolMapper::toResponse);
         }
 
         @Override
         @Transactional(readOnly = true)
-        public Page<UsuarioRolResponseDTO> findAllByEmpresaId(Pageable pageable) {
+        public Page<UsuarioRolResponseForCurrentEmpresaDTO> findAllForCurrentEmpresa(Pageable pageable) {
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
                 return usuarioRolRepository
-                                .findAllByEmpresaId(pageable, empresaId)
-                                .map(usuarioRolMapper::toResponse);
+                                .findAllByEmpresaIdAndDeletedAtIsNullOrderByIdDesc(pageable, empresaId)
+                                .map(usuarioRolMapper::toResponseForCurrentEmpresa);
         }
 
         @Override
         @Transactional(readOnly = true)
         public UsuarioRolResponseDTO findById(Long id) {
-                UsuarioRol entity = usuarioRolRepository.findById(id)
+                UsuarioRol entity = usuarioRolRepository.findByIdAndDeletedAtIsNull(id)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
                 return usuarioRolMapper.toResponse(entity);
@@ -78,12 +82,12 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
 
         @Override
         @Transactional(readOnly = true)
-        public UsuarioRolResponseDTO findByIdAndEmpresaId(Long id) {
+        public UsuarioRolResponseForCurrentEmpresaDTO findByIdForCurrentEmpresa(Long id) {
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-                UsuarioRol entity = usuarioRolRepository.findByIdAndEmpresaId(id, empresaId)
+                UsuarioRol entity = usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
-                return usuarioRolMapper.toResponse(entity);
+                return usuarioRolMapper.toResponseForCurrentEmpresa(entity);
         }
 
         @Override
@@ -143,13 +147,72 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         }
 
         @Override
+        public UsuarioRolResponseDTO createForCurrentEmpresa(UsuarioRolRequestForCurrentEmpresaDTO request,
+                        HttpServletRequest httpRequest) {
+                User currentUser = authenticatedUser.getCurrentUser();
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+                User usuario = userRepository.findById(request.usuarioId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Usuario no encontrado con id " + request.usuarioId()));
+
+                Empresa empresa = empresaRepository.findById(empresaId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Empresa no encontrada con id " + empresaId));
+
+                Rol rol = empresaRolRepository.findRolByEmpresaIdAndRolId(empresaId, request.rolId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "El rol " + request.rolId() + " no está asignado a la empresa "
+                                                                + empresaId));
+
+                Long estadoId = request.estadoId() != null ? request.estadoId() : ESTADO_ACTIVO_ID;
+                Estado estado = estadoRepository.findById(estadoId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Estado no encontrado con id " + estadoId));
+
+                boolean existsActivo = usuarioRolRepository
+                                .existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(
+                                                usuario.getId(), empresa.getId(), rol.getId(), ESTADO_ACTIVO_ID);
+                if (existsActivo && estadoId.equals(ESTADO_ACTIVO_ID)) {
+                        throw new DataIntegrityViolationException(
+                                        "El usuario ya tiene este rol activo para la empresa seleccionada");
+                }
+
+                UsuarioRol entity = usuarioRolMapper.toEntity(request);
+
+                entity.setUser(usuario);
+                entity.setEmpresa(empresa);
+                entity.setRol(rol);
+                entity.setEstado(estado);
+
+                OffsetDateTime now = OffsetDateTime.now();
+                entity.setIniciaContratoEn(
+                                request.iniciaContratoEn() != null ? request.iniciaContratoEn() : now);
+
+                entity.setCreatedAt(now);
+                entity.setCreatedBy(currentUser);
+                entity.setUpdatedAt(null);
+                entity.setUpdatedBy(null);
+                entity.setDeletedAt(null);
+                entity.setDeletedBy(null);
+
+                String requestIp = requestUtils.getClientIp(httpRequest);
+                String requestHost = requestUtils.getClientHost(httpRequest);
+                entity.setRequestIp(requestIp);
+                entity.setRequestHost(requestHost);
+
+                UsuarioRol saved = usuarioRolRepository.save(entity);
+                return usuarioRolMapper.toResponse(saved);
+        }
+
+        @Override
         public UsuarioRolResponseDTO update(
                         Long id,
                         UsuarioRolRequestDTO request,
                         HttpServletRequest httpRequest) {
                 User currentUser = authenticatedUser.getCurrentUser();
 
-                UsuarioRol entity = usuarioRolRepository.findById(id)
+                UsuarioRol entity = usuarioRolRepository.findByIdAndDeletedAtIsNull(id)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
 
@@ -255,10 +318,131 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         }
 
         @Override
+        public UsuarioRolResponseDTO updateForCurrentEmpresa(
+                        Long id,
+                        UsuarioRolRequestForCurrentEmpresaDTO request,
+                        HttpServletRequest httpRequest) {
+
+                User currentUser = authenticatedUser.getCurrentUser();
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+                // Aseguramos que el registro pertenece a la empresa del token
+                UsuarioRol entity = usuarioRolRepository
+                                .findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id + " para la empresa actual"));
+
+                // =========================
+                // 1. Determinar IDs objetivo (por si cambian)
+                // =========================
+                Long targetUsuarioId = (request.usuarioId() != null)
+                                ? request.usuarioId()
+                                : entity.getUser().getId();
+
+                Long targetRolId = (request.rolId() != null)
+                                ? request.rolId()
+                                : entity.getRol().getId();
+
+                Long targetEstadoId = (request.estadoId() != null)
+                                ? request.estadoId()
+                                : entity.getEstado().getId();
+
+                // La empresa objetivo SIEMPRE es la del token
+                Long targetEmpresaId = empresaId;
+
+                // =========================
+                // 2. Validar unicidad si queda ACTIVO
+                // =========================
+                if (ESTADO_ACTIVO_ID.equals(targetEstadoId)) {
+
+                        boolean existsActivo = usuarioRolRepository
+                                        .existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(
+                                                        targetUsuarioId,
+                                                        targetEmpresaId,
+                                                        targetRolId,
+                                                        ESTADO_ACTIVO_ID);
+
+                        boolean seVuelveActivoConNuevaComb =
+                                        // pasa de NO activo a ACTIVO
+                                        !ESTADO_ACTIVO_ID.equals(entity.getEstado().getId())
+                                                        // o cambia usuario/rol con estado ACTIVO
+                                                        || !entity.getUser().getId().equals(targetUsuarioId)
+                                                        || !entity.getRol().getId().equals(targetRolId);
+                        // empresa NO cambia, siempre es la misma del token
+
+                        if (existsActivo && seVuelveActivoConNuevaComb) {
+                                throw new DataIntegrityViolationException(
+                                                "El usuario ya tiene este rol activo para la empresa seleccionada");
+                        }
+                }
+
+                // =========================
+                // 3. Actualizar campos simples con el mapper
+                // (sin tocar empresa, ni auditoría)
+                // =========================
+                usuarioRolMapper.updateEntityFromDTO(request, entity);
+
+                // =========================
+                // 4. Actualizar relaciones si vienen nuevos IDs
+                // =========================
+
+                // Usuario
+                if (request.usuarioId() != null
+                                && !request.usuarioId().equals(entity.getUser().getId())) {
+
+                        User nuevoUsuario = userRepository.findById(request.usuarioId())
+                                        .orElseThrow(() -> new EntityNotFoundException(
+                                                        "Usuario no encontrado con id " + request.usuarioId()));
+                        entity.setUser(nuevoUsuario);
+                }
+
+                // Empresa NO se cambia nunca en este flujo (empresa = token)
+
+                // Rol (validando que pertenezca a la empresa del token)
+                if (request.rolId() != null
+                                && !request.rolId().equals(entity.getRol().getId())) {
+
+                        Rol nuevoRol = empresaRolRepository
+                                        .findRolByEmpresaIdAndRolId(empresaId, request.rolId())
+                                        .orElseThrow(() -> new EntityNotFoundException(
+                                                        "El rol " + request.rolId() + " no está asignado a la empresa "
+                                                                        + empresaId));
+
+                        entity.setRol(nuevoRol);
+                }
+
+                // Estado
+                if (request.estadoId() != null
+                                && !request.estadoId().equals(entity.getEstado().getId())) {
+
+                        Long estadoId = request.estadoId();
+                        Estado nuevoEstado = estadoRepository.findById(estadoId)
+                                        .orElseThrow(() -> new EntityNotFoundException(
+                                                        "Estado no encontrado con id " + estadoId));
+                        entity.setEstado(nuevoEstado);
+                }
+
+                // =========================
+                // 5. Auditoría
+                // =========================
+                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedBy(currentUser);
+
+                // =========================
+                // 6. IP y Host desde RequestUtils
+                // =========================
+                entity.setRequestIp(requestUtils.getClientIp(httpRequest));
+                entity.setRequestHost(requestUtils.getClientHost(httpRequest));
+
+                UsuarioRol saved = usuarioRolRepository.save(entity);
+                return usuarioRolMapper.toResponse(saved);
+        }
+
+        @Override
         public void delete(Long id) {
                 User currentUser = authenticatedUser.getCurrentUser();
 
-                UsuarioRol entity = usuarioRolRepository.findById(id)
+                UsuarioRol entity = usuarioRolRepository.findByIdAndDeletedAtIsNull(id)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
 
@@ -269,11 +453,11 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         }
 
         @Override
-        public void deleteByEmpresaId(Long id) {
+        public void deleteForCurrentEmpresa(Long id) {
                 User currentUser = authenticatedUser.getCurrentUser();
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-                UsuarioRol entity = usuarioRolRepository.findByIdAndEmpresaId(id, empresaId)
+                UsuarioRol entity = usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
 
