@@ -1,6 +1,7 @@
 package com.coagronet.empresarol;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
 import com.coagronet.rol.Rol;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,15 +33,21 @@ public class EmpresaRol {
     @JoinColumn(name = "rol_id", referencedColumnName = "id")
     private Rol rol;
 
-    @Column(name = "estado_id")
-    private String estado;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estado_id", referencedColumnName = "est_id")
+    private Estado estado;
 
     @Column(name = "created_at", insertable = false)
     private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false)
+    private OffsetDateTime updatedAt;
 
     @Column(name = "created_by")
     private String createdBy;
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+
 }
