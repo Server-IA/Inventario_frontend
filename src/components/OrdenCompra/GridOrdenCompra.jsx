@@ -335,3 +335,4 @@ GridOrdenCompra.propTypes = {
   setMessage: PropTypes.func,
   reloadData: PropTypes.func,
 };
+
