@@ -298,6 +298,9 @@ const loadArticulos = async (pedidoId) => {
             producciones={producciones}
             almacenes={almacenes}
             estados={estados}
+
+            onAnularPedido={(pedido) => anularPedido(pedido)}         // PUT /pedido/anular
+            onCompletarPedido={(pedido) => completarPedido(pedido)}   // PUT /pedido/completar
           />
         </Box>
       </Box>

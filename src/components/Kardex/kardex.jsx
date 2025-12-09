@@ -33,6 +33,11 @@ export default function Kardex() {
   const [tiposMovimiento, setTiposMovimiento] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
 
+  // 🔹 NUEVOS catálogos para mostrar nombres en GridKardex
+  const [pedidos, setPedidos] = useState([]);
+  const [ordenesCompra, setOrdenesCompra] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
+
   const theme = useTheme();
 
   // Paginación Kardex
@@ -74,21 +79,40 @@ export default function Kardex() {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const [rAlm, rProd, rTmov, rPres] = await Promise.all([
+        const [
+          rAlm,
+          rProd,
+          rTmov,
+          rPres,
+          rPed,
+          rOc,
+          rEmp,
+        ] = await Promise.all([
           axios.get("/v1/items/almacen/0"),
           axios.get("/v1/items/produccion/0"),
           axios.get("/v1/items/tipo_movimiento/0"),
           axios.get("/v1/items/producto_presentacion/0"),
+          axios.get("/v1/items/pedido/0"),
+          axios.get("/v1/items/orden_compra/0"),
+          axios.get("/v1/items/empresa/0"),
         ]);
+
         setAlmacenes(toArray(rAlm.data));
         setProducciones(toArray(rProd.data));
         setTiposMovimiento(toArray(rTmov.data));
         setPresentaciones(toArray(rPres.data));
+
+        setPedidos(toArray(rPed.data));
+        setOrdenesCompra(toArray(rOc.data));
+        setEmpresas(toArray(rEmp.data));
       } catch (e) {
         setAlmacenes([]);
         setProducciones([]);
         setTiposMovimiento([]);
         setPresentaciones([]);
+        setPedidos([]);
+        setOrdenesCompra([]);
+        setEmpresas([]);
       }
     };
     loadCatalogs();
@@ -115,6 +139,7 @@ export default function Kardex() {
 
         setKardexes(rows);
         setTotalKardex(effectiveTotal);
+
         if (rows.length > 0 && !selectedRow) setSelectedRow(rows[0]);
         if (rows.length === 0 && page > 0) {
           setKardexPage((p) => ({ ...p, page: p.page - 1 }));
@@ -132,7 +157,7 @@ export default function Kardex() {
       .finally(() => setLoadingKardex(false));
   };
 
-  // ------- Cargar artículos del kardex (versión que me diste, adaptada) -------
+  // ------- Cargar artículos del kardex -------
   const loadArticulos = async (kardexId) => {
     if (!kardexId) {
       setArticuloItems([]);
@@ -296,15 +321,18 @@ export default function Kardex() {
           </Typography>
           <GridKardex
             kardexes={kardexes}
-            selectedRow={selectedRow}
-            setSelectedRow={setSelectedRow}
-            loading={loadingKardex}
-            paginationModel={kardexPage}
-            setPaginationModel={setKardexPage}
-            rowCount={totalKardex}
             almacenes={almacenes}
             producciones={producciones}
             tiposMovimiento={tiposMovimiento}
+            pedidos={pedidos}
+            ordenesCompra={ordenesCompra}
+            empresas={empresas}
+            selectedRow={selectedRow}
+            setSelectedRow={setSelectedRow}
+            loading={loadingKardex}
+            rowCount={totalKardex}
+            paginationModel={kardexPage}
+            setPaginationModel={setKardexPage}
           />
         </Box>
       </Box>

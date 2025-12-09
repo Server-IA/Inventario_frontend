@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+// src/components/empresaRol/GridEmpresaRol.jsx
+import React, { useMemo, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   DataGrid,
@@ -11,9 +12,9 @@ import {
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
-const LS_KEY = "gridUsuarioRol:columnVisibility:v1";
+const LS_KEY = "gridEmpresaRol:columnVisibility:v1";
 
-function UsuarioRolToolbar({ onResetColumns }) {
+function EmpresaRolToolbar({ onResetColumns }) {
   return (
     <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
       <div>
@@ -36,11 +37,11 @@ function UsuarioRolToolbar({ onResetColumns }) {
   );
 }
 
-UsuarioRolToolbar.propTypes = {
+EmpresaRolToolbar.propTypes = {
   onResetColumns: PropTypes.func,
 };
 
-export default function GridUsuarioRol({
+export default function GridEmpresaRol({
   rows = [],
   loading = false,
   selectedRow = null,
@@ -49,29 +50,14 @@ export default function GridUsuarioRol({
   const columns = useMemo(
     () => [
       { field: "id", headerName: "ID", width: 90, type: "number" },
-
-      { field: "usuarioId", headerName: "Usuario ID", width: 110, type: "number" },
-      { field: "usuarioEmail", headerName: "Usuario", flex: 1.2, minWidth: 220 },
-
-      { field: "rolId", headerName: "Rol ID", width: 100, type: "number" },
-      { field: "rolNombre", headerName: "Rol", flex: 1.1, minWidth: 220 },
-
-      { field: "estadoId", headerName: "Estado ID", width: 110, type: "number" },
+      { field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 },
+      { field: "rolNombre", headerName: "Rol", flex: 1.2, minWidth: 220 },
       { field: "estadoNombre", headerName: "Estado", width: 160 },
-
-      { field: "iniciaContratoEn", headerName: "Inicia contrato", width: 210 },
-      { field: "finalizaContratoEn", headerName: "Finaliza contrato", width: 210 },
-
-      // Auditoría
-      { field: "createdBy", headerName: "Creado por", width: 180 },
-      { field: "createdAt", headerName: "Creado el", width: 210 },
-      { field: "updatedBy", headerName: "Actualizado por", width: 180 },
-      { field: "updatedAt", headerName: "Actualizado el", width: 210 },
     ],
     []
   );
 
-  // Persistencia visibilidad columnas
+  // Persistencia de visibilidad de columnas
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
   useEffect(() => {
@@ -93,7 +79,6 @@ export default function GridUsuarioRol({
     setColumnVisibilityModel({});
   };
 
-  // Paginación controlada
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 5,
@@ -119,7 +104,7 @@ export default function GridUsuarioRol({
         disableRowSelectionOnClick
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
-        slots={{ toolbar: UsuarioRolToolbar }}
+        slots={{ toolbar: EmpresaRolToolbar }}
         slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
         pagination
         paginationModel={paginationModel}
@@ -135,7 +120,7 @@ export default function GridUsuarioRol({
   );
 }
 
-GridUsuarioRol.propTypes = {
+GridEmpresaRol.propTypes = {
   rows: PropTypes.array,
   loading: PropTypes.bool,
   selectedRow: PropTypes.object,

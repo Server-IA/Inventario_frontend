@@ -1,16 +1,10 @@
-// src/components/usuarioRol/UsuarioRol.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "../axiosConfig";
-import MessageSnackBar from "../MessageSnackBar";
-import FormUsuarioRol from "./FormUsuarioRol.jsx";
-import GridUsuarioRol from "./GridUsuarioRol.jsx";
+import axios from "../axiosConfig.js";
+import MessageSnackBar from "../MessageSnackBar.jsx";
+import FormEmpresaRol from "./FormEmpresaRolsystem.jsx";
+import GridEmpresaRol from "./GridEmpresaRolsystem.jsx";
 
-const ESTADOS_USUARIO_ROL = [
-  { id: 1, nombre: "Activo" },
-  { id: 2, nombre: "Inactivo" },
-];
-
-export default function UsuarioRol() {
+export default function EmpresaRolsystem() {
   const [selectedRow, setSelectedRow] = useState({});
   const [message, setMessage] = useState({
     open: false,
@@ -21,24 +15,27 @@ export default function UsuarioRol() {
   const [formOpen, setFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Si más adelante quieres combos de empresa y rol,
+  // aquí podrías cargarlos y pasarlos como props al formulario.
+  const [empresas, setEmpresas] = useState([]);
+  const [roles, setRoles] = useState([]);
+
   const reloadData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const res = await axios.get("v1/usuario-roles", {
-        params: { page: 0, size: 1000 },
-      });
+      // GET empresas-rol
+      const res = await axios.get("v1/system/empresa-rol");
+      const list = Array.isArray(res?.data) ? res.data : [];
 
-      const list = res?.data?.content ?? [];
-
-      console.log("Usuario-Roles recibidos:", list.length);
+      console.log("Empresa-Rol recibidos:", list.length);
       setRows(list);
     } catch (error) {
       console.error(error);
       setMessage({
         open: true,
         severity: "error",
-        text: "Error al cargar usuario-roles",
+        text: "Error al cargar empresa-rol",
       });
     } finally {
       setLoading(false);
@@ -51,24 +48,22 @@ export default function UsuarioRol() {
 
   return (
     <div>
-      <h1>Gestión de Usuario-Rol</h1>
+      <h1>Gestión Empresa-Rol</h1>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
-      <FormUsuarioRol
+      <FormEmpresaRol
         open={formOpen}
         setOpen={setFormOpen}
         selectedRow={selectedRow || {}}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
         reloadData={reloadData}
-        estados={ESTADOS_USUARIO_ROL}
-        // En el futuro puedes pasar aquí usuarios y roles para llenar los combos
-        usuarios={[]}
-        roles={[]}
+        empresas={empresas}
+        roles={roles}
       />
 
-      <GridUsuarioRol
+      <GridEmpresaRol
         rows={rows}
         loading={loading}
         selectedRow={selectedRow}

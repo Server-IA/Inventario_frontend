@@ -181,6 +181,9 @@ import TipoUnida from "../tipo_unidad/tipounidad.jsx";
 import Estado from "../estado/estado.jsx";
 import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
 import UsuarioRol from "../usario_rol/usariorol.jsx";
+import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
+import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
+import EmpresaRolsystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
 
 // Imágenes
 import img1 from "/images/cards/1.jpg";
@@ -364,6 +367,9 @@ const icons = {
 };
 
 const components = {
+  EmpresaRolsystem: EmpresaRolsystem,
+  EmpresaRol: EmpresaRol,
+  UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
   PedidoCotizacion: PedidoCotizacion,
   Estado: Estado,

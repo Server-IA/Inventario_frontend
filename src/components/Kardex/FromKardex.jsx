@@ -12,9 +12,21 @@ import {
   MenuItem,
   Box,
   FormHelperText,
+  Typography,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
 } from "@mui/material";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
+
+/* ============================
+   🔹 Constante: ID tipo mov ENTRADA COMPRA
+   👉 AJUSTA ESTE VALOR SEGÚN TU CATÁLOGO
+============================ */
+const TIPO_MOV_ENTRADA_COMPRA = 2;
 
 /* ============================
    🔹 Helpers Yup
@@ -70,13 +82,33 @@ const kardexSchema = Yup.object({
   pedidoId: Yup.number()
     .nullable()
     .transform((v, o) => (o === "" ? null : v)),
+
   ordenCompraId: Yup.number()
     .nullable()
-    .transform((v, o) => (o === "" ? null : v)),
+    .transform((v, o) => (o === "" ? null : v))
+    .when("tipoMovimientoId", {
+      is: TIPO_MOV_ENTRADA_COMPRA,
+      then: numberRequired("Orden de compra obligatoria.", { min: 1 }),
+      otherwise: (schema) =>
+        schema.nullable().transform((v, o) => (o === "" ? null : v)),
+    }),
+
   clienteProveedorId: Yup.number()
     .nullable()
     .transform((v, o) => (o === "" ? null : v)),
 });
+
+/* ============================
+   🔹 pickList Response helper
+============================ */
+const pickList = (res) => {
+  const d = res?.data;
+  if (Array.isArray(d)) return d;
+  if (Array.isArray(d?.data)) return d.data;
+  if (Array.isArray(d?.content)) return d.content;
+  if (Array.isArray(d?.data?.content)) return d.data.content;
+  return [];
+};
 
 /* ============================
    🔹 Component
@@ -117,6 +149,13 @@ export default function FormKardex({
   const [empresas, setEmpresas] = useState([]);
 
   /* ============================
+     🔹 Items de la Orden de Compra
+     (para ENTRADA COMPRA)
+  ============================ */
+  const [ocItems, setOcItems] = useState([]);
+  const [loadingOcItems, setLoadingOcItems] = useState(false);
+
+  /* ============================
      🔹 Token + empresaId
   ============================ */
   const token = localStorage.getItem("token");
@@ -135,21 +174,11 @@ export default function FormKardex({
   })();
 
   /* ============================
-     🔹 pickList Response
-  ============================ */
-  const pickList = (res) => {
-    const d = res?.data;
-    if (Array.isArray(d)) return d;
-    if (Array.isArray(d?.data)) return d.data;
-    if (Array.isArray(d?.content)) return d.content;
-    if (Array.isArray(d?.data?.content)) return d.data.content;
-    return [];
-  };
-
-  /* ============================
      🔹 CARGA INICIAL DE LISTAS
   ============================ */
   useEffect(() => {
+    if (!open) return;
+
     const loadLists = async () => {
       // OBLIGATORIAS
       try {
@@ -194,7 +223,7 @@ export default function FormKardex({
     };
 
     loadLists();
-  }, []);
+  }, [open]); // solo cuando se abre el modal
 
   /* ============================
      🔹 Cargar datos en modo editar
@@ -208,6 +237,7 @@ export default function FormKardex({
         clienteProveedorId: selectedRow.clienteProveedorId ?? "",
         empresaId,
       });
+      // en modo editar, podrías cargar los items si aplica
     } else if (open) {
       setFormData({
         id: undefined,
@@ -223,8 +253,69 @@ export default function FormKardex({
         empresaId,
       });
       setErrors({});
+      setOcItems([]);
     }
   }, [open, formMode, selectedRow, empresaId]);
+
+  /* ============================
+     🔹 Cargar items de OC cuando:
+       - es tipo ENTRADA COMPRA
+       - hay ordenCompraId
+  ============================ */
+  useEffect(() => {
+    const { tipoMovimientoId, ordenCompraId } = formData;
+
+    if (
+      !open ||
+      !ordenCompraId ||
+      Number(tipoMovimientoId) !== TIPO_MOV_ENTRADA_COMPRA
+    ) {
+      setOcItems([]);
+      return;
+    }
+
+    const loadOcItems = async () => {
+      setLoadingOcItems(true);
+      try {
+        // 👉 AJUSTA ESTE ENDPOINT A TU BACKEND REAL
+        const res = await axios.get(
+          `/v1/orden_compra/${ordenCompraId}/items`,
+          headers
+        );
+        const items = pickList(res).map((it) => {
+          const cantidadPedida = Number(it.cantidadPedida ?? it.cantidad ?? 0);
+          const cantidadRecibida = Number(it.cantidadRecibida ?? 0);
+          const cantidadPendiente = cantidadPedida - cantidadRecibida;
+
+          return {
+            id: it.id,
+            producto:
+              it.productoNombre ||
+              it.producto?.nombre ||
+              it.descripcion ||
+              `Item #${it.id}`,
+            cantidadPedida,
+            cantidadRecibida,
+            cantidadPendiente: cantidadPendiente < 0 ? 0 : cantidadPendiente,
+            cantidadARecibir: 0,
+          };
+        });
+        setOcItems(items);
+      } catch (e) {
+        console.error("❌ Error cargando items de OC:", e);
+        setOcItems([]);
+        setMessage?.({
+          open: true,
+          severity: "error",
+          text: "No se pudieron cargar los ítems de la orden de compra.",
+        });
+      } finally {
+        setLoadingOcItems(false);
+      }
+    };
+
+    loadOcItems();
+  }, [open, formData.tipoMovimientoId, formData.ordenCompraId]); // deps primitivas
 
   /* ============================
      🔹 Handlers
@@ -245,6 +336,33 @@ export default function FormKardex({
       [name]: numeric.includes(name) && value !== "" ? Number(value) : value,
     }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
+
+    // Si cambia la OC o el tipo de movimiento, reseteo items
+    if (name === "ordenCompraId" || name === "tipoMovimientoId") {
+      setOcItems([]);
+    }
+  };
+
+  const handleChangeOcItemQty = (id, rawValue) => {
+    const value = rawValue === "" ? "" : Number(rawValue);
+    setOcItems((prev) =>
+      prev.map((it) => {
+        if (it.id !== id) return it;
+
+        let cantidadARecibir = value;
+        if (cantidadARecibir === "") {
+          return { ...it, cantidadARecibir: "" };
+        }
+
+        if (isNaN(cantidadARecibir) || cantidadARecibir < 0) {
+          cantidadARecibir = 0;
+        }
+        if (cantidadARecibir > it.cantidadPendiente) {
+          cantidadARecibir = it.cantidadPendiente;
+        }
+        return { ...it, cantidadARecibir };
+      })
+    );
   };
 
   const handleSubmit = async () => {
@@ -252,6 +370,73 @@ export default function FormKardex({
       await kardexSchema.validate(formData, { abortEarly: false });
       setErrors({});
 
+      const isEntradaCompra =
+        Number(formData.tipoMovimientoId) === TIPO_MOV_ENTRADA_COMPRA &&
+        !!formData.ordenCompraId;
+
+      // Si es entrada por compra, validar items
+      if (isEntradaCompra) {
+        if (!ocItems.length) {
+          setMessage?.({
+            open: true,
+            severity: "warning",
+            text: "No hay ítems de la orden de compra para recepcionar.",
+          });
+          return;
+        }
+
+        const itemsConCantidad = ocItems.filter(
+          (it) => Number(it.cantidadARecibir) > 0
+        );
+
+        if (!itemsConCantidad.length) {
+          setMessage?.({
+            open: true,
+            severity: "warning",
+            text: "Debe ingresar cantidad a recepcionar al menos en un ítem.",
+          });
+          return;
+        }
+
+        // Validación adicional: cantidadARecibir <= cantidadPendiente
+        const invalido = itemsConCantidad.find(
+          (it) => it.cantidadARecibir > it.cantidadPendiente
+        );
+        if (invalido) {
+          setMessage?.({
+            open: true,
+            severity: "warning",
+            text: `La cantidad a recepcionar del ítem ${invalido.id} excede lo pendiente.`,
+          });
+          return;
+        }
+
+        // Payload para /kardex/entrada-compra
+        const body = {
+          ordenCompraId: formData.ordenCompraId,
+          almacenId: formData.almacenId,
+          fechaHora: formData.fechaHora,
+          descripcion: formData.descripcion,
+          items: itemsConCantidad.map((it) => ({
+            ordenCompraItemId: it.id,
+            cantidad: it.cantidadARecibir,
+          })),
+        };
+
+        await axios.post("/v1/kardex/entrada-compra", body, headers);
+
+        reloadData?.();
+        setMessage?.({
+          open: true,
+          severity: "success",
+          text: "Entrada de compra registrada y orden de compra actualizada.",
+        });
+        setOpen(false);
+        setSelectedRow(null);
+        return;
+      }
+
+      // 🔹 Flujo Kardex genérico (lo que ya tenías)
       const payload = {
         ...formData,
         pedidoId: formData.pedidoId || null,
@@ -261,9 +446,7 @@ export default function FormKardex({
 
       const method = formMode === "edit" ? axios.put : axios.post;
       const url =
-        formMode === "edit"
-          ? `/v1/kardex/${payload.id}`
-          : "/v1/kardex";
+        formMode === "edit" ? `/v1/kardex/${payload.id}` : "/v1/kardex";
 
       await method(url, payload, headers);
 
@@ -291,7 +474,7 @@ export default function FormKardex({
       setMessage?.({
         open: true,
         severity: "error",
-        text: "Error al guardar Kardex.",
+        text: "Error al guardar Kardex / entrada de compra.",
       });
     }
   };
@@ -302,18 +485,22 @@ export default function FormKardex({
   const renderName = (it) =>
     it?.name ?? it?.nombre ?? it?.descripcion ?? `#${it?.id}`;
 
+  const isEntradaCompraUi =
+    Number(formData.tipoMovimientoId) === TIPO_MOV_ENTRADA_COMPRA;
+
   /* ============================
      🔹 UI
   ============================ */
   return (
     <Box>
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
         <DialogTitle>
           {formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}
         </DialogTitle>
 
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        >
           {/* Fecha/Hora */}
           <TextField
             label="Fecha/Hora"
@@ -336,9 +523,13 @@ export default function FormKardex({
               value={formData.almacenId}
               onChange={handleChange}
             >
-              <MenuItem value=""><em>Seleccione...</em></MenuItem>
+              <MenuItem value="">
+                <em>Seleccione...</em>
+              </MenuItem>
               {almacenes.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{renderName(a)}</MenuItem>
+                <MenuItem key={a.id} value={a.id}>
+                  {renderName(a)}
+                </MenuItem>
               ))}
             </Select>
             <FormHelperText>{errors.almacenId}</FormHelperText>
@@ -353,9 +544,13 @@ export default function FormKardex({
               value={formData.produccionId}
               onChange={handleChange}
             >
-              <MenuItem value=""><em>Seleccione...</em></MenuItem>
+              <MenuItem value="">
+                <em>Seleccione...</em>
+              </MenuItem>
               {producciones.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{renderName(p)}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {renderName(p)}
+                </MenuItem>
               ))}
             </Select>
             <FormHelperText>{errors.produccionId}</FormHelperText>
@@ -370,9 +565,13 @@ export default function FormKardex({
               value={formData.tipoMovimientoId}
               onChange={handleChange}
             >
-              <MenuItem value=""><em>Seleccione...</em></MenuItem>
+              <MenuItem value="">
+                <em>Seleccione...</em>
+              </MenuItem>
               {tiposMovimiento.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{renderName(t)}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>
+                  {renderName(t)}
+                </MenuItem>
               ))}
             </Select>
             <FormHelperText>{errors.tipoMovimientoId}</FormHelperText>
@@ -387,15 +586,22 @@ export default function FormKardex({
               value={formData.pedidoId}
               onChange={handleChange}
             >
-              <MenuItem value=""><em>Sin pedido asociado</em></MenuItem>
+              <MenuItem value="">
+                <em>Sin pedido asociado</em>
+              </MenuItem>
               {pedidos.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{renderName(p)}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {renderName(p)}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
 
           {/* Orden de compra */}
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={!!errors.ordenCompraId && isEntradaCompraUi}
+          >
             <InputLabel>Orden de Compra</InputLabel>
             <Select
               name="ordenCompraId"
@@ -403,11 +609,18 @@ export default function FormKardex({
               value={formData.ordenCompraId}
               onChange={handleChange}
             >
-              <MenuItem value=""><em>Sin orden asociada</em></MenuItem>
+              <MenuItem value="">
+                <em>Sin orden asociada</em>
+              </MenuItem>
               {ordenesCompra.map((o) => (
-                <MenuItem key={o.id} value={o.id}>{renderName(o)}</MenuItem>
+                <MenuItem key={o.id} value={o.id}>
+                  {renderName(o)}
+                </MenuItem>
               ))}
             </Select>
+            <FormHelperText>
+              {isEntradaCompraUi ? errors.ordenCompraId : ""}
+            </FormHelperText>
           </FormControl>
 
           {/* Cliente / proveedor */}
@@ -419,9 +632,13 @@ export default function FormKardex({
               value={formData.clienteProveedorId}
               onChange={handleChange}
             >
-              <MenuItem value=""><em>Sin cliente/proveedor</em></MenuItem>
+              <MenuItem value="">
+                <em>Sin cliente/proveedor</em>
+              </MenuItem>
               {empresas.map((e) => (
-                <MenuItem key={e.id} value={e.id}>{renderName(e)}</MenuItem>
+                <MenuItem key={e.id} value={e.id}>
+                  {renderName(e)}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -452,6 +669,75 @@ export default function FormKardex({
             </Select>
             <FormHelperText>{errors.estadoId}</FormHelperText>
           </FormControl>
+
+          {/* ============================
+              🔹 Tabla de ítems OC
+              Solo si es ENTRADA COMPRA
+          ============================ */}
+          {isEntradaCompraUi && formData.ordenCompraId && (
+            <Box mt={2}>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Ítems de la Orden de Compra
+              </Typography>
+
+              {loadingOcItems ? (
+                <Typography variant="body2">Cargando ítems...</Typography>
+              ) : !ocItems.length ? (
+                <Typography variant="body2">
+                  No hay ítems para esta orden de compra o ya están totalmente
+                  recibidos.
+                </Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Producto</TableCell>
+                      <TableCell align="right">Pedida</TableCell>
+                      <TableCell align="right">Recibida</TableCell>
+                      <TableCell align="right">Pendiente</TableCell>
+                      <TableCell align="right">A recepcionar</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {ocItems.map((it) => (
+                      <TableRow key={it.id}>
+                        <TableCell>{it.producto}</TableCell>
+                        <TableCell align="right">
+                          {it.cantidadPedida}
+                        </TableCell>
+                        <TableCell align="right">
+                          {it.cantidadRecibida}
+                        </TableCell>
+                        <TableCell align="right">
+                          {it.cantidadPendiente}
+                        </TableCell>
+                        <TableCell align="right">
+                          <TextField
+                            type="number"
+                            size="small"
+                            inputProps={{
+                              min: 0,
+                              max: it.cantidadPendiente,
+                              step: "0.01",
+                            }}
+                            value={
+                              it.cantidadARecibir === ""
+                                ? ""
+                                : it.cantidadARecibir
+                            }
+                            onChange={(e) =>
+                              handleChangeOcItemQty(it.id, e.target.value)
+                            }
+                            sx={{ width: 100 }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
+          )}
         </DialogContent>
 
         <DialogActions>

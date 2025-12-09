@@ -17,7 +17,9 @@ const LS_KEY = "gridKardex:columnVisibility:v1";
 /* ---------- Toolbar personalizada ---------- */
 function KardexToolbar({ onResetColumns }) {
   return (
-    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
+    <GridToolbarContainer
+      sx={{ p: 1, gap: 1, justifyContent: "space-between" }}
+    >
       <div>
         <GridToolbarColumnsButton />
         <GridToolbarFilterButton />
@@ -38,12 +40,23 @@ function KardexToolbar({ onResetColumns }) {
   );
 }
 
+/* ---------- Helper fecha ---------- */
+const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
+
+/* =========================================================
+   🔹 Componente principal
+========================================================= */
 export default function GridKardex({
   // Datos
   kardexes = [],
   almacenes = [],
   producciones = [],
   tiposMovimiento = [],
+
+  // NUEVOS: datos para mostrar nombres de pedido / OC / cliente-proveedor
+  pedidos = [],
+  ordenesCompra = [],
+  empresas = [],
 
   // Selección
   selectedRow = null,
@@ -52,7 +65,7 @@ export default function GridKardex({
   // Paginación (server-side opcional)
   loading = false,
   rowCount,
-  paginationModel,    // { page, pageSize } o { page, size }
+  paginationModel, // { page, pageSize } o { page, size }
   setPaginationModel, // (model) => void
 }) {
   /* ---------- Mapas de lookup ---------- */
@@ -80,7 +93,45 @@ export default function GridKardex({
     return m;
   }, [tiposMovimiento]);
 
-  const safeDateTime = (val) => (val ? new Date(val).toLocaleString() : "");
+  // 🔹 NUEVOS mapas
+  const pedidoById = useMemo(() => {
+    const m = {};
+    for (const p of pedidos ?? []) {
+      m[String(p?.id)] =
+        p?.codigo ??
+        p?.numero ??
+        p?.name ??
+        p?.nombre ??
+        `Pedido ${p?.id ?? ""}`;
+    }
+    return m;
+  }, [pedidos]);
+
+  const ocById = useMemo(() => {
+    const m = {};
+    for (const o of ordenesCompra ?? []) {
+      m[String(o?.id)] =
+        o?.codigo ??
+        o?.numero ??
+        o?.name ??
+        o?.nombre ??
+        `OC ${o?.id ?? ""}`;
+    }
+    return m;
+  }, [ordenesCompra]);
+
+  const empresaById = useMemo(() => {
+    const m = {};
+    for (const e of empresas ?? []) {
+      m[String(e?.id)] =
+        e?.nombreComercial ??
+        e?.razonSocial ??
+        e?.name ??
+        e?.nombre ??
+        `Empresa ${e?.id ?? ""}`;
+    }
+    return m;
+  }, [empresas]);
 
   /* ---------- Columnas ---------- */
   const columns = useMemo(
@@ -123,13 +174,36 @@ export default function GridKardex({
           String(p?.row?.tipoMovimientoId ?? ""),
       },
 
-      // 🔹 NUEVOS CAMPOS
-      { field: "pedidoId", headerName: "Pedido", width: 120 },
-      { field: "ordenCompraId", headerName: "Orden compra", width: 140 },
+      // 🔹 NUEVOS CAMPOS con nombres bonitos
+      {
+        field: "pedidoId",
+        headerName: "Pedido",
+        width: 140,
+        valueGetter: (p) =>
+          p?.row?.pedido?.codigo ??
+          p?.row?.pedido?.numero ??
+          pedidoById[String(p?.row?.pedidoId)] ??
+          String(p?.row?.pedidoId ?? ""),
+      },
+      {
+        field: "ordenCompraId",
+        headerName: "Orden compra",
+        width: 160,
+        valueGetter: (p) =>
+          p?.row?.ordenCompra?.codigo ??
+          p?.row?.ordenCompra?.numero ??
+          ocById[String(p?.row?.ordenCompraId)] ??
+          String(p?.row?.ordenCompraId ?? ""),
+      },
       {
         field: "clienteProveedorId",
-        headerName: "Cliente/Proveedor",
-        width: 160,
+        headerName: "Cliente / Proveedor",
+        width: 220,
+        valueGetter: (p) =>
+          p?.row?.clienteProveedor?.nombre ??
+          p?.row?.clienteProveedor?.nombreComercial ??
+          empresaById[String(p?.row?.clienteProveedorId)] ??
+          String(p?.row?.clienteProveedorId ?? ""),
       },
 
       { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
@@ -149,7 +223,7 @@ export default function GridKardex({
         },
       },
     ],
-    [almById, prodById, tmovById]
+    [almById, prodById, tmovById, pedidoById, ocById, empresaById]
   );
 
   /* -------- Visibilidad de columnas (con persistencia) -------- */
@@ -239,11 +313,14 @@ export default function GridKardex({
 
 GridKardex.propTypes = {
   kardexes: PropTypes.array,
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func,
   almacenes: PropTypes.array,
   producciones: PropTypes.array,
   tiposMovimiento: PropTypes.array,
+  pedidos: PropTypes.array,
+  ordenesCompra: PropTypes.array,
+  empresas: PropTypes.array,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
   paginationModel: PropTypes.shape({
     page: PropTypes.number,
     pageSize: PropTypes.number,

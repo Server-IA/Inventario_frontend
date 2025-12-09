@@ -81,6 +81,71 @@ export default function GridOrdenCompra({
     [setMessage, reloadData]
   );
 
+  /* =============== ANULAR ORDEN DE COMPRA (PATCH) =============== */
+  const handleAnularOrdenCompra = useCallback(
+    (row) => {
+      if (!row?.id) {
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "No se encontró el ID de la orden de compra.",
+        });
+        return;
+      }
+
+      const estadoActual = Number(row?.estadoId ?? row?.estado?.id);
+
+      // Evitamos anular si ya está anulada (27) o si es entrada total (26)
+      if (estadoActual === 27) {
+        setMessage({
+          open: true,
+          severity: "info",
+          text: "Esta orden de compra ya se encuentra ANULADA.",
+        });
+        return;
+      }
+
+      if (estadoActual === 26) {
+        setMessage({
+          open: true,
+          severity: "warning",
+          text: "No es posible anular una orden con entrada total.",
+        });
+        return;
+      }
+
+      const confirmar = window.confirm(
+        `¿Seguro que deseas ANULAR la orden de compra #${row.id}?`
+      );
+
+      if (!confirmar) return;
+
+      // Endpoint recomendado: PATCH /orden-compra/anular
+      // Lo adapto a tu convención /v1/...
+      const url = `/v1/orden-compra/anular/${row.id}`;
+
+      axios
+        .patch(url)
+        .then(() => {
+          setMessage({
+            open: true,
+            severity: "success",
+            text: "Orden de compra anulada correctamente.",
+          });
+          reloadData?.();
+        })
+        .catch((error) => {
+          const errorMessage = error.response?.data?.message || error.message;
+          setMessage({
+            open: true,
+            severity: "error",
+            text: `Error al anular la orden de compra: ${errorMessage}`,
+          });
+        });
+    },
+    [setMessage, reloadData]
+  );
+
   /* ================== COLUMNAS ================== */
   const columns = useMemo(() => {
     const proveedorValueGetter = ({ row }) => {
@@ -114,6 +179,8 @@ export default function GridOrdenCompra({
           return "Entrega Parcial";
         case 26:
           return "Entrada total";
+        case 27:
+          return "Anulada";
         default:
           return `Estado ${id}`;
       }
@@ -149,7 +216,7 @@ export default function GridOrdenCompra({
       {
         field: "acciones",
         headerName: "Acciones",
-        width: 250,
+        width: 320,
         sortable: false,
         filterable: false,
         renderCell: (params) => {
@@ -157,33 +224,51 @@ export default function GridOrdenCompra({
           const estadoId = Number(row?.estadoId ?? row?.estado?.id);
 
           const esActivo = estadoId === 23;
-          const habilitado = esActivo;
-
-          const label = "ENVIAR AL PROVEEDOR";
-          const color = "primary";
+          const puedeAnular =
+            estadoId === 23 || estadoId === 24 || estadoId === 25;
 
           return (
-            <Button
-              variant="contained"
-              size="small"
-              disabled={!habilitado}
-              color={color}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEnviarOrdenCompra(row);
-              }}
-              sx={{
-                fontWeight: "bold",
-                color: "white",
-              }}
-            >
-              {label}
-            </Button>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {/* ENVIAR AL PROVEEDOR */}
+              <Button
+                variant="contained"
+                size="small"
+                disabled={!esActivo}
+                color="primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEnviarOrdenCompra(row);
+                }}
+                sx={{
+                  fontWeight: "bold",
+                  color: "white",
+                }}
+              >
+                ENVIAR AL PROVEEDOR
+              </Button>
+
+              {/* ANULAR ORDEN DE COMPRA */}
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={!puedeAnular}
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAnularOrdenCompra(row);
+                }}
+                sx={{
+                  fontWeight: "bold",
+                }}
+              >
+                ANULAR ORDEN
+              </Button>
+            </Box>
           );
         },
       },
     ];
-  }, [proveedoresMap, handleEnviarOrdenCompra]);
+  }, [proveedoresMap, handleEnviarOrdenCompra, handleAnularOrdenCompra]);
 
   const serverPagination =
     paginationModel && setPaginationModel && typeof rowCount === "number";
@@ -195,8 +280,6 @@ export default function GridOrdenCompra({
         columns={columns}
         getRowId={(row) => row.id}
         onRowClick={(params) => setSelectedRow?.(params.row)}
-        // 🔹 IMPORTANTE: quitamos disableRowSelectionOnClick
-        // disableRowSelectionOnClick
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         pagination
         pageSizeOptions={[5, 10, 20, 50]}
@@ -237,7 +320,6 @@ export default function GridOrdenCompra({
     </Box>
   );
 }
-
 GridOrdenCompra.propTypes = {
   ordenes: PropTypes.array,
   rowCount: PropTypes.number,
@@ -252,3 +334,4 @@ GridOrdenCompra.propTypes = {
   setMessage: PropTypes.func,
   reloadData: PropTypes.func,
 };
+

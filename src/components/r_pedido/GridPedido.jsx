@@ -9,7 +9,7 @@ import {
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const LS_KEY = "gridPedido:columnVisibility:v1";
@@ -48,6 +48,10 @@ export default function GridPedido({
   // Selección
   selectedRow = null,
   setSelectedRow,
+
+  // Acciones
+  onAnularPedido,        // (pedido) => void   -> PUT /pedido/anular
+  onCompletarPedido,     // (pedido) => void   -> PUT /pedido/completar
 
   // Paginación server-side (opcional)
   loading = false,
@@ -131,8 +135,58 @@ export default function GridPedido({
         },
         hideable: true,
       },
+      /* -------- Columna de acciones (Anular / Completar) -------- */
+      {
+        field: "acciones",
+        headerName: "Acciones",
+        width: 260,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params) => {
+          const row = params.row;
+
+          const handleAnularClick = (e) => {
+            e.stopPropagation(); // que no seleccione la fila
+            onAnularPedido?.(row);
+          };
+
+          const handleCompletarClick = (e) => {
+            e.stopPropagation();
+            onCompletarPedido?.(row);
+          };
+
+          // Aquí podrías deshabilitar según el estado si quieres:
+          // const estado = row.estado?.codigo || row.estado?.nombre || "";
+          // const isAnulado = estado.toUpperCase() === "ANULADO";
+          // const isCompleto = estado.toUpperCase() === "COMPLETADO";
+
+          return (
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                color="error"
+                onClick={handleAnularClick}
+                // disabled={isAnulado || isCompleto}
+              >
+                Anular
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                color="success"
+                onClick={handleCompletarClick}
+                // disabled={isCompleto || isAnulado}
+              >
+                Completar
+              </Button>
+            </Stack>
+          );
+        },
+      },
     ],
-    [prodById, almById, estById]
+    [prodById, almById, estById, onAnularPedido, onCompletarPedido]
   );
 
   /* -------- Visibilidad de columnas (con persistencia) -------- */
@@ -161,7 +215,6 @@ export default function GridPedido({
   };
 
   const handleResetColumns = () => {
-    // Limpia storage y vuelve al estado por defecto (todas visibles)
     localStorage.removeItem(LS_KEY);
     setColumnVisibilityModel({});
   };
@@ -229,6 +282,9 @@ GridPedido.propTypes = {
   estados: PropTypes.array,
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func.isRequired,
+
+  onAnularPedido: PropTypes.func,
+  onCompletarPedido: PropTypes.func,
 
   // Server-side opcional
   loading: PropTypes.bool,
