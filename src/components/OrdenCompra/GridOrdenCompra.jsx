@@ -320,7 +320,6 @@ export default function GridOrdenCompra({
     </Box>
   );
 }
-
 GridOrdenCompra.propTypes = {
   ordenes: PropTypes.array,
   rowCount: PropTypes.number,
