@@ -92,6 +92,17 @@ public class EmpresaRolSystemService {
         empresaRol.setUpdatedBy(username);
         empresaRol.setUpdatedAt(OffsetDateTime.now());
     }
+    @Transactional
+    public void toggleEstadoEmpresaRol(Long id){
+        Estado nuevoEstado;
+        EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRolAdmin(id);
+        if(empresaRol.getEstado().getId().equals(EstadoConstantes.ESTADO_GENERAL_ACTIVO)){
+            nuevoEstado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_INACTIVO);
+        }else {
+            nuevoEstado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        }
+        empresaRol.setEstado(nuevoEstado);
+    }
 
     @Transactional
     public void delete(Long id){
