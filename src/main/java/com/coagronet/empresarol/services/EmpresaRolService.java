@@ -99,6 +99,19 @@ public class EmpresaRolService {
     }
 
     @Transactional
+    public void toggleEstadoEmpresaRol(Long id){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        Estado nuevoEstado;
+        EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
+        if(empresaRol.getEstado().getId().equals(EstadoConstantes.ESTADO_GENERAL_ACTIVO)){
+            nuevoEstado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_INACTIVO);
+        }else {
+            nuevoEstado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        }
+        empresaRol.setEstado(nuevoEstado);
+    }
+
+    @Transactional
     public void delete(Long id){
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 

@@ -61,6 +61,12 @@ public class EmpresaRolController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/toggleEstado/{empresaRolId}")
+    public ResponseEntity<Void> toggleEstado(@PathVariable Long empresaRolId){
+        empresaRolService.toggleEstadoEmpresaRol(empresaRolId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         empresaRolService.delete(id);
