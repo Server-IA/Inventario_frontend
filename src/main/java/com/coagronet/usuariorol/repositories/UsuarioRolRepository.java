@@ -12,15 +12,17 @@ import com.coagronet.usuariorol.UsuarioRol;
 
 public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
-	Page<UsuarioRol> findAllByEmpresaIdAndDeletedAtIsNullOrderByIdDesc(Pageable pageable, Long empresaId);
+	Page<UsuarioRol> findAllByEmpresaIdAndDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(Pageable pageable, Long empresaId,
+			Long estadoId);
 
-	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNull(Long id, Long empresaId);
+	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long empresaId, Long estadoId);
 
 	List<UsuarioRol> findByUserOrderByUserId(User user);
 
 	UsuarioRol findByUser(User user);
 
-	Optional<UsuarioRol> findByUserAndEmpresaIdAndRolId(User user, Long empresaId, Long rolId);
+	Optional<UsuarioRol> findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullOrEstadoIdNot(User user, Long empresaId,
+			Long rolId, Long estadoId);
 
 	boolean existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(
 			Long userId,
@@ -28,8 +30,8 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 			Long rolId,
 			Long estadoId);
 
-	Page<UsuarioRol> findByDeletedAtIsNullOrderByIdDesc(Pageable pageable);
+	Page<UsuarioRol> findByDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(Pageable pageable, Long estadoId);
 
-	Optional<UsuarioRol> findByIdAndDeletedAtIsNull(Long id);
+	Optional<UsuarioRol> findByIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long estadoId);
 
 }

@@ -18,6 +18,7 @@ public interface UsuarioRolMapper {
 
     @Mapping(target = "usuarioId", source = "user.id")
     @Mapping(target = "usuarioEmail", source = "user.username")
+    @Mapping(target = "personaNombreCompleto", expression = "java(buildPersonaNombreCompleto(entity))")
     @Mapping(target = "empresaId", source = "empresa.id")
     @Mapping(target = "empresaNombre", source = "empresa.nombre")
     @Mapping(target = "rolId", source = "rol.id")
@@ -30,6 +31,7 @@ public interface UsuarioRolMapper {
 
     @Mapping(target = "usuarioId", source = "user.id")
     @Mapping(target = "usuarioEmail", source = "user.username")
+    @Mapping(target = "personaNombreCompleto", expression = "java(buildPersonaNombreCompleto(entity))")
     @Mapping(target = "rolId", source = "rol.id")
     @Mapping(target = "rolNombre", source = "rol.nombre")
     @Mapping(target = "estadoId", source = "estado.id")
@@ -92,4 +94,36 @@ public interface UsuarioRolMapper {
     @Mapping(target = "requestIp", ignore = true)
     @Mapping(target = "requestHost", ignore = true)
     void updateEntityFromDTO(UsuarioRolRequestForCurrentEmpresaDTO dto, @MappingTarget UsuarioRol entity);
+
+    default String buildPersonaNombreCompleto(UsuarioRol entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        var user = entity.getUser();
+        if (user == null) {
+            return null;
+        }
+
+        var persona = user.getPersona();
+        if (persona == null) {
+            return null;
+        }
+
+        String nombre = persona.getNombre();
+        String apellido = persona.getApellido();
+
+        boolean hasNombre = nombre != null && !nombre.isBlank();
+        boolean hasApellido = apellido != null && !apellido.isBlank();
+
+        if (hasNombre && hasApellido) {
+            return nombre + " " + apellido;
+        } else if (hasNombre) {
+            return nombre;
+        } else if (hasApellido) {
+            return apellido;
+        }
+
+        return null;
+    }
 }

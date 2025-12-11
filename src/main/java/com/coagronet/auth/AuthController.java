@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.coagronet.auth.dto.ApiResponse;
 import com.coagronet.auth.dto.ChangePasswordRequestDTO;
 import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
+import com.coagronet.auth.dto.InitialPasswordChangeRequestDTO;
 import com.coagronet.auth.dto.LoginRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
@@ -81,6 +82,12 @@ public class AuthController {
 	@GetMapping("/roles")
 	public Set<String> roles() {
 		return authService.getCurrentUserRoles();
+	}
+
+	@PostMapping("/change-password-initial")
+	public ResponseEntity<ApiResponse> changePasswordInitial(
+			@Valid @RequestBody InitialPasswordChangeRequestDTO dto) {
+		return ResponseEntity.ok(authService.changePasswordInitial(dto));
 	}
 
 }
