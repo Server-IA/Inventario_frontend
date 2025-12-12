@@ -21,14 +21,11 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	UsuarioRol findByUser(User user);
 
-	Optional<UsuarioRol> findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullOrEstadoIdNot(User user, Long empresaId,
+	Optional<UsuarioRol> findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(User user, Long empresaId,
 			Long rolId, Long estadoId);
 
-	boolean existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(
-			Long userId,
-			Long empresaId,
-			Long rolId,
-			Long estadoId);
+	boolean existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(Long userId, Long empresaId,
+			Long rolId, Long estadoId);
 
 	Page<UsuarioRol> findByDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(Pageable pageable, Long estadoId);
 
