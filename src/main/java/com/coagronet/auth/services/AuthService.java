@@ -46,7 +46,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@Transactional // ensures atomicity of operations
+@Transactional
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -73,23 +73,56 @@ public class AuthService {
 
 	private final AuthProperties props; // e.g. defaultRole, etc.
 
-	private static final Set<String> COMMON_PASSWORDS = Set.of(
-			"123456",
-			"123456789",
-			"12345678",
-			"password",
-			"qwerty",
-			"11111111",
-			"123123",
-			"000000",
-			"password1",
-			"abc123",
-			"admin",
-			"admin123");
+	private static final Set<String> COMMON_PASSWORDS = Set.of("123456", "123456789", "12345678", "password", "qwerty",
+			"11111111", "123123", "000000", "password1", "abc123", "admin", "admin123");
 
 	/* ================= REGISTRATION ================= */
 	@Transactional
 	public ApiResponse register(@Valid RegisterRequestDTO dto) {
+
+		// 1?? Does the user already exist? ----------------------------------
+		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
+
+		if (existing != null) {
+
+			// 1a. Still pending verification ? 409 Conflict + resend email
+			if (existing.getUsuarioEstado() == UsuarioEstado.PENDIENTE_VERIFICACION) {
+
+				// resend: generate (or reuse) token and send email again
+				String token = emailService.createVerificationToken(existing.getUsername());
+				emailService.sendVerificationEmail(existing.getUsername(), token);
+
+				throw new ResponseStatusException(HttpStatus.CONFLICT,
+						"El correo electrónico ya está registrado, pero no verificado. Se ha reenviado el enlace de verificación.");
+			}
+
+			// 1b. Already active/in use ? 400 Bad Request
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso.");
+		}
+
+		// 2?? Create a new user ----------------------------------------------
+		User user = new User();
+		user.setUsername(dto.getUsername());
+
+		// 🔐 Validación NIST/OWASP de la contraseña
+		validatePasswordPolicy(dto.getPassword());
+
+		user.setPassword(encoder.encode(dto.getPassword()));
+		user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
+
+		Rol role = rolRepository.findByNombre(props.getDefaultRole())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+		user.setRoles(Set.of(role));
+
+		// 3?? Register and send email (listener) -----------------------------
+		registrationService.registerUser(user);
+
+		// 4?? Success ? 201 Created ------------------------------------------
+		return new ApiResponse(true, "Correo electrónico de verificación enviado a " + user.getUsername());
+	}
+
+	@Transactional
+	public ApiResponse registerForCurrentEmpresa(@Valid RegisterRequestDTO dto) {
 
 		// 1?? Does the user already exist? ----------------------------------
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
@@ -167,8 +200,7 @@ public class AuthService {
 
 			String token = jwt.generateToken(user, current.getRol().getId(), user.getUsuarioEstado().getId());
 
-			return Map.of("token", token, "rolId", current.getRol().getId(), "estado",
-					user.getUsuarioEstado().getId());
+			return Map.of("token", token, "rolId", current.getRol().getId(), "estado", user.getUsuarioEstado().getId());
 
 		}
 		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
@@ -191,7 +223,7 @@ public class AuthService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		userRoleRepo
-				.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullOrEstadoIdNot(user, dto.empresaId(), dto.rolId(),
+				.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
 						ESTADO_INACTVIO_ID)
 				.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
@@ -235,8 +267,7 @@ public class AuthService {
 		}
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La nueva contraseña no puede ser igual a la contraseña anterior.");
 		}
 
@@ -262,8 +293,7 @@ public class AuthService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La nueva contraseña no puede ser igual a la contraseña anterior.");
 		}
 
@@ -286,14 +316,12 @@ public class AuthService {
 		}
 
 		if (!dto.nuevaClave().equals(dto.confirmacionClave())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña y su confirmación no coinciden.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña y su confirmación no coinciden.");
 		}
 
 		// ⛔ Nueva contraseña igual a la actual
 		if (encoder.matches(dto.nuevaClave(), user.getPassword())) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La nueva contraseña no puede ser igual a la contraseña anterior.");
 		}
 
@@ -353,14 +381,11 @@ public class AuthService {
 
 	private void validatePasswordPolicy(String rawPassword) {
 		if (rawPassword == null) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
-					"La contraseña no puede ser nula.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña no puede ser nula.");
 		}
 
 		if (!rawPassword.equals(rawPassword.trim())) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La contraseña no puede iniciar ni terminar con espacios en blanco.");
 		}
 
@@ -368,33 +393,28 @@ public class AuthService {
 		int length = password.codePointCount(0, password.length());
 
 		if (length < MIN_PASSWORD_LENGTH) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres.");
 		}
 
 		if (length > MAX_PASSWORD_LENGTH) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La contraseña no puede superar los " + MAX_PASSWORD_LENGTH + " caracteres.");
 		}
 
 		if (isCommonPassword(password)) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La contraseña es demasiado común. Por favor, usa una contraseña más única.");
 		}
 
 		if (allCharactersAreTheSame(password)) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La contraseña no puede estar formada por el mismo carácter repetido.");
 		}
 
 		long distinctChars = password.codePoints().distinct().count();
 		if (distinctChars < 4) {
-			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"La contraseña debe contener más variedad de caracteres.");
 		}
 
