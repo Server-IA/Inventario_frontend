@@ -44,4 +44,24 @@ public class UsuarioEstado {
 	public static final UsuarioEstado ACTIVADO_CON_EMPRESA = new UsuarioEstado(4L,
 			"Usuario activado, ha llenado información personal y se ha asociado a una empresa");
 
+	public boolean esPendienteActivacion() {
+		return this.id != null && this.id == 1L;
+	}
+
+	public boolean esActivadoSinInfo() {
+		return this.id != null && this.id == 2L;
+	}
+
+	public boolean esActivadoSinEmpresa() {
+		return this.id != null && this.id == 3L;
+	}
+
+	public boolean esActivadoConEmpresa() {
+		return this.id != null && this.id == 4L;
+	}
+
+	public boolean esDesactivado() {
+		return this.id != null && this.id == 0L;
+	}
+
 }
