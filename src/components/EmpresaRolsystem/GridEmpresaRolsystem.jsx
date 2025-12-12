@@ -1,4 +1,4 @@
-// src/components/empresaRol/GridEmpresaRol.jsx
+// src/components/empresaRolSystem/GridEmpresaRolsystem.jsx
 import React, { useMemo, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
@@ -109,7 +109,7 @@ export default function GridEmpresaRol({
         pagination
         paginationModel={paginationModel}
         onPaginationModelChange={handlePaginationChange}
-        pageSizeOptions={[5, 10, 20, 50]}
+        pageSizeOptions={[5, 10, 15]}
         autoHeight
         sx={{
           minHeight: 300,

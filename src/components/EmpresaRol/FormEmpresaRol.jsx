@@ -59,7 +59,8 @@ export default function FormEmpresaRol({ open, onClose, roles = [], onSubmit }) 
         <Button
           variant="contained"
           startIcon={<AddRounded />}
-          onClick={handleSubmit}
+          type="submit"
+          form=":r" // opcional si quieres, pero no es necesario si es el único form del Dialog
         >
           Guardar
         </Button>
