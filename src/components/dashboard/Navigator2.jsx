@@ -246,6 +246,9 @@ import prodcutos_vencidos from "/images/cards/prodcutos_vencidos.webp";
 import r_orden_compra from "/images/cards/r_orden_compra.webp";
 import pedido_coti from "/images/cards/pedido_coti.webp";
 import usariorol from "/images/cards/usariorol.webp";
+import rol_sistema from "/images/cards/rol_sistema.webp";
+import usai_rol_sistema from "/images/cards/usai_rol_sistema.webp";
+import rol_empresa from "/images/cards/rol_empresa.webp";
 
 import tipo_unidad from "/images/cards/tipo_unidad.webp";
 import categoria_estado from "/images/cards/categoria_estado.webp";
@@ -425,6 +428,9 @@ const components = {
 };
 
 const moduleImages = {
+  EmpresaRol: rol_empresa,
+  UsuarioRoles: usai_rol_sistema,
+  EmpresaRolsystem: rol_sistema,
   UsuarioRol: usariorol,
   PedidoCotizacion:pedido_coti,
   persona,

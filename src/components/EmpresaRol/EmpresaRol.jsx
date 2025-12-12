@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "../axiosConfig";
-import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Box, Stack, Typography, Button } from "@mui/material";
 import AddRounded from "@mui/icons-material/AddRounded";
 
 import GridEmpresaRol from "./GridEmpresaRol.jsx";
 import FormEmpresaRol from "./FormEmpresaRol.jsx";
+import MessageSnackBar from "../MessageSnackBar";
 
 const toArray = (data) =>
   Array.isArray(data)
@@ -29,10 +23,10 @@ export default function EmpresaRol() {
 
   const [openForm, setOpenForm] = useState(false);
 
-  const [snack, setSnack] = useState({
+  const [message, setMessage] = useState({
     open: false,
     severity: "success",
-    message: "",
+    text: "",
   });
 
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({
@@ -47,15 +41,17 @@ export default function EmpresaRol() {
   const loadEmpresaRoles = async () => {
     try {
       setLoading(true);
-      // 🔴 SIN /api
-      const resp = await axios.get("/v1/empresa-rol");
+      // SIN /api, igual que UsuarioRol
+      const resp = await axios.get("v1/empresa-rol", {
+        params: { page: 0, size: 1000 },
+      });
       setRows(toArray(resp.data));
     } catch (error) {
       console.error("Error cargando empresa-rol", error);
-      setSnack({
+      setMessage({
         open: true,
         severity: "error",
-        message: "Error cargando empresa-rol",
+        text: "Error cargando empresa-rol",
       });
     } finally {
       setLoading(false);
@@ -64,15 +60,15 @@ export default function EmpresaRol() {
 
   const loadRoles = async () => {
     try {
-      // Ajusta este endpoint si tu catálogo de roles es distinto
-      const resp = await axios.get("/v1/items/rol/0"); // 🔴 SIN /api
+      // Catálogo de roles sin /api
+      const resp = await axios.get("v1/items/rol/0");
       setRoles(toArray(resp.data));
     } catch (error) {
       console.error("Error cargando roles", error);
-      setSnack({
+      setMessage({
         open: true,
         severity: "error",
-        message: "Error cargando la lista de roles",
+        text: "Error cargando la lista de roles",
       });
     }
   };
@@ -94,32 +90,32 @@ export default function EmpresaRol() {
 
   const handleCreate = async (rolId) => {
     if (!rolId) {
-      setSnack({
+      setMessage({
         open: true,
         severity: "warning",
-        message: "Debes seleccionar un rol",
+        text: "Debes seleccionar un rol",
       });
       return;
     }
 
     try {
-      // 🔴 SIN /api
-      await axios.post("/v1/empresa-rol", { rolId });
+      // SIN /api
+      await axios.post("v1/empresa-rol", { rolId });
 
-      setSnack({
+      setMessage({
         open: true,
         severity: "success",
-        message: "Rol asignado a la empresa correctamente",
+        text: "Rol asignado a la empresa correctamente",
       });
 
       handleCloseForm();
       loadEmpresaRoles();
     } catch (error) {
       console.error("Error creando empresa-rol", error);
-      setSnack({
+      setMessage({
         open: true,
         severity: "error",
-        message: "Error al asignar el rol a la empresa",
+        text: "Error al asignar el rol a la empresa",
       });
     }
   };
@@ -128,20 +124,20 @@ export default function EmpresaRol() {
     if (!window.confirm("¿Seguro que deseas eliminar este registro?")) return;
 
     try {
-      // 🔴 SIN /api
-      await axios.delete(`/v1/empresa-rol/${id}`);
-      setSnack({
+      // SIN /api
+      await axios.delete(`v1/empresa-rol/${id}`);
+      setMessage({
         open: true,
         severity: "success",
-        message: "Registro eliminado correctamente",
+        text: "Registro eliminado correctamente",
       });
       loadEmpresaRoles();
     } catch (error) {
       console.error("Error eliminando empresa-rol", error);
-      setSnack({
+      setMessage({
         open: true,
         severity: "error",
-        message: "Error al eliminar el registro",
+        text: "Error al eliminar el registro",
       });
     }
   };
@@ -155,9 +151,6 @@ export default function EmpresaRol() {
       acciones: true,
     });
   };
-
-  const handleCloseSnack = () =>
-    setSnack((prev) => ({ ...prev, open: false }));
 
   /* =========== Render =========== */
 
@@ -180,6 +173,8 @@ export default function EmpresaRol() {
         </Button>
       </Stack>
 
+      <MessageSnackBar message={message} setMessage={setMessage} />
+
       <GridEmpresaRol
         rows={rows}
         loading={loading}
@@ -195,22 +190,6 @@ export default function EmpresaRol() {
         roles={roles}
         onSubmit={handleCreate}
       />
-
-      <Snackbar
-        open={snack.open}
-        autoHideDuration={4000}
-        onClose={handleCloseSnack}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseSnack}
-          severity={snack.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snack.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

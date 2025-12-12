@@ -1,4 +1,4 @@
-// src/components/empresaRol/FormEmpresaRol.jsx
+// src/components/empresaRolSystem/FormEmpresaRolsystem.jsx
 import * as React from "react";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
@@ -38,27 +38,49 @@ export default function FormEmpresaRol({
   const [formData, setFormData] = React.useState(initialData);
   const [errors, setErrors] = React.useState({});
 
+  // --------- Carga de datos al abrir (crear / actualizar) ----------
   React.useEffect(() => {
     if (!open) return;
 
     if (selectedRow?.id) {
-      // Modo actualizar
+      // Intentar obtener los IDs a partir del row y de los combos
+      const empresaFromRowName = empresas.find((e) => {
+        const nombre = e.name ?? e.nombre ?? e.empresaNombre;
+        return nombre === selectedRow.empresaNombre;
+      });
+
+      const rolFromRowName = roles.find((r) => {
+        const nombre = r.name ?? r.nombre ?? r.rolNombre;
+        return nombre === selectedRow.rolNombre;
+      });
+
+      const empresaId =
+        selectedRow.empresaId ??
+        selectedRow.empresa?.id ??
+        empresaFromRowName?.id ??
+        "";
+
+      const rolId =
+        selectedRow.rolId ??
+        selectedRow.rol?.id ??
+        rolFromRowName?.id ??
+        "";
+
       setFormData({
-        empresaId: selectedRow.empresaId ?? "",
-        rolId: selectedRow.rolId ?? "",
+        empresaId,
+        rolId,
       });
       setMethodName("Actualizar");
     } else {
-      // Modo crear
       setFormData(initialData);
       setMethodName("Agregar");
     }
     setErrors({});
-  }, [open, selectedRow]);
+  }, [open, selectedRow, empresas, roles]);
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedRow({});
+    setSelectedRow(null);
     setFormData(initialData);
     setErrors({});
   };
@@ -95,8 +117,8 @@ export default function FormEmpresaRol({
 
     const creating = methodName === "Agregar";
     const url = creating
-      ? "v1/system/empresa-rol"
-      : `v1/system/empresa-rol/${selectedRow.id}`;
+      ? "/v1/system/empresa-rol"
+      : `/v1/system/empresa-rol/${selectedRow.id}`;
     const req = creating ? axios.post : axios.put;
 
     try {
@@ -139,7 +161,7 @@ export default function FormEmpresaRol({
       return;
 
     try {
-      await axios.delete(`v1/system/empresa-rol/${selectedRow.id}`);
+      await axios.delete(`/v1/system/empresa-rol/${selectedRow.id}`);
       setMessage({
         open: true,
         severity: "success",
@@ -163,7 +185,7 @@ export default function FormEmpresaRol({
         methods={{
           create: () => {
             setMethodName("Agregar");
-            setSelectedRow({});
+            setSelectedRow(null);
             setFormData(initialData);
             setErrors({});
             setOpen(true);
@@ -208,7 +230,7 @@ export default function FormEmpresaRol({
                 >
                   {empresas.map((e) => (
                     <MenuItem key={e.id} value={e.id}>
-                      {e.nombre || e.empresaNombre || e.id}
+                      {e.name ?? e.nombre ?? e.empresaNombre ?? e.id}
                     </MenuItem>
                   ))}
                 </Select>
@@ -241,7 +263,7 @@ export default function FormEmpresaRol({
                 >
                   {roles.map((r) => (
                     <MenuItem key={r.id} value={r.id}>
-                      {r.nombre || r.rolNombre || r.id}
+                      {r.name ?? r.nombre ?? r.rolNombre ?? r.id}
                     </MenuItem>
                   ))}
                 </Select>
@@ -275,7 +297,7 @@ export default function FormEmpresaRol({
 }
 
 FormEmpresaRol.propTypes = {
-  selectedRow: PropTypes.object.isRequired,
+  selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func.isRequired,
   setMessage: PropTypes.func.isRequired,
   reloadData: PropTypes.func.isRequired,
