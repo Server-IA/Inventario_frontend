@@ -47,14 +47,38 @@ export default function GridEmpresaRol({
   selectedRow = null,
   setSelectedRow = () => {},
 }) {
+  // ✅ Si tu backend trae estadoId y quieres mostrarlo como texto:
+  // (pero NO lo uses si ya tienes estadoNombre)
+  const estadosMap = useMemo(
+    () => ({
+      1: "Activo",
+      0: "Inactivo",
+      23: "Activo", // si manejas otros ids
+      24: "Inactivo",
+    }),
+    []
+  );
+
   const columns = useMemo(
     () => [
       { field: "id", headerName: "ID", width: 90, type: "number" },
       { field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 },
       { field: "rolNombre", headerName: "Rol", flex: 1.2, minWidth: 220 },
-      { field: "estadoNombre", headerName: "Estado", width: 160 },
+
+      // ✅ Deja SOLO una columna Estado:
+      // 1) Si viene estadoNombre:
+      {
+        field: "estadoNombre",
+        headerName: "Estado",
+        width: 160,
+        valueGetter: (params) =>
+          params.row.estadoNombre ??
+          estadosMap[params.row.estadoId] ??
+          params.row.estadoId ??
+          "",
+      },
     ],
-    []
+    [estadosMap]
   );
 
   // Persistencia de visibilidad de columnas
