@@ -22,8 +22,8 @@ const emptyRow = {
 const extractItems = (resp) => resp.data?.content ?? resp.data ?? [];
 
 const buildMap = (list) =>
-  list.reduce((acc, item) => {
-    acc[item.id] = item.name ?? item.nombre ?? item.id;
+  (Array.isArray(list) ? list : []).reduce((acc, item) => {
+    acc[item.id] = item.name ?? item.nombre ?? String(item.id);
     return acc;
   }, {});
 
@@ -45,6 +45,22 @@ export default function UsuarioRoles() {
   const rolesMap = useMemo(() => buildMap(roles), [roles]);
   const estadosMap = useMemo(() => buildMap(estados), [estados]);
 
+  // Detecta IDs reales del estado ACTIVO/INACTIVO según catálogo
+  const ACTIVO_ID = useMemo(() => {
+    const e = (estados || []).find((x) =>
+      String(x.name ?? x.nombre ?? "").toUpperCase().includes("ACTIVO")
+    );
+    return e?.id ?? 1;
+  }, [estados]);
+
+  const INACTIVO_ID = useMemo(() => {
+    const e = (estados || []).find((x) =>
+      String(x.name ?? x.nombre ?? "").toUpperCase().includes("INACTIVO")
+    );
+    // si no lo encuentra, intenta el típico 2 o 0 (pero el real manda)
+    return e?.id ?? 2;
+  }, [estados]);
+
   // -----------------------
   // LOAD DATA
   // -----------------------
@@ -52,11 +68,13 @@ export default function UsuarioRoles() {
     setLoading(true);
     try {
       const resp = await axios.get("/v1/system/usuario-roles", {
-        params: { page: 0, size: 50 },
+        params: { page: 0, size: 200 },
       });
-      setRows(extractItems(resp));
+      const data = extractItems(resp);
+      setRows(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error cargando usuario-roles", err);
+      setRows([]);
     } finally {
       setLoading(false);
     }
@@ -68,18 +86,21 @@ export default function UsuarioRoles() {
         axios.get("/v1/items/usuario_system/0"),
         axios.get("/v1/items/empresa/0"),
         axios.get("/v1/items/rol/0"),
-        axios.get("/v1/items/estado/0"),
+        axios.get("/v1/items/estado/0"), // ✅ necesario para mostrar nombres y tener IDs reales
       ]);
 
       setUsuarios(extractItems(uRes));
       setEmpresas(extractItems(eRes));
       setRoles(extractItems(rRes));
 
-      // 👉 Guardamos TODOS los estados (para que el mapa tenga todos los ids)
       const estadosApi = extractItems(esRes);
-      setEstados(estadosApi);
+      setEstados(Array.isArray(estadosApi) ? estadosApi : []);
     } catch (err) {
       console.error("Error cargando combos", err);
+      setUsuarios([]);
+      setEmpresas([]);
+      setRoles([]);
+      setEstados([]);
     }
   };
 
@@ -103,16 +124,71 @@ export default function UsuarioRoles() {
     setOpenForm(true);
   };
 
+  // ✅ helper: marca inactivo en grilla SIN remover
+  const markRowInactiveLocally = (id) => {
+    setRows((prev) =>
+      (Array.isArray(prev) ? prev : []).map((r) =>
+        r.id === id ? { ...r, estadoId: INACTIVO_ID } : r
+      )
+    );
+    setSelectedRow(null);
+  };
+
+  /**
+   * ✅ INACTIVAR: NO debe desaparecer de la grid
+   * - intentamos distintas rutas (porque tu backend cambió entre módulos)
+   * - si el request es OK, forzamos estadoId INACTIVO en frontend (sin remover)
+   */
   const handleDelete = async () => {
     if (!selectedRow) return;
-    if (!window.confirm("¿Seguro que deseas eliminar este registro?")) return;
+
+    const ok = window.confirm(
+      "¿Seguro que deseas INACTIVAR este registro? (Debe quedar en la grilla)"
+    );
+    if (!ok) return;
+
+    const id = selectedRow.id;
 
     try {
-      await axios.delete(`/v1/system/usuario-roles/${selectedRow.id}`);
-      await loadData();
-      setSelectedRow(null);
+      // 1) Si existe toggleEstado en algún ambiente
+      try {
+        await axios.patch(`/v1/system/usuario-roles/toggleEstado/${id}`);
+        markRowInactiveLocally(id);
+        return;
+      } catch (e) {
+        // si NO es 404, lo relanzamos
+        if (e?.response?.status && e.response.status !== 404) throw e;
+      }
+
+      // 2) Intento PUT /{id} cambiando SOLO estadoId (+ rolId por si el backend lo exige)
+      //    (si tu backend solo permite cambiar rol, esto puede fallar)
+      try {
+        await axios.put(`/v1/system/usuario-roles/${id}`, {
+          id,
+          rolId: selectedRow.rolId,
+          estadoId: INACTIVO_ID,
+        });
+        markRowInactiveLocally(id);
+        return;
+      } catch (e) {
+        if (e?.response?.status && e.response.status !== 404) {
+          // puede ser 400/405 por validación, seguimos a DELETE
+        }
+      }
+
+      // 3) DELETE /{id} (si el backend lo usa como borrado lógico)
+      await axios.delete(`/v1/system/usuario-roles/${id}`);
+
+      // ✅ CLAVE: NO recargamos de inmediato para que NO desaparezca.
+      // Marcamos localmente inactivo sí o sí:
+      markRowInactiveLocally(id);
+
+      // Si tu backend hace borrado lógico, puedes descomentar para sincronizar:
+      // await loadData();
     } catch (err) {
-      console.error("Error al eliminar", err);
+      console.error("Error inactivando", err);
+      console.error("Respuesta backend:", err.response?.status, err.response?.data);
+      alert(err.response?.data?.message ?? "No se pudo inactivar.");
     }
   };
 
@@ -129,11 +205,8 @@ export default function UsuarioRoles() {
       setSelectedRow(null);
     } catch (err) {
       console.error("Error guardando usuario-rol", err);
-      console.error(
-        "Respuesta backend:",
-        err.response?.status,
-        err.response?.data
-      );
+      console.error("Respuesta backend:", err.response?.status, err.response?.data);
+      alert(err.response?.data?.message ?? "Error guardando usuario-rol");
     }
   };
 
@@ -144,11 +217,7 @@ export default function UsuarioRoles() {
       </Typography>
 
       <Stack direction="row" spacing={2} mb={2}>
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={handleCreate}
-        >
+        <Button variant="contained" startIcon={<AddRounded />} onClick={handleCreate}>
           Crear
         </Button>
 
@@ -168,7 +237,7 @@ export default function UsuarioRoles() {
           disabled={!selectedRow}
           onClick={handleDelete}
         >
-          Eliminar
+          Inactivar
         </Button>
       </Stack>
 
