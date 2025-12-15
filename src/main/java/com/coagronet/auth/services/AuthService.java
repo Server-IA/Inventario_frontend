@@ -1,10 +1,12 @@
 package com.coagronet.auth.services;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,28 +19,45 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.auth.dto.ApiResponse;
 import com.coagronet.auth.dto.ChangePasswordRequestDTO;
 import com.coagronet.auth.dto.EmpresaRolDTO;
 import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
 import com.coagronet.auth.dto.InitialPasswordChangeRequestDTO;
 import com.coagronet.auth.dto.LoginRequestDTO;
+import com.coagronet.auth.dto.RegisterForCurrentEmpresaRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
 import com.coagronet.auth.dto.SwitchContextRequestDTO;
+import com.coagronet.auth.events.NewUserCredentialsEvent;
+import com.coagronet.auth.listeners.RoleActivatedEvent;
 import com.coagronet.auth.props.AuthProperties;
 import com.coagronet.email.services.EmailVerificationService;
+import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.repositories.EmpresaRepository;
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.infrastructure.security.JwtUtil;
+import com.coagronet.persona.Persona;
+import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.rol.Rol;
 import com.coagronet.rol.repositories.RolRepository;
+import com.coagronet.tipoIdentificacion.TipoIdentificacion;
+import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
+import com.coagronet.utils.AuthenticatedUser;
+import com.coagronet.utils.PasswordGenerator;
+import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -71,7 +90,25 @@ public class AuthService {
 
 	private final UsuarioRolRepository userRoleRepo;
 
-	private final AuthProperties props; // e.g. defaultRole, etc.
+	private final AuthProperties props;
+
+	private final AuthenticatedUser authenticatedUser;
+
+	private final EstadoRepository estadoRepository;
+
+	private final EmpresaRepository empresaRepository;
+
+	private final UserEmpresaService userEmpresaService;
+
+	private final UsuarioRolRepository usuarioRolRepository;
+
+	private final PersonaRepository personaRepository;
+
+	private final TipoIdentificacionRepository tipoIdentificacionRepository;
+
+	private final RequestUtils requestUtils;
+
+	private final ApplicationEventPublisher applicationEventPublisher;
 
 	private static final Set<String> COMMON_PASSWORDS = Set.of("123456", "123456789", "12345678", "password", "qwerty",
 			"11111111", "123123", "000000", "password1", "abc123", "admin", "admin123");
@@ -122,47 +159,167 @@ public class AuthService {
 	}
 
 	@Transactional
-	public ApiResponse registerForCurrentEmpresa(@Valid RegisterRequestDTO dto) {
+	public ApiResponse registerForCurrentEmpresa(@Valid RegisterForCurrentEmpresaRequestDTO dto,
+			HttpServletRequest httpRequest) {
+
+		User currentUser = authenticatedUser.getCurrentUser();
+
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
 		// 1?? Does the user already exist? ----------------------------------
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
 
 		if (existing != null) {
 
-			// 1a. Still pending verification ? 409 Conflict + resend email
-			if (existing.getUsuarioEstado() == UsuarioEstado.PENDIENTE_VERIFICACION) {
-
-				// resend: generate (or reuse) token and send email again
-				String token = emailService.createVerificationToken(existing.getUsername());
-				emailService.sendVerificationEmail(existing.getUsername(), token);
-
-				throw new ResponseStatusException(HttpStatus.CONFLICT,
-						"El correo electrónico ya está registrado, pero no verificado. Se ha reenviado el enlace de verificación.");
+			if (existing.getUsuarioEstado() != UsuarioEstado.ACTIVADO_CON_EMPRESA) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+						"El usuario no está activo; no se puede activar el rol.");
 			}
 
-			// 1b. Already active/in use ? 400 Bad Request
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso.");
+			Rol rol = rolRepository.findById(dto.getRolId())
+					.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+
+			Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
+					.orElseThrow(() -> new EntityNotFoundException(
+							"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+
+			Empresa empresa = empresaRepository.findById(empresaId)
+					.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+
+			boolean existsActivo = usuarioRolRepository
+					.existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(existing.getId(),
+							empresa.getId(), rol.getId(), EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+
+			if (existsActivo == true) {
+
+				throw new ResponseStatusException(HttpStatus.CONFLICT,
+						"El usuario ya tiene este rol activo para la empresa seleccionada");
+
+			}
+
+			UsuarioRol usuarioRol = new UsuarioRol();
+
+			usuarioRol.setUser(existing);
+			usuarioRol.setEmpresa(empresa);
+			usuarioRol.setRol(rol);
+			usuarioRol.setEstado(estado);
+
+			OffsetDateTime now = OffsetDateTime.now();
+
+			usuarioRol.setIniciaContratoEn(now);
+
+			usuarioRol.setCreatedAt(now);
+			usuarioRol.setCreatedBy(currentUser);
+			usuarioRol.setUpdatedAt(null);
+			usuarioRol.setUpdatedBy(null);
+			usuarioRol.setDeletedAt(null);
+			usuarioRol.setDeletedBy(null);
+
+			String requestIp = requestUtils.getClientIp(httpRequest);
+			String requestHost = requestUtils.getClientHost(httpRequest);
+			usuarioRol.setRequestIp(requestIp);
+			usuarioRol.setRequestHost(requestHost);
+
+			UsuarioRol saved = usuarioRolRepository.save(usuarioRol);
+
+			applicationEventPublisher.publishEvent(new RoleActivatedEvent(saved.getId()));
+
+			String message = String.format(
+					"Se ha notificado por correo electrónico a %s %s que su rol \"%s\" "
+							+ "en la empresa \"%s\" ya se encuentra activo.",
+					saved.getUser().getPersona().getNombre(), saved.getUser().getPersona().getApellido(),
+					saved.getRol().getNombre(), saved.getEmpresa().getNombre());
+
+			return new ApiResponse(true, message);
 		}
 
-		// 2?? Create a new user ----------------------------------------------
+		Rol rol = rolRepository.findById(dto.getRolId())
+				.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+
+		Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+
+		Empresa empresa = empresaRepository.findById(empresaId)
+				.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+
+		TipoIdentificacion tipoDocumentoIdentidad = tipoIdentificacionRepository
+				.findById(dto.getTipoDocumentoIdentidadId()).orElseThrow(() -> new EntityNotFoundException(
+						"Tipo de documento de identidad no encontrado con id: " + dto.getTipoDocumentoIdentidadId()));
+
+		boolean personaExiste = personaRepository.existsByTipoIdentificacion_IdAndIdentificacionAndEstado_Id(
+				dto.getTipoDocumentoIdentidadId(), dto.getCodigoIdentificacion(),
+				EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+
+		if (personaExiste) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT,
+					"Ya existe una persona con ese tipo y código de identificación.");
+		}
+
+		if (personaRepository.existsByEmailAndEstado_Id(dto.getUsername(), EstadoConstantes.ESTADO_GENERAL_ACTIVO)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una persona con ese correo.");
+		}
+
+		String tempPassword = PasswordGenerator.generateStrongPassword();
+
+		Persona persona = new Persona();
+
+		persona.setNombre(dto.getNombre());
+		persona.setApellido(dto.getApellido());
+		persona.setGenero(dto.getGenero());
+		persona.setTipoIdentificacion(tipoDocumentoIdentidad);
+		persona.setIdentificacion(dto.getCodigoIdentificacion());
+		persona.setFechaNacimiento(dto.getFechaNacimiento());
+		persona.setEstrato(dto.getEstrato());
+		persona.setDireccion(dto.getDireccion());
+		persona.setCelular(dto.getCelular());
+		persona.setEmail(dto.getUsername());
+		persona.setEstado(estado);
+
+		Persona savedPersona = personaRepository.save(persona);
+
 		User user = new User();
 		user.setUsername(dto.getUsername());
+		user.setPassword(encoder.encode(tempPassword));
+		user.setDebeCambiarClave(true);
+		user.setPersona(savedPersona);
+		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
+		User savedUser = userRepo.save(user);
 
-		// 🔐 Validación NIST/OWASP de la contraseña
-		validatePasswordPolicy(dto.getPassword());
+		UsuarioRol usuarioRol = new UsuarioRol();
 
-		user.setPassword(encoder.encode(dto.getPassword()));
-		user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
+		usuarioRol.setUser(savedUser);
+		usuarioRol.setEmpresa(empresa);
+		usuarioRol.setRol(rol);
+		usuarioRol.setEstado(estado);
 
-		Rol role = rolRepository.findByNombre(props.getDefaultRole())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
-		user.setRoles(Set.of(role));
+		OffsetDateTime now = OffsetDateTime.now();
 
-		// 3?? Register and send email (listener) -----------------------------
-		registrationService.registerUser(user);
+		usuarioRol.setIniciaContratoEn(now);
 
-		// 4?? Success ? 201 Created ------------------------------------------
-		return new ApiResponse(true, "Correo electrónico de verificación enviado a " + user.getUsername());
+		usuarioRol.setCreatedAt(now);
+		usuarioRol.setCreatedBy(currentUser);
+		usuarioRol.setUpdatedAt(null);
+		usuarioRol.setUpdatedBy(null);
+		usuarioRol.setDeletedAt(null);
+		usuarioRol.setDeletedBy(null);
+
+		String requestIp = requestUtils.getClientIp(httpRequest);
+		String requestHost = requestUtils.getClientHost(httpRequest);
+		usuarioRol.setRequestIp(requestIp);
+		usuarioRol.setRequestHost(requestHost);
+
+		UsuarioRol saved = usuarioRolRepository.save(usuarioRol);
+
+		applicationEventPublisher.publishEvent(new NewUserCredentialsEvent(saved.getId(), tempPassword));
+
+		String message = String.format(
+				"Se ha notificado por correo electrónico a %s %s que su rol \"%s\" "
+						+ "en la empresa \"%s\" ya se encuentra activo.",
+				saved.getUser().getPersona().getNombre(), saved.getUser().getPersona().getApellido(),
+				saved.getRol().getNombre(), saved.getEmpresa().getNombre());
+
+		return new ApiResponse(true, message);
 	}
 
 	// LOGIN

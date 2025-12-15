@@ -69,24 +69,20 @@ public class EmailVerificationService {
 
 	/** Verificaci?n de cuenta: valida consumo de token VERIFY y lo borra */
 	public boolean consumeVerificationToken(String token) {
-		return verificationTokenRepository.findByTokenAndPurpose(token, TokenPurpose.VERIFY)
-			.filter(t -> !t.isExpired())
-			.map(t -> {
-				verificationTokenRepository.delete(t);
-				return true;
-			})
-			.orElse(false);
+		return verificationTokenRepository.findByTokenAndPurpose(token, TokenPurpose.VERIFY).filter(t -> !t.isExpired())
+				.map(t -> {
+					verificationTokenRepository.delete(t);
+					return true;
+				}).orElse(false);
 	}
 
 	/** Reset de password: devuelve email si token RESET es v?lido y lo borra */
 	public String consumeResetPasswordToken(String token) {
-		return verificationTokenRepository.findByTokenAndPurpose(token, TokenPurpose.RESET)
-			.filter(t -> !t.isExpired())
-			.map(t -> {
-				verificationTokenRepository.delete(t);
-				return t.getEmail();
-			})
-			.orElse(null);
+		return verificationTokenRepository.findByTokenAndPurpose(token, TokenPurpose.RESET).filter(t -> !t.isExpired())
+				.map(t -> {
+					verificationTokenRepository.delete(t);
+					return t.getEmail();
+				}).orElse(null);
 	}
 
 	/* ================= EMAILS ================= */
@@ -103,6 +99,60 @@ public class EmailVerificationService {
 		sendEmail(email, subject, text);
 	}
 
+	public void sendRoleActivatedEmail(String email, String rolNombre, String personaNombre, String personaApellido,
+			String empresaNombre) {
+		final String subject = "Rol activado en la empresa";
+
+		final String fullName = String.join(" ", personaNombre != null ? personaNombre.trim() : "",
+				personaApellido != null ? personaApellido.trim() : "").trim();
+
+		final String safeName = fullName.isBlank() ? "Usuario" : fullName;
+		final String safeRol = (rolNombre == null || rolNombre.isBlank()) ? "N/A" : rolNombre.trim();
+		final String safeEmpresa = (empresaNombre == null || empresaNombre.isBlank()) ? "N/A" : empresaNombre.trim();
+
+		final String text = String.format("""
+				Estimado(a) %s,
+
+				Se ha activado el rol "%s" en la empresa "%s".
+
+				Ya puede ingresar al sistema.
+
+				Cordialmente,
+				Equipo de la plataforma
+				""", safeName, safeRol, safeEmpresa);
+
+		sendEmail(email, subject, text);
+	}
+
+	public void sendNewUserCredentialsEmail(String email, String personaNombre, String personaApellido,
+			String empresaNombre, String rolNombre, String tempPassword) {
+		final String subject = "Acceso creado - Credenciales temporales";
+
+		final String fullName = String.join(" ", personaNombre != null ? personaNombre.trim() : "",
+				personaApellido != null ? personaApellido.trim() : "").trim();
+
+		final String safeName = fullName.isBlank() ? "Usuario" : fullName;
+		final String safeRol = (rolNombre == null || rolNombre.isBlank()) ? "N/A" : rolNombre.trim();
+		final String safeEmpresa = (empresaNombre == null || empresaNombre.isBlank()) ? "N/A" : empresaNombre.trim();
+
+		final String text = String.format("""
+				Estimado(a) %s,
+
+				Se ha creado tu acceso a la empresa "%s" con el rol "%s".
+
+				Credenciales temporales:
+				- Usuario: %s
+				- Contraseña temporal: %s
+
+				Por seguridad, al iniciar sesión se te solicitará cambiar la contraseña inmediatamente.
+
+				Cordialmente,
+				Equipo de la plataforma
+				""", safeName, safeEmpresa, safeRol, email, tempPassword);
+
+		sendEmail(email, subject, text);
+	}
+
 	private void sendEmail(String to, String subject, String text) {
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setTo(to);
@@ -112,8 +162,7 @@ public class EmailVerificationService {
 		try {
 			mailSender.send(message);
 			logger.info("Email sent to {} with subject: {}", to, subject);
-		}
-		catch (MailException e) {
+		} catch (MailException e) {
 			logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
 		}
 	}

@@ -116,7 +116,7 @@ public class User implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return this.usuarioEstado.getId() >= 2;
+		return this.usuarioEstado.getId() >= 2 && this.debeCambiarClave == false;
 	}
 
 }
