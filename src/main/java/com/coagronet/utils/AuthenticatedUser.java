@@ -5,20 +5,30 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
 
 @Component
 public class AuthenticatedUser {
 
-    public User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        return (User) auth.getPrincipal();
-    }
+	private final UserRepository userRepo;
 
-    public Long getCurrentUserId() {
-        User user = getCurrentUser();
-        return (user != null) ? user.getId() : null;
-    }
+	public AuthenticatedUser(UserRepository userRepo) {
+		this.userRepo = userRepo;
+	}
+
+	public User getCurrentUser() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth == null || !auth.isAuthenticated())
+			return null;
+
+		// Esto funciona aunque el principal sea String / Jwt / UserDetails
+		String username = auth.getName();
+
+		return userRepo.findByUsername(username).orElse(null);
+	}
+
+	public Long getCurrentUserId() {
+		User user = getCurrentUser();
+		return (user != null) ? user.getId() : null;
+	}
 }

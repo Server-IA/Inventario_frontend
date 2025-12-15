@@ -17,6 +17,7 @@ import com.coagronet.auth.dto.ChangePasswordRequestDTO;
 import com.coagronet.auth.dto.ForgotPasswordRequestDTO;
 import com.coagronet.auth.dto.InitialPasswordChangeRequestDTO;
 import com.coagronet.auth.dto.LoginRequestDTO;
+import com.coagronet.auth.dto.RegisterForCurrentEmpresaRequestDTO;
 import com.coagronet.auth.dto.RegisterRequestDTO;
 import com.coagronet.auth.dto.ResetPasswordRequestDTO;
 import com.coagronet.auth.dto.SwitchContextRequestDTO;
@@ -39,6 +40,12 @@ public class AuthController {
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO dto) {
 		return ResponseEntity.ok(authService.register(dto));
+	}
+
+	@PostMapping("/empresa/usuarios-roles")
+	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterForCurrentEmpresaRequestDTO dto,
+			HttpServletRequest httpRequest) {
+		return ResponseEntity.ok(authService.registerForCurrentEmpresa(dto, httpRequest));
 	}
 
 	@PostMapping("/v2/login")
@@ -85,8 +92,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/change-password-initial")
-	public ResponseEntity<ApiResponse> changePasswordInitial(
-			@Valid @RequestBody InitialPasswordChangeRequestDTO dto) {
+	public ResponseEntity<ApiResponse> changePasswordInitial(@Valid @RequestBody InitialPasswordChangeRequestDTO dto) {
 		return ResponseEntity.ok(authService.changePasswordInitial(dto));
 	}
 

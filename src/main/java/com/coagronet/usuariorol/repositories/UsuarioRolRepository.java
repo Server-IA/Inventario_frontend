@@ -6,11 +6,23 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.coagronet.user.User;
 import com.coagronet.usuariorol.UsuarioRol;
 
 public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
+
+	@Query("""
+			select ur from UsuarioRol ur
+			join fetch ur.user u
+			join fetch u.persona p
+			join fetch ur.rol r
+			join fetch ur.empresa e
+			where ur.id = :id
+			""")
+	Optional<UsuarioRol> findForEmailById(@Param("id") Long id);
 
 	Page<UsuarioRol> findAllByEmpresaIdAndDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(Pageable pageable, Long empresaId,
 			Long estadoId);
