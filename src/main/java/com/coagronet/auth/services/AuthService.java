@@ -166,12 +166,11 @@ public class AuthService {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		// 1?? Does the user already exist? ----------------------------------
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
 
 		if (existing != null) {
 
-			if (existing.getUsuarioEstado() != UsuarioEstado.ACTIVADO_CON_EMPRESA) {
+			if (existing.getUsuarioEstado() == null || !existing.getUsuarioEstado().esActivadoConEmpresa()) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN,
 						"El usuario no está activo; no se puede activar el rol.");
 			}
@@ -281,7 +280,7 @@ public class AuthService {
 		User user = new User();
 		user.setUsername(dto.getUsername());
 		user.setPassword(encoder.encode(tempPassword));
-		user.setDebeCambiarClave(true);
+		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_DEBE_CAMBIAR_CONTRASENA);
 		user.setPersona(savedPersona);
 		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
 		User savedUser = userRepo.save(user);
@@ -336,7 +335,6 @@ public class AuthService {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales o estado de usuario inválido");
 		}
 
-		// Aquí traduces a tus estados reales
 		if (estado.esPendienteActivacion()) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tu cuenta está pendiente de activación.");
 		}
@@ -370,7 +368,7 @@ public class AuthService {
 
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRol().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
-				nombrePersona, "debeCambiarClave", user.mustChangePassword());
+				nombrePersona);
 
 	}
 
@@ -467,7 +465,7 @@ public class AuthService {
 	public ApiResponse changePasswordInitial(@Valid InitialPasswordChangeRequestDTO dto) {
 		User user = getCurrentUser(); // ya lo usas en changePassword
 
-		if (!Boolean.TRUE.equals(user.getDebeCambiarClave())) {
+		if (user.getUsuarioEstado() == UsuarioEstado.ACTIVADO_CON_EMPRESA) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"Este usuario no requiere cambio de contraseña obligatorio.");
 		}
@@ -486,7 +484,7 @@ public class AuthService {
 		validatePasswordPolicy(dto.nuevaClave());
 
 		user.setPassword(encoder.encode(dto.nuevaClave()));
-		user.setDebeCambiarClave(false);
+		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
 		user.incrementTokenVersion(); // revoca JWT previos
 		userRepo.save(user);
 

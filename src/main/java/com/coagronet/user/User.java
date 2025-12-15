@@ -79,13 +79,6 @@ public class User implements UserDetails {
 	@Column(name = "usu_token_version", nullable = false)
 	private Integer tokenVersion = 0;
 
-	@Column(name = "usu_debe_cambiar_clave", nullable = false)
-	private Boolean debeCambiarClave = Boolean.FALSE;
-
-	public boolean mustChangePassword() {
-		return Boolean.TRUE.equals(debeCambiarClave);
-	}
-
 	public void incrementTokenVersion() {
 		this.tokenVersion = (this.tokenVersion == null ? 1 : this.tokenVersion + 1);
 	}
@@ -116,7 +109,7 @@ public class User implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return this.usuarioEstado.getId() >= 2 && this.debeCambiarClave == false;
+		return this.usuarioEstado.getId() >= 2;
 	}
 
 }

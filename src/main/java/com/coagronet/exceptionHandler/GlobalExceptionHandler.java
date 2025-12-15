@@ -13,6 +13,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -179,13 +181,10 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorDetails> handleEntityNotFound(EntityNotFoundException ex, WebRequest request) {
 		Locale locale = LocaleContextHolder.getLocale();
 
-		ErrorDetails body = new ErrorDetails(
-				LocalDateTime.now(),
-				"Not Found",
+		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
 				// msg() usa codeOrRaw y si no existe en messages.properties devuelve el mismo
 				// texto
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.not-found", null, locale),
-				requestPath(request),
+				msg(ex.getMessage() != null ? ex.getMessage() : "error.not-found", null, locale), requestPath(request),
 				null);
 
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
@@ -195,12 +194,9 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorDetails> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
 		Locale locale = LocaleContextHolder.getLocale();
 
-		ErrorDetails body = new ErrorDetails(
-				LocalDateTime.now(),
-				"Bad Request",
+		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
 				msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", null, locale),
-				requestPath(request),
-				null);
+				requestPath(request), null);
 
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
@@ -209,14 +205,21 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorDetails> handleIllegalState(IllegalStateException ex, WebRequest request) {
 		Locale locale = LocaleContextHolder.getLocale();
 
-		ErrorDetails body = new ErrorDetails(
-				LocalDateTime.now(),
-				"Conflict",
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.conflict", null, locale),
-				requestPath(request),
+		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Conflict",
+				msg(ex.getMessage() != null ? ex.getMessage() : "error.conflict", null, locale), requestPath(request),
 				null);
 
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+	}
+
+	@ExceptionHandler(DisabledException.class)
+	public ResponseEntity<?> handleDisabled(DisabledException ex) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Usuario inactivo o deshabilitado"));
+	}
+
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<?> handleRse(ResponseStatusException ex) {
+		return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message", ex.getReason()));
 	}
 
 }
