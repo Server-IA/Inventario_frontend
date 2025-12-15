@@ -1,0 +1,567 @@
+<!-- Created with Jaspersoft Studio version 7.0.2.final using JasperReports Library version 7.0.2-31532122640f516c6d17238ae0e41a08113d5ac0  -->
+<jasperReport name="Reporte_kardex" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.2"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<parameter name="logo_empresa" class="java.lang.String"/>
+	<parameter name="condicion" class="java.lang.String"/>
+	<query language="sql"><![CDATA[SELECT 
+    e.emp_id AS header_empresa_id,
+    e.emp_nombre AS header_empresa,
+    s.sed_id AS header_sede_id,
+    s.sed_nombre AS header_sede,
+    k.kar_almacen_id AS header_almacen_id,
+    al.alm_nombre AS header_almacen,
+    m.mun_id AS header_municipio_id,
+    m.mun_nombre AS header_municipio,
+    e.emp_correo AS header_correo,
+    e.emp_contacto AS header_contacto,
+    CONCAT(per.per_nombre, ' ', per.per_apellido) AS header_responsable,
+    esp.esp_id AS header_espacio_id,
+    esp.esp_nombre AS header_espacio,
+    blo.blo_id AS header_bloque_id,
+    blo.blo_nombre AS header_bloque,
+
+    p.pro_id AS item_producto_id,
+    p.pro_producto_categoria_id AS item_categoria_producto_id,
+    p.pro_nombre AS item_producto,
+    -- NUEVOS CAMPOS
+    pr.pro_nombre AS item_produccion_nombre,
+    pp.prp_nombre AS item_presentacion_nombre,
+
+    u.uni_nombre AS item_unidad,
+
+    k.kar_fecha_hora AS item_fecha,
+    k.kar_tipo_movimiento_id AS item_tipo_movimiento,
+
+    -- cantidad en presentaciones (sin signo)
+    ki.kai_cantidad AS item_cantidad,
+
+    -- entrada (presentaciones)
+    CASE 
+        WHEN mov.mov_nombre = 'Entrada' THEN ki.kai_cantidad
+        ELSE 0::double precision
+    END AS item_entrada,
+
+    -- salida (presentaciones)
+    CASE 
+        WHEN mov.mov_nombre = 'Salida' THEN ki.kai_cantidad
+        ELSE 0::double precision
+    END AS item_salida,
+
+    ki.kai_fecha_vencimiento AS item_fecha_vencimiento,
+
+    -- saldo acumulado por empresa + almacén + producto, ordenado por fecha/movimiento
+    SUM(
+        CASE
+            WHEN mov.mov_nombre = 'Entrada' THEN ki.kai_cantidad
+            WHEN mov.mov_nombre = 'Salida'  THEN -ki.kai_cantidad
+            ELSE 0
+        END
+    ) OVER (
+        PARTITION BY e.emp_id, k.kar_almacen_id, p.pro_id
+        ORDER BY k.kar_fecha_hora, ki.kai_id
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS item_saldo
+
+FROM kardex_item ki
+JOIN kardex k                 ON ki.kai_kardex_id = k.kar_id
+JOIN producto_presentacion pp ON ki.kai_producto_presentacion_id = pp.prp_id
+JOIN producto p               ON pp.prp_producto_id = p.pro_id
+-- NUEVO JOIN PARA PRODUCCION
+JOIN produccion pr            ON k.kar_produccion_id = pr.pro_id
+JOIN unidad u                 ON pp.prp_unidad_id = u.uni_id
+JOIN almacen al               ON k.kar_almacen_id = al.alm_id
+JOIN espacio esp              ON al.alm_espacio_id = esp.esp_id
+JOIN bloque blo               ON esp.esp_bloque_id = blo.blo_id
+JOIN sede s                   ON blo.blo_sede_id = s.sed_id
+JOIN municipio m              ON s.sed_municipio_id = m.mun_id
+JOIN empresa e                ON k.kar_empresa_id = e.emp_id
+JOIN persona per              ON e.emp_persona_id = per.per_id
+JOIN tipo_movimiento tm       ON tm.tim_id = k.kar_tipo_movimiento_id
+JOIN movimiento mov           ON mov.mov_id = tm.tim_movimiento_id
+
+WHERE 
+    $P!{condicion}
+ORDER BY ki.kai_id;
+
+]]></query>
+	<field name="header_empresa_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_empresa_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_empresa" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_empresa"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_empresa"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_sede_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_sede_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_sede_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
+	</field>
+	<field name="header_sede" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_sede"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_sede"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
+	</field>
+	<field name="header_almacen_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_almacen_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_almacen_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="kardex"/>
+	</field>
+	<field name="header_almacen" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_almacen"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_almacen"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="almacen"/>
+	</field>
+	<field name="header_municipio_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_municipio_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_municipio_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="municipio"/>
+	</field>
+	<field name="header_municipio" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_municipio"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_municipio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="municipio"/>
+	</field>
+	<field name="header_correo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_correo"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_correo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_contacto" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_contacto"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_contacto"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
+	</field>
+	<field name="header_responsable" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_responsable"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_responsable"/>
+	</field>
+	<field name="header_espacio_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_espacio_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="header_espacio" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_espacio"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_espacio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
+	</field>
+	<field name="header_bloque_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="header_bloque_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_bloque_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="header_bloque" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="header_bloque"/>
+		<property name="com.jaspersoft.studio.field.label" value="header_bloque"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
+	</field>
+	<field name="item_producto_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="item_producto_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_producto_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto"/>
+	</field>
+	<field name="item_categoria_producto_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="item_categoria_producto_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_categoria_producto_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto"/>
+	</field>
+	<field name="item_producto" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_producto"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_producto"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto"/>
+	</field>
+	<field name="item_produccion_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_produccion_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_produccion_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="produccion"/>
+	</field>
+	<field name="item_presentacion_nombre" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_presentacion_nombre"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_presentacion_nombre"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="producto_presentacion"/>
+	</field>
+	<field name="item_unidad" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="item_unidad"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_unidad"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="unidad"/>
+	</field>
+	<field name="item_fecha" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="item_fecha"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_fecha"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="kardex"/>
+	</field>
+	<field name="item_tipo_movimiento" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="item_tipo_movimiento"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_tipo_movimiento"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="kardex"/>
+	</field>
+	<field name="item_cantidad" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_cantidad"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_cantidad"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="kardex_item"/>
+	</field>
+	<field name="item_entrada" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_entrada"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_entrada"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_salida" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_salida"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_salida"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="vista_kardex"/>
+	</field>
+	<field name="item_fecha_vencimiento" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="item_fecha_vencimiento"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_fecha_vencimiento"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="kardex_item"/>
+	</field>
+	<field name="item_saldo" class="java.lang.Double">
+		<property name="com.jaspersoft.studio.field.name" value="item_saldo"/>
+		<property name="com.jaspersoft.studio.field.label" value="item_saldo"/>
+	</field>
+	<variable name="totalCantidad" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{item_cantidad}]]></expression>
+	</variable>
+	<variable name="totalEntrada" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{item_entrada}]]></expression>
+	</variable>
+	<variable name="totalSalida" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{item_salida}]]></expression>
+	</variable>
+	<variable name="totalSaldo" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{item_saldo}]]></expression>
+	</variable>
+	<title height="90">
+		<element kind="rectangle" uuid="7068c842-c18d-413e-8ae7-f5bbfecf8d8a" x="-20" y="-20" width="595" height="110" backcolor="#D6E4F0">
+			<pen lineColor="#3747A1"/>
+		</element>
+		<element kind="staticText" uuid="b3dcb43c-5ace-4ca6-a20a-3f31c53c6d0a" x="240" y="10" width="280" height="40" fontName="Arial" fontSize="26.0" bold="true" hTextAlign="Right">
+			<text><![CDATA[KARDEX]]></text>
+		</element>
+		<element kind="staticText" uuid="197496f6-1a42-489e-8361-87324df4f5f7" mode="Transparent" x="320" y="50" width="110" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[ Fecha de generacion:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="f1e24d09-c982-4107-8f23-943c4125c2cf" x="430" y="50" width="90" height="20" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA[new java.util.Date()]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="image" uuid="ad6fe63b-6cb8-4bd5-8c18-bc002bb7bfcc" x="50" y="0" width="70" height="75">
+			<expression><![CDATA[new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
+		</element>
+	</title>
+	<pageHeader height="248">
+		<element kind="rectangle" uuid="6d0bfea8-3503-46b8-a64a-4df717dfc882" x="-20" y="0" width="595" height="248" backcolor="#FFFFFF">
+			<pen lineColor="#3747A1"/>
+		</element>
+		<element kind="staticText" uuid="91db920a-6ed2-4181-b718-a8ca2ef009a3" mode="Opaque" x="20" y="70" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Sede:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="b83a1dcf-7321-454a-9270-c3ffb580de18" x="90" y="70" width="150" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{header_sede}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="e75aee68-e4e1-41d9-a928-42a5373e9275" mode="Opaque" x="20" y="160" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Almacén:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="7f95d458-4749-4a8f-8557-c9809ad28509" x="90" y="160" width="150" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{header_almacen}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="04bfb93a-179f-4895-91a8-a12a732eb051" mode="Opaque" x="279" y="70" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Correo:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="5c05a5e2-d01e-4a7d-99d9-180a217c5dde" x="359" y="70" width="162" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{header_correo}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="d8e752bc-ad64-4bac-a291-eed46493fa1c" mode="Opaque" x="280" y="40" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Municipio:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="da65d96c-c127-4321-b565-826b0ad4b2f1" x="360" y="40" width="160" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{header_municipio}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="d2edb052-b680-426e-85d4-2e0a1246c038" mode="Opaque" x="280" y="130" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Responsable:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="4bef04ab-8922-4025-a3bd-f59288a318da" x="360" y="130" width="162" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{header_responsable}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="16edb09d-ba61-4f9d-936d-937f97a810ac" x="360" y="160" width="162" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{item_produccion_nombre}]]></expression>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="cd6a77ea-b603-4bdc-ae36-9a3bb6620b41" mode="Opaque" x="280" y="160" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[Produccion:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="421c5203-efcb-4c1b-bf61-13da9901867e" x="360" y="100" width="162" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" "+$F{header_contacto}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="dc619787-6642-4ffa-b6fe-1bf89631f49d" mode="Opaque" x="280" y="100" width="80" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Contacto:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="e1e9f0aa-3c8f-40df-ae8f-c4d2f9552b98" mode="Opaque" x="20" y="100" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Bloque:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="47e99f21-e943-4287-9175-9cf17d159319" x="90" y="100" width="150" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[$F{header_bloque}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="4d19e5cb-d591-4c60-97d9-d33310952c4c" mode="Opaque" x="20" y="130" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Espacio:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="7896c977-fb84-4dc3-af11-fbbc3bc8be1c" x="90" y="130" width="150" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[$F{header_espacio}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="9a583cc8-df74-4148-9751-de3030ae5336" mode="Opaque" x="20" y="40" width="70" height="20" backcolor="#D6E4F0" fontName="Arial" bold="true" vTextAlign="Bottom">
+			<text><![CDATA[ Empresa:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="50730993-a5ac-4c7d-bd12-4a1a5c781284" x="90" y="40" width="150" height="20" vTextAlign="Bottom">
+			<expression><![CDATA[" " +$F{header_empresa}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				<topPen lineWidth="0.0"/>
+				<leftPen lineWidth="0.0"/>
+				<rightPen lineWidth="0.0"/>
+			</box>
+		</element>
+	</pageHeader>
+	<columnHeader height="60">
+		<element kind="staticText" uuid="ec4d6625-1f8e-49fc-980b-836072de5671" mode="Opaque" x="28" y="30" width="76" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Fecha]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="2f18ad61-a971-42dc-8774-cb097e461303" mode="Opaque" x="104" y="30" width="78" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Producto]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="f801345a-166c-4ad3-8946-84f668545271" mode="Opaque" x="265" y="30" width="65" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Unidad]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="dcfcb993-f861-4c58-8993-4d306a1ad210" mode="Opaque" x="330" y="30" width="60" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Entrada]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="67ee2cb3-41c1-404d-a358-3f1a19f8586a" mode="Opaque" x="390" y="30" width="60" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Salida]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="3c0563a4-91e9-42ef-941a-ce42f832a0f6" mode="Opaque" x="450" y="30" width="75" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Saldo]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="22b2059a-c07d-414a-bc56-4846e28554b4" mode="Opaque" x="182" y="30" width="83" height="30" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Producto Presentación]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="40">
+			<element kind="textField" uuid="d1b3ed0a-a577-4d28-8936-de9928371a64" stretchType="ContainerHeight" x="28" y="0" width="76" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_fecha}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="8db288f6-b430-4cf4-b07b-ce66d97590bb" x="104" y="0" width="78" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_producto}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="30732894-64a2-4a38-89a6-2048cb1b4360" x="265" y="0" width="65" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_unidad}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="7988253e-f6b1-4fd7-be7f-2868f007fdbc" x="330" y="0" width="60" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_entrada}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="978147ac-505a-42c3-a83e-08f1ceb5674f" x="390" y="0" width="60" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_salida}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="ed469bbf-9119-4831-87e4-515c9eb8d1ec" x="450" y="0" width="75" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_saldo}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="c5a9b442-3c5a-4f0b-9f0b-1a2b3c4d5e6f" x="182" y="0" width="83" height="40" hTextAlign="Center">
+				<expression><![CDATA[" "+$F{item_presentacion_nombre}]]></expression>
+				<box>
+					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+				</box>
+			</element>
+		</band>
+	</detail>
+	<columnFooter height="30">
+		<element kind="staticText" uuid="6f9a4d9d-88ea-4d8b-a62f-48ad63a3402d" mode="Opaque" x="260" y="0" width="70" height="20" backcolor="#D6E4F0" bold="true" hTextAlign="Right">
+			<text><![CDATA[TOTALES:]]></text>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="41fa326f-03cb-4f9b-8904-0bc0697716fa" x="330" y="0" width="60" height="20" hTextAlign="Center">
+			<expression><![CDATA[$V{totalEntrada}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="7b95f2e7-9b7b-46d5-92a3-ff8ed1e77969" x="390" y="0" width="60" height="20" hTextAlign="Center">
+			<expression><![CDATA[$V{totalSalida}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="7cbc27e3-c799-44db-96af-aa426911158a" x="450" y="0" width="75" height="20" textAdjust="StretchHeight" hTextAlign="Center">
+			<expression><![CDATA[" "+$V{totalSaldo}]]></expression>
+			<box>
+				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
+			</box>
+		</element>
+	</columnFooter>
+	<pageFooter height="50">
+		<element kind="textField" uuid="b75d0b71-e92d-455c-8669-c2c2ef1d93f0" x="430" y="20" width="100" height="30" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+	</pageFooter>
+</jasperReport>
