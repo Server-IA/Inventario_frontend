@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+// src/components/EmpresaRol/GridEmpresaRol.jsx
+import React, { useMemo, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   DataGrid,
@@ -7,12 +8,12 @@ import {
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
-  esES,
 } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
-/* ---------- Toolbar personalizada ---------- */
+const LS_KEY = "gridEmpresaRolEmpresa:columnVisibility:v1";
+
 function EmpresaRolToolbar({ onResetColumns }) {
   return (
     <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
@@ -21,7 +22,6 @@ function EmpresaRolToolbar({ onResetColumns }) {
         <GridToolbarFilterButton />
         <GridToolbarDensitySelector />
       </div>
-
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <GridToolbarQuickFilter debounceMs={300} />
         <Button
@@ -37,70 +37,95 @@ function EmpresaRolToolbar({ onResetColumns }) {
   );
 }
 
+EmpresaRolToolbar.propTypes = {
+  onResetColumns: PropTypes.func,
+};
+
 export default function GridEmpresaRol({
   rows = [],
   loading = false,
-  columnVisibilityModel,
-  setColumnVisibilityModel,
-  onResetColumns,
+  selectedRow = null,
+  setSelectedRow = () => {},
 }) {
-  /* ---------- Columnas sin acciones ---------- */
   const columns = useMemo(
     () => [
-      {
-        field: "id",
-        headerName: "ID",
-        width: 90,
-      },
-      {
-        field: "empresaNombre",
-        headerName: "Empresa",
-        flex: 1,
-        minWidth: 150,
-      },
-      {
-        field: "rolNombre",
-        headerName: "Rol",
-        flex: 1,
-        minWidth: 150,
-      },
+      { field: "id", headerName: "ID", width: 90, type: "number" },
+      { field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 },
+      { field: "rolNombre", headerName: "Rol", flex: 1.2, minWidth: 220 },
       {
         field: "estadoNombre",
         headerName: "Estado",
-        flex: 1,
-        minWidth: 150,
+        width: 160,
       },
     ],
     []
   );
 
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      setColumnVisibilityModel(saved);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    localStorage.setItem(LS_KEY, JSON.stringify(model));
+  };
+
+  const handleResetColumns = () => {
+    localStorage.removeItem(LS_KEY);
+    setColumnVisibilityModel({});
+  };
+
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
+
+  const handlePaginationChange = (model) => {
+    if (model.pageSize !== paginationModel.pageSize) {
+      setPaginationModel({ page: 0, pageSize: model.pageSize });
+    } else {
+      setPaginationModel(model);
+    }
+  };
+
   return (
-    <Box sx={{ height: 500, width: "100%" }}>
+    <Box sx={{ width: "100%", mt: 1 }}>
       <DataGrid
-        rows={rows}
+        rows={Array.isArray(rows) ? rows : []}
         columns={columns}
+        getRowId={(r) => r.id}
         loading={loading}
+        onRowClick={(p) => setSelectedRow(p.row)}
+        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
         disableRowSelectionOnClick
-        getRowId={(row) => row.id}
-        slots={{
-          toolbar: EmpresaRolToolbar,
-        }}
-        slotProps={{
-          toolbar: { onResetColumns },
-        }}
         columnVisibilityModel={columnVisibilityModel}
-        onColumnVisibilityModelChange={setColumnVisibilityModel}
-        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        slots={{ toolbar: EmpresaRolToolbar }}
+        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
+        pagination
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationChange}
+        pageSizeOptions={[10, 25, 50, 100]}
+        autoHeight
+        sx={{
+          minHeight: 300,
+          "& .MuiDataGrid-virtualScroller": { overflow: "auto" },
+        }}
       />
     </Box>
   );
 }
 
-/* ---------- PropTypes ---------- */
 GridEmpresaRol.propTypes = {
   rows: PropTypes.array,
   loading: PropTypes.bool,
-  columnVisibilityModel: PropTypes.object.isRequired,
-  setColumnVisibilityModel: PropTypes.func.isRequired,
-  onResetColumns: PropTypes.func.isRequired,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
 };

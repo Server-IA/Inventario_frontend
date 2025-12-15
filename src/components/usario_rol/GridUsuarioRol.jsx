@@ -36,9 +36,7 @@ function UsuarioRolToolbar({ onResetColumns }) {
   );
 }
 
-UsuarioRolToolbar.propTypes = {
-  onResetColumns: PropTypes.func,
-};
+UsuarioRolToolbar.propTypes = { onResetColumns: PropTypes.func };
 
 export default function GridUsuarioRol({
   rows = [],
@@ -49,37 +47,26 @@ export default function GridUsuarioRol({
   const columns = useMemo(
     () => [
       { field: "id", headerName: "ID", width: 90, type: "number" },
-
-      { field: "usuarioId", headerName: "Usuario ID", width: 110, type: "number" },
-      { field: "usuarioEmail", headerName: "Usuario", flex: 1.2, minWidth: 220 },
-
-      { field: "rolId", headerName: "Rol ID", width: 100, type: "number" },
+      { field: "usuarioNombre", headerName: "Usuario", flex: 1.2, minWidth: 260 },
       { field: "rolNombre", headerName: "Rol", flex: 1.1, minWidth: 220 },
-
-      { field: "estadoId", headerName: "Estado ID", width: 110, type: "number" },
       { field: "estadoNombre", headerName: "Estado", width: 160 },
-
       { field: "iniciaContratoEn", headerName: "Inicia contrato", width: 210 },
       { field: "finalizaContratoEn", headerName: "Finaliza contrato", width: 210 },
 
-      // Auditoría
-      { field: "createdBy", headerName: "Creado por", width: 180 },
-      { field: "createdAt", headerName: "Creado el", width: 210 },
-      { field: "updatedBy", headerName: "Actualizado por", width: 180 },
-      { field: "updatedAt", headerName: "Actualizado el", width: 210 },
+      // opcional oculto:
+      { field: "usuarioEmail", headerName: "Correo", width: 260 },
     ],
     []
   );
 
-  // Persistencia visibilidad columnas
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-      setColumnVisibilityModel(saved);
+      setColumnVisibilityModel(Object.keys(saved).length ? saved : { usuarioEmail: false });
     } catch {
-      // ignore
+      setColumnVisibilityModel({ usuarioEmail: false });
     }
   }, []);
 
@@ -90,14 +77,10 @@ export default function GridUsuarioRol({
 
   const handleResetColumns = () => {
     localStorage.removeItem(LS_KEY);
-    setColumnVisibilityModel({});
+    setColumnVisibilityModel({ usuarioEmail: false });
   };
 
-  // Paginación controlada
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 5,
-  });
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 5 });
 
   const handlePaginationChange = (model) => {
     if (model.pageSize !== paginationModel.pageSize) {
@@ -126,10 +109,7 @@ export default function GridUsuarioRol({
         onPaginationModelChange={handlePaginationChange}
         pageSizeOptions={[5, 10, 20, 50]}
         autoHeight
-        sx={{
-          minHeight: 300,
-          "& .MuiDataGrid-virtualScroller": { overflow: "auto" },
-        }}
+        sx={{ minHeight: 300, "& .MuiDataGrid-virtualScroller": { overflow: "auto" } }}
       />
     </Box>
   );

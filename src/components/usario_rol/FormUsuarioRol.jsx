@@ -35,6 +35,56 @@ const toIsoOrNull = (val) => {
   return d.toISOString();
 };
 
+// ===== Helpers items =====
+const looksLikeEmail = (v) =>
+  typeof v === "string" && v.includes("@") && v.includes(".");
+
+const pickEmail = (obj) => {
+  if (!obj || typeof obj !== "object") return "";
+  const byKey =
+    obj.email ??
+    obj.usuarioEmail ??
+    obj.correo ??
+    obj.correoElectronico ??
+    obj.usuario_email ??
+    obj.mail ??
+    "";
+  if (looksLikeEmail(byKey)) return String(byKey).trim();
+  const found = Object.values(obj).find((v) => looksLikeEmail(v));
+  return found ? String(found).trim() : "";
+};
+
+const pickUsuarioEmpresa = (obj) => {
+  if (!obj || typeof obj !== "object") return "";
+  return String(
+    obj.usuario_empresa ??
+      obj.usuarioEmpresa ??
+      obj.usuarioempresa ??
+      obj.userEmpresa ??
+      obj.nombre ??
+      ""
+  ).trim();
+};
+
+const pickRolId = (obj) => {
+  const v = obj?.id ?? obj?.rolId ?? obj?.rol_id ?? obj?.codigo ?? null;
+  if (v === null || v === undefined || v === "") return "";
+  const n = Number(v);
+  return Number.isNaN(n) ? "" : n;
+};
+
+const pickRolEmpresa = (obj) => {
+  if (!obj || typeof obj !== "object") return "";
+  return String(
+    obj.rol_empresa ??
+      obj.rolEmpresa ??
+      obj.rolNombre ??
+      obj.nombre ??
+      obj.descripcion ??
+      ""
+  ).trim();
+};
+
 export default function FormUsuarioRol({
   selectedRow,
   setSelectedRow,
@@ -49,8 +99,8 @@ export default function FormUsuarioRol({
   const [methodName, setMethodName] = React.useState("Agregar");
 
   const initialData = {
-    usuarioId: "",
-    rolId: "",
+    usuarioEmail: "", // ✅ se envía al backend
+    rolId: "", // ✅ id del rol (items rol_empresa)
     estadoId: 1,
     iniciaContratoEn: "",
     finalizaContratoEn: "",
@@ -63,9 +113,8 @@ export default function FormUsuarioRol({
     if (!open) return;
 
     if (selectedRow?.id) {
-      // Modo actualizar
       setFormData({
-        usuarioId: selectedRow.usuarioId ?? "",
+        usuarioEmail: selectedRow.usuarioEmail ?? "",
         rolId: selectedRow.rolId ?? "",
         estadoId: selectedRow.estadoId ?? 1,
         iniciaContratoEn: toInputDateTime(selectedRow.iniciaContratoEn),
@@ -73,11 +122,11 @@ export default function FormUsuarioRol({
       });
       setMethodName("Actualizar");
     } else {
-      // Modo crear
       setFormData(initialData);
       setMethodName("Agregar");
     }
     setErrors({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, selectedRow]);
 
   const handleClose = () => {
@@ -89,37 +138,24 @@ export default function FormUsuarioRol({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validate = () => {
     const e = {};
-
-    if (!formData.usuarioId) e.usuarioId = "El usuario es obligatorio.";
-    if (!formData.rolId) e.rolId = "El rol es obligatorio.";
+    if (!formData.usuarioEmail) e.usuarioEmail = "El usuario es obligatorio.";
+    if (!formData.rolId && formData.rolId !== 0) e.rolId = "El rol es obligatorio.";
     if (!formData.estadoId) e.estadoId = "El estado es obligatorio.";
-
-    if (!formData.iniciaContratoEn) {
-      e.iniciaContratoEn = "La fecha de inicio es obligatoria.";
-    }
-    if (!formData.finalizaContratoEn) {
-      e.finalizaContratoEn = "La fecha de finalización es obligatoria.";
-    }
+    if (!formData.iniciaContratoEn) e.iniciaContratoEn = "La fecha de inicio es obligatoria.";
+    if (!formData.finalizaContratoEn) e.finalizaContratoEn = "La fecha de finalización es obligatoria.";
 
     if (formData.iniciaContratoEn && formData.finalizaContratoEn) {
       const ini = new Date(formData.iniciaContratoEn);
       const fin = new Date(formData.finalizaContratoEn);
-      if (!Number.isNaN(ini.getTime()) && !Number.isNaN(fin.getTime())) {
-        if (fin < ini) {
-          e.finalizaContratoEn =
-            "La fecha de finalización debe ser mayor o igual a la fecha de inicio.";
-        }
+      if (!Number.isNaN(ini.getTime()) && !Number.isNaN(fin.getTime()) && fin < ini) {
+        e.finalizaContratoEn =
+          "La fecha de finalización debe ser mayor o igual a la fecha de inicio.";
       }
     }
 
@@ -132,17 +168,15 @@ export default function FormUsuarioRol({
     if (!validate()) return;
 
     const payload = {
-      usuarioId: Number(formData.usuarioId),
-      rolId: Number(formData.rolId),
+      usuarioEmail: String(formData.usuarioEmail).trim(), // ✅ correo
+      rolId: Number(formData.rolId), // ✅ id rol
       estadoId: Number(formData.estadoId),
       iniciaContratoEn: toIsoOrNull(formData.iniciaContratoEn),
       finalizaContratoEn: toIsoOrNull(formData.finalizaContratoEn),
     };
 
     const creating = methodName === "Agregar";
-    const url = creating
-      ? "v1/usuario-roles"
-      : `v1/usuario-roles/${selectedRow.id}`;
+    const url = creating ? "v1/usuario-roles" : `v1/usuario-roles/${selectedRow.id}`;
     const req = creating ? axios.post : axios.put;
 
     try {
@@ -150,9 +184,7 @@ export default function FormUsuarioRol({
       setMessage({
         open: true,
         severity: "success",
-        text: creating
-          ? "Usuario-Rol creado correctamente"
-          : "Usuario-Rol actualizado correctamente",
+        text: creating ? "Usuario-Rol creado correctamente" : "Usuario-Rol actualizado correctamente",
       });
       handleClose();
       reloadData();
@@ -161,45 +193,26 @@ export default function FormUsuarioRol({
       setMessage({
         open: true,
         severity: "error",
-        text:
-          err?.response?.data?.message ||
-          "Error al guardar el registro de usuario-rol",
+        text: err?.response?.data?.message || "Error al guardar el registro de usuario-rol",
       });
     }
   };
 
   const deleteRow = async () => {
     if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona un registro para eliminar",
-      });
+      setMessage({ open: true, severity: "error", text: "Selecciona un registro para eliminar" });
       return;
     }
-    if (
-      !window.confirm(
-        `¿Eliminar el registro de usuario-rol con id "${selectedRow.id}"?`
-      )
-    )
-      return;
+    if (!window.confirm(`¿Eliminar el registro de usuario-rol con id "${selectedRow.id}"?`)) return;
 
     try {
       await axios.delete(`v1/usuario-roles/${selectedRow.id}`);
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Usuario-Rol eliminado",
-      });
+      setMessage({ open: true, severity: "success", text: "Usuario-Rol eliminado" });
       handleClose();
       reloadData();
     } catch (err) {
       console.error(err);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "No se pudo eliminar el registro",
-      });
+      setMessage({ open: true, severity: "error", text: "No se pudo eliminar el registro" });
     }
   };
 
@@ -216,11 +229,7 @@ export default function FormUsuarioRol({
           },
           update: () => {
             if (!selectedRow?.id)
-              return setMessage({
-                open: true,
-                severity: "error",
-                text: "Selecciona un registro",
-              });
+              return setMessage({ open: true, severity: "error", text: "Selecciona un registro" });
             setMethodName("Actualizar");
             setErrors({});
             setOpen(true);
@@ -237,75 +246,58 @@ export default function FormUsuarioRol({
               Formulario para gestionar la asignación de roles a usuarios
             </DialogContentText>
 
-            {/* Usuario */}
-            {usuarios.length ? (
-              <FormControl
-                fullWidth
-                margin="dense"
-                error={!!errors.usuarioId}
-              >
-                <InputLabel id="usuarioId-label">Usuario</InputLabel>
-                <Select
-                  labelId="usuarioId-label"
-                  label="Usuario"
-                  name="usuarioId"
-                  value={formData.usuarioId}
-                  onChange={handleChange}
-                >
-                  {usuarios.map((u) => (
-                    <MenuItem key={u.id} value={u.id}>
-                      {u.email || u.nombre || u.usuarioEmail || u.id}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{errors.usuarioId}</FormHelperText>
-              </FormControl>
-            ) : (
-              <TextField
-                fullWidth
-                margin="dense"
-                name="usuarioId"
-                label="Usuario ID"
-                type="number"
-                value={formData.usuarioId}
+            {/* ✅ Usuario: items usuario_empresa (mostrar usuario_empresa, enviar correo) */}
+            <FormControl fullWidth margin="dense" error={!!errors.usuarioEmail}>
+              <InputLabel id="usuarioEmail-label">Usuario</InputLabel>
+              <Select
+                labelId="usuarioEmail-label"
+                label="Usuario"
+                name="usuarioEmail"
+                value={formData.usuarioEmail}
                 onChange={handleChange}
-                error={!!errors.usuarioId}
-                helperText={errors.usuarioId}
-              />
-            )}
-
-            {/* Rol */}
-            {roles.length ? (
-              <FormControl fullWidth margin="dense" error={!!errors.rolId}>
-                <InputLabel id="rolId-label">Rol</InputLabel>
-                <Select
-                  labelId="rolId-label"
-                  label="Rol"
-                  name="rolId"
-                  value={formData.rolId}
-                  onChange={handleChange}
-                >
-                  {roles.map((r) => (
-                    <MenuItem key={r.id} value={r.id}>
-                      {r.nombre || r.rolNombre || r.id}
+              >
+                {(Array.isArray(usuarios) ? usuarios : []).map((u) => {
+                  const email = pickEmail(u);
+                  const usuarioEmpresa = pickUsuarioEmpresa(u);
+                  return (
+                    <MenuItem key={email || u.id} value={email}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontWeight: 700 }}>
+                          {usuarioEmpresa || "Sin nombre"}
+                        </span>
+                        <span style={{ fontSize: 12, opacity: 0.7 }}>
+                          {email}
+                        </span>
+                      </div>
                     </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{errors.rolId}</FormHelperText>
-              </FormControl>
-            ) : (
-              <TextField
-                fullWidth
-                margin="dense"
+                  );
+                })}
+              </Select>
+              <FormHelperText>{errors.usuarioEmail}</FormHelperText>
+            </FormControl>
+
+            {/* ✅ Rol: items rol_empresa (mostrar rol_empresa, enviar rolId) */}
+            <FormControl fullWidth margin="dense" error={!!errors.rolId}>
+              <InputLabel id="rolId-label">Rol</InputLabel>
+              <Select
+                labelId="rolId-label"
+                label="Rol"
                 name="rolId"
-                label="Rol ID"
-                type="number"
                 value={formData.rolId}
                 onChange={handleChange}
-                error={!!errors.rolId}
-                helperText={errors.rolId}
-              />
-            )}
+              >
+                {(Array.isArray(roles) ? roles : []).map((r) => {
+                  const id = pickRolId(r);
+                  const rolEmpresa = pickRolEmpresa(r);
+                  return (
+                    <MenuItem key={id || r.id} value={id}>
+                      {rolEmpresa || id}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+              <FormHelperText>{errors.rolId}</FormHelperText>
+            </FormControl>
 
             {/* Estado */}
             <FormControl fullWidth margin="dense" error={!!errors.estadoId}>

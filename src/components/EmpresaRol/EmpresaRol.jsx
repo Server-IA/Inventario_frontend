@@ -1,27 +1,12 @@
-import React, { useEffect, useState } from "react";
+// src/components/EmpresaRol/EmpresaRol.jsx
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "../axiosConfig";
-import { Box, Stack, Typography, Button } from "@mui/material";
-import AddRounded from "@mui/icons-material/AddRounded";
-
-import GridEmpresaRol from "./GridEmpresaRol.jsx";
+import MessageSnackBar from "../MessageSnackBar.jsx";
 import FormEmpresaRol from "./FormEmpresaRol.jsx";
-import MessageSnackBar from "../MessageSnackBar";
-
-const toArray = (data) =>
-  Array.isArray(data)
-    ? data
-    : Array.isArray(data?.content)
-    ? data.content
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+import GridEmpresaRol from "./GridEmpresaRol.jsx";
 
 export default function EmpresaRol() {
-  const [rows, setRows] = useState([]);
-  const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [openForm, setOpenForm] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const [message, setMessage] = useState({
     open: false,
@@ -29,167 +14,87 @@ export default function EmpresaRol() {
     text: "",
   });
 
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState({
-    id: true,
-    empresaNombre: true,
-    rolNombre: true,
-    estadoNombre: true,
-    acciones: true,
-  });
+  const [rows, setRows] = useState([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  /* =========== Cargar datos =========== */
-  const loadEmpresaRoles = async () => {
+  // combo roles
+  const [roles, setRoles] = useState([]);
+
+  /** Carga de la tabla principal */
+  const reloadData = useCallback(async () => {
     try {
       setLoading(true);
-      // SIN /api, igual que UsuarioRol
-      const resp = await axios.get("v1/empresa-rol", {
+      const res = await axios.get("/v1/empresa-rol", {
         params: { page: 0, size: 1000 },
       });
-      setRows(toArray(resp.data));
+
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.content)
+        ? res.data.content
+        : [];
+
+      setRows(list);
     } catch (error) {
-      console.error("Error cargando empresa-rol", error);
+      console.error(error);
+      setRows([]);
       setMessage({
         open: true,
         severity: "error",
-        text: "Error cargando empresa-rol",
+        text: "Error al cargar Empresa-Rol",
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadRoles = async () => {
-    try {
-      // Catálogo de roles sin /api
-      const resp = await axios.get("v1/items/rol/0");
-      setRoles(toArray(resp.data));
-    } catch (error) {
-      console.error("Error cargando roles", error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error cargando la lista de roles",
-      });
-    }
-  };
-
-  useEffect(() => {
-    loadEmpresaRoles();
-    loadRoles();
   }, []);
 
-  /* =========== Handlers =========== */
-
-  const handleOpenForm = () => {
-    setOpenForm(true);
-  };
-
-  const handleCloseForm = () => {
-    setOpenForm(false);
-  };
-
-  const handleCreate = async (rolId) => {
-    if (!rolId) {
-      setMessage({
-        open: true,
-        severity: "warning",
-        text: "Debes seleccionar un rol",
-      });
-      return;
-    }
-
+  /** Carga de combos (items rol) */
+  const loadItems = useCallback(async () => {
     try {
-      // SIN /api
-      await axios.post("v1/empresa-rol", { rolId });
-
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Rol asignado a la empresa correctamente",
-      });
-
-      handleCloseForm();
-      loadEmpresaRoles();
-    } catch (error) {
-      console.error("Error creando empresa-rol", error);
-      setMessage({
+      const rolRes = await axios.get("/v1/items/rol/0");
+      setRoles(Array.isArray(rolRes?.data) ? rolRes.data : []);
+    } catch (err) {
+      console.error(err);
+      setRoles([]);
+      setMessage((prev) => ({
+        ...prev,
         open: true,
         severity: "error",
-        text: "Error al asignar el rol a la empresa",
-      });
+        text: "Error al cargar lista de roles",
+      }));
     }
-  };
+  }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este registro?")) return;
-
-    try {
-      // SIN /api
-      await axios.delete(`v1/empresa-rol/${id}`);
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Registro eliminado correctamente",
-      });
-      loadEmpresaRoles();
-    } catch (error) {
-      console.error("Error eliminando empresa-rol", error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al eliminar el registro",
-      });
-    }
-  };
-
-  const handleResetColumns = () => {
-    setColumnVisibilityModel({
-      id: true,
-      empresaNombre: true,
-      rolNombre: true,
-      estadoNombre: true,
-      acciones: true,
-    });
-  };
-
-  /* =========== Render =========== */
+  useEffect(() => {
+    reloadData();
+    loadItems();
+  }, [reloadData, loadItems]);
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
-        <Typography variant="h6">Empresa – Roles</Typography>
-
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={handleOpenForm}
-        >
-          Asignar rol a empresa
-        </Button>
-      </Stack>
-
+    <div>
+      <h1>Gestión Rol </h1>
       <MessageSnackBar message={message} setMessage={setMessage} />
+
+      <FormEmpresaRol
+        open={formOpen}
+        setOpen={setFormOpen}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        setMessage={setMessage}
+        reloadData={reloadData}
+        roles={roles}
+      />
 
       <GridEmpresaRol
         rows={rows}
         loading={loading}
-        onDelete={handleDelete}
-        columnVisibilityModel={columnVisibilityModel}
-        setColumnVisibilityModel={setColumnVisibilityModel}
-        onResetColumns={handleResetColumns}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        setOpenForm={setFormOpen}
+        setMessage={setMessage}
+        reloadData={reloadData}
       />
-
-      <FormEmpresaRol
-        open={openForm}
-        onClose={handleCloseForm}
-        roles={roles}
-        onSubmit={handleCreate}
-      />
-    </Box>
+    </div>
   );
 }
