@@ -244,24 +244,43 @@ export default function RE_kardexPedido() {
     return c;
   };
 
+  // Decide report path based on selected filters
+  const getReportPath = () => {
+    // Priority: producción -> producto_presentacion -> generic kardex
+    if (kdxFiltro.produccion_id) return "/v2/report/nuevo/kardex_produccion";
+    if (kdxFiltro.producto_presentacion_id) return "/v2/report/nuevo/kardex_producto_presentacion";
+    return "/v2/report/nuevo/kardex";
+  };
+
   const requestPDF = async (condicion) => {
+    const url = getReportPath();
+    const payload = { condicion, EMPRESA_ID: empresaId };
+
+    // Debug: log selected URL and payload before sending
+    console.log('[requestPDF] POST', url, payload);
+
     try {
       return await axios({
-        url: "/v2/report/nuevo/kardex",
+        url,
         method: "POST",
-        data: { condicion, EMPRESA_ID: empresaId },
+        data: payload,
         responseType: "blob",
         ...headers,
       });
     } catch (e1) {
-      if (e1?.response?.status !== 404) throw e1;
-      return await axios({
-        url: "/v2/report/nuevo/kardex",
-        method: "POST",
-        data: { condicion, EMPRESA_ID: empresaId },
-        responseType: "blob",
-        ...headers,
-      });
+      // If a specialized endpoint (producción / producto_presentacion) is missing, fall back to generic kardex
+      if (e1?.response?.status === 404 && url !== "/v2/report/nuevo/kardex") {
+        console.log('[requestPDF] specialized endpoint not found, falling back to generic /v2/report/nuevo/kardex');
+        console.log('[requestPDF] fallback POST', '/v2/report/nuevo/kardex', payload);
+        return await axios({
+          url: "/v2/report/nuevo/kardex",
+          method: "POST",
+          data: payload,
+          responseType: "blob",
+          ...headers,
+        });
+      }
+      throw e1;
     }
   };
 
@@ -306,7 +325,7 @@ export default function RE_kardexPedido() {
       {/* Filtros principales (producto, categoría, fechas) */}
       <Grid container spacing={2} mb={2}>
 
-      <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>Categoría Producto</InputLabel>
             <Select
@@ -325,7 +344,7 @@ export default function RE_kardexPedido() {
             </Select>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>Producto</InputLabel>
@@ -346,7 +365,7 @@ export default function RE_kardexPedido() {
           </FormControl>
         </Grid>
 
-       
+
 
         {/* NUEVO: Producción */}
         <Grid item xs={12} md={6}>
