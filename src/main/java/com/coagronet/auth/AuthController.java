@@ -35,65 +35,65 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthController {
 
-	private final AuthService authService;
+    private final AuthService authService;
 
-	@PostMapping("/register")
-	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO dto) {
-		return ResponseEntity.ok(authService.register(dto));
-	}
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO dto) {
+	return ResponseEntity.ok(authService.register(dto));
+    }
 
-	@PostMapping("/empresa/usuarios-roles")
-	public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterForCurrentEmpresaRequestDTO dto,
-			HttpServletRequest httpRequest) {
-		return ResponseEntity.ok(authService.registerForCurrentEmpresa(dto, httpRequest));
-	}
+    @PostMapping("/empresa/usuario-roles")
+    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterForCurrentEmpresaRequestDTO dto,
+	    HttpServletRequest httpRequest) {
+	return ResponseEntity.ok(authService.registerForCurrentEmpresa(dto, httpRequest));
+    }
 
-	@PostMapping("/v2/login")
-	public Map<String, Object> login(@Valid @RequestBody LoginRequestDTO dto) {
-		return authService.login(dto);
-	}
+    @PostMapping("/v2/login")
+    public Map<String, Object> login(@Valid @RequestBody LoginRequestDTO dto) {
+	return authService.login(dto);
+    }
 
-	@PostMapping("/switch-context")
-	public Map<String, Object> switchContext(@Valid @RequestBody SwitchContextRequestDTO dto,
-			Authentication authentication) {
-		String username = authentication.getName();
-		return authService.switchContext(dto, username);
-	}
+    @PostMapping("/switch-context")
+    public Map<String, Object> switchContext(@Valid @RequestBody SwitchContextRequestDTO dto,
+	    Authentication authentication) {
+	String username = authentication.getName();
+	return authService.switchContext(dto, username);
+    }
 
-	@PostMapping("/change-password")
-	public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody ChangePasswordRequestDTO dto) {
-		return ResponseEntity.ok(authService.changePassword(dto));
-	}
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody ChangePasswordRequestDTO dto) {
+	return ResponseEntity.ok(authService.changePassword(dto));
+    }
 
-	@GetMapping("/verify")
-	public ResponseEntity<ApiResponse> verify(@RequestParam String token) {
-		return ResponseEntity.ok(authService.verifyUser(token));
-	}
+    @GetMapping("/verify")
+    public ResponseEntity<ApiResponse> verify(@RequestParam String token) {
+	return ResponseEntity.ok(authService.verifyUser(token));
+    }
 
-	@PostMapping("/forgot-password")
-	public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO dto) {
-		return ResponseEntity.ok(authService.forgotPassword(dto));
-	}
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO dto) {
+	return ResponseEntity.ok(authService.forgotPassword(dto));
+    }
 
-	@PostMapping("/reset-password")
-	public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO dto) {
-		return ResponseEntity.ok(authService.resetPassword(dto));
-	}
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO dto) {
+	return ResponseEntity.ok(authService.resetPassword(dto));
+    }
 
-	@PostMapping("/logout")
-	public void logout(HttpServletRequest req, HttpServletResponse res) {
-		authService.logout(req, res);
-	}
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest req, HttpServletResponse res) {
+	authService.logout(req, res);
+    }
 
-	/** s?lo utilitario de perfil logeado */
-	@GetMapping("/roles")
-	public Set<String> roles() {
-		return authService.getCurrentUserRoles();
-	}
+    /** s?lo utilitario de perfil logeado */
+    @GetMapping("/roles")
+    public Set<String> roles() {
+	return authService.getCurrentUserRoles();
+    }
 
-	@PostMapping("/change-password-initial")
-	public ResponseEntity<ApiResponse> changePasswordInitial(@Valid @RequestBody InitialPasswordChangeRequestDTO dto) {
-		return ResponseEntity.ok(authService.changePasswordInitial(dto));
-	}
+    @PostMapping("/change-password-initial")
+    public ResponseEntity<ApiResponse> changePasswordInitial(@Valid @RequestBody InitialPasswordChangeRequestDTO dto) {
+	return ResponseEntity.ok(authService.changePasswordInitial(dto));
+    }
 
 }
