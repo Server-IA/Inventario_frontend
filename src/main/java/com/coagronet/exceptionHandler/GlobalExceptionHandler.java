@@ -34,192 +34,221 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-	private final MessageSource messageSource;
+    private final MessageSource messageSource;
 
-	private String msg(String codeOrRaw, Object[] args, Locale locale) {
-		return messageSource.getMessage(codeOrRaw, args, codeOrRaw, locale);
-	}
+    private String msg(String codeOrRaw, Object[] args, Locale locale) {
+        return messageSource.getMessage(codeOrRaw, args, codeOrRaw, locale);
+    }
 
-	private String requestPath(WebRequest request) {
-		if (request instanceof ServletWebRequest swr) {
-			return swr.getRequest().getRequestURI();
-		}
-		// WebRequest.getDescription(false) -> "uri=/path"
-		String desc = request.getDescription(false);
-		return (desc != null && desc.startsWith("uri=")) ? desc.substring(4) : desc;
-	}
+    private static final Map<String, String> CONSTRAINT_MAP = Map.of(
+            "unique_emp_correo", "empresa.correo.existente",
+            "unique_emp_identificacion", "empresa.identificacion.existente"
+            // Puedes agregar más aquí: "nombre_constraint", "codigo.mensaje"
+    );
 
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex,
-			WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
+    private String requestPath(WebRequest request) {
+        if (request instanceof ServletWebRequest swr) {
+            return swr.getRequest().getRequestURI();
+        }
+        // WebRequest.getDescription(false) -> "uri=/path"
+        String desc = request.getDescription(false);
+        return (desc != null && desc.startsWith("uri=")) ? desc.substring(4) : desc;
+    }
 
-		Map<String, String> fieldErrors = new LinkedHashMap<>();
-		ex.getBindingResult().getFieldErrors().forEach(fe -> {
-			String m = messageSource.getMessage(fe, locale);
-			fieldErrors.put(fe.getField(), m);
-		});
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex,
+                                                                   WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
 
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Validation Failed",
-				msg("error.validation", null, locale), requestPath(request), fieldErrors);
-		return ResponseEntity.badRequest().body(body);
-	}
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(fe -> {
+            String m = messageSource.getMessage(fe, locale);
+            fieldErrors.put(fe.getField(), m);
+        });
 
-	@ExceptionHandler(BadRequestException.class)
-	public ResponseEntity<ErrorDetails> handleBadRequest(BadRequestException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", ex.getArgs(), locale),
-				requestPath(request), null);
-		return ResponseEntity.badRequest().body(body);
-	}
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Validation Failed",
+                msg("error.validation", null, locale), requestPath(request), fieldErrors);
+        return ResponseEntity.badRequest().body(body);
+    }
 
-	@ExceptionHandler(DomainValidationException.class)
-	public ResponseEntity<ErrorDetails> handleDomainValidation(DomainValidationException ex, WebRequest request) {
-		var locale = LocaleContextHolder.getLocale();
-		Map<String, String> fieldErrors = new LinkedHashMap<>();
-		for (var v : ex.getViolations()) {
-			String resolved = messageSource.getMessage(v.getCode(), v.getArgs(), v.getCode(), locale);
-			fieldErrors.put(v.getField(), resolved);
-		}
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorDetails> handleBadRequest(BadRequestException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
+                msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", ex.getArgs(), locale),
+                requestPath(request), null);
+        return ResponseEntity.badRequest().body(body);
+    }
 
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Validation Failed",
-				msg("error.validation", null, locale), requestPath(request), fieldErrors);
-		return ResponseEntity.badRequest().body(body);
-	}
+    @ExceptionHandler(DomainValidationException.class)
+    public ResponseEntity<ErrorDetails> handleDomainValidation(DomainValidationException ex, WebRequest request) {
+        var locale = LocaleContextHolder.getLocale();
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        for (var v : ex.getViolations()) {
+            String resolved = messageSource.getMessage(v.getCode(), v.getArgs(), v.getCode(), locale);
+            fieldErrors.put(v.getField(), resolved);
+        }
 
-	@ExceptionHandler(NotFoundException.class)
-	public ResponseEntity<ErrorDetails> handleNotFound(NotFoundException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
-				msg(ex.getCode() != null ? ex.getCode() : "error.not-found", ex.getArgs(), locale),
-				requestPath(request), null);
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-	}
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Validation Failed",
+                msg("error.validation", null, locale), requestPath(request), fieldErrors);
+        return ResponseEntity.badRequest().body(body);
+    }
 
-	@ExceptionHandler(ExpiredJwtException.class)
-	public ResponseEntity<ErrorDetails> handleExpiredJwt(ExpiredJwtException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Unauthorized", msg("jwt.expired", null, locale),
-				requestPath(request), null);
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
-	}
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleNotFound(NotFoundException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
+                msg(ex.getCode() != null ? ex.getCode() : "error.not-found", ex.getArgs(), locale),
+                requestPath(request), null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
 
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<ErrorDetails> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		String code = "db.integrity";
-		Throwable root = ex.getRootCause();
-		if (root instanceof SQLException sql && "23503".equals(sql.getSQLState())) {
-			code = "db.integrity.fk";
-		}
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Data Integrity Violation", msg(code, null, locale),
-				requestPath(request), null);
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(body); // 409
-	}
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorDetails> handleExpiredJwt(ExpiredJwtException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Unauthorized", msg("jwt.expired", null, locale),
+                requestPath(request), null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
 
-	@ExceptionHandler(UserRoleForbiddenException.class)
-	public ResponseEntity<ErrorDetails> handleForbidden(UserRoleForbiddenException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Forbidden",
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.forbidden", null, locale), requestPath(request),
-				null);
-		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
-	}
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorDetails> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String code = "db.integrity"; // Código por defecto
+        Throwable root = ex.getRootCause();
 
-	@ExceptionHandler({ NoResourceFoundException.class, NoHandlerFoundException.class })
-	public ResponseEntity<ErrorDetails> handleNoResource(Exception ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
-				msg("error.endpoint-not-found", null, locale), requestPath(request), null);
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-	}
+        if (root instanceof SQLException sql) {
+            String message = sql.getMessage();
+            String sqlState = sql.getSQLState();
 
-	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-	public ResponseEntity<ErrorDetails> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex,
-			WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
-		var headers = new org.springframework.http.HttpHeaders();
-		if (ex.getSupportedHttpMethods() != null)
-			headers.setAllow(ex.getSupportedHttpMethods());
+            // 2. Buscamos en el mapa si alguna de nuestras llaves está en el mensaje de SQL
+            if (message != null) {
+                code = CONSTRAINT_MAP.entrySet().stream()
+                        .filter(entry -> message.contains(entry.getKey()))
+                        .map(Map.Entry::getValue)
+                        .findFirst()
+                        .orElse(code); // Si no encuentra nada en el mapa, mantiene el default
 
-		String message = ex.getSupportedHttpMethods() != null
-				? msg("error.method-not-allowed.with-allow", new Object[] { ex.getSupportedHttpMethods() }, locale)
-				: msg("error.method-not-allowed", null, locale);
+                // 3. Fallback para llaves foráneas si no fue un error de duplicidad
+                if (code.equals("db.integrity") && "23503".equals(sqlState)) {
+                    code = "db.integrity.fk";
+                }
+            }
+        }
 
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Method Not Allowed", message, requestPath(request),
-				null);
-		return new ResponseEntity<>(body, headers, HttpStatus.METHOD_NOT_ALLOWED);
-	}
+        ErrorDetails body = new ErrorDetails(
+                LocalDateTime.now(),
+                "Data Integrity Violation",
+                msg(code, null, locale),
+                requestPath(request),
+                null
+        );
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ErrorDetails> handleGeneric(Exception ex, WebRequest request) {
-		System.err.println("Unhandled exception at " + requestPath(request));
-		ex.printStackTrace(System.err);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
 
-		Locale locale = LocaleContextHolder.getLocale();
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Internal Server Error",
-				msg(ex.getMessage(), null, locale), requestPath(request), null);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
-	}
+    @ExceptionHandler(UserRoleForbiddenException.class)
+    public ResponseEntity<ErrorDetails> handleForbidden(UserRoleForbiddenException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Forbidden",
+                msg(ex.getMessage() != null ? ex.getMessage() : "error.forbidden", null, locale), requestPath(request),
+                null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
 
-	@ExceptionHandler(MissingServletRequestParameterException.class)
-	public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex, HttpServletRequest req) {
-		String message = "Falta el parámetro requerido '" + ex.getParameterName() + "'";
-		if ("tipoAplicacion".equals(ex.getParameterName())) {
-			message += " (valores válidos: web | movil)";
-		}
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ErrorDetails> handleNoResource(Exception ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
+                msg("error.endpoint-not-found", null, locale), requestPath(request), null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
 
-		Map<String, Object> body = Map.of("timestamp", Instant.now().toString(), "path", req.getRequestURI(), "code",
-				"VALIDATION_ERROR", "message", message, "fieldErrors",
-				List.of(Map.of("field", ex.getParameterName(), "message", "required")));
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorDetails> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex,
+                                                               WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+        var headers = new org.springframework.http.HttpHeaders();
+        if (ex.getSupportedHttpMethods() != null)
+            headers.setAllow(ex.getSupportedHttpMethods());
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
-	}
+        String message = ex.getSupportedHttpMethods() != null
+                ? msg("error.method-not-allowed.with-allow", new Object[]{ex.getSupportedHttpMethods()}, locale)
+                : msg("error.method-not-allowed", null, locale);
 
-	@ExceptionHandler(EntityNotFoundException.class)
-	public ResponseEntity<ErrorDetails> handleEntityNotFound(EntityNotFoundException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Method Not Allowed", message, requestPath(request),
+                null);
+        return new ResponseEntity<>(body, headers, HttpStatus.METHOD_NOT_ALLOWED);
+    }
 
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
-				// msg() usa codeOrRaw y si no existe en messages.properties devuelve el mismo
-				// texto
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.not-found", null, locale), requestPath(request),
-				null);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDetails> handleGeneric(Exception ex, WebRequest request) {
+        System.err.println("Unhandled exception at " + requestPath(request));
+        ex.printStackTrace(System.err);
 
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-	}
+        Locale locale = LocaleContextHolder.getLocale();
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Internal Server Error",
+                msg(ex.getMessage(), null, locale), requestPath(request), null);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
 
-	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<ErrorDetails> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex, HttpServletRequest req) {
+        String message = "Falta el parámetro requerido '" + ex.getParameterName() + "'";
+        if ("tipoAplicacion".equals(ex.getParameterName())) {
+            message += " (valores válidos: web | movil)";
+        }
 
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", null, locale),
-				requestPath(request), null);
+        Map<String, Object> body = Map.of("timestamp", Instant.now().toString(), "path", req.getRequestURI(), "code",
+                "VALIDATION_ERROR", "message", message, "fieldErrors",
+                List.of(Map.of("field", ex.getParameterName(), "message", "required")));
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
-	}
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 
-	@ExceptionHandler(IllegalStateException.class)
-	public ResponseEntity<ErrorDetails> handleIllegalState(IllegalStateException ex, WebRequest request) {
-		Locale locale = LocaleContextHolder.getLocale();
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleEntityNotFound(EntityNotFoundException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
 
-		ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Conflict",
-				msg(ex.getMessage() != null ? ex.getMessage() : "error.conflict", null, locale), requestPath(request),
-				null);
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
+                // msg() usa codeOrRaw y si no existe en messages.properties devuelve el mismo
+                // texto
+                msg(ex.getMessage() != null ? ex.getMessage() : "error.not-found", null, locale), requestPath(request),
+                null);
 
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-	}
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
 
-	@ExceptionHandler(DisabledException.class)
-	public ResponseEntity<?> handleDisabled(DisabledException ex) {
-		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Usuario inactivo o deshabilitado"));
-	}
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorDetails> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
 
-	@ExceptionHandler(ResponseStatusException.class)
-	public ResponseEntity<?> handleRse(ResponseStatusException ex) {
-		return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message", ex.getReason()));
-	}
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
+                msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", null, locale),
+                requestPath(request), null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorDetails> handleIllegalState(IllegalStateException ex, WebRequest request) {
+        Locale locale = LocaleContextHolder.getLocale();
+
+        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Conflict",
+                msg(ex.getMessage() != null ? ex.getMessage() : "error.conflict", null, locale), requestPath(request),
+                null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<?> handleDisabled(DisabledException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Usuario inactivo o deshabilitado"));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<?> handleRse(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message", ex.getReason()));
+    }
 
 }
