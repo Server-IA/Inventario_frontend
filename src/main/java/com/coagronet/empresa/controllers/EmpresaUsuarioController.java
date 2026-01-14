@@ -3,6 +3,7 @@ package com.coagronet.empresa.controllers;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,7 @@ public class EmpresaUsuarioController {
 	@Autowired
 	private UsuarioRolRepository usuarioRolRepository;
 
+	@Transactional
 	@PostMapping("/empresa-usuario")
 	public ResponseEntity<Map<String, Integer>> createEmpresa(@RequestBody EmpresaDTO empresaDTO,
 			@RequestHeader("Authorization") String authorizationHeader) {
