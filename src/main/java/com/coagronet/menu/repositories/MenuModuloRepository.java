@@ -75,4 +75,14 @@ public interface MenuModuloRepository extends Repository<Modulo, Long> {
 	List<SubModuloRow> findSubmodulosByEmpresaTipoAppAndRol(@Param("empresaId") Long empresaId,
 			@Param("tipoAppId") Integer tipoAppId, @Param("roleName") String roleName);
 
+	@Query("SELECT m FROM Modulo m " +
+		   "JOIN FETCH m.subSistema s " +
+		   "WHERE m.id NOT IN (" +
+		   "   SELECT me.modulo.id " +
+		   "   FROM ModuloEmpresa me " +
+		   "   WHERE me.empresa.id = :empresaId" +
+		   ") " +
+		   "ORDER BY s.nombre ASC, m.nombre ASC")
+	List<Modulo> findModulosNoAsignados(@Param("empresaId") Long empresaId);
+
 }

@@ -1,12 +1,12 @@
 package com.coagronet.menu.controllers;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.coagronet.menu.dtos.AsignarModulosRequestDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.services.MenuService;
@@ -49,6 +49,28 @@ public class MenuController {
 	public ResponseEntity<List<MenuSubSistemaResponseDTO>> listarSubsistemas(@RequestParam String tipoAplicacion) {
 		List<MenuSubSistemaResponseDTO> data = menuService.obtenerMenuPorEmpresaTipoYRol(tipoAplicacion);
 		return ResponseEntity.ok(data);
+	}
+
+	@GetMapping("/modulos-disponibles")
+	public ResponseEntity<List<MenuSubSistemaResponseDTO>> getModulosDisponibles() {
+		List<MenuSubSistemaResponseDTO> modulos = menuService.obtenerModulosDisponiblesParaEmpresa();
+
+		if (modulos.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+
+		return ResponseEntity.ok(modulos);
+	}
+
+	@PostMapping("/asignar-modulos")
+	public ResponseEntity<Map<String, String>> asignarModulos(@RequestBody AsignarModulosRequestDTO request) {
+
+		menuService.asignarModulosAEmpresa(request.getModulosIds());
+
+		Map<String, String> response = new HashMap<>();
+		response.put("mensaje", "Módulos procesados correctamente");
+
+		return ResponseEntity.ok(response);
 	}
 
 }
