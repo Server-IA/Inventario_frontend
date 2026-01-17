@@ -19,7 +19,7 @@ public class MyUserDetailsService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user = userRepository.findByUsernameWithRolesAndEstado(username)
-			.orElseThrow(() -> new UsernameNotFoundException("User not found"));
+				.orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
 		// Verificación de estado (igual que antes)
 		switch (user.getUsuarioEstado().getId().intValue()) {
@@ -30,6 +30,7 @@ public class MyUserDetailsService implements UserDetailsService {
 			case 2:
 			case 3:
 			case 4:
+			case 5:
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + user.getUsuarioEstado().getId());
