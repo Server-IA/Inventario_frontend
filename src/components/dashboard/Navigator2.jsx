@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 
 import { alpha, useTheme } from "@mui/material/styles";
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import SecurityIcon from '@mui/icons-material/Security';
 import MenuIcon from "@mui/icons-material/Menu";
@@ -184,7 +185,7 @@ import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
 import EmpresaRolsystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
-
+import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // Imágenes
 import img1 from "/images/cards/1.jpg";
 import img2 from "/images/cards/2.jpg";
@@ -256,7 +257,7 @@ import estado from "/images/cards/estado.webp";
 import { es } from "date-fns/locale";
 
 const icons = {
-  
+  AccountBoxIcon: <AccountBoxIcon />,
   HistoryToggleOff: <HistoryToggleOffIcon />,
   Category: <CategoryIcon />,
   Timeline: <TimelineIcon />,
@@ -370,6 +371,7 @@ const icons = {
 };
 
 const components = {
+  Rol_usuario: Rol_usuario,
   EmpresaRolsystem: EmpresaRolsystem,
   EmpresaRol: EmpresaRol,
   UsuarioRoles: UsuarioRoles,

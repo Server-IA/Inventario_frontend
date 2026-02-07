@@ -62,7 +62,7 @@ export default function Ocupacion() {
 
   useEffect(() => {
     reloadData(0, pageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   // Handlers para el grid

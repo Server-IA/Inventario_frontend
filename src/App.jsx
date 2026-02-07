@@ -62,6 +62,7 @@ import RE_fc from './components/RE_fc/re_fc.jsx';
 import Verify from './components/Verify.jsx';
 import FormRegistroPersona from "./components/seguridad/FormRegistroPersona";
 import FormRegistroEmpresa from './components/seguridad/FormRegistroEmpresa.jsx';
+import ChangePasswordInitial from './components/seguridad/ChangePasswordInitial.jsx';
 
 const moduleMap = {
   persona: Persona,
@@ -138,10 +139,26 @@ useEffect(() => {
     return;
   }
 
+  // -----------------------------------------------------------------
+  // 1.0) NUEVO BLOQUE: Change Password Initial — SIN MENÚ
+  // -----------------------------------------------------------------
+  if (location.pathname.startsWith("/coagronet/auth/change-password-initial")) {
+    if (hasValidToken()) {
+      setIsAuthenticated(false); // <--- ESTO OCULTA EL MENÚ
+      // Asegúrate de importar ChangePasswordInitial arriba
+      setCurrentModule(<ChangePasswordInitial />); 
+    } else {
+      setIsAuthenticated(false);
+      setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
+    }
+    return;
+  }
+  // -----------------------------------------------------------------
+
   // 1.1) Onboarding por ruta — SIN MENÚ
   if (location.pathname.startsWith("/coagronet/onboarding/persona")) {
     if (hasValidToken()) {
-      setIsAuthenticated(false); // modo público
+      setIsAuthenticated(false); 
       setCurrentModule(
         <FormRegistroPersona setCurrentModule={setCurrentModule} />
       );
@@ -154,7 +171,7 @@ useEffect(() => {
 
   if (location.pathname.startsWith("/coagronet/onboarding/empresa")) {
     if (hasValidToken()) {
-      setIsAuthenticated(false); // modo público
+      setIsAuthenticated(false); 
       setCurrentModule(
         <FormRegistroEmpresa setCurrentModule={setCurrentModule} />
       );
@@ -181,6 +198,16 @@ useEffect(() => {
   if (hasValidToken()) {
     const savedModule = localStorage.getItem("activeModule");
 
+    // -----------------------------------------------------------------
+    // NUEVO BLOQUE: Persistencia al recargar (si guardaste esto en el Login)
+    // -----------------------------------------------------------------
+    if (savedModule === "change_password_initial") {
+        setIsAuthenticated(false); // <--- ESTO OCULTA EL MENÚ
+        setCurrentModule(<ChangePasswordInitial />);
+        return;
+    }
+    // -----------------------------------------------------------------
+
     // Onboarding si quedó guardado en localStorage
     if (savedModule === "form_registro_persona") {
       setIsAuthenticated(false);
@@ -197,7 +224,7 @@ useEffect(() => {
       return;
     }
 
-    // ✅ Autenticado normal con menú
+    // ✅ Autenticado normal CON MENÚ
     setIsAuthenticated(true);
 
     // 🔒 Rutas de MENÚ donde NO se debe aplicar el último CRUD
@@ -230,7 +257,6 @@ useEffect(() => {
     setCurrentModule(<Inicio setCurrentModule={setCurrentModule} />);
   }
 }, [location.pathname, location.search]);
-
 
   const isPublic = !isAuthenticated;
 

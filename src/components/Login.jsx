@@ -166,56 +166,82 @@ export default function Login(props) {
         return { empresaIdE, rolIdE, empresaNombreE };
       };
 
-      switch (estado) {
-        case 0: {
-          clearAuth();
-          props.setIsAuthenticated?.(false);
-          setError("Tu usuario está desactivado. Contacta al administrador.");
-          break;
-        }
-        case 1: {
-          clearAuth();
-          props.setIsAuthenticated?.(false);
-          setError("Debes activar tu cuenta desde el email de verificación.");
-          break;
-        }
-        case 2: {
-          if (!token) {
+switch (estado) {
+    case 0: {
+        clearAuth();
+        props.setIsAuthenticated?.(false);
+        setError("Tu usuario está desactivado. Contacta al administrador.");
+        break;
+    }
+    case 1: {
+        clearAuth();
+        props.setIsAuthenticated?.(false);
+        setError("Debes activar tu cuenta desde el email de verificación.");
+        break;
+    }
+    case 2: {
+        if (!token) {
             clearAuth();
             setError("No se recibió token válido.");
             break;
-          }
-          const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
-          persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-          localStorage.setItem("activeModule", "form_registro_persona");
-          navigate("/coagronet/onboarding/persona", { replace: true });
-          break;
         }
-
-        case 3: {
-          if (!token) {
+        const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+        persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
+        localStorage.setItem("activeModule", "form_registro_persona");
+        navigate("/coagronet/onboarding/persona", { replace: true });
+        break;
+    }
+    case 3: {
+        if (!token) {
             clearAuth();
             setError("No se recibió token válido.");
             break;
-          }
-          const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
-          persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-          localStorage.setItem("activeModule", "form_registro_empresa");
-          navigate("/coagronet/onboarding/empresa", { replace: true });
-          break;
         }
+        const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+        persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
+        localStorage.setItem("activeModule", "form_registro_empresa");
+        navigate("/coagronet/onboarding/empresa", { replace: true });
+        break;
+    }
 
-        case 4:
-        default: { // Completo
-          if (!token) { clearAuth(); setError("No se recibió token válido."); break; }
-          const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
-          persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-          localStorage.removeItem("activeModule");
-          props.setIsAuthenticated?.(true);
-          navigate("/coagronet/", { replace: true });
-          break;
+    // --- NUEVO CASO AGREGADO ---
+    case 5: { 
+        if (!token) {
+            clearAuth();
+            setError("No se recibió token válido.");
+            break;
         }
-      }
+        // 1. Persistimos la sesión para que pueda llamar al API de cambio de contraseña
+        const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+        persistAuth(token, { 
+            empresaId: empresaIdE, 
+            rolId: rolIdE, 
+            empresaNombre: empresaNombreE, 
+            rolesByCompany, 
+            decodeJwt 
+        });
+
+        // 2. (Opcional) Marcamos un módulo activo por si recarga la página
+        localStorage.setItem("activeModule", "change_password_initial");
+
+        // 3. Navegamos a la ruta que renderiza el componente ChangePasswordInitial
+        // Asegúrate de que esta ruta exista en tu archivo de rutas
+        navigate("/coagronet/auth/change-password-initial", { replace: true }); 
+        break;
+    }
+    // ---------------------------
+
+    case 4:
+    default: { // Completo
+        if (!token) { clearAuth(); setError("No se recibió token válido."); break; }
+        const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
+        persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
+        localStorage.removeItem("activeModule");
+        props.setIsAuthenticated?.(true);
+        navigate("/coagronet/", { replace: true });
+        break;
+    }
+}
     } catch (err) {
       console.error("Login error:", err);
       const msg = err?.response?.status === 401

@@ -1,206 +1,94 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
-import FormUsuarioRol from "./FormUsuarioRol.jsx";
-import GridUsuarioRol from "./GridUsuarioRol.jsx";
-
-const ESTADOS_USUARIO_ROL = [
-  { id: 1, nombre: "Activo" },
-  { id: 2, nombre: "Inactivo" },
-];
-
-// ===== Helpers robustos =====
-const looksLikeEmail = (v) =>
-  typeof v === "string" && v.includes("@") && v.includes(".");
-
-const pickEmail = (obj) => {
-  if (!obj || typeof obj !== "object") return "";
-  const byKey =
-    obj.email ??
-    obj.usuarioEmail ??
-    obj.correo ??
-    obj.correoElectronico ??
-    obj.usuario_email ??
-    obj.mail ??
-    "";
-  if (looksLikeEmail(byKey)) return String(byKey).trim();
-  const found = Object.values(obj).find((v) => looksLikeEmail(v));
-  return found ? String(found).trim() : "";
-};
-
-const pickUsuarioEmpresa = (obj) => {
-  if (!obj || typeof obj !== "object") return "";
-  return String(
-    obj.usuario_empresa ??
-      obj.usuarioEmpresa ??
-      obj.usuarioempresa ??
-      obj.userEmpresa ??
-      obj.nombre ??
-      ""
-  ).trim();
-};
-
-const pickRolId = (obj) => {
-  const v = obj?.id ?? obj?.rolId ?? obj?.rol_id ?? obj?.codigo ?? null;
-  if (v === null || v === undefined || v === "") return null;
-  const n = Number(v);
-  return Number.isNaN(n) ? null : n;
-};
-
-const pickRolEmpresa = (obj) => {
-  if (!obj || typeof obj !== "object") return "";
-  return String(
-    obj.rol_empresa ??
-      obj.rolEmpresa ??
-      obj.rolNombre ??
-      obj.nombre ??
-      obj.descripcion ??
-      ""
-  ).trim();
-};
+import FormUsuarioRol from "./FormUsuarioRol";
+import GridUsuarioRol from "./GridUsuarioRol";
+import { Paper, Typography } from "@mui/material";
 
 export default function UsuarioRol() {
   const [selectedRow, setSelectedRow] = useState({});
-  const [message, setMessage] = useState({
-    open: false,
-    severity: "success",
-    text: "",
-  });
+  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
 
-  const [rawRows, setRawRows] = useState([]);
-  const [usuariosItems, setUsuariosItems] = useState([]); // /items/usuario_empresa/0
-  const [rolesItems, setRolesItems] = useState([]); // /items/rol_empresa/0
-
-  const [formOpen, setFormOpen] = useState(false);
+  const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Mapa email -> usuario_empresa
-  const usuarioEmpresaByEmail = useMemo(() => {
-    const map = {};
-    (Array.isArray(usuariosItems) ? usuariosItems : []).forEach((u) => {
-      const email = pickEmail(u);
-      const usuarioEmpresa = pickUsuarioEmpresa(u);
-      if (email) map[email] = usuarioEmpresa || email;
-    });
-    return map;
-  }, [usuariosItems]);
+  const reloadData = async (pageArg = page, sizeArg = pageSize) => {
+    const token = localStorage.getItem("token");
+    const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-  // ✅ Mapa rolId -> rol_empresa
-  const rolEmpresaById = useMemo(() => {
-    const map = {};
-    (Array.isArray(rolesItems) ? rolesItems : []).forEach((r) => {
-      const id = pickRolId(r);
-      const rolEmpresa = pickRolEmpresa(r);
-      if (id !== null) map[id] = rolEmpresa || String(id);
-    });
-    return map;
-  }, [rolesItems]);
-
-  // ✅ Enriquecer rows para que el Grid muestre nombres
-  const rows = useMemo(() => {
-    return (Array.isArray(rawRows) ? rawRows : []).map((r) => {
-      const email = String(r?.usuarioEmail ?? "").trim();
-      const rolId = r?.rolId ?? r?.rol_id ?? r?.rol ?? null;
-      const rolIdNum = rolId !== null ? Number(rolId) : null;
-
-      return {
-        ...r,
-        usuarioNombre: usuarioEmpresaByEmail[email] || email,
-        // si el backend ya trae rolNombre bonito, lo respetamos; si no, usamos items
-        rolNombre:
-          r?.rolNombre ||
-          (rolIdNum !== null && !Number.isNaN(rolIdNum)
-            ? rolEmpresaById[rolIdNum]
-            : "") ||
-          r?.rolNombre ||
-          "",
-      };
-    });
-  }, [rawRows, usuarioEmpresaByEmail, rolEmpresaById]);
-
-  const reloadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get("v1/usuario-roles", {
-        params: { page: 0, size: 1000 },
+      const { data } = await axios.get("/v1/usuario-roles", {
+        ...headers,
+        params: {
+          page: pageArg,
+          size: sizeArg,
+          sort: "id,desc", 
+        },
       });
-      const list = res?.data?.content ?? res?.data ?? [];
-      setRawRows(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error(error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al cargar usuario-roles",
-      });
+
+      const content = data.content || [];
+      const meta = data.page || {};
+      const total = data.totalElements ?? meta.totalElements ?? content.length;
+
+      setRows(content);
+      setRowCount(total);
+      setPage(data.number ?? meta.number ?? pageArg);
+      setPageSize(data.size ?? meta.size ?? sizeArg);
+
+    } catch (err) {
+      console.error("❌ Error API:", err);
+      setMessage({ open: true, severity: "error", text: "Error de conexión con el servidor" });
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const loadUsuariosItems = useCallback(async () => {
-    try {
-      const res = await axios.get("/v1/items/usuario_empresa/0");
-      const list = res?.data?.content ?? res?.data ?? [];
-      setUsuariosItems(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error(error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al cargar items de usuario_empresa",
-      });
-      setUsuariosItems([]);
-    }
-  }, []);
-
-  const loadRolesItems = useCallback(async () => {
-    try {
-      const res = await axios.get("/v1/items/rol_empresa/0");
-      const list = res?.data?.content ?? res?.data ?? [];
-      setRolesItems(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error(error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al cargar items de rol_empresa",
-      });
-      setRolesItems([]);
-    }
-  }, []);
+  };
 
   useEffect(() => {
-    reloadData();
-    loadUsuariosItems();
-    loadRolesItems();
-  }, [reloadData, loadUsuariosItems, loadRolesItems]);
+    reloadData(0, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handlePaginationModelChange = (model) => {
+    if (model.size !== pageSize) {
+      setPageSize(model.size);
+      setPage(0);
+      reloadData(0, model.size);
+    } else {
+      setPage(model.page);
+      reloadData(model.page, pageSize);
+    }
+  };
 
   return (
-    <div>
-      <h1>Gestión de Usuario-Rol</h1>
+    <div style={{ padding: '20px' }}>
+      <Typography variant="h5" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
+        Gestión de Usuarios y Roles
+      </Typography>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
       <FormUsuarioRol
-        open={formOpen}
-        setOpen={setFormOpen}
-        selectedRow={selectedRow || {}}
-        setSelectedRow={setSelectedRow}
-        setMessage={setMessage}
-        reloadData={reloadData}
-        estados={ESTADOS_USUARIO_ROL}
-        // ✅ USANDO LOS ITEMS
-        usuarios={usuariosItems}
-        roles={rolesItems}
-      />
-
-      <GridUsuarioRol
-        rows={rows}
-        loading={loading}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
+        setMessage={setMessage}
+        reloadData={() => reloadData(page, pageSize)}
       />
+
+      <Paper elevation={2} sx={{ mt: 2 }}>
+        <GridUsuarioRol
+          rows={rows}
+          selectedRow={selectedRow}
+          setSelectedRow={setSelectedRow}
+          paginationModel={{ page, pageSize }}
+          setPaginationModel={handlePaginationModelChange}
+          rowCount={rowCount}
+          loading={loading}
+        />
+      </Paper>
     </div>
   );
 }
