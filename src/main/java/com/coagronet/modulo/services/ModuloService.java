@@ -1,11 +1,11 @@
 package com.coagronet.modulo.services;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException;
+import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.repositories.ModuloRepository;
@@ -38,26 +38,25 @@ public class ModuloService {
         public Long crearModulo(ModuloRequest request) {
 
                 if (moduloRepository.existsByNombre(request.nombre())) {
-                        throw new ResponseStatusException(HttpStatus.CONFLICT,
-                                        "Ya existe un módulo con el nombre: " + request.nombre());
+                        // Lanza excepción con código "modulo.duplicado"
+                        throw new RecursoDuplicadoException(request.nombre());
                 }
 
                 Estado estado = estadoRepository.findById(request.estadoId())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                                "No existe un Estado con el ID: " + request.estadoId()));
+                                // Lanza excepción con código "entidad.no_encontrada", params: "Estado", id
+                                .orElseThrow(() -> new EntidadNoEncontradaException("Estado", request.estadoId()));
 
                 SubSistema subSistema = subSistemaRepository.findById(request.subSistemaId())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                                "No existe un SubSistema con el ID: " + request.subSistemaId()));
+                                .orElseThrow(() -> new EntidadNoEncontradaException("SubSistema",
+                                                request.subSistemaId()));
 
                 TipoModulo tipoModulo = tipoModuloRepository.findById(request.tipoModuloId())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                                "No existe un Tipo de Módulo con el ID: " + request.tipoModuloId()));
+                                .orElseThrow(() -> new EntidadNoEncontradaException("Tipo de Módulo",
+                                                request.tipoModuloId()));
 
                 TipoAplicacion tipoAplicacion = tipoAplicacionRepository.findById(request.tipoAplicacionId())
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                                                "No existe un Tipo de Aplicación con el ID: "
-                                                                + request.tipoAplicacionId()));
+                                .orElseThrow(() -> new EntidadNoEncontradaException("Tipo de Aplicación",
+                                                request.tipoAplicacionId()));
 
                 String[] rolesArray = (request.roles() != null && !request.roles().isEmpty())
                                 ? request.roles().toArray(new String[0])
