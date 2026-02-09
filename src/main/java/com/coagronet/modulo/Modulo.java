@@ -21,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -30,7 +31,10 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "modulo", schema = "public")
+@Table(name = "modulo", schema = "public", uniqueConstraints = {
+        @UniqueConstraint(name = "ux_nombre_subsistema_tipo_aplicacion", columnNames = { "mod_nombre",
+                "mod_subsistema_id", "mod_tipo_aplicacion_id" })
+})
 @SequenceGenerator(name = "MOD_SEQ", sequenceName = "modulo_mod_id_seq", schema = "public", initialValue = 1, allocationSize = 1)
 @Getter
 @Setter
@@ -41,11 +45,12 @@ import lombok.ToString;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Modulo implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MOD_SEQ")
     @Column(name = "mod_id")
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "mod_nombre", nullable = false, length = 100)
@@ -82,5 +87,8 @@ public class Modulo implements Serializable {
 
     @Column(name = "mod_nombre_id", length = 255)
     private String nombreId;
+
+    @Column(name = "mod_requerido")
+    private Boolean requerido;
 
 }
