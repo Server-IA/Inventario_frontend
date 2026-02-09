@@ -3,6 +3,7 @@ package com.coagronet.tipoaplicacion;
 import java.io.Serializable;
 
 import com.coagronet.estado.Estado;
+import com.fasterxml.jackson.annotation.JsonFilter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,6 +34,7 @@ import lombok.ToString;
 @Builder
 @ToString(exclude = { "estado" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@JsonFilter("filtroDinamico")
 public class TipoAplicacion implements Serializable {
 
     private static final long serialVersionUID = 1L;
