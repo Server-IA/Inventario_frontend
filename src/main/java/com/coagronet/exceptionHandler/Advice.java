@@ -5,12 +5,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import io.jsonwebtoken.ExpiredJwtException;
 
 /**
  * Provee el manejo centralizado de excepciones para la API REST, interceptando
@@ -88,6 +93,45 @@ public class Advice extends ResponseEntityExceptionHandler {
         problemDetail.setTitle("Error de Validación");
 
         return createResponseEntity(problemDetail, headers, status, request);
+    }
+
+    /**
+     * Intercepta y gestiona la excepción lanzada cuando un token de seguridad JWT
+     * ha superado su tiempo de validez.
+     * <p>
+     * Este método captura {@link ExpiredJwtException} para transformar el error
+     * técnico en una respuesta
+     * estructurada (RFC 7807). Mapea el incidente al código de estado HTTP
+     * <code>401 UNAUTHORIZED</code>
+     * y define un mensaje amigable ("El token de sesión ha caducado...") para guiar
+     * al usuario final
+     * hacia un nuevo inicio de sesión.
+     * </p>
+     * <p>
+     * Además, categoriza el error con el URI <code>.../errors/jwt-expired</code>
+     * para facilitar su
+     * identificación programática en el cliente.
+     * </p>
+     *
+     * @param ex la excepción capturada que contiene los metadatos del token
+     *           vencido.
+     * @return una instancia de {@link ProblemDetail} configurada con el título
+     *         "Token Expirado" y
+     *         las instrucciones de remediación.
+     * @see ExpiredJwtException
+     * @see ProblemDetail
+     * @since 2026
+     */
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ProblemDetail handleExpiredJwtException(ExpiredJwtException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+
+        problemDetail.setTitle("Token Expirado");
+        problemDetail.setType(URI.create("https://coagronet.com/errors/jwt-expired"));
+
+        problemDetail.setDetail("El token de sesión ha caducado. Por favor, inicie sesión nuevamente.");
+
+        return problemDetail;
     }
 
 }
