@@ -85,4 +85,32 @@ public interface ModuloRepository extends JpaRepository<Modulo, Long> {
      */
     Boolean existsByNombre(String nombre);
 
+    /**
+     * Verifica si existe algún otro registro con el nombre especificado, excluyendo
+     * el identificador proporcionado.
+     * <p>
+     * Este método derivado (Query Method) es fundamental para las validaciones de
+     * integridad durante los procesos
+     * de <strong>actualización</strong>. Permite comprobar que el nuevo nombre
+     * asignado no entre en conflicto con
+     * otros registros existentes en la base de datos, ignorando el propio registro
+     * que está siendo modificado.
+     * </p>
+     * <p>
+     * La consulta generada equivale lógicamente a:
+     * <code>SELECT COUNT(*) > 0 FROM table WHERE nombre = ? AND id <> ?</code>.
+     * </p>
+     *
+     * @param nombre cadena de caracteres con el nombre comercial o funcional que se
+     *               desea validar.
+     * @param id     identificador único (llave primaria) del registro actual que
+     *               debe ser omitido en la búsqueda
+     *               para evitar falsos positivos de duplicidad.
+     * @return <code>true</code> si existe <strong>otro</strong> registro diferente
+     *         que ya utiliza ese nombre;
+     *         <code>false</code> si el nombre está libre o solo pertenece al
+     *         registro con el <code>id</code> dado.
+     */
+    boolean existsByNombreAndIdNot(String nombre, Long id);
+
 }

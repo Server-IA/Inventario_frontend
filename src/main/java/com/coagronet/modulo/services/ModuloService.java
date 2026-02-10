@@ -1,11 +1,13 @@
 package com.coagronet.modulo.services;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException;
 import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
+import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.repositories.ModuloRepository;
@@ -98,6 +100,7 @@ public class ModuloService {
          *                                      registro existente.
          * @see ModuloRequest
          */
+        @Transactional
         public Long crearModulo(ModuloRequest request) {
 
                 if (moduloRepository.existsByNombre(request.nombre())) {
@@ -140,6 +143,94 @@ public class ModuloService {
                                 .build();
 
                 return moduloRepository.save(modulo).getId();
+        }
+
+        /**
+         * Actualiza la información operativa y funcional de un módulo existente en el
+         * sistema.
+         * <p>
+         * Este método ejecuta una transacción atómica para modificar los atributos de
+         * la entidad {@link Modulo}.
+         * Antes de aplicar los cambios, realiza un conjunto estricto de validaciones de
+         * integridad y reglas de negocio:
+         * </p>
+         * <ul>
+         * <li>Confirma la existencia del registro objetivo en la base de datos.</li>
+         * <li>Valida la unicidad del nombre, asegurando que no entre en conflicto con
+         * otros registros (excluyendo el propio módulo en edición).</li>
+         * <li>Verifica la validez de todas las llaves foráneas referenciadas (Estado,
+         * Subsistema, Tipos).</li>
+         * </ul>
+         * <p>
+         * Adicionalmente, gestiona la transformación de tipos de datos, convirtiendo la
+         * lista de roles del DTO
+         * a un arreglo de cadenas (<code>String[]</code>) para garantizar la
+         * compatibilidad con el tipo de columna
+         * específico de PostgreSQL.
+         * </p>
+         *
+         * @param id      identificador único (llave primaria) del módulo que se desea
+         *                actualizar.
+         * @param request objeto de transferencia (DTO) que contiene los nuevos valores
+         *                a persistir.
+         *                No debe ser <code>null</code>.
+         * @throws RecursoNoEncontradoException si no existe un módulo asociado al
+         *                                      <code>id</code> proporcionado.
+         * @throws RecursoDuplicadoException    si el nombre especificado en el
+         *                                      <code>request</code> ya está asignado
+         *                                      a otro módulo diferente en el sistema.
+         * @throws EntidadNoEncontradaException si alguna de las entidades relacionadas
+         *                                      (Estado, SubSistema,
+         *                                      TipoModulo, TipoAplicacion) no se
+         *                                      encuentra en los catálogos respectivos.
+         * @see ModuloRequest
+         * @see Modulo
+         * @since 2026
+         */
+        @Transactional
+        public void actualizarModulo(Long id, ModuloRequest request) {
+
+                Modulo modulo = moduloRepository.findById(id)
+                                .orElseThrow(() -> new RecursoNoEncontradoException("Módulo", id));
+
+                if (moduloRepository.existsByNombreAndIdNot(request.nombre(), id)) {
+                        throw new RecursoDuplicadoException(request.nombre());
+                }
+
+                Estado estado = estadoRepository.findById(request.estadoId())
+                                .orElseThrow(() -> new EntidadNoEncontradaException("Estado", request.estadoId()));
+
+                SubSistema subSistema = subSistemaRepository.findById(request.subSistemaId())
+                                .orElseThrow(() -> new EntidadNoEncontradaException("SubSistema",
+                                                request.subSistemaId()));
+
+                TipoModulo tipoModulo = tipoModuloRepository.findById(request.tipoModuloId())
+                                .orElseThrow(() -> new EntidadNoEncontradaException("Tipo de Módulo",
+                                                request.tipoModuloId()));
+
+                TipoAplicacion tipoAplicacion = tipoAplicacionRepository.findById(request.tipoAplicacionId())
+                                .orElseThrow(() -> new EntidadNoEncontradaException("Tipo de Aplicación",
+                                                request.tipoAplicacionId()));
+
+                // Transformación de List<String> a String[] para compatibilidad con array de
+                // PostgreSQL
+                String[] rolesArray = (request.roles() != null && !request.roles().isEmpty())
+                                ? request.roles().toArray(new String[0])
+                                : null;
+
+                modulo.setNombre(request.nombre());
+                modulo.setUrl(request.url());
+                modulo.setDescripcion(request.descripcion());
+                modulo.setIcon(request.icon());
+                modulo.setEstado(estado);
+                modulo.setSubSistema(subSistema);
+                modulo.setTipoModulo(tipoModulo);
+                modulo.setTipoAplicacion(tipoAplicacion);
+                modulo.setRolId(rolesArray);
+                modulo.setNombreId(request.nombreId());
+                modulo.setRequerido(request.requerido());
+
+                moduloRepository.save(modulo);
         }
 
 }
