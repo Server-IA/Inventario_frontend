@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 
 @ControllerAdvice
 @RequiredArgsConstructor
+@Deprecated(since = "2026-02-08", forRemoval = true) // Migración a Advice
 public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     private static final Map<String, String> CONSTRAINT_MAP = Map.of(
             "unique_emp_correo", "empresa.correo.existente",
             "unique_emp_identificacion", "empresa.identificacion.existente"
-            // Puedes agregar más aquí: "nombre_constraint", "codigo.mensaje"
+    // Puedes agregar más aquí: "nombre_constraint", "codigo.mensaje"
     );
 
     private String requestPath(WebRequest request) {
@@ -53,22 +53,6 @@ public class GlobalExceptionHandler {
         // WebRequest.getDescription(false) -> "uri=/path"
         String desc = request.getDescription(false);
         return (desc != null && desc.startsWith("uri=")) ? desc.substring(4) : desc;
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex,
-                                                                   WebRequest request) {
-        Locale locale = LocaleContextHolder.getLocale();
-
-        Map<String, String> fieldErrors = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(fe -> {
-            String m = messageSource.getMessage(fe, locale);
-            fieldErrors.put(fe.getField(), m);
-        });
-
-        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Validation Failed",
-                msg("error.validation", null, locale), requestPath(request), fieldErrors);
-        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(BadRequestException.class)
@@ -141,8 +125,7 @@ public class GlobalExceptionHandler {
                 "Data Integrity Violation",
                 msg(code, null, locale),
                 requestPath(request),
-                null
-        );
+                null);
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
@@ -156,7 +139,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
-    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    @ExceptionHandler({ NoResourceFoundException.class, NoHandlerFoundException.class })
     public ResponseEntity<ErrorDetails> handleNoResource(Exception ex, WebRequest request) {
         Locale locale = LocaleContextHolder.getLocale();
         ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Not Found",
@@ -166,14 +149,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorDetails> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex,
-                                                               WebRequest request) {
+            WebRequest request) {
         Locale locale = LocaleContextHolder.getLocale();
         var headers = new org.springframework.http.HttpHeaders();
         if (ex.getSupportedHttpMethods() != null)
             headers.setAllow(ex.getSupportedHttpMethods());
 
         String message = ex.getSupportedHttpMethods() != null
-                ? msg("error.method-not-allowed.with-allow", new Object[]{ex.getSupportedHttpMethods()}, locale)
+                ? msg("error.method-not-allowed.with-allow", new Object[] { ex.getSupportedHttpMethods() }, locale)
                 : msg("error.method-not-allowed", null, locale);
 
         ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Method Not Allowed", message, requestPath(request),
