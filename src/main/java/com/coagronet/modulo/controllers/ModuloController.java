@@ -19,10 +19,13 @@ import com.coagronet.modulo.services.ModuloService;
 import jakarta.validation.Valid;
 
 /**
- * Controlador REST encargado de exponer los servicios de gestión para el recurso Módulo.
+ * Controlador REST encargado de exponer los servicios de gestión para el
+ * recurso Módulo.
  * <p>
- * Define los puntos de entrada (endpoints) bajo la ruta <code>/api/v1/modulos</code>, permitiendo la interacción de
- * clientes externos con la lógica de negocio. Actúa como capa de presentación, delegando el procesamiento al
+ * Define los puntos de entrada (endpoints) bajo la ruta
+ * <code>/api/v1/modulos</code>, permitiendo la interacción de
+ * clientes externos con la lógica de negocio. Actúa como capa de presentación,
+ * delegando el procesamiento al
  * {@link ModuloService} y orquestando las respuestas HTTP estandarizadas.
  * </p>
  *
@@ -31,7 +34,8 @@ import jakarta.validation.Valid;
  * @see ModuloService
  * @since 2026
  */
-@RestController @RequestMapping("/api/v1/modulos")
+@RestController
+@RequestMapping("/api/v1/modulos")
 public class ModuloController {
 
     private final ModuloService moduloService;
@@ -39,8 +43,9 @@ public class ModuloController {
     /**
      * Inicializa el controlador inyectando la dependencia de servicio requerida.
      *
-     * @param moduloService componente de lógica de negocio para la gestión de módulos. Gestionado por el contenedor de
-     * Spring.
+     * @param moduloService componente de lógica de negocio para la gestión de
+     *                      módulos. Gestionado por el contenedor de
+     *                      Spring.
      */
     public ModuloController(ModuloService moduloService) {
         this.moduloService = moduloService;
@@ -49,19 +54,24 @@ public class ModuloController {
     /**
      * Registra un nuevo módulo en la plataforma procesando una solicitud HTTP POST.
      * <p>
-     * Este método recibe un payload JSON validado contra el esquema {@link ModuloRequest}. Si la operación es exitosa,
-     * retorna un estado <code>201 Created</code> e incluye la cabecera <code>Location</code> con la URI del recurso
+     * Este método recibe un payload JSON validado contra el esquema
+     * {@link ModuloRequest}. Si la operación es exitosa,
+     * retorna un estado <code>201 Created</code> e incluye la cabecera
+     * <code>Location</code> con la URI del recurso
      * recién creado, siguiendo las mejores prácticas RESTful.
      * </p>
      * <p>
-     * Las excepciones de negocio como duplicidad o referencias inexistentes son propagadas y manejadas globalmente por
+     * Las excepciones de negocio como duplicidad o referencias inexistentes son
+     * propagadas y manejadas globalmente por
      * el <code>Advice</code> de excepciones.
      * </p>
      *
-     * @param request objeto de transferencia (DTO) que contiene los datos del módulo. Debe cumplir con las validaciones
-     * (<code>@Valid</code>) de obligatoriedad y formato.
-     * @return una respuesta {@link ResponseEntity} sin cuerpo (Void), con estado HTTP 201 y la cabecera de ubicación
-     * del recurso.
+     * @param request objeto de transferencia (DTO) que contiene los datos del
+     *                módulo. Debe cumplir con las validaciones
+     *                (<code>@Valid</code>) de obligatoriedad y formato.
+     * @return una respuesta {@link ResponseEntity} sin cuerpo (Void), con estado
+     *         HTTP 201 y la cabecera de ubicación
+     *         del recurso.
      * @see ModuloService#crearModulo(ModuloRequest)
      * @see com.coagronet.exceptionHandler.RecursoDuplicadoException
      * @see com.coagronet.exceptionHandler.EntidadNoEncontradaException
@@ -73,26 +83,59 @@ public class ModuloController {
     }
 
     /**
-     * Actualiza la información de un módulo existente procesando una petición HTTP PUT.
+     * Actualiza la información de un módulo existente procesando una petición HTTP
+     * PUT.
      * <p>
-     * Este método actúa como punto de entrada para la modificación de recursos. Valida la estructura del cuerpo de la
-     * solicitud ({@link ModuloRequest}) y delega la ejecución de la lógica de negocio al servicio subyacente.
+     * Este método actúa como punto de entrada para la modificación de recursos.
+     * Valida la estructura del cuerpo de la
+     * solicitud ({@link ModuloRequest}) y delega la ejecución de la lógica de
+     * negocio al servicio subyacente.
      * </p>
      * <p>
-     * Si la operación es exitosa, responde con un estado <strong>204 No Content</strong>, indicando que la solicitud ha
+     * Si la operación es exitosa, responde con un estado <strong>204 No
+     * Content</strong>, indicando que la solicitud ha
      * sido procesada correctamente y no requiere retornar contenido adicional.
      * </p>
      *
-     * @param id identificador único del módulo a modificar, capturado desde la variable de ruta (Path Variable).
-     * @param entity objeto de transferencia (DTO) con los nuevos datos del módulo. Debe cumplir con las validaciones de
-     * formato y obligatoriedad definidas (<code>@Valid</code>).
-     * @return una instancia de {@link ResponseEntity} con estado HTTP 204 y sin cuerpo de respuesta.
-     * @throws com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException si el <code>id</code> proporcionado no
-     * corresponde a ningún módulo.
-     * @throws com.coagronet.exceptionHandler.custom.RecursoDuplicadoException si el nuevo nombre del módulo entra en
-     * conflicto con otro registro existente.
-     * @throws com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException si las referencias a entidades
-     * relacionadas (Estado, SubSistema) son inválidas.
+     * @param id     identificador único del módulo a modificar, capturado desde la
+     *               variable de ruta (Path Variable).
+     * @param entity objeto de transferencia (DTO) con los nuevos datos del módulo.
+     *               Debe cumplir con las validaciones de
+     *               formato y obligatoriedad definidas (<code>@Valid</code>).
+     * @return una instancia de {@link ResponseEntity} con estado HTTP 204 y sin
+     *         cuerpo de respuesta.
+     * @throws com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException si
+     *                                                                            el
+     *                                                                            <code>id</code>
+     *                                                                            proporcionado
+     *                                                                            no
+     *                                                                            corresponde
+     *                                                                            a
+     *                                                                            ningún
+     *                                                                            módulo.
+     * @throws com.coagronet.exceptionHandler.custom.RecursoDuplicadoException    si
+     *                                                                            el
+     *                                                                            nuevo
+     *                                                                            nombre
+     *                                                                            del
+     *                                                                            módulo
+     *                                                                            entra
+     *                                                                            en
+     *                                                                            conflicto
+     *                                                                            con
+     *                                                                            otro
+     *                                                                            registro
+     *                                                                            existente.
+     * @throws com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException si
+     *                                                                            las
+     *                                                                            referencias
+     *                                                                            a
+     *                                                                            entidades
+     *                                                                            relacionadas
+     *                                                                            (Estado,
+     *                                                                            SubSistema)
+     *                                                                            son
+     *                                                                            inválidas.
      * @see ModuloService#actualizarModulo(Long, ModuloRequest)
      * @since 2026
      */
@@ -105,20 +148,27 @@ public class ModuloController {
     /**
      * Recupera el listado paginado de módulos registrados en el sistema.
      * <p>
-     * Este endpoint procesa peticiones HTTP GET para consultar el catálogo de módulos. Utiliza la estrategia de
-     * proyección de datos ({@link com.coagronet.subsistema.dto.ModuloResponse}) para entregar una respuesta optimizada,
-     * donde las relaciones con otras entidades (Estado, Subsistema, Tipos) ya vienen resueltas con sus nombres
+     * Este endpoint procesa peticiones HTTP GET para consultar el catálogo de
+     * módulos. Utiliza la estrategia de
+     * proyección de datos ({@link com.coagronet.subsistema.dto.ModuloResponse})
+     * para entregar una respuesta optimizada,
+     * donde las relaciones con otras entidades (Estado, Subsistema, Tipos) ya
+     * vienen resueltas con sus nombres
      * descriptivos.
      * </p>
      * <p>
-     * Soporta los parámetros estándar de paginación y ordenamiento definidos por Spring Data (ej.
+     * Soporta los parámetros estándar de paginación y ordenamiento definidos por
+     * Spring Data (ej.
      * <code>?page=0&size=10&sort=nombre,asc</code>).
      * </p>
      *
-     * @param pageable interfaz que captura la información de paginación (número de página, tamaño) y los criterios de
-     * ordenamiento enviados en la URL de la solicitud.
-     * @return una instancia de {@link ResponseEntity} con estado <strong>200 OK</strong>. El cuerpo de la respuesta
-     * contiene un objeto {@link org.springframework.data.domain.Page} con la lista de módulos encontrados.
+     * @param pageable interfaz que captura la información de paginación (número de
+     *                 página, tamaño) y los criterios de
+     *                 ordenamiento enviados en la URL de la solicitud.
+     * @return una instancia de {@link ResponseEntity} con estado <strong>200
+     *         OK</strong>. El cuerpo de la respuesta
+     *         contiene un objeto {@link org.springframework.data.domain.Page} con
+     *         la lista de módulos encontrados.
      * @see com.coagronet.subsistema.services.ModuloService#obtenerModulos(Pageable)
      * @see com.coagronet.subsistema.dto.ModuloResponse
      * @since 2026
@@ -128,6 +178,39 @@ public class ModuloController {
         return ResponseEntity.ok(moduloService.obtenerModulos(pageable));
     }
 
+    /**
+     * Recupera la información detallada de un módulo específico por su
+     * identificador único.
+     * <p>
+     * Este endpoint expone el recurso de lectura individual utilizando la
+     * proyección {@link ModuloDetailResponse}.
+     * Está diseñado para suministrar los datos necesarios para cargar formularios
+     * de edición en el cliente,
+     * incluyendo los identificadores de las relaciones (Estado, Subsistema, Tipos)
+     * para el enlace de datos (data binding).
+     * </p>
+     * <p>
+     * Responde con un estado <strong>200 OK</strong> si el recurso existe. En caso
+     * contrario, el manejo de excepciones
+     * global retornará un estado <strong>404 Not Found</strong>.
+     * </p>
+     *
+     * @param id identificador numérico del módulo a consultar, extraído de la
+     *           variable de ruta (URI).
+     * @return una instancia de {@link ResponseEntity} que envuelve el objeto
+     *         {@link ModuloDetailResponse}
+     *         con los datos del módulo solicitado.
+     * @throws com.coagronet.exceptionHandler.RecursoNoEncontradoException si el id
+     *                                                                     proporcionado
+     *                                                                     no
+     *                                                                     corresponde
+     *                                                                     a ningún
+     *                                                                     módulo
+     *                                                                     registrado.
+     * @see com.coagronet.subsistema.services.ModuloService#obtenerDetalleModulo(Long)
+     * @see ModuloDetailResponse
+     * @since 2026
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ModuloDetailResponse> obtenerDetalleModulo(@PathVariable Long id) {
         ModuloDetailResponse response = moduloService.obtenerDetalleModulo(id);
