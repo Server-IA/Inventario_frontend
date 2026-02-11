@@ -1,6 +1,7 @@
 package com.coagronet.modulo.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,7 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.coagronet.modulo.Modulo;
-import com.coagronet.modulo.dtos.ModuloResponse;
+import com.coagronet.modulo.dtos.ModuloDetailResponse;
+import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 
 /**
  * Interfaz de repositorio encargada de la persistencia y gestión de datos para la entidad {@link Modulo}.
@@ -108,6 +110,9 @@ public interface ModuloRepository extends JpaRepository<Modulo, Long> {
      * @see Pageable
      */
     @Query("select m.id, m.nombre, m.url, m.descripcion, m.icon, m.estado.nombre, m.subSistema.nombre, m.tipoModulo.nombre, m.tipoAplicacion.nombre, m.rolId, m.nombreId, m.requerido from Modulo m")
-    Page<ModuloResponse> findAllProjected(Pageable pageable);
+    Page<ModuloSummaryResponse> findAllProjected(Pageable pageable);
+
+    @Query("select m.nombre, m.url, m.descripcion, m.icon, m.estado.id, m.subSistema.id, m.tipoModulo.id, m.tipoAplicacion.id, m.rolId, m.nombreId, m.requerido from Modulo m where m.id = :id")
+    Optional<ModuloDetailResponse> findByIdProjected(@Param("id") Long id);
 
 }

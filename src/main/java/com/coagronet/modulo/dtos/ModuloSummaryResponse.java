@@ -34,28 +34,28 @@ package com.coagronet.modulo.dtos;
  * @see ModuloRequest
  * @since 2026
  */
-public record ModuloResponse(Long id,
+public record ModuloSummaryResponse(Long id,
 
-                String nombre,
+        String nombre,
 
-                String url,
+        String url,
 
-                String descripcion,
+        String descripcion,
 
-                String icon,
+        String icon,
 
-                String estado,
+        String estado,
 
-                String subSistema,
+        String subSistema,
 
-                String tipoModulo,
+        String tipoModulo,
 
-                String tipoAplicacion,
+        String tipoAplicacion,
 
-                String[] roles,
+        String[] roles,
 
-                String nombreId,
+        String nombreId,
 
-                Boolean requerido) {
+        Boolean requerido) {
 
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.services.ModuloService;
 
@@ -126,4 +127,11 @@ public class ModuloController {
     public ResponseEntity<?> obtenerModulos(Pageable pageable) {
         return ResponseEntity.ok(moduloService.obtenerModulos(pageable));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ModuloDetailResponse> obtenerDetalleModulo(@PathVariable Long id) {
+        ModuloDetailResponse response = moduloService.obtenerDetalleModulo(id);
+        return ResponseEntity.ok(response);
+    }
+
 }

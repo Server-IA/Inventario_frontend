@@ -11,8 +11,9 @@ import com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException;
 import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
 import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.modulo.Modulo;
+import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloRequest;
-import com.coagronet.modulo.dtos.ModuloResponse;
+import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 import com.coagronet.modulo.repositories.ModuloRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.subsistema.repositories.SubSistemaRepository;
@@ -215,8 +216,13 @@ public class ModuloService {
          * @see ModuloRepository#findAllProjected(Pageable)
          * @since 2026
          */
-        public Page<ModuloResponse> obtenerModulos(Pageable pageable) {
+        public Page<ModuloSummaryResponse> obtenerModulos(Pageable pageable) {
                 return moduloRepository.findAllProjected(pageable);
+        }
+
+        public ModuloDetailResponse obtenerDetalleModulo(Long id) {
+                return moduloRepository.findByIdProjected(id)
+                                .orElseThrow(() -> new RecursoNoEncontradoException("Módulo", id));
         }
 
 }
