@@ -2,7 +2,9 @@ package com.coagronet.modulo.controllers;
 
 import java.net.URI;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.services.ModuloService;
 
@@ -98,4 +101,37 @@ public class ModuloController {
         moduloService.actualizarModulo(id, entity);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Recupera el listado paginado de módulos registrados en el sistema.
+     * <p>
+     * Este endpoint procesa peticiones HTTP GET para consultar el catálogo de módulos. Utiliza la estrategia de
+     * proyección de datos ({@link com.coagronet.subsistema.dto.ModuloResponse}) para entregar una respuesta optimizada,
+     * donde las relaciones con otras entidades (Estado, Subsistema, Tipos) ya vienen resueltas con sus nombres
+     * descriptivos.
+     * </p>
+     * <p>
+     * Soporta los parámetros estándar de paginación y ordenamiento definidos por Spring Data (ej.
+     * <code>?page=0&size=10&sort=nombre,asc</code>).
+     * </p>
+     *
+     * @param pageable interfaz que captura la información de paginación (número de página, tamaño) y los criterios de
+     * ordenamiento enviados en la URL de la solicitud.
+     * @return una instancia de {@link ResponseEntity} con estado <strong>200 OK</strong>. El cuerpo de la respuesta
+     * contiene un objeto {@link org.springframework.data.domain.Page} con la lista de módulos encontrados.
+     * @see com.coagronet.subsistema.services.ModuloService#obtenerModulos(Pageable)
+     * @see com.coagronet.subsistema.dto.ModuloResponse
+     * @since 2026
+     */
+    @GetMapping
+    public ResponseEntity<?> obtenerModulos(Pageable pageable) {
+        return ResponseEntity.ok(moduloService.obtenerModulos(pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ModuloDetailResponse> obtenerDetalleModulo(@PathVariable Long id) {
+        ModuloDetailResponse response = moduloService.obtenerDetalleModulo(id);
+        return ResponseEntity.ok(response);
+    }
+
 }

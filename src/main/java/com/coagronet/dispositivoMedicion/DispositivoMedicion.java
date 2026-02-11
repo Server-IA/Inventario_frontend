@@ -21,21 +21,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@Entity
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "dispositivo_medicion", schema = "iot")
+@Data @Builder @Entity @NoArgsConstructor @AllArgsConstructor @Table(name = "dispositivo_medicion", schema = "iot")
 public class DispositivoMedicion {
-    @Id
-    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="dispositivoMedicion_generator")
-    @SequenceGenerator(name = "dispositivoMedicion_generator", sequenceName = "iot.dispositivo_medicion_dim_id_seq", allocationSize = 1)
-    @Column(name = "dim_id", nullable = false)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dispositivoMedicion_generator") @SequenceGenerator(name = "dispositivoMedicion_generator", sequenceName = "iot.dispositivo_medicion_dim_id_seq", allocationSize = 1) @Column(name = "dim_id", nullable = false)
     private Long id;
 
     @Column(name = "dim_valor", nullable = false)
-    private Integer valor;
+    private Double valor;
 
     @Column(name = "dim_nombre", nullable = false)
     private String nombre;
@@ -46,20 +38,16 @@ public class DispositivoMedicion {
     @Column(name = "dim_fecha_hora", nullable = false)
     private Timestamp fechaHora;
 
-    @ManyToOne
-    @JoinColumn(name = "dim_sub_seccion_dispositivo_id", referencedColumnName = "ssd_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "dim_sub_seccion_dispositivo_id", referencedColumnName = "ssd_id", nullable = false)
     private SubseccionDispositivo subseccionDispositivo;
 
-    @ManyToOne
-    @JoinColumn(name = "dim_tipo_medicion_id", referencedColumnName = "tim_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "dim_tipo_medicion_id", referencedColumnName = "tim_id", nullable = false)
     private TipoMedicion tipoMedicion;
 
-    @ManyToOne
-    @JoinColumn(name = "dim_estado_id", referencedColumnName = "est_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "dim_estado_id", referencedColumnName = "est_id", nullable = false)
     private Estado estado;
 
-    @ManyToOne
-    @JoinColumn(name= "dim_empresa_id", referencedColumnName = "emp_id", nullable= false)
+    @ManyToOne @JoinColumn(name = "dim_empresa_id", referencedColumnName = "emp_id", nullable = false)
     private Empresa empresa;
-    
+
 }
