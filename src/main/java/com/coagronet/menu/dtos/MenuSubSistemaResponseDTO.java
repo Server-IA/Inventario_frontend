@@ -5,14 +5,14 @@ import java.util.List;
 import lombok.Builder;
 
 /**
- * DTO que representa un subsistema del menú (grupo) y sus módulos.
+ * Objeto de Transferencia de Datos (DTO) que representa un subsistema y su colección de módulos asociados en el menú.
+ * <p>
+ * Se utiliza para estructurar la respuesta jerárquica del menú hacia el cliente.
+ * </p>
  *
- * @param nombre  nombre del subsistema
- * @param icono   icono del subsistema (puede ser {@code null})
- * @param modulos lista de módulos pertenecientes a este subsistema
- *
- * @author Juan J. Castro
- * @since 0.3.1
+ * @param nombre El nombre descriptivo del subsistema.
+ * @param icono La referencia o clase CSS del icono visual del subsistema.
+ * @param modulos La lista de módulos {@link MenuModuloResponseDTO} contenidos en este subsistema.
  */
 @Builder
 public record MenuSubSistemaResponseDTO(String nombre, String icono, List<MenuModuloResponseDTO> modulos) {

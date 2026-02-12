@@ -6,48 +6,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.modulo.Modulo;
-import com.coagronet.modulo.repositories.ModuloRepository;
-import com.coagronet.moduloempresa.ModuloEmpresa;
-import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
-import com.coagronet.subsistema.SubSistema;
-import org.springframework.stereotype.Service;
-
 import com.coagronet.menu.dtos.MenuModuloResponseDTO;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.repositories.MenuModuloRepository;
 import com.coagronet.menu.repositories.projections.SubModuloRow;
+import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.mappers.ModuloMapper;
+import com.coagronet.modulo.repositories.ModuloRepository;
+import com.coagronet.moduloempresa.ModuloEmpresa;
+import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
+import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.utils.UserRoleService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio de dominio responsable de construir el menú visible para el usuario.
  * <p>
- * Resuelve la empresa y el rol desde el contexto de seguridad, traduce el
- * {@code tipoAplicacion} a {@link TipoAplicacionEnum}, consulta el repositorio
- * y agrupa los módulos por subsistema para producir la estructura final del
- * menú.
+ * Resuelve la empresa y el rol desde el contexto de seguridad, traduce el {@code tipoAplicacion} a
+ * {@link TipoAplicacionEnum}, consulta el repositorio y agrupa los módulos por subsistema para producir la estructura
+ * final del menú.
  * </p>
  *
  * <p>
- * <strong>Principios:</strong> SRP (construcción del menú), SoC (consulta en
- * repository), y uso de {@link ModuloMapper} para separar el mapeo entidad→DTO.
+ * <strong>Principios:</strong> SRP (construcción del menú), SoC (consulta en repository), y uso de {@link ModuloMapper}
+ * para separar el mapeo entidad→DTO.
  * </p>
  *
  * @author Juan J. Castro
  * @since 0.3.1
  */
-@Service
-@RequiredArgsConstructor
+@Service @RequiredArgsConstructor
 public class MenuService {
 
     private final MenuModuloRepository menuModuloRepository;
@@ -60,27 +58,20 @@ public class MenuService {
     private final EstadoRepository estadoRepository;
 
     /**
-     * Obtiene el menú para la empresa actual y el rol actual del usuario, filtrado
-     * por tipo de aplicación.
+     * Obtiene el menú para la empresa actual y el rol actual del usuario, filtrado por tipo de aplicación.
      * <p>
      * Pasos:
      * <ol>
      * <li>Resuelve {@code empresaId} y {@code roleName} del contexto.</li>
-     * <li>Convierte {@code tipoAplicacion} a {@link TipoAplicacionEnum} y obtiene
-     * su ID interno.</li>
-     * <li>Consulta
-     * {@link MenuRepository#findSubmodulosByEmpresaTipoAppAndRol(Long, Integer, String)}.</li>
-     * <li>Agrupa por subsistema (nombre + icono) y mapea cada fila a
-     * {@link MenuModuloResponseDTO}.</li>
+     * <li>Convierte {@code tipoAplicacion} a {@link TipoAplicacionEnum} y obtiene su ID interno.</li>
+     * <li>Consulta {@link MenuRepository#findSubmodulosByEmpresaTipoAppAndRol(Long, Integer, String)}.</li>
+     * <li>Agrupa por subsistema (nombre + icono) y mapea cada fila a {@link MenuModuloResponseDTO}.</li>
      * </ol>
      * </p>
      *
-     * @param tipoAplicacion cadena {@code "web"} o {@code "movil"} (no sensible a
-     *                       mayúsculas)
-     * @return lista de subsistemas, cada uno con sus módulos, en orden estable (por
-     * nombre de subsistema y módulo)
-     * @throws IllegalArgumentException si {@code tipoAplicacion} no corresponde a
-     *                                  un valor soportado
+     * @param tipoAplicacion cadena {@code "web"} o {@code "movil"} (no sensible a mayúsculas)
+     * @return lista de subsistemas, cada uno con sus módulos, en orden estable (por nombre de subsistema y módulo)
+     * @throws IllegalArgumentException si {@code tipoAplicacion} no corresponde a un valor soportado
      */
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
@@ -106,41 +97,38 @@ public class MenuService {
         return out;
     }
 
+    /**
+     * Obtiene y estructura los módulos que aún no han sido asignados a la empresa asociada a la petición actual.
+     * <p>
+     * El proceso recupera el identificador de la empresa del contexto de seguridad o petición, consulta los módulos no
+     * asignados en el repositorio y los agrupa por su {@link SubSistema} correspondiente. Finalmente, transforma las
+     * entidades en objetos de transferencia de datos (DTO) para su respuesta.
+     * </p>
+     *
+     * @return Una lista de {@link MenuSubSistemaResponseDTO} que representa la jerarquía de subsistemas y sus
+     * respectivos módulos no asignados. Retorna una lista vacía si no existen módulos pendientes.
+     * @see #findModulosNoAsignados(Long)
+     */
     @Transactional(readOnly = true)
     public List<MenuSubSistemaResponseDTO> obtenerModulosDisponiblesParaEmpresa() {
 
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-        // 1. Obtener todos los módulos faltantes de la BD
         List<Modulo> modulosFaltantes = menuModuloRepository.findModulosNoAsignados(empresaId);
 
-        // 2. Agrupar los módulos por su Objeto Subsistema
         Map<SubSistema, List<Modulo>> modulosPorSubsistema = modulosFaltantes.stream()
                 .collect(Collectors.groupingBy(Modulo::getSubSistema));
 
-        // 3. Transformar el mapa en la lista de DTOs de respuesta
         List<MenuSubSistemaResponseDTO> respuesta = new ArrayList<>();
 
         modulosPorSubsistema.forEach((subsistema, listaModulos) -> {
-            // Convertir entidades Modulo a DTOs
+
             List<MenuModuloResponseDTO> modulosDto = listaModulos.stream()
-                    .map(m -> new MenuModuloResponseDTO(
-                            m.getNombreId(), // mod_nombre_id (el ID tipo String "kardex")
-                            m.getNombre(),
-                            m.getUrl(),
-                            m.getIcon()
-                    )).collect(Collectors.toList());
+                    .map(m -> new MenuModuloResponseDTO(m.getNombreId(), m.getNombre(), m.getUrl(), m.getIcon()))
+                    .collect(Collectors.toList());
 
-            // Crear el DTO del Subsistema con sus hijos
-            respuesta.add(new MenuSubSistemaResponseDTO(
-                    subsistema.getNombre(),
-                    subsistema.getIcon(),
-                    modulosDto
-            ));
+            respuesta.add(new MenuSubSistemaResponseDTO(subsistema.getNombre(), subsistema.getIcon(), modulosDto));
         });
-
-        // Opcional: Ordenar la respuesta final por nombre de subsistema si el mapa desordenó
-        // respuesta.sort(Comparator.comparing(MenuSubSistemaResponseDTO::getNombre));
 
         return respuesta;
     }
