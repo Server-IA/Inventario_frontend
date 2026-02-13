@@ -51,21 +51,47 @@ export default function FormModulo({
     });
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
+useEffect(() => {
+  if (!open) return;
 
-    if (formMode === "edit" && selectedRow) {
-      setFormData({
-        ...selectedRow,
-        estadoId: selectedRow.estado === "Activo" ? 1 : 2,
-        roles: Array.isArray(selectedRow.roles)
-          ? selectedRow.roles.join(", ")
-          : "",
-      });
-    } else {
-      setFormData(initialData);
-    }
-  }, [open, formMode, selectedRow]);
+  if (formMode === "edit" && selectedRow) {
+
+    const subSistema = subSistemas.find(
+      s => s.nombre === selectedRow.subSistema
+    );
+
+    const tipoModulo = tipoModulos.find(
+      t => t.nombre === selectedRow.tipoModulo
+    );
+
+    const tipoAplicacion = tipoAplicaciones.find(
+      a => a.nombre === selectedRow.tipoAplicacion
+    );
+
+    setFormData({
+      ...selectedRow,
+      estadoId: selectedRow.estado === "Activo" ? 1 : 2,
+      subSistemaId: subSistema?.id || "",
+      tipoModuloId: tipoModulo?.id || "",
+      tipoAplicacionId: tipoAplicacion?.id || "",
+      roles: Array.isArray(selectedRow.roles)
+        ? selectedRow.roles.join(", ")
+        : "",
+    });
+
+  } else {
+    setFormData(initialData);
+  }
+
+}, [
+  open,
+  formMode,
+  selectedRow,
+  subSistemas,
+  tipoModulos,
+  tipoAplicaciones
+]);
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
