@@ -15,23 +15,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
+import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.infrastructure.security.JwtService;
-import com.coagronet.infrastructure.security.MyUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
 
-@Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
+@Configuration @EnableWebSecurity @RequiredArgsConstructor
 public class SecurityConfig {
-
-	private final MyUserDetailsService myUserDetailsService;
 
 	private final JwtService jwtService;
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAccessDeniedHandler accessDeniedHandler,
+			CustomAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
 		http.cors(Customizer.withDefaults()).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth
 				.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**",
 						"/api/v1/empresas/**", "/api/v1/personas/**", "/api/v1/menu/**", "/change-password-initial/**")
@@ -41,7 +39,7 @@ public class SecurityConfig {
 						"/api/v1/categoria-estado/**", "/api/v1/roles/**", "/api/v1/system/usuario-roles/**",
 						"/api/v1/system/empresa-rol/**", "/api/v1/modulos/**", "/api/v1/tipo-modulos/**",
 						"/api/v1/tipo-aplicaciones/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA")
+				.hasAuthority("ROLE_ADMINISTRADOR_SISTEMA")
 				// Especifidad para unidad y tipoUnidad
 				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
 				.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**").authenticated()
@@ -70,7 +68,9 @@ public class SecurityConfig {
 						"/empresa/usuarios-roles/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
-				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.exceptionHandling(exceptions -> exceptions.accessDeniedHandler(accessDeniedHandler)
+						.authenticationEntryPoint(authenticationEntryPoint));
 
 		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
 
@@ -79,7 +79,7 @@ public class SecurityConfig {
 
 	@Bean
 	JwtRequestFilter jwtRequestFilter() {
-		return new JwtRequestFilter(jwtService, myUserDetailsService);
+		return new JwtRequestFilter(jwtService);
 	}
 
 	@Bean
