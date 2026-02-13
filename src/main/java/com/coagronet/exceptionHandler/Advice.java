@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -127,6 +128,21 @@ public class Advice extends ResponseEntityExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, mensaje);
         problemDetail.setTitle("Acceso Prohibido");
         problemDetail.setType(URI.create("https://coagronet.com/errors/forbidden"));
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthenticationException(AuthenticationException ex, Locale locale) {
+
+        String mensaje = getMessageSource() != null
+                ? getMessageSource().getMessage("security.unauthorized", null, "Se requiere autenticación completa.",
+                        locale)
+                : "No se proporcionaron credenciales válidas.";
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, mensaje);
+        problemDetail.setTitle("No Autenticado");
+        problemDetail.setType(URI.create("https://coagronet.com/errors/unauthorized"));
 
         return problemDetail;
     }

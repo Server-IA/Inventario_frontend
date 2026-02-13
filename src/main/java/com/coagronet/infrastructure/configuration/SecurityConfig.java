@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
+import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.infrastructure.security.JwtService;
 
@@ -27,8 +28,8 @@ public class SecurityConfig {
 	private final JwtService jwtService;
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAccessDeniedHandler accessDeniedHandler)
-			throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAccessDeniedHandler accessDeniedHandler,
+			CustomAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
 		http.cors(Customizer.withDefaults()).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth
 				.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**",
 						"/api/v1/empresas/**", "/api/v1/personas/**", "/api/v1/menu/**", "/change-password-initial/**")
@@ -68,7 +69,8 @@ public class SecurityConfig {
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
 				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.exceptionHandling(exceptions -> exceptions.accessDeniedHandler(accessDeniedHandler));
+				.exceptionHandling(exceptions -> exceptions.accessDeniedHandler(accessDeniedHandler)
+						.authenticationEntryPoint(authenticationEntryPoint));
 
 		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
 
