@@ -79,14 +79,14 @@ public class ModuloController {
      * solicitud ({@link ModuloRequest}) y delega la ejecución de la lógica de negocio al servicio subyacente.
      * </p>
      * <p>
-     * Si la operación es exitosa, responde con un estado <strong>204 No Content</strong>, indicando que la solicitud ha
-     * sido procesada correctamente y no requiere retornar contenido adicional.
+    * Si la operación es exitosa, responde con un estado <strong>204 No Content</strong>, indicando que la solicitud ha
+    * sido procesada correctamente y no requiere retornar contenido adicional.
      * </p>
      *
      * @param id identificador único del módulo a modificar, capturado desde la variable de ruta (Path Variable).
      * @param entity objeto de transferencia (DTO) con los nuevos datos del módulo. Debe cumplir con las validaciones de
      * formato y obligatoriedad definidas (<code>@Valid</code>).
-     * @return una instancia de {@link ResponseEntity} con estado HTTP 204 y sin cuerpo de respuesta.
+    * @return una instancia de {@link ResponseEntity} con estado HTTP 204 y sin cuerpo de respuesta.
      * @throws com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException si el <code>id</code> proporcionado no
      * corresponde a ningún módulo.
      * @throws com.coagronet.exceptionHandler.custom.RecursoDuplicadoException si el nuevo nombre del módulo entra en
