@@ -24,12 +24,16 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.coagronet.exceptionHandler.Advice;
+import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
+import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
 import com.coagronet.infrastructure.configuration.CorsProperties;
 import com.coagronet.infrastructure.configuration.SecurityConfig;
 import com.coagronet.infrastructure.security.JwtAuthenticationFilter;
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.infrastructure.security.MyUserDetailsService;
+import com.coagronet.menu.services.MenuService;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.dtos.ModuloSummaryResponse;
@@ -38,7 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(controllers = ModuloController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
     JwtRequestFilter.class, JwtAuthenticationFilter.class }))
-@Import(SecurityConfig.class)
+@Import({ SecurityConfig.class, Advice.class, CustomAccessDeniedHandler.class, CustomAuthenticationEntryPoint.class })
 class ModuloControllerSecurityTest {
 
     @Autowired
@@ -49,6 +53,9 @@ class ModuloControllerSecurityTest {
 
     @MockBean
     private ModuloService moduloService;
+
+    @MockBean
+    private MenuService menuService;
 
     @MockBean
     private JwtService jwtService;

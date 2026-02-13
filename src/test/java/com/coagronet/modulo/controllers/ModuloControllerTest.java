@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.coagronet.infrastructure.configuration.CorsProperties;
 import com.coagronet.infrastructure.security.JwtAuthenticationFilter;
 import com.coagronet.infrastructure.security.JwtRequestFilter;
+import com.coagronet.menu.services.MenuService;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.dtos.ModuloSummaryResponse;
@@ -53,6 +54,9 @@ class ModuloControllerTest {
 
     @MockBean
     private ModuloService moduloService;
+
+    @MockBean
+    private MenuService menuService;
 
     @MockBean
     private CorsProperties corsProperties;
