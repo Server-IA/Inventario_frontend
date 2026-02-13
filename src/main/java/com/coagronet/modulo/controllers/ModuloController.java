@@ -1,6 +1,7 @@
 package com.coagronet.modulo.controllers;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
+import com.coagronet.menu.services.MenuService;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.services.ModuloService;
@@ -35,15 +38,11 @@ import jakarta.validation.Valid;
 public class ModuloController {
 
     private final ModuloService moduloService;
+    private final MenuService menuService;
 
-    /**
-     * Inicializa el controlador inyectando la dependencia de servicio requerida.
-     *
-     * @param moduloService componente de lógica de negocio para la gestión de módulos. Gestionado por el contenedor de
-     * Spring.
-     */
-    public ModuloController(ModuloService moduloService) {
+    public ModuloController(ModuloService moduloService, MenuService menuService) {
         this.moduloService = moduloService;
+        this.menuService = menuService;
     }
 
     /**
@@ -128,9 +127,46 @@ public class ModuloController {
         return ResponseEntity.ok(moduloService.obtenerModulos(pageable));
     }
 
+    /**
+     * Recupera la información detallada de un módulo específico por su identificador único.
+     * <p>
+     * Este endpoint expone el recurso de lectura individual utilizando la proyección {@link ModuloDetailResponse}. Está
+     * diseñado para suministrar los datos necesarios para cargar formularios de edición en el cliente, incluyendo los
+     * identificadores de las relaciones (Estado, Subsistema, Tipos) para el enlace de datos (data binding).
+     * </p>
+     * <p>
+     * Responde con un estado <strong>200 OK</strong> si el recurso existe. En caso contrario, el manejo de excepciones
+     * global retornará un estado <strong>404 Not Found</strong>.
+     * </p>
+     *
+     * @param id identificador numérico del módulo a consultar, extraído de la variable de ruta (URI).
+     * @return una instancia de {@link ResponseEntity} que envuelve el objeto {@link ModuloDetailResponse} con los datos
+     * del módulo solicitado.
+     * @throws com.coagronet.exceptionHandler.RecursoNoEncontradoException si el id proporcionado no corresponde a
+     * ningún módulo registrado.
+     * @see com.coagronet.subsistema.services.ModuloService#obtenerDetalleModulo(Long)
+     * @see ModuloDetailResponse
+     * @since 2026
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ModuloDetailResponse> obtenerDetalleModulo(@PathVariable Long id) {
         ModuloDetailResponse response = moduloService.obtenerDetalleModulo(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Recupera el listado de módulos disponibles para la conformación del menú de la empresa actual.
+     * <p>
+     * Este endpoint maneja las peticiones GET filtradas por el parámetro <code>disponiblesParaMenu=true</code>. Delega
+     * la lógica de negocio al servicio correspondiente para obtener los datos estructurados.
+     * </p>
+     *
+     * @return Un objeto {@link ResponseEntity} que contiene una lista de {@link MenuSubSistemaResponseDTO} con los
+     * módulos disponibles y el estado HTTP 200 (OK).
+     */
+    @GetMapping(params = "disponiblesParaMenu=true")
+    public ResponseEntity<List<MenuSubSistemaResponseDTO>> getModulosDisponibles() {
+        List<MenuSubSistemaResponseDTO> response = menuService.obtenerModulosDisponiblesParaEmpresa();
         return ResponseEntity.ok(response);
     }
 

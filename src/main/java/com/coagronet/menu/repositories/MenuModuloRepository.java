@@ -10,17 +10,14 @@ import com.coagronet.menu.repositories.projections.SubModuloRow;
 import com.coagronet.modulo.Modulo;
 
 /**
- * Repositorio de lectura para construir el menú a partir de los módulos
- * disponibles.
+ * Repositorio de lectura para construir el menú a partir de los módulos disponibles.
  * <p>
- * Usa una consulta nativa para traer filas planas (proyección
- * {@link SubModuloRow}) que incluyen datos del subsistema y del módulo,
- * filtradas por empresa, estado, tipo de aplicación y rol.
+ * Usa una consulta nativa para traer filas planas (proyección {@link SubModuloRow}) que incluyen datos del subsistema y
+ * del módulo, filtradas por empresa, estado, tipo de aplicación y rol.
  * </p>
  *
  * <p>
- * <strong>Notas:</strong> Se ordena por nombre de subsistema y luego de módulo
- * para mantener estabilidad en la UI.
+ * <strong>Notas:</strong> Se ordena por nombre de subsistema y luego de módulo para mantener estabilidad en la UI.
  * </p>
  *
  * @author Juan J. Castro
@@ -29,24 +26,20 @@ import com.coagronet.modulo.Modulo;
 public interface MenuModuloRepository extends Repository<Modulo, Long> {
 
 	/**
-	 * Recupera las filas de submódulos visibles para una empresa, tipo de
-	 * aplicación y rol.
+	 * Recupera las filas de submódulos visibles para una empresa, tipo de aplicación y rol.
 	 * <p>
 	 * Criterios clave:
 	 * <ul>
 	 * <li>{@code me.moe_empresa_id = :empresaId}</li>
 	 * <li>{@code me.moe_estado_id = 1} y {@code m.mod_estado_id = 1} (activos)</li>
 	 * <li>{@code m.mod_tipo_aplicacion_id = :tipoAppId}</li>
-	 * <li>Rol: {@code m.mod_rol_id IS NULL} o
-	 * {@code :roleName = ANY(m.mod_rol_id)}</li>
+	 * <li>Rol: {@code m.mod_rol_id IS NULL} o {@code :roleName = ANY(m.mod_rol_id)}</li>
 	 * </ul>
 	 * </p>
 	 *
 	 * @param empresaId ID de la empresa del contexto
-	 * @param tipoAppId ID interno del tipo de aplicación (p. ej. {@code 1 = WEB},
-	 *                  {@code 2 = MOVIL})
-	 * @param roleName  nombre del rol actual del usuario (debe coincidir con el
-	 *                  almacenado en BD)
+	 * @param tipoAppId ID interno del tipo de aplicación (p. ej. {@code 1 = WEB}, {@code 2 = MOVIL})
+	 * @param roleName nombre del rol actual del usuario (debe coincidir con el almacenado en BD)
 	 * @return lista ordenada por nombre de subsistema y nombre de módulo
 	 */
 	@Query(value = """
@@ -75,14 +68,20 @@ public interface MenuModuloRepository extends Repository<Modulo, Long> {
 	List<SubModuloRow> findSubmodulosByEmpresaTipoAppAndRol(@Param("empresaId") Long empresaId,
 			@Param("tipoAppId") Integer tipoAppId, @Param("roleName") String roleName);
 
-	@Query("SELECT m FROM Modulo m " +
-		   "JOIN FETCH m.subSistema s " +
-		   "WHERE m.id NOT IN (" +
-		   "   SELECT me.modulo.id " +
-		   "   FROM ModuloEmpresa me " +
-		   "   WHERE me.empresa.id = :empresaId" +
-		   ") " +
-		   "ORDER BY s.nombre ASC, m.nombre ASC")
+	/**
+	 * Consulta la base de datos para recuperar los módulos que no están asociados a una empresa específica.
+	 * <p>
+	 * Ejecuta una consulta JPQL que selecciona las entidades {@link Modulo} cuyo identificador no se encuentra en la
+	 * tabla de relación <code>ModuloEmpresa</code> para el <code>empresaId</code> proporcionado. Los resultados se
+	 * ordenan ascendentemente por el nombre del subsistema y posteriormente por el nombre del módulo.
+	 * </p>
+	 *
+	 * @param empresaId El identificador único de la empresa para la cual se filtran los módulos ya asignados.
+	 * @return Una lista de entidades {@link Modulo} disponibles (no asignadas) para la empresa indicada.
+	 */
+	@Query("SELECT m FROM Modulo m " + "JOIN FETCH m.subSistema s " + "WHERE m.id NOT IN (" + "   SELECT me.modulo.id "
+			+ "   FROM ModuloEmpresa me " + "   WHERE me.empresa.id = :empresaId" + ") "
+			+ "ORDER BY s.nombre ASC, m.nombre ASC")
 	List<Modulo> findModulosNoAsignados(@Param("empresaId") Long empresaId);
 
 }
