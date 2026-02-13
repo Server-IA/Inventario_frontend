@@ -17,16 +17,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.infrastructure.security.JwtService;
-import com.coagronet.infrastructure.security.MyUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
 
-@Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
+@Configuration @EnableWebSecurity @RequiredArgsConstructor
 public class SecurityConfig {
-
-	private final MyUserDetailsService myUserDetailsService;
 
 	private final JwtService jwtService;
 
@@ -41,7 +36,7 @@ public class SecurityConfig {
 						"/api/v1/categoria-estado/**", "/api/v1/roles/**", "/api/v1/system/usuario-roles/**",
 						"/api/v1/system/empresa-rol/**", "/api/v1/modulos/**", "/api/v1/tipo-modulos/**",
 						"/api/v1/tipo-aplicaciones/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA")
+				.hasAuthority("ROLE_ADMINISTRADOR_SISTEMA")
 				// Especifidad para unidad y tipoUnidad
 				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
 				.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**").authenticated()
@@ -79,7 +74,7 @@ public class SecurityConfig {
 
 	@Bean
 	JwtRequestFilter jwtRequestFilter() {
-		return new JwtRequestFilter(jwtService, myUserDetailsService);
+		return new JwtRequestFilter(jwtService);
 	}
 
 	@Bean

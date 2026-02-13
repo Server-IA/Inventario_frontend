@@ -7,7 +7,6 @@ import java.util.function.Function;
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
@@ -16,8 +15,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 
-@Service
-@RequiredArgsConstructor
+@Service @RequiredArgsConstructor
 public class JwtService {
 
 	@Value("${jwt.secret}")
@@ -31,11 +29,8 @@ public class JwtService {
 	}
 
 	private Claims extractAllClaims(String token) {
-		return (Claims) Jwts.parser()
-			.verifyWith((SecretKey) getSigningKey())
-			.build()
-			.parseSignedClaims(token)
-			.getPayload();
+		return (Claims) Jwts.parser().verifyWith((SecretKey) getSigningKey()).build().parseSignedClaims(token)
+				.getPayload();
 	}
 
 	private Key getSigningKey() {
@@ -51,9 +46,8 @@ public class JwtService {
 		return jwtUtil.validateToken(token, username);
 	}
 
-	public boolean isTokenValid(String token, UserDetails userDetails) {
-		final String userName = extractUsername(token);
-		return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);
+	public boolean isTokenValid(String token) {
+		return !isTokenExpired(token);
 	}
 
 	private boolean isTokenExpired(String token) {
@@ -62,6 +56,10 @@ public class JwtService {
 
 	private Date extractExpiration(String token) {
 		return extractClaim(token, Claims::getExpiration);
+	}
+
+	public Integer extractRoleId(String token) {
+		return extractClaim(token, claims -> claims.get("rolId", Integer.class));
 	}
 
 }
