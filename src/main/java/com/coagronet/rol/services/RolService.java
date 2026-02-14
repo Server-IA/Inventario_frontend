@@ -15,6 +15,8 @@ public interface RolService {
 
     List<RolResponseDTO> getAll();
 
+    void softDelete(Long id);
+
     void delete(Long id);
 
 }
