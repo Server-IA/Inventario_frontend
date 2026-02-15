@@ -129,7 +129,7 @@ public class RolServiceImpl implements RolService {
     // ====================== DELETE (borrado lógico) =======================
 
     @Override
-    public void delete(Long id) {
+    public void softDelete(Long id) {
         Rol existing = rolRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
 
@@ -148,4 +148,17 @@ public class RolServiceImpl implements RolService {
 
         rolRepository.save(existing);
     }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+
+        Rol existing = rolRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
+
+        rolRepository.delete(existing);
+    }
+
+
+
 }
