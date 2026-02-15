@@ -35,10 +35,10 @@ import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.infrastructure.security.MyUserDetailsService;
 import com.coagronet.menu.services.MenuService;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
-import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 import com.coagronet.modulo.services.ModuloService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @WebMvcTest(controllers = ModuloController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
     JwtRequestFilter.class, JwtAuthenticationFilter.class }))
@@ -73,11 +73,11 @@ class ModuloControllerSecurityTest {
 
     @Test
     void crear_returns401_whenUserIsUnauthenticated() throws Exception {
-        ModuloRequest request = buildRequest();
+        String requestJson = buildRequestJsonWithoutRoles();
 
         mockMvc.perform(post("/api/v1/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(moduloService);
@@ -86,11 +86,11 @@ class ModuloControllerSecurityTest {
     @Test
     @WithMockUser(roles = "USER")
     void crear_returns403_whenUserLacksAdminRole() throws Exception {
-        ModuloRequest request = buildRequest();
+        String requestJson = buildRequestJsonWithoutRoles();
 
         mockMvc.perform(post("/api/v1/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(moduloService);
@@ -165,11 +165,11 @@ class ModuloControllerSecurityTest {
 
         @Test
         void actualizar_returns401_whenUserIsUnauthenticated() throws Exception {
-        ModuloRequest request = buildRequest();
+        String requestJson = buildRequestJsonWithoutRoles();
 
         mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
             .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(moduloService);
@@ -178,11 +178,11 @@ class ModuloControllerSecurityTest {
         @Test
         @WithMockUser(roles = "USER")
         void actualizar_returns403_whenUserLacksAdminRole() throws Exception {
-        ModuloRequest request = buildRequest();
+        String requestJson = buildRequestJsonWithoutRoles();
 
         mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
             .andExpect(status().isForbidden());
 
         verifyNoInteractions(moduloService);
@@ -191,27 +191,26 @@ class ModuloControllerSecurityTest {
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
         void actualizar_returns204_whenUserIsAdmin() throws Exception {
-        ModuloRequest request = buildRequest();
+        String requestJson = buildRequestJsonWithoutRoles();
 
         mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
             .andExpect(status().isNoContent());
         }
 
-    private ModuloRequest buildRequest() {
-        return new ModuloRequest(
-                "Compras",
-                "/compras",
-                "Modulo de compras",
-                "fa-cart",
-                1L,
-                2L,
-                3L,
-                4L,
-                List.of("ADMIN"),
-                "mod_compras",
-                true);
+    private String buildRequestJsonWithoutRoles() throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("nombre", "Compras");
+        json.put("url", "/compras");
+        json.put("descripcion", "Modulo de compras");
+        json.put("estadoId", 1L);
+        json.put("subSistemaId", 2L);
+        json.put("tipoModuloId", 3L);
+        json.put("tipoAplicacionId", 4L);
+        json.put("nombreId", "mod_compras");
+        json.put("requerido", true);
+        return objectMapper.writeValueAsString(json);
     }
 }
 

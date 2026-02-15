@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
@@ -33,10 +34,10 @@ import com.coagronet.infrastructure.security.JwtAuthenticationFilter;
 import com.coagronet.infrastructure.security.JwtRequestFilter;
 import com.coagronet.menu.services.MenuService;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
-import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 import com.coagronet.modulo.services.ModuloService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @WebMvcTest(
     controllers = ModuloController.class,
@@ -68,28 +69,21 @@ class ModuloControllerTest {
 
     @Test
     void crear_returns201AndLocationHeader_whenRequestIsValid() throws Exception {
-        ModuloRequest request = new ModuloRequest(
-                "Compras",
-                "/compras",
-                "Modulo de compras",
-                "fa-cart",
-                1L,
-                2L,
-                3L,
-                4L,
-                List.of("ADMIN"),
-                "mod_compras",
-                true);
+        String requestJson = buildRequestJsonWithoutRoles();
 
-        when(moduloService.crearModulo(request)).thenReturn(10L);
+        when(moduloService.crearModulo(org.mockito.ArgumentMatchers.any())).thenReturn(10L);
 
         mockMvc.perform(post("/api/v1/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/v1/modulos/10"));
 
-        verify(moduloService).crearModulo(request);
+        ArgumentCaptor<com.coagronet.modulo.dtos.ModuloRequest> captor = ArgumentCaptor.forClass(
+            com.coagronet.modulo.dtos.ModuloRequest.class);
+        verify(moduloService).crearModulo(captor.capture());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().roles());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().icon());
     }
 
     @Test
@@ -105,25 +99,18 @@ class ModuloControllerTest {
         @Test
         void actualizar_returns204_whenRequestIsValid() throws Exception {
         Long moduloId = 10L;
-        ModuloRequest request = new ModuloRequest(
-            "Compras",
-            "/compras",
-            "Modulo de compras",
-            "fa-cart",
-            1L,
-            2L,
-            3L,
-            4L,
-            List.of("ADMIN"),
-            "mod_compras",
-            true);
+        String requestJson = buildRequestJsonWithoutRoles();
 
         mockMvc.perform(put("/api/v1/modulos/{id}", moduloId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(requestJson))
             .andExpect(status().isNoContent());
 
-        verify(moduloService).actualizarModulo(moduloId, request);
+        ArgumentCaptor<com.coagronet.modulo.dtos.ModuloRequest> captor = ArgumentCaptor.forClass(
+                com.coagronet.modulo.dtos.ModuloRequest.class);
+        verify(moduloService).actualizarModulo(org.mockito.ArgumentMatchers.eq(moduloId), captor.capture());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().roles());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().icon());
         }
 
         @Test
@@ -189,5 +176,19 @@ class ModuloControllerTest {
 
         verify(moduloService).obtenerDetalleModulo(moduloId);
         }
+
+    private String buildRequestJsonWithoutRoles() throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("nombre", "Compras");
+        json.put("url", "/compras");
+        json.put("descripcion", "Modulo de compras");
+        json.put("estadoId", 1L);
+        json.put("subSistemaId", 2L);
+        json.put("tipoModuloId", 3L);
+        json.put("tipoAplicacionId", 4L);
+        json.put("nombreId", "mod_compras");
+        json.put("requerido", true);
+        return objectMapper.writeValueAsString(json);
+    }
 }
 

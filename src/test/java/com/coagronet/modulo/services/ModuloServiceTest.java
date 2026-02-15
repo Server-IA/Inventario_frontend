@@ -1,7 +1,6 @@
 package com.coagronet.modulo.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,7 +59,7 @@ class ModuloServiceTest {
 
     @Test
     void crearModulo_throwsRecursoDuplicadoException_whenNombreExists() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(true);
 
         assertThrows(RecursoDuplicadoException.class, () -> moduloService.crearModulo(request));
@@ -71,7 +70,7 @@ class ModuloServiceTest {
 
     @Test
     void crearModulo_throwsEntidadNoEncontradaException_whenEstadoMissing() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
         when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.empty());
 
@@ -85,7 +84,7 @@ class ModuloServiceTest {
 
     @Test
     void crearModulo_throwsEntidadNoEncontradaException_whenSubSistemaMissing() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
         when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
         when(subSistemaRepository.findById(request.subSistemaId())).thenReturn(Optional.empty());
@@ -99,7 +98,7 @@ class ModuloServiceTest {
 
     @Test
     void crearModulo_throwsEntidadNoEncontradaException_whenTipoModuloMissing() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
         when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
         when(subSistemaRepository.findById(request.subSistemaId())).thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
@@ -113,7 +112,7 @@ class ModuloServiceTest {
 
     @Test
     void crearModulo_throwsEntidadNoEncontradaException_whenTipoAplicacionMissing() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
         when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
         when(subSistemaRepository.findById(request.subSistemaId())).thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
@@ -127,7 +126,7 @@ class ModuloServiceTest {
 
     @Test
     void crearModulo_persistsModulo_whenRequestIsValid() {
-        ModuloRequest request = buildRequest(List.of("ADMIN", "USER"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
         when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
         when(subSistemaRepository.findById(request.subSistemaId())).thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
@@ -150,19 +149,19 @@ class ModuloServiceTest {
         assertThat(persisted.getNombre()).isEqualTo(request.nombre());
         assertThat(persisted.getUrl()).isEqualTo(request.url());
         assertThat(persisted.getDescripcion()).isEqualTo(request.descripcion());
-        assertThat(persisted.getIcon()).isEqualTo(request.icon());
+        assertNull(persisted.getIcon());
         assertThat(persisted.getNombreId()).isEqualTo(request.nombreId());
         assertThat(persisted.getRequerido()).isEqualTo(request.requerido());
         assertThat(persisted.getEstado().getId()).isEqualTo(request.estadoId());
         assertThat(persisted.getSubSistema().getId()).isEqualTo(request.subSistemaId());
         assertThat(persisted.getTipoModulo().getId()).isEqualTo(request.tipoModuloId());
         assertThat(persisted.getTipoAplicacion().getId()).isEqualTo(request.tipoAplicacionId());
-        assertArrayEquals(new String[] { "ADMIN", "USER" }, persisted.getRolId());
+        assertNull(persisted.getRolId());
     }
 
     @Test
-    void crearModulo_setsRolIdToNull_whenRolesIsEmpty() {
-        ModuloRequest request = buildRequest(Collections.emptyList());
+    void crearModulo_setsRolIdToNull_whenRolesIsNull() {
+        ModuloRequest request = buildRequest();
         when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
         when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
         when(subSistemaRepository.findById(request.subSistemaId())).thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
@@ -185,7 +184,7 @@ class ModuloServiceTest {
 
     @Test
     void actualizarModulo_throwsRecursoNoEncontradoException_whenModuloMissing() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         when(moduloRepository.findById(10L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class, () -> moduloService.actualizarModulo(10L, request));
@@ -197,7 +196,7 @@ class ModuloServiceTest {
 
     @Test
     void actualizarModulo_throwsRecursoDuplicadoException_whenNombreExistsOnOtherModulo() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         Modulo existing = new Modulo();
         existing.setId(10L);
         when(moduloRepository.findById(10L)).thenReturn(Optional.of(existing));
@@ -211,7 +210,7 @@ class ModuloServiceTest {
 
     @Test
     void actualizarModulo_throwsEntidadNoEncontradaException_whenEstadoMissing() {
-        ModuloRequest request = buildRequest(List.of("ADMIN"));
+        ModuloRequest request = buildRequest();
         Modulo existing = new Modulo();
         existing.setId(10L);
         when(moduloRepository.findById(10L)).thenReturn(Optional.of(existing));
@@ -226,7 +225,7 @@ class ModuloServiceTest {
     @Test
     void actualizarModulo_persistsUpdatedFields_whenRequestIsValid() {
         Long moduloId = 10L;
-        ModuloRequest request = buildRequest(List.of("ADMIN", "USER"));
+        ModuloRequest request = buildRequest();
 
         Modulo existing = new Modulo();
         existing.setId(moduloId);
@@ -253,20 +252,20 @@ class ModuloServiceTest {
         assertThat(updated.getNombre()).isEqualTo(request.nombre());
         assertThat(updated.getUrl()).isEqualTo(request.url());
         assertThat(updated.getDescripcion()).isEqualTo(request.descripcion());
-        assertThat(updated.getIcon()).isEqualTo(request.icon());
+        assertNull(updated.getIcon());
         assertThat(updated.getNombreId()).isEqualTo(request.nombreId());
         assertThat(updated.getRequerido()).isEqualTo(request.requerido());
         assertThat(updated.getEstado().getId()).isEqualTo(request.estadoId());
         assertThat(updated.getSubSistema().getId()).isEqualTo(request.subSistemaId());
         assertThat(updated.getTipoModulo().getId()).isEqualTo(request.tipoModuloId());
         assertThat(updated.getTipoAplicacion().getId()).isEqualTo(request.tipoAplicacionId());
-        assertArrayEquals(new String[] { "ADMIN", "USER" }, updated.getRolId());
+        assertNull(updated.getRolId());
     }
 
     @Test
-    void actualizarModulo_setsRolIdToNull_whenRolesIsEmpty() {
+    void actualizarModulo_setsRolIdToNull_whenRolesIsNull() {
         Long moduloId = 10L;
-        ModuloRequest request = buildRequest(Collections.emptyList());
+        ModuloRequest request = buildRequest();
 
         Modulo existing = new Modulo();
         existing.setId(moduloId);
@@ -317,17 +316,17 @@ class ModuloServiceTest {
         assertThrows(RecursoNoEncontradoException.class, () -> moduloService.obtenerDetalleModulo(10L));
     }
 
-    private ModuloRequest buildRequest(List<String> roles) {
+    private ModuloRequest buildRequest() {
         return new ModuloRequest(
                 "Inventario",
                 "/inventario",
                 "Modulo de inventario",
-                "fa-box",
+                null,
                 1L,
                 2L,
                 3L,
                 4L,
-                roles,
+                null,
                 "mod_inventario",
                 true);
     }
