@@ -118,6 +118,21 @@ public class Advice extends ResponseEntityExceptionHandler {
         return problemDetail;
     }
 
+    /**
+     * Captura las excepciones de acceso denegado y construye una respuesta de error estructurada.
+     * <p>
+     * Este método se invoca cuando un usuario autenticado intenta acceder a un recurso para el cual no posee los
+     * permisos suficientes (Autorización). Utiliza el esquema {@link ProblemDetail} para estandarizar la respuesta con
+     * un estado HTTP 403 (Forbidden), incluyendo un mensaje localizado basado en el {@link Locale} de la petición.
+     * </p>
+     *
+     * @param ex La excepción {@link AccessDeniedException} lanzada por el marco de seguridad.
+     * @param locale La configuración regional actual, utilizada para resolver el mensaje de error traducido.
+     * @return Una instancia de {@link ProblemDetail} que encapsula los detalles del error, el título y el tipo de
+     * problema para su renderizado en el cliente.
+     * @see ProblemDetail
+     * @see HttpStatus#FORBIDDEN
+     */
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDeniedException(AccessDeniedException ex, Locale locale) {
 
@@ -132,6 +147,21 @@ public class Advice extends ResponseEntityExceptionHandler {
         return problemDetail;
     }
 
+    /**
+     * Captura y procesa las excepciones de autenticación para generar una respuesta de error estructurada.
+     * <p>
+     * Este método intercepta cualquier {@link AuthenticationException} lanzada durante el procesamiento de la petición.
+     * Utiliza el {@code MessageSource} disponible para resolver un mensaje de error localizado según el {@link Locale}
+     * del usuario. La respuesta se encapsula en un objeto {@link ProblemDetail} con el estado HTTP 401.
+     * </p>
+     *
+     * @param ex La excepción de autenticación capturada que contiene los detalles del fallo.
+     * @param locale La configuración regional de la petición actual, utilizada para la internacionalización del
+     * mensaje.
+     * @return Una instancia de {@link ProblemDetail} que contiene el estado {@code UNAUTHORIZED}, el título y el
+     * mensaje descriptivo.
+     * @see ProblemDetail
+     */
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleAuthenticationException(AuthenticationException ex, Locale locale) {
 
