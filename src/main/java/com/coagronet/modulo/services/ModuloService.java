@@ -23,18 +23,15 @@ import com.coagronet.tipomodulo.TipoModulo;
 import com.coagronet.tipomodulo.repositories.TipoModuloRepository;
 
 /**
- * Implementa la lógica de negocio y las reglas de validación para la gestión de
- * módulos del sistema.
+ * Implementa la lógica de negocio y las reglas de validación para la gestión de módulos del sistema.
  * <p>
- * Esta clase orquesta la interacción entre las entidades de dominio
- * ({@link Modulo}, {@link Estado},
- * {@link SubSistema}, etc.) y sus respectivos repositorios. Se encarga de
- * garantizar la integridad referencial y la
+ * Esta clase orquesta la interacción entre las entidades de dominio ({@link Modulo}, {@link Estado},
+ * {@link SubSistema}, etc.) y sus respectivos repositorios. Se encarga de garantizar la integridad referencial y la
  * unicidad de los registros antes de la persistencia.
  * </p>
  *
  * @author jujcgu
- * @version 1.0
+ * @version 2.0
  * @see ModuloRepository
  * @see ModuloRequest
  * @since 2026
@@ -49,24 +46,17 @@ public class ModuloService {
         private final TipoAplicacionRepository tipoAplicacionRepository;
 
         /**
-         * Construye el servicio inyectando todas las dependencias necesarias de
-         * repositorios.
+         * Construye el servicio inyectando todas las dependencias necesarias de repositorios.
          * <p>
-         * La inyección por constructor asegura que el servicio no pueda ser instanciado
-         * en un estado inválido (sin
+         * La inyección por constructor asegura que el servicio no pueda ser instanciado en un estado inválido (sin
          * acceso a datos).
          * </p>
          *
-         * @param moduloRepository         repositorio para operaciones CRUD sobre la
-         *                                 entidad Modulo.
-         * @param estadoRepository         repositorio para validar y recuperar el
-         *                                 estado operativo.
-         * @param subSistemaRepository     repositorio para asociar el módulo a su
-         *                                 subsistema padre.
-         * @param tipoModuloRepository     repositorio para clasificar el tipo de
-         *                                 funcionalidad.
-         * @param tipoAplicacionRepository repositorio para definir la plataforma de
-         *                                 despliegue.
+         * @param moduloRepository repositorio para operaciones CRUD sobre la entidad Modulo.
+         * @param estadoRepository repositorio para validar y recuperar el estado operativo.
+         * @param subSistemaRepository repositorio para asociar el módulo a su subsistema padre.
+         * @param tipoModuloRepository repositorio para clasificar el tipo de funcionalidad.
+         * @param tipoAplicacionRepository repositorio para definir la plataforma de despliegue.
          */
         public ModuloService(ModuloRepository moduloRepository, EstadoRepository estadoRepository,
                         SubSistemaRepository subSistemaRepository, TipoModuloRepository tipoModuloRepository,
@@ -79,32 +69,25 @@ public class ModuloService {
         }
 
         /**
-         * Registra un nuevo módulo en la base de datos tras validar sus dependencias y
-         * restricciones de negocio.
+         * Registra un nuevo módulo en la base de datos tras validar sus dependencias y restricciones de negocio.
          * <p>
          * El proceso de creación sigue los siguientes pasos:
          * <ol>
          * <li>Verifica la unicidad del nombre comercial para evitar duplicados.</li>
-         * <li>Resuelve las referencias a llaves foráneas (Estado, Subsistema, Tipos),
-         * lanzando excepción si alguna no
+         * <li>Resuelve las referencias a llaves foráneas (Estado, Subsistema, Tipos), lanzando excepción si alguna no
          * existe.</li>
-         * <li>Transforma la lista de roles del DTO a un arreglo de cadenas compatible
-         * con el tipo de dato de
+         * <li>Transforma la lista de roles del DTO a un arreglo de cadenas compatible con el tipo de dato de
          * PostgreSQL.</li>
          * <li>Construye y persiste la entidad {@link Modulo}.</li>
          * </ol>
          * </p>
          *
-         * @param request objeto de transferencia (DTO) con los datos de entrada
-         *                validados previamente por el
-         *                controlador.
+         * @param request objeto de transferencia (DTO) con los datos de entrada validados previamente por el
+         * controlador.
          * @return el identificador único (ID) del módulo recién creado.
-         * @throws RecursoDuplicadoException    si ya existe un módulo con el mismo
-         *                                      nombre en el sistema.
-         * @throws EntidadNoEncontradaException si alguno de los IDs relacionados
-         *                                      (Estado, SubSistema, TipoModulo,
-         *                                      TipoAplicacion) no corresponde a un
-         *                                      registro existente.
+         * @throws RecursoDuplicadoException si ya existe un módulo con el mismo nombre en el sistema.
+         * @throws EntidadNoEncontradaException si alguno de los IDs relacionados (Estado, SubSistema, TipoModulo,
+         * TipoAplicacion) no corresponde a un registro existente.
          * @see ModuloRequest
          */
         @Transactional
@@ -127,59 +110,40 @@ public class ModuloService {
                                 .orElseThrow(() -> new EntidadNoEncontradaException("Tipo de Aplicación",
                                                 request.tipoAplicacionId()));
 
-                // Transformación de List<String> a String[] para compatibilidad con array de
-                // PostgreSQL
-                String[] rolesArray = (request.roles() != null && !request.roles().isEmpty())
-                                ? request.roles().toArray(new String[0])
-                                : null;
-
                 Modulo modulo = Modulo.builder().nombre(request.nombre()).url(request.url())
-                                .descripcion(request.descripcion()).icon(request.icon()).estado(estado)
-                                .subSistema(subSistema).tipoModulo(tipoModulo).tipoAplicacion(tipoAplicacion)
-                                .rolId(rolesArray).nombreId(request.nombreId()).requerido(request.requerido()).build();
+                                .descripcion(request.descripcion()).estado(estado).subSistema(subSistema)
+                                .tipoModulo(tipoModulo).tipoAplicacion(tipoAplicacion).nombreId(request.nombreId())
+                                .requerido(request.requerido()).build();
 
                 return moduloRepository.save(modulo).getId();
         }
 
         /**
-         * Actualiza la información operativa y funcional de un módulo existente en el
-         * sistema.
+         * Actualiza la información operativa y funcional de un módulo existente en el sistema.
          * <p>
-         * Este método ejecuta una transacción atómica para modificar los atributos de
-         * la entidad {@link Modulo}. Antes
-         * de aplicar los cambios, realiza un conjunto estricto de validaciones de
-         * integridad y reglas de negocio:
+         * Este método ejecuta una transacción atómica para modificar los atributos de la entidad {@link Modulo}. Antes
+         * de aplicar los cambios, realiza un conjunto estricto de validaciones de integridad y reglas de negocio:
          * </p>
          * <ul>
          * <li>Confirma la existencia del registro objetivo en la base de datos.</li>
-         * <li>Valida la unicidad del nombre, asegurando que no entre en conflicto con
-         * otros registros (excluyendo el
+         * <li>Valida la unicidad del nombre, asegurando que no entre en conflicto con otros registros (excluyendo el
          * propio módulo en edición).</li>
-         * <li>Verifica la validez de todas las llaves foráneas referenciadas (Estado,
-         * Subsistema, Tipos).</li>
+         * <li>Verifica la validez de todas las llaves foráneas referenciadas (Estado, Subsistema, Tipos).</li>
          * </ul>
          * <p>
-         * Adicionalmente, gestiona la transformación de tipos de datos, convirtiendo la
-         * lista de roles del DTO a un
-         * arreglo de cadenas (<code>String[]</code>) para garantizar la compatibilidad
-         * con el tipo de columna
+         * Adicionalmente, gestiona la transformación de tipos de datos, convirtiendo la lista de roles del DTO a un
+         * arreglo de cadenas (<code>String[]</code>) para garantizar la compatibilidad con el tipo de columna
          * específico de PostgreSQL.
          * </p>
          *
-         * @param id      identificador único (llave primaria) del módulo que se desea
-         *                actualizar.
-         * @param request objeto de transferencia (DTO) que contiene los nuevos valores
-         *                a persistir. No debe ser
-         *                <code>null</code>.
-         * @throws RecursoNoEncontradoException si no existe un módulo asociado al
-         *                                      <code>id</code> proporcionado.
-         * @throws RecursoDuplicadoException    si el nombre especificado en el
-         *                                      <code>request</code> ya está asignado a
-         *                                      otro módulo diferente en el sistema.
-         * @throws EntidadNoEncontradaException si alguna de las entidades relacionadas
-         *                                      (Estado, SubSistema, TipoModulo,
-         *                                      TipoAplicacion) no se encuentra en los
-         *                                      catálogos respectivos.
+         * @param id identificador único (llave primaria) del módulo que se desea actualizar.
+         * @param request objeto de transferencia (DTO) que contiene los nuevos valores a persistir. No debe ser
+         * <code>null</code>.
+         * @throws RecursoNoEncontradoException si no existe un módulo asociado al <code>id</code> proporcionado.
+         * @throws RecursoDuplicadoException si el nombre especificado en el <code>request</code> ya está asignado a
+         * otro módulo diferente en el sistema.
+         * @throws EntidadNoEncontradaException si alguna de las entidades relacionadas (Estado, SubSistema, TipoModulo,
+         * TipoAplicacion) no se encuentra en los catálogos respectivos.
          * @see ModuloRequest
          * @see Modulo
          * @since 2026
@@ -207,21 +171,13 @@ public class ModuloService {
                                 .orElseThrow(() -> new EntidadNoEncontradaException("Tipo de Aplicación",
                                                 request.tipoAplicacionId()));
 
-                // Transformación de List<String> a String[] para compatibilidad con array de
-                // PostgreSQL
-                String[] rolesArray = (request.roles() != null && !request.roles().isEmpty())
-                                ? request.roles().toArray(new String[0])
-                                : null;
-
                 modulo.setNombre(request.nombre());
                 modulo.setUrl(request.url());
                 modulo.setDescripcion(request.descripcion());
-                modulo.setIcon(request.icon());
                 modulo.setEstado(estado);
                 modulo.setSubSistema(subSistema);
                 modulo.setTipoModulo(tipoModulo);
                 modulo.setTipoAplicacion(tipoAplicacion);
-                modulo.setRolId(rolesArray);
                 modulo.setNombreId(request.nombreId());
                 modulo.setRequerido(request.requerido());
 
@@ -229,25 +185,19 @@ public class ModuloService {
         }
 
         /**
-         * Recupera el listado paginado de módulos con una proyección de datos
-         * optimizada para la lectura.
+         * Recupera el listado paginado de módulos con una proyección de datos optimizada para la lectura.
          * <p>
          * Este método actúa como una fachada de servicio para la consulta
-         * {@link ModuloRepository#findAllProjected(Pageable)}. Su objetivo principal es
-         * proveer información al cliente
-         * (Frontend) minimizando el tráfico de red, ya que retorna objetos
-         * {@link ModuloResponse} con las relaciones ya
-         * resueltas (nombres en lugar de IDs), evitando la necesidad de múltiples
-         * consultas adicionales o la
+         * {@link ModuloRepository#findAllProjected(Pageable)}. Su objetivo principal es proveer información al cliente
+         * (Frontend) minimizando el tráfico de red, ya que retorna objetos {@link ModuloResponse} con las relaciones ya
+         * resueltas (nombres en lugar de IDs), evitando la necesidad de múltiples consultas adicionales o la
          * serialización de entidades completas.
          * </p>
          *
-         * @param pageable objeto que encapsula la información de paginación (número de
-         *                 página, tamaño) y ordenamiento
-         *                 solicitada por el controlador.
-         * @return una página ({@link Page}) de objetos {@link ModuloResponse}. Retorna
-         *         una página vacía si no existen
-         *         registros, garantizando que el resultado nunca sea <code>null</code>.
+         * @param pageable objeto que encapsula la información de paginación (número de página, tamaño) y ordenamiento
+         * solicitada por el controlador.
+         * @return una página ({@link Page}) de objetos {@link ModuloResponse}. Retorna una página vacía si no existen
+         * registros, garantizando que el resultado nunca sea <code>null</code>.
          * @see ModuloResponse
          * @see ModuloRepository#findAllProjected(Pageable)
          * @since 2026
@@ -257,32 +207,23 @@ public class ModuloService {
         }
 
         /**
-         * Recupera la información detallada de un módulo específico para fines de
-         * edición o auditoría.
+         * Recupera la información detallada de un módulo específico para fines de edición o auditoría.
          * <p>
-         * Este método actúa como intermediario hacia la capa de persistencia, invocando
-         * la proyección
-         * {@link com.coagronet.subsistema.dto.ModuloDetailResponse}. Su función
-         * principal es desempaquetar el
-         * resultado opcional y aplicar la regla de negocio de "existencia obligatoria".
+         * Este método actúa como intermediario hacia la capa de persistencia, invocando la proyección
+         * {@link com.coagronet.subsistema.dto.ModuloDetailResponse}. Su función principal es desempaquetar el resultado
+         * opcional y aplicar la regla de negocio de "existencia obligatoria".
          * </p>
          * <p>
-         * A diferencia de una búsqueda simple, este servicio garantiza que el valor de
-         * retorno nunca sea
-         * <code>null</code>; si el recurso no existe, interrumpe el procesamiento
-         * lanzando una excepción
-         * de negocio estandarizada (RFC 7807).
+         * A diferencia de una búsqueda simple, este servicio garantiza que el valor de retorno nunca sea
+         * <code>null</code>; si el recurso no existe, interrumpe el procesamiento lanzando una excepción de negocio
+         * estandarizada (RFC 7807).
          * </p>
          *
-         * @param id identificador único (llave primaria) del módulo que se desea
-         *           consultar.
-         * @return un objeto {@link ModuloDetailResponse} que contiene los datos del
-         *         módulo y los identificadores
-         *         de sus relaciones (FKs) para facilitar el enlace en formularios.
-         * @throws RecursoNoEncontradoException si no existe un registro activo asociado
-         *                                      al <code>id</code> proporcionado.
-         *                                      El manejo de esta excepción resulta en
-         *                                      una respuesta HTTP 404.
+         * @param id identificador único (llave primaria) del módulo que se desea consultar.
+         * @return un objeto {@link ModuloDetailResponse} que contiene los datos del módulo y los identificadores de sus
+         * relaciones (FKs) para facilitar el enlace en formularios.
+         * @throws RecursoNoEncontradoException si no existe un registro activo asociado al <code>id</code>
+         * proporcionado. El manejo de esta excepción resulta en una respuesta HTTP 404.
          * @see ModuloRepository#findByIdProjected(Long)
          * @see RecursoNoEncontradoException
          * @since 2026
