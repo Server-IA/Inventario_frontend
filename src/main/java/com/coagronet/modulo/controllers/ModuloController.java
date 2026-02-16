@@ -34,7 +34,7 @@ import jakarta.validation.Valid;
  * @see ModuloService
  * @since 2026
  */
-@RestController @RequestMapping("/api/v1/modulos")
+@RestController @RequestMapping("/api/v2/modulos")
 public class ModuloController {
 
     private final ModuloService moduloService;
@@ -68,7 +68,7 @@ public class ModuloController {
     @PostMapping
     public ResponseEntity<Void> crear(@Valid @RequestBody ModuloRequest request) {
         Long id = moduloService.crearModulo(request);
-        return ResponseEntity.created(URI.create("/api/v1/modulos/" + id)).build();
+        return ResponseEntity.created(URI.create("/api/v2/modulos/" + id)).build();
     }
 
     /**
