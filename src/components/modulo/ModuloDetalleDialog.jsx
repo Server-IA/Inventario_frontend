@@ -56,7 +56,7 @@ export default function ModuloDetalleDialog({
           tipoModuloRes,
           tipoAplicacionRes
         ] = await Promise.all([
-          axios.get(`/v1/modulos/${moduloId}`, authHeaders),
+          axios.get(`/v2/modulos/${moduloId}`, authHeaders),
           axios.get("/v1/sub-sistemas?campos=id,nombre", authHeaders),
           axios.get("/v1/tipo-modulos?campos=id,nombre", authHeaders),
           axios.get("/v1/tipo-aplicaciones?campos=id,nombre", authHeaders),
@@ -208,28 +208,6 @@ export default function ModuloDetalleDialog({
               </Grid>
 
             </Grid>
-
-            {/* ROLES */}
-            {data.roles?.length > 0 && (
-              <>
-                <Divider sx={{ my: 3 }} />
-
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Roles asociados
-                </Typography>
-
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {data.roles.map((rol) => (
-                    <Chip
-                      key={rol}
-                      label={rol}
-                      variant="outlined"
-                      size="small"
-                    />
-                  ))}
-                </Box>
-              </>
-            )}
 
           </Paper>
 

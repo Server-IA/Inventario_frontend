@@ -52,7 +52,7 @@ export default function Modulo() {
   // =============================
   const reloadData = async () => {
     try {
-      const res = await axios.get("/v1/modulos", authHeaders);
+      const res = await axios.get("/v2/modulos", authHeaders);
       setModulos(unwrap(res.data));
     } catch {
       setMessage({

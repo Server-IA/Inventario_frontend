@@ -44,7 +44,7 @@ export default function ModuloDisponiblesMenu({ open, onClose, setMessage }) {
       setLoading(true);
 
       const res = await axios.get(
-        "/v1/modulos?disponiblesParaMenu=true",
+        "/v2/modulos?disponiblesParaMenu=true",
         authHeaders
       );
 
