@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Switch, Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
@@ -6,14 +6,21 @@ import * as MuiIcons from "@mui/icons-material";
 import axios from "../axiosConfig";
 
 export default function GridModulo({
-  modulos = [],
+  modulos = {},
   setSelectedRow,
   authHeaders,
   setMessage,
   reloadData,
+  loading = false,
 }) {
-const theme = useTheme();
-const isDark = theme.palette.mode === "dark";
+
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 5,
+  });
 
   const handleToggleRequerido = async (row) => {
     const nuevoValor = !row.requerido;
@@ -31,10 +38,9 @@ const isDark = theme.palette.mode === "dark";
         text: "Obligatoriedad actualizada correctamente.",
       });
 
-      reloadData?.();
+      reloadData?.(paginationModel.page, paginationModel.pageSize);
 
-    } catch (error) {
-
+    } catch {
       setMessage?.({
         open: true,
         severity: "error",
@@ -46,16 +52,11 @@ const isDark = theme.palette.mode === "dark";
   const columns = useMemo(() => [
 
     { field: "id", headerName: "ID", width: 80 },
-
     { field: "nombre", headerName: "Nombre", width: 180 },
-
     { field: "nombreId", headerName: "Acrónimo", width: 140 },
-
     { field: "url", headerName: "URL", width: 220 },
-
     { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 220 },
 
-    // 🔹 ICONO REAL (NO TEXTO)
     {
       field: "icon",
       headerName: "Icono",
@@ -63,7 +64,6 @@ const isDark = theme.palette.mode === "dark";
       sortable: false,
       renderCell: (params) => {
         const IconComponent = MuiIcons[params.value];
-
         return IconComponent ? (
           <IconComponent sx={{ fontSize: 22 }} />
         ) : null;
@@ -71,69 +71,55 @@ const isDark = theme.palette.mode === "dark";
     },
 
     { field: "subSistema", headerName: "SubSistema", width: 160 },
-
     { field: "tipoModulo", headerName: "Tipo Módulo", width: 150 },
-
     { field: "tipoAplicacion", headerName: "Tipo Aplicación", width: 170 },
 
-   {
-  field: "requerido",
-  headerName: "Requerido",
-  width: 180,
-  sortable: false,
-  renderCell: (params) => {
-    const activo = Boolean(params.row.requerido);
+    {
+      field: "requerido",
+      headerName: "Requerido",
+      width: 180,
+      sortable: false,
+      renderCell: (params) => {
+        const activo = Boolean(params.row.requerido);
 
-    return (
-      <Box display="flex" alignItems="center" gap={1}>
-        <Switch
-          checked={activo}
-          onChange={() => handleToggleRequerido(params.row)}
-          sx={{
-            '& .MuiSwitch-switchBase.Mui-checked': {
-              color: isDark ? '#00e676' : theme.palette.primary.main,
-            },
-            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-              backgroundColor: isDark ? '#00e676' : theme.palette.primary.main,
-            },
-            '& .MuiSwitch-track': {
-              backgroundColor: isDark ? '#555' : undefined,
-            },
-          }}
-        />
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 600,
-            color: activo
-              ? (isDark ? '#00e676' : theme.palette.primary.main)
-              : (isDark ? '#ccc' : '#666'),
-          }}
-        >
-          {activo ? "Sí" : "No"}
-        </Typography>
-      </Box>
-    );
-  },
-},
+        return (
+          <Box display="flex" alignItems="center" gap={1}>
+            <Switch
+              checked={activo}
+              onChange={() => handleToggleRequerido(params.row)}
+            />
+            <Typography>
+              {activo ? "Sí" : "No"}
+            </Typography>
+          </Box>
+        );
+      },
+    },
+
     { field: "estado", headerName: "Estado", width: 120 },
 
-  ], []);
+  ], [isDark, theme]);
 
   return (
     <div style={{ width: "100%" }}>
       <DataGrid
-        rows={Array.isArray(modulos) ? modulos : []}
+        loading={loading}
+        rows={modulos?.content || []}
         columns={columns}
         getRowId={(row) => row.id}
         onRowClick={(params) => setSelectedRow?.(params.row)}
-        disableRowSelectionOnClick
-        pageSizeOptions={[5, 10, 20, 50]}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
+
+        paginationMode="server"
+        rowCount={modulos?.page?.totalElements || 0}
+
+        paginationModel={paginationModel}
+        onPaginationModelChange={(model) => {
+          setPaginationModel(model);
+          reloadData?.(model.page, model.pageSize);
         }}
+
+        pageSizeOptions={[5, 10, 20, 50]}
+        disableRowSelectionOnClick
         autoHeight
       />
     </div>
