@@ -156,30 +156,6 @@ class ModuloServiceTest {
         assertThat(persisted.getSubSistema().getId()).isEqualTo(request.subSistemaId());
         assertThat(persisted.getTipoModulo().getId()).isEqualTo(request.tipoModuloId());
         assertThat(persisted.getTipoAplicacion().getId()).isEqualTo(request.tipoAplicacionId());
-        assertNull(persisted.getRolId());
-    }
-
-    @Test
-    void crearModulo_setsRolIdToNull_whenRolesIsNull() {
-        ModuloRequest request = buildRequest();
-        when(moduloRepository.existsByNombre(request.nombre())).thenReturn(false);
-        when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
-        when(subSistemaRepository.findById(request.subSistemaId())).thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
-        when(tipoModuloRepository.findById(request.tipoModuloId())).thenReturn(Optional.of(buildTipoModulo(request.tipoModuloId())));
-        when(tipoAplicacionRepository.findById(request.tipoAplicacionId()))
-                .thenReturn(Optional.of(buildTipoAplicacion(request.tipoAplicacionId())));
-
-        Modulo saved = new Modulo();
-        saved.setId(100L);
-        when(moduloRepository.save(any(Modulo.class))).thenReturn(saved);
-
-        moduloService.crearModulo(request);
-
-        ArgumentCaptor<Modulo> captor = ArgumentCaptor.forClass(Modulo.class);
-        verify(moduloRepository).save(captor.capture());
-        Modulo persisted = captor.getValue();
-
-        assertNull(persisted.getRolId());
     }
 
     @Test
@@ -259,35 +235,6 @@ class ModuloServiceTest {
         assertThat(updated.getSubSistema().getId()).isEqualTo(request.subSistemaId());
         assertThat(updated.getTipoModulo().getId()).isEqualTo(request.tipoModuloId());
         assertThat(updated.getTipoAplicacion().getId()).isEqualTo(request.tipoAplicacionId());
-        assertNull(updated.getRolId());
-    }
-
-    @Test
-    void actualizarModulo_setsRolIdToNull_whenRolesIsNull() {
-        Long moduloId = 10L;
-        ModuloRequest request = buildRequest();
-
-        Modulo existing = new Modulo();
-        existing.setId(moduloId);
-
-        when(moduloRepository.findById(moduloId)).thenReturn(Optional.of(existing));
-        when(moduloRepository.existsByNombreAndIdNot(request.nombre(), moduloId)).thenReturn(false);
-        when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
-        when(subSistemaRepository.findById(request.subSistemaId()))
-                .thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
-        when(tipoModuloRepository.findById(request.tipoModuloId()))
-                .thenReturn(Optional.of(buildTipoModulo(request.tipoModuloId())));
-        when(tipoAplicacionRepository.findById(request.tipoAplicacionId()))
-                .thenReturn(Optional.of(buildTipoAplicacion(request.tipoAplicacionId())));
-
-        when(moduloRepository.save(any(Modulo.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        moduloService.actualizarModulo(moduloId, request);
-
-        ArgumentCaptor<Modulo> captor = ArgumentCaptor.forClass(Modulo.class);
-        verify(moduloRepository).save(captor.capture());
-        Modulo updated = captor.getValue();
-        assertNull(updated.getRolId());
     }
 
     @Test
@@ -301,7 +248,6 @@ class ModuloServiceTest {
                 2L,
                 3L,
                 4L,
-                new String[] { "ADMIN" },
                 "mod_inventario",
                 true)));
 
@@ -321,12 +267,10 @@ class ModuloServiceTest {
                 "Inventario",
                 "/inventario",
                 "Modulo de inventario",
-                null,
                 1L,
                 2L,
                 3L,
                 4L,
-                null,
                 "mod_inventario",
                 true);
     }

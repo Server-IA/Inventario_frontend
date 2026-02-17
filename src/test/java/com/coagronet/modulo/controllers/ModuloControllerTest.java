@@ -73,22 +73,22 @@ class ModuloControllerTest {
 
         when(moduloService.crearModulo(org.mockito.ArgumentMatchers.any())).thenReturn(10L);
 
-        mockMvc.perform(post("/api/v1/modulos")
+        mockMvc.perform(post("/api/v2/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/v1/modulos/10"));
+            .andExpect(header().string("Location", "/api/v2/modulos/10"));
 
         ArgumentCaptor<com.coagronet.modulo.dtos.ModuloRequest> captor = ArgumentCaptor.forClass(
             com.coagronet.modulo.dtos.ModuloRequest.class);
         verify(moduloService).crearModulo(captor.capture());
-        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().roles());
-        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().icon());
+        org.junit.jupiter.api.Assertions.assertEquals("Compras", captor.getValue().nombre());
+        org.junit.jupiter.api.Assertions.assertEquals("/compras", captor.getValue().url());
     }
 
     @Test
     void crear_returns400_whenRequestIsInvalid() throws Exception {
-        mockMvc.perform(post("/api/v1/modulos")
+        mockMvc.perform(post("/api/v2/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
                 .andExpect(status().isBadRequest());
@@ -101,7 +101,7 @@ class ModuloControllerTest {
         Long moduloId = 10L;
         String requestJson = buildRequestJsonWithoutRoles();
 
-        mockMvc.perform(put("/api/v1/modulos/{id}", moduloId)
+        mockMvc.perform(put("/api/v2/modulos/{id}", moduloId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
             .andExpect(status().isNoContent());
@@ -109,13 +109,13 @@ class ModuloControllerTest {
         ArgumentCaptor<com.coagronet.modulo.dtos.ModuloRequest> captor = ArgumentCaptor.forClass(
                 com.coagronet.modulo.dtos.ModuloRequest.class);
         verify(moduloService).actualizarModulo(org.mockito.ArgumentMatchers.eq(moduloId), captor.capture());
-        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().roles());
-        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().icon());
+        org.junit.jupiter.api.Assertions.assertEquals("Compras", captor.getValue().nombre());
+        org.junit.jupiter.api.Assertions.assertEquals("/compras", captor.getValue().url());
         }
 
         @Test
         void actualizar_returns400_whenRequestIsInvalid() throws Exception {
-        mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
+        mockMvc.perform(put("/api/v2/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{}"))
             .andExpect(status().isBadRequest());
@@ -136,7 +136,6 @@ class ModuloControllerTest {
                 "Seguridad",
                 "CRUD",
                 "Web",
-                new String[] { "ADMIN" },
                 "mod_inventario",
                 true)),
             PageRequest.of(0, 10),
@@ -144,7 +143,7 @@ class ModuloControllerTest {
 
         when(moduloService.obtenerModulos(org.mockito.ArgumentMatchers.any())).thenReturn(page);
 
-        mockMvc.perform(get("/api/v1/modulos")
+        mockMvc.perform(get("/api/v2/modulos")
             .queryParam("page", "0")
             .queryParam("size", "10"))
             .andExpect(status().isOk())
@@ -163,13 +162,12 @@ class ModuloControllerTest {
             2L,
             3L,
             4L,
-            new String[] { "ADMIN" },
             "mod_inventario",
             true);
 
         when(moduloService.obtenerDetalleModulo(moduloId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/modulos/{id}", moduloId))
+        mockMvc.perform(get("/api/v2/modulos/{id}", moduloId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.nombre").value("Inventario"))
             .andExpect(jsonPath("$.requerido").value(true));

@@ -75,7 +75,7 @@ class ModuloControllerSecurityTest {
     void crear_returns401_whenUserIsUnauthenticated() throws Exception {
         String requestJson = buildRequestJsonWithoutRoles();
 
-        mockMvc.perform(post("/api/v1/modulos")
+        mockMvc.perform(post("/api/v2/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
                 .andExpect(status().isUnauthorized());
@@ -88,7 +88,7 @@ class ModuloControllerSecurityTest {
     void crear_returns403_whenUserLacksAdminRole() throws Exception {
         String requestJson = buildRequestJsonWithoutRoles();
 
-        mockMvc.perform(post("/api/v1/modulos")
+        mockMvc.perform(post("/api/v2/modulos")
                 .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
                 .andExpect(status().isForbidden());
@@ -98,7 +98,7 @@ class ModuloControllerSecurityTest {
 
         @Test
         void obtenerModulos_returns401_whenUserIsUnauthenticated() throws Exception {
-        mockMvc.perform(get("/api/v1/modulos"))
+        mockMvc.perform(get("/api/v2/modulos"))
             .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(moduloService);
@@ -107,7 +107,7 @@ class ModuloControllerSecurityTest {
         @Test
         @WithMockUser(roles = "USER")
         void obtenerModulos_returns403_whenUserLacksAdminRole() throws Exception {
-        mockMvc.perform(get("/api/v1/modulos"))
+        mockMvc.perform(get("/api/v2/modulos"))
             .andExpect(status().isForbidden());
 
         verifyNoInteractions(moduloService);
@@ -118,17 +118,17 @@ class ModuloControllerSecurityTest {
         void obtenerModulos_returns200_whenUserIsAdmin() throws Exception {
         Page<ModuloSummaryResponse> page = new PageImpl<>(List.of(
             new ModuloSummaryResponse(1L, "Inventario", "/inventario", "Modulo de inventario", "fa-box",
-                "Activo", "Seguridad", "CRUD", "Web", new String[] { "ADMIN" }, "mod_inventario", true)),
+                "Activo", "Seguridad", "CRUD", "Web", "mod_inventario", true)),
             PageRequest.of(0, 10), 1);
         when(moduloService.obtenerModulos(org.mockito.ArgumentMatchers.any())).thenReturn(page);
 
-        mockMvc.perform(get("/api/v1/modulos"))
+        mockMvc.perform(get("/api/v2/modulos"))
             .andExpect(status().isOk());
         }
 
         @Test
         void obtenerDetalle_returns401_whenUserIsUnauthenticated() throws Exception {
-        mockMvc.perform(get("/api/v1/modulos/{id}", 1L))
+        mockMvc.perform(get("/api/v2/modulos/{id}", 1L))
             .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(moduloService);
@@ -137,7 +137,7 @@ class ModuloControllerSecurityTest {
         @Test
         @WithMockUser(roles = "USER")
         void obtenerDetalle_returns403_whenUserLacksAdminRole() throws Exception {
-        mockMvc.perform(get("/api/v1/modulos/{id}", 1L))
+        mockMvc.perform(get("/api/v2/modulos/{id}", 1L))
             .andExpect(status().isForbidden());
 
         verifyNoInteractions(moduloService);
@@ -155,11 +155,10 @@ class ModuloControllerSecurityTest {
             2L,
             3L,
             4L,
-            new String[] { "ADMIN" },
             "mod_inventario",
             true));
 
-        mockMvc.perform(get("/api/v1/modulos/{id}", 1L))
+        mockMvc.perform(get("/api/v2/modulos/{id}", 1L))
             .andExpect(status().isOk());
         }
 
@@ -167,7 +166,7 @@ class ModuloControllerSecurityTest {
         void actualizar_returns401_whenUserIsUnauthenticated() throws Exception {
         String requestJson = buildRequestJsonWithoutRoles();
 
-        mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
+        mockMvc.perform(put("/api/v2/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
             .andExpect(status().isUnauthorized());
@@ -180,7 +179,7 @@ class ModuloControllerSecurityTest {
         void actualizar_returns403_whenUserLacksAdminRole() throws Exception {
         String requestJson = buildRequestJsonWithoutRoles();
 
-        mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
+        mockMvc.perform(put("/api/v2/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
             .andExpect(status().isForbidden());
@@ -193,7 +192,7 @@ class ModuloControllerSecurityTest {
         void actualizar_returns204_whenUserIsAdmin() throws Exception {
         String requestJson = buildRequestJsonWithoutRoles();
 
-        mockMvc.perform(put("/api/v1/modulos/{id}", 10L)
+        mockMvc.perform(put("/api/v2/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
             .andExpect(status().isNoContent());
