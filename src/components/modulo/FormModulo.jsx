@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Button, Grid, MenuItem,
-  Checkbox, FormControlLabel
+  Checkbox, FormControlLabel,
+  Box, Typography
 } from "@mui/material";
 import axios from "../axiosConfig";
 
@@ -16,18 +17,27 @@ export default function FormModulo({
   authHeaders,
 }) {
 
+  // 🔹 Generador automático del acrónimo
+  const generarNombreId = (nombre) => {
+    return nombre
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "");
+  };
+
   const initialData = {
     id: null,
     nombre: "",
+    nombreId: "",
     url: "",
     descripcion: "",
-    icon: "",
     estadoId: 1,
     subSistemaId: "",
     tipoModuloId: "",
     tipoAplicacionId: "",
-    roles: "",
-    nombreId: "",
     requerido: false,
   };
 
@@ -36,6 +46,7 @@ export default function FormModulo({
   const [tipoModulos, setTipoModulos] = useState([]);
   const [tipoAplicaciones, setTipoAplicaciones] = useState([]);
 
+  // 🔹 Cargar combos
   useEffect(() => {
     if (!open) return;
 
@@ -51,54 +62,66 @@ export default function FormModulo({
     });
   }, [open]);
 
-useEffect(() => {
-  if (!open) return;
+  // 🔹 Cargar datos en edición
+  useEffect(() => {
+    if (!open) return;
 
-  if (formMode === "edit" && selectedRow) {
+    if (formMode === "edit" && selectedRow) {
 
-    const subSistema = subSistemas.find(
-      s => s.nombre === selectedRow.subSistema
-    );
+      const subSistema = subSistemas.find(
+        s => s.nombre === selectedRow.subSistema
+      );
 
-    const tipoModulo = tipoModulos.find(
-      t => t.nombre === selectedRow.tipoModulo
-    );
+      const tipoModulo = tipoModulos.find(
+        t => t.nombre === selectedRow.tipoModulo
+      );
 
-    const tipoAplicacion = tipoAplicaciones.find(
-      a => a.nombre === selectedRow.tipoAplicacion
-    );
+      const tipoAplicacion = tipoAplicaciones.find(
+        a => a.nombre === selectedRow.tipoAplicacion
+      );
 
-    setFormData({
-      ...selectedRow,
-      estadoId: selectedRow.estado === "Activo" ? 1 : 2,
-      subSistemaId: subSistema?.id || "",
-      tipoModuloId: tipoModulo?.id || "",
-      tipoAplicacionId: tipoAplicacion?.id || "",
-      roles: Array.isArray(selectedRow.roles)
-        ? selectedRow.roles.join(", ")
-        : "",
-    });
+      setFormData({
+        id: selectedRow.id,
+        nombre: selectedRow.nombre || "",
+        nombreId: selectedRow.nombreId || "",
+        url: selectedRow.url || "",
+        descripcion: selectedRow.descripcion || "",
+        estadoId: selectedRow.estado === "Activo" ? 1 : 2,
+        subSistemaId: subSistema?.id || "",
+        tipoModuloId: tipoModulo?.id || "",
+        tipoAplicacionId: tipoAplicacion?.id || "",
+        requerido: Boolean(selectedRow.requerido),
+      });
 
-  } else {
-    setFormData(initialData);
-  }
+    } else {
+      setFormData(initialData);
+    }
 
-}, [
-  open,
-  formMode,
-  selectedRow,
-  subSistemas,
-  tipoModulos,
-  tipoAplicaciones
-]);
+  }, [
+    open,
+    formMode,
+    selectedRow,
+    subSistemas,
+    tipoModulos,
+    tipoAplicaciones
+  ]);
 
-
+  // 🔹 Manejo de cambios con generación automática
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      if (name === "nombre") {
+        updated.nombreId = generarNombreId(value);
+      }
+
+      return updated;
+    });
   };
 
   const error = (text) => {
@@ -119,46 +142,39 @@ useEffect(() => {
     if (formData.url.length > 100)
       return error("La URL no puede superar 100 caracteres.");
 
-    if (!Number(formData.subSistemaId) || Number(formData.subSistemaId) <= 0)
+    if (!Number(formData.subSistemaId))
       return error("SubSistema inválido.");
 
-    if (!Number(formData.tipoModuloId) || Number(formData.tipoModuloId) <= 0)
+    if (!Number(formData.tipoModuloId))
       return error("Tipo Módulo inválido.");
 
-    if (!Number(formData.tipoAplicacionId) || Number(formData.tipoAplicacionId) <= 0)
+    if (!Number(formData.tipoAplicacionId))
       return error("Tipo Aplicación inválido.");
 
-    const rolesArray = formData.roles
-      .split(",")
-      .map(r => r.trim())
-      .filter(r => r.length > 0);
-
-    if (!rolesArray.length)
-      return error("Debe ingresar al menos un rol.");
+    if (!formData.nombreId)
+      return error("No se pudo generar el identificador técnico.");
 
     const payload = {
       nombre: formData.nombre.trim(),
+      nombreId: formData.nombreId,
       url: formData.url.trim(),
       descripcion: formData.descripcion.trim(),
-      icon: formData.icon.trim(),
       estadoId: formMode === "create" ? 1 : Number(formData.estadoId),
       subSistemaId: Number(formData.subSistemaId),
       tipoModuloId: Number(formData.tipoModuloId),
       tipoAplicacionId: Number(formData.tipoAplicacionId),
-      roles: rolesArray,
-      nombreId: formData.nombreId.trim(),
       requerido: Boolean(formData.requerido),
     };
 
     try {
       if (formMode === "edit") {
         await axios.put(
-          `/v1/modulos/${formData.id}`,
+          `/v2/modulos/${formData.id}`,
           payload,
           authHeaders
         );
       } else {
-        await axios.post("/v1/modulos", payload, authHeaders);
+        await axios.post("/v2/modulos", payload, authHeaders);
       }
 
       setMessage({
@@ -176,30 +192,7 @@ useEffect(() => {
       if (!res)
         return error("Error de conexión con el servidor.");
 
-      switch (res.status) {
-        case 400:
-          if (res.data?.errors) {
-            error(Object.values(res.data.errors).join(" - "));
-          } else {
-            error(res.data?.detail || "Error de validación.");
-          }
-          break;
-
-        case 401:
-          error("Token expirado. Inicie sesión nuevamente.");
-          break;
-
-        case 409:
-          error(res.data?.detail || "El módulo ya existe.");
-          break;
-
-        case 422:
-          error(res.data?.detail || "Referencia inválida.");
-          break;
-
-        default:
-          error("Error inesperado.");
-      }
+      error(res.data?.detail || "Error inesperado.");
     }
   };
 
@@ -213,86 +206,153 @@ useEffect(() => {
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
 
+          {/* Nombre */}
           <Grid item xs={12} md={6}>
-            <TextField fullWidth required label="Nombre"
-              name="nombre" value={formData.nombre}
-              onChange={handleChange} />
+            <TextField
+              fullWidth
+              required
+              label="Nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+            />
           </Grid>
 
+          {/* Acrónimo visual mejorado */}
           <Grid item xs={12} md={6}>
-            <TextField fullWidth required label="URL"
-              name="url" value={formData.url}
-              onChange={handleChange} />
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                backgroundColor: "action.hover",
+                height: "100%",
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                Acrónimo generado automáticamente
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  mt: 0.5,
+                  px: 1.5,
+                  py: 0.5,
+                  display: "inline-block",
+                  borderRadius: 1,
+                  backgroundColor: "primary.main",
+                  color: "primary.contrastText",
+                  letterSpacing: 1,
+                }}
+              >
+                {formData.nombreId || "—"}
+              </Typography>
+            </Box>
           </Grid>
 
+          {/* URL */}
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              required
+              label="URL"
+              name="url"
+              value={formData.url}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          {/* Descripción */}
           <Grid item xs={12}>
-            <TextField fullWidth multiline rows={2}
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
               label="Descripción"
               name="descripcion"
               value={formData.descripcion}
-              onChange={handleChange} />
+              onChange={handleChange}
+            />
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <TextField fullWidth label="Icono"
-              name="icon" value={formData.icon}
-              onChange={handleChange} />
-          </Grid>
-
+          {/* Estado */}
           {formMode === "edit" && (
             <Grid item xs={12} md={6}>
-              <TextField select fullWidth label="Estado"
-                name="estadoId" value={formData.estadoId}
-                onChange={handleChange}>
+              <TextField
+                select
+                fullWidth
+                label="Estado"
+                name="estadoId"
+                value={formData.estadoId}
+                onChange={handleChange}
+              >
                 <MenuItem value={1}>Activo</MenuItem>
                 <MenuItem value={2}>Inactivo</MenuItem>
               </TextField>
             </Grid>
           )}
 
+          {/* SubSistema */}
           <Grid item xs={12} md={6}>
-            <TextField select fullWidth required label="SubSistema"
-              name="subSistemaId" value={formData.subSistemaId}
-              onChange={handleChange}>
-              {subSistemas.map(s =>
-                <MenuItem key={s.id} value={s.id}>{s.nombre}</MenuItem>
-              )}
+            <TextField
+              select
+              fullWidth
+              required
+              label="SubSistema"
+              name="subSistemaId"
+              value={formData.subSistemaId}
+              onChange={handleChange}
+            >
+              {subSistemas.map(s => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.nombre}
+                </MenuItem>
+              ))}
             </TextField>
           </Grid>
 
+          {/* Tipo Módulo */}
           <Grid item xs={12} md={6}>
-            <TextField select fullWidth required label="Tipo Módulo"
-              name="tipoModuloId" value={formData.tipoModuloId}
-              onChange={handleChange}>
-              {tipoModulos.map(t =>
-                <MenuItem key={t.id} value={t.id}>{t.nombre}</MenuItem>
-              )}
+            <TextField
+              select
+              fullWidth
+              required
+              label="Tipo Módulo"
+              name="tipoModuloId"
+              value={formData.tipoModuloId}
+              onChange={handleChange}
+            >
+              {tipoModulos.map(t => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.nombre}
+                </MenuItem>
+              ))}
             </TextField>
           </Grid>
 
+          {/* Tipo Aplicación */}
           <Grid item xs={12} md={6}>
-            <TextField select fullWidth required label="Tipo Aplicación"
-              name="tipoAplicacionId" value={formData.tipoAplicacionId}
-              onChange={handleChange}>
-              {tipoAplicaciones.map(a =>
-                <MenuItem key={a.id} value={a.id}>{a.nombre}</MenuItem>
-              )}
+            <TextField
+              select
+              fullWidth
+              required
+              label="Tipo Aplicación"
+              name="tipoAplicacionId"
+              value={formData.tipoAplicacionId}
+              onChange={handleChange}
+            >
+              {tipoAplicaciones.map(a => (
+                <MenuItem key={a.id} value={a.id}>
+                  {a.nombre}
+                </MenuItem>
+              ))}
             </TextField>
           </Grid>
 
-          <Grid item xs={12}>
-            <TextField fullWidth
-              label="Roles (separados por coma)"
-              name="roles" value={formData.roles}
-              onChange={handleChange} />
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <TextField fullWidth label="Nombre ID"
-              name="nombreId" value={formData.nombreId}
-              onChange={handleChange} />
-          </Grid>
-
+          {/* Requerido */}
           <Grid item xs={12}>
             <FormControlLabel
               control={

@@ -1,10 +1,47 @@
 import React, { useMemo } from "react";
+import { Switch, Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
+import * as MuiIcons from "@mui/icons-material";
+import axios from "../axiosConfig";
 
 export default function GridModulo({
   modulos = [],
   setSelectedRow,
+  authHeaders,
+  setMessage,
+  reloadData,
 }) {
+const theme = useTheme();
+const isDark = theme.palette.mode === "dark";
+
+  const handleToggleRequerido = async (row) => {
+    const nuevoValor = !row.requerido;
+
+    try {
+      await axios.patch(
+        `/v2/modulos/${row.id}`,
+        { requerido: nuevoValor },
+        authHeaders
+      );
+
+      setMessage?.({
+        open: true,
+        severity: "success",
+        text: "Obligatoriedad actualizada correctamente.",
+      });
+
+      reloadData?.();
+
+    } catch (error) {
+
+      setMessage?.({
+        open: true,
+        severity: "error",
+        text: "Error al actualizar obligatoriedad.",
+      });
+    }
+  };
 
   const columns = useMemo(() => [
 
@@ -18,32 +55,67 @@ export default function GridModulo({
 
     { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 220 },
 
-    { field: "icon", headerName: "Icono", width: 160 },
+    // 🔹 ICONO REAL (NO TEXTO)
+    {
+      field: "icon",
+      headerName: "Icono",
+      width: 120,
+      sortable: false,
+      renderCell: (params) => {
+        const IconComponent = MuiIcons[params.value];
+
+        return IconComponent ? (
+          <IconComponent sx={{ fontSize: 22 }} />
+        ) : null;
+      },
+    },
 
     { field: "subSistema", headerName: "SubSistema", width: 160 },
 
-    { field: "tipoModulo", headerName: "Tipo Módulo", width: 140 },
+    { field: "tipoModulo", headerName: "Tipo Módulo", width: 150 },
 
-    { field: "tipoAplicacion", headerName: "Tipo Aplicación", width: 150 },
+    { field: "tipoAplicacion", headerName: "Tipo Aplicación", width: 170 },
 
-    {
-      field: "roles",
-      headerName: "Roles",
-      width: 280,
-      valueGetter: (params) =>
-        Array.isArray(params.row.roles)
-          ? params.row.roles.join(", ")
-          : "",
-    },
+   {
+  field: "requerido",
+  headerName: "Requerido",
+  width: 180,
+  sortable: false,
+  renderCell: (params) => {
+    const activo = Boolean(params.row.requerido);
 
-    {
-      field: "requerido",
-      headerName: "Requerido",
-      width: 120,
-      valueGetter: (params) =>
-        params.row.requerido ? "Sí" : "No",
-    },
-
+    return (
+      <Box display="flex" alignItems="center" gap={1}>
+        <Switch
+          checked={activo}
+          onChange={() => handleToggleRequerido(params.row)}
+          sx={{
+            '& .MuiSwitch-switchBase.Mui-checked': {
+              color: isDark ? '#00e676' : theme.palette.primary.main,
+            },
+            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+              backgroundColor: isDark ? '#00e676' : theme.palette.primary.main,
+            },
+            '& .MuiSwitch-track': {
+              backgroundColor: isDark ? '#555' : undefined,
+            },
+          }}
+        />
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 600,
+            color: activo
+              ? (isDark ? '#00e676' : theme.palette.primary.main)
+              : (isDark ? '#ccc' : '#666'),
+          }}
+        >
+          {activo ? "Sí" : "No"}
+        </Typography>
+      </Box>
+    );
+  },
+},
     { field: "estado", headerName: "Estado", width: 120 },
 
   ], []);
@@ -56,7 +128,7 @@ export default function GridModulo({
         getRowId={(row) => row.id}
         onRowClick={(params) => setSelectedRow?.(params.row)}
         disableRowSelectionOnClick
-        pageSizeOptions={[5, 10, 20]}
+        pageSizeOptions={[5, 10, 20, 50]}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },
