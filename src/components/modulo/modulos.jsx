@@ -19,8 +19,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 
 export default function Modulo() {
 
-  const [modulos, setModulos] = useState([]);
+  const [modulos, setModulos] = useState({});
   const [selectedRow, setSelectedRow] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
@@ -44,27 +45,32 @@ export default function Modulo() {
     },
   };
 
-  const unwrap = (data) =>
-    Array.isArray(data) ? data : data?.content ?? [];
+  // =============================
+  // CARGAR LISTADO
+  // =============================
+  const reloadData = async (page = 0, size = 5) => {
+    setLoading(true);
 
-  // =============================
-  // CARGAR LISTADO GENERAL
-  // =============================
-  const reloadData = async () => {
     try {
-      const res = await axios.get("/v2/modulos", authHeaders);
-      setModulos(unwrap(res.data));
+      const res = await axios.get(
+        `/v2/modulos?page=${page}&size=${size}`,
+        authHeaders
+      );
+
+      setModulos(res.data);
     } catch {
       setMessage({
         open: true,
         severity: "error",
         text: "Error cargando módulos.",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    reloadData();
+    reloadData(0, 5);
   }, []);
 
   return (
@@ -73,9 +79,6 @@ export default function Modulo() {
         Gestión de Módulos
       </Typography>
 
-      {/* =============================
-          BOTONES
-      ============================== */}
       <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
 
         <Tooltip title="Crear">
@@ -130,17 +133,15 @@ export default function Modulo() {
 
       </Box>
 
-      {/* =============================
-          GRID
-      ============================== */}
       <GridModulo
         modulos={modulos}
         setSelectedRow={setSelectedRow}
+        reloadData={reloadData}
+        authHeaders={authHeaders}
+        setMessage={setMessage}
+        loading={loading}
       />
 
-      {/* =============================
-          FORMULARIO
-      ============================== */}
       <FormModulo
         open={formOpen}
         setOpen={setFormOpen}
@@ -151,9 +152,6 @@ export default function Modulo() {
         authHeaders={authHeaders}
       />
 
-      {/* =============================
-          MODAL DETALLE
-      ============================== */}
       <ModuloDetalleDialog
         open={openDetalle}
         onClose={() => setOpenDetalle(false)}
@@ -161,9 +159,6 @@ export default function Modulo() {
         setMessage={setMessage}
       />
 
-      {/* =============================
-          MODAL DISPONIBLES
-      ============================== */}
       <ModuloDisponiblesMenu
         open={openDisponibles}
         onClose={() => setOpenDisponibles(false)}
