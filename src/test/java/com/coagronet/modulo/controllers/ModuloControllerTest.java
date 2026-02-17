@@ -96,8 +96,25 @@ class ModuloControllerTest {
         verifyNoInteractions(moduloService);
     }
 
-        @Test
-        void actualizar_returns204_whenRequestIsValid() throws Exception {
+    @Test
+    void actualizar_returns204_andPassesEstadoId_whenMarkingInactive() throws Exception {
+        Long moduloId = 10L;
+        long estadoIdInactivo = 2L;
+        String requestJson = buildRequestJsonWithEstadoId(estadoIdInactivo);
+
+        mockMvc.perform(put("/api/v2/modulos/{id}", moduloId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isNoContent());
+
+        ArgumentCaptor<com.coagronet.modulo.dtos.ModuloRequest> captor = ArgumentCaptor.forClass(
+                com.coagronet.modulo.dtos.ModuloRequest.class);
+        verify(moduloService).actualizarModulo(org.mockito.ArgumentMatchers.eq(moduloId), captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals(estadoIdInactivo, captor.getValue().estadoId());
+    }
+
+    @Test
+    void actualizar_returns204_whenRequestIsValid() throws Exception {
         Long moduloId = 10L;
         String requestJson = buildRequestJsonWithoutRoles();
 
@@ -111,20 +128,20 @@ class ModuloControllerTest {
         verify(moduloService).actualizarModulo(org.mockito.ArgumentMatchers.eq(moduloId), captor.capture());
         org.junit.jupiter.api.Assertions.assertEquals("Compras", captor.getValue().nombre());
         org.junit.jupiter.api.Assertions.assertEquals("/compras", captor.getValue().url());
-        }
+    }
 
-        @Test
-        void actualizar_returns400_whenRequestIsInvalid() throws Exception {
+    @Test
+    void actualizar_returns400_whenRequestIsInvalid() throws Exception {
         mockMvc.perform(put("/api/v2/modulos/{id}", 10L)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{}"))
             .andExpect(status().isBadRequest());
 
         verifyNoInteractions(moduloService);
-        }
+    }
 
-        @Test
-        void obtenerModulos_returns200AndPage_whenServiceReturnsPage() throws Exception {
+    @Test
+    void obtenerModulos_returns200AndPage_whenServiceReturnsPage() throws Exception {
         Page<ModuloSummaryResponse> page = new PageImpl<>(List.of(
             new ModuloSummaryResponse(
                 1L,
@@ -148,10 +165,10 @@ class ModuloControllerTest {
             .queryParam("size", "10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value(1));
-        }
+    }
 
-        @Test
-        void obtenerDetalleModulo_returns200_whenModuloExists() throws Exception {
+    @Test
+    void obtenerDetalleModulo_returns200_whenModuloExists() throws Exception {
         Long moduloId = 5L;
         ModuloDetailResponse response = new ModuloDetailResponse(
             "Inventario",
@@ -173,14 +190,18 @@ class ModuloControllerTest {
             .andExpect(jsonPath("$.requerido").value(true));
 
         verify(moduloService).obtenerDetalleModulo(moduloId);
-        }
+    }
 
     private String buildRequestJsonWithoutRoles() throws Exception {
+        return buildRequestJsonWithEstadoId(1L);
+    }
+
+    private String buildRequestJsonWithEstadoId(long estadoId) throws Exception {
         ObjectNode json = objectMapper.createObjectNode();
         json.put("nombre", "Compras");
         json.put("url", "/compras");
         json.put("descripcion", "Modulo de compras");
-        json.put("estadoId", 1L);
+        json.put("estadoId", estadoId);
         json.put("subSistemaId", 2L);
         json.put("tipoModuloId", 3L);
         json.put("tipoAplicacionId", 4L);

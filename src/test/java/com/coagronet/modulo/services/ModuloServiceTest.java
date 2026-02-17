@@ -237,6 +237,48 @@ class ModuloServiceTest {
         assertThat(updated.getTipoAplicacion().getId()).isEqualTo(request.tipoAplicacionId());
     }
 
+        @Test
+        void actualizarModulo_allowsInactivarByChangingEstadoId() {
+        Long moduloId = 10L;
+        Long estadoIdActivo = 1L;
+        Long estadoIdInactivo = 2L;
+
+        ModuloRequest request = new ModuloRequest(
+            "Inventario",
+            "/inventario",
+            "Modulo de inventario",
+            estadoIdInactivo,
+            2L,
+            3L,
+            4L,
+            "mod_inventario",
+            true);
+
+        Modulo existing = new Modulo();
+        existing.setId(moduloId);
+        existing.setEstado(buildEstado(estadoIdActivo));
+
+        when(moduloRepository.findById(moduloId)).thenReturn(Optional.of(existing));
+        when(moduloRepository.existsByNombreAndIdNot(request.nombre(), moduloId)).thenReturn(false);
+        when(estadoRepository.findById(request.estadoId())).thenReturn(Optional.of(buildEstado(request.estadoId())));
+        when(subSistemaRepository.findById(request.subSistemaId()))
+            .thenReturn(Optional.of(buildSubSistema(request.subSistemaId())));
+        when(tipoModuloRepository.findById(request.tipoModuloId()))
+            .thenReturn(Optional.of(buildTipoModulo(request.tipoModuloId())));
+        when(tipoAplicacionRepository.findById(request.tipoAplicacionId()))
+            .thenReturn(Optional.of(buildTipoAplicacion(request.tipoAplicacionId())));
+        when(moduloRepository.save(any(Modulo.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        moduloService.actualizarModulo(moduloId, request);
+
+        ArgumentCaptor<Modulo> captor = ArgumentCaptor.forClass(Modulo.class);
+        verify(moduloRepository).save(captor.capture());
+        Modulo updated = captor.getValue();
+
+        assertThat(updated.getEstado().getId()).isEqualTo(estadoIdInactivo);
+        assertThat(updated.getEstado().getId()).isNotEqualTo(estadoIdActivo);
+        }
+
     @Test
     void obtenerDetalleModulo_returnsProjection_whenExists() {
         when(moduloRepository.findByIdProjected(10L)).thenReturn(Optional.of(new ModuloDetailResponse(
