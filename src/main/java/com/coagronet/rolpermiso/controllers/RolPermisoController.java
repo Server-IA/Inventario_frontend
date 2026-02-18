@@ -9,6 +9,8 @@ import com.coagronet.rolpermiso.dtos.response.RolPermisoAsignadoResponse;
 import com.coagronet.rolpermiso.services.RolPermisoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,14 +33,20 @@ public class RolPermisoController {
     private final RolPermisoService rolPermisoService;
 
     /**
-     * GET: Obtener módulos disponibles con sus permisos agrupados
+     * GET: Obtener módulos disponibles con sus permisos agrupados (con paginación)
      * Admin de empresa usa esto para ver qué módulos puede asignar a los roles
+     * 
+     * Parámetros de paginación:
+     * - page: número de página (default: 0)
+     * - size: elementos por página (default: 20)
+     * - sort: ordenamiento por campo (ej: sort=moduloNombre,asc)
      */
     @GetMapping("/modulos-disponibles")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<ModuloPermisoResponse>> getModulosDisponibles() {
-        return ResponseEntity.ok(rolPermisoService.getModulosDisponibles());
+    public ResponseEntity<Page<ModuloPermisoResponse>> getModulosDisponibles(
+            Pageable pageable) {
+        return ResponseEntity.ok(rolPermisoService.getModulosDisponibles(pageable));
     }
 
     /**

@@ -16,6 +16,8 @@ import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,46 +49,42 @@ public class RolPermisoService {
 
 
     /**
-     * Obtiene módulos disponibles con sus permisos agrupados.
-     * Admin de empresa usa esto para seleccionar qué módulos asignar.
+     * Obtiene módulos disponibles con sus permisos agrupados, con paginación.
+     * Optimizado para evitar cargar todos los permisos en memoria.
+     * 
+     * @param pageable información de paginación (page, size, sort)
+     * @return Página de módulos con permisos agrupados
      */
     @Transactional(readOnly = true)
-    public List<ModuloPermisoResponse> getModulosDisponibles() {
-        // Obtenemos permisos únicos agrupados por módulo
-        List<Permiso> todosPermisos = permisoRepository.findAll().stream()
-                .filter(p -> p.getEstado().getId() == 1)
-                .filter(p -> p.getModulo().getEstado().getId() == 1)
+    public Page<ModuloPermisoResponse> getModulosDisponibles(Pageable pageable) {
+        // Obtener página de módulos únicos
+        Page<Long> moduloIds = permisoRepository.findDistinctModuloIds(pageable);
+        
+        // Transformar página de IDs de módulos a página de ModuloPermisoResponse
+        return moduloIds.map(moduloId -> {
+            List<Permiso> permisosModulo = permisoRepository.findPermisosByModuloId(moduloId);
+            if (permisosModulo.isEmpty()) return null;
+            
+            Permiso primerPermiso = permisosModulo.getFirst();
+            List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisosModulo.stream()
+                .map(p -> new ModuloPermisoResponse.PermisoDTO(
+                    p.getId(),
+                    p.getNombre(),
+                    p.getAutoridad(),
+                    p.getMetodo() != null ? p.getMetodo().getNombre() : null,
+                    p.getUri()
+                ))
                 .toList();
-        
-        Map<Long, List<Permiso>> permisosPorModulo = todosPermisos.stream()
-                .collect(Collectors.groupingBy(p -> p.getModulo().getId()));
-        
-        return permisosPorModulo.entrySet().stream()
-                .map(entry -> {
-                    Long moduloId = entry.getKey();
-                    List<Permiso> permisos = entry.getValue();
-                    Permiso primerPermiso = permisos.getFirst();
-                    
-                    List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisos.stream()
-                            .map(p -> new ModuloPermisoResponse.PermisoDTO(
-                                    p.getId(),
-                                    p.getNombre(),
-                                    p.getAutoridad(),
-                                    p.getMetodo().getNombre(),  // GET, POST, DELETE, etc
-                                    p.getUri()
-                            ))
-                            .collect(Collectors.toList());
-                    
-                    return ModuloPermisoResponse.builder()
-                            .moduloId(moduloId)
-                            .moduloNombre(primerPermiso.getModulo().getNombre())
-                            .moduloUrl(primerPermiso.getModulo().getUrl())
-                            .moduloDescripcion(primerPermiso.getModulo().getDescripcion())
-                            .moduloIcon(primerPermiso.getModulo().getIcon())
-                            .permisos(permisosDTO)
-                            .build();
-                })
-                .collect(Collectors.toList());
+            
+            return ModuloPermisoResponse.builder()
+                .moduloId(moduloId)
+                .moduloNombre(primerPermiso.getModulo().getNombre())
+                .moduloUrl(primerPermiso.getModulo().getUrl())
+                .moduloDescripcion(primerPermiso.getModulo().getDescripcion())
+                .moduloIcon(primerPermiso.getModulo().getIcon())
+                .permisos(permisosDTO)
+                .build();
+        });
     }
 
     @Transactional(readOnly = true)
