@@ -24,7 +24,7 @@ public class Permiso {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "modulo_id", referencedColumnName = "id")
+    @JoinColumn(name = "modulo_id", referencedColumnName = "mod_id")
     private Modulo modulo;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,5 +41,11 @@ public class Permiso {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entidad_id", referencedColumnName = "id")
     private Entidad entidad;
+
+    @Column(name = "nombre")
+    private String nombre;
+
+    @Column(name = "autoridad")
+    private String autoridad;
 
 }

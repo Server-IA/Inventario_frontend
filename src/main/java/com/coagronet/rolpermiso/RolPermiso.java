@@ -5,10 +5,7 @@ import com.coagronet.estado.Estado;
 import com.coagronet.permiso.Permiso;
 import com.coagronet.user.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 
@@ -18,6 +15,7 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class RolPermiso {
 
     @Id
