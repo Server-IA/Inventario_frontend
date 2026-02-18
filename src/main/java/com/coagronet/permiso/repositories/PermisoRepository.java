@@ -1,6 +1,8 @@
 package com.coagronet.permiso.repositories;
 
 import com.coagronet.permiso.Permiso;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -58,4 +60,19 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
         ORDER BY p.modulo.nombre, p.nombre
     """)
     List<Permiso> findPermisosByModulosIds(@Param("modulosIds") List<Long> modulosIds);
+
+    /**
+     * Obtiene módulos únicos (DISTINCT) con permisos activos, con paginación.
+     * Está optimizada para obtener módulos agrupados por página.
+     */
+    @Query("""
+    SELECT p.modulo.id
+    FROM Permiso p
+    WHERE p.estado.id = 1
+      AND p.modulo.estado.id = 1
+    GROUP BY p.modulo.id, p.modulo.nombre
+    ORDER BY p.modulo.nombre
+""")
+    Page<Long> findDistinctModuloIds(Pageable pageable);
+
 }
