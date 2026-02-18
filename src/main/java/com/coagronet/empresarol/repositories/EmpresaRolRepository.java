@@ -25,4 +25,6 @@ public interface EmpresaRolRepository extends JpaRepository<EmpresaRol, Long> {
             """)
     Optional<Rol> findRolByEmpresaIdAndRolId(Long empresaId, Long rolId);
 
+    Optional<EmpresaRol> findByEmpresaIdAndRolIdAndEstadoId(Long empresaId, Long rolId, Long estadoId);
+
 }
