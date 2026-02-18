@@ -196,4 +196,8 @@ public class EntidadValidatorFacade {
         return validatorRegistry.getValidator(EmpresaRolValidator.class).validarEmpresaRolAdmin(empresaRolId);
     }
 
+    public EmpresaRol validarRolDeEmpresaActivo(Long empresaId, Long rolId){
+        return validatorRegistry.getValidator(EmpresaRolValidator.class).validarRolDeEmpresaActivo(empresaId, rolId);
+    }
+
 }

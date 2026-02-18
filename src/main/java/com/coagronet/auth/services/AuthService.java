@@ -314,6 +314,7 @@ public class AuthService {
 		user.setPassword(encoder.encode(tempPassword));
 		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_DEBE_CAMBIAR_CONTRASENA);
 		user.setPersona(savedPersona);
+		user.setPreferredEmpresaId(empresaId);
 		User savedUser = userRepo.save(user);
 
 		UsuarioRol usuarioRol = new UsuarioRol();
