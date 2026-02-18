@@ -6,6 +6,7 @@ import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.permiso.Permiso;
 import com.coagronet.permiso.repositories.PermisoRepository;
 import com.coagronet.rolpermiso.RolPermiso;
+import com.coagronet.rolpermiso.dtos.request.AsignarPermisosRequest;
 import com.coagronet.rolpermiso.dtos.response.ModuloPermisoResponse;
 import com.coagronet.rolpermiso.dtos.response.RolPermisoAsignadoResponse;
 import com.coagronet.rolpermiso.repositories.RolPermisoRepository;
@@ -254,6 +255,147 @@ public class RolPermisoService {
                 permisoIds
             );
         }
+    }
+
+    /**
+     * Reemplaza un permiso individual por otro en la asignación de un rol-empresa.
+     * Caso de uso: "asigné el permiso X por error, quiero reemplazarlo por Y"
+     * 
+     * @param rolId ID del rol
+     * @param permisoIdActual ID del permiso que queremos quitar
+     * @param nuevoPermisoId ID del nuevo permiso a asignar
+     * @throws RuntimeException si el permiso actual no está asignado o si el nuevo ya existe
+     */
+    @Transactional
+    public RolPermisoAsignadoResponse reemplazarPermisoDeEmpresaRol(
+            Long rolId,
+            Long permisoIdActual,
+            Long nuevoPermisoId) {
+
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
+
+        // Validar que el permiso actual existe y está asignado
+        if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permisoIdActual)) {
+            throw new RuntimeException("El permiso actual no está asignado a este rol-empresa");
+        }
+
+        // Validar que el nuevo permiso no está ya asignado (evitar duplicados)
+        if (rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), nuevoPermisoId)) {
+            throw new RuntimeException("El nuevo permiso ya está asignado a este rol-empresa");
+        }
+
+        // Quitar el permiso antiguo
+        rolPermisoRepository.deleteByEmpresaRolIdAndPermisoIds(
+            empresaRol.getId(),
+            List.of(permisoIdActual)
+        );
+
+        // Asignar el nuevo permiso
+        Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = authenticationService.getAuthenticatedUser();
+        Permiso nuevoPermiso = permisoRepository.findById(nuevoPermisoId)
+            .orElseThrow(() -> new RuntimeException("Permiso destino no encontrado con ID: " + nuevoPermisoId));
+
+        RolPermiso rolPermiso = RolPermiso.builder()
+            .empresaRol(empresaRol)
+            .permiso(nuevoPermiso)
+            .estado(estadoActivo)
+            .createdBy(currentUser)
+            .createdAt(OffsetDateTime.now())
+            .build();
+        rolPermisoRepository.save(rolPermiso);
+
+        return RolPermisoAsignadoResponse.builder()
+            .rolId(empresaRol.getRol().getId())
+            .rolNombre(empresaRol.getRol().getNombre())
+            .permisosAsignados(1)
+            .modulos(List.of(nuevoPermiso.getModulo().getNombre()))
+            .autoridades(List.of(nuevoPermiso.getAutoridad()))
+            .build();
+    }
+
+    /**
+     * Reemplaza todos los permisos de un módulo por los permisos de otro módulo.
+     * Caso de uso: "asigné el módulo X por error, quiero reemplazarlo completamente por el módulo Y"
+     * 
+     * @param rolId ID del rol
+     * @param moduloIdActual ID del módulo que queremos quitar
+     * @param nuevoModuloId ID del nuevo módulo a asignar
+     * @throws RuntimeException si el módulo actual no tiene permisos asignados o si hay conflictos
+     */
+    @Transactional
+    public RolPermisoAsignadoResponse reemplazarModuloPermisosDeEmpresaRol(
+            Long rolId,
+            Long moduloIdActual,
+            Long nuevoModuloId) {
+
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
+
+        // Obtener permisos del módulo actual asignados a este rol
+        List<Permiso> permisosActuales = permisoRepository.findPermisosByModuloId(moduloIdActual);
+        if (permisosActuales.isEmpty()) {
+            throw new RuntimeException("No hay permisos del módulo actual asignados a este rol");
+        }
+
+        // Filtrar solo los que están asignados a este rol-empresa
+        List<Long> permisoIdsAsignados = permisosActuales.stream()
+            .filter(p -> rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), p.getId()))
+            .map(Permiso::getId)
+            .toList();
+
+        if (permisoIdsAsignados.isEmpty()) {
+            throw new RuntimeException("Ningún permiso del módulo actual está asignado a este rol-empresa");
+        }
+
+        // Obtener permisos del nuevo módulo
+        List<Permiso> permisosNuevos = permisoRepository.findPermisosByModuloId(nuevoModuloId);
+        if (permisosNuevos.isEmpty()) {
+            throw new RuntimeException("El nuevo módulo no tiene permisos disponibles");
+        }
+
+        // Quitar todos los permisos del módulo actual
+        rolPermisoRepository.deleteByEmpresaRolIdAndPermisoIds(
+            empresaRol.getId(),
+            permisoIdsAsignados
+        );
+
+        // Asignar todos los permisos del nuevo módulo (evitando duplicados)
+        Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = authenticationService.getAuthenticatedUser();
+
+        int permisosAsignados = 0;
+        for (Permiso permiso : permisosNuevos) {
+            if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permiso.getId())) {
+                RolPermiso rolPermiso = RolPermiso.builder()
+                    .empresaRol(empresaRol)
+                    .permiso(permiso)
+                    .estado(estadoActivo)
+                    .createdBy(currentUser)
+                    .createdAt(OffsetDateTime.now())
+                    .build();
+                rolPermisoRepository.save(rolPermiso);
+                permisosAsignados++;
+            }
+        }
+
+        List<String> modulos = permisosNuevos.stream()
+            .map(p -> p.getModulo().getNombre())
+            .distinct()
+            .toList();
+
+        List<String> autoridades = permisosNuevos.stream()
+            .map(Permiso::getAutoridad)
+            .toList();
+
+        return RolPermisoAsignadoResponse.builder()
+            .rolId(empresaRol.getRol().getId())
+            .rolNombre(empresaRol.getRol().getNombre())
+            .permisosAsignados(permisosAsignados)
+            .modulos(modulos)
+            .autoridades(autoridades)
+            .build();
     }
 
     @Transactional
