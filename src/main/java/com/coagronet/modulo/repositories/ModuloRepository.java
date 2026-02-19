@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -130,5 +131,19 @@ public interface ModuloRepository extends JpaRepository<Modulo, Long> {
      */
     @Query("select m.nombre, m.url, m.descripcion, m.icon, m.estado.id, m.subSistema.id, m.tipoModulo.id, m.tipoAplicacion.id, m.nombreId, m.requerido from Modulo m where m.id = :id")
     Optional<ModuloDetailResponse> findByIdProjected(@Param("id") Long id);
+
+    /**
+     * Recupera una entidad Modulo por su identificador, optimizando la carga de relaciones asociadas.
+     * <p>
+     * Sobrescribe el método estándar para aplicar un {@link EntityGraph}. Esto fuerza una carga ansiosa (eager
+     * fetching) de las propiedades "estado", "subSistema", "tipoModulo" y "tipoAplicacion" en una sola consulta,
+     * evitando problemas de rendimiento n+1 al serializar la respuesta.
+     * </p>
+     *
+     * @param id El identificador único de la entidad buscada.
+     * @return Un {@link Optional} que contiene el módulo si existe, o vacío si no.
+     */
+    @Override @EntityGraph(attributePaths = { "estado", "subSistema", "tipoModulo", "tipoAplicacion" })
+    Optional<Modulo> findById(Long id);
 
 }

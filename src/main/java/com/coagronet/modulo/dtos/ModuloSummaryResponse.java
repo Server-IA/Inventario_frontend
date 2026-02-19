@@ -1,39 +1,45 @@
 package com.coagronet.modulo.dtos;
 
+import com.coagronet.modulo.Modulo;
+
 /**
- * Representa la proyección de salida de datos para un {@link com.coagronet.subsistema.Modulo}.
+ * Proyección inmutable (DTO) que resume la información esencial de un módulo para su visualización.
  * <p>
- * Este registro (<i>record</i>) actúa como un Objeto de Transferencia de Datos (DTO) de lectura, diseñado para entregar
- * información al cliente (Frontend) de forma optimizada. A diferencia del objeto de petición, esta estructura "aplana"
- * las relaciones de base de datos, entregando los nombres descriptivos de las entidades relacionadas (Estado,
- * Subsistema, Tipos) en lugar de sus identificadores numéricos, facilitando así su visualización directa en la interfaz
- * de usuario.
+ * Se utiliza para desacoplar la entidad de base de datos de la respuesta de la API.
  * </p>
  *
- * @param id identificador único (llave primaria) del módulo en la base de datos.
- * @param nombre nombre comercial o funcional del módulo.
- * @param url ruta relativa de navegación (endpoint) configurada para el acceso desde el cliente.
- * @param descripcion detalle extendido del propósito del módulo. Puede ser <code>null</code> si no se definió.
- * @param icon identificador de la clase CSS o recurso gráfico asociado para la representación visual.
- * @param estado nombre descriptivo del estado operativo actual (ej. "Activo", "Inactivo"). Proyección de lectura de la
- * entidad {@link com.coagronet.estado.Estado}.
- * @param subSistema nombre del subsistema padre al que pertenece este módulo. Proyección de lectura de la entidad
- * {@link com.coagronet.subsistema.SubSistema}.
- * @param tipoModulo categoría funcional del módulo (ej. "Reporte", "Formulario"). Proyección de lectura de la entidad
- * {@link com.coagronet.tipomodulo.TipoModulo}.
- * @param tipoAplicacion nombre de la plataforma o entorno de despliegue (ej. "Web", "Móvil"). Proyección de lectura de
- * la entidad {@link com.coagronet.tipoaplicacion.TipoAplicacion}.
- * @param nombreId identificador técnico utilizado para referencias en el DOM o pruebas automatizadas.
- * @param requerido indica si el módulo es indispensable para la operación del sistema (<code>true</code>) o si es
- * opcional (<code>false</code>).
- *
- * @author jujcgu
- * @version 2.0
- * @see com.coagronet.subsistema.Modulo
- * @see ModuloRequest
- * @since 2026
+ * @param id Identificador numérico del módulo.
+ * @param nombre Nombre legible por el usuario.
+ * @param url Ruta de acceso o endpoint asociado.
+ * @param descripcion Detalle funcional del módulo.
+ * @param icon Identificador o clase del icono visual.
+ * @param estado Nombre del estado actual (ej. "Activo").
+ * @param subSistema Nombre del subsistema al que pertenece.
+ * @param tipoModulo Categorización del módulo.
+ * @param tipoAplicacion Tipo de aplicación asociada.
+ * @param nombreId Identificador de cadena único (slug).
+ * @param requerido Indica si el módulo es de uso obligatorio para la empresa.
  */
 public record ModuloSummaryResponse(Long id, String nombre, String url, String descripcion, String icon, String estado,
-                String subSistema, String tipoModulo, String tipoAplicacion, String nombreId, Boolean requerido) {
+        String subSistema, String tipoModulo, String tipoAplicacion, String nombreId, Boolean requerido) {
+
+    /**
+     * Método de fábrica que convierte una entidad {@link Modulo} en este DTO.
+     * <p>
+     * Maneja la navegación segura de nulos para las relaciones (estado, subsistema, etc.), extrayendo solo los nombres
+     * descriptivos necesarios para la vista.
+     * </p>
+     *
+     * @param modulo La entidad fuente persistida.
+     * @return Una nueva instancia del record con los datos aplanados.
+     */
+    public static ModuloSummaryResponse fromEntity(Modulo modulo) {
+        return new ModuloSummaryResponse(modulo.getId(), modulo.getNombre(), modulo.getUrl(), modulo.getDescripcion(),
+                modulo.getIcon(), modulo.getEstado() != null ? modulo.getEstado().getNombre() : null,
+                modulo.getSubSistema() != null ? modulo.getSubSistema().getNombre() : null,
+                modulo.getTipoModulo() != null ? modulo.getTipoModulo().getNombre() : null,
+                modulo.getTipoAplicacion() != null ? modulo.getTipoAplicacion().getNombre() : null,
+                modulo.getNombreId(), modulo.getRequerido());
+    }
 
 }

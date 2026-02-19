@@ -12,6 +12,7 @@ import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
 import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
+import com.coagronet.modulo.dtos.ModuloRequeridoPatch;
 import com.coagronet.modulo.dtos.ModuloRequest;
 import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 import com.coagronet.modulo.repositories.ModuloRepository;
@@ -231,6 +232,35 @@ public class ModuloService {
         public ModuloDetailResponse obtenerDetalleModulo(Long id) {
                 return moduloRepository.findByIdProjected(id)
                                 .orElseThrow(() -> new RecursoNoEncontradoException("Módulo", id));
+        }
+
+        /**
+         * Ejecuta la lógica de negocio para modificar el estado de obligatoriedad ("requerido") de un módulo.
+         * <p>
+         * Este método opera dentro de una transacción de lectura/escritura. Primero verifica la existencia de la
+         * entidad; si existe, compara el valor entrante con el actual para evitar escrituras innecesarias. Finalmente,
+         * persiste los cambios y transforma la entidad a su proyección de respuesta.
+         * </p>
+         *
+         * @param id El identificador del módulo a buscar en el repositorio.
+         * @param patch El DTO con la nueva información. Se asume que el valor {@code requerido} puede ser nulo, en cuyo
+         * caso no se realiza ninguna acción.
+         * @return Una instancia inmutable de {@link ModuloSummaryResponse} reflejando el estado posterior a la
+         * actualización.
+         * @throws RecursoNoEncontradoException Si no se encuentra un módulo persistido con el ID proporcionado.
+         * @see ModuloSummaryResponse#fromEntity(Modulo)
+         */
+        @Transactional
+        public ModuloSummaryResponse actualizarRequerido(Long id, ModuloRequeridoPatch patch) {
+
+                Modulo modulo = moduloRepository.findById(id)
+                                .orElseThrow(() -> new RecursoNoEncontradoException("Modulo", id));
+
+                if (patch.requerido() != null && !patch.requerido().equals(modulo.getRequerido())) {
+                        modulo.setRequerido(patch.requerido());
+                }
+
+                return ModuloSummaryResponse.fromEntity(modulo);
         }
 
 }
