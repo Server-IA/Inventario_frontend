@@ -29,7 +29,7 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/empresa-rol")
+@RequestMapping("/api/v1/empresa-rol-permisos")
 public class RolPermisoController {
 
     private final RolPermisoService rolPermisoService;
@@ -49,6 +49,19 @@ public class RolPermisoController {
     public ResponseEntity<Page<ModuloPermisoResponse>> getModulosDisponibles(
             Pageable pageable) {
         return ResponseEntity.ok(rolPermisoService.getModulosDisponibles(pageable));
+    }
+
+    /**
+     * GET: Obtener módulos por subsistema(s) con permisos agrupados (sin paginación)
+     * Parámetro: subsistemaIds=1,2,3
+     * Usado para que admin de empresa seleccione subsistemas y luego elija permisos individuales
+     */
+    @GetMapping("/test-modulos")
+    @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ModuloPermisoResponse> getModulosBySubsistemas(
+            @RequestParam List<Long> subsistemaIds) {
+        return rolPermisoService.getModulosBySubsistemas(subsistemaIds);
     }
 
     /**

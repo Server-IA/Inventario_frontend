@@ -88,6 +88,44 @@ public class RolPermisoService {
         });
     }
 
+    /**
+     * Obtiene módulos agrupados con permisos filtrando por uno o varios ids de subsistema.
+     * Devuelve lista sin paginación para selección UI a nivel de subsistema.
+     * Útil para que el admin de empresa seleccione subsistemas y luego vea todos sus módulos para elegir permisos individuales.
+     */
+    @Transactional(readOnly = true)
+    public List<ModuloPermisoResponse> getModulosBySubsistemas(List<Long> subsistemaIds) {
+        List<Long> moduloIds = permisoRepository.findDistinctModuloIdsBySubsistemas(subsistemaIds);
+
+        return moduloIds.stream()
+            .map(moduloId -> {
+                List<Permiso> permisosModulo = permisoRepository.findPermisosByModuloId(moduloId);
+                if (permisosModulo.isEmpty()) return null;
+
+                Permiso primerPermiso = permisosModulo.getFirst();
+                List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisosModulo.stream()
+                    .map(p -> new ModuloPermisoResponse.PermisoDTO(
+                        p.getId(),
+                        p.getNombre(),
+                        p.getAutoridad(),
+                        p.getMetodo() != null ? p.getMetodo().getNombre() : null,
+                        p.getUri()
+                    ))
+                    .toList();
+
+                return ModuloPermisoResponse.builder()
+                    .moduloId(moduloId)
+                    .moduloNombre(primerPermiso.getModulo().getNombre())
+                    .moduloUrl(primerPermiso.getModulo().getUrl())
+                    .moduloDescripcion(primerPermiso.getModulo().getDescripcion())
+                    .moduloIcon(primerPermiso.getModulo().getIcon())
+                    .permisos(permisosDTO)
+                    .build();
+            })
+            .filter(m -> m != null)
+            .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<Permiso> getPermisosByEmpresaRol(Long rolId) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();

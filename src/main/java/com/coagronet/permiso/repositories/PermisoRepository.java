@@ -75,4 +75,19 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
 """)
     Page<Long> findDistinctModuloIds(Pageable pageable);
 
+    /**
+     * Obtiene módulos únicos de subsistemas específicos sin paginación.
+     * Usado para listar todos los módulos de uno o varios subsistemas para selección UI.
+     */
+    @Query(value = """
+    SELECT DISTINCT p.modulo_id, m.mod_nombre
+    FROM permiso p
+    JOIN modulo m ON m.mod_id = p.modulo_id
+    WHERE p.estado_id = 1
+      AND m.mod_estado_id = 1
+      AND m.mod_subsistema_id IN :subsistemaIds
+    ORDER BY m.mod_nombre
+    """, nativeQuery = true)
+    List<Long> findDistinctModuloIdsBySubsistemas(@Param("subsistemaIds") List<Long> subsistemaIds);
 }
+
