@@ -27,7 +27,9 @@ import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
 import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
+import com.coagronet.modulo.dtos.ModuloRequeridoPatch;
 import com.coagronet.modulo.dtos.ModuloRequest;
+import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 import com.coagronet.modulo.repositories.ModuloRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.subsistema.repositories.SubSistemaRepository;
@@ -302,6 +304,51 @@ class ModuloServiceTest {
         when(moduloRepository.findByIdProjected(10L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class, () -> moduloService.obtenerDetalleModulo(10L));
+    }
+
+    @Test
+    void actualizarRequerido_throwsRecursoNoEncontradoException_whenModuloMissing() {
+        when(moduloRepository.findById(10L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> moduloService.actualizarRequerido(10L, new ModuloRequeridoPatch(false)));
+    }
+
+    @Test
+    void actualizarRequerido_updatesFlagAndReturnsSummary_whenValueChanges() {
+        Modulo modulo = new Modulo();
+        modulo.setId(10L);
+        modulo.setNombre("Inventario");
+        modulo.setUrl("/inventario");
+        modulo.setDescripcion("Modulo de inventario");
+        modulo.setNombreId("mod_inventario");
+        modulo.setRequerido(true);
+
+        when(moduloRepository.findById(10L)).thenReturn(Optional.of(modulo));
+
+        ModuloSummaryResponse response = moduloService.actualizarRequerido(10L, new ModuloRequeridoPatch(false));
+
+        assertThat(modulo.getRequerido()).isFalse();
+        assertThat(response.id()).isEqualTo(10L);
+        assertThat(response.requerido()).isFalse();
+    }
+
+    @Test
+    void actualizarRequerido_keepsFlag_whenPatchValueIsNull() {
+        Modulo modulo = new Modulo();
+        modulo.setId(10L);
+        modulo.setNombre("Inventario");
+        modulo.setUrl("/inventario");
+        modulo.setDescripcion("Modulo de inventario");
+        modulo.setNombreId("mod_inventario");
+        modulo.setRequerido(true);
+
+        when(moduloRepository.findById(10L)).thenReturn(Optional.of(modulo));
+
+        ModuloSummaryResponse response = moduloService.actualizarRequerido(10L, new ModuloRequeridoPatch(null));
+
+        assertThat(modulo.getRequerido()).isTrue();
+        assertThat(response.requerido()).isTrue();
     }
 
     private ModuloRequest buildRequest() {

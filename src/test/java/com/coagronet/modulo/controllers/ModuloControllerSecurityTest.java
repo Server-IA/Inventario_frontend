@@ -3,6 +3,7 @@ package com.coagronet.modulo.controllers;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -198,6 +199,46 @@ class ModuloControllerSecurityTest {
             .andExpect(status().isNoContent());
         }
 
+        @Test
+        void actualizarParcial_returns401_whenUserIsUnauthenticated() throws Exception {
+        String patchJson = buildPatchRequeridoJson(false);
+
+        mockMvc.perform(patch("/api/v2/modulos/{id}", 10L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(patchJson))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(moduloService);
+        }
+
+        @Test
+        @WithMockUser(roles = "USER")
+        void actualizarParcial_returns403_whenUserLacksAdminRole() throws Exception {
+        String patchJson = buildPatchRequeridoJson(false);
+
+        mockMvc.perform(patch("/api/v2/modulos/{id}", 10L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(patchJson))
+            .andExpect(status().isForbidden());
+
+        verifyNoInteractions(moduloService);
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+        void actualizarParcial_returns200_whenUserIsAdmin() throws Exception {
+        String patchJson = buildPatchRequeridoJson(false);
+
+        when(moduloService.actualizarRequerido(org.mockito.ArgumentMatchers.eq(10L), org.mockito.ArgumentMatchers.any()))
+            .thenReturn(new ModuloSummaryResponse(10L, "Compras", "/compras", "Modulo de compras", "fa-box",
+                "Activo", "Seguridad", "CRUD", "Web", "mod_compras", false));
+
+        mockMvc.perform(patch("/api/v2/modulos/{id}", 10L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(patchJson))
+            .andExpect(status().isOk());
+        }
+
     private String buildRequestJsonWithoutRoles() throws Exception {
         ObjectNode json = objectMapper.createObjectNode();
         json.put("nombre", "Compras");
@@ -209,6 +250,12 @@ class ModuloControllerSecurityTest {
         json.put("tipoAplicacionId", 4L);
         json.put("nombreId", "mod_compras");
         json.put("requerido", true);
+        return objectMapper.writeValueAsString(json);
+    }
+
+    private String buildPatchRequeridoJson(boolean requerido) throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("requerido", requerido);
         return objectMapper.writeValueAsString(json);
     }
 }

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -140,6 +141,38 @@ class ModuloControllerTest {
         verifyNoInteractions(moduloService);
     }
 
+        @Test
+        void actualizarParcial_returns200_whenChangingRequerido() throws Exception {
+        Long moduloId = 11L;
+        String patchJson = buildPatchRequeridoJson(false);
+
+        when(moduloService.actualizarRequerido(org.mockito.ArgumentMatchers.eq(moduloId),
+            org.mockito.ArgumentMatchers.any())).thenReturn(new ModuloSummaryResponse(
+                11L,
+                "Inventario",
+                "/inventario",
+                "Modulo de inventario",
+                "fa-box",
+                "Activo",
+                "Seguridad",
+                "CRUD",
+                "Web",
+                "mod_inventario",
+                false));
+
+        mockMvc.perform(patch("/api/v2/modulos/{id}", moduloId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(patchJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(11))
+            .andExpect(jsonPath("$.requerido").value(false));
+
+        ArgumentCaptor<com.coagronet.modulo.dtos.ModuloRequeridoPatch> captor = ArgumentCaptor
+            .forClass(com.coagronet.modulo.dtos.ModuloRequeridoPatch.class);
+        verify(moduloService).actualizarRequerido(org.mockito.ArgumentMatchers.eq(moduloId), captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals(Boolean.FALSE, captor.getValue().requerido());
+        }
+
     @Test
     void obtenerModulos_returns200AndPage_whenServiceReturnsPage() throws Exception {
         Page<ModuloSummaryResponse> page = new PageImpl<>(List.of(
@@ -207,6 +240,12 @@ class ModuloControllerTest {
         json.put("tipoAplicacionId", 4L);
         json.put("nombreId", "mod_compras");
         json.put("requerido", true);
+        return objectMapper.writeValueAsString(json);
+    }
+
+    private String buildPatchRequeridoJson(boolean requerido) throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("requerido", requerido);
         return objectMapper.writeValueAsString(json);
     }
 }
