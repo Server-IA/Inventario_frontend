@@ -150,7 +150,7 @@ public class RolPermisoController {
     }
 
     /**
-     * POST: Reemplazar un permiso individual por otro
+     * PUT: Reemplazar un permiso individual por otro
      * Caso de uso: "Asigné el permiso X por error, quiero reemplazarlo por Y"
      * 
      * Body ejemplo:
@@ -159,7 +159,7 @@ public class RolPermisoController {
      *   "nuevoPermisoId": 105
      * }
      */
-    @PostMapping("/{rolId}/reemplazar-permiso")
+    @PutMapping("/{rolId}/reemplazar-permiso")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<RolPermisoAsignadoResponse> reemplazarPermiso(
@@ -173,7 +173,7 @@ public class RolPermisoController {
     }
 
     /**
-     * POST: Reemplazar todos los permisos de un módulo por los de otro
+     * PUT: Reemplazar todos los permisos de un módulo por los de otro
      * Caso de uso: "Asigné el módulo X por error, quiero reemplazarlo completamente por el módulo Y"
      * 
      * Body ejemplo:
@@ -182,7 +182,7 @@ public class RolPermisoController {
      *   "nuevoModuloId": 340
      * }
      */
-    @PostMapping("/{rolId}/reemplazar-modulo")
+    @PutMapping("/{rolId}/reemplazar-modulo")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<RolPermisoAsignadoResponse> reemplazarModulo(
