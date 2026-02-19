@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import io.jsonwebtoken.ExpiredJwtException;
 
@@ -175,6 +178,52 @@ public class Advice extends ResponseEntityExceptionHandler {
         problemDetail.setType(URI.create("https://coagronet.com/errors/unauthorized"));
 
         return problemDetail;
+    }
+
+    /**
+     * Personaliza el manejo de excepciones de lectura de mensajes HTTP para refinar los detalles de errores de formato.
+     * <p>
+     * Sobrescribe el comportamiento base para interceptar errores de deserialización JSON. Aunque delega la creación
+     * inicial de la respuesta a la clase padre, este método inspecciona la causa raíz ({@link Throwable}) en busca de
+     * excepciones de tipo {@link InvalidFormatException}.
+     * </p>
+     * <p>
+     * Específicamente, si el error se origina al intentar deserializar un campo de tipo {@link Boolean}, se inyecta un
+     * mensaje de detalle dinámico en el objeto {@link ProblemDetail} resultante, indicando el valor inválido recibido y
+     * aclarando que se espera un booleano estricto.
+     * </p>
+     *
+     * @param ex La excepción {@link HttpMessageNotReadableException} capturada, que envuelve el error de
+     * deserialización subyacente.
+     * @param headers Los encabezados HTTP que se aplicarán a la respuesta.
+     * @param status El código de estado HTTP seleccionado para este error (generalmente 400 Bad Request).
+     * @param request La solicitud web actual durante la cual ocurrió la excepción.
+     * @return Un objeto {@link ResponseEntity} que contiene el cuerpo {@link ProblemDetail} enriquecido con mensajes
+     * específicos de tipo.
+     * @see InvalidFormatException
+     * @see ProblemDetail
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+
+        ResponseEntity<Object> response = super.handleHttpMessageNotReadable(ex, headers, status, request);
+
+        if (response != null && response.getBody() instanceof ProblemDetail problemDetail) {
+
+            Throwable causa = ex.getCause();
+            if (causa instanceof InvalidFormatException formatoInvalidoEx) {
+                if (formatoInvalidoEx.getTargetType().equals(Boolean.class)) {
+
+                    String detalleDinamico = String.format(
+                            "El valor '%s' no es válido. Se esperaba un booleano estricto (true o false).",
+                            formatoInvalidoEx.getValue());
+                    problemDetail.setDetail(detalleDinamico);
+                }
+            }
+        }
+
+        return response;
     }
 
 }
