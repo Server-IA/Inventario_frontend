@@ -11,8 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 public class AsignarPermisosRequest {
 
-    private Long rolId;
-
     private List<Long> permisosId;
 
 }

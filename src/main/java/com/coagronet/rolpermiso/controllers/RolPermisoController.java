@@ -3,12 +3,16 @@ package com.coagronet.rolpermiso.controllers;
 import com.coagronet.rolpermiso.dtos.request.AsignarModulosPermisoRequest;
 import com.coagronet.rolpermiso.dtos.request.AsignarModulosMetodosRequest;
 import com.coagronet.rolpermiso.dtos.request.AsignarPermisosRequest;
+import com.coagronet.rolpermiso.dtos.request.ReemplazarPermisoRequest;
+import com.coagronet.rolpermiso.dtos.request.ReemplazarModuloRequest;
 import com.coagronet.rolpermiso.dtos.response.ModuloPermisoResponse;
 import com.coagronet.rolpermiso.dtos.response.PermisoResponse;
 import com.coagronet.rolpermiso.dtos.response.RolPermisoAsignadoResponse;
 import com.coagronet.rolpermiso.services.RolPermisoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,20 +29,39 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/empresa-rol")
+@RequestMapping("/api/v1/empresa-rol-permisos")
 public class RolPermisoController {
 
     private final RolPermisoService rolPermisoService;
 
     /**
-     * GET: Obtener módulos disponibles con sus permisos agrupados
+     * GET: Obtener módulos disponibles con sus permisos agrupados (con paginación)
      * Admin de empresa usa esto para ver qué módulos puede asignar a los roles
+     * 
+     * Parámetros de paginación:
+     * - page: número de página (default: 0)
+     * - size: elementos por página (default: 20)
+     * - sort: ordenamiento por campo (ej: sort=moduloNombre,asc)
      */
     @GetMapping("/modulos-disponibles")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<ModuloPermisoResponse>> getModulosDisponibles() {
-        return ResponseEntity.ok(rolPermisoService.getModulosDisponibles());
+    public ResponseEntity<Page<ModuloPermisoResponse>> getModulosDisponibles(
+            Pageable pageable) {
+        return ResponseEntity.ok(rolPermisoService.getModulosDisponibles(pageable));
+    }
+
+    /**
+     * GET: Obtener módulos por subsistema(s) con permisos agrupados (sin paginación)
+     * Parámetro: subsistemaIds=1,2,3
+     * Usado para que admin de empresa seleccione subsistemas y luego elija permisos individuales
+     */
+    @GetMapping("/test-modulos")
+    @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ModuloPermisoResponse> getModulosBySubsistemas(
+            @RequestParam List<Long> subsistemaIds) {
+        return rolPermisoService.getModulosBySubsistemas(subsistemaIds);
     }
 
     /**
@@ -127,6 +150,52 @@ public class RolPermisoController {
     }
 
     /**
+     * PUT: Reemplazar un permiso individual por otro
+     * Caso de uso: "Asigné el permiso X por error, quiero reemplazarlo por Y"
+     * 
+     * Body ejemplo:
+     * {
+     *   "permisoIdActual": 100,
+     *   "nuevoPermisoId": 105
+     * }
+     */
+    @PutMapping("/{rolId}/reemplazar-permiso")
+    @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<RolPermisoAsignadoResponse> reemplazarPermiso(
+            @PathVariable Long rolId,
+            @RequestBody @Valid ReemplazarPermisoRequest dto) {
+        
+        RolPermisoAsignadoResponse response = rolPermisoService
+            .reemplazarPermisoDeEmpresaRol(rolId, dto.getPermisoIdActual(), dto.getNuevoPermisoId());
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * PUT: Reemplazar todos los permisos de un módulo por los de otro
+     * Caso de uso: "Asigné el módulo X por error, quiero reemplazarlo completamente por el módulo Y"
+     * 
+     * Body ejemplo:
+     * {
+     *   "moduloIdActual": 342,
+     *   "nuevoModuloId": 340
+     * }
+     */
+    @PutMapping("/{rolId}/reemplazar-modulo")
+    @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<RolPermisoAsignadoResponse> reemplazarModulo(
+            @PathVariable Long rolId,
+            @RequestBody @Valid ReemplazarModuloRequest dto) {
+        
+        RolPermisoAsignadoResponse response = rolPermisoService
+            .reemplazarModuloPermisosDeEmpresaRol(rolId, dto.getModuloIdActual(), dto.getNuevoModuloId());
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * ============================================================================
      * MÉTODOS ANTIGUOS (Compatibilidad / Administración individual de permisos)
      * ============================================================================
@@ -154,14 +223,14 @@ public class RolPermisoController {
      * Asignar permisos individuales a un rol (permiso a permiso)
      * @deprecated Usar asignarModulosPermisos() en su lugar
      */
-    @PostMapping("/rol/permisos")
+    @PostMapping("/rol/{rolId}/permisos")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.CREATED)
     @Deprecated(forRemoval = false, since = "1.0")
-    public Void asignarPermisosARolDeEmpresa(
+    public Void asignarPermisosARolDeEmpresa( @PathVariable Long rolId,
             @RequestBody @Valid AsignarPermisosRequest dto) {
 
-        rolPermisoService.asignarPermisosAEmpresaRol(dto.getRolId(), dto.getPermisosId());
+        rolPermisoService.asignarPermisosAEmpresaRol(rolId, dto.getPermisosId());
         return null;
     }
 
@@ -169,11 +238,11 @@ public class RolPermisoController {
      * Quitar permisos individuales de un rol
      * @deprecated Usar quitarModulosPermisos() en su lugar
      */
-    @DeleteMapping("/rol/permisos/quitar")
+    @DeleteMapping("/rol/{rolId}/permisos/quitar")
     @PreAuthorize("hasRole('ADMINISTRADOR_SISTEMA') or hasRole('ADMINISTRADOR_EMPRESA')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Deprecated(forRemoval = false, since = "1.0")
-    public void removePermiso(@RequestBody @Valid AsignarPermisosRequest dto) {
-        rolPermisoService.quitarPermisosDeEmpresaRol(dto.getRolId(), dto.getPermisosId());
+    public void removePermiso(@PathVariable Long rolId, @RequestBody @Valid AsignarPermisosRequest dto) {
+        rolPermisoService.quitarPermisosDeEmpresaRol(rolId, dto.getPermisosId());
     }
 }

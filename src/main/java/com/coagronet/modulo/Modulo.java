@@ -2,6 +2,8 @@ package com.coagronet.modulo;
 
 import java.io.Serializable;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import com.coagronet.estado.Estado;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.TipoAplicacion;
@@ -45,7 +47,7 @@ import lombok.ToString;
  * @see TipoModulo
  * @since 2026
  */
-@Entity @Table(name = "modulo", schema = "public", uniqueConstraints = {
+@Entity @DynamicUpdate @Table(name = "modulo", schema = "public", uniqueConstraints = {
                 @UniqueConstraint(name = "ux_nombre_subsistema_tipo_aplicacion", columnNames = { "mod_nombre",
                                 "mod_subsistema_id",
                                 "mod_tipo_aplicacion_id" }) }) @SequenceGenerator(name = "MOD_SEQ", sequenceName = "modulo_mod_id_seq", schema = "public", initialValue = 1, allocationSize = 1) @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder @ToString(exclude = {

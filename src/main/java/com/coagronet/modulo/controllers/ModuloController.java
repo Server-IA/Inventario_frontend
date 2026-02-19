@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.services.MenuService;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
+import com.coagronet.modulo.dtos.ModuloRequeridoPatch;
 import com.coagronet.modulo.dtos.ModuloRequest;
+import com.coagronet.modulo.dtos.ModuloSummaryResponse;
 import com.coagronet.modulo.services.ModuloService;
 
 import jakarta.validation.Valid;
@@ -168,6 +171,27 @@ public class ModuloController {
     public ResponseEntity<List<MenuSubSistemaResponseDTO>> getModulosDisponibles() {
         List<MenuSubSistemaResponseDTO> response = menuService.obtenerModulosDisponiblesParaEmpresa();
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Procesa una solicitud de actualización parcial para los atributos de un módulo específico.
+     * <p>
+     * Este endpoint maneja peticiones HTTP PATCH. Valida el cuerpo de la solicitud (DTO) y delega la persistencia al
+     * servicio. Retorna la representación actualizada del recurso.
+     * </p>
+     *
+     * @param id El identificador único del módulo a modificar. Proveniente del path de la URL.
+     * @param patchDTO El objeto de transferencia de datos {@link ModuloRequeridoPatch} que contiene los campos
+     * modificables (ej. bandera de requerido). Debe cumplir con las validaciones vigentes.
+     * @return Un objeto {@link ResponseEntity} que contiene el {@link ModuloSummaryResponse} actualizado y el estado
+     * HTTP 200 (OK).
+     * @see ModuloService#actualizarRequerido(Long, ModuloRequeridoPatch)
+     */
+    @PatchMapping("/{id}")
+    public ResponseEntity<ModuloSummaryResponse> actualizarParcial(@PathVariable Long id,
+            @RequestBody @Valid ModuloRequeridoPatch patchDTO) {
+
+        return ResponseEntity.ok(moduloService.actualizarRequerido(id, patchDTO));
     }
 
 }

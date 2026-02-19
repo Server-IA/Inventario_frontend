@@ -1,6 +1,8 @@
 package com.coagronet.permiso.repositories;
 
 import com.coagronet.permiso.Permiso;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -58,4 +60,34 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
         ORDER BY p.modulo.nombre, p.nombre
     """)
     List<Permiso> findPermisosByModulosIds(@Param("modulosIds") List<Long> modulosIds);
+
+    /**
+     * Obtiene módulos únicos (DISTINCT) con permisos activos, con paginación.
+     * Está optimizada para obtener módulos agrupados por página.
+     */
+    @Query("""
+    SELECT p.modulo.id
+    FROM Permiso p
+    WHERE p.estado.id = 1
+      AND p.modulo.estado.id = 1
+    GROUP BY p.modulo.id, p.modulo.nombre
+    ORDER BY p.modulo.nombre
+""")
+    Page<Long> findDistinctModuloIds(Pageable pageable);
+
+    /**
+     * Obtiene módulos únicos de subsistemas específicos sin paginación.
+     * Usado para listar todos los módulos de uno o varios subsistemas para selección UI.
+     */
+    @Query(value = """
+    SELECT DISTINCT p.modulo_id, m.mod_nombre
+    FROM permiso p
+    JOIN modulo m ON m.mod_id = p.modulo_id
+    WHERE p.estado_id = 1
+      AND m.mod_estado_id = 1
+      AND m.mod_subsistema_id IN :subsistemaIds
+    ORDER BY m.mod_nombre
+    """, nativeQuery = true)
+    List<Long> findDistinctModuloIdsBySubsistemas(@Param("subsistemaIds") List<Long> subsistemaIds);
 }
+
