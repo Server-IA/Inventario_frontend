@@ -9,10 +9,13 @@ import com.coagronet.empresarol.dtos.responses.EmpresaRolResponseDTO;
 import com.coagronet.empresarol.mappers.EmpresaRolMapper;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
+import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.rol.Rol;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
+import com.coagronet.validator.parametrizacion.constantes.RolConstantes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,13 @@ public class EmpresaRolService {
     public EmpresaRolResponseDTO create(EmpresaRolCreateRequestDTO dto){
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
         Empresa empresa = entidadValidatorFacade.validarEmpresa(empresaId);
+        if (RolConstantes.ROLE_ADMINISTRADOR_SISTEMA.equals(dto.getRolId())) {
+            throw new UserRoleForbiddenException("No puedes asignar ese rol");
+        }
+        if (empresaRolRepository.existsByEmpresaIdAndRolId(empresaId, dto.getRolId())) {
+            throw new BadRequestException("Ese rol ya está asignado a la empresa");
+        }
+
         Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
         Estado estado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 
