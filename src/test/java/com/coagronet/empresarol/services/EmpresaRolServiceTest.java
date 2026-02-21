@@ -1,7 +1,10 @@
 package com.coagronet.empresarol.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -17,15 +20,18 @@ import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.dtos.requests.EmpresaRolCreateRequestDTO;
+import com.coagronet.empresarol.dtos.requests.EmpresaRolUpdateRequestDTO;
 import com.coagronet.empresarol.dtos.responses.EmpresaRolResponseDTO;
 import com.coagronet.empresarol.mappers.EmpresaRolMapper;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
+import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.rol.Rol;
 import com.coagronet.user.User;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
+import com.coagronet.validator.parametrizacion.constantes.RolConstantes;
 
 @ExtendWith(MockitoExtension.class)
 class EmpresaRolServiceTest {
@@ -131,5 +137,46 @@ class EmpresaRolServiceTest {
         empresaRolService.toggleEstadoEmpresaRol(empresaRolId);
 
         assertThat(empresaRol.getEstado().getId()).isEqualTo(EstadoConstantes.ESTADO_GENERAL_INACTIVO);
+    }
+
+    @Test
+    void create_throwsUserRoleForbiddenException_whenRolIsAdministradorSistema() {
+        Long empresaId = 7L;
+        EmpresaRolCreateRequestDTO request = new EmpresaRolCreateRequestDTO(RolConstantes.ROLE_ADMINISTRADOR_SISTEMA);
+        Empresa empresa = new Empresa();
+        empresa.setId(empresaId);
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarEmpresa(empresaId)).thenReturn(empresa);
+
+        assertThrows(UserRoleForbiddenException.class, () -> empresaRolService.create(request));
+
+        verify(entidadValidatorFacade).validarEmpresa(empresaId);
+        verifyNoInteractions(authenticationService, empresaRolMapper);
+        verifyNoMoreInteractions(entidadValidatorFacade);
+    }
+
+    @Test
+    void update_throwsUserRoleForbiddenException_whenRolIsAdministradorSistema() {
+        Long empresaId = 7L;
+        Long empresaRolId = 15L;
+
+        EmpresaRol empresaRol = new EmpresaRol();
+        empresaRol.setId(empresaRolId);
+
+        User user = new User();
+        user.setUsername("admin.empresa@coagronet.com");
+
+        EmpresaRolUpdateRequestDTO request = new EmpresaRolUpdateRequestDTO(RolConstantes.ROLE_ADMINISTRADOR_SISTEMA, null);
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarEmpresaRol(empresaRolId, empresaId)).thenReturn(empresaRol);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(user);
+
+        assertThrows(UserRoleForbiddenException.class, () -> empresaRolService.update(empresaRolId, request));
+
+        verify(entidadValidatorFacade).validarEmpresaRol(empresaRolId, empresaId);
+        verify(authenticationService).getAuthenticatedUser();
+        verifyNoMoreInteractions(entidadValidatorFacade);
     }
 }

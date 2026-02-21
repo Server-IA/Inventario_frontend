@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.coagronet.empresarol.dtos.responses.EmpresaRolResponseDTO;
 import com.coagronet.empresarol.services.EmpresaRolService;
 import com.coagronet.exceptionHandler.Advice;
+import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
 import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
 import com.coagronet.infrastructure.configuration.CorsProperties;
@@ -142,11 +143,33 @@ class EmpresaRolControllerSecurityTest {
 
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void create_returns403_whenRolIsAdministradorSistema() throws Exception {
+        when(empresaRolService.create(any())).thenThrow(new UserRoleForbiddenException("No puedes asignar ese rol"));
+
+        mockMvc.perform(post("/api/v1/empresa-rol")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(buildCreateAdminSistemaJson()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void update_returns204_whenPayloadIsValid() throws Exception {
         mockMvc.perform(put("/api/v1/empresa-rol/{id}", 20L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(buildUpdateJson()))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void update_returns403_whenRolIsAdministradorSistema() throws Exception {
+        when(empresaRolService.update(any(), any())).thenThrow(new UserRoleForbiddenException("No puedes asignar ese rol"));
+
+        mockMvc.perform(put("/api/v1/empresa-rol/{id}", 20L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(buildUpdateAdminSistemaJson()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -166,6 +189,18 @@ class EmpresaRolControllerSecurityTest {
         ObjectNode json = objectMapper.createObjectNode();
         json.put("rolId", 3L);
         json.put("estadoId", 1L);
+        return objectMapper.writeValueAsString(json);
+    }
+
+    private String buildCreateAdminSistemaJson() throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("rolId", 1L);
+        return objectMapper.writeValueAsString(json);
+    }
+
+    private String buildUpdateAdminSistemaJson() throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("rolId", 1L);
         return objectMapper.writeValueAsString(json);
     }
 }
