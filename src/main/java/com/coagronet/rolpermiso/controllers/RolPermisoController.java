@@ -202,15 +202,12 @@ public class RolPermisoController {
      */
 
     /**
-     * Obtener permisos de un rol en una empresa (por permiso individual)
-     * @deprecated Usar getModulosDisponibles() en su lugar
+     * Obtener permisos de un rol en una empresa
      */
-    @GetMapping("/{empresaId}/rol/{rolId}/permisos")
+    @GetMapping("/rol/{rolId}/permisos")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.OK)
-    @Deprecated(forRemoval = false, since = "1.0")
     public List<PermisoResponse> getPermisos(
-            @PathVariable Long empresaId,
             @PathVariable Long rolId) {
 
         return rolPermisoService.getPermisosByEmpresaRol(rolId)
