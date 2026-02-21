@@ -13,6 +13,7 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.menu.dtos.MenuModuloResponseDTO;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.repositories.MenuModuloRepository;
@@ -25,8 +26,8 @@ import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
 import com.coagronet.utils.UserEmpresaService;
-import com.coagronet.utils.UserRoleService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -51,49 +52,55 @@ public class MenuService {
     private final MenuModuloRepository menuModuloRepository;
     private final ModuloMapper moduloMapper;
     private final UserEmpresaService userEmpresaService;
-    private final UserRoleService userRoleService;
     private final ModuloRepository moduloRepository;
     private final ModuloEmpresaRepository moduloEmpresaRepository;
     private final EmpresaRepository empresaRepository;
     private final EstadoRepository estadoRepository;
+    private final JwtService jwtService;
+    private final HttpServletRequest request;
 
-    /**
-     * Obtiene el menú para la empresa actual y el rol actual del usuario, filtrado por tipo de aplicación.
-     * <p>
-     * Pasos:
-     * <ol>
-     * <li>Resuelve {@code empresaId} y {@code roleName} del contexto.</li>
-     * <li>Convierte {@code tipoAplicacion} a {@link TipoAplicacionEnum} y obtiene su ID interno.</li>
-     * <li>Consulta {@link MenuRepository#findSubmodulosByEmpresaTipoAppAndRol(Long, Integer, String)}.</li>
-     * <li>Agrupa por subsistema (nombre + icono) y mapea cada fila a {@link MenuModuloResponseDTO}.</li>
-     * </ol>
-     * </p>
-     *
-     * @param tipoAplicacion cadena {@code "web"} o {@code "movil"} (no sensible a mayúsculas)
-     * @return lista de subsistemas, cada uno con sus módulos, en orden estable (por nombre de subsistema y módulo)
-     * @throws IllegalArgumentException si {@code tipoAplicacion} no corresponde a un valor soportado
-     */
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-        String roleName = userRoleService.getRoleFromCurrentRequest();
-
         int tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
 
-        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRol(empresaId, tipoAppId, roleName);
+        // 1. Extraer el token del header Authorization
+        String authHeader = request.getHeader("Authorization");
+        Integer rolId = null;
 
-        Map<String, List<SubModuloRow>> agrupado = rows.stream().collect(Collectors
-                .groupingBy(r -> r.getSubNombre() + "||" + r.getSubIcon(), LinkedHashMap::new, Collectors.toList()));
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            // 2. Usar tu método existente para sacar el rolId
+            rolId = jwtService.extractRoleId(token);
+        }
+
+        if (rolId == null) {
+            throw new IllegalArgumentException("No se pudo extraer el rol del token de seguridad");
+        }
+
+        System.out.println("EmpresaId: " + empresaId);
+        System.out.println("RolId: " + rolId);
+        System.out.println("TipoAppId: " + tipoAppId);
+
+        // 3. Llamamos al nuevo método del repositorio pasándole el rolId (Integer)
+        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
+
+        // (El resto de tu lógica de agrupación se mantiene igual)
+        record SubSistemaKey(String nombre, String icono) {
+        }
+
+        Map<SubSistemaKey, List<SubModuloRow>> agrupado = rows.stream().collect(Collectors.groupingBy(
+                r -> new SubSistemaKey(r.getSubNombre(), r.getSubIcon()), LinkedHashMap::new, Collectors.toList()));
 
         List<MenuSubSistemaResponseDTO> out = new ArrayList<>();
-        for (var e : agrupado.entrySet()) {
-            String[] parts = e.getKey().split("\\|\\|", 2);
-            String subNombre = parts[0];
-            String subIcon = parts.length > 1 ? parts[1] : null;
 
-            List<MenuModuloResponseDTO> modulos = e.getValue().stream().map(moduloMapper::toDTO).toList();
+        for (var entry : agrupado.entrySet()) {
+            SubSistemaKey key = entry.getKey();
+            List<MenuModuloResponseDTO> modulos = entry.getValue().stream().map(moduloMapper::toDTO).toList();
 
-            out.add(MenuSubSistemaResponseDTO.builder().nombre(subNombre).icono(subIcon).modulos(modulos).build());
+            out.add(MenuSubSistemaResponseDTO.builder().nombre(key.nombre()).icono(key.icono()).modulos(modulos)
+                    .build());
         }
+
         return out;
     }
 
@@ -138,6 +145,7 @@ public class MenuService {
 
         // 1. Obtener la empresa del contexto actual
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
         Empresa empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
 
