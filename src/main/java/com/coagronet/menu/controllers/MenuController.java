@@ -50,7 +50,7 @@ public class MenuController {
 		return ResponseEntity.ok(data);
 	}
 
-	@PostMapping("/asignar-modulos")
+	@PostMapping("modulos")
 	public ResponseEntity<Map<String, String>> asignarModulos(@RequestBody AsignarModulosRequestDTO request) {
 
 		menuService.asignarModulosAEmpresa(request.getModulosIds());

@@ -63,13 +63,11 @@ public class MenuService {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
         int tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
 
-        // 1. Extraer el token del header Authorization
         String authHeader = request.getHeader("Authorization");
         Integer rolId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            // 2. Usar tu método existente para sacar el rolId
             rolId = jwtService.extractRoleId(token);
         }
 
@@ -77,14 +75,8 @@ public class MenuService {
             throw new IllegalArgumentException("No se pudo extraer el rol del token de seguridad");
         }
 
-        System.out.println("EmpresaId: " + empresaId);
-        System.out.println("RolId: " + rolId);
-        System.out.println("TipoAppId: " + tipoAppId);
-
-        // 3. Llamamos al nuevo método del repositorio pasándole el rolId (Integer)
         var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
 
-        // (El resto de tu lógica de agrupación se mantiene igual)
         record SubSistemaKey(String nombre, String icono) {
         }
 
