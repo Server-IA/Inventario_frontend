@@ -80,8 +80,14 @@ public class EmpresaRolService {
         EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
         String username = authenticationService.getAuthenticatedUser().getUsername();
 
+
+
         if (dto.getRolId() != null) {
             Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
+
+            if (RolConstantes.ROLE_ADMINISTRADOR_SISTEMA.equals(dto.getRolId())) {
+                throw new UserRoleForbiddenException("No puedes asignar ese rol");
+            }
             empresaRol.setRol(rol);
         }
 
