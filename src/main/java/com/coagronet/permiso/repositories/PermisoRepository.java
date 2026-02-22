@@ -74,7 +74,7 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
                     AND p.estado_id = 1
               )
             """, countQuery = """
-            SELECT count(m.mod_id)
+            SELECT count(*)
             FROM public.modulo m
             WHERE m.mod_estado_id = 1
               AND EXISTS (
@@ -83,7 +83,7 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
                   WHERE p.modulo_id = m.mod_id
                     AND p.estado_id = 1
               )
-            """, nativeQuery = true)
+                        """, nativeQuery = true)
     Page<Long> findDistinctModuloIds(Pageable pageable);
 
     @Query("""
