@@ -1,6 +1,7 @@
 package com.coagronet.empresarol.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -164,7 +165,8 @@ class EmpresaRolControllerSecurityTest {
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void update_returns403_whenRolIsAdministradorSistema() throws Exception {
-        when(empresaRolService.update(any(), any())).thenThrow(new UserRoleForbiddenException("No puedes asignar ese rol"));
+        doThrow(new UserRoleForbiddenException("No puedes asignar ese rol"))
+            .when(empresaRolService).update(any(), any());
 
         mockMvc.perform(put("/api/v1/empresa-rol/{id}", 20L)
                 .contentType(MediaType.APPLICATION_JSON)

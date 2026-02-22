@@ -176,6 +176,7 @@ class EmpresaRolServiceTest {
         assertThrows(UserRoleForbiddenException.class, () -> empresaRolService.update(empresaRolId, request));
 
         verify(entidadValidatorFacade).validarEmpresaRol(empresaRolId, empresaId);
+        verify(entidadValidatorFacade).validarRol(RolConstantes.ROLE_ADMINISTRADOR_SISTEMA);
         verify(authenticationService).getAuthenticatedUser();
         verifyNoMoreInteractions(entidadValidatorFacade);
     }
