@@ -111,4 +111,7 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
             ORDER BY m.mod_nombre
             """, nativeQuery = true)
     List<Long> findDistinctModuloIdsBySubsistemas(@Param("subsistemaIds") List<Long> subsistemaIds);
+
+    // Busca los permisos de una lista de módulos que son exclusivos para el admin
+    List<Permiso> findByModuloIdInAndAdminEmpresaTrue(List<Long> moduloIds);
 }

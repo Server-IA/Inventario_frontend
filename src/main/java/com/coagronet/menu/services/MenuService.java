@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
@@ -61,30 +64,31 @@ public class MenuService {
 
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-        int tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
 
-        // 1. Extraer el token del header Authorization
+        // 1. Manejo del tipo de aplicación (400 Bad Request)
+        int tipoAppId;
+        try {
+            tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El tipo de aplicación proporcionado no es válido: " + tipoAplicacion);
+        }
+
         String authHeader = request.getHeader("Authorization");
         Integer rolId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            // 2. Usar tu método existente para sacar el rolId
             rolId = jwtService.extractRoleId(token);
         }
 
+        // 2. Manejo de la falta de Rol (403 Forbidden)
         if (rolId == null) {
-            throw new IllegalArgumentException("No se pudo extraer el rol del token de seguridad");
+            throw new AccessDeniedException("No se pudo extraer el rol del token de seguridad");
         }
 
-        System.out.println("EmpresaId: " + empresaId);
-        System.out.println("RolId: " + rolId);
-        System.out.println("TipoAppId: " + tipoAppId);
-
-        // 3. Llamamos al nuevo método del repositorio pasándole el rolId (Integer)
         var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
 
-        // (El resto de tu lógica de agrupación se mantiene igual)
         record SubSistemaKey(String nombre, String icono) {
         }
 
