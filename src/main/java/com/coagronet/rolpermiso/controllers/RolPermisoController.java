@@ -218,12 +218,11 @@ public class RolPermisoController {
 
     /**
      * Asignar permisos individuales a un rol (permiso a permiso)
-     * @deprecated Usar asignarModulosPermisos() en su lugar
+     *
      */
     @PostMapping("/rol/{rolId}/permisos")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.CREATED)
-    @Deprecated(forRemoval = false, since = "1.0")
     public Void asignarPermisosARolDeEmpresa( @PathVariable Long rolId,
             @RequestBody @Valid AsignarPermisosRequest dto) {
 
@@ -233,12 +232,10 @@ public class RolPermisoController {
 
     /**
      * Quitar permisos individuales de un rol
-     * @deprecated Usar quitarModulosPermisos() en su lugar
      */
     @DeleteMapping("/rol/{rolId}/permisos/quitar")
     @PreAuthorize("hasRole('ADMINISTRADOR_SISTEMA') or hasRole('ADMINISTRADOR_EMPRESA')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Deprecated(forRemoval = false, since = "1.0")
     public void removePermiso(@PathVariable Long rolId, @RequestBody @Valid AsignarPermisosRequest dto) {
         rolPermisoService.quitarPermisosDeEmpresaRol(rolId, dto.getPermisosId());
     }
