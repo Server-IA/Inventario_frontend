@@ -63,15 +63,39 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
      * Obtiene módulos únicos (DISTINCT) con permisos activos, con paginación. Está optimizada para obtener módulos
      * agrupados por página.
      */
-    @Query("""
-                SELECT p.modulo.id
-                FROM Permiso p
-                WHERE p.estado.id = 1
-                  AND p.modulo.estado.id = 1
-                GROUP BY p.modulo.id, p.modulo.nombre
-                ORDER BY p.modulo.nombre
-            """)
+    @Query(value = """
+            SELECT m.mod_id
+            FROM public.modulo m
+            WHERE m.mod_estado_id = 1
+              AND EXISTS (
+                  SELECT 1
+                  FROM public.permiso p
+                  WHERE p.modulo_id = m.mod_id
+                    AND p.estado_id = 1
+              )
+            """, countQuery = """
+            SELECT count(*)
+            FROM public.modulo m
+            WHERE m.mod_estado_id = 1
+              AND EXISTS (
+                  SELECT 1
+                  FROM public.permiso p
+                  WHERE p.modulo_id = m.mod_id
+                    AND p.estado_id = 1
+              )
+                        """, nativeQuery = true)
     Page<Long> findDistinctModuloIds(Pageable pageable);
+
+    @Query("""
+            SELECT p
+            FROM Permiso p
+            JOIN FETCH p.modulo m
+            LEFT JOIN FETCH p.metodo met
+            WHERE m.id IN :moduloIds
+              AND p.estado.id = 1
+            ORDER BY m.nombre
+            """)
+    List<Permiso> findPermisosConRelacionesByModuloIdIn(@Param("moduloIds") List<Long> moduloIds);
 
     /**
      * Obtiene módulos únicos de subsistemas específicos sin paginación. Usado para listar todos los módulos de uno o

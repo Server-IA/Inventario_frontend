@@ -27,4 +27,5 @@ public interface EmpresaRolRepository extends JpaRepository<EmpresaRol, Long> {
 
     Optional<EmpresaRol> findByEmpresaIdAndRolIdAndEstadoId(Long empresaId, Long rolId, Long estadoId);
 
+    boolean existsByEmpresaIdAndRolId(Long empresaId, Long rolId);
 }
