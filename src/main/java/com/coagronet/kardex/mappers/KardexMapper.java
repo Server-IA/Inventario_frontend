@@ -2,9 +2,10 @@ package com.coagronet.kardex.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
-import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface KardexMapper {
@@ -19,14 +20,14 @@ public interface KardexMapper {
 	@Mapping(source = "ordenCompra.id", target = "ordenCompraId")
 	KardexDTO toDto(Kardex kardex);
 
-	@Mapping(source = "almacenId", target = "almacen.id")
-	@Mapping(source = "produccionId", target = "produccion.id")
-	@Mapping(source = "tipoMovimientoId", target = "tipoMovimiento.id")
-	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(target = "almacen", ignore = true)
+	@Mapping(target = "produccion", ignore = true)
+	@Mapping(target = "tipoMovimiento", ignore = true)
+	@Mapping(target = "estado", ignore = true)
+	@Mapping(target = "empresa", ignore = true)
 	@Mapping(target = "clienteProveedor", ignore = true)
-	@Mapping(source = "empresaId", target = "empresa.id")
-	@Mapping(source = "pedidoId", target = "pedido.id")
-	@Mapping(source = "ordenCompraId", target = "ordenCompra.id")
+	@Mapping(target = "pedido", ignore = true)
+	@Mapping(target = "ordenCompra", ignore = true)
 	Kardex toEntity(KardexDTO kardexDTO);
 
 	@org.mapstruct.BeanMapping(nullValuePropertyMappingStrategy = org.mapstruct.NullValuePropertyMappingStrategy.IGNORE)

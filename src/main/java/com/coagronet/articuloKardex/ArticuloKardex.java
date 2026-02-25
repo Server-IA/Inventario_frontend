@@ -1,44 +1,74 @@
 package com.coagronet.articuloKardex;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.UUID;
+
+import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "kardex_item", schema = "public")
+@Table(name = "kardex_item", schema = "public",
+		indexes = { @Index(name = "idx_kai_empresa_id", columnList = "kai_empresa_id"),
+				@Index(name = "idx_kai_kardex_id", columnList = "kai_kardex_id"),
+				@Index(name = "idx_kai_producto_id", columnList = "kai_producto_presentacion_id") },
+		uniqueConstraints = { @UniqueConstraint(name = "kardex_item_kai_producto_identificador_key",
+				columnNames = "kai_producto_identificador") })
+@EntityListeners(AuditingEntityListener.class)
 public class ArticuloKardex {
 
 	@Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_item_generator")
-	@SequenceGenerator(name = "kardex_item_generator", sequenceName = "kardex_item_kai_id_seq", allocationSize = 1)
-	@Column(name = "kai_id")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "kai_id", nullable = false, updatable = false)
 	private Long id;
 
-	@Column(name = "kai_cantidad")
-	private Double cantidad;
+	// Cambiado a BigDecimal para correspondencia exacta con 'numeric' y evitar errores de
+	// redondeo
+	@Column(name = "kai_cantidad", nullable = false)
+	private BigDecimal cantidad;
 
-	@Column(name = "kai_precio")
-	private Double precio;
+	@Column(name = "kai_precio", nullable = false)
+	private BigDecimal precio;
 
+	// Cambiado a LocalDate para correspondencia exacta con el tipo 'date' de PostgreSQL
 	@Column(name = "kai_fecha_vencimiento")
-	private LocalDateTime fechaVencimiento;
+	private LocalDate fechaVencimiento;
 
-	@Column(name = "kai_producto_identificador")
+	@Column(name = "kai_producto_identificador", columnDefinition = "TEXT")
 	private String identificadorProducto;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -61,30 +91,59 @@ public class ArticuloKardex {
 			foreignKey = @ForeignKey(name = "kardex_item_kai_empresa_id_fkey"))
 	private Empresa empresa;
 
-	@Column(name = "kai_lote")
+	@Column(name = "kai_lote", columnDefinition = "TEXT")
 	private String lote;
 
-	@Column(name = "kai_seg_username")
+	// --- Metadatos de Auditoría Integrados con Spring Data ---
+
+	@CreatedBy
+	@Column(name = "kai_seg_username", length = 150, nullable = false, updatable = false)
 	private String username;
 
-	@Column(name = "kai_seg_rol")
+	@Column(name = "kai_seg_rol", length = 100, nullable = false)
 	private String rol;
 
-	@Column(name = "kai_seg_ip")
+	@Column(name = "kai_seg_ip", columnDefinition = "inet", nullable = false)
 	private String ip;
 
-	@Column(name = "kai_seg_host")
+	@Column(name = "kai_seg_host", length = 255)
 	private String host;
 
-	@Column(name = "kai_seg_fecha_hora", insertable = false, updatable = false)
+	@CreatedDate
+	@Column(name = "kai_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE", nullable = false,
+			updatable = false)
 	private OffsetDateTime fechaHora;
 
-
+	// Mantenemos la lógica de negocio previa a persistir
 	@PrePersist
 	public void prePersist() {
 		if (identificadorProducto == null || identificadorProducto.isBlank()) {
 			this.identificadorProducto = UUID.randomUUID().toString();
 		}
+	}
+
+	// Métodos equals y hashCode optimizados para evaluación de entidades JPA
+	@Override
+	public final boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null)
+			return false;
+		Class<?> oEffectiveClass = o instanceof HibernateProxy
+				? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
+		Class<?> thisEffectiveClass = this instanceof HibernateProxy
+				? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
+		if (thisEffectiveClass != oEffectiveClass)
+			return false;
+		ArticuloKardex that = (ArticuloKardex) o;
+		return getId() != null && Objects.equals(getId(), that.getId());
+	}
+
+	@Override
+	public final int hashCode() {
+		return this instanceof HibernateProxy
+				? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
+				: getClass().hashCode();
 	}
 
 }
