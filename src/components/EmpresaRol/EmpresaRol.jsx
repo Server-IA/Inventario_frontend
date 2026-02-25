@@ -152,74 +152,74 @@ export default function EmpresaRol() {
 
                   setFormOpen(true);
                 },
-deleteRow: async () => {
-  if (!selectedRow?.id)
-    return setMessage({
-      open: true,
-      severity: "warning",
-      text: "Selecciona una fila",
-    });
+              deleteRow: async () => {
+                if (!selectedRow?.id)
+                  return setMessage({
+                    open: true,
+                    severity: "warning",
+                    text: "Selecciona una fila",
+                  });
 
-  if (!window.confirm("¿Eliminar este rol y todos sus permisos?")) return;
+                if (!window.confirm("¿Eliminar este rol y todos sus permisos?")) return;
 
-  try {
-    setLoading(true);
+                try {
+                  setLoading(true);
 
-    // 🔹 Obtener rolId real
-    const resRoles = await axios.get("/v1/items/rol/0");
-    const rolBase = resRoles.data.find(
-      r => r.name === selectedRow.rolNombre
-    );
+                  //  Obtener rolId real
+                  const resRoles = await axios.get("/v1/items/rol/0");
+                  const rolBase = resRoles.data.find(
+                    r => r.name === selectedRow.rolNombre
+                  );
 
-    if (!rolBase) throw new Error("Rol base no encontrado");
+                  if (!rolBase) throw new Error("Rol base no encontrado");
 
-    const rolId = rolBase.id;
+                  const rolId = rolBase.id;
 
-    // 🔹 Obtener permisos actuales
-    const permisosRes = await axios.get(
-      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
-    );
+                  //  Obtener permisos actuales
+                  const permisosRes = await axios.get(
+                    `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+                  );
 
-    const permisos = permisosRes.data || [];
+                  const permisos = permisosRes.data || [];
 
-    // 🔹 Extraer permisosId
-    const permisosIds = permisos.map(p => p.id);
+                  //  Extraer permisosId
+                  const permisosIds = permisos.map(p => p.id);
 
-    // 🔹 Eliminar permisos individuales si existen
-    if (permisosIds.length > 0) {
-      await axios.delete(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        {
-          data: { permisosId: permisosIds }
-        }
-      );
-    }
+                  //  Eliminar permisos individuales si existen
+                  if (permisosIds.length > 0) {
+                    await axios.delete(
+                      `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+                      {
+                        data: { permisosId: permisosIds }
+                      }
+                    );
+                  }
 
-    // 🔹 Ahora eliminar empresa-rol
-    await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
+                  //  Ahora eliminar empresa-rol
+                  await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
 
-    setMessage({
-      open: true,
-      severity: "success",
-      text: "Rol y permisos eliminados correctamente",
-    });
+                  setMessage({
+                    open: true,
+                    severity: "success",
+                    text: "Rol y permisos eliminados correctamente",
+                  });
 
-    reloadData();
+                  reloadData();
 
-  } catch (error) {
+                } catch (error) {
 
-    console.error(error);
+                  console.error(error);
 
-    setMessage({
-      open: true,
-      severity: "error",
-      text: "Error al eliminar. Revisa dependencias o permisos.",
-    });
+                  setMessage({
+                    open: true,
+                    severity: "error",
+                    text: "Error al eliminar. Revisa dependencias o permisos.",
+                  });
 
-  } finally {
-    setLoading(false);
-  }
-}
+                } finally {
+                  setLoading(false);
+                }
+              }
               }}
             />
 

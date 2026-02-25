@@ -172,7 +172,7 @@ const handleAsignarTodos = async () => {
 
     const autoridades = res.data?.autoridades || [];
 
-    // 🔥 Construir nueva selección según autoridades devueltas
+    //  Construir nueva selección según autoridades devueltas
     const nuevaSeleccion = {};
 
     modulos.forEach((modulo) => {

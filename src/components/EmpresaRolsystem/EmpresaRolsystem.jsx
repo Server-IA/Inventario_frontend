@@ -1,7 +1,7 @@
 // src/components/empresaRolSystem/EmpresaRolsystem.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "../axiosConfig.js";
-import { Box, Typography, Button } from "@mui/material"; // 🔥 Agregamos Button aquí
+import { Box, Typography, Button } from "@mui/material"; 
 import MessageSnackBar from "../MessageSnackBar.jsx";
 import ModalPermisosRol from "./ModalPermisosRol";
 import FormEmpresaRolSystem from "./FormEmpresaRolsystem.jsx";
@@ -14,7 +14,7 @@ export default function EmpresaRolsystem() {
   const [rows, setRows] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [permisosOpen, setPermisosOpen] = React.useState(false); // 🔥 Estado del nuevo modal
+  const [permisosOpen, setPermisosOpen] = React.useState(false); 
   const [message, setMessage] = useState({
     open: false,
     severity: "success",
@@ -66,14 +66,14 @@ export default function EmpresaRolsystem() {
   ============================== */
 
   const handleCreate = () => {
-    setSelectedRow(null); // 🔥 asegurar modo crear
+    setSelectedRow(null); //  asegurar modo crear
     setFormOpen(true);
   };
 
   const handleEdit = () => {
     if (!selectedRow) return;
 
-    // 🔥 FORZAR NUEVA REFERENCIA
+    //  FORZAR NUEVA REFERENCIA
     setSelectedRow({ ...selectedRow });
     setFormOpen(true);
   };
@@ -128,7 +128,7 @@ export default function EmpresaRolsystem() {
             disableDelete={!selectedRow}
           />
 
-          {/* 🔥 BOTÓN NUEVO PARA ABRIR LOS PERMISOS 🔥 */}
+          {/*  BOTÓN NUEVO PARA ABRIR LOS PERMISOS  */}
           <Button
             variant="contained"
             color="info"
@@ -159,11 +159,11 @@ export default function EmpresaRolsystem() {
         selectedRow={selectedRow}
       />
 
-      {/* 🔥 MODAL DETALLADO DE LOS MÓDULOS Y PERMISOS 🔥 */}
+      {/*  MODAL DETALLADO DE LOS MÓDULOS Y PERMISOS  */}
       <ModalPermisosRol
         open={permisosOpen}
         setOpen={setPermisosOpen}
-        // 👇 MAGIA AQUÍ: Buscamos el ID real del Rol (ej. 4), evitando usar el ID de la tabla (92)
+        //  MAGIA AQUÍ: Buscamos el ID real del Rol (ej. 4), evitando usar el ID de la tabla (92)
         rolId={
           selectedRow?.rolId || 
           roles.find((r) => r.nombre === selectedRow?.rolNombre || r.name === selectedRow?.rolNombre)?.id

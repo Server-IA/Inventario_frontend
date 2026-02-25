@@ -128,7 +128,7 @@ useEffect(() => {
     await cargarModulos();
 
     if (isEdit && selectedRow) {
-      // 🔥 Buscar el rolId real usando el nombre
+      //  Buscar el rolId real usando el nombre
       const idRol = await obtenerRolIdPorNombre(
         selectedRow.rolNombre
       );
