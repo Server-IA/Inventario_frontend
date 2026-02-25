@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.dtos.ModuloDetailResponse;
 import com.coagronet.modulo.dtos.ModuloSummaryResponse;
+import com.coagronet.modulo.enums.AlcanceModulo;
 
 /**
  * Interfaz de repositorio encargada de la persistencia y gestión de datos para la entidad {@link Modulo}.
@@ -145,5 +146,8 @@ public interface ModuloRepository extends JpaRepository<Modulo, Long> {
      */
     @Override @EntityGraph(attributePaths = { "estado", "subSistema", "tipoModulo", "tipoAplicacion" })
     Optional<Modulo> findById(Long id);
+
+    // Busca módulos de la empresa que son requeridos obligatoriamente
+    List<Modulo> findByAlcanceAndRequeridoTrue(AlcanceModulo alcance);
 
 }

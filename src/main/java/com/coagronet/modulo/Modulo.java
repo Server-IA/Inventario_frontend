@@ -3,14 +3,19 @@ package com.coagronet.modulo;
 import java.io.Serializable;
 
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.coagronet.estado.Estado;
+import com.coagronet.modulo.enums.AlcanceModulo;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.TipoAplicacion;
 import com.coagronet.tipomodulo.TipoModulo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
@@ -162,5 +167,14 @@ public class Modulo implements Serializable {
          */
         @Column(name = "mod_requerido")
         private Boolean requerido;
+
+        /**
+         * Define el alcance operativo o de visibilidad del módulo.
+         * <p>
+         * Mapeado a un tipo ENUM nativo de PostgreSQL (alcance_modulo).
+         * </p>
+         */
+        @Enumerated(EnumType.STRING) @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(name = "alcance")
+        private AlcanceModulo alcance;
 
 }

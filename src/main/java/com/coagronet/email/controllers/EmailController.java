@@ -16,7 +16,7 @@ public class EmailController {
 
 	@GetMapping("/send")
 	public String sendEmail() {
-		emailService.sendSimpleMessage("juanjosecastrogutierrez@gmail.com", "Prueba backend", "LOrem ipsum dolor.");
+		emailService.sendSimpleMessage("ojachila@gmail.com", "Prueba backend", "LOrem ipsum dolor.");
 		return "Email sent!";
 	}
 
