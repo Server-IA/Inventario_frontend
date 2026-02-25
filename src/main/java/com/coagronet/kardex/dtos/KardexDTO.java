@@ -1,6 +1,6 @@
 package com.coagronet.kardex.dtos;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,7 +17,7 @@ public class KardexDTO {
 
 	private Long id;
 
-	private LocalDateTime fechaHora;
+	private OffsetDateTime fechaHora;
 
 	@NotNull(message = "El id del almac�n no puede ser nulo")
 	private Long almacenId;

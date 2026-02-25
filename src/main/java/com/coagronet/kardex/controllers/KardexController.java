@@ -2,11 +2,6 @@ package com.coagronet.kardex.controllers;
 
 import java.net.URI;
 
-import com.coagronet.kardex.dtos.KardexDTO;
-import com.coagronet.kardex.services.KardexService;
-import com.coagronet.utils.UriBuilderUtil;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -21,6 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.kardex.dtos.KardexDTO;
+import com.coagronet.kardex.services.KardexService;
+import com.coagronet.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/v1/kardex")
 @RequiredArgsConstructor
@@ -34,7 +36,7 @@ public class KardexController {
 	public ResponseEntity<Page<KardexDTO>> findAll(@PageableDefault Pageable pageable) {
 		Page<KardexDTO> page = kardexService.findAll(pageable);
 
-		if(page.isEmpty()){
+		if (page.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.ok(page);
@@ -64,7 +66,7 @@ public class KardexController {
 
 	@DeleteMapping("/{requestedId}")
 	public ResponseEntity<Void> eliminarKardex(@PathVariable Long requestedId) {
-		kardexService.delete(requestedId);
+		kardexService.inactivar(requestedId);
 		return ResponseEntity.noContent().build();
 	}
 
