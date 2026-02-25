@@ -1,6 +1,7 @@
 package com.coagronet.articuloKardex.dtos;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,11 +22,11 @@ public class ArticuloKardexDTO {
 
 	private Long id;
 
-	private Double cantidad;
+	private BigDecimal cantidad;
 
-	private Double precio;
+	private BigDecimal precio;
 
-	private LocalDateTime fechaVencimiento;
+	private LocalDate fechaVencimiento;
 
 	private String identificadorProducto;
 
