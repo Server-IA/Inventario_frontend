@@ -1,131 +1,142 @@
-// src/components/EmpresaRol/GridEmpresaRol.jsx
-import React, { useMemo, useEffect, useState } from "react";
-import PropTypes from "prop-types";
-import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
-import { Box, Button } from "@mui/material";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
-
-const LS_KEY = "gridEmpresaRolEmpresa:columnVisibility:v1";
-
-function EmpresaRolToolbar({ onResetColumns }) {
-  return (
-    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
-      <div>
-        <GridToolbarColumnsButton />
-        <GridToolbarFilterButton />
-        <GridToolbarDensitySelector />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <GridToolbarQuickFilter debounceMs={300} />
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<RestartAltIcon />}
-          onClick={onResetColumns}
-        >
-          Restablecer columnas
-        </Button>
-      </div>
-    </GridToolbarContainer>
-  );
-}
-
-EmpresaRolToolbar.propTypes = {
-  onResetColumns: PropTypes.func,
-};
+import React from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { Chip } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 
 export default function GridEmpresaRol({
-  rows = [],
-  loading = false,
-  selectedRow = null,
-  setSelectedRow = () => {},
+  rows,
+  loading,
+  selectedRow,
+  setSelectedRow,
 }) {
-  const columns = useMemo(
-    () => [
-      { field: "id", headerName: "ID", width: 90, type: "number" },
-      { field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 },
-      { field: "rolNombre", headerName: "Rol", flex: 1.2, minWidth: 220 },
-      {
+const theme = useTheme();
+const isDark = theme.palette.mode === "dark";
+  const columns = [
+    { field: "id", headerName: "ID", width: 80 },
+
+    { field: "rolNombre", headerName: "Rol", flex: 1 },
+    {
+  field: "permisos",
+  headerName: "Permisos",
+  flex: 2,
+  renderCell: (params) => {
+    const permisos = params.row.permisos;
+
+    if (!Array.isArray(permisos) || permisos.length === 0) {
+      return (
+        <span style={{ color: theme.palette.text.secondary, fontStyle: "italic" }}>
+          Sin permisos
+        </span>
+      );
+    }
+
+    const visibles = permisos.slice(0, 3);
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "6px",
+          maxWidth: "100%",
+        }}
+      >
+        {visibles.map((permiso) => (
+          <Chip
+          key={permiso.id}
+          label={permiso.nombre}
+          size="small"
+          sx={{
+            fontSize: "11px",
+            fontWeight: 500,
+
+            backgroundColor: isDark
+              ? alpha(theme.palette.primary.light, 0.25)
+              : alpha(theme.palette.primary.main, 0.15),
+
+            color: isDark
+              ? theme.palette.primary.light
+              : theme.palette.primary.main,
+
+            border: `1px solid ${
+              isDark
+                ? theme.palette.primary.light
+                : theme.palette.primary.main
+            }`,
+          }}
+        />
+        ))}
+
+        {permisos.length > 3 && (
+          <span
+            style={{
+              fontSize: "11px",
+              color: theme.palette.text.secondary,
+              alignSelf: "center",
+            }}
+          >
+            +{permisos.length - 3} más
+          </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
         field: "estadoNombre",
         headerName: "Estado",
         width: 160,
+        valueGetter: (params) =>
+          params.row.estadoNombre ??
+          estadosMap[params.row.estadoId] ??
+          params.row.estadoId ??
+          "",
+      }
+  ];
+
+return (
+  <DataGrid
+    rows={rows}
+    columns={columns}
+    loading={loading}
+    autoHeight
+    pageSizeOptions={[5, 10, 20, 50]}
+    initialState={{
+      pagination: {
+        paginationModel: { pageSize: 5, page: 0 },
       },
-    ],
-    []
-  );
+    }}
+    getRowId={(row) => row.id}
+    onRowClick={(params) => setSelectedRow(params.row)}
+    sx={{
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      border: `1px solid ${theme.palette.divider}`,
 
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+      "& .MuiDataGrid-columnHeaders": {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          isDark ? 0.15 : 0.05
+        ),
+        color: theme.palette.text.primary,
+        fontWeight: 600,
+      },
 
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-      setColumnVisibilityModel(saved);
-    } catch {
-      // ignore
-    }
-  }, []);
+      "& .MuiDataGrid-row": {
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      },
 
-  const handleVisibilityChange = (model) => {
-    setColumnVisibilityModel(model);
-    localStorage.setItem(LS_KEY, JSON.stringify(model));
-  };
+      "& .MuiDataGrid-cell": {
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      },
 
-  const handleResetColumns = () => {
-    localStorage.removeItem(LS_KEY);
-    setColumnVisibilityModel({});
-  };
-
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 10,
-  });
-
-  const handlePaginationChange = (model) => {
-    if (model.pageSize !== paginationModel.pageSize) {
-      setPaginationModel({ page: 0, pageSize: model.pageSize });
-    } else {
-      setPaginationModel(model);
-    }
-  };
-
-  return (
-    <Box sx={{ width: "100%", mt: 1 }}>
-      <DataGrid
-        rows={Array.isArray(rows) ? rows : []}
-        columns={columns}
-        getRowId={(r) => r.id}
-        loading={loading}
-        onRowClick={(p) => setSelectedRow(p.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
-        columnVisibilityModel={columnVisibilityModel}
-        onColumnVisibilityModelChange={handleVisibilityChange}
-        slots={{ toolbar: EmpresaRolToolbar }}
-        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
-        pagination
-        paginationModel={paginationModel}
-        onPaginationModelChange={handlePaginationChange}
-        pageSizeOptions={[10, 25, 50, 100]}
-        autoHeight
-        sx={{
-          minHeight: 300,
-          "& .MuiDataGrid-virtualScroller": { overflow: "auto" },
-        }}
-      />
-    </Box>
-  );
+      "& .MuiDataGrid-row:hover": {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          isDark ? 0.08 : 0.04
+        ),
+      },
+    }}
+  />
+);
 }
-
-GridEmpresaRol.propTypes = {
-  rows: PropTypes.array,
-  loading: PropTypes.bool,
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func,
-};
