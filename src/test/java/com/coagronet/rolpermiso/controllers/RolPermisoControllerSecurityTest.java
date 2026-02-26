@@ -163,7 +163,7 @@ class RolPermisoControllerSecurityTest {
         void getModulosBySubsistemas_returns200_whenQueryParamIsPresent() throws Exception {
         when(rolPermisoService.getModulosBySubsistemas(List.of(1L, 2L))).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/empresa-rol-permisos/test-modulos")
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-subsitema")
             .param("subsistemaIds", "1", "2"))
             .andExpect(status().isOk());
         }
@@ -171,7 +171,7 @@ class RolPermisoControllerSecurityTest {
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void getModulosBySubsistemas_returns400_whenQueryParamIsMissing() throws Exception {
-        mockMvc.perform(get("/api/v1/empresa-rol-permisos/test-modulos"))
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-subsitema"))
             .andExpect(status().isBadRequest());
         }
 

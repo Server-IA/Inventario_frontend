@@ -56,7 +56,9 @@ public class RolPermisoService {
 
 	private final AuthenticationService authenticationService;
 
-	private final EstadoRepository estadoRepository;
+	private final EstadoRepository estadoRepository; // Kept just in case you use it
+														// elsewhere, though it's no
+														// longer strictly needed here.
 
 	/**
 	 * Obtiene módulos disponibles con sus permisos agrupados, con paginación. Optimizado
@@ -261,18 +263,29 @@ public class RolPermisoService {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
+
+		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+		User currentUser = authenticationService.getAuthenticatedUser();
+
 		List<Permiso> permisos = permisoRepository.findAllById(permisoIds);
 
-		// Asumiendo que obtienes el estado activo
-		Estado estadoActivo = estadoRepository.findById(1L).orElseThrow();
-
-		// Construir la lista en memoria
+		// Combina la validación de duplicados con el guardado en lote (saveAll) para
+		// mayor rendimiento
 		List<RolPermiso> nuevosPermisos = permisos.stream()
-			.map(permiso -> RolPermiso.builder().empresaRol(empresaRol).permiso(permiso).estado(estadoActivo).build())
+			.filter(permiso -> !rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(),
+					permiso.getId()))
+			.map(permiso -> RolPermiso.builder()
+				.empresaRol(empresaRol)
+				.permiso(permiso)
+				.estado(estadoActivo)
+				.createdBy(currentUser)
+				.createdAt(Instant.now())
+				.build())
 			.collect(Collectors.toList());
 
-		// Guardar todos en un solo lote
-		rolPermisoRepository.saveAll(nuevosPermisos);
+		if (!nuevosPermisos.isEmpty()) {
+			rolPermisoRepository.saveAll(nuevosPermisos);
+		}
 	}
 
 	/**
