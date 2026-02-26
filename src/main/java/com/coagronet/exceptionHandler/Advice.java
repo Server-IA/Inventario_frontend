@@ -75,12 +75,7 @@ public class Advice extends ResponseEntityExceptionHandler {
 
         // Recolecta los errores de campo en un mapa simple (Campo -> Mensaje)
         Map<String, String> errores = ex.getBindingResult().getFieldErrors().stream().collect(Collectors.toMap(
-                error -> error.getField(), error -> error.getDefaultMessage(), (msg1, msg2) -> msg1 + "; " + msg2)); // Manejo
-                                                                                                                     // de
-                                                                                                                     // colisiones
-                                                                                                                     // en
-                                                                                                                     // claves
-                                                                                                                     // duplicadas
+                error -> error.getField(), error -> error.getDefaultMessage(), (msg1, msg2) -> msg1 + "; " + msg2));
 
         problemDetail.setProperty("errors", errores);
 

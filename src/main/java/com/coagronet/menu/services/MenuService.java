@@ -6,13 +6,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.menu.dtos.MenuModuloResponseDTO;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.repositories.MenuModuloRepository;
@@ -25,8 +29,8 @@ import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
 import com.coagronet.utils.UserEmpresaService;
-import com.coagronet.utils.UserRoleService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -51,49 +55,56 @@ public class MenuService {
     private final MenuModuloRepository menuModuloRepository;
     private final ModuloMapper moduloMapper;
     private final UserEmpresaService userEmpresaService;
-    private final UserRoleService userRoleService;
     private final ModuloRepository moduloRepository;
     private final ModuloEmpresaRepository moduloEmpresaRepository;
     private final EmpresaRepository empresaRepository;
     private final EstadoRepository estadoRepository;
+    private final JwtService jwtService;
+    private final HttpServletRequest request;
 
-    /**
-     * Obtiene el menú para la empresa actual y el rol actual del usuario, filtrado por tipo de aplicación.
-     * <p>
-     * Pasos:
-     * <ol>
-     * <li>Resuelve {@code empresaId} y {@code roleName} del contexto.</li>
-     * <li>Convierte {@code tipoAplicacion} a {@link TipoAplicacionEnum} y obtiene su ID interno.</li>
-     * <li>Consulta {@link MenuRepository#findSubmodulosByEmpresaTipoAppAndRol(Long, Integer, String)}.</li>
-     * <li>Agrupa por subsistema (nombre + icono) y mapea cada fila a {@link MenuModuloResponseDTO}.</li>
-     * </ol>
-     * </p>
-     *
-     * @param tipoAplicacion cadena {@code "web"} o {@code "movil"} (no sensible a mayúsculas)
-     * @return lista de subsistemas, cada uno con sus módulos, en orden estable (por nombre de subsistema y módulo)
-     * @throws IllegalArgumentException si {@code tipoAplicacion} no corresponde a un valor soportado
-     */
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-        String roleName = userRoleService.getRoleFromCurrentRequest();
 
-        int tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
+        // 1. Manejo del tipo de aplicación (400 Bad Request)
+        int tipoAppId;
+        try {
+            tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El tipo de aplicación proporcionado no es válido: " + tipoAplicacion);
+        }
 
-        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRol(empresaId, tipoAppId, roleName);
+        String authHeader = request.getHeader("Authorization");
+        Integer rolId = null;
 
-        Map<String, List<SubModuloRow>> agrupado = rows.stream().collect(Collectors
-                .groupingBy(r -> r.getSubNombre() + "||" + r.getSubIcon(), LinkedHashMap::new, Collectors.toList()));
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            rolId = jwtService.extractRoleId(token);
+        }
+
+        // 2. Manejo de la falta de Rol (403 Forbidden)
+        if (rolId == null) {
+            throw new AccessDeniedException("No se pudo extraer el rol del token de seguridad");
+        }
+
+        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
+
+        record SubSistemaKey(String nombre, String icono) {
+        }
+
+        Map<SubSistemaKey, List<SubModuloRow>> agrupado = rows.stream().collect(Collectors.groupingBy(
+                r -> new SubSistemaKey(r.getSubNombre(), r.getSubIcon()), LinkedHashMap::new, Collectors.toList()));
 
         List<MenuSubSistemaResponseDTO> out = new ArrayList<>();
-        for (var e : agrupado.entrySet()) {
-            String[] parts = e.getKey().split("\\|\\|", 2);
-            String subNombre = parts[0];
-            String subIcon = parts.length > 1 ? parts[1] : null;
 
-            List<MenuModuloResponseDTO> modulos = e.getValue().stream().map(moduloMapper::toDTO).toList();
+        for (var entry : agrupado.entrySet()) {
+            SubSistemaKey key = entry.getKey();
+            List<MenuModuloResponseDTO> modulos = entry.getValue().stream().map(moduloMapper::toDTO).toList();
 
-            out.add(MenuSubSistemaResponseDTO.builder().nombre(subNombre).icono(subIcon).modulos(modulos).build());
+            out.add(MenuSubSistemaResponseDTO.builder().nombre(key.nombre()).icono(key.icono()).modulos(modulos)
+                    .build());
         }
+
         return out;
     }
 
@@ -138,6 +149,7 @@ public class MenuService {
 
         // 1. Obtener la empresa del contexto actual
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
         Empresa empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
 
