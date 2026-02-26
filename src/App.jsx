@@ -120,29 +120,32 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentModule, setCurrentModule] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const hasValidToken = () => {
+  const token = localStorage.getItem("token");
+  const exp = Number(localStorage.getItem("token_expiration"));
+  return Boolean(token && exp && Date.now() < exp);
+};
+
+const [isAuthenticated, setIsAuthenticated] = useState(hasValidToken());
   const [menuOpen, setMenuOpen] = useState(() => {
     const saved = localStorage.getItem('sidebarOpen');
     return saved ? JSON.parse(saved) : true;
   });
 useEffect(() => {
-  const segments = location.pathname.split("/").filter(Boolean);
-  const pathModule = segments[0] || null;
-
   const hasValidToken = () => {
     const token = localStorage.getItem("token");
     const exp = Number(localStorage.getItem("token_expiration"));
     return Boolean(token && exp && Date.now() < exp);
   };
 
-  // 🔹 RUTA PÚBLICA (VERIFY)
+  // 🔹 VERIFY (PÚBLICO)
   if (/\/auth\/verify(?:\/|$)/.test(location.pathname)) {
     setIsAuthenticated(false);
     setCurrentModule(<Verify key={location.search} />);
     return;
   }
 
-  // 🔹 SI NO HAY TOKEN VÁLIDO
+  // 🔹 SIN TOKEN
   if (!hasValidToken()) {
     localStorage.removeItem("token");
     localStorage.removeItem("token_expiration");
@@ -155,29 +158,55 @@ useEffect(() => {
     return;
   }
 
-  // 🔹 USUARIO AUTENTICADO
-// 🔹 USUARIO AUTENTICADO
-setIsAuthenticated(true);
+  setIsAuthenticated(true);
+  
 
-// ⚠️ SOLO cargar Contenido si NO hay módulo en la URL
-if (location.pathname === "/" || location.pathname === "/coagronet") {
-  setCurrentModule(
-    <Contenido setCurrentModule={setCurrentModule} />
-  );
-}
+  // 🔥 ONBOARDING PERSONA
+  if (location.pathname === "/coagronet/onboarding/persona") {
+    setCurrentModule(
+      <FormRegistroPersona setCurrentModule={setCurrentModule} />
+    );
+    return;
+  }
 
+  // 🔥 ONBOARDING EMPRESA
+  if (location.pathname === "/coagronet/onboarding/empresa") {
+    setCurrentModule(
+      <FormRegistroEmpresa setCurrentModule={setCurrentModule} />
+    );
+    return;
+  }
+
+  // 🔥 CAMBIO PASSWORD INICIAL
+  if (location.pathname === "/coagronet/auth/change-password-initial") {
+    setCurrentModule(<ChangePasswordInitial />);
+    return;
+  }
+
+  // 🔹 DASHBOARD PRINCIPAL
+  if (location.pathname === "/" || location.pathname === "/coagronet") {
+    setCurrentModule(
+      <Contenido setCurrentModule={setCurrentModule} />
+    );
+  }
 
 }, [location.pathname]);
 
+const isOnboarding =
+  location.pathname.startsWith("/coagronet/onboarding") ||
+  location.pathname.startsWith("/coagronet/auth");
 
-  const isPublic = !isAuthenticated;
+const isPublic = !isAuthenticated || isOnboarding;
+
+  //const isPublic = !isAuthenticated;
+  
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <CssBaseline />
 
       {/* Menú solo si está autenticado */}
-      {isAuthenticated && (
+      {isAuthenticated && !isOnboarding && (
         <Navigator2
           setCurrentModuleItem={setCurrentModule}
           setMenuOpen={setMenuOpen}

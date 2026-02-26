@@ -187,8 +187,10 @@ switch (estado) {
         }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-        localStorage.setItem("activeModule", "form_registro_persona");
-        navigate("/coagronet/onboarding/persona", { replace: true });
+localStorage.removeItem("activeModule");
+localStorage.removeItem("activeMenu");
+props.setIsAuthenticated?.(true);
+navigate("/coagronet/onboarding/persona", { replace: true });
         break;
     }
     case 3: {
@@ -199,8 +201,10 @@ switch (estado) {
         }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-        localStorage.setItem("activeModule", "form_registro_empresa");
-        navigate("/coagronet/onboarding/empresa", { replace: true });
+localStorage.removeItem("activeModule");
+localStorage.removeItem("activeMenu");
+props.setIsAuthenticated?.(true);
+navigate("/coagronet/onboarding/empresa", { replace: true });
         break;
     }
 
@@ -226,7 +230,10 @@ switch (estado) {
 
         // 3. Navegamos a la ruta que renderiza el componente ChangePasswordInitial
         // Asegúrate de que esta ruta exista en tu archivo de rutas
-        navigate("/coagronet/auth/change-password-initial", { replace: true }); 
+localStorage.removeItem("activeModule");
+localStorage.removeItem("activeMenu");
+
+navigate("/coagronet/auth/change-password-initial", { replace: true });
         break;
     }
     // ---------------------------
@@ -236,8 +243,7 @@ switch (estado) {
         if (!token) { clearAuth(); setError("No se recibió token válido."); break; }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-        localStorage.removeItem("activeModule");
-        props.setIsAuthenticated?.(true);
+      props.setIsAuthenticated?.(true);
         navigate("/coagronet/", { replace: true });
         break;
     }
