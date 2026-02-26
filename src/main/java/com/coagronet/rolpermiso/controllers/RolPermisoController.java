@@ -56,7 +56,7 @@ public class RolPermisoController {
      * Parámetro: subsistemaIds=1,2,3
      * Usado para que admin de empresa seleccione subsistemas y luego elija permisos individuales
      */
-    @GetMapping("/test-modulos")
+    @GetMapping("/modulos-subsistema")
     @PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
     @ResponseStatus(HttpStatus.OK)
     public List<ModuloPermisoResponse> getModulosBySubsistemas(
