@@ -222,12 +222,21 @@ public class RolPermisoService {
 
         EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
+        Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = authenticationService.getAuthenticatedUser();
+
         List<Permiso> permisos = permisoRepository.findAllById(permisoIds);
 
-        for (Permiso permiso : permisos) {
-            RolPermiso rolPermiso = RolPermiso.builder().empresaRol(empresaRol).permiso(permiso).build();
-            rolPermisoRepository.save(rolPermiso);
-        }
+        permisos.forEach(permiso -> {
+            if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permiso.getId())) {
+                RolPermiso rolPermiso = RolPermiso.builder().empresaRol(empresaRol).permiso(permiso)
+                        .estado(estadoActivo).createdBy(currentUser).createdAt(OffsetDateTime.now()).build();
+
+                rolPermisoRepository.save(rolPermiso);
+            }
+        });
+
+
     }
 
     /**
