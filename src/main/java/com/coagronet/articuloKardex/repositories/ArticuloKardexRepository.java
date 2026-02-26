@@ -61,7 +61,7 @@ public interface ArticuloKardexRepository extends JpaRepository<ArticuloKardex, 
 	List<ArticuloKardex> findByEmpresaIdAndKardex_OrdenCompra_IdOrderByIdAsc(Long empresaId, Long ordenCompraId);
 
 	@Query("""
-			    SELECT new com.coagronet.articuloKardex.ArticuloKardexDTO(
+			    SELECT new com.coagronet.articuloKardex.dtos.ArticuloKardexDTO(
 			        a.id, a.cantidad, a.precio, a.fechaVencimiento, a.identificadorProducto,
 			        k.id, pp.id, e.id, emp.id, a.lote,
 			        a.username, a.rol, a.ip, a.host, a.fechaHora
