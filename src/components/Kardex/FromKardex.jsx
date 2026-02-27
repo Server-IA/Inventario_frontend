@@ -18,6 +18,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  Grid,
 } from "@mui/material";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
@@ -454,9 +455,8 @@ export default function FormKardex({
       setMessage?.({
         open: true,
         severity: "success",
-        text: `Kardex ${
-          formMode === "edit" ? "actualizado" : "creado"
-        } correctamente.`,
+        text: `Kardex ${formMode === "edit" ? "actualizado" : "creado"
+          } correctamente.`,
       });
       setOpen(false);
       setSelectedRow(null);
@@ -498,177 +498,196 @@ export default function FormKardex({
           {formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}
         </DialogTitle>
 
-        <DialogContent
-          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-        >
-          {/* Fecha/Hora */}
-          <TextField
-            label="Fecha/Hora"
-            type="datetime-local"
-            name="fechaHora"
-            value={formData.fechaHora}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            error={!!errors.fechaHora}
-            helperText={errors.fechaHora}
-            fullWidth
-          />
+        <DialogContent sx={{ mt: 1 }}>
+          <Grid container spacing={2}>
+            {/* Fecha/Hora + Tipo movimiento */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Fecha/Hora"
+                type="datetime-local"
+                name="fechaHora"
+                value={formData.fechaHora}
+                onChange={handleChange}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: {
+                    ml: "5px",
+                    mt: "5px",
+                  }
+                }}
+                error={!!errors.fechaHora}
+                helperText={errors.fechaHora}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth error={!!errors.tipoMovimientoId}>
+                <InputLabel>Tipo Movimiento</InputLabel>
+                <Select
+                  name="tipoMovimientoId"
+                  label="Tipo Movimiento"
+                  value={formData.tipoMovimientoId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione...</em>
+                  </MenuItem>
+                  {tiposMovimiento.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {renderName(t)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{errors.tipoMovimientoId}</FormHelperText>
+              </FormControl>
+            </Grid>
 
-          {/* Almacén */}
-          <FormControl fullWidth error={!!errors.almacenId}>
-            <InputLabel>Almacén</InputLabel>
-            <Select
-              name="almacenId"
-              label="Almacén"
-              value={formData.almacenId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                <em>Seleccione...</em>
-              </MenuItem>
-              {almacenes.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {renderName(a)}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>{errors.almacenId}</FormHelperText>
-          </FormControl>
+            {/* Almacén + Producción */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth error={!!errors.almacenId}>
+                <InputLabel>Almacén</InputLabel>
+                <Select
+                  name="almacenId"
+                  label="Almacén"
+                  value={formData.almacenId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione...</em>
+                  </MenuItem>
+                  {almacenes.map((a) => (
+                    <MenuItem key={a.id} value={a.id}>
+                      {renderName(a)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{errors.almacenId}</FormHelperText>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth error={!!errors.produccionId}>
+                <InputLabel>Producción</InputLabel>
+                <Select
+                  name="produccionId"
+                  label="Producción"
+                  value={formData.produccionId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione...</em>
+                  </MenuItem>
+                  {producciones.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {renderName(p)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{errors.produccionId}</FormHelperText>
+              </FormControl>
+            </Grid>
 
-          {/* Producción */}
-          <FormControl fullWidth error={!!errors.produccionId}>
-            <InputLabel>Producción</InputLabel>
-            <Select
-              name="produccionId"
-              label="Producción"
-              value={formData.produccionId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                <em>Seleccione...</em>
-              </MenuItem>
-              {producciones.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {renderName(p)}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>{errors.produccionId}</FormHelperText>
-          </FormControl>
+            {/* Pedido + Orden compra */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Pedido</InputLabel>
+                <Select
+                  name="pedidoId"
+                  label="Pedido"
+                  value={formData.pedidoId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Sin pedido asociado</em>
+                  </MenuItem>
+                  {pedidos.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {renderName(p)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl
+                fullWidth
+                error={!!errors.ordenCompraId && isEntradaCompraUi}
+              >
+                <InputLabel>Orden de Compra</InputLabel>
+                <Select
+                  name="ordenCompraId"
+                  label="Orden de Compra"
+                  value={formData.ordenCompraId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Sin orden asociada</em>
+                  </MenuItem>
+                  {ordenesCompra.map((o) => (
+                    <MenuItem key={o.id} value={o.id}>
+                      {renderName(o)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>
+                  {isEntradaCompraUi ? errors.ordenCompraId : ""}
+                </FormHelperText>
+              </FormControl>
+            </Grid>
 
-          {/* Tipo Movimiento */}
-          <FormControl fullWidth error={!!errors.tipoMovimientoId}>
-            <InputLabel>Tipo Movimiento</InputLabel>
-            <Select
-              name="tipoMovimientoId"
-              label="Tipo Movimiento"
-              value={formData.tipoMovimientoId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                <em>Seleccione...</em>
-              </MenuItem>
-              {tiposMovimiento.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {renderName(t)}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>{errors.tipoMovimientoId}</FormHelperText>
-          </FormControl>
+            {/* Cliente/proveedor (full row) */}
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Cliente / Proveedor</InputLabel>
+                <Select
+                  name="clienteProveedorId"
+                  label="Cliente / Proveedor"
+                  value={formData.clienteProveedorId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Sin cliente/proveedor</em>
+                  </MenuItem>
+                  {empresas.map((e) => (
+                    <MenuItem key={e.id} value={e.id}>
+                      {renderName(e)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-          {/* Pedido */}
-          <FormControl fullWidth>
-            <InputLabel>Pedido</InputLabel>
-            <Select
-              name="pedidoId"
-              label="Pedido"
-              value={formData.pedidoId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                <em>Sin pedido asociado</em>
-              </MenuItem>
-              {pedidos.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {renderName(p)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            {/* Descripción (full row) */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                label="Descripción"
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleChange}
+                error={!!errors.descripcion}
+                helperText={errors.descripcion}
+                minRows={3}
+              />
+            </Grid>
 
-          {/* Orden de compra */}
-          <FormControl
-            fullWidth
-            error={!!errors.ordenCompraId && isEntradaCompraUi}
-          >
-            <InputLabel>Orden de Compra</InputLabel>
-            <Select
-              name="ordenCompraId"
-              label="Orden de Compra"
-              value={formData.ordenCompraId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                <em>Sin orden asociada</em>
-              </MenuItem>
-              {ordenesCompra.map((o) => (
-                <MenuItem key={o.id} value={o.id}>
-                  {renderName(o)}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              {isEntradaCompraUi ? errors.ordenCompraId : ""}
-            </FormHelperText>
-          </FormControl>
-
-          {/* Cliente / proveedor */}
-          <FormControl fullWidth>
-            <InputLabel>Cliente / Proveedor</InputLabel>
-            <Select
-              name="clienteProveedorId"
-              label="Cliente / Proveedor"
-              value={formData.clienteProveedorId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                <em>Sin cliente/proveedor</em>
-              </MenuItem>
-              {empresas.map((e) => (
-                <MenuItem key={e.id} value={e.id}>
-                  {renderName(e)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Descripción */}
-          <TextField
-            fullWidth
-            multiline
-            label="Descripción"
-            name="descripcion"
-            value={formData.descripcion}
-            onChange={handleChange}
-            error={!!errors.descripcion}
-            helperText={errors.descripcion}
-          />
-
-          {/* Estado */}
-          <FormControl fullWidth error={!!errors.estadoId}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              name="estadoId"
-              label="Estado"
-              value={formData.estadoId}
-              onChange={handleChange}
-            >
-              <MenuItem value={1}>Activo</MenuItem>
-              <MenuItem value={0}>Inactivo</MenuItem>
-            </Select>
-            <FormHelperText>{errors.estadoId}</FormHelperText>
-          </FormControl>
+            {/* Estado */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth error={!!errors.estadoId}>
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  name="estadoId"
+                  label="Estado"
+                  value={formData.estadoId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value={1}>Activo</MenuItem>
+                  <MenuItem value={0}>Inactivo</MenuItem>
+                </Select>
+                <FormHelperText>{errors.estadoId}</FormHelperText>
+              </FormControl>
+            </Grid>
+          </Grid>
 
           {/* ============================
               🔹 Tabla de ítems OC
