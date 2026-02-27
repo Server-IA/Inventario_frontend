@@ -64,23 +64,44 @@ export default function FormEmpresaRol({
   /* ===============================
      Cargar módulos
   =============================== */
-  const cargarModulos = async () => {
-    try {
-      setLoadingModulos(true);
-      const res = await axios.get(
-        "/v1/empresa-rol-permisos/modulos-disponibles?page=0&size=100"
-      );
-      setModulos(res.data?.content || []);
-    } catch {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al cargar módulos",
-      });
-    } finally {
-      setLoadingModulos(false);
-    }
-  };
+const SUBSISTEMAS_PERMITIDOS = [
+  { id: 2, nombre: "Inventario" },
+  { id: 1, nombre: "Parametrizacion" },
+  { id: 8, nombre: "Reportes" },
+  { id: 9, nombre: "Seguridad" }
+];
+
+const cargarModulos = async () => {
+  try {
+    setLoadingModulos(true);
+
+    const resultados = await Promise.all(
+      SUBSISTEMAS_PERMITIDOS.map(async (sub) => {
+        const res = await axios.get(
+          `/v1/empresa-rol-permisos/modulos-subsistema?subsistemaIds=${sub.id}`
+        );
+
+        return res.data.map((modulo) => ({
+          ...modulo,
+          subsistemaId: sub.id,
+          subsistemaNombre: sub.nombre,
+        }));
+      })
+    );
+
+    const todos = resultados.flat();
+    setModulos(todos);
+
+  } catch (error) {
+    setMessage({
+      open: true,
+      severity: "error",
+      text: "Error al cargar módulos",
+    });
+  } finally {
+    setLoadingModulos(false);
+  }
+};
 
   /* ===============================
      Cargar permisos actuales
@@ -233,7 +254,7 @@ const handleSave = async () => {
     });
 
 /* ===============================
-   1️⃣ Ejecutar ALL
+   Ejecutar ALL
 =============================== */
 
 let permisosALLIds = [];
@@ -244,7 +265,7 @@ if (modulosALL.length > 0) {
     { modulosIds: modulosALL }
   );
 
-  // 🔥 Obtener todos los permisos que pertenecen a los módulos ALL
+  //  Obtener todos los permisos que pertenecen a los módulos ALL
   modulos.forEach((modulo) => {
     if (modulosALL.includes(modulo.moduloId)) {
       modulo.permisos.forEach((p) => {
@@ -255,7 +276,7 @@ if (modulosALL.length > 0) {
 }
 
 /* ===============================
-   2️⃣ Limpiar duplicados
+    Limpiar duplicados
 =============================== */
 
 permisosINDIVIDUAL = permisosINDIVIDUAL.filter(
@@ -313,6 +334,29 @@ if (permisosNuevos.length > 0) {
       permisosSeleccionados.includes(p.id)
     )
   );
+const agruparPorSubsistema = (modulosArray) => {
+  const mapa = {};
+
+  modulosArray.forEach((modulo) => {
+    const key = modulo.subsistemaId;
+
+    if (!mapa[key]) {
+      mapa[key] = {
+        id: modulo.subsistemaId,
+        nombre: modulo.subsistemaNombre,
+        modulos: [],
+      };
+    }
+
+    mapa[key].modulos.push(modulo);
+  });
+
+  return Object.values(mapa);
+};
+
+const subsConPermiso = agruparPorSubsistema(modulosConPermiso);
+const subsSinPermiso = agruparPorSubsistema(modulosSinPermiso);
+const subsistemasAgrupados = agruparPorSubsistema(modulos);
 
   const renderModulo = (modulo) => (
     <Accordion key={modulo.moduloId}>
@@ -404,6 +448,19 @@ if (permisosNuevos.length > 0) {
       </AccordionDetails>
     </Accordion>
   );
+  const renderSubsistema = (sub) => (
+  <Accordion key={sub.id}>
+    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <Typography sx={{ fontWeight: 700 }}>
+        {sub.nombre}
+      </Typography>
+    </AccordionSummary>
+
+    <AccordionDetails>
+      {sub.modulos.map(renderModulo)}
+    </AccordionDetails>
+  </Accordion>
+);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
@@ -431,35 +488,40 @@ if (permisosNuevos.length > 0) {
 
         <Divider sx={{ mb: 2 }} />
 
+        
         {loadingModulos ? (
-          <CircularProgress />
-        ) : (
+  <CircularProgress />
+) : (
+  <>
+    {isEdit ? (
+      <>
+        {subsConPermiso.length > 0 && (
           <>
-            {isEdit && modulosConPermiso.length > 0 && (
-              <>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Este rol tiene permisos en los siguientes módulos
-                </Typography>
-                {modulosConPermiso.map(renderModulo)}
-              </>
-            )}
-
-            {modulosSinPermiso.length > 0 && (
-              <>
-                <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
-                  Módulos sin permisos asignados
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ mb: 2, opacity: 0.7 }}
-                >
-                  Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.
-                </Typography>
-                {modulosSinPermiso.map(renderModulo)}
-              </>
-            )}
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Este rol tiene permisos en los siguientes módulos
+            </Typography>
+            {subsConPermiso.map(renderSubsistema)}
           </>
         )}
+
+        {subsSinPermiso.length > 0 && (
+          <>
+            <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
+              Módulos sin permisos asignados
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2, opacity: 0.7 }}>
+              Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.
+            </Typography>
+            {subsSinPermiso.map(renderSubsistema)}
+          </>
+        )}
+      </>
+    ) : (
+      //  EN CREAR mostramos TODO sin separar
+      subsistemasAgrupados.map(renderSubsistema)
+    )}
+  </>
+)}
       </DialogContent>
 
       <DialogActions>
