@@ -94,7 +94,7 @@ export default function FormRegistroEmpresa(props) {
     const base = validateCamposBase({
       nombre: raw.nombre ?? "",
       descripcion: raw.descripcion ?? "",
-      estado: raw.estadoId ?? 1,
+      estado: 1,
     });
     if (base.nombre) e.nombre = base.nombre;
     if (base.descripcion) e.descripcion = base.descripcion;
@@ -142,7 +142,7 @@ export default function FormRegistroEmpresa(props) {
       if (!/^\d+$/.test(identificacion)) e.identificacion = "Para Cédula, sólo números.";
     }
 
-    if (![1,2].includes(estadoId)) e.estadoId = "Debe seleccionar un estado válido.";
+  
 
     return e;
   };
@@ -166,12 +166,12 @@ export default function FormRegistroEmpresa(props) {
     if (Object.keys(e).length > 0) {
       setError(e._security || "Corrige los campos marcados.");
       setSuccess('');
-      return; // ⛔️ NO enviar si hay errores
+      return; //  NO enviar si hay errores
     }
 
     // transformaciones
     formJson.tipoIdentificacionId = parseInt(formJson.tipoIdentificacionId);
-    formJson.estadoId = parseInt(formJson.estadoId);
+    formJson.estadoId = 1; 
     formJson.personaId = props.personaId;
 
     const token = localStorage.getItem('token');
@@ -381,24 +381,6 @@ export default function FormRegistroEmpresa(props) {
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
-                required
-                fullWidth
-                id="estadoId"
-                name="estadoId"
-                label="Estado"
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                defaultValue={props.selectedRow?.estadoId || 1}
-                error={!!fieldErrors.estadoId}
-                helperText={fieldErrors.estadoId}
-              >
-                <MenuItem value={1}>Activo</MenuItem>
-                <MenuItem value={2}>Inactivo</MenuItem>
-              </TextField>
-            </Grid>
           </Grid>
 
           <Box sx={{ mt: 3 }}>
