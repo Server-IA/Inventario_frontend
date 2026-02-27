@@ -1,4 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
+} from "@mui/material";
 import axios from "../axiosConfig";
 import { Box, Button } from "@mui/material";
 import MessageSnackBar from "../MessageSnackBar.jsx";
@@ -22,7 +28,7 @@ export default function EmpresaRol() {
   });
 
   const empresaId = Number(localStorage.getItem("empresaId"));
-
+  const [confirmOpen, setConfirmOpen] = useState(false);
  const reloadData = useCallback(async () => {
   try {
     setLoading(true);
@@ -98,6 +104,57 @@ export default function EmpresaRol() {
             reloadData();
             loadRoles();
           }, [reloadData, loadRoles]);
+          
+const confirmarEliminacion = async () => {
+  try {
+    setLoading(true);
+
+    const resRoles = await axios.get("/v1/items/rol/0");
+    const rolBase = resRoles.data.find(
+      r => r.name === selectedRow.rolNombre
+    );
+
+    if (!rolBase) throw new Error("Rol base no encontrado");
+
+    const rolId = rolBase.id;
+
+    const permisosRes = await axios.get(
+      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+    );
+
+    const permisos = permisosRes.data || [];
+    const permisosIds = permisos.map(p => p.id);
+
+    if (permisosIds.length > 0) {
+      await axios.delete(
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+        {
+          data: { permisosId: permisosIds }
+        }
+      );
+    }
+
+    await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
+
+    setMessage({
+      open: true,
+      severity: "success",
+      text: "Rol y permisos eliminados correctamente",
+    });
+
+    reloadData();
+
+  } catch (error) {
+    setMessage({
+      open: true,
+      severity: "error",
+      text: "Error al eliminar. Revisa dependencias o permisos.",
+    });
+  } finally {
+    setLoading(false);
+    setConfirmOpen(false);
+  }
+};
 
           return (
             <div>
@@ -152,74 +209,16 @@ export default function EmpresaRol() {
 
                   setFormOpen(true);
                 },
-              deleteRow: async () => {
-                if (!selectedRow?.id)
-                  return setMessage({
-                    open: true,
-                    severity: "warning",
-                    text: "Selecciona una fila",
-                  });
+deleteRow: () => {
+  if (!selectedRow?.id)
+    return setMessage({
+      open: true,
+      severity: "warning",
+      text: "Selecciona una fila",
+    });
 
-                if (!window.confirm("¿Eliminar este rol y todos sus permisos?")) return;
-
-                try {
-                  setLoading(true);
-
-                  //  Obtener rolId real
-                  const resRoles = await axios.get("/v1/items/rol/0");
-                  const rolBase = resRoles.data.find(
-                    r => r.name === selectedRow.rolNombre
-                  );
-
-                  if (!rolBase) throw new Error("Rol base no encontrado");
-
-                  const rolId = rolBase.id;
-
-                  //  Obtener permisos actuales
-                  const permisosRes = await axios.get(
-                    `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
-                  );
-
-                  const permisos = permisosRes.data || [];
-
-                  //  Extraer permisosId
-                  const permisosIds = permisos.map(p => p.id);
-
-                  //  Eliminar permisos individuales si existen
-                  if (permisosIds.length > 0) {
-                    await axios.delete(
-                      `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-                      {
-                        data: { permisosId: permisosIds }
-                      }
-                    );
-                  }
-
-                  //  Ahora eliminar empresa-rol
-                  await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
-
-                  setMessage({
-                    open: true,
-                    severity: "success",
-                    text: "Rol y permisos eliminados correctamente",
-                  });
-
-                  reloadData();
-
-                } catch (error) {
-
-                  console.error(error);
-
-                  setMessage({
-                    open: true,
-                    severity: "error",
-                    text: "Error al eliminar. Revisa dependencias o permisos.",
-                  });
-
-                } finally {
-                  setLoading(false);
-                }
-              }
+  setConfirmOpen(true); // SOLO abre el modal
+}
               }}
             />
 
@@ -250,7 +249,24 @@ export default function EmpresaRol() {
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
       />
-
+<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+  <DialogTitle>Confirmar eliminación</DialogTitle>
+  <DialogContent>
+    ¿Está seguro que desea eliminar este rol y todos sus permisos?
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setConfirmOpen(false)}>
+      Cancelar
+    </Button>
+    <Button
+      color="error"
+      variant="contained"
+      onClick={confirmarEliminacion}
+    >
+      Eliminar
+    </Button>
+  </DialogActions>
+</Dialog>
     </div>
   );
 }

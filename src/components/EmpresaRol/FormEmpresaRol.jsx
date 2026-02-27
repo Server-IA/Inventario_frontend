@@ -11,12 +11,9 @@ import {
   Select,
   MenuItem,
   Checkbox,
-  FormControlLabel,
   Typography,
   Box,
   CircularProgress,
-  Radio,
-  RadioGroup,
   Divider,
   Accordion,
   AccordionSummary,
@@ -37,29 +34,35 @@ export default function FormEmpresaRol({
 
   const [rolId, setRolId] = useState("");
   const [modulos, setModulos] = useState([]);
-  const [configModulos, setConfigModulos] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingModulos, setLoadingModulos] = useState(false);
-  const [resumen, setResumen] = useState(null);
-  const [permisosActuales, setPermisosActuales] = useState([]);
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
-  const [todosPermisos, setTodosPermisos] = useState([]);
-  const METODOS_MAP = {
-  Listar: "GET",
-  Crear: "POST",
-  Actualizar: "PUT",
-  Eliminar: "DELETE",
-};
+  const [permisosOriginales, setPermisosOriginales] = useState([]);
 
   const handleClose = () => {
     setOpen(false);
     setSelectedRow(null);
     setRolId("");
-    setConfigModulos({});
-    setResumen(null);
+    setPermisosSeleccionados([]);
+    setPermisosOriginales([]);
   };
+
   /* ===============================
-     Cargar módulos disponibles
+     Obtener rol por nombre
+  =============================== */
+  const obtenerRolIdPorNombre = async (nombreRol) => {
+    try {
+      const res = await axios.get("/v1/items/rol/0");
+      const rolEncontrado = res.data.find((r) => r.name === nombreRol);
+      return rolEncontrado?.id || null;
+    } catch (error) {
+      console.error("Error obteniendo roles:", error);
+      return null;
+    }
+  };
+
+  /* ===============================
+     Cargar módulos
   =============================== */
   const cargarModulos = async () => {
     try {
@@ -78,317 +81,339 @@ export default function FormEmpresaRol({
       setLoadingModulos(false);
     }
   };
-  const permisosDisponibles = todosPermisos.filter(
-  (permiso) =>
-    !permisosActuales.some((p) => p.id === permiso.id)
-);
-const agregarPermisos = async () => {
-  try {
-    if (permisosSeleccionados.length === 0) return;
 
-    await axios.post(
-      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
-      { permisosId: permisosSeleccionados }
-    );
-
-    const nuevos = todosPermisos.filter((p) =>
-      permisosSeleccionados.includes(p.id)
-    );
-
-    setPermisosActuales((prev) => [...prev, ...nuevos]);
-    setPermisosSeleccionados([]);
-  } catch (error) {
-    console.error("Error agregando permisos", error);
-  }
-};
-const quitarPermisoIndividual = async (permisoId) => {
-  try {
-    await axios.delete(
-      `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-      {
-        data: { permisosId: [permisoId] },
-      }
-    );
-
-    setPermisosActuales((prev) =>
-      prev.filter((p) => p.id !== permisoId)
-    );
-  } catch (error) {
-    console.error("Error quitando permiso", error);
-  }
-};
-  useEffect(() => {
-  const lista = modulos.flatMap((m) => m.permisos);
-  setTodosPermisos(lista);
-}, [modulos]);
-useEffect(() => {
-  if (!open) return;
-
-  const init = async () => {
-    await cargarModulos();
-
-    if (isEdit && selectedRow) {
-      //  Buscar el rolId real usando el nombre
-      const idRol = await obtenerRolIdPorNombre(
-        selectedRow.rolNombre
+  /* ===============================
+     Cargar permisos actuales
+  =============================== */
+  const cargarPermisosActuales = async (rolId) => {
+    try {
+      const res = await axios.get(
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
       );
 
-      if (!idRol) {
-        console.error("No se pudo obtener el rolId real");
-        return;
+      const ids = res.data.map((p) => p.id);
+      setPermisosSeleccionados(ids);
+      setPermisosOriginales(ids);
+    } catch (error) {
+      console.error("Error cargando permisos actuales", error);
+    }
+  };
+
+  /* ===============================
+     INIT
+  =============================== */
+  useEffect(() => {
+    if (!open) return;
+
+    const init = async () => {
+      await cargarModulos();
+
+      if (isEdit && selectedRow) {
+        let idRol = selectedRow.rolId;
+
+        if (!idRol && selectedRow.rolNombre) {
+          idRol = await obtenerRolIdPorNombre(selectedRow.rolNombre);
+        }
+
+        if (!idRol) return;
+
+        setRolId(idRol);
+        await cargarPermisosActuales(idRol);
       }
+    };
 
-      setRolId(idRol);
-      await cargarPermisosActuales(idRol);
+    init();
+  }, [open, selectedRow]);
+
+  /* ===============================
+     Toggle permiso (solo visual)
+  =============================== */
+  const togglePermiso = (permisoId) => {
+    setPermisosSeleccionados((prev) =>
+      prev.includes(permisoId)
+        ? prev.filter((id) => id !== permisoId)
+        : [...prev, permisoId]
+    );
+  };
+
+  const seleccionarTodosModulo = (permisos) => {
+    const ids = permisos.map((p) => p.id);
+
+    const todosSeleccionados = ids.every((id) =>
+      permisosSeleccionados.includes(id)
+    );
+
+    if (todosSeleccionados) {
+      setPermisosSeleccionados((prev) =>
+        prev.filter((id) => !ids.includes(id))
+      );
+    } else {
+      setPermisosSeleccionados((prev) => [
+        ...new Set([...prev, ...ids]),
+      ]);
     }
   };
 
-  init();
-}, [open, selectedRow]);
-
   /* ===============================
-     Configuración por módulo
+     Quitar permiso inmediato
   =============================== */
-  const cambiarModo = (moduloId, modo) => {
-    setConfigModulos((prev) => ({
-      ...prev,
-      [moduloId]: {
-        modo,
-        metodos: [],
-        permisos: [],
-      },
-    }));
-  };
-const cargarPermisosActuales = async (rolId) => {
-  try {
-    const res = await axios.get(
-      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
-    );
-
-    setPermisosActuales(res.data);
-  } catch (error) {
-    console.error("Error cargando permisos actuales", error);
-  }
-};
-
-const obtenerRolIdPorNombre = async (nombreRol) => {
-  try {
-    const res = await axios.get("/v1/items/rol/0");
-
-    const rolEncontrado = res.data.find(
-      (r) => r.name === nombreRol
-    );
-
-    return rolEncontrado?.id || null;
-  } catch (error) {
-    console.error("Error obteniendo roles:", error);
-    return null;
-  }
-};
-  const toggleMetodo = (moduloId, metodo) => {
-    setConfigModulos((prev) => {
-      const actuales = prev[moduloId]?.metodos || [];
-      return {
-        ...prev,
-        [moduloId]: {
-          ...prev[moduloId],
-          metodos: actuales.includes(metodo)
-            ? actuales.filter((m) => m !== metodo)
-            : [...actuales, metodo],
-        },
-      };
-    });
-  };
-
-  const togglePermiso = (moduloId, permisoId) => {
-    setConfigModulos((prev) => {
-      const actuales = prev[moduloId]?.permisos || [];
-      return {
-        ...prev,
-        [moduloId]: {
-          ...prev[moduloId],
-          permisos: actuales.includes(permisoId)
-            ? actuales.filter((p) => p !== permisoId)
-            : [...actuales, permisoId],
-        },
-      };
-    });
-  };
-
-  /* ===============================
-     Guardar
-  =============================== */
-  const handleSave = async () => {
-    if (!rolId) {
-      setMessage({
-        open: true,
-        severity: "warning",
-        text: "Debe seleccionar un rol",
-      });
-      return;
-    }
-
+  const quitarPermiso = async (permisoId) => {
     try {
-      setLoading(true);
+      await axios.delete(
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+        { data: { permisosId: [permisoId] } }
+      );
 
-      // Crear empresa-rol si es nuevo
-      if (!isEdit) {
-        await axios.post("/v1/empresa-rol", {
-          rolId: Number(rolId),
-        });
-      }
+      setPermisosSeleccionados((prev) =>
+        prev.filter((id) => id !== permisoId)
+      );
 
-      let ultimaRespuesta = null;
-
-      for (const moduloId in configModulos) {
-        const config = configModulos[moduloId];
-
-        if (config.modo === "ALL") {
-          ultimaRespuesta = await axios.post(
-            `/v1/empresa-rol-permisos/${rolId}/asignar-modulos-permisos`,
-            { modulosIds: [Number(moduloId)] }
-          );
-        }
-
-        if (config.modo === "READ") {
-          ultimaRespuesta = await axios.post(
-            `/v1/empresa-rol-permisos/${rolId}/asignar-modulos-lectura`,
-            { modulosIds: [Number(moduloId)] }
-          );
-        }
-
-        if (config.modo === "METHODS") {
-          if (!config.metodos || config.metodos.length === 0) {
-            setMessage({
-              open: true,
-              severity: "warning",
-              text: "Debe seleccionar al menos un método",
-            });
-            return;
-          }
-
-          ultimaRespuesta = await axios.post(
-            `/v1/empresa-rol-permisos/${rolId}/asignar-modulos-metodos`,
-            {
-              modulosMetodos: [
-                {
-                  moduloId: Number(moduloId),
-                  metodos: config.metodos.map((m) => METODOS_MAP[m]),
-                },
-              ],
-            }
-          );
-        }
-
-        if (config.modo === "INDIVIDUAL") {
-          ultimaRespuesta = await axios.post(
-            `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
-            { permisosId: config.permisos }
-          );
-        }
-      }
-
-      setResumen(ultimaRespuesta?.data);
+      setPermisosOriginales((prev) =>
+        prev.filter((id) => id !== permisoId)
+      );
 
       setMessage({
         open: true,
         severity: "success",
-        text: "Permisos actualizados correctamente",
+        text: "Permiso eliminado correctamente",
       });
-
-      reloadData();
-    } catch (err) {
-      console.error(err.response?.data);
+    } catch (error) {
+      console.error(error.response?.data);
       setMessage({
         open: true,
         severity: "error",
-        text: "Error al guardar",
+        text: "Error eliminando permiso",
       });
-    } finally {
-      setLoading(false);
     }
   };
-const quitarModuloCompleto = async (moduloId) => {
+
+  /* ===============================
+     Guardar (solo agrega nuevos)
+  =============================== */
+const handleSave = async () => {
+  if (!rolId) {
+    setMessage({
+      open: true,
+      severity: "warning",
+      text: "Debe seleccionar un rol",
+    });
+    return;
+  }
+
   try {
-    await axios.delete(
-      `/v1/empresa-rol-permisos/${rolId}/quitar-modulos-permisos`,
-      {
-        data: { modulosIds: [Number(moduloId)] },
+    setLoading(true);
+
+    if (!isEdit) {
+      await axios.post("/v1/empresa-rol", {
+        rolId: Number(rolId),
+      });
+    }
+
+    let modulosALL = [];
+    let permisosINDIVIDUAL = [];
+
+    modulos.forEach((modulo) => {
+      const permisosModuloIds = modulo.permisos.map((p) => p.id);
+
+      const todosSeleccionados =
+        permisosModuloIds.length > 0 &&
+        permisosModuloIds.every((id) =>
+          permisosSeleccionados.includes(id)
+        );
+
+      if (todosSeleccionados) {
+        modulosALL.push(modulo.moduloId);
+      } else {
+        permisosModuloIds.forEach((id) => {
+          if (permisosSeleccionados.includes(id)) {
+            permisosINDIVIDUAL.push(id);
+          }
+        });
       }
-    );
+    });
+
+/* ===============================
+   1️⃣ Ejecutar ALL
+=============================== */
+
+let permisosALLIds = [];
+
+if (modulosALL.length > 0) {
+  await axios.post(
+    `/v1/empresa-rol-permisos/${rolId}/asignar-modulos-permisos`,
+    { modulosIds: modulosALL }
+  );
+
+  // 🔥 Obtener todos los permisos que pertenecen a los módulos ALL
+  modulos.forEach((modulo) => {
+    if (modulosALL.includes(modulo.moduloId)) {
+      modulo.permisos.forEach((p) => {
+        permisosALLIds.push(p.id);
+      });
+    }
+  });
+}
+
+/* ===============================
+   2️⃣ Limpiar duplicados
+=============================== */
+
+permisosINDIVIDUAL = permisosINDIVIDUAL.filter(
+  (id) =>
+    !permisosOriginales.includes(id) &&
+    !permisosALLIds.includes(id)
+);
+
+/* ===============================
+   INDIVIDUAL SEGURO
+=============================== */
+
+let permisosNuevos = permisosSeleccionados.filter(
+  (id) => !permisosOriginales.includes(id)
+);
+
+if (permisosNuevos.length > 0) {
+  await axios.post(
+    `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
+    { permisosId: permisosNuevos }
+  );
+}
 
     setMessage({
       open: true,
       severity: "success",
-      text: "Permisos del módulo eliminados correctamente",
+      text: "Permisos actualizados correctamente",
     });
 
-    await cargarPermisosActuales(rolId);
+    reloadData();
+    handleClose();
   } catch (error) {
-    console.error("Error quitando módulo completo", error);
+    console.error(error.response?.data);
+
     setMessage({
       open: true,
       severity: "error",
-      text: "Error eliminando permisos del módulo",
+      text: "Error al guardar permisos",
     });
+  } finally {
+    setLoading(false);
   }
 };
-const reemplazarPermiso = async (permisoActualId, nuevoPermisoId) => {
-  try {
-    const res = await axios.put(
-      `/v1/empresa-rol-permisos/${rolId}/reemplazar-permiso`,
-      {
-        permisoIdActual: permisoActualId,
-        nuevoPermisoId: nuevoPermisoId,
-      }
-    );
+  /* ===============================
+     Separar módulos
+  =============================== */
+  const modulosConPermiso = modulos.filter((modulo) =>
+    modulo.permisos.some((p) =>
+      permisosSeleccionados.includes(p.id)
+    )
+  );
 
-    setResumen(res.data);
+  const modulosSinPermiso = modulos.filter((modulo) =>
+    !modulo.permisos.some((p) =>
+      permisosSeleccionados.includes(p.id)
+    )
+  );
 
-    setMessage({
-      open: true,
-      severity: "success",
-      text: "Permiso reemplazado correctamente",
-    });
+  const renderModulo = (modulo) => (
+    <Accordion key={modulo.moduloId}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography sx={{ fontWeight: 600 }}>
+          {modulo.moduloNombre}
+        </Typography>
+      </AccordionSummary>
 
-    await cargarPermisosActuales(rolId);
-  } catch (error) {
-    console.error("Error reemplazando permiso", error);
-  }
-};
-const reemplazarModulo = async (moduloActualId, nuevoModuloId) => {
-  try {
-    const res = await axios.put(
-      `/v1/empresa-rol-permisos/${rolId}/reemplazar-modulo`,
-      {
-        moduloIdActual: moduloActualId,
-        nuevoModuloId: nuevoModuloId,
-      }
-    );
+      <AccordionDetails>
+        <Box sx={{ mb: 2, display: "flex", alignItems: "center" }}>
+          <Checkbox
+            checked={
+              modulo.permisos.length > 0 &&
+              modulo.permisos.every((p) =>
+                permisosSeleccionados.includes(p.id)
+              )
+            }
+            onChange={() =>
+              seleccionarTodosModulo(modulo.permisos)
+            }
+          />
+          <Typography sx={{ fontWeight: 600 }}>
+            Todos los permisos
+          </Typography>
+        </Box>
 
-    setResumen(res.data);
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fill, minmax(250px, 1fr))",
+            gap: 2,
+          }}
+        >
+          {modulo.permisos.map((permiso) => {
+            const checked =
+              permisosSeleccionados.includes(permiso.id);
 
-    setMessage({
-      open: true,
-      severity: "success",
-      text: "Módulo reemplazado correctamente",
-    });
+            return (
+              <Box
+                key={permiso.id}
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  border: checked
+                    ? "1px solid #1976d2"
+                    : "1px solid rgba(255,255,255,0.1)",
+                  backgroundColor: checked
+                    ? "rgba(25,118,210,0.1)"
+                    : "transparent",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  onClick={() =>
+                    togglePermiso(permiso.id)
+                  }
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Checkbox size="small" checked={checked} />
+                  <Typography variant="body2">
+                    {permiso.nombre}
+                  </Typography>
+                </Box>
 
-    await cargarPermisosActuales(rolId);
-  } catch (error) {
-    console.error("Error reemplazando módulo", error);
-  }
-};
+                {isEdit && checked && (
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() =>
+                      quitarPermiso(permiso.id)
+                    }
+                  >
+                    Quitar
+                  </Button>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  );
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
-        {isEdit ? "Editar Rol y Permisos" : "Crear Rol y Asignar Permisos"}
+        {isEdit
+          ? "Editar Rol y Permisos"
+          : "Crear Rol y Asignar Permisos"}
       </DialogTitle>
 
       <DialogContent>
-
-        {/* SELECT ROL */}
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel>Rol</InputLabel>
           <Select
@@ -406,165 +431,46 @@ const reemplazarModulo = async (moduloActualId, nuevoModuloId) => {
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* ACCORDION POR MÓDULO */}
         {loadingModulos ? (
           <CircularProgress />
         ) : (
-      modulos.map((modulo) => (
-        <Accordion key={modulo.moduloId}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography sx={{ fontWeight: 600 }}>
-              {modulo.moduloNombre}
-            </Typography>
-          </AccordionSummary>
-
-          <AccordionDetails>
-
-            {isEdit && (
-              <Button
-                color="error"
-                size="small"
-                sx={{ mb: 2 }}
-                onClick={() => quitarModuloCompleto(modulo.moduloId)}
-              >
-                Quitar todos los permisos de este módulo
-              </Button>
+          <>
+            {isEdit && modulosConPermiso.length > 0 && (
+              <>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Este rol tiene permisos en los siguientes módulos
+                </Typography>
+                {modulosConPermiso.map(renderModulo)}
+              </>
             )}
 
-            <RadioGroup
-              value={configModulos[modulo.moduloId]?.modo || ""}
-              onChange={(e) =>
-                cambiarModo(modulo.moduloId, e.target.value)
-              }
-            >
-              <FormControlLabel
-                value="ALL"
-                control={<Radio />}
-                label="Todos los permisos"
-              />
-
-              <FormControlLabel
-                value="READ"
-                control={<Radio />}
-                label="Solo lectura"
-              />
-
-              <FormControlLabel
-                value="METHODS"
-                control={<Radio />}
-                label="Filtrar por tipo de acción"
-              />
-
-              {configModulos[modulo.moduloId]?.modo === "METHODS" && (
-                <Box sx={{ ml: 4, mt: 1 }}>
-                  {["Listar", "Crear", "Actualizar", "Eliminar"].map((metodoLabel) => (
-                    <FormControlLabel
-                      key={metodoLabel}
-                      control={
-                        <Checkbox
-                          checked={
-                            configModulos[modulo.moduloId]?.metodos?.includes(metodoLabel) || false
-                          }
-                          onChange={() =>
-                            toggleMetodo(modulo.moduloId, metodoLabel)
-                          }
-                        />
-                      }
-                      label={metodoLabel}
-                    />
-                  ))}
-                </Box>
-              )}
-
-              <FormControlLabel
-                value="INDIVIDUAL"
-                control={<Radio />}
-                label="Seleccionar permisos individuales"
-              />
-
-              {configModulos[modulo.moduloId]?.modo === "INDIVIDUAL" && (
-                <Box sx={{ ml: 4, mt: 1 }}>
-                  {modulo.permisos.map((permiso) => (
-                    <FormControlLabel
-                      key={permiso.id}
-                      control={
-                        <Checkbox
-                          checked={
-                            configModulos[modulo.moduloId]?.permisos?.includes(
-                              permiso.id
-                            ) || false
-                          }
-                          onChange={() =>
-                            togglePermiso(modulo.moduloId, permiso.id)
-                          }
-                        />
-                      }
-                      label={`${permiso.nombre} (${permiso.metodo})`}
-                    />
-                  ))}
-                </Box>
-              )}
-            </RadioGroup>
-          </AccordionDetails>
-        </Accordion>
-      ))
-        )}
-        {isEdit && (
-  <>
-    {/* PERMISOS ACTUALES */}
-    <Typography variant="h6" sx={{ mt: 2 }}>
-      Permisos actuales
-    </Typography>
-
-    {permisosActuales.map((permiso) => (
-      <Box
-        key={permiso.id}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 1 }}
-      >
-        <Typography>
-          {permiso.nombre}
-        </Typography>
-
-        <Button
-          color="error"
-          size="small"
-          onClick={() =>
-            quitarPermisoIndividual(permiso.id)
-          }
-        >
-          Quitar
-        </Button>
-      </Box>
-    ))}
-
-    <Divider sx={{ my: 3 }} />
-  </>
-)}
-
-
-        {/* RESUMEN */}
-        {resumen && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6">Resumen:</Typography>
-            <Typography>
-              Permisos asignados: {resumen.permisosAsignados}
-            </Typography>
-            <Typography>
-              Módulos: {resumen.modulos?.join(", ")}
-            </Typography>
-          </Box>
+            {modulosSinPermiso.length > 0 && (
+              <>
+                <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
+                  Módulos sin permisos asignados
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ mb: 2, opacity: 0.7 }}
+                >
+                  Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.
+                </Typography>
+                {modulosSinPermiso.map(renderModulo)}
+              </>
+            )}
+          </>
         )}
       </DialogContent>
 
       <DialogActions>
         <Button onClick={handleClose}>Cerrar</Button>
-        <Button variant="contained" onClick={handleSave} disabled={loading}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={loading}
+        >
           {loading ? "Guardando..." : "Guardar"}
         </Button>
-  
       </DialogActions>
     </Dialog>
   );
