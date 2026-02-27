@@ -1,6 +1,6 @@
 package com.coagronet.empresa.controllers;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,22 +41,35 @@ import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
-@RestController @RequestMapping("/api/v1/empresas") @RequiredArgsConstructor
+@RestController
+@RequestMapping("/api/v1/empresas")
+@RequiredArgsConstructor
 public class EmpresaUsuarioController {
 
 	private final EmpresaService empresaService;
+
 	private final JwtService jwtService;
+
 	private final UserRepository userRepository;
+
 	private final UsuarioRolRepository usuarioRolRepository;
+
 	private final ModuloRepository moduloRepository;
+
 	private final EstadoRepository estadoRepository;
+
 	private final ModuloEmpresaRepository moduloEmpresaRepository;
+
 	private final RolRepository rolRepository;
+
 	private final EmpresaRolRepository empresaRolRepository;
+
 	private final PermisoRepository permisoRepository;
+
 	private final RolPermisoRepository rolPermisoRepository;
 
-	@Transactional @PostMapping("/empresa-usuario")
+	@Transactional
+	@PostMapping("/empresa-usuario")
 	public ResponseEntity<Map<String, Integer>> createEmpresa(@RequestBody EmpresaDTO empresaDTO,
 			@RequestHeader("Authorization") String authorizationHeader) {
 
@@ -64,7 +77,7 @@ public class EmpresaUsuarioController {
 		String username = jwtService.extractUsername(token);
 
 		User user = userRepository.findByUsername(username)
-				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
 		Empresa empresa = EmpresaMapper.INSTANCE.toEmpresa(empresaDTO);
 		empresa.setPersona(user.getPersona());
@@ -92,7 +105,7 @@ public class EmpresaUsuarioController {
 
 		// B. Crear el vínculo Empresa - Rol para el Rol 2 (empresa_rol)
 		Rol rolAdmin = rolRepository.findById(2L)
-				.orElseThrow(() -> new RuntimeException("Rol Administrador no encontrado"));
+			.orElseThrow(() -> new RuntimeException("Rol Administrador no encontrado"));
 
 		EmpresaRol empresaRol = new EmpresaRol();
 		empresaRol.setEmpresa(savedEmpresa);
@@ -115,7 +128,7 @@ public class EmpresaUsuarioController {
 				// ¡LA SOLUCIÓN! Asigna la fecha manualmente.
 				// (Nota: Usa LocalDateTime.now(), LocalDate.now() o new Date()
 				// dependiendo del tipo de dato que tengas en tu entidad RolPermiso)
-				rp.setCreatedAt(OffsetDateTime.now());
+				rp.setCreatedAt(Instant.now());
 
 				return rp;
 			}).toList();
