@@ -17,7 +17,7 @@ import {
   clickDialogButton,
   fillDialogField,
   clickDialogSelectOption,
-} from './helpers/modulos.real.utils';
+} from './helpers/e2e.shared.utils';
 
 test.describe('RF-035.0 - Gestión de módulos (casos positivos)', () => {
   test.beforeEach(async ({ page, request }) => {

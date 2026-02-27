@@ -13,7 +13,11 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "start": "serve -s dist",
+    "mailhog:start": "docker run -d --rm --name mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog",
+    "mailhog:stop": "docker stop mailhog",
+    "mailhog:logs": "docker logs -n 100 mailhog",
     "test:e2e": "playwright test",
+    "test:e2e:onboarding": "playwright test tests/e2e/onboarding.autoregistro.spec.js tests/e2e/onboarding.autoregistro.validation.spec.js",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug"

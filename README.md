@@ -32,6 +32,14 @@ E2E_NOADMIN_PASSWORD=
 E2E_BASE_URL=http://127.0.0.1:5173/coagronet
 E2E_WEB_SERVER_URL=http://127.0.0.1:5173/coagronet
 E2E_WEB_SERVER_COMMAND=npm run dev -- --host 127.0.0.1 --port 5173
+
+# MailHog para capturar correo de verificación en E2E
+E2E_MAILHOG_API_URL=http://localhost:8025
+
+# Opcionales (si no usas MailHog)
+E2E_VERIFICATION_LINK_PROVIDER_URL=
+E2E_VERIFICATION_TOKEN_PROVIDER_URL=
+E2E_VERIFICATION_TOKEN=
 ```
 
 ## Comandos disponibles
@@ -52,9 +60,22 @@ E2E_WEB_SERVER_COMMAND=npm run dev -- --host 127.0.0.1 --port 5173
 ### Pruebas E2E (Playwright)
 
 - `npm run test:e2e`: ejecuta toda la suite E2E en modo headless.
+- `npm run test:e2e:onboarding`: ejecuta solo flujo y validaciones de onboarding/autorregistro.
 - `npm run test:e2e:ui`: abre Playwright UI para ejecutar y depurar pruebas visualmente.
 - `npm run test:e2e:headed`: ejecuta E2E mostrando el navegador.
 - `npm run test:e2e:debug`: ejecuta E2E en modo debug paso a paso.
+
+### MailHog (solo frontend E2E)
+
+- `npm run mailhog:start`: levanta MailHog por Docker.
+- `npm run mailhog:stop`: detiene MailHog.
+- `npm run mailhog:logs`: revisa logs de MailHog.
+
+Flujo recomendado:
+
+1. `npm run mailhog:start`
+2. `npm run test:e2e:onboarding`
+3. `npm run mailhog:stop`
 
 ## Notas importantes
 

@@ -13,7 +13,7 @@ import {
   clickDialogSelectOption,
   NOADMIN_EMAIL,
   NOADMIN_PASSWORD,
-} from './helpers/modulos.real.utils';
+} from './helpers/e2e.shared.utils';
 
 test.describe('RF-035.0 - Gestión de módulos (validaciones y errores)', () => {
   test.beforeEach(async ({ page, request }) => {
