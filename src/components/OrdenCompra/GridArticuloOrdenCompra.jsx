@@ -7,7 +7,7 @@ import {
   GridToolbarFilterButton,
   esES,
 } from "@mui/x-data-grid";
-
+import GridBase from "../dashboard/GridBase";
 function Toolbar() {
   return (
     <GridToolbarContainer>
@@ -81,7 +81,7 @@ export default function GridArticuloOrdenCompra({
 
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(items) ? items : []}
         columns={columns}
         getRowId={(row) => row.id}

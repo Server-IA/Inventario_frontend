@@ -8,7 +8,7 @@ import {
   esES,
 } from "@mui/x-data-grid";
 import axios from "../axiosConfig";
-
+import GridBase from "../dashboard/GridBase";
 function CustomToolbar() {
   return (
     <GridToolbarContainer>
@@ -275,7 +275,7 @@ export default function GridOrdenCompra({
 
   return (
     <Box sx={{ width: "100%", overflowX: "auto" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(ordenes) ? ordenes : []}
         columns={columns}
         getRowId={(row) => row.id}

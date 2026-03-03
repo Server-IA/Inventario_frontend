@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridTipoEspacio({
   // Datos
@@ -44,7 +45,7 @@ export default function GridTipoEspacio({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(tiposEspacio) ? tiposEspacio : []}
         columns={columns}
         getRowId={(row) => row.id}

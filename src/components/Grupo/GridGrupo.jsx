@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 /**
  * GridGrupo
@@ -49,7 +50,7 @@ export default function GridGrupo({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(grupos) ? grupos : []}
         columns={columns}
         getRowId={(row) => row.id}

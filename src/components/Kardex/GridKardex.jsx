@@ -11,6 +11,7 @@ import {
 } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridKardex:columnVisibility:v1";
 
@@ -268,7 +269,7 @@ export default function GridKardex({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(kardexes) ? kardexes : []}
         columns={columns}
         getRowId={(row) => row.id}

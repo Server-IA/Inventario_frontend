@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridPedidoCotizacion({
   rows = [],
@@ -52,7 +53,7 @@ export default function GridPedidoCotizacion({
 
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
-      <DataGrid
+      <GridBase
         autoHeight
         rows={rows}
         columns={columns}

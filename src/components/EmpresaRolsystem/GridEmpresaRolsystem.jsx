@@ -11,7 +11,7 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-
+import GridBase from "../dashboard/GridBase";
 const LS_KEY = "gridEmpresaRol:columnVisibility:v1";
 
 function EmpresaRolToolbar({ onResetColumns }) {
@@ -118,7 +118,7 @@ export default function GridEmpresaRol({
 
   return (
     <Box sx={{ width: "100%", mt: 1 }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(r) => r.id}

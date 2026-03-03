@@ -2,6 +2,7 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridEspacio({
   // Datos
@@ -63,7 +64,7 @@ export default function GridEspacio({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(espacios) ? espacios : []}
         columns={columns}
         getRowId={(row) => row.id}

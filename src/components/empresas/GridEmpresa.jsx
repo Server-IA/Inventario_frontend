@@ -9,6 +9,7 @@ import * as React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import { SiteProps } from "../dashboard/SiteProps";
+import GridBase from "../dashboard/GridBase";
 
 /**
  * @typedef {Object} EmpresaRow
@@ -124,7 +125,7 @@ export default function GridEmpresa(props) {
 
   return (
     <div style={{ height: 600, width: '100%' }}>
-      <DataGrid
+      <GridBase
         rows={data || []}
         columns={columns}
         rowCount={rowCount}

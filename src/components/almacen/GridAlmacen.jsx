@@ -2,6 +2,7 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
+import GridBase from "../dashboard/GridBase";
 
 /**
  * GridAlmacen
@@ -58,7 +59,7 @@ export default function GridAlmacen({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(almacenes) ? almacenes : []}
         columns={columns}
         getRowId={(row) => row.id}

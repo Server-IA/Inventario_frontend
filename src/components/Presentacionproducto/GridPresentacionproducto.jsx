@@ -11,6 +11,7 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Chip, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridPresentacionProducto:columnVisibility:v1";
 
@@ -192,7 +193,7 @@ export default function GridPresentacionproducto({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={safeRows}
         columns={columns}
         getRowId={(r) => r.id}

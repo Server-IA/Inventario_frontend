@@ -187,7 +187,7 @@ import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
 import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
-import EmpresaRolsystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
+import EmpresaRolSystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // Imágenes
 import img1 from "/images/cards/1.jpg";
@@ -376,7 +376,7 @@ const icons = {
 const components = {
   modulo: modulo,
   Rol_usuario: Rol_usuario,
-  EmpresaRolsystem: EmpresaRolsystem,
+  EmpresaRolSystem: EmpresaRolSystem,
   EmpresaRol: EmpresaRol,
   UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
@@ -436,7 +436,7 @@ const components = {
 const moduleImages = {
   EmpresaRol: rol_empresa,
   UsuarioRoles: usai_rol_sistema,
-  EmpresaRolsystem: rol_sistema,
+  EmpresaRolSystem: rol_sistema,
   UsuarioRol: usariorol,
   PedidoCotizacion:pedido_coti,
   persona,

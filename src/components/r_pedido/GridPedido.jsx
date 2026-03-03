@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  DataGrid,
   esES,
   GridToolbarContainer,
   GridToolbarColumnsButton,
@@ -11,6 +10,7 @@ import {
 } from "@mui/x-data-grid";
 import { Button, Stack } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridPedido:columnVisibility:v1";
 
@@ -232,7 +232,7 @@ export default function GridPedido({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(pedidos) ? pedidos : []}
         columns={columns}
         getRowId={(row) => row.id}

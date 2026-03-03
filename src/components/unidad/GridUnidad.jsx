@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridUnidad({
   rows = [],
@@ -55,7 +56,7 @@ export default function GridUnidad({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(row) => row.id}

@@ -11,7 +11,7 @@ import {
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-
+import GridBase from "../dashboard/GridBase";
 const LS_KEY = "gridUsuarioRoles:columnVisibility:v1";
 
 /* ---------- Toolbar personalizada ---------- */
@@ -138,7 +138,7 @@ export default function GridUsuarioRoles({
 
   return (
     <Box sx={{ height: 430, width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={rows}
         columns={columns}
         loading={loading}

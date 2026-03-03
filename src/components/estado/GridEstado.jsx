@@ -10,6 +10,7 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridEstado:columnVisibility:v1";
 

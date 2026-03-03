@@ -10,7 +10,7 @@ import {
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
-
+import GridBase from "../dashboard/GridBase";
 const LS_KEY = "gridPersona:columnVisibility:v1";
 
 /* -------- Toolbar personalizada -------- */
@@ -143,7 +143,7 @@ export default function GridPersona({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(personas) ? personas : []}
         columns={columns}
         getRowId={(row) => row.id}

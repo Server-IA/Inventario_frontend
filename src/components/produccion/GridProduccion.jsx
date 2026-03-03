@@ -2,13 +2,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  DataGrid,
   GridToolbarContainer,
   GridToolbarColumnsButton,
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridProduccion:columnVisibility:v1";
 
@@ -170,7 +170,7 @@ export default function GridProduccion({
 
   return (
     <div style={{ width: "100%", height: 500 }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(producciones) ? producciones : []}
         columns={columns}
         getRowId={(row) => row.id}

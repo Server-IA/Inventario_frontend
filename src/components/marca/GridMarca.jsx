@@ -6,6 +6,7 @@ import {
   GridToolbarFilterButton,
 } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 /**
  * GridMarca
@@ -62,7 +63,7 @@ export default function GridMarca({
 
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(row) => row.id}

@@ -9,7 +9,7 @@ import {
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-
+import GridBase from "../dashboard/GridBase";
 const LS_KEY = "gridIngredientePP:columnVisibility:v1";
 
 /* ---------- Toolbar personalizada ---------- */
@@ -186,7 +186,7 @@ export default function GridIngredientePresentacionP({
 
   return (
     <div style={{ width: "100%", height: 500 }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(row) => row.id}

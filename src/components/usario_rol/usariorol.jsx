@@ -40,7 +40,7 @@ export default function UsuarioRol() {
       setPageSize(data.size ?? meta.size ?? sizeArg);
 
     } catch (err) {
-      console.error("❌ Error API:", err);
+      console.error(" Error API:", err);
       setMessage({ open: true, severity: "error", text: "Error de conexión con el servidor" });
     } finally {
       setLoading(false);

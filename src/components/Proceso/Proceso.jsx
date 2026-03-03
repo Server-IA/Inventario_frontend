@@ -40,7 +40,7 @@ export default function Proceso() {
   const [procesosRaw, setProcesosRaw] = useState([]);
 
   // ---- paginación del grid (server-side) ----
-  const [page, setPage] = useState(0);      // DataGrid usa 0-based
+  const [page, setPage] = useState(0);      // <GridBase usa 0-based
   const [size, setSize] = useState(10);     // rowsPerPage actual
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -143,7 +143,7 @@ export default function Proceso() {
     });
   }, [procesosRaw, tipoProduccionMap]);
 
-  // ---- handlers que usará el DataGrid para paginar ----
+  // ---- handlers que usará el <GridBase para paginar ----
   const handleChangePage = (_evt, nextPage) => {
     setPage(nextPage);
     loadProcesos(nextPage, size);

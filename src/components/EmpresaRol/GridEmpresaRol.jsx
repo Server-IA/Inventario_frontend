@@ -2,7 +2,7 @@ import React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Chip } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-
+import GridBase from "../dashboard/GridBase";
 export default function GridEmpresaRol({
   rows,
   loading,
@@ -95,7 +95,7 @@ const isDark = theme.palette.mode === "dark";
   ];
 
 return (
-  <DataGrid
+  <GridBase
     rows={rows}
     columns={columns}
     loading={loading}

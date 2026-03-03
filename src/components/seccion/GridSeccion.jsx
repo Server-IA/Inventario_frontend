@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-
+import GridBase from "../dashboard/GridBase";
 export default function GridSeccion({
   // Datos
   secciones = [],
@@ -39,7 +39,7 @@ export default function GridSeccion({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(secciones) ? secciones : []}
         columns={columns}
         getRowId={(row) => row.id}

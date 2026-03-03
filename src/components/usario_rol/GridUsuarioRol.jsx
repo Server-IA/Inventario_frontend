@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridUsuarioRol({
   rows = [],
@@ -58,7 +59,7 @@ export default function GridUsuarioRol({
 
   return (
     <Box sx={{ width: "100%", height: 500 }}>
-      <DataGrid
+      <GridBase
         rows={rows}
         columns={columns}
         getRowId={(row) => row.id}

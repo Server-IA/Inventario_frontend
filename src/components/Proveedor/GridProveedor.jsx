@@ -11,6 +11,7 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridProveedor:columnVisibility:v1";
 
@@ -132,7 +133,7 @@ export default function GridProveedor({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(proveedores) ? proveedores : []}
         columns={columns}
         getRowId={(row) => row.id}

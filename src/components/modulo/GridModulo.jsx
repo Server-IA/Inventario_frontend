@@ -4,6 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import * as MuiIcons from "@mui/icons-material";
 import axios from "../axiosConfig";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridModulo({
   modulos = {},
@@ -102,7 +103,7 @@ export default function GridModulo({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         loading={loading}
         rows={modulos?.content || []}
         columns={columns}

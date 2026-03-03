@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import GridBase from "../dashboard/GridBase";
 
 export default function GridCriterioEvaluacion({ rows = [], selectedRow = {}, setSelectedRow = () => {} }) {
   const [paginationModel, setPaginationModel] = useState({ pageSize: 5, page: 0 });
@@ -21,7 +22,7 @@ export default function GridCriterioEvaluacion({ rows = [], selectedRow = {}, se
 
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
-      <DataGrid
+      <GridBase
         rows={rows}
         columns={columns}
         paginationModel={paginationModel}

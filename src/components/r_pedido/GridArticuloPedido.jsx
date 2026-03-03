@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  DataGrid,
   esES,
   GridToolbarContainer,
   GridToolbarColumnsButton,
@@ -11,6 +10,7 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridArticuloPedido:columnVisibility:v1";
 
@@ -140,7 +140,7 @@ export default function GridArticuloPedido({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(items) ? items : []}
         columns={columns}
         getRowId={(row) => row.id}

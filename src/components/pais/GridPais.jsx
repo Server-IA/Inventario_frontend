@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
-
+import GridBase from "../dashboard/GridBase";
 /**
  * GridPais
  * - Si pasas { paginationModel, setPaginationModel, rowCount } => usa paginación "server"
@@ -45,7 +45,7 @@ export default function GridPais({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(paises) ? paises : []}
         columns={columns}
         getRowId={(row) => row.id}

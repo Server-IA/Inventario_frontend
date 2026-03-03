@@ -3,12 +3,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "../axiosConfig.js";
 import { Box, Typography, Button } from "@mui/material"; 
 import MessageSnackBar from "../MessageSnackBar.jsx";
-import ModalPermisosRol from "./ModalPermisosRol";
+import ModalPermisosRol from "./ModalPermisosRol.jsx";
 import FormEmpresaRolSystem from "./FormEmpresaRolsystem.jsx";
 import GridEmpresaRol from "./GridEmpresaRolsystem.jsx";
-import StackButtons from "../StackButtons";
+import StackButtons from "../StackButtons.jsx";
 
-export default function EmpresaRolsystem() {
+export default function EmpresaRolSystem() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [rows, setRows] = useState([]);

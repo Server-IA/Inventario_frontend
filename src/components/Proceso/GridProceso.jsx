@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
-
+import GridBase from "../dashboard/GridBase";
 export default function GridProceso({
   // Datos
   procesos = [],
@@ -49,7 +49,7 @@ export default function GridProceso({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(procesos) ? procesos : []}
         columns={columns}
         getRowId={(row) => row.id}

@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-
+import GridBase from "../dashboard/GridBase";
 export default function GridMunicipio({
   // Datos
   municipios = [],
@@ -55,7 +55,7 @@ export default function GridMunicipio({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(municipios) ? municipios : []}
         columns={columns}
         getRowId={(row) => row.id}

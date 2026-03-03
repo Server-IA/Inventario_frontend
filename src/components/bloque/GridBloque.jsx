@@ -8,6 +8,7 @@ import {
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
+import GridBase from "../dashboard/GridBase";
 
 const LS_KEY = "gridBloque:columnVisibility:v1";
 
@@ -128,7 +129,7 @@ export default function GridBloque({
 
   return (
     <div style={{ width: "100%" }}>
-      <DataGrid
+      <GridBase
         rows={Array.isArray(bloques) ? bloques : []}
         columns={columns}
         getRowId={(row) => row.id}

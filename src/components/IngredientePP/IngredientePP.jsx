@@ -177,7 +177,7 @@ export default function IngredientePresentacionProducto() {
 
       return {
         ...r,
-        // id normalizado para DataGrid
+        // id normalizado para <GridBase
         id: idIngredientePresentacionProducto,
         idIngredientePresentacionProducto,
 
