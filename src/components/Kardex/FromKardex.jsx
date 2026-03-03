@@ -19,7 +19,10 @@ import {
   TableRow,
   TableCell,
   Grid,
+  InputAdornment,
+  CircularProgress,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
 
@@ -155,6 +158,16 @@ export default function FormKardex({
   ============================ */
   const [ocItems, setOcItems] = useState([]);
   const [loadingOcItems, setLoadingOcItems] = useState(false);
+
+  /* ============================
+     🔹 Modal de Búsqueda de Producción
+  ============================ */
+  const [produccionSearchOpen, setProduccionSearchOpen] = useState(false);
+  const [produccionSearchNombre, setProduccionSearchNombre] = useState("");
+  const [produccionSearchFecha, setProduccionSearchFecha] = useState("");
+  const [produccionesCompletas, setProduccionesCompletas] = useState([]);
+  const [loadingProduccionesCompletas, setLoadingProduccionesCompletas] =
+    useState(false);
 
   /* ============================
      🔹 Token + empresaId
@@ -366,6 +379,78 @@ export default function FormKardex({
     );
   };
 
+  /* ============================
+     🔹 Abrir modal de búsqueda de Producción
+  ============================ */
+  const handleOpenProduccionSearch = async () => {
+    setProduccionSearchOpen(true);
+    setProduccionSearchNombre("");
+    setProduccionSearchFecha("");
+    setLoadingProduccionesCompletas(true);
+
+    try {
+      // Cargar TODAS las producciones una sola vez
+      const res = await axios.get("/v1/items/produccion/0", headers);
+      const allProds = pickList(res);
+      setProduccionesCompletas(allProds);
+    } catch (e) {
+      console.error("❌ Error cargando producciones:", e);
+      setProduccionesCompletas([]);
+      setMessage?.({
+        open: true,
+        severity: "error",
+        text: "Error al cargar producciones.",
+      });
+    } finally {
+      setLoadingProduccionesCompletas(false);
+    }
+  };
+
+  /* ============================
+     🔹 Filtrar producciones localmente
+  ============================ */
+  const getFilteredProducciones = () => {
+    return produccionesCompletas.filter((prod) => {
+      const nombre = (prod.nombre || prod.name || "").toLowerCase();
+      const searchNombre = (produccionSearchNombre || "").toLowerCase();
+
+      if (!nombre.includes(searchNombre)) return false;
+
+      if (produccionSearchFecha) {
+        // Comparar fecha (espera formato YYYY-MM-DD)
+        const inicio = prod.inicio || prod.start || "";
+        const fin = prod.fin || prod.end || "";
+        const searchDate = produccionSearchFecha;
+
+        // Verifica si la fecha está entre inicio y fin
+        const isInRange =
+          (!inicio || inicio <= searchDate) &&
+          (!fin || searchDate <= fin);
+        if (!isInRange) return false;
+      }
+
+      return true;
+    });
+  };
+
+  const handleSelectProduccion = (prod) => {
+    setFormData((prev) => ({
+      ...prev,
+      produccionId: prod.id,
+    }));
+    setProduccionSearchOpen(false);
+    setProduccionSearchNombre("");
+    setProduccionSearchFecha("");
+    setProduccionesCompletas([]);
+  };
+
+  const handleCloseProduccionSearch = () => {
+    setProduccionSearchOpen(false);
+    setProduccionSearchNombre("");
+    setProduccionSearchFecha("");
+    setProduccionesCompletas([]);
+  };
+
   const handleSubmit = async () => {
     try {
       await kardexSchema.validate(formData, { abortEarly: false });
@@ -565,25 +650,32 @@ export default function FormKardex({
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.produccionId}>
-                <InputLabel>Producción</InputLabel>
-                <Select
-                  name="produccionId"
-                  label="Producción"
-                  value={formData.produccionId}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="">
-                    <em>Seleccione...</em>
-                  </MenuItem>
-                  {producciones.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {renderName(p)}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{errors.produccionId}</FormHelperText>
-              </FormControl>
+              <TextField
+                fullWidth
+                label="Producción"
+                value={
+                  formData.produccionId
+                    ? producciones.find((p) => p.id === formData.produccionId)
+                      ?.name || `ID: ${formData.produccionId}`
+                    : ""
+                }
+                InputProps={{
+                  readOnly: true,
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        onClick={handleOpenProduccionSearch}
+                        sx={{ minWidth: "40px", p: 0.5 }}
+                      >
+                        <SearchIcon fontSize="small" />
+                      </Button>
+                    </InputAdornment>
+                  ),
+                }}
+                error={!!errors.produccionId}
+                helperText={errors.produccionId}
+              />
             </Grid>
 
             {/* Pedido + Orden compra */}
@@ -762,6 +854,72 @@ export default function FormKardex({
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
           <Button onClick={handleSubmit}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ============================
+          🔹 Modal Búsqueda Producciones
+      ============================ */}
+      <Dialog
+        open={produccionSearchOpen}
+        onClose={handleCloseProduccionSearch}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Buscar Producción</DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Nombre"
+                value={produccionSearchNombre}
+                onChange={(e) => setProduccionSearchNombre(e.target.value)}
+                placeholder="Escribe para filtrar por nombre..."
+              />
+            </Grid>
+          </Grid>
+
+          {/* Tabla de resultados */}
+          {loadingProduccionesCompletas ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : getFilteredProducciones().length === 0 ? (
+            <Typography variant="body2" sx={{ py: 2 }}>
+              {produccionesCompletas.length === 0
+                ? "No hay producciones disponibles."
+                : "No hay producciones que coincidan con los filtros."}
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell align="center">Acción</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {getFilteredProducciones().map((prod) => (
+                  <TableRow key={prod.id}>
+                    <TableCell>{prod.nombre || prod.name || prod.id}</TableCell>
+                    <TableCell align="center">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => handleSelectProduccion(prod)}
+                      >
+                        Seleccionar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseProduccionSearch}>Cancelar</Button>
         </DialogActions>
       </Dialog>
     </Box>
