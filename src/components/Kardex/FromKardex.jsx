@@ -164,10 +164,17 @@ export default function FormKardex({
   ============================ */
   const [produccionSearchOpen, setProduccionSearchOpen] = useState(false);
   const [produccionSearchNombre, setProduccionSearchNombre] = useState("");
-  const [produccionSearchFecha, setProduccionSearchFecha] = useState("");
   const [produccionesCompletas, setProduccionesCompletas] = useState([]);
   const [loadingProduccionesCompletas, setLoadingProduccionesCompletas] =
     useState(false);
+
+  /* ============================
+     🔹 Modal de Búsqueda de Pedido
+  ============================ */
+  const [pedidoSearchOpen, setPedidoSearchOpen] = useState(false);
+  const [pedidoSearchNombre, setPedidoSearchNombre] = useState("");
+  const [pedidosCompletos, setPedidosCompletos] = useState([]);
+  const [loadingPedidosCompletos, setLoadingPedidosCompletos] = useState(false);
 
   /* ============================
      🔹 Token + empresaId
@@ -406,30 +413,41 @@ export default function FormKardex({
     }
   };
 
+  const handleOpenPedidoSearch = () => {
+    setPedidoSearchOpen(true);
+    setPedidoSearchNombre("");
+    // cargar desde estado existente
+    setPedidosCompletos(pedidos);
+  };
+
+  const handleClosePedidoSearch = () => {
+    setPedidoSearchOpen(false);
+    setPedidoSearchNombre("");
+    setPedidosCompletos([]);
+  };
+
+  const getFilteredPedidos = () => {
+    return pedidosCompletos.filter((ped) => {
+      const nombre = (ped.nombre || ped.name || "").toLowerCase();
+      const search = (pedidoSearchNombre || "").toLowerCase();
+      return nombre.includes(search);
+    });
+  };
+
+  const handleSelectPedido = (ped) => {
+    setFormData((prev) => ({ ...prev, pedidoId: ped.id }));
+    setPedidoSearchOpen(false);
+    setPedidoSearchNombre("");
+    setPedidosCompletos([]);
+  };
   /* ============================
      🔹 Filtrar producciones localmente
   ============================ */
   const getFilteredProducciones = () => {
+    const search = (produccionSearchNombre || "").toLowerCase();
     return produccionesCompletas.filter((prod) => {
       const nombre = (prod.nombre || prod.name || "").toLowerCase();
-      const searchNombre = (produccionSearchNombre || "").toLowerCase();
-
-      if (!nombre.includes(searchNombre)) return false;
-
-      if (produccionSearchFecha) {
-        // Comparar fecha (espera formato YYYY-MM-DD)
-        const inicio = prod.inicio || prod.start || "";
-        const fin = prod.fin || prod.end || "";
-        const searchDate = produccionSearchFecha;
-
-        // Verifica si la fecha está entre inicio y fin
-        const isInRange =
-          (!inicio || inicio <= searchDate) &&
-          (!fin || searchDate <= fin);
-        if (!isInRange) return false;
-      }
-
-      return true;
+      return nombre.includes(search);
     });
   };
 
@@ -680,24 +698,34 @@ export default function FormKardex({
 
             {/* Pedido + Orden compra */}
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Pedido</InputLabel>
-                <Select
-                  name="pedidoId"
-                  label="Pedido"
-                  value={formData.pedidoId}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="">
-                    <em>Sin pedido asociado</em>
-                  </MenuItem>
-                  {pedidos.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {renderName(p)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                label="Pedido"
+                value={
+                  formData.pedidoId
+                    ? pedidos.find((p) => p.id === formData.pedidoId)
+                      ?.nombre ||
+                    pedidos.find((p) => p.id === formData.pedidoId)?.name ||
+                    `ID: ${formData.pedidoId}`
+                    : ""
+                }
+                InputProps={{
+                  readOnly: true,
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        onClick={handleOpenPedidoSearch}
+                        sx={{ minWidth: "40px", p: 0.5 }}
+                      >
+                        <SearchIcon fontSize="small" />
+                      </Button>
+                    </InputAdornment>
+                  ),
+                }}
+                error={!!errors.pedidoId}
+                helperText={errors.pedidoId}
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl
@@ -920,6 +948,68 @@ export default function FormKardex({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseProduccionSearch}>Cancelar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ============================
+          🔹 Modal Búsqueda Pedidos
+      ============================ */}
+      <Dialog
+        open={pedidoSearchOpen}
+        onClose={handleClosePedidoSearch}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Buscar Pedido</DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Nombre"
+                value={pedidoSearchNombre}
+                onChange={(e) => setPedidoSearchNombre(e.target.value)}
+                placeholder="Escribe para filtrar por nombre..."
+              />
+            </Grid>
+          </Grid>
+
+          {/* Tabla de resultados */}
+          {getFilteredPedidos().length === 0 ? (
+            <Typography variant="body2" sx={{ py: 2 }}>
+              {pedidosCompletos.length === 0
+                ? "No hay pedidos disponibles."
+                : "No hay pedidos que coincidan con el filtro."}
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell align="center">Acción</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {getFilteredPedidos().map((ped) => (
+                  <TableRow key={ped.id}>
+                    <TableCell>{ped.nombre || ped.name || ped.id}</TableCell>
+                    <TableCell align="center">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => handleSelectPedido(ped)}
+                      >
+                        Seleccionar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePedidoSearch}>Cancelar</Button>
         </DialogActions>
       </Dialog>
     </Box>
