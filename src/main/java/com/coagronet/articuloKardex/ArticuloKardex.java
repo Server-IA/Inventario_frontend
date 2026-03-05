@@ -15,6 +15,7 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.presentacionProducto.PresentacionProducto;
+import com.coagronet.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,7 +46,10 @@ import lombok.Setter;
 @Table(name = "kardex_item", schema = "public",
 		indexes = { @Index(name = "idx_kai_empresa_id", columnList = "kai_empresa_id"),
 				@Index(name = "idx_kai_kardex_id", columnList = "kai_kardex_id"),
-				@Index(name = "idx_kai_producto_id", columnList = "kai_producto_presentacion_id") },
+				@Index(name = "idx_kai_producto_id", columnList = "kai_producto_presentacion_id"),
+				@Index(name = "idx_kai_responsable_id", columnList = "kai_responsable_id") // Índice
+																							// añadido
+		},
 		uniqueConstraints = { @UniqueConstraint(name = "kardex_item_kai_producto_identificador_key",
 				columnNames = "kai_producto_identificador") })
 @EntityListeners(AuditingEntityListener.class)
@@ -56,15 +60,15 @@ public class ArticuloKardex {
 	@Column(name = "kai_id", nullable = false, updatable = false)
 	private Long id;
 
-	// Cambiado a BigDecimal para correspondencia exacta con 'numeric' y evitar errores de
-	// redondeo
-	@Column(name = "kai_cantidad", nullable = false)
+	@Column(name = "kai_cantidad", nullable = false, precision = 16, scale = 4)
 	private BigDecimal cantidad;
 
-	@Column(name = "kai_precio", nullable = false)
+	@Column(name = "kai_precio", nullable = false, precision = 16, scale = 4)
 	private BigDecimal precio;
 
-	// Cambiado a LocalDate para correspondencia exacta con el tipo 'date' de PostgreSQL
+	@Column(name = "kai_precio_total", insertable = false, updatable = false, precision = 16, scale = 4)
+	private BigDecimal precioTotal;
+
 	@Column(name = "kai_fecha_vencimiento")
 	private LocalDate fechaVencimiento;
 
@@ -87,9 +91,14 @@ public class ArticuloKardex {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kai_empresa_id", referencedColumnName = "emp_id", nullable = false,
+	@JoinColumn(name = "kai_empresa_id", referencedColumnName = "emp_id", nullable = false, updatable = false,
 			foreignKey = @ForeignKey(name = "kardex_item_kai_empresa_id_fkey"))
 	private Empresa empresa;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kai_responsable_id", referencedColumnName = "usu_id",
+			foreignKey = @ForeignKey(name = "fk_kai_responsable"))
+	private User responsable;
 
 	@Column(name = "kai_lote", columnDefinition = "TEXT")
 	private String lote;
@@ -100,13 +109,13 @@ public class ArticuloKardex {
 	@Column(name = "kai_seg_username", length = 150, nullable = false, updatable = false)
 	private String username;
 
-	@Column(name = "kai_seg_rol", length = 100, nullable = false)
+	@Column(name = "kai_seg_rol", length = 100, nullable = false, updatable = false)
 	private String rol;
 
-	@Column(name = "kai_seg_ip", columnDefinition = "inet", nullable = false)
+	@Column(name = "kai_seg_ip", columnDefinition = "inet", nullable = false, updatable = false)
 	private String ip;
 
-	@Column(name = "kai_seg_host", length = 255)
+	@Column(name = "kai_seg_host", length = 255, updatable = false)
 	private String host;
 
 	@CreatedDate
@@ -114,7 +123,6 @@ public class ArticuloKardex {
 			updatable = false)
 	private OffsetDateTime fechaHora;
 
-	// Mantenemos la lógica de negocio previa a persistir
 	@PrePersist
 	public void prePersist() {
 		if (identificadorProducto == null || identificadorProducto.isBlank()) {
@@ -122,7 +130,6 @@ public class ArticuloKardex {
 		}
 	}
 
-	// Métodos equals y hashCode optimizados para evaluación de entidades JPA
 	@Override
 	public final boolean equals(Object o) {
 		if (this == o)
