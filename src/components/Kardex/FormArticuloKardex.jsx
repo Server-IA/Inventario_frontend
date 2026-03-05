@@ -11,6 +11,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Grid,
 } from "@mui/material";
 import axios from "../axiosConfig";
 import StackButtons from "../StackButtons";
@@ -29,8 +30,8 @@ export default function FormArticuloKardex({
   const initialData = {
     cantidad: "",
     precio: "",
+    lote: "",
     fechaVencimiento: "",
-    identificadorProducto: "",
     kardexId: kardexId || "",
     presentacionProductoId: "",
     estadoId: "1",
@@ -52,8 +53,7 @@ export default function FormArticuloKardex({
         p.producto?.nombre ?? p.productoNombre,
         p.presentacion?.nombre ?? p.presentacionNombre,
         p.cantidad
-          ? `${p.cantidad} ${
-              p.unidad?.nombre ?? p.unidadNombre ?? ""
+          ? `${p.cantidad} ${p.unidad?.nombre ?? p.unidadNombre ?? ""
             }`.trim()
           : null,
       ]
@@ -105,7 +105,7 @@ export default function FormArticuloKardex({
         selectedRow.presentacionProducto?.id ??
         selectedRow.presentacionProductoId ??
         "",
-      identificadorProducto: selectedRow.identificadorProducto ?? "",
+
       estadoId: String(selectedRow.estadoId ?? 1),
     });
 
@@ -160,10 +160,10 @@ export default function FormArticuloKardex({
       id: selectedRow.id,
       cantidad: Number(formData.cantidad),
       precio: Number(formData.precio),
+      lote: formData.lote,
       kardexId: Number(formData.kardexId),
       presentacionProductoId: Number(formData.presentacionProductoId),
       estadoId: Number(formData.estadoId),
-      identificadorProducto: formData.identificadorProducto || null,
       fechaVencimiento: String(formData.fechaVencimiento).includes("T")
         ? formData.fechaVencimiento
         : `${formData.fechaVencimiento}T00:00:00`,
@@ -216,95 +216,110 @@ export default function FormArticuloKardex({
           <DialogTitle>{methodName} Artículo Kardex</DialogTitle>
 
           <DialogContent>
-            <TextField
-              fullWidth
-              name="kardexId"
-              label="Kardex ID"
-              value={formData.kardexId}
-              margin="dense"
-              required
-              disabled
-            />
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              {/* Renglón 1: Kardex ID + Producto Presentación */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  name="kardexId"
+                  label="Kardex ID"
+                  value={formData.kardexId}
+                  required
+                  disabled
+                />
+              </Grid>
 
-            {/* Producto Presentación */}
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel id="pp-label">Producto Presentación</InputLabel>
-              <Select
-                labelId="pp-label"
-                label="Producto Presentación"
-                name="presentacionProductoId"
-                value={formData.presentacionProductoId ?? ""}
-                onChange={handleChange}
-                displayEmpty
-              >
-                <MenuItem value="">
-                  <em>Seleccione...</em>
-                </MenuItem>
-                {presentaciones.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {ppLabel(p)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel id="pp-label" shrink>
+                    Producto Presentación
+                  </InputLabel>
+                  <Select
+                    labelId="pp-label"
+                    label="Producto Presentación"
+                    name="presentacionProductoId"
+                    value={formData.presentacionProductoId ?? ""}
+                    onChange={handleChange}
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione...</em>
+                    </MenuItem>
+                    {presentaciones.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {ppLabel(p)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <TextField
-              fullWidth
-              name="cantidad"
-              label="Cantidad"
-              value={formData.cantidad}
-              onChange={handleChange}
-              margin="dense"
-              required
-            />
+              {/* Renglón 2: Cantidad + Precio + Lote */}
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  name="cantidad"
+                  label="Cantidad"
+                  value={formData.cantidad}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
 
-            <TextField
-              fullWidth
-              name="precio"
-              label="Precio"
-              value={formData.precio}
-              onChange={handleChange}
-              margin="dense"
-              required
-            />
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  name="precio"
+                  label="Precio"
+                  value={formData.precio}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
 
-            {/* Identificador de producto */}
-            <TextField
-              fullWidth
-              name="identificadorProducto"
-              label="Identificador producto"
-              value={formData.identificadorProducto}
-              onChange={handleChange}
-              margin="dense"
-            />
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  name="lote"
+                  label="Lote"
+                  value={formData.lote}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
 
-            <TextField
-              fullWidth
-              type="date"
-              name="fechaVencimiento"
-              label="Fecha Vencimiento"
-              value={(
-                formData.fechaVencimiento || ""
-              ).toString().substring(0, 10)}
-              onChange={handleChange}
-              margin="dense"
-              InputLabelProps={{ shrink: true }}
-              required
-            />
+              {/* Renglón 3: Fecha Vencimiento + Estado */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  name="fechaVencimiento"
+                  label="Fecha Vencimiento"
+                  value={(
+                    formData.fechaVencimiento || ""
+                  ).toString().substring(0, 10)}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                  required
+                />
+              </Grid>
 
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel id="estado-label">Estado</InputLabel>
-              <Select
-                labelId="estado-label"
-                label="Estado"
-                name="estadoId"
-                value={formData.estadoId}
-                onChange={handleChange}
-              >
-                <MenuItem value={1}>Activo</MenuItem>
-                <MenuItem value={2}>Inactivo</MenuItem>
-              </Select>
-            </FormControl>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel id="estado-label">Estado</InputLabel>
+                  <Select
+                    labelId="estado-label"
+                    label="Estado"
+                    name="estadoId"
+                    value={formData.estadoId}
+                    onChange={handleChange}
+                  >
+                    <MenuItem value={1}>Activo</MenuItem>
+                    <MenuItem value={2}>Inactivo</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
           </DialogContent>
 
           <DialogActions>
