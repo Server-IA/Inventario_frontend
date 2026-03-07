@@ -392,7 +392,6 @@ export default function FormKardex({
   const handleOpenProduccionSearch = async () => {
     setProduccionSearchOpen(true);
     setProduccionSearchNombre("");
-    setProduccionSearchFecha("");
     setLoadingProduccionesCompletas(true);
 
     try {
@@ -458,14 +457,12 @@ export default function FormKardex({
     }));
     setProduccionSearchOpen(false);
     setProduccionSearchNombre("");
-    setProduccionSearchFecha("");
     setProduccionesCompletas([]);
   };
 
   const handleCloseProduccionSearch = () => {
     setProduccionSearchOpen(false);
     setProduccionSearchNombre("");
-    setProduccionSearchFecha("");
     setProduccionesCompletas([]);
   };
 
