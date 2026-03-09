@@ -19,6 +19,7 @@ import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 
 @RestController
 @RequestMapping("/api/v1/personas")
@@ -33,6 +34,9 @@ public class PersonaUsuarioController {
 	// Suponiendo que tienes una instancia de JwtService
 	@Autowired
 	private JwtService jwtService;
+
+	@Autowired
+	private UsuarioEstadoRepository usuarioEstadoRepository;
 
 	@PostMapping("/persona-usuario")
 	public ResponseEntity<Map<String, Integer>> createPersona(@RequestBody PersonaDTO newPersonaRequest,
@@ -51,7 +55,7 @@ public class PersonaUsuarioController {
 		persona = personaRepository.save(persona);
 
 		user.setPersona(persona);
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
+		user.setUsuarioEstado(usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_SIN_EMPRESA));
 
 		userRepository.save(user);
 

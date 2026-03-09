@@ -35,6 +35,7 @@ import com.coagronet.rolpermiso.repositories.RolPermisoRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 
@@ -67,6 +68,8 @@ public class EmpresaUsuarioController {
 	private final PermisoRepository permisoRepository;
 
 	private final RolPermisoRepository rolPermisoRepository;
+
+	private final UsuarioEstadoRepository usuarioEstadoRepository;
 
 	@Transactional
 	@PostMapping("/empresa-usuario")
@@ -139,7 +142,7 @@ public class EmpresaUsuarioController {
 		// FIN DE INICIALIZACIÓN
 		// ==========================================
 
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
+		user.setUsuarioEstado(usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA));
 		userRepository.save(user);
 
 		UsuarioRol usuarioRol = usuarioRolRepository.findByUser(user);

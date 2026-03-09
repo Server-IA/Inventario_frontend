@@ -8,6 +8,7 @@ import com.coagronet.user.User;
 import com.coagronet.user.events.OnRegistrationCompleteEvent;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 import com.coagronet.verificationToken.TokenPurpose;
 import com.coagronet.verificationToken.repositories.VerificationTokenRepository;
 
@@ -22,6 +23,8 @@ public class UserRegistrationService {
 	private final VerificationTokenRepository verificationTokenRepository;
 
 	private final ApplicationEventPublisher publisher;
+
+	private final UsuarioEstadoRepository usuarioEstadoRepository;
 
 	@Transactional
 	public void registerUser(User user) {
@@ -44,7 +47,7 @@ public class UserRegistrationService {
 		var user = userRepository.findByUsername(vt.getEmail())
 			.orElseThrow(() -> new RuntimeException("User not found with email: " + vt.getEmail()));
 
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_INFO);
+		user.setUsuarioEstado(usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_SIN_INFO));
 		userRepository.save(user);
 
 		// ? MUY IMPORTANTE: invalidar el token tras activar
