@@ -3,6 +3,7 @@ package com.coagronet.rolpermiso.services;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.metodo.repositories.MetodoRepository;
+import com.coagronet.modulo.Modulo;
 import com.coagronet.permiso.Permiso;
 import com.coagronet.permiso.repositories.PermisoRepository;
 import com.coagronet.rolpermiso.RolPermiso;
@@ -114,35 +116,40 @@ public class RolPermisoService {
 	}
 
 	/**
-	 * Obtiene módulos agrupados con permisos filtrando por uno o varios ids de
-	 * subsistema. Devuelve lista sin paginación para selección UI a nivel de subsistema.
-	 * Útil para que el admin de empresa seleccione subsistemas y luego vea todos sus
-	 * módulos para elegir permisos individuales.
+	 * Implementa el patrón Unit of Work en modo solo lectura. Según la documentación de
+	 * Spring Data Access, readOnly = true optimiza el rendimiento al deshabilitar el
+	 * dirty-checking (flushing) de Hibernate, ahorrando CPU y memoria.
 	 */
 	@Transactional(readOnly = true)
 	public List<ModuloPermisoResponse> getModulosBySubsistemas(List<Long> subsistemaIds) {
-		List<Long> moduloIds = permisoRepository.findDistinctModuloIdsBySubsistemas(subsistemaIds);
 
-		return moduloIds.stream().map(moduloId -> {
-			List<Permiso> permisosModulo = permisoRepository.findPermisosByModuloId(moduloId);
-			if (permisosModulo.isEmpty())
-				return null;
+		// 1. Unica ida a la base de datos
+		List<Permiso> permisosAsignables = permisoRepository
+			.findPermisosActivosAdminEmpresaBySubsistemas(subsistemaIds);
 
-			Permiso primerPermiso = permisosModulo.getFirst();
-			List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisosModulo.stream()
+		// 2. Agrupación en memoria
+		Map<Modulo, List<Permiso>> permisosPorModulo = permisosAsignables.stream()
+			.collect(Collectors.groupingBy(Permiso::getModulo));
+
+		// 3. Transformación al DTO de salida
+		return permisosPorModulo.entrySet().stream().map(entry -> {
+			Modulo modulo = entry.getKey();
+			List<Permiso> permisosDelModulo = entry.getValue();
+
+			List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisosDelModulo.stream()
 				.map(p -> new ModuloPermisoResponse.PermisoDTO(p.getId(), p.getNombre(), p.getAutoridad(),
 						p.getMetodo() != null ? p.getMetodo().getNombre() : null, p.getUri()))
 				.toList();
 
 			return ModuloPermisoResponse.builder()
-				.moduloId(moduloId)
-				.moduloNombre(primerPermiso.getModulo().getNombre())
-				.moduloUrl(primerPermiso.getModulo().getUrl())
-				.moduloDescripcion(primerPermiso.getModulo().getDescripcion())
-				.moduloIcon(primerPermiso.getModulo().getIcon())
+				.moduloId(modulo.getId())
+				.moduloNombre(modulo.getNombre())
+				.moduloUrl(modulo.getUrl())
+				.moduloDescripcion(modulo.getDescripcion())
+				.moduloIcon(modulo.getIcon())
 				.permisos(permisosDTO)
 				.build();
-		}).filter(m -> m != null).toList();
+		}).sorted(Comparator.comparing(ModuloPermisoResponse::getModuloNombre)).toList();
 	}
 
 	@Transactional(readOnly = true)
