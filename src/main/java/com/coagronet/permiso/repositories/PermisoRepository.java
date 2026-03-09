@@ -134,4 +134,6 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
 			""")
 	List<Permiso> findPermisosActivosAdminEmpresaBySubsistemas(@Param("subsistemaIds") List<Long> subsistemaIds);
 
+	List<Permiso> findByIdInAndAdminEmpresaTrue(List<Long> ids);
+
 }

@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -267,20 +270,36 @@ public class RolPermisoService {
 
 	@Transactional
 	public void asignarPermisosAEmpresaRol(Long rolId, List<Long> permisoIds) {
+		if (permisoIds == null || permisoIds.isEmpty())
+			return;
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
-
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		List<Permiso> permisos = permisoRepository.findAllById(permisoIds);
+		// 1. Verificación de Roles mediante Spring Security Context
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		boolean isSystemAdmin = authentication.getAuthorities()
+			.stream()
+			.map(GrantedAuthority::getAuthority)
+			.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA") || role.equals("ADMINISTRADOR_SISTEMA"));
 
-		// Combina la validación de duplicados con el guardado en lote (saveAll) para
-		// mayor rendimiento
+		// 2. Extraer permisos válidos de DB
+		List<Permiso> permisos = isSystemAdmin ? permisoRepository.findAllById(permisoIds)
+				: permisoRepository.findByIdInAndAdminEmpresaTrue(permisoIds);
+
+		if (permisos.isEmpty())
+			return;
+
+		// 3. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
+		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
+		Set<Long> permisosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
+
+		// 4. Filtrado en memoria y construcción de Entidades
 		List<RolPermiso> nuevosPermisos = permisos.stream()
-			.filter(permiso -> !rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(),
-					permiso.getId()))
+			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
 			.map(permiso -> RolPermiso.builder()
 				.empresaRol(empresaRol)
 				.permiso(permiso)
@@ -288,8 +307,9 @@ public class RolPermisoService {
 				.createdBy(currentUser)
 				.createdAt(Instant.now())
 				.build())
-			.collect(Collectors.toList());
+			.toList();
 
+		// 5. Inserción por lotes (Unit of Work via @Transactional)
 		if (!nuevosPermisos.isEmpty()) {
 			rolPermisoRepository.saveAll(nuevosPermisos);
 		}
