@@ -14,7 +14,7 @@ import com.coagronet.kardex.dtos.KardexDTO;
 
 public interface KardexRepository extends JpaRepository<Kardex, Long> {
 
-	@Query("""
+	@Query(value = """
 			    SELECT new com.coagronet.kardex.dtos.KardexDTO(
 			        k.id, k.fechaHora, a.id, p.id, tm.id,
 			        k.descripcion, ped.id, oc.id, est.id,
@@ -30,6 +30,10 @@ public interface KardexRepository extends JpaRepository<Kardex, Long> {
 			    LEFT JOIN k.ordenCompra oc
 			    LEFT JOIN k.clienteProveedor cp
 			    WHERE emp.id = :empresaId
+			""", countQuery = """
+			    SELECT COUNT(k.id)
+			    FROM Kardex k
+			    WHERE k.empresa.id = :empresaId
 			""")
 	Page<KardexDTO> findDtoByEmpresaIdOrderByIdAsc(@Param("empresaId") Long empresaId, Pageable pageable);
 
@@ -68,5 +72,10 @@ public interface KardexRepository extends JpaRepository<Kardex, Long> {
 	Optional<Long> findEstadoIdByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
 	Kardex getReferenceByIdAndEmpresaId(Long id, Long empresaId);
+
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("UPDATE Kardex k SET k.estado.id = :estadoInactivoId WHERE k.id = :kardexId AND k.estado.id = :estadoActivoId AND k.empresa.id = :empresaId")
+	int inactivarKardex(@Param("kardexId") Long kardexId, @Param("empresaId") Long empresaId,
+			@Param("estadoActivoId") Long estadoActivoId, @Param("estadoInactivoId") Long estadoInactivoId);
 
 }

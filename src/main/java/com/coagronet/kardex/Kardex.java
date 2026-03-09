@@ -41,6 +41,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "kardex",
 		indexes = { @Index(name = "idx_kardex_almacen_id", columnList = "kar_almacen_id"),
+				@Index(name = "idx_kardex_almacen_destino", columnList = "kar_almacen_destino_id"),
 				@Index(name = "idx_kardex_empresa_id", columnList = "kar_empresa_id"),
 				@Index(name = "idx_kardex_orden_compra_id", columnList = "kar_orden_compra_id"),
 				@Index(name = "idx_kardex_pedido_id", columnList = "kar_pedido_id"),
@@ -53,12 +54,17 @@ public class Kardex {
 	@Column(name = "kar_id", nullable = false, updatable = false)
 	private Long id;
 
+	@Builder.Default
 	@Column(name = "kar_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private OffsetDateTime fechaHora;
+	private OffsetDateTime fechaHora = OffsetDateTime.now();
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_almacen_id", referencedColumnName = "alm_id", nullable = false)
 	private Almacen almacen;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_almacen_destino_id", referencedColumnName = "alm_id")
+	private Almacen almacenDestino;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_produccion_id", referencedColumnName = "pro_id", nullable = false)
@@ -76,7 +82,7 @@ public class Kardex {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false)
+	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false, updatable = false)
 	private Empresa empresa;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -97,20 +103,19 @@ public class Kardex {
 	@Column(name = "kar_seg_username", length = 150, updatable = false)
 	private String username;
 
-	@Column(name = "kar_seg_rol", length = 100)
+	@Column(name = "kar_seg_rol", length = 100, updatable = false)
 	private String rol;
 
-	@Column(name = "kar_seg_ip", columnDefinition = "inet")
+	@Column(name = "kar_seg_ip", columnDefinition = "inet", updatable = false)
 	private String ip;
 
-	@Column(name = "kar_seg_host", length = 255)
+	@Column(name = "kar_seg_host", length = 255, updatable = false)
 	private String host;
 
 	@CreatedDate
 	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
 	private OffsetDateTime segFechaHora;
 
-	// Métodos equals y hashCode
 	@Override
 	public final boolean equals(Object o) {
 		if (this == o)
