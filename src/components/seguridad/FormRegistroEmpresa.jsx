@@ -9,6 +9,7 @@ import axios from '../axiosConfig.js';
 import { useNavigate } from 'react-router-dom';
 import { validateCamposBase } from "../utils/validations";
 
+
 // helper para leer estado desde un JWT si te lo devuelven
 const decodeJwt = (jwt) => {
   try {
@@ -60,6 +61,8 @@ export default function FormRegistroEmpresa(props) {
   const [error, setError] = React.useState('');
   const [success, setSuccess] = React.useState('');
   const [fieldErrors, setFieldErrors] = React.useState({});
+  const [sessionExpired, setSessionExpired] = React.useState(false);
+  const [mustRelogin, setMustRelogin] = React.useState(false);
 
   // ---- Tipos de identificación desde backend ----
   const [tiposIdent, setTiposIdent] = React.useState([]);
@@ -86,6 +89,19 @@ export default function FormRegistroEmpresa(props) {
     return () => { mounted = false; };
   }, []);
 
+  React.useEffect(() => {
+  const expiration = localStorage.getItem("token_expiration");
+
+  if (!expiration || Date.now() > Number(expiration)) {
+    setSessionExpired(true);
+
+    setTimeout(() => {
+      localStorage.clear();
+      navigate("/login");
+    }, 10000);
+    }
+  }, [navigate]);
+
   // ===== Validación integral (usa validateCamposBase + reglas de negocio) =====
   const validateAll = (raw) => {
     const e = {};
@@ -94,7 +110,7 @@ export default function FormRegistroEmpresa(props) {
     const base = validateCamposBase({
       nombre: raw.nombre ?? "",
       descripcion: raw.descripcion ?? "",
-      estado: raw.estadoId ?? 1,
+      estado: 1,
     });
     if (base.nombre) e.nombre = base.nombre;
     if (base.descripcion) e.descripcion = base.descripcion;
@@ -142,7 +158,7 @@ export default function FormRegistroEmpresa(props) {
       if (!/^\d+$/.test(identificacion)) e.identificacion = "Para Cédula, sólo números.";
     }
 
-    if (![1,2].includes(estadoId)) e.estadoId = "Debe seleccionar un estado válido.";
+  
 
     return e;
   };
@@ -156,63 +172,63 @@ export default function FormRegistroEmpresa(props) {
   };
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const formJson = Object.fromEntries(formData.entries());
+  event.preventDefault();
 
-    // valida todo
-    const e = validateAll(formJson);
-    setFieldErrors(e);
-    if (Object.keys(e).length > 0) {
-      setError(e._security || "Corrige los campos marcados.");
-      setSuccess('');
-      return; // ⛔️ NO enviar si hay errores
+  const formData = new FormData(event.currentTarget);
+  const formJson = Object.fromEntries(formData.entries());
+
+  // validar formulario
+  const e = validateAll(formJson);
+  setFieldErrors(e);
+
+  if (Object.keys(e).length > 0) {
+    setError(e._security || "Corrige los campos marcados.");
+    return;
+  }
+
+  // transformar datos
+  formJson.tipoIdentificacionId = parseInt(formJson.tipoIdentificacionId);
+  formJson.estadoId = 1;
+  formJson.personaId = props.personaId;
+
+  const token = localStorage.getItem("token");
+
+  try {
+    const response = await axios.post(url, formJson, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // guardar nuevo token si el backend lo envía
+    const { token: newToken } = response.data || {};
+
+    if (newToken) {
+      const { exp } = decodeJwt(newToken);
+      const expiration = exp ? exp * 1000 : Date.now() + 3 * 60 * 60 * 1000;
+
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("token_expiration", String(expiration));
     }
 
-    // transformaciones
-    formJson.tipoIdentificacionId = parseInt(formJson.tipoIdentificacionId);
-    formJson.estadoId = parseInt(formJson.estadoId);
-    formJson.personaId = props.personaId;
+    // limpiar errores
+    setError("");
 
-    const token = localStorage.getItem('token');
+    // mostrar mensaje de cierre de sesión
+    setMustRelogin(true);
 
-    try {
-      const response = await axios.post(url, formJson, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    // cerrar sesión después de 10 segundos
+    setTimeout(() => {
+      localStorage.clear();
+      navigate("/login");
+    }, 10000);
 
-      setError('');
-      setSuccess('Empresa creada con éxito');
+    return;
 
-      const { usuarioEstado, estado, token: newToken } = response.data || {};
-      if (newToken) {
-        const { exp } = decodeJwt(newToken);
-        const expiration = exp ? exp * 1000 : Date.now() + 3 * 60 * 60 * 1000;
-        localStorage.setItem('token', newToken);
-        localStorage.setItem('token_expiration', String(expiration));
-      }
-
-      const estadoJwt = decodeJwt(newToken || token)?.estado;
-      const candidatos = [estado, usuarioEstado, estadoJwt];
-      const primeroValido = candidatos.find(v => Number.isFinite(Number(v)));
-      const nextEstado = typeof primeroValido !== 'undefined' ? Number(primeroValido) : 4;
-
-      if (nextEstado === 4) {
-        localStorage.removeItem('activeModule');
-        props.setIsAuthenticated?.(true);
-        navigate('/coagronet/', { replace: true });
-        return;
-      }
-
-      localStorage.setItem('activeModule', 'form_registro_empresa');
-      props.setIsAuthenticated?.(false);
-    } catch (e) {
-      console.error('Error al crear la empresa:', e);
-      const message = e.response?.data?.message || 'No se pudo crear la empresa.';
-      setError(message);
-      setSuccess('');
-    }
-  };
+  } catch (e) {
+    console.error("Error al crear la empresa:", e);
+    const message = e.response?.data?.message || "No se pudo crear la empresa.";
+    setError(message);
+  }
+};
 
   return (
     <Container
@@ -240,9 +256,29 @@ export default function FormRegistroEmpresa(props) {
           maxWidth: 990,
         }}
       >
+      {mustRelogin && (
+         <Box
+            sx={{
+              backgroundColor: "#1e4620",
+              color: "white",
+              padding: 2,
+              borderRadius: 2,
+              textAlign: "center",
+              fontSize: 18,
+              fontWeight: 500,
+              mb: 2
+            }}
+          >
+          La empresa fue creada correctamente.
+          <br />
+          Por seguridad debes cerrar sesión y volver a iniciar.
+          <br />
+          El sistema cerrará tu sesión automáticamente en unos segundos.
+        </Box>
+      )}
         {!!error && <Alert severity="error">{error}</Alert>}
         {!!success && <Alert severity="success">{success}</Alert>}
-
+        {!mustRelogin && (
         <form onSubmit={handleSubmit}>
           <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 700 }}>
             Formulario Empresa
@@ -381,24 +417,6 @@ export default function FormRegistroEmpresa(props) {
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
-                required
-                fullWidth
-                id="estadoId"
-                name="estadoId"
-                label="Estado"
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                defaultValue={props.selectedRow?.estadoId || 1}
-                error={!!fieldErrors.estadoId}
-                helperText={fieldErrors.estadoId}
-              >
-                <MenuItem value={1}>Activo</MenuItem>
-                <MenuItem value={2}>Inactivo</MenuItem>
-              </TextField>
-            </Grid>
           </Grid>
 
           <Box sx={{ mt: 3 }}>
@@ -407,6 +425,7 @@ export default function FormRegistroEmpresa(props) {
             </Button>
           </Box>
         </form>
+        )}
       </Box>
     </Container>
   );

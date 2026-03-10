@@ -1,4 +1,3 @@
-// src/components/empresaRolSystem/FormEmpresaRolsystem.jsx
 import * as React from "react";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
@@ -7,387 +6,371 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
+  Box,
+  CircularProgress,
+  Divider,
   Typography,
-  Stack,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
-import StackButtons from "../StackButtons";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function FormEmpresaRolSystem({
-  selectedRow,
-  setSelectedRow,
   setMessage,
   reloadData,
   open,
   setOpen,
-  empresas = [],
   roles = [],
+  selectedRow,
 }) {
-  const [methodName, setMethodName] = React.useState("Agregar");
 
   const initialData = {
-    empresaId: "", // string
-    rolId: "", // string
+    rolId: "",
+    estadoId: 1,
   };
 
   const [formData, setFormData] = React.useState(initialData);
+  const [empresaRolId, setEmpresaRolId] = React.useState(null);
+  const [modulos, setModulos] = React.useState([]);
+  const [seleccion, setSeleccion] = React.useState({});
+  const [loading, setLoading] = React.useState(false);
+  const [loadingModulos, setLoadingModulos] = React.useState(false);
   const [errors, setErrors] = React.useState({});
 
-  // Si NO te pasan empresas/roles por props, las cargamos aquí (usando items)
-  const [empresasLocal, setEmpresasLocal] = React.useState([]);
-  const [rolesLocal, setRolesLocal] = React.useState([]);
+  const isEditMode = Boolean(selectedRow);
 
-  const empresasList = empresas?.length ? empresas : empresasLocal;
-  const rolesList = roles?.length ? roles : rolesLocal;
+  /* ==============================
+     EMPRESA DESDE TOKEN
+  ============================== */
+  const getEmpresaIdFromToken = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
 
-  const isEdit = methodName === "Actualizar";
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.empresaId ?? null;
+    } catch {
+      return null;
+    }
+  };
 
-  // --------- Cargar items (si no vienen por props) ----------
-  React.useEffect(() => {
-    const loadItems = async () => {
-      try {
-        if (!empresas?.length) {
-          const rEmp = await axios.get("/v1/items/empresa/0");
-          setEmpresasLocal(Array.isArray(rEmp.data) ? rEmp.data : []);
-        }
-        if (!roles?.length) {
-          const rRol = await axios.get("/v1/items/rol/0");
-          setRolesLocal(Array.isArray(rRol.data) ? rRol.data : []);
-        }
-      } catch (err) {
-        console.error(err);
-        // no bloquea el form, pero avisamos
-        setMessage?.({
-          open: true,
-          severity: "warning",
-          text: "No se pudieron cargar empresas/roles (items).",
-        });
-      }
-    };
-
-    loadItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // --------- Precargar datos al abrir ----------
+  /* ==============================
+     CARGAR DATOS EN EDICIÓN
+  ============================== */
   React.useEffect(() => {
     if (!open) return;
 
-    if (selectedRow?.id) {
-      // Intentar obtener ids desde el row o mapear por nombre
-      const empresaFromRowName = empresasList.find((e) => {
-        const nombre = e.name ?? e.nombre ?? e.empresaNombre;
-        return nombre === selectedRow.empresaNombre;
-      });
-
-      const rolFromRowName = rolesList.find((r) => {
-        const nombre = r.name ?? r.nombre ?? r.rolNombre;
-        return nombre === selectedRow.rolNombre;
-      });
-
-      const empresaId =
-        selectedRow.empresaId ??
-        selectedRow.empresa?.id ??
-        empresaFromRowName?.id ??
-        "";
-
-      const rolId =
-        selectedRow.rolId ??
-        selectedRow.rol?.id ??
-        rolFromRowName?.id ??
-        "";
+    if (isEditMode && selectedRow) {
+      const rolEncontrado = roles.find(
+        (r) =>
+          r.id === selectedRow.rolId ||
+          r.nombre === selectedRow.rolNombre ||
+          r.name === selectedRow.rolNombre
+      );
 
       setFormData({
-        empresaId: empresaId ? String(empresaId) : "",
-        rolId: rolId ? String(rolId) : "",
+        rolId: rolEncontrado?.id || "",
+        estadoId: selectedRow.estadoId ?? 1,
       });
 
-      setMethodName("Actualizar");
+      setEmpresaRolId(selectedRow.id);
+      cargarModulos();
+
     } else {
       setFormData(initialData);
-      setMethodName("Agregar");
+      setEmpresaRolId(null);
+      setModulos([]);
+      setSeleccion({});
     }
 
     setErrors({});
-  }, [open, selectedRow, empresasList, rolesList]);
+  }, [open, selectedRow, roles]);
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedRow(null);
     setFormData(initialData);
+    setEmpresaRolId(null);
+    setModulos([]);
+    setSeleccion({});
     setErrors({});
   };
 
-  // ✅ handlers explícitos (evita problemas de name/type)
-  const handleEmpresaChange = (e) => {
-    setFormData((p) => ({ ...p, empresaId: String(e.target.value) }));
-    setErrors((p) => ({ ...p, empresaId: "" }));
-  };
+  /* ==============================
+     CREAR EMPRESA-ROL
+  ============================== */
+  const handleCrear = async () => {
+    const empresaId = getEmpresaIdFromToken();
 
-  const handleRolChange = (e) => {
-    setFormData((p) => ({ ...p, rolId: String(e.target.value) }));
-    setErrors((p) => ({ ...p, rolId: "" }));
-  };
-
-  const validate = () => {
-    const e = {};
-    if (!formData.empresaId) e.empresaId = "La empresa es obligatoria.";
-    if (!formData.rolId) e.rolId = "El rol es obligatorio.";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  // ✅ Guardar (sin /api)
-  const handleSubmit = async (ev) => {
-    ev.preventDefault();
-    if (!validate()) return;
-
-    const creating = methodName === "Agregar";
-
-    // Crear: empresaId + rolId
-    // Editar: SOLO rolId (estado NO se cambia por PUT, se cambia por PATCH toggleEstado)
-    const payload = creating
-      ? {
-          empresaId: Number(formData.empresaId),
-          rolId: Number(formData.rolId),
-        }
-      : {
-          rolId: Number(formData.rolId),
-        };
-
-    const url = creating
-      ? "/v1/system/empresa-rol"
-      : `/v1/system/empresa-rol/${selectedRow.id}`;
+    if (!formData.rolId) {
+      setErrors({ rolId: "El rol es obligatorio." });
+      return;
+    }
 
     try {
-      await (creating ? axios.post : axios.put)(url, payload);
+      setLoading(true);
+
+      const res = await axios.post("/v1/system/empresa-rol", {
+        empresaId: Number(empresaId),
+        rolId: Number(formData.rolId),
+      });
+
+      const nuevoId = res.data?.id;
+      setEmpresaRolId(nuevoId);
 
       setMessage({
         open: true,
         severity: "success",
-        text: creating
-          ? "Empresa-Rol creado correctamente"
-          : "Empresa-Rol actualizado correctamente",
+        text: "Rol creado. Ahora asigna módulos.",
       });
 
-      handleClose();
-      reloadData();
+      await cargarModulos();
+
     } catch (err) {
-      console.error(err);
       setMessage({
         open: true,
         severity: "error",
-        text:
-          err?.response?.data?.message ||
-          "Error al guardar el registro empresa-rol",
+        text: err?.response?.data?.message || "Error al crear",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-// ✅ ELIMINAR = INACTIVAR (soft delete)
-const deleteRow = async () => {
-  if (!selectedRow?.id) {
-    return setMessage({
-      open: true,
-      severity: "error",
-      text: "Selecciona un registro para inactivar",
-    });
-  }
-
-  // Detectar si está activo (según nombre o id)
-  const estadoNombre = String(selectedRow?.estadoNombre ?? "").toLowerCase();
-  const estadoId = selectedRow?.estadoId;
-
-  const isActivo =
-    estadoNombre === "activo" ||
-    estadoNombre === "activa" ||
-    estadoId === 1 ||
-    estadoId === "1" ||
-    estadoId === true;
-
-  if (!isActivo) {
-    return setMessage({
-      open: true,
-      severity: "info",
-      text: "Este registro ya está INACTIVO.",
-    });
-  }
-
-  if (!window.confirm(`¿Inactivar el registro con id "${selectedRow.id}"?`)) return;
-
-  try {
-    // PATCH toggleEstado (sin /api)
-    await axios.patch(`/v1/system/empresa-rol/toggleEstado/${selectedRow.id}`, {});
-
-    setMessage({
-      open: true,
-      severity: "success",
-      text: "Registro inactivado correctamente",
-    });
-
-    // ✅ NO cierres el modal necesariamente; pero refrescamos la grilla
-    reloadData();
-  } catch (err) {
-    console.error(err);
-    setMessage({
-      open: true,
-      severity: "error",
-      text: err?.response?.data?.message || "No se pudo inactivar el registro",
-    });
-  }
-};
-
-  // ✅ Cambiar estado: PATCH toggleEstado/{id} (sin body o con {} para evitar 400)
-  const toggleEstado = async () => {
-    if (!selectedRow?.id) {
-      return setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona un registro para cambiar el estado",
-      });
-    }
+  /* ==============================
+     ACTUALIZAR
+  ============================== */
+  const handleUpdate = async () => {
+    const empresaId = getEmpresaIdFromToken();
 
     try {
-      await axios.patch(
-        `/v1/system/empresa-rol/toggleEstado/${selectedRow.id}`,
-        {} // 🔥 body vacío (muchos backends requieren {} y fallan con null)
+      setLoading(true);
+
+      await axios.put(
+        `/v1/system/empresa-rol/${selectedRow.id}`,
+        {
+          empresaId: Number(empresaId),
+          rolId: Number(formData.rolId),
+          estadoId: Number(formData.estadoId),
+        }
       );
 
       setMessage({
         open: true,
         severity: "success",
-        text: "Estado alternado correctamente",
+        text: "Registro actualizado correctamente",
       });
 
-      // refrescar data (y si el modal está abierto, refresca la grilla igualmente)
+      handleClose();
       reloadData();
+
     } catch (err) {
-      console.error(err);
       setMessage({
         open: true,
         severity: "error",
-        text:
-          err?.response?.data?.message ||
-          "No se pudo alternar el estado (toggleEstado)",
+        text: err?.response?.data?.message || "Error al actualizar",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ==============================
+     OBTENER MÓDULOS
+  ============================== */
+const cargarModulos = async () => {
+  try {
+    setLoadingModulos(true);
+
+    const res = await axios.get(
+      "/v1/empresa-rol-permisos/modulos-disponibles",
+      {
+        params: {
+          page: 0,
+          size: 20,
+        },
+      }
+    );
+
+    console.log("MODULOS OK:", res.data);
+
+    setModulos(res.data?.content ?? []);
+
+  } catch (err) {
+    console.error("ERROR MODULOS FULL:", err);
+
+    setMessage({
+      open: true,
+      severity: "error",
+      text: err?.response?.data?.message || "Error al cargar módulos",
+    });
+
+    setModulos([]);
+  } finally {
+    setLoadingModulos(false);
+  }
+};
+
+  /* ==============================
+     CHECKBOX
+  ============================== */
+  const handleCheck = (moduloId) => {
+    setSeleccion((prev) => ({
+      ...prev,
+      [moduloId]: !prev[moduloId],
+    }));
+  };
+
+  /* ==============================
+     ASIGNAR MÓDULOS
+  ============================== */
+  const handleAsignarModulos = async () => {
+    const modulosIds = Object.entries(seleccion)
+      .filter(([_, checked]) => checked)
+      .map(([id]) => Number(id));
+
+    if (!modulosIds.length) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona al menos un módulo",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await axios.post(
+        `/v1/empresa-rol-permisos/${empresaRolId}/asignar-modulos-permisos`,
+        { modulosIds }
+      );
+
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Permisos asignados correctamente",
+      });
+
+      handleClose();
+      reloadData();
+
+    } catch (err) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: err?.response?.data?.message || "Error al asignar permisos",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      {/* ✅ Botonera superior */}
-      <StackButtons
-        methods={{
-          create: () => {
-            setMethodName("Agregar");
-            setSelectedRow(null);
-            setFormData(initialData);
-            setErrors({});
-            setOpen(true);
-          },
-          update: () => {
-            if (!selectedRow?.id) {
-              return setMessage({
-                open: true,
-                severity: "error",
-                text: "Selecciona un registro",
-              });
-            }
-            setMethodName("Actualizar");
-            setErrors({});
-            setOpen(true);
-          },
-          deleteRow,
-          toggleEstado, // ✅ nuevo
-        }}
-      />
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
+      <DialogTitle>
+        {isEditMode ? "Actualizar Empresa-Rol" : "Crear Empresa-Rol"}
+      </DialogTitle>
 
-      {/* ✅ Modal */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <form onSubmit={handleSubmit}>
-          <DialogTitle>{methodName} Empresa-Rol</DialogTitle>
+      <DialogContent dividers>
 
-          <DialogContent>
-            <DialogContentText>
-              Formulario para asignar roles a empresas
-            </DialogContentText>
-
-            {/* Empresa: en editar NO se cambia */}
-            <FormControl fullWidth margin="dense" error={!!errors.empresaId}>
-              <InputLabel id="empresaId-label">Empresa</InputLabel>
+        {!empresaRolId && (
+          <>
+            <FormControl fullWidth error={!!errors.rolId}>
+              <InputLabel>Rol</InputLabel>
               <Select
-                labelId="empresaId-label"
-                label="Empresa"
-                value={formData.empresaId}
-                onChange={handleEmpresaChange}
-                disabled={isEdit}
-              >
-                {empresasList.map((e) => (
-                  <MenuItem key={e.id} value={String(e.id)}>
-                    {e.name ?? e.nombre ?? e.empresaNombre ?? e.id}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{errors.empresaId}</FormHelperText>
-            </FormControl>
-
-            {/* Rol: editable */}
-            <FormControl fullWidth margin="dense" error={!!errors.rolId}>
-              <InputLabel id="rolId-label">Rol</InputLabel>
-              <Select
-                labelId="rolId-label"
-                label="Rol"
                 value={formData.rolId}
-                onChange={handleRolChange}
+                label="Rol"
+                onChange={(e) =>
+                  setFormData({ ...formData, rolId: e.target.value })
+                }
               >
-                {rolesList.map((r) => (
-                  <MenuItem key={r.id} value={String(r.id)}>
-                    {r.name ?? r.nombre ?? r.rolNombre ?? r.id}
+                {roles.map((r) => (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.nombre ?? r.name}
                   </MenuItem>
                 ))}
               </Select>
               <FormHelperText>{errors.rolId}</FormHelperText>
             </FormControl>
 
-            {/* Estado: NO se edita por PUT, se cambia por toggleEstado */}
-            {isEdit && (
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ opacity: 0.85 }}>
-                  Estado actual: <b>{selectedRow?.estadoNombre ?? "—"}</b>
-                </Typography>
+            <Box mt={3}>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleCrear}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={20} /> : "Crear"}
+              </Button>
+            </Box>
+          </>
+        )}
 
-                <Button variant="outlined" onClick={toggleEstado}>
-                  Cambiar estado
-                </Button>
-              </Stack>
-            )}
-          </DialogContent>
+        {empresaRolId && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              Selecciona Módulos
+            </Typography>
 
-          <DialogActions>
-            <Button onClick={handleClose}>Cancelar</Button>
-            <Button type="submit" variant="contained">
-              {methodName}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </>
+            {loadingModulos && <CircularProgress size={24} />}
+
+            {!loadingModulos &&
+              modulos.map((modulo) => (
+                <Accordion key={modulo.id}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{modulo.nombre}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={seleccion[modulo.id] || false}
+                          onChange={() => handleCheck(modulo.id)}
+                        />
+                      }
+                      label="Asignar todos los permisos"
+                    />
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+
+            <Box mt={3}>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleAsignarModulos}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={20} /> : "Asignar Permisos"}
+              </Button>
+            </Box>
+          </>
+        )}
+
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleClose}>Cancelar</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
 FormEmpresaRolSystem.propTypes = {
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func.isRequired,
   setMessage: PropTypes.func.isRequired,
   reloadData: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
-  empresas: PropTypes.array,
   roles: PropTypes.array,
+  selectedRow: PropTypes.object,
 };

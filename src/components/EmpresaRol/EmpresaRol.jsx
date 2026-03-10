@@ -1,27 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
+} from "@mui/material";
 import axios from "../axiosConfig";
-import { Box, Stack, Typography, Button } from "@mui/material";
-import AddRounded from "@mui/icons-material/AddRounded";
-
-import GridEmpresaRol from "./GridEmpresaRol.jsx";
+import { Box, Button } from "@mui/material";
+import MessageSnackBar from "../MessageSnackBar.jsx";
 import FormEmpresaRol from "./FormEmpresaRol.jsx";
-import MessageSnackBar from "../MessageSnackBar";
-
-const toArray = (data) =>
-  Array.isArray(data)
-    ? data
-    : Array.isArray(data?.content)
-    ? data.content
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+import GridEmpresaRol from "./GridEmpresaRol.jsx";
+import ModalVerPermisos from "./ModalVerPermisos";
+import StackButtons from "../StackButtons";
 
 export default function EmpresaRol() {
+  const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState([]);
-  const [roles, setRoles] = useState([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [modalPermisosOpen, setModalPermisosOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [openForm, setOpenForm] = useState(false);
+  const [roles, setRoles] = useState([]);
 
   const [message, setMessage] = useState({
     open: false,
@@ -29,167 +27,246 @@ export default function EmpresaRol() {
     text: "",
   });
 
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState({
-    id: true,
-    empresaNombre: true,
-    rolNombre: true,
-    estadoNombre: true,
-    acciones: true,
-  });
+  const empresaId = Number(localStorage.getItem("empresaId"));
+  const [confirmOpen, setConfirmOpen] = useState(false);
+ const reloadData = useCallback(async () => {
+  try {
+    setLoading(true);
 
-  /* =========== Cargar datos =========== */
-  const loadEmpresaRoles = async () => {
-    try {
-      setLoading(true);
-      // SIN /api, igual que UsuarioRol
-      const resp = await axios.get("v1/empresa-rol", {
-        params: { page: 0, size: 1000 },
-      });
-      setRows(toArray(resp.data));
-    } catch (error) {
-      console.error("Error cargando empresa-rol", error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error cargando empresa-rol",
-      });
-    } finally {
-      setLoading(false);
+    //  Cargar empresa-rol
+    const resEmpresaRol = await axios.get("/v1/empresa-rol");
+    const empresaRoles = resEmpresaRol.data;
+
+    //  Cargar catálogo roles
+    const resRoles = await axios.get("/v1/items/rol/0");
+    const rolesCatalogo = resRoles.data;
+
+    const enriched = await Promise.all(
+      empresaRoles.map(async (empresaRol) => {
+
+        //  Buscar rolId por nombre
+        const rolBase = rolesCatalogo.find(
+          r => r.name === empresaRol.rolNombre
+        );
+
+        if (!rolBase) {
+          return { ...empresaRol, permisos: [] };
+        }
+
+        try {
+          const permisosRes = await axios.get(
+            `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
+          );
+
+          return {
+            ...empresaRol,
+            permisos: permisosRes.data || [],
+          };
+
+        } catch {
+          return {
+            ...empresaRol,
+            permisos: [],
+          };
+        }
+      })
+    );
+
+    setRows(enriched);
+
+  } catch (error) {
+    console.error(error);
+    setRows([]);
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+  // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
+          const loadRoles = useCallback(async () => {
+            try {
+              const rolRes = await axios.get("/v1/items/rol/0");
+
+              const list = Array.isArray(rolRes?.data)
+                ? rolRes.data
+                : Array.isArray(rolRes?.data?.content)
+                ? rolRes.data.content
+                : [];
+
+              setRoles(list);
+            } catch (err) {
+              console.error("Error cargando roles catálogo:", err);
+              setRoles([]);
+            }
+          }, []);
+
+          useEffect(() => {
+            reloadData();
+            loadRoles();
+          }, [reloadData, loadRoles]);
+          
+const confirmarEliminacion = async () => {
+  try {
+    setLoading(true);
+
+    const resRoles = await axios.get("/v1/items/rol/0");
+    const rolBase = resRoles.data.find(
+      r => r.name === selectedRow.rolNombre
+    );
+
+    if (!rolBase) throw new Error("Rol base no encontrado");
+
+    const rolId = rolBase.id;
+
+    const permisosRes = await axios.get(
+      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+    );
+
+    const permisos = permisosRes.data || [];
+    const permisosIds = permisos.map(p => p.id);
+
+    if (permisosIds.length > 0) {
+      await axios.delete(
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+        {
+          data: { permisosId: permisosIds }
+        }
+      );
     }
-  };
 
-  const loadRoles = async () => {
-    try {
-      // Catálogo de roles sin /api
-      const resp = await axios.get("v1/items/rol/0");
-      setRoles(toArray(resp.data));
-    } catch (error) {
-      console.error("Error cargando roles", error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error cargando la lista de roles",
-      });
-    }
-  };
+    await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
 
-  useEffect(() => {
-    loadEmpresaRoles();
-    loadRoles();
-  }, []);
-
-  /* =========== Handlers =========== */
-
-  const handleOpenForm = () => {
-    setOpenForm(true);
-  };
-
-  const handleCloseForm = () => {
-    setOpenForm(false);
-  };
-
-  const handleCreate = async (rolId) => {
-    if (!rolId) {
-      setMessage({
-        open: true,
-        severity: "warning",
-        text: "Debes seleccionar un rol",
-      });
-      return;
-    }
-
-    try {
-      // SIN /api
-      await axios.post("v1/empresa-rol", { rolId });
-
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Rol asignado a la empresa correctamente",
-      });
-
-      handleCloseForm();
-      loadEmpresaRoles();
-    } catch (error) {
-      console.error("Error creando empresa-rol", error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al asignar el rol a la empresa",
-      });
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este registro?")) return;
-
-    try {
-      // SIN /api
-      await axios.delete(`v1/empresa-rol/${id}`);
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Registro eliminado correctamente",
-      });
-      loadEmpresaRoles();
-    } catch (error) {
-      console.error("Error eliminando empresa-rol", error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al eliminar el registro",
-      });
-    }
-  };
-
-  const handleResetColumns = () => {
-    setColumnVisibilityModel({
-      id: true,
-      empresaNombre: true,
-      rolNombre: true,
-      estadoNombre: true,
-      acciones: true,
+    setMessage({
+      open: true,
+      severity: "success",
+      text: "Rol y permisos eliminados correctamente",
     });
-  };
 
-  /* =========== Render =========== */
+    reloadData();
 
-  return (
-    <Box sx={{ p: 2 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
-        <Typography variant="h6">Empresa – Roles</Typography>
+  } catch (error) {
+    setMessage({
+      open: true,
+      severity: "error",
+      text: "Error al eliminar. Revisa dependencias o permisos.",
+    });
+  } finally {
+    setLoading(false);
+    setConfirmOpen(false);
+  }
+};
 
-        <Button
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={handleOpenForm}
+          return (
+            <div>
+              <h1>Roles de Empresa</h1>
+
+              <MessageSnackBar message={message} setMessage={setMessage} />
+              <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
         >
-          Asignar rol a empresa
-        </Button>
-      </Stack>
 
-      <MessageSnackBar message={message} setMessage={setMessage} />
+          {/* IZQUIERDA (si quieres dejar vacío o título secundario) */}
+          <Box />
+
+          {/* DERECHA: Botones */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+
+            <Button
+              variant="outlined"
+              onClick={() => {
+                if (!selectedRow?.id) {
+                  return setMessage({
+                    open: true,
+                    severity: "warning",
+                    text: "Selecciona un rol primero",
+                  });
+                }
+
+                setModalPermisosOpen(true);
+              }}
+            >
+              Ver permisos
+            </Button>
+
+            <StackButtons
+              methods={{
+                create: () => {
+                  setSelectedRow(null);
+                  setFormOpen(true);
+                },
+                update: () => {
+                  if (!selectedRow?.id)
+                    return setMessage({
+                      open: true,
+                      severity: "warning",
+                      text: "Selecciona una fila",
+                    });
+
+                  setFormOpen(true);
+                },
+deleteRow: () => {
+  if (!selectedRow?.id)
+    return setMessage({
+      open: true,
+      severity: "warning",
+      text: "Selecciona una fila",
+    });
+
+  setConfirmOpen(true); // SOLO abre el modal
+}
+              }}
+            />
+
+          </Box>
+        </Box>
+          
+      <FormEmpresaRol
+        open={formOpen}
+        setOpen={setFormOpen}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        setMessage={setMessage}
+        reloadData={reloadData}
+        roles={roles}
+        empresaId={empresaId}
+      />
+
+      <ModalVerPermisos
+        open={modalPermisosOpen}
+        onClose={() => setModalPermisosOpen(false)}
+        permisos={selectedRow?.permisos || []}
+        rolNombre={selectedRow?.rolNombre}
+      />
 
       <GridEmpresaRol
         rows={rows}
         loading={loading}
-        onDelete={handleDelete}
-        columnVisibilityModel={columnVisibilityModel}
-        setColumnVisibilityModel={setColumnVisibilityModel}
-        onResetColumns={handleResetColumns}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
       />
-
-      <FormEmpresaRol
-        open={openForm}
-        onClose={handleCloseForm}
-        roles={roles}
-        onSubmit={handleCreate}
-      />
-    </Box>
+<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+  <DialogTitle>Confirmar eliminación</DialogTitle>
+  <DialogContent>
+    ¿Está seguro que desea eliminar este rol y todos sus permisos?
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setConfirmOpen(false)}>
+      Cancelar
+    </Button>
+    <Button
+      color="error"
+      variant="contained"
+      onClick={confirmarEliminacion}
+    >
+      Eliminar
+    </Button>
+  </DialogActions>
+</Dialog>
+    </div>
   );
 }

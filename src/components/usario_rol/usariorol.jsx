@@ -1,79 +1,94 @@
-// src/components/usuarioRol/UsuarioRol.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
-import FormUsuarioRol from "./FormUsuarioRol.jsx";
-import GridUsuarioRol from "./GridUsuarioRol.jsx";
-
-const ESTADOS_USUARIO_ROL = [
-  { id: 1, nombre: "Activo" },
-  { id: 2, nombre: "Inactivo" },
-];
+import FormUsuarioRol from "./FormUsuarioRol";
+import GridUsuarioRol from "./GridUsuarioRol";
+import { Paper, Typography } from "@mui/material";
 
 export default function UsuarioRol() {
   const [selectedRow, setSelectedRow] = useState({});
-  const [message, setMessage] = useState({
-    open: false,
-    severity: "success",
-    text: "",
-  });
+  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+
   const [rows, setRows] = useState([]);
-  const [formOpen, setFormOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const reloadData = useCallback(async () => {
+  const reloadData = async (pageArg = page, sizeArg = pageSize) => {
+    const token = localStorage.getItem("token");
+    const headers = { headers: { Authorization: `Bearer ${token}` } };
+
     try {
       setLoading(true);
-
-      const res = await axios.get("v1/usuario-roles", {
-        params: { page: 0, size: 1000 },
+      const { data } = await axios.get("/v1/usuario-roles", {
+        ...headers,
+        params: {
+          page: pageArg,
+          size: sizeArg,
+          sort: "id,desc", 
+        },
       });
 
-      const list = res?.data?.content ?? [];
+      const content = data.content || [];
+      const meta = data.page || {};
+      const total = data.totalElements ?? meta.totalElements ?? content.length;
 
-      console.log("Usuario-Roles recibidos:", list.length);
-      setRows(list);
-    } catch (error) {
-      console.error(error);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al cargar usuario-roles",
-      });
+      setRows(content);
+      setRowCount(total);
+      setPage(data.number ?? meta.number ?? pageArg);
+      setPageSize(data.size ?? meta.size ?? sizeArg);
+
+    } catch (err) {
+      console.error("❌ Error API:", err);
+      setMessage({ open: true, severity: "error", text: "Error de conexión con el servidor" });
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    reloadData();
-  }, [reloadData]);
+    reloadData(0, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handlePaginationModelChange = (model) => {
+    if (model.size !== pageSize) {
+      setPageSize(model.size);
+      setPage(0);
+      reloadData(0, model.size);
+    } else {
+      setPage(model.page);
+      reloadData(model.page, pageSize);
+    }
+  };
 
   return (
-    <div>
-      <h1>Gestión de Usuario-Rol</h1>
+    <div style={{ padding: '20px' }}>
+      <Typography variant="h5" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
+        Gestión de Usuarios y Roles
+      </Typography>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
       <FormUsuarioRol
-        open={formOpen}
-        setOpen={setFormOpen}
-        selectedRow={selectedRow || {}}
-        setSelectedRow={setSelectedRow}
-        setMessage={setMessage}
-        reloadData={reloadData}
-        estados={ESTADOS_USUARIO_ROL}
-        // En el futuro puedes pasar aquí usuarios y roles para llenar los combos
-        usuarios={[]}
-        roles={[]}
-      />
-
-      <GridUsuarioRol
-        rows={rows}
-        loading={loading}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
+        setMessage={setMessage}
+        reloadData={() => reloadData(page, pageSize)}
       />
+
+      <Paper elevation={2} sx={{ mt: 2 }}>
+        <GridUsuarioRol
+          rows={rows}
+          selectedRow={selectedRow}
+          setSelectedRow={setSelectedRow}
+          paginationModel={{ page, pageSize }}
+          setPaginationModel={handlePaginationModelChange}
+          rowCount={rowCount}
+          loading={loading}
+        />
+      </Paper>
     </div>
   );
 }

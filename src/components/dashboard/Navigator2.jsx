@@ -10,8 +10,11 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+
 
 import { alpha, useTheme } from "@mui/material/styles";
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import SecurityIcon from '@mui/icons-material/Security';
 import MenuIcon from "@mui/icons-material/Menu";
@@ -122,6 +125,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import FactoryIcon from '@mui/icons-material/Factory';
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
+import modulo from "../modulo/modulos.jsx";
 
 
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
@@ -184,7 +188,7 @@ import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
 import EmpresaRolsystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
-
+import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // Imágenes
 import img1 from "/images/cards/1.jpg";
 import img2 from "/images/cards/2.jpg";
@@ -256,7 +260,7 @@ import estado from "/images/cards/estado.webp";
 import { es } from "date-fns/locale";
 
 const icons = {
-  
+  AccountBoxIcon: <AccountBoxIcon />,
   HistoryToggleOff: <HistoryToggleOffIcon />,
   Category: <CategoryIcon />,
   Timeline: <TimelineIcon />,
@@ -370,6 +374,8 @@ const icons = {
 };
 
 const components = {
+  modulo: modulo,
+  Rol_usuario: Rol_usuario,
   EmpresaRolsystem: EmpresaRolsystem,
   EmpresaRol: EmpresaRol,
   UsuarioRoles: UsuarioRoles,
@@ -485,7 +491,6 @@ const moduleImages = {
 };
 
 
-
 export default function Navigator2({
   setCurrentModuleItem,
   setMenuOpen,
@@ -493,41 +498,170 @@ export default function Navigator2({
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const navigate = useNavigate();
   const isDark = theme.palette.mode === "dark";
 
   // ===== TOKENS VISUALES =====
   const sidebarBg = isDark
     ? alpha(theme.palette.background.paper, 0.98)
     : theme.palette.background.paper;
-  const dividerColor = isDark ? alpha("#fff", 0.08) : alpha("#000", 0.08);
+
+  const dividerColor = alpha(
+    isDark ? "#fff" : "#000",
+    0.08
+  );
+
   const hoverBg = isDark
     ? alpha("#FFFFFF", 0.06)
     : alpha(theme.palette.primary.main, 0.06);
+
   const selectedBg = isDark
     ? alpha("#FFFFFF", 0.15)
     : alpha(theme.palette.primary.main, 0.12);
-  const selectedColor = isDark ? "#FFFFFF" : theme.palette.primary.dark;
+
+  const selectedColor = isDark
+    ? "#FFFFFF"
+    : theme.palette.primary.dark;
+
   const selectedBar = theme.palette.primary.main;
 
-  const tileBorder = isDark
-    ? alpha("#FFFFFF", 0.12)
-    : alpha(theme.palette.primary.main, 0.28);
-  const tileOverlayFrom = isDark ? alpha("#000", 0.05) : alpha("#000", 0.0);
-  const tileOverlayTo = isDark ? alpha("#000", 0.65) : alpha("#000", 0.55);
+  const tileBorder = alpha(
+    isDark ? "#FFFFFF" : theme.palette.primary.main,
+    isDark ? 0.12 : 0.28
+  );
+
+  const tileOverlayFrom = alpha("#000", isDark ? 0.05 : 0);
+  const tileOverlayTo = alpha("#000", isDark ? 0.65 : 0.55);
+
   const tileTitleColor = isDark
     ? alpha("#fff", 0.95)
     : theme.palette.common.white;
+
   const tileTitleShadow = isDark
     ? "0 1px 2px rgba(0,0,0,.85)"
     : "0 1px 2px rgba(0,0,0,.45)";
+
   const tileIconBg = isDark
     ? alpha(theme.palette.primary.light, 0.22)
     : alpha("#fff", 0.75);
-  const tileIconFg = isDark ? "#fff" : theme.palette.primary.dark;
+
+  const tileIconFg = isDark
+    ? "#fff"
+    : theme.palette.primary.dark;
 
   // ===== HELPERS =====
   const toKey = (x) => String(x ?? "").trim();
   const normalizeTipo = (t) => (t === "movil" ? "movil" : "web");
+
+  const renderComponent = (key) => {
+    const Component = components[key];
+    setCurrentModuleItem(Component ? <Component /> : null);
+  };
+
+  const renderSubmenu = (children, parentMenuId) => {
+    const uniqueChildren = children.filter(
+      (item, index, self) =>
+        index === self.findIndex((t) => t.id === item.id)
+    );
+
+    return (
+      <Box
+        sx={{
+          bgcolor: (t) =>
+            t.palette.mode === "dark" ? "transparent" : "#e7f6f7",
+          borderRadius: 3,
+          p: { xs: 2, md: 3 },
+        }}
+      >
+        <Grid container spacing={2.5}>
+          {uniqueChildren.map(({ id, text, icon }) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={id}>
+              <Box
+                onClick={() => handleSubMenuClick(id, parentMenuId)}
+                sx={{
+                  position: "relative",
+                  height: 190,
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform .2s ease",
+                  "&:hover": { transform: "translateY(-2px)" },
+                  "&:before": {
+                    content: '""',
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 3,
+                    border: `2px solid ${tileBorder}`,
+                    pointerEvents: "none",
+                  },
+                }}
+              >
+                <Box
+                  component="img"
+                  src={moduleImages[id] || img1}
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    background: `linear-gradient(180deg, ${tileOverlayFrom} 45%, ${tileOverlayTo} 100%)`,
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: tileIconBg,
+                      color: tileIconFg,
+                    }}
+                  >
+                    {icons[icon] || <AppsIcon />}
+                  </Box>
+
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: 800,
+                      color: tileTitleColor,
+                      textShadow: tileTitleShadow,
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {t(text)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  };
 
   // ===== ESTADOS =====
   const [menuItems, setMenuItems] = React.useState([]);
@@ -535,15 +669,55 @@ export default function Navigator2({
   const [tipoAplicacion, setTipoAplicacion] = React.useState(() =>
     normalizeTipo(localStorage.getItem("tipoAplicacion") || "web")
   );
-  const [open, setOpen] = React.useState(() => {
-    const stored = localStorage.getItem("sidebarOpen");
-    return stored ? JSON.parse(stored) : true;
-  });
+  const [open, setOpen] = React.useState(() =>
+    JSON.parse(localStorage.getItem("sidebarOpen") ?? "true")
+  );
+
+  // ===== HANDLERS =====
+  const handleMenuClick = (menuId) => {
+    const key = toKey(menuId);
+
+    localStorage.setItem("activeMenu", key);
+    localStorage.removeItem("activeModule");
+
+    setSelectedMenu(key);
+    navigate(`/${key}`);
+
+    const menu = menuItems.find(
+      (item) => toKey(item.id) === key
+    );
+
+    if (menu?.children?.length) {
+      setCurrentModuleItem(
+        renderSubmenu(menu.children, key)
+      );
+    } else {
+      localStorage.setItem("activeModule", key);
+      renderComponent(key);
+    }
+  };
+
+  const handleSubMenuClick = (subMenuId, parentMenuId) => {
+    const key = toKey(subMenuId);
+
+    localStorage.setItem("activeModule", key);
+    setSelectedMenu(toKey(parentMenuId));
+
+    navigate(`/${key}`);
+    renderComponent(key);
+  };
+
+  const toggleDrawer = () => {
+    const newOpen = !open;
+    setOpen(newOpen);
+    setMenuOpen?.(newOpen);
+    localStorage.setItem("sidebarOpen", JSON.stringify(newOpen));
+  };
 
   // ===== EFECTOS =====
   React.useEffect(() => {
     setMenuOpen?.(open);
-  }, [open]);
+  }, [open, setMenuOpen]);
 
   React.useEffect(() => {
     if (!isAuthenticated) return;
@@ -552,227 +726,52 @@ export default function Navigator2({
     localStorage.setItem("tipoAplicacion", tipo);
 
     axios
-      // Endpoint correcto con query param
       .get("/v2/menu", { params: { tipoAplicacion: tipo } })
       .then(({ data }) => {
-        // Adaptar la respuesta (SubSistemaResponseDTO)
-        const subsistemas = Array.isArray(data) ? data : [];
-        const adapted = subsistemas.map((ss) => ({
-          id: ss.nombre, // clave del subsistema
-          text: ss.nombre,
-          icon: ss.icono,
-          children: (ss.modulos ?? []).map((m) => ({
-            id: m.id,
-            text: m.nombre,
-            icon: m.icono,
-            url: m.url,
-          })),
-        }));
+        const adapted = (Array.isArray(data) ? data : []).map(
+          (ss) => ({
+            id: ss.nombre,
+            text: ss.nombre,
+            icon: ss.icono,
+            children: (ss.modulos ?? []).map((m) => ({
+              id: m.id,
+              text: m.nombre,
+              icon: m.icono,
+              url: m.url,
+            })),
+          })
+        );
+
         setMenuItems(adapted);
 
-        // 1️⃣ Restaurar CRUD activo si existe
         const savedModule = localStorage.getItem("activeModule");
-        if (savedModule && components[savedModule]) {
-          const Comp = components[savedModule];
-          setCurrentModuleItem(<Comp />);
-          // no cambiamos menú aquí
-          return;
-        }
-
-        // 2️⃣ Restaurar MENÚ activo si existe
         const savedMenu = localStorage.getItem("activeMenu");
 
-        // Elegir el menú correcto:
-        //   • Primero buscamos el último menú guardado
-        //   • Si no existe, usamos el primero
-        const menuToOpen =
-          adapted.find((m) => toKey(m.id) === toKey(savedMenu)) || adapted[0];
-
-        if (!menuToOpen) {
-          setSelectedMenu(null);
-          setCurrentModuleItem(null);
+        if (savedModule && components[savedModule]) {
+          renderComponent(savedModule);
           return;
         }
 
-        // Marcar menú seleccionado
+        const menuToOpen =
+          adapted.find(
+            (m) => toKey(m.id) === toKey(savedMenu)
+          ) || adapted[0];
+
+        if (!menuToOpen) return;
+
         setSelectedMenu(toKey(menuToOpen.id));
 
-        // Si el menú tiene submódulos (tarjetas)
         if (menuToOpen.children?.length) {
-          setCurrentModuleItem(renderSubmenu(menuToOpen.children, menuToOpen.id));
-          return;
-        }
-
-        // Si es un módulo hoja (un CRUD directamente)
-        const k = toKey(menuToOpen.id);
-        const Comp = components[k];
-        if (Comp) {
-          localStorage.setItem("activeModule", k);
-          setCurrentModuleItem(<Comp />);
+          setCurrentModuleItem(
+            renderSubmenu(menuToOpen.children, menuToOpen.id)
+          );
         } else {
-          setCurrentModuleItem(null);
+          renderComponent(toKey(menuToOpen.id));
         }
       })
-      .catch((err) => {
-        console.error("[Navigator2] Error cargando menú:", {
-          status: err?.response?.status,
-          data: err?.response?.data,
-        });
-      });
+      .catch(console.error);
   }, [isAuthenticated, tipoAplicacion]);
 
-  // ===== HANDLERS =====
-  const toggleDrawer = () => {
-    const newOpen = !open;
-    setOpen(newOpen);
-    setMenuOpen?.(newOpen);
-    localStorage.setItem("sidebarOpen", JSON.stringify(newOpen));
-  };
-
-const handleMenuClick = (menuId) => {
-  const key = toKey(menuId);
-
-  // 👇 Guardar último menú donde estuve
-  localStorage.setItem("activeMenu", key);
-
-  setSelectedMenu(key);
-
-  const menu = menuItems.find((item) => toKey(item.id) === key);
-
-  if (menu?.children?.length) {
-    // Es menú → limpiar CRUD
-    localStorage.removeItem("activeModule");
-    setCurrentModuleItem(renderSubmenu(menu.children, menuId));
-  } else {
-    // Es un CRUD
-    localStorage.setItem("activeModule", key);
-    const Component = components[key];
-    setCurrentModuleItem(Component ? <Component /> : null);
-  }
-};
-
-
-  const handleSubMenuClick = (subMenuId, parentMenuId) => {
-    const key = toKey(subMenuId);
-    localStorage.setItem("activeModule", key);
-    setSelectedMenu(toKey(parentMenuId));
-    const Component = components[key];
-    setCurrentModuleItem(Component ? <Component /> : null);
-  };
-
-  // ===== RENDER DE SUBMENÚ =====
-  const renderSubmenu = (children, parentMenuId) => (
-    <Box
-      key={theme.palette.mode}
-      sx={{
-        bgcolor: (t) =>
-          t.palette.mode === "dark" ? "transparent" : "#e7f6f7",
-        borderRadius: 3,
-        p: { xs: 2, md: 3 },
-      }}
-    >
-      <Grid container spacing={2.5}>
-        {children.map(({ id, text, icon }) => (
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            md={4}
-            lg={3}
-            key={`submenu:${toKey(parentMenuId)}:${toKey(id)}`}
-          >
-            <Box
-              onClick={() => handleSubMenuClick(id, parentMenuId)}
-              sx={{
-                position: "relative",
-                height: 190,
-                borderRadius: 3,
-                overflow: "hidden",
-                cursor: "pointer",
-                transition: "transform .2s ease",
-                "&:hover": { transform: "translateY(-2px)" },
-                "&:before": {
-                  content: '""',
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: 3,
-                  border: `2px solid ${tileBorder}`,
-                  pointerEvents: "none",
-                },
-              }}
-            >
-              {/* Imagen */}
-              <Box
-                component="img"
-                src={moduleImages[id] || img1}
-                alt={id}
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "50% 35%",
-                }}
-              />
-              {/* Overlay */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  background: `linear-gradient(180deg, ${tileOverlayFrom} 45%, ${tileOverlayTo} 100%)`,
-                }}
-              />
-              {/* Icono + título */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    display: "grid",
-                    placeItems: "center",
-                    bgcolor: tileIconBg,
-                    color: tileIconFg,
-                    flex: "0 0 auto",
-                  }}
-                >
-                  {icons[icon]}
-                </Box>
-                <Typography
-                  variant="subtitle1"
-                  title={t(text)}
-                  sx={{
-                    fontWeight: 800,
-                    lineHeight: 1.1,
-                    color: tileTitleColor,
-                    textShadow: tileTitleShadow,
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {t(text)}
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
-
-  // ===== RENDER PRINCIPAL =====
   if (!isAuthenticated) return null;
 
   return (
@@ -781,14 +780,9 @@ const handleMenuClick = (menuId) => {
         position: "fixed",
         top: 65,
         left: 0,
-        width: {
-          xs: open ? "200px" : "60px",
-          sm: open ? "220px" : "70px",
-          md: open ? "250px" : "70px",
-        },
+        width: open ? 250 : 70,
         height: "calc(100vh - 65px)",
         bgcolor: sidebarBg,
-        color: theme.palette.text.primary,
         borderRight: `1px solid ${dividerColor}`,
         transition: "width 0.25s ease",
         zIndex: 1200,
@@ -796,7 +790,6 @@ const handleMenuClick = (menuId) => {
         flexDirection: "column",
       }}
     >
-      {/* Header del sidebar */}
       <Box
         onClick={toggleDrawer}
         sx={{
@@ -817,71 +810,67 @@ const handleMenuClick = (menuId) => {
         )}
       </Box>
 
-      {/* Lista de subsistemas */}
       <List sx={{ px: 1, py: 1, flex: 1, overflowY: "auto" }}>
-        {menuItems.map(({ id, text, icon }) => (
-          <ListItem
-            key={`menu:${toKey(id)}`}
-            disablePadding
-            onClick={() => handleMenuClick(id)}
-          >
-            <ListItemButton
-              selected={selectedMenu === toKey(id)}
-              sx={{
-                borderRadius: 2,
-                mx: 1,
-                my: 0.5,
-                justifyContent: open ? "flex-start" : "center",
-                "&:hover": { bgcolor: hoverBg },
-                "&.Mui-selected": {
-                  bgcolor: selectedBg,
-                  color: selectedColor,
-                  "& .MuiListItemIcon-root": { color: selectedColor },
-                  "& .MuiListItemText-primary": {
-                    color: selectedColor,
-                    fontWeight: 800,
-                  },
-                  "&:hover": { bgcolor: selectedBg },
-                  position: "relative",
-                  boxShadow: isDark
-                    ? `inset 0 0 0 1px ${alpha(
-                        theme.palette.primary.main,
-                        0.25
-                      )}`
-                    : "none",
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    left: 0,
-                    top: 6,
-                    bottom: 6,
-                    width: 3.5,
-                    borderRadius: "0 3px 3px 0",
-                    backgroundColor: selectedBar,
-                  },
-                },
-              }}
-            >
-              <ListItemIcon
+        {menuItems.map(({ id, text, icon }) => {
+          const key = toKey(id);
+          const selected = selectedMenu === key;
+
+          return (
+            <ListItem key={key} disablePadding>
+              <ListItemButton
+                selected={selected}
+                onClick={() => handleMenuClick(id)}
                 sx={{
-                  color: theme.palette.text.primary,
-                  minWidth: 0,
-                  mr: open ? 2 : 0,
+                  borderRadius: 2,
+                  mx: 1,
+                  my: 0.5,
+                  justifyContent: open
+                    ? "flex-start"
+                    : "center",
+                  "&:hover": { bgcolor: hoverBg },
+                  "&.Mui-selected": {
+                    bgcolor: selectedBg,
+                    color: selectedColor,
+                    "& .MuiListItemIcon-root": {
+                      color: selectedColor,
+                    },
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      left: 0,
+                      top: 6,
+                      bottom: 6,
+                      width: 3.5,
+                      borderRadius: "0 3px 3px 0",
+                      backgroundColor: selectedBar,
+                    },
+                  },
                 }}
               >
-                {icons[icon]}
-              </ListItemIcon>
-              {open && (
-                <ListItemText
-                  primary={t(text)}
-                  primaryTypographyProps={{ fontWeight: 600 }}
-                />
-              )}
-            </ListItemButton>
-          </ListItem>
-        ))}
-        <Divider sx={{ my: 1.5, borderColor: dividerColor }} />
+                <ListItemIcon
+                  sx={{
+                    color: theme.palette.text.primary,
+                    minWidth: 0,
+                    mr: open ? 2 : 0,
+                  }}
+                >
+                  {icons[icon] || <AppsIcon />}
+                </ListItemIcon>
+
+                {open && (
+                  <ListItemText
+                    primary={t(text)}
+                    primaryTypographyProps={{
+                      fontWeight: 600,
+                    }}
+                  />
+                )}
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
       </List>
     </Box>
   );
 }
+

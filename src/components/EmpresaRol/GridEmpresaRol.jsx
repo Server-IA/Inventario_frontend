@@ -1,106 +1,142 @@
-import React, { useMemo } from "react";
-import PropTypes from "prop-types";
-import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  GridToolbarQuickFilter,
-  esES,
-} from "@mui/x-data-grid";
-import { Box, Button } from "@mui/material";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
-
-/* ---------- Toolbar personalizada ---------- */
-function EmpresaRolToolbar({ onResetColumns }) {
-  return (
-    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
-      <div>
-        <GridToolbarColumnsButton />
-        <GridToolbarFilterButton />
-        <GridToolbarDensitySelector />
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <GridToolbarQuickFilter debounceMs={300} />
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<RestartAltIcon />}
-          onClick={onResetColumns}
-        >
-          Restablecer columnas
-        </Button>
-      </div>
-    </GridToolbarContainer>
-  );
-}
+import React from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { Chip } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 
 export default function GridEmpresaRol({
-  rows = [],
-  loading = false,
-  columnVisibilityModel,
-  setColumnVisibilityModel,
-  onResetColumns,
+  rows,
+  loading,
+  selectedRow,
+  setSelectedRow,
 }) {
-  /* ---------- Columnas sin acciones ---------- */
-  const columns = useMemo(
-    () => [
-      {
-        field: "id",
-        headerName: "ID",
-        width: 90,
-      },
-      {
-        field: "empresaNombre",
-        headerName: "Empresa",
-        flex: 1,
-        minWidth: 150,
-      },
-      {
-        field: "rolNombre",
-        headerName: "Rol",
-        flex: 1,
-        minWidth: 150,
-      },
-      {
+const theme = useTheme();
+const isDark = theme.palette.mode === "dark";
+  const columns = [
+    { field: "id", headerName: "ID", width: 80 },
+
+    { field: "rolNombre", headerName: "Rol", flex: 1 },
+    {
+  field: "permisos",
+  headerName: "Permisos",
+  flex: 2,
+  renderCell: (params) => {
+    const permisos = params.row.permisos;
+
+    if (!Array.isArray(permisos) || permisos.length === 0) {
+      return (
+        <span style={{ color: theme.palette.text.secondary, fontStyle: "italic" }}>
+          Sin permisos
+        </span>
+      );
+    }
+
+    const visibles = permisos.slice(0, 3);
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "6px",
+          maxWidth: "100%",
+        }}
+      >
+        {visibles.map((permiso) => (
+          <Chip
+          key={permiso.id}
+          label={permiso.nombre}
+          size="small"
+          sx={{
+            fontSize: "11px",
+            fontWeight: 500,
+
+            backgroundColor: isDark
+              ? alpha(theme.palette.primary.light, 0.25)
+              : alpha(theme.palette.primary.main, 0.15),
+
+            color: isDark
+              ? theme.palette.primary.light
+              : theme.palette.primary.main,
+
+            border: `1px solid ${
+              isDark
+                ? theme.palette.primary.light
+                : theme.palette.primary.main
+            }`,
+          }}
+        />
+        ))}
+
+        {permisos.length > 3 && (
+          <span
+            style={{
+              fontSize: "11px",
+              color: theme.palette.text.secondary,
+              alignSelf: "center",
+            }}
+          >
+            +{permisos.length - 3} más
+          </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
         field: "estadoNombre",
         headerName: "Estado",
-        flex: 1,
-        minWidth: 150,
+        width: 160,
+        valueGetter: (params) =>
+          params.row.estadoNombre ??
+          estadosMap[params.row.estadoId] ??
+          params.row.estadoId ??
+          "",
+      }
+  ];
+
+return (
+  <DataGrid
+    rows={rows}
+    columns={columns}
+    loading={loading}
+    autoHeight
+    pageSizeOptions={[5, 10, 20, 50]}
+    initialState={{
+      pagination: {
+        paginationModel: { pageSize: 5, page: 0 },
       },
-    ],
-    []
-  );
+    }}
+    getRowId={(row) => row.id}
+    onRowClick={(params) => setSelectedRow(params.row)}
+    sx={{
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      border: `1px solid ${theme.palette.divider}`,
 
-  return (
-    <Box sx={{ height: 500, width: "100%" }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        loading={loading}
-        disableRowSelectionOnClick
-        getRowId={(row) => row.id}
-        slots={{
-          toolbar: EmpresaRolToolbar,
-        }}
-        slotProps={{
-          toolbar: { onResetColumns },
-        }}
-        columnVisibilityModel={columnVisibilityModel}
-        onColumnVisibilityModelChange={setColumnVisibilityModel}
-        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
-      />
-    </Box>
-  );
+      "& .MuiDataGrid-columnHeaders": {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          isDark ? 0.15 : 0.05
+        ),
+        color: theme.palette.text.primary,
+        fontWeight: 600,
+      },
+
+      "& .MuiDataGrid-row": {
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      },
+
+      "& .MuiDataGrid-cell": {
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      },
+
+      "& .MuiDataGrid-row:hover": {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          isDark ? 0.08 : 0.04
+        ),
+      },
+    }}
+  />
+);
 }
-
-/* ---------- PropTypes ---------- */
-GridEmpresaRol.propTypes = {
-  rows: PropTypes.array,
-  loading: PropTypes.bool,
-  columnVisibilityModel: PropTypes.object.isRequired,
-  setColumnVisibilityModel: PropTypes.func.isRequired,
-  onResetColumns: PropTypes.func.isRequired,
-};

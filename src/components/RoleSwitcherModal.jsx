@@ -7,10 +7,14 @@ import {
 import axios from "axios";
 
 // Imágenes por rol (ejemplo)
+import rol_admistrador from "/images/cards/rol_admistrador.webp";
+import usai_rol_sistema from "/images/cards/usai_rol_sistema.webp";
+import rol_nn from "/images/cards/rol_nn.webp";
+import rol_gerente from "/images/cards/rol_gerente.webp";
 import img1 from "/images/cards/1.jpg";
 import img2 from "/images/cards/2.jpg";
 import img3 from "/images/cards/3.jpg";
-const roleImages = { 1: img1, 2: img2, 3: img3 };
+const roleImages = { 1: rol_admistrador, 2:usai_rol_sistema, 3: rol_nn, 4: rol_gerente, 5: img1, 6: img2, 7: img3 };
 
 // --- helper: decodifica payload del JWT sin librerías ---
 const decodeJwt = (jwt) => {
