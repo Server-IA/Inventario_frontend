@@ -63,6 +63,7 @@ import Verify from './components/Verify.jsx';
 import FormRegistroPersona from "./components/seguridad/FormRegistroPersona";
 import FormRegistroEmpresa from './components/seguridad/FormRegistroEmpresa.jsx';
 import ChangePasswordInitial from './components/seguridad/ChangePasswordInitial.jsx';
+import Modulo from './components/modulo/modulos.jsx';
 
 const moduleMap = {
   persona: Persona,
@@ -109,7 +110,8 @@ const moduleMap = {
   re_kardex: RE_kardex,
   re_productovencimiento: RE_productoVencimiento,
   re_ordencompra: RE_ordenCompra,
-  re_fc: RE_fc
+  re_fc: RE_fc,
+  modulo: Modulo,
 };
 
 const APPBAR_GREEN = '#0F2327';

@@ -14,6 +14,8 @@ export const COMPANY_ADMIN_EMAIL = env.E2E_COMPANY_ADMIN_EMAIL || env.E2E_ADMIN_
 export const COMPANY_ADMIN_PASSWORD = env.E2E_COMPANY_ADMIN_PASSWORD || env.E2E_ADMIN_PASSWORD;
 export const NOADMIN_EMAIL = env.E2E_NOADMIN_EMAIL;
 export const NOADMIN_PASSWORD = env.E2E_NOADMIN_PASSWORD;
+export const COMPANY_CONTEXT_NAME = env.E2E_COMPANY_CONTEXT_NAME || '';
+export const COMPANY_CONTEXT_ROLE_NAME = env.E2E_COMPANY_CONTEXT_ROLE_NAME || 'ROLE_ADMINISTRADOR_EMPRESA';
 
 export const ONBOARDING_STATE2_EMAIL = env.E2E_ONBOARDING_STATE2_EMAIL;
 export const ONBOARDING_STATE2_PASSWORD = env.E2E_ONBOARDING_STATE2_PASSWORD;
@@ -89,9 +91,87 @@ export async function injectAuthStorage(page, token, moduleKey = 'modulo') {
   );
 }
 
+function decodeJwtForStorage(jwt = '') {
+  try {
+    const [, raw] = jwt.split('.');
+    if (!raw) return {};
+    const b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4 === 2 ? '==' : b64.length % 4 === 3 ? '=' : '';
+    const json = atob(b64 + pad);
+    const payload = JSON.parse(json);
+    return {
+      exp: payload?.exp != null ? Number(payload.exp) : undefined,
+      tver: payload?.tver != null ? Number(payload.tver) : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function normalizeLoginContext(data = {}) {
+  const rolesByCompany = Array.isArray(data?.rolesByCompany) ? data.rolesByCompany : [];
+  let empresaId = data?.empresaId;
+  let rolId = data?.rolId;
+  let empresaNombre = data?.empresaNombre || '';
+
+  if ((empresaId == null || rolId == null) && rolesByCompany.length > 0) {
+    const first = rolesByCompany[0];
+    empresaId = empresaId ?? first?.empresaId;
+    rolId = rolId ?? first?.rolId;
+    empresaNombre = empresaNombre || first?.empresaNombre || '';
+  }
+
+  return {
+    empresaId,
+    rolId,
+    empresaNombre,
+    rolesByCompany,
+    nombrePersona: data?.nombrePersona || '',
+  };
+}
+
+export async function injectAuthStorageFromLoginData(page, loginData, moduleKey = 'modulo') {
+  const token = loginData?.token;
+  expect(token, 'No se recibió token en login').toBeTruthy();
+
+  const { exp, tver } = decodeJwtForStorage(token || '');
+  const expiration = exp ? exp * 1000 : Date.now() + 3 * 60 * 60 * 1000;
+  const { empresaId, rolId, empresaNombre, rolesByCompany, nombrePersona } = normalizeLoginContext(loginData);
+
+  await page.addInitScript(
+    ({ jwt, expTs, tokenVersion, activeModule, empId, roleId, empName, rolesByCo, personName }) => {
+      localStorage.setItem('token', jwt);
+      localStorage.setItem('token_expiration', String(expTs));
+      if (typeof tokenVersion !== 'undefined') localStorage.setItem('tver', String(tokenVersion));
+
+      if (empId != null) localStorage.setItem('empresaId', String(empId));
+      if (roleId != null) localStorage.setItem('rolId', String(roleId));
+      if (empName) localStorage.setItem('empresaNombre', String(empName));
+      if (personName) localStorage.setItem('nombrePersona', String(personName));
+
+      localStorage.setItem('rolesByCompany', JSON.stringify(rolesByCo || []));
+      localStorage.setItem('activeModule', activeModule);
+      localStorage.setItem('activeMenu', 'Seguridad');
+      localStorage.setItem('tipoAplicacion', 'web');
+      window.sessionStorage.setItem('e2e', 'true');
+    },
+    {
+      jwt: token,
+      expTs: expiration,
+      tokenVersion: tver,
+      activeModule: moduleKey,
+      empId: empresaId,
+      roleId: rolId,
+      empName: empresaNombre,
+      rolesByCo: rolesByCompany,
+      personName: nombrePersona,
+    }
+  );
+}
+
 export async function authenticateByApi(page, request, email, password, moduleKey = 'modulo') {
   const data = await loginByApi(request, email, password);
-  await injectAuthStorage(page, data.token, moduleKey);
+  await injectAuthStorageFromLoginData(page, data, moduleKey);
   return data;
 }
 
@@ -177,6 +257,9 @@ export async function expectBaseMenuVisible(page) {
 }
 
 export async function openModuleScreen(page, moduleKey, headingRegex) {
+  // Ensure we have an origin before touching localStorage.
+  await page.goto('/');
+
   await page.evaluate(
     ({ activeModule }) => {
       localStorage.setItem('activeModule', activeModule);
@@ -189,6 +272,67 @@ export async function openModuleScreen(page, moduleKey, headingRegex) {
   if (headingRegex) {
     await expect(page.getByRole('heading', { name: headingRegex })).toBeVisible({ timeout: 20000 });
   }
+}
+
+async function openProfileMenu(page) {
+  const candidates = [
+    page.getByRole('button', { name: /mi perfil|perfil/i }).first(),
+    page.locator('button:has(svg[data-testid="AccountCircleIcon"])').first(),
+    page.locator('header button').last(),
+  ];
+
+  for (const candidate of candidates) {
+    if (await candidate.isVisible().catch(() => false)) {
+      await candidate.click();
+      const roleMenuItem = page.getByRole('menuitem', { name: /Cambiar empresa\/rol/i }).first();
+      if (await roleMenuItem.isVisible().catch(() => false)) {
+        return;
+      }
+    }
+  }
+
+  throw new Error('No se pudo abrir el menú de perfil para cambiar empresa/rol.');
+}
+
+export async function switchCompanyRoleFromProfile(page, options = {}) {
+  const {
+    companyName = COMPANY_CONTEXT_NAME,
+    roleName = COMPANY_CONTEXT_ROLE_NAME,
+  } = options;
+
+  await page.goto('/');
+  await openProfileMenu(page);
+
+  const switchMenuItem = page.getByRole('menuitem', { name: /Cambiar empresa\/rol/i }).first();
+  if (!(await switchMenuItem.isVisible().catch(() => false))) {
+    // Single company/role context: nothing to switch.
+    return;
+  }
+
+  await switchMenuItem.click();
+
+  const dialog = page.locator('[role="dialog"]:visible').last();
+  await expect(dialog.getByText(/Cambiar empresa\/rol/i)).toBeVisible({ timeout: 15000 });
+
+  if (companyName) {
+    const companyCardText = dialog.getByText(exactTextRegex(companyName)).first();
+    await expect(companyCardText).toBeVisible({ timeout: 10000 });
+    await companyCardText.click();
+  } else {
+    const firstCardAction = dialog.locator('.MuiCardActionArea-root').first();
+    await expect(firstCardAction).toBeVisible({ timeout: 10000 });
+    await firstCardAction.click();
+  }
+
+  if (roleName) {
+    const roleText = dialog.getByText(new RegExp(escapeRegex(roleName), 'i')).first();
+    await expect(roleText).toBeVisible({ timeout: 10000 });
+    await roleText.click();
+  }
+
+  await dialog.getByRole('button', { name: /Cambiar/i }).click();
+  await expect(dialog).not.toBeVisible({ timeout: 20000 });
+  await page.waitForLoadState('domcontentloaded');
 }
 
 export async function openModuloScreen(page) {
@@ -265,14 +409,39 @@ export async function clickDialogSelectFirstOption(page, fieldName) {
 
 export async function selectDialogOptionByLabel(page, labelText, optionText) {
   const dialog = await getActiveDialog(page);
-  await dialog.getByLabel(exactTextRegex(labelText)).click();
-  await page.getByRole('option', { name: exactTextRegex(optionText) }).first().click();
+  const byLabel = dialog.getByLabel(exactTextRegex(labelText)).first();
+  if (await byLabel.isVisible().catch(() => false)) {
+    await byLabel.click();
+  } else {
+    const combo = dialog.getByRole('combobox', { name: new RegExp(escapeRegex(labelText), 'i') }).first();
+    await expect(combo).toBeVisible({ timeout: 10000 });
+    await combo.click();
+  }
+  const option = page.getByRole('option', { name: exactTextRegex(optionText) }).first();
+  const selectedText = (await option.textContent())?.trim() || optionText;
+  await option.click();
+  return selectedText;
 }
 
 export async function selectDialogFirstOptionByLabel(page, labelText) {
   const dialog = await getActiveDialog(page);
-  await dialog.getByLabel(exactTextRegex(labelText)).click();
-  await page.getByRole('option').first().click();
+  const byLabel = dialog.getByLabel(exactTextRegex(labelText)).first();
+  if (await byLabel.isVisible().catch(() => false)) {
+    await byLabel.click();
+  } else {
+    const combo = dialog.getByRole('combobox', { name: new RegExp(escapeRegex(labelText), 'i') }).first();
+    if (await combo.isVisible().catch(() => false)) {
+      await combo.click();
+    } else {
+      const muiSelect = dialog.locator('.MuiSelect-select').first();
+      await expect(muiSelect).toBeVisible({ timeout: 10000 });
+      await muiSelect.click();
+    }
+  }
+  const option = page.getByRole('option').first();
+  const selectedText = ((await option.textContent()) || '').trim();
+  await option.click();
+  return selectedText;
 }
 
 export async function toggleDialogCheckbox(page, fieldName, checked) {
