@@ -63,6 +63,7 @@ export default function FormRegistroEmpresa(props) {
   const [fieldErrors, setFieldErrors] = React.useState({});
   const [sessionExpired, setSessionExpired] = React.useState(false);
   const [mustRelogin, setMustRelogin] = React.useState(false);
+  const [countdown, setCountdown] = React.useState(10);
 
   // ---- Tipos de identificación desde backend ----
   const [tiposIdent, setTiposIdent] = React.useState([]);
@@ -101,7 +102,21 @@ export default function FormRegistroEmpresa(props) {
     }, 10000);
     }
   }, [navigate]);
+  React.useEffect(() => {
+    if (!mustRelogin) return;
 
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+  return () => clearInterval(interval);
+}, [mustRelogin]);
   // ===== Validación integral (usa validateCamposBase + reglas de negocio) =====
   const validateAll = (raw) => {
     const e = {};
@@ -257,23 +272,59 @@ export default function FormRegistroEmpresa(props) {
         }}
       >
       {mustRelogin && (
-         <Box
+        <Box
+          sx={{
+            background: "linear-gradient(135deg,#1e4620,#2e7d32)",
+            color: "white",
+            p: 4,
+            borderRadius: 3,
+            textAlign: "center",
+            mb: 2,
+            boxShadow: 4
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            ✅ Empresa creada correctamente
+          </Typography>
+
+          <Typography sx={{ mt: 1, opacity: 0.9 }}>
+            Por seguridad es necesario volver a iniciar sesión.
+          </Typography>
+
+          <Typography sx={{ mt: 2 }}>
+            Tu sesión se cerrará automáticamente en
+          </Typography>
+
+          <Typography
             sx={{
-              backgroundColor: "#1e4620",
-              color: "white",
-              padding: 2,
-              borderRadius: 2,
-              textAlign: "center",
-              fontSize: 18,
-              fontWeight: 500,
-              mb: 2
+              fontSize: 42,
+              fontWeight: 800,
+              mt: 1
             }}
           >
-          La empresa fue creada correctamente.
-          <br />
-          Por seguridad debes cerrar sesión y volver a iniciar.
-          <br />
-          El sistema cerrará tu sesión automáticamente en unos segundos.
+            {countdown}
+          </Typography>
+
+          <Typography>segundos</Typography>
+
+          <Box
+            sx={{
+              mt: 2,
+              height: 8,
+              borderRadius: 4,
+              background: "rgba(255,255,255,0.2)",
+              overflow: "hidden"
+            }}
+          >
+            <Box
+              sx={{
+                height: "100%",
+                width: `${(countdown / 10) * 100}%`,
+                background: "#8BC34A",
+                transition: "width 1s linear"
+              }}
+            />
+          </Box>
         </Box>
       )}
         {!!error && <Alert severity="error">{error}</Alert>}
