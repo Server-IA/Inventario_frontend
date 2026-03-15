@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormKardex from "./FromKardex";
@@ -8,12 +8,41 @@ import FormArticuloKardex from "./FormArticuloKardex";
 import ReKardex from "../RKardex/Rkardex";
 import { Box, Typography, Button, Dialog, useTheme } from "@mui/material";
 
+/* ===== Helper para decodificar JWT ===== */
+const decodeJwt = (jwt = "") => {
+  try {
+    const [, raw] = jwt.split(".");
+    if (!raw) return {};
+    const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 === 2 ? "==" : b64.length % 4 === 3 ? "=" : "";
+    const json = atob(b64 + pad);
+    return JSON.parse(json);
+  } catch {
+    return {};
+  }
+};
+
 export default function Kardex() {
+  /* ===== Detectar admin desde JWT ===== */
+  const token = localStorage.getItem("token");
+  const decoded = useMemo(() => decodeJwt(token), [token]);
+  const rolId = decoded?.rolId; // 1 = ADMINISTRADOR_SISTEMA, 2 = ADMINISTRADOR_EMPRESA
+  const isAdmin = rolId === 1; // Solo ADMINISTRADOR_SISTEMA ve todas las empresas
+
   const [kardexes, setKardexes] = useState([]);
+  const [kardexesRaw, setKardexesRaw] = useState([]); // Todos los datos sin filtrar
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
+
+  /* ===== Filtros frontend ===== */
+  const [filters, setFilters] = useState({
+    fechaDesde: "",
+    fechaHasta: "",
+    tipoMovimientoId: "",
+    estadoId: "",
+  });
 
   const [message, setMessage] = useState({
     open: false,
@@ -58,10 +87,10 @@ export default function Kardex() {
     Array.isArray(d)
       ? d
       : d?.content ??
-        d?.items ??
-        d?.data ??
-        d?.results ??
-        [];
+      d?.items ??
+      d?.data ??
+      d?.results ??
+      [];
 
   // Normalizador de página (igual que en Pedido)
   const normalizePageResponse = (res) => {
@@ -118,32 +147,14 @@ export default function Kardex() {
     loadCatalogs();
   }, []);
 
-  // ------- Cargar lista de kardex con paginación (rowCount efectivo) -------
+  // ------- Cargar lista de kardex (SIN paginación, trae todo y filtra frontend) -------
   const reloadData = () => {
     setLoadingKardex(true);
-    const { page, size } = kardexPage; // 0-based; si tu API es 1-based: page+1
     axios
-      .get("/v1/kardex", { params: { page, size } })
+      .get("/v1/kardex", { params: { page: 0, size: 1000 } }) // Trae máximo 1000
       .then((res) => {
         const rows = toArray(res.data);
-        const rawTotal = Number(
-          res.data?.totalElements ?? res.data?.page?.totalElements
-        );
-        // rowCount robusto: usa total si viene; si no, estima para habilitar flechas
-        const effectiveTotal =
-          Number.isFinite(rawTotal) && rawTotal > 0
-            ? rawTotal
-            : rows.length < size
-            ? page * size + rows.length
-            : (page + 2) * size;
-
-        setKardexes(rows);
-        setTotalKardex(effectiveTotal);
-
-        if (rows.length > 0 && !selectedRow) setSelectedRow(rows[0]);
-        if (rows.length === 0 && page > 0) {
-          setKardexPage((p) => ({ ...p, page: p.page - 1 }));
-        }
+        setKardexesRaw(rows); // Guardar todos los datos sin filtrar
       })
       .catch(() => {
         setMessage({
@@ -151,11 +162,56 @@ export default function Kardex() {
           severity: "error",
           text: "Error al cargar kardexes",
         });
-        setKardexes([]);
-        setTotalKardex(0);
+        setKardexesRaw([]);
       })
       .finally(() => setLoadingKardex(false));
   };
+
+  /* ===== Filtrar kardexes en frontend ===== */
+  useEffect(() => {
+    let filtered = kardexesRaw;
+
+    // Filtro por fecha desde
+    if (filters.fechaDesde) {
+      const dateDesde = new Date(filters.fechaDesde);
+      filtered = filtered.filter(
+        (k) => new Date(k.fechaHora) >= dateDesde
+      );
+    }
+
+    // Filtro por fecha hasta
+    if (filters.fechaHasta) {
+      const dateHasta = new Date(filters.fechaHasta);
+      filtered = filtered.filter(
+        (k) => new Date(k.fechaHora) <= dateHasta
+      );
+    }
+
+    // Filtro por tipo de movimiento
+    if (filters.tipoMovimientoId) {
+      const tipoId = Number(filters.tipoMovimientoId);
+      filtered = filtered.filter((k) => k.tipoMovimientoId === tipoId);
+    }
+
+    // Filtro por estado
+    if (filters.estadoId !== "") {
+      const estId = Number(filters.estadoId);
+      filtered = filtered.filter((k) => k.estadoId === estId);
+    }
+
+    // Aplicar paginación al filtrado
+    const { page, size } = kardexPage;
+    const startIdx = page * size;
+    const paginatedRows = filtered.slice(startIdx, startIdx + size);
+
+    setKardexes(paginatedRows);
+    setTotalKardex(filtered.length);
+
+    if (paginatedRows.length > 0 && !selectedRow) setSelectedRow(paginatedRows[0]);
+    if (paginatedRows.length === 0 && page > 0) {
+      setKardexPage((p) => ({ ...p, page: 0 }));
+    }
+  }, [kardexesRaw, filters, kardexPage.page, kardexPage.size]);
 
   // ------- Cargar artículos del kardex -------
   const loadArticulos = async (kardexId) => {
@@ -207,7 +263,7 @@ export default function Kardex() {
   useEffect(() => {
     reloadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kardexPage.page, kardexPage.size]);
+  }, []);
 
   useEffect(() => {
     if (selectedRow) {
@@ -333,6 +389,9 @@ export default function Kardex() {
             rowCount={totalKardex}
             paginationModel={kardexPage}
             setPaginationModel={setKardexPage}
+            isAdmin={isAdmin}
+            filters={filters}
+            setFilters={setFilters}
           />
         </Box>
       </Box>

@@ -9,23 +9,123 @@ import {
   GridToolbarDensitySelector,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
+import { Button, TextField, MenuItem, Box } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const LS_KEY = "gridKardex:columnVisibility:v1";
 
 /* ---------- Toolbar personalizada ---------- */
-function KardexToolbar({ onResetColumns }) {
+function KardexToolbar({
+  onResetColumns,
+  filters,
+  setFilters,
+  tiposMovimiento = [],
+}) {
   return (
     <GridToolbarContainer
-      sx={{ p: 1, gap: 1, justifyContent: "space-between" }}
+      sx={{
+        p: 1,
+        gap: 1,
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+      }}
     >
-      <div>
+      <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
         <GridToolbarColumnsButton />
         <GridToolbarFilterButton />
         <GridToolbarDensitySelector />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+
+        {/* Filtro por fecha desde */}
+        <TextField
+          size="small"
+          label="Fecha desde"
+          type="date"
+          InputLabelProps={{ shrink: true }}
+          value={filters.fechaDesde}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              fechaDesde: e.target.value,
+            }))
+          }
+          sx={{ width: 150 }}
+        />
+
+        {/* Filtro por fecha hasta */}
+        <TextField
+          size="small"
+          label="Fecha hasta"
+          type="date"
+          InputLabelProps={{ shrink: true }}
+          value={filters.fechaHasta}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              fechaHasta: e.target.value,
+            }))
+          }
+          sx={{ width: 150 }}
+        />
+
+        {/* Filtro por tipo de movimiento */}
+        <TextField
+          size="small"
+          select
+          label="Tipo movimiento"
+          value={filters.tipoMovimientoId}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              tipoMovimientoId: e.target.value,
+            }))
+          }
+          sx={{ width: 160 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {tiposMovimiento.map((t) => (
+            <MenuItem key={t.id} value={t.id}>
+              {t.name || t.nombre}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        {/* Filtro por estado */}
+        <TextField
+          size="small"
+          select
+          label="Estado"
+          value={filters.estadoId}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              estadoId: e.target.value,
+            }))
+          }
+          sx={{ width: 130 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="1">Activo</MenuItem>
+          <MenuItem value="0">Inactivo</MenuItem>
+        </TextField>
+
+        {/* Botón limpiar filtros */}
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() =>
+            setFilters({
+              fechaDesde: "",
+              fechaHasta: "",
+              tipoMovimientoId: "",
+              estadoId: "",
+            })
+          }
+        >
+          Limpiar filtros
+        </Button>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <GridToolbarQuickFilter debounceMs={300} />
         <Button
           variant="outlined"
@@ -35,7 +135,7 @@ function KardexToolbar({ onResetColumns }) {
         >
           Restablecer columnas
         </Button>
-      </div>
+      </Box>
     </GridToolbarContainer>
   );
 }
@@ -65,8 +165,13 @@ export default function GridKardex({
   // Paginación (server-side opcional)
   loading = false,
   rowCount,
-  paginationModel, // { page, pageSize } o { page, size }
-  setPaginationModel, // (model) => void
+  paginationModel,
+  setPaginationModel,
+
+  // NUEVOS: admin y filtros
+  isAdmin = false,
+  filters = {},
+  setFilters = () => { },
 }) {
   /* ---------- Mapas de lookup ---------- */
   const almById = useMemo(() => {
@@ -135,95 +240,101 @@ export default function GridKardex({
 
   /* ---------- Columnas ---------- */
   const columns = useMemo(
-    () => [
-      { field: "id", headerName: "ID", width: 90 },
-      {
-        field: "fechaHora",
-        headerName: "Fecha/Hora",
-        width: 180,
-        valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
-      },
-      {
-        field: "almacenId",
-        headerName: "Almacén",
-        width: 200,
-        valueGetter: (p) =>
-          p?.row?.almacen?.name ??
-          p?.row?.almacen?.nombre ??
-          almById[String(p?.row?.almacenId)] ??
-          String(p?.row?.almacenId ?? ""),
-      },
-      {
-        field: "produccionId",
-        headerName: "Producción",
-        width: 200,
-        valueGetter: (p) =>
-          p?.row?.produccion?.name ??
-          p?.row?.produccion?.nombre ??
-          prodById[String(p?.row?.produccionId)] ??
-          String(p?.row?.produccionId ?? ""),
-      },
-      {
-        field: "tipoMovimientoId",
-        headerName: "Tipo Movimiento",
-        width: 220,
-        valueGetter: (p) =>
-          p?.row?.tipoMovimiento?.name ??
-          p?.row?.tipoMovimiento?.nombre ??
-          tmovById[String(p?.row?.tipoMovimientoId)] ??
-          String(p?.row?.tipoMovimientoId ?? ""),
-      },
-
-      // 🔹 NUEVOS CAMPOS con nombres bonitos
-      {
-        field: "pedidoId",
-        headerName: "Pedido",
-        width: 140,
-        valueGetter: (p) =>
-          p?.row?.pedido?.codigo ??
-          p?.row?.pedido?.numero ??
-          pedidoById[String(p?.row?.pedidoId)] ??
-          String(p?.row?.pedidoId ?? ""),
-      },
-      {
-        field: "ordenCompraId",
-        headerName: "Orden compra",
-        width: 160,
-        valueGetter: (p) =>
-          p?.row?.ordenCompra?.codigo ??
-          p?.row?.ordenCompra?.numero ??
-          ocById[String(p?.row?.ordenCompraId)] ??
-          String(p?.row?.ordenCompraId ?? ""),
-      },
-      {
-        field: "clienteProveedorId",
-        headerName: "Cliente / Proveedor",
-        width: 220,
-        valueGetter: (p) =>
-          p?.row?.clienteProveedor?.nombre ??
-          p?.row?.clienteProveedor?.nombreComercial ??
-          empresaById[String(p?.row?.clienteProveedorId)] ??
-          String(p?.row?.clienteProveedorId ?? ""),
-      },
-
-      { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
-      { field: "empresaId", headerName: "Empresa", width: 120 },
-      {
-        field: "estadoId",
-        headerName: "Estado",
-        width: 140,
-        valueGetter: (p) => {
-          const state =
-            p?.row?.estado?.name ??
-            p?.row?.estado?.nombre ??
-            p?.row?.estadoId;
-          if (state === 1 || state === "1") return "Activo";
-          if ([0, "0", 2, "2"].includes(state)) return "Inactivo";
-          return String(state ?? "");
+    () => {
+      const baseColumns = [
+        { field: "id", headerName: "ID", width: 90 },
+        {
+          field: "fechaHora",
+          headerName: "Fecha/Hora",
+          width: 180,
+          valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
         },
-      },
-    ],
-    [almById, prodById, tmovById, pedidoById, ocById, empresaById]
+        {
+          field: "almacenId",
+          headerName: "Almacén",
+          width: 200,
+          valueGetter: (p) =>
+            p?.row?.almacen?.name ??
+            p?.row?.almacen?.nombre ??
+            almById[String(p?.row?.almacenId)] ??
+            String(p?.row?.almacenId ?? ""),
+        },
+        {
+          field: "produccionId",
+          headerName: "Producción",
+          width: 200,
+          valueGetter: (p) =>
+            p?.row?.produccion?.name ??
+            p?.row?.produccion?.nombre ??
+            prodById[String(p?.row?.produccionId)] ??
+            String(p?.row?.produccionId ?? ""),
+        },
+        {
+          field: "tipoMovimientoId",
+          headerName: "Tipo Movimiento",
+          width: 220,
+          valueGetter: (p) =>
+            p?.row?.tipoMovimiento?.name ??
+            p?.row?.tipoMovimiento?.nombre ??
+            tmovById[String(p?.row?.tipoMovimientoId)] ??
+            String(p?.row?.tipoMovimientoId ?? ""),
+        },
+
+        // 🔹 NUEVOS CAMPOS con nombres bonitos
+        {
+          field: "pedidoId",
+          headerName: "Pedido",
+          width: 140,
+          valueGetter: (p) =>
+            p?.row?.pedido?.codigo ??
+            p?.row?.pedido?.numero ??
+            pedidoById[String(p?.row?.pedidoId)] ??
+            String(p?.row?.pedidoId ?? ""),
+        },
+        {
+          field: "ordenCompraId",
+          headerName: "Orden compra",
+          width: 160,
+          valueGetter: (p) =>
+            p?.row?.ordenCompra?.codigo ??
+            p?.row?.ordenCompra?.numero ??
+            ocById[String(p?.row?.ordenCompraId)] ??
+            String(p?.row?.ordenCompraId ?? ""),
+        },
+        {
+          field: "clienteProveedorId",
+          headerName: "Cliente / Proveedor",
+          width: 220,
+          valueGetter: (p) =>
+            p?.row?.clienteProveedor?.nombre ??
+            p?.row?.clienteProveedor?.nombreComercial ??
+            empresaById[String(p?.row?.clienteProveedorId)] ??
+            String(p?.row?.clienteProveedorId ?? ""),
+        },
+
+        { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
+        // 🔹 Columna Empresa SOLO para administrador del sistema
+        ...(isAdmin
+          ? [{ field: "empresaId", headerName: "Empresa", width: 120 }]
+          : []),
+        {
+          field: "estadoId",
+          headerName: "Estado",
+          width: 140,
+          valueGetter: (p) => {
+            const state =
+              p?.row?.estado?.name ??
+              p?.row?.estado?.nombre ??
+              p?.row?.estadoId;
+            if (state === 1 || state === "1") return "Activo";
+            if ([0, "0", 2, "2"].includes(state)) return "Inactivo";
+            return String(state ?? "");
+          },
+        },
+      ];
+      return baseColumns;
+    },
+    [almById, prodById, tmovById, pedidoById, ocById, empresaById, isAdmin]
   );
 
   /* -------- Visibilidad de columnas (con persistencia) -------- */
@@ -284,28 +395,35 @@ export default function GridKardex({
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         slots={{ toolbar: KardexToolbar }}
-        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
+        slotProps={{
+          toolbar: {
+            onResetColumns: handleResetColumns,
+            filters,
+            setFilters,
+            tiposMovimiento,
+          },
+        }}
         {...(serverPaging
           ? {
-              rowCount: Math.max(
-                Number(rowCount ?? 0),
-                Array.isArray(kardexes) ? kardexes.length : 0
-              ),
-              paginationModel: { page: modelPage, pageSize: modelPageSize },
-              onPaginationModelChange: (model) => {
-                const next = {
-                  page: model.page ?? 0,
-                  pageSize: model.pageSize ?? 10,
-                  size: model.pageSize ?? 10,
-                };
-                setPaginationModel?.(next);
-              },
-            }
+            rowCount: Math.max(
+              Number(rowCount ?? 0),
+              Array.isArray(kardexes) ? kardexes.length : 0
+            ),
+            paginationModel: { page: modelPage, pageSize: modelPageSize },
+            onPaginationModelChange: (model) => {
+              const next = {
+                page: model.page ?? 0,
+                pageSize: model.pageSize ?? 10,
+                size: model.pageSize ?? 10,
+              };
+              setPaginationModel?.(next);
+            },
+          }
           : {
-              initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 10 } },
-              },
-            })}
+            initialState: {
+              pagination: { paginationModel: { page: 0, pageSize: 10 } },
+            },
+          })}
       />
     </div>
   );
@@ -329,4 +447,7 @@ GridKardex.propTypes = {
   setPaginationModel: PropTypes.func,
   rowCount: PropTypes.number,
   loading: PropTypes.bool,
+  isAdmin: PropTypes.bool,
+  filters: PropTypes.object,
+  setFilters: PropTypes.func,
 };
