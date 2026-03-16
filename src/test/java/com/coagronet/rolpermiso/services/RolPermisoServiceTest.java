@@ -2,19 +2,25 @@ package com.coagronet.rolpermiso.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
-
+import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.empresarol.EmpresaRol;
@@ -61,6 +67,11 @@ class RolPermisoServiceTest {
 
     @InjectMocks
     private RolPermisoService rolPermisoService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void asignarModulosPermisos_assignsAllPermisosForModules() {
@@ -177,6 +188,85 @@ class RolPermisoServiceTest {
 
         assertThat(response.getPermisosAsignados()).isEqualTo(1);
         verify(rolPermisoRepository, times(1)).save(any(RolPermiso.class));
+    }
+
+    @Test
+    void getModulosBySubsistemas_usesAdminEmpresaFilteredQuery() {
+        Permiso permiso = buildPermiso(201L, "Ver Kardex", "KARDEX_READ", "GET", "Kardex");
+
+        when(permisoRepository.findPermisosActivosAdminEmpresaBySubsistemas(List.of(1L, 2L)))
+            .thenReturn(List.of(permiso));
+
+        var response = rolPermisoService.getModulosBySubsistemas(List.of(1L, 2L));
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).getPermisos()).hasSize(1);
+        verify(permisoRepository).findPermisosActivosAdminEmpresaBySubsistemas(List.of(1L, 2L));
+    }
+
+    @Test
+    void asignarPermisosAEmpresaRol_filtersToAdminEmpresa_whenUserIsNotSystemAdmin() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(99L, "admin-empresa");
+        Permiso permisoAdminEmpresa = buildPermiso(301L, "Permiso Empresa", "EMPRESA_READ", "GET", "Inventario");
+
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+            "admin-empresa",
+            "N/A",
+            List.of(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR_EMPRESA"))));
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(301L, 999L)))
+            .thenReturn(List.of(permisoAdminEmpresa));
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(301L)))
+            .thenReturn(Collections.emptySet());
+
+        rolPermisoService.asignarPermisosAEmpresaRol(rolId, List.of(301L, 999L));
+
+        verify(permisoRepository).findByIdInAndAdminEmpresaTrue(List.of(301L, 999L));
+        verify(permisoRepository, never()).findAllById(any());
+        verify(rolPermisoRepository).findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(301L));
+        verify(rolPermisoRepository).saveAll(any());
+    }
+
+    @Test
+    void asignarPermisosAEmpresaRol_filtersToAdminEmpresa_whenUserIsSystemAdmin() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(100L, "admin-sistema");
+        Permiso permisoSistema = buildPermiso(401L, "Permiso Sistema", "SISTEMA_WRITE", "POST", "Configuracion");
+        Permiso permisoEmpresa = buildPermiso(402L, "Permiso Empresa", "EMPRESA_READ", "GET", "Inventario");
+
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+            "admin-sistema",
+            "N/A",
+            Set.of(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR_SISTEMA"))));
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(401L, 402L)))
+            .thenReturn(List.of(permisoEmpresa));
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(402L)))
+            .thenReturn(Collections.emptySet());
+
+        rolPermisoService.asignarPermisosAEmpresaRol(rolId, List.of(401L, 402L));
+
+        verify(permisoRepository).findByIdInAndAdminEmpresaTrue(List.of(401L, 402L));
+        verify(permisoRepository, never()).findAllById(any());
+        verify(rolPermisoRepository).findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(402L));
+        verify(rolPermisoRepository).saveAll(any());
     }
 
     private EmpresaRol buildEmpresaRol(Long empresaRolId, Long rolId, String rolNombre) {
