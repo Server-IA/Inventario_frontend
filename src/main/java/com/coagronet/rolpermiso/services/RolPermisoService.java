@@ -278,26 +278,18 @@ public class RolPermisoService {
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		// 1. Verificación de Roles mediante Spring Security Context
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		boolean isSystemAdmin = authentication.getAuthorities()
-			.stream()
-			.map(GrantedAuthority::getAuthority)
-			.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA") || role.equals("ADMINISTRADOR_SISTEMA"));
-
-		// 2. Extraer permisos válidos de DB
-		List<Permiso> permisos = isSystemAdmin ? permisoRepository.findAllById(permisoIds)
-				: permisoRepository.findByIdInAndAdminEmpresaTrue(permisoIds);
+		// 1. Extraer permisos válidos de DB
+		List<Permiso> permisos = permisoRepository.findByIdInAndAdminEmpresaTrue(permisoIds);
 
 		if (permisos.isEmpty())
 			return;
 
-		// 3. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
+		// 2. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
 		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
 		Set<Long> permisosYaAsignados = rolPermisoRepository
 			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
 
-		// 4. Filtrado en memoria y construcción de Entidades
+		// 3. Filtrado en memoria y construcción de Entidades
 		List<RolPermiso> nuevosPermisos = permisos.stream()
 			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
 			.map(permiso -> RolPermiso.builder()
@@ -309,7 +301,7 @@ public class RolPermisoService {
 				.build())
 			.toList();
 
-		// 5. Inserción por lotes (Unit of Work via @Transactional)
+		// 4. Inserción por lotes (Unit of Work via @Transactional)
 		if (!nuevosPermisos.isEmpty()) {
 			rolPermisoRepository.saveAll(nuevosPermisos);
 		}
