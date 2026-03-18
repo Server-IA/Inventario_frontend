@@ -24,7 +24,6 @@ export default function GridPais({
   loading = false,        // spinner
 }) {
   const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 90 },
     { field: "nombre", headerName: "Nombre del País", width: 220 },
     { field: "codigo", headerName: "Código", width: 140 },
     { field: "acronimo", headerName: "Acrónimo", width: 140 },

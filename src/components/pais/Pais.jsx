@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { Box } from "@mui/material";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormPais from "./FormPais";
@@ -52,7 +53,7 @@ export default function Pais() {
         setPaises(datosConId);
       })
       .catch((err) => {
-        console.error("❌ Error al cargar países:", err);
+        console.error(" Error al cargar países:", err);
         setMessage({
           open: true,
           severity: "error",
@@ -69,12 +70,17 @@ export default function Pais() {
     <div>
       <h1>Gestión de Países</h1>
       <MessageSnackBar message={message} setMessage={setMessage} />
+
+      <Box sx={{ mb: 3 }}>
+
       <FormPais
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
         reloadData={reloadData}
       />
+       </Box>
+
       <GridPais
         paises={paises}
         selectedRow={selectedRow}

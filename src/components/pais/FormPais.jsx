@@ -16,17 +16,14 @@ import {
   FormHelperText,
 } from "@mui/material";
 import StackButtons from "../StackButtons";
-
 import { validateCamposBase } from "../utils/validations";
 
 const getErrorMessage = (err, defaultMsg) => {
-  if (err?.response) {
+  if (err?.response?.data) {
     const data = err.response.data;
-    if (typeof data === "string") return data;
-    return data?.message || data?.error || data?.detalle || defaultMsg;
+    return data.detail || data.title || defaultMsg;
   }
-  if (err?.message) return err.message;
-  return defaultMsg;
+  return err?.message || defaultMsg;
 };
 
 export default function FormPais({
@@ -36,6 +33,7 @@ export default function FormPais({
   reloadData,
 }) {
   const [open, setOpen] = React.useState(false);
+  const [openConfirm, setOpenConfirm] = React.useState(false);
   const [methodName, setMethodName] = React.useState("");
 
   const initialData = {
@@ -48,18 +46,25 @@ export default function FormPais({
   const [formData, setFormData] = React.useState(initialData);
   const [errors, setErrors] = React.useState({});
 
-  // solo letras (incluye tildes y espacios)
   const lettersSpacesRegex = /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g;
-  // caracteres especiales NO permitidos (para validación extra)
   const invalidCharsRegex = /[<>/"'`;(){}[\]\\]/;
 
+  // ======================
+  // CREATE
+  // ======================
   const create = () => {
-    setFormData(initialData);
+    setFormData({
+      ...initialData,
+      estado: "1", // automático
+    });
     setErrors({});
-    setMethodName("Add");
+    setMethodName("Crear");
     setOpen(true);
   };
 
+  // ======================
+  // UPDATE
+  // ======================
   const update = () => {
     if (!selectedRow?.id) {
       setMessage({
@@ -76,11 +81,15 @@ export default function FormPais({
       acronimo: selectedRow.acronimo || "",
       estado: selectedRow.estadoId?.toString() || "",
     });
+
     setErrors({});
-    setMethodName("Update");
+    setMethodName("Actualizar ");
     setOpen(true);
   };
 
+  // ======================
+  // DELETE (abre modal)
+  // ======================
   const deleteRow = () => {
     if (!selectedRow?.id) {
       setMessage({
@@ -91,64 +100,52 @@ export default function FormPais({
       return;
     }
 
+    setOpenConfirm(true);
+  };
+
+  // ======================
+  // CONFIRM DELETE
+  // ======================
+  const confirmDelete = () => {
     axios
       .delete(`/v1/pais/${selectedRow.id}`)
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "País eliminado correctamente.",
-        });
-        setSelectedRow({});
-        reloadData();
+      .then((res) => {
+        if (res.status === 204 || res.status === 200) {
+          setMessage({
+            open: true,
+            severity: "success",
+            text: "País eliminado correctamente.",
+          });
+          setSelectedRow({});
+          reloadData();
+        }
       })
       .catch((err) => {
-        let userMsg = "No se pudo eliminar el país.";
-
-        if (err?.response) {
-          const { status, data } = err.response;
-          const rawMsg =
-            typeof data === "string"
-              ? data
-              : data?.message || data?.error || data?.detalle || "";
-          const lower = (rawMsg || "").toLowerCase();
-
-          // 🔎 Detectar caso de país con departamentos asociados
-          if (
-            status === 409 || // típico de FK/CONFLICT
-            lower.includes("departament") || // 'departamento' / 'departamentos'
-            lower.includes("foreign key") ||
-            lower.includes("clave foránea") ||
-            lower.includes("fk")
-          ) {
-            userMsg =
-              "No se puede eliminar el país porque tiene departamentos asociados.";
-          } else if (rawMsg) {
-            userMsg = rawMsg;
-          }
-        } else if (err?.message) {
-          userMsg = err.message;
-        }
-
+        const msg = getErrorMessage(
+          err,
+          "No se pudo eliminar el país."
+        );
         setMessage({
           open: true,
           severity: "error",
-          text: userMsg,
+          text: msg,
         });
-      });
+      })
+      .finally(() => setOpenConfirm(false));
   };
 
   const handleClose = () => setOpen(false);
 
+  // ======================
+  // HANDLE CHANGE
+  // ======================
   const handleChange = (e) => {
     let { name, value } = e.target;
 
-    // Nombre: solo letras y espacios
     if (name === "nombre") {
       value = value.replace(lettersSpacesRegex, "");
     }
 
-    // Código: solo números
     if (name === "codigo") {
       value = value.replace(/[^0-9]/g, "");
     }
@@ -156,6 +153,9 @@ export default function FormPais({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ======================
+  // VALIDATE
+  // ======================
   const validate = () => {
     const newErrors = {};
 
@@ -166,38 +166,42 @@ export default function FormPais({
     });
 
     if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
-    if (baseErrors.estado) newErrors.estado = baseErrors.estado;
+    if (baseErrors.estado && methodName === "Actualizar ")
+      newErrors.estado = baseErrors.estado;
+
     if (baseErrors._security) newErrors._security = baseErrors._security;
 
-    // nombre obligatorio
     if (!formData.nombre.trim()) {
-      newErrors.nombre = newErrors.nombre || "El nombre es obligatorio.";
+      newErrors.nombre = "El nombre es obligatorio.";
     } else if (invalidCharsRegex.test(formData.nombre)) {
       newErrors.nombre = "El nombre contiene caracteres no permitidos.";
     }
 
-    // código obligatorio
     if (!formData.codigo.toString().trim()) {
       newErrors.codigo = "El código es obligatorio.";
     }
 
-    // acrónimo obligatorio
     if (!formData.acronimo.trim()) {
       newErrors.acronimo = "El acrónimo es obligatorio.";
     } else if (invalidCharsRegex.test(formData.acronimo)) {
-      newErrors.acronimo = "El acrónimo contiene caracteres no permitidos.";
+      newErrors.acronimo =
+        "El acrónimo contiene caracteres no permitidos.";
     }
 
-    // estado válido
-    if (!["1", "2"].includes(formData.estado)) {
-      newErrors.estado =
-        newErrors.estado || "Debe seleccionar un estado válido.";
+    if (
+      methodName === "Actualizar " &&
+      !["1", "2"].includes(formData.estado)
+    ) {
+      newErrors.estado = "Debe seleccionar un estado válido.";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // ======================
+  // SUBMIT
+  // ======================
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!validate()) return;
@@ -206,12 +210,17 @@ export default function FormPais({
       nombre: formData.nombre.trim(),
       codigo: parseInt(formData.codigo),
       acronimo: formData.acronimo.trim().toUpperCase(),
-      estadoId: parseInt(formData.estado),
+      estadoId:
+        methodName === "Crear"
+          ? 1
+          : parseInt(formData.estado),
     };
 
-    const isAdd = methodName === "Add";
+    const isAdd = methodName === "Crear";
     const method = isAdd ? axios.post : axios.put;
-    const url = isAdd ? "/v1/pais" : `/v1/pais/${selectedRow.id}`;
+    const url = isAdd
+      ? "/v1/pais"
+      : `/v1/pais/${selectedRow.id}`;
 
     method(url, payload)
       .then(() => {
@@ -227,11 +236,14 @@ export default function FormPais({
         reloadData();
       })
       .catch((err) => {
-        const msg = getErrorMessage(err, "No se pudo guardar el país.");
+        const msg = getErrorMessage(
+          err,
+          "No se pudo guardar el país."
+        );
         setMessage({
           open: true,
           severity: "error",
-          text: `Error al guardar país: ${msg}`,
+          text: msg,
         });
       });
   };
@@ -240,6 +252,7 @@ export default function FormPais({
     <>
       <StackButtons methods={{ create, update, deleteRow }} />
 
+      {/* ================= FORM MODAL ================= */}
       <Dialog open={open} onClose={handleClose}>
         <form onSubmit={handleSubmit}>
           <DialogTitle>{methodName} País</DialogTitle>
@@ -283,22 +296,24 @@ export default function FormPais({
               helperText={errors.acronimo}
             />
 
-            <FormControl fullWidth margin="normal" error={!!errors.estado}>
-              <InputLabel>Estado</InputLabel>
-              <Select
-                name="estado"
-                value={formData.estado}
-                onChange={handleChange}
-                label="Estado"
-              >
-                <MenuItem value="">Seleccione...</MenuItem>
-                <MenuItem value="1">Activo</MenuItem>
-                <MenuItem value="2">Inactivo</MenuItem>
-              </Select>
-              {errors.estado && (
-                <FormHelperText>{errors.estado}</FormHelperText>
-              )}
-            </FormControl>
+            {/* SOLO EN UPDATE */}
+            {methodName === "Actualizar " && (
+              <FormControl fullWidth margin="normal" error={!!errors.estado}>
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  name="estado"
+                  value={formData.estado}
+                  onChange={handleChange}
+                  label="Estado"
+                >
+                  <MenuItem value="1">Activo</MenuItem>
+                  <MenuItem value="2">Inactivo</MenuItem>
+                </Select>
+                {errors.estado && (
+                  <FormHelperText>{errors.estado}</FormHelperText>
+                )}
+              </FormControl>
+            )}
           </DialogContent>
 
           <DialogActions>
@@ -306,6 +321,27 @@ export default function FormPais({
             <Button type="submit">{methodName}</Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* ================= CONFIRM DELETE ================= */}
+      <Dialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+      >
+        <DialogTitle>Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de eliminar este país?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirm(false)}>
+            Cancelar
+          </Button>
+          <Button color="error" onClick={confirmDelete}>
+            Eliminar
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
