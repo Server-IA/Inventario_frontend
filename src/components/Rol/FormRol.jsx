@@ -37,6 +37,8 @@ export default function FormRol({
 
   const [formData, setFormData] = React.useState(initialData);
   const [errors, setErrors] = React.useState({});
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+
 
   React.useEffect(() => {
     if (!open) return;
@@ -103,8 +105,8 @@ export default function FormRol({
       e.descripcion = "La descripción es obligatoria.";
     }
 
-    // ESTADO
-    if (!formData.estadoId) {
+    // SOLO en actualizar
+    if (methodName === "Actualizar" && !formData.estadoId) {
       e.estadoId = "El estado es obligatorio.";
     }
 
@@ -116,12 +118,14 @@ export default function FormRol({
     ev.preventDefault();
     if (!validate()) return;
 
-    const payload = {
-      nombre: formData.nombre.trim(),
-      descripcion: formData.descripcion.trim(),
-      estadoId: Number(formData.estadoId),
-    };
-
+  const payload = {
+    nombre: formData.nombre.trim(),
+    descripcion: formData.descripcion.trim(),
+    estadoId:
+      methodName === "Actualizar"
+        ? Number(formData.estadoId)
+        : 1, 
+  };
     const creating = methodName === "Agregar";
     const url = creating ? "/v1/roles" : `/v1/roles/${selectedRow.id}`;
     const req = creating ? axios.post : axios.put;
@@ -144,120 +148,154 @@ export default function FormRol({
     }
   };
 
-  const deleteRow = async () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona un registro para eliminar",
-      });
-      return;
-    }
-    if (!window.confirm(`¿Eliminar el rol "${selectedRow.nombre}"?`)) return;
+const handleConfirmDelete = async () => {
+  try {
+    await axios.delete(`/v1/roles/${selectedRow.id}`);
+    setMessage({
+      open: true,
+      severity: "success",
+      text: "Rol eliminado",
+    });
+    setConfirmOpen(false);
+    handleClose();
+    reloadData();
+  } catch {
+    setMessage({
+      open: true,
+      severity: "error",
+      text: "No se pudo eliminar el rol",
+    });
+    setConfirmOpen(false);
+  }
+};
+const deleteRow = () => {
+  if (!selectedRow?.id) {
+    setMessage({
+      open: true,
+      severity: "error",
+      text: "Selecciona un registro para eliminar",
+    });
+    return;
+  }
 
-    try {
-      await axios.delete(`/v1/roles/${selectedRow.id}`);
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Rol eliminado",
-      });
-      handleClose();
-      reloadData();
-    } catch {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "No se pudo eliminar el rol",
-      });
-    }
-  };
+  setConfirmOpen(true);
+};
+return (
+  <>
+    <StackButtons
+      methods={{
+        create: () => {
+          setMethodName("Agregar");
+          setSelectedRow({});
+          setFormData(initialData);
+          setErrors({});
+          setOpen(true);
+        },
+        update: () => {
+          if (!selectedRow?.id)
+            return setMessage({
+              open: true,
+              severity: "error",
+              text: "Selecciona un registro",
+            });
+          setMethodName("Actualizar");
+          setErrors({});
+          setOpen(true);
+        },
+        deleteRow,
+      }}
+    />
 
-  return (
-    <>
-      <StackButtons
-        methods={{
-          create: () => {
-            setMethodName("Agregar");
-            setSelectedRow({});
-            setFormData(initialData);
-            setErrors({});
-            setOpen(true);
-          },
-          update: () => {
-            if (!selectedRow?.id)
-              return setMessage({
-                open: true,
-                severity: "error",
-                text: "Selecciona un registro",
-              });
-            setMethodName("Actualizar");
-            setErrors({});
-            setOpen(true);
-          },
-          deleteRow,
-        }}
-      />
+    {/*  Dialog principal */}
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>{methodName} Rol</DialogTitle>
 
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <form onSubmit={handleSubmit}>
-          <DialogTitle>{methodName} Rol</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Formulario para gestionar roles
-            </DialogContentText>
+  <DialogContent>
+  <DialogContentText>
+    Formulario para gestionar roles
+  </DialogContentText>
 
-            <TextField
-              fullWidth
-              margin="dense"
-              name="nombre"
-              label="Nombre (ej: ROLE_ADMIN)"
-              value={formData.nombre}
-              onChange={handleChange}
-              error={!!errors.nombre}
-              helperText={errors.nombre}
-            />
+  <TextField
+    fullWidth
+    margin="dense"
+    name="nombre"
+    label="Nombre (ej: ROLE_ADMIN)"
+    value={formData.nombre}
+    onChange={handleChange}
+    error={!!errors.nombre}
+    helperText={errors.nombre}
+  />
 
-            <TextField
-              fullWidth
-              margin="dense"
-              name="descripcion"
-              label="Descripción"
-              value={formData.descripcion}
-              onChange={handleChange}
-              error={!!errors.descripcion}
-              helperText={errors.descripcion}
-            />
+  <TextField
+    fullWidth
+    margin="dense"
+    name="descripcion"
+    label="Descripción"
+    value={formData.descripcion}
+    onChange={handleChange}
+    error={!!errors.descripcion}
+    helperText={errors.descripcion}
+  />
 
-            <FormControl fullWidth margin="dense" error={!!errors.estadoId}>
-              <InputLabel id="estadoId-label">Estado</InputLabel>
-              <Select
-                labelId="estadoId-label"
-                label="Estado"
-                name="estadoId"
-                value={formData.estadoId ?? 1}
-                onChange={handleChange}
-              >
-                {estados.map((e) => (
-                  <MenuItem key={e.id} value={e.id}>
-                    {e.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{errors.estadoId}</FormHelperText>
-            </FormControl>
-          </DialogContent>
+  {methodName === "Actualizar" && (
+    <TextField
+      select
+      fullWidth
+      margin="dense"
+      size="small"
+      variant="outlined"
+      label="Estado"
+      name="estadoId"
+      value={formData.estadoId ?? 1}
+      onChange={handleChange}
+      error={!!errors.estadoId}
+      helperText={errors.estadoId}
+    >
+      {estados.map((e) => (
+        <MenuItem key={e.id} value={e.id}>
+          {e.nombre}
+        </MenuItem>
+      ))}
+    </TextField>
+  )}
+</DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancelar</Button>
+          <Button type="submit" variant="contained">
+            {methodName}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
 
-          <DialogActions>
-            <Button onClick={handleClose}>Cancelar</Button>
-            <Button type="submit" variant="contained">
-              {methodName}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </>
-  );
+    {/* Dialog de confirmación (AHORA SÍ BIEN UBICADO) */}
+    <Dialog
+      open={confirmOpen}
+      onClose={() => setConfirmOpen(false)}
+    >
+      <DialogTitle>Confirmar eliminación</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          ¿Estás seguro de que deseas eliminar el rol "{selectedRow?.nombre}"?
+        </DialogContentText>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={() => setConfirmOpen(false)}>
+          Cancelar
+        </Button>
+        <Button
+          onClick={handleConfirmDelete}
+          color="error"
+          variant="contained"
+        >
+          Eliminar
+        </Button>
+      </DialogActions>
+    </Dialog>
+  </>
+);
 }
 
 FormRol.propTypes = {
