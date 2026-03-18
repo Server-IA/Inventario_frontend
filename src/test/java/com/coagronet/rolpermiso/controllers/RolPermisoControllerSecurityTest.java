@@ -1,6 +1,7 @@
 package com.coagronet.rolpermiso.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -163,15 +164,17 @@ class RolPermisoControllerSecurityTest {
         void getModulosBySubsistemas_returns200_whenQueryParamIsPresent() throws Exception {
         when(rolPermisoService.getModulosBySubsistemas(List.of(1L, 2L))).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-subsitema")
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-subsistema")
             .param("subsistemaIds", "1", "2"))
             .andExpect(status().isOk());
+
+        verify(rolPermisoService).getModulosBySubsistemas(List.of(1L, 2L));
         }
 
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void getModulosBySubsistemas_returns400_whenQueryParamIsMissing() throws Exception {
-        mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-subsitema"))
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-subsistema"))
             .andExpect(status().isBadRequest());
         }
 
@@ -226,6 +229,15 @@ class RolPermisoControllerSecurityTest {
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void asignarPermisosLegacy_returns201_whenPayloadIsValid() throws Exception {
+        mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(buildPermisosPayload()))
+            .andExpect(status().isCreated());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+        void asignarPermisosLegacy_returns201_whenUserIsAdminSistema() throws Exception {
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildPermisosPayload()))

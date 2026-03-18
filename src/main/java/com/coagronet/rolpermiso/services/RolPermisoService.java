@@ -3,6 +3,7 @@ package com.coagronet.rolpermiso.services;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +24,7 @@ import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.metodo.repositories.MetodoRepository;
+import com.coagronet.modulo.Modulo;
 import com.coagronet.permiso.Permiso;
 import com.coagronet.permiso.repositories.PermisoRepository;
 import com.coagronet.rolpermiso.RolPermiso;
@@ -114,35 +119,40 @@ public class RolPermisoService {
 	}
 
 	/**
-	 * Obtiene módulos agrupados con permisos filtrando por uno o varios ids de
-	 * subsistema. Devuelve lista sin paginación para selección UI a nivel de subsistema.
-	 * Útil para que el admin de empresa seleccione subsistemas y luego vea todos sus
-	 * módulos para elegir permisos individuales.
+	 * Implementa el patrón Unit of Work en modo solo lectura. Según la documentación de
+	 * Spring Data Access, readOnly = true optimiza el rendimiento al deshabilitar el
+	 * dirty-checking (flushing) de Hibernate, ahorrando CPU y memoria.
 	 */
 	@Transactional(readOnly = true)
 	public List<ModuloPermisoResponse> getModulosBySubsistemas(List<Long> subsistemaIds) {
-		List<Long> moduloIds = permisoRepository.findDistinctModuloIdsBySubsistemas(subsistemaIds);
 
-		return moduloIds.stream().map(moduloId -> {
-			List<Permiso> permisosModulo = permisoRepository.findPermisosByModuloId(moduloId);
-			if (permisosModulo.isEmpty())
-				return null;
+		// 1. Unica ida a la base de datos
+		List<Permiso> permisosAsignables = permisoRepository
+			.findPermisosActivosAdminEmpresaBySubsistemas(subsistemaIds);
 
-			Permiso primerPermiso = permisosModulo.getFirst();
-			List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisosModulo.stream()
+		// 2. Agrupación en memoria
+		Map<Modulo, List<Permiso>> permisosPorModulo = permisosAsignables.stream()
+			.collect(Collectors.groupingBy(Permiso::getModulo));
+
+		// 3. Transformación al DTO de salida
+		return permisosPorModulo.entrySet().stream().map(entry -> {
+			Modulo modulo = entry.getKey();
+			List<Permiso> permisosDelModulo = entry.getValue();
+
+			List<ModuloPermisoResponse.PermisoDTO> permisosDTO = permisosDelModulo.stream()
 				.map(p -> new ModuloPermisoResponse.PermisoDTO(p.getId(), p.getNombre(), p.getAutoridad(),
 						p.getMetodo() != null ? p.getMetodo().getNombre() : null, p.getUri()))
 				.toList();
 
 			return ModuloPermisoResponse.builder()
-				.moduloId(moduloId)
-				.moduloNombre(primerPermiso.getModulo().getNombre())
-				.moduloUrl(primerPermiso.getModulo().getUrl())
-				.moduloDescripcion(primerPermiso.getModulo().getDescripcion())
-				.moduloIcon(primerPermiso.getModulo().getIcon())
+				.moduloId(modulo.getId())
+				.moduloNombre(modulo.getNombre())
+				.moduloUrl(modulo.getUrl())
+				.moduloDescripcion(modulo.getDescripcion())
+				.moduloIcon(modulo.getIcon())
 				.permisos(permisosDTO)
 				.build();
-		}).filter(m -> m != null).toList();
+		}).sorted(Comparator.comparing(ModuloPermisoResponse::getModuloNombre)).toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -260,20 +270,28 @@ public class RolPermisoService {
 
 	@Transactional
 	public void asignarPermisosAEmpresaRol(Long rolId, List<Long> permisoIds) {
+		if (permisoIds == null || permisoIds.isEmpty())
+			return;
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
-
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		List<Permiso> permisos = permisoRepository.findAllById(permisoIds);
+		// 1. Extraer permisos válidos de DB
+		List<Permiso> permisos = permisoRepository.findByIdInAndAdminEmpresaTrue(permisoIds);
 
-		// Combina la validación de duplicados con el guardado en lote (saveAll) para
-		// mayor rendimiento
+		if (permisos.isEmpty())
+			return;
+
+		// 2. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
+		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
+		Set<Long> permisosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
+
+		// 3. Filtrado en memoria y construcción de Entidades
 		List<RolPermiso> nuevosPermisos = permisos.stream()
-			.filter(permiso -> !rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(),
-					permiso.getId()))
+			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
 			.map(permiso -> RolPermiso.builder()
 				.empresaRol(empresaRol)
 				.permiso(permiso)
@@ -281,8 +299,9 @@ public class RolPermisoService {
 				.createdBy(currentUser)
 				.createdAt(Instant.now())
 				.build())
-			.collect(Collectors.toList());
+			.toList();
 
+		// 4. Inserción por lotes (Unit of Work via @Transactional)
 		if (!nuevosPermisos.isEmpty()) {
 			rolPermisoRepository.saveAll(nuevosPermisos);
 		}
