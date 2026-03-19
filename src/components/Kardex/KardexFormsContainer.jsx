@@ -37,6 +37,37 @@ export function KardexFormsContainer({
         }
     };
 
+    const handleInactivate = async () => {
+        if (!selectedRow) return;
+
+        const confirmMessage =
+            "¿Inactivar este movimiento de Kardex?\n\n" +
+            "⚠️ Se revertirán los cambios de stock asociados.\n" +
+            "Si el stock resultante es negativo, la operación será bloqueada.";
+
+        if (!window.confirm(confirmMessage)) return;
+
+        try {
+            const axios = (await import("../axiosConfig")).default;
+            const response = await axios.put(`/v1/kardex/${selectedRow.id}/inactivate`);
+
+            setMessage({
+                open: true,
+                severity: "success",
+                text: response?.data?.message || "Kardex inactivado correctamente. Stock revertido.",
+            });
+            setSelectedRow(null);
+            reloadData();
+        } catch (err) {
+            const errorMsg = err?.response?.data?.message || "Error al inactivar el Kardex.";
+            setMessage({
+                open: true,
+                severity: "error",
+                text: errorMsg,
+            });
+        }
+    };
+
     return (
         <>
             <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
@@ -59,6 +90,14 @@ export function KardexFormsContainer({
                     disabled={!selectedRow}
                 >
                     Actualizar
+                </Button>
+                <Button
+                    variant="outlined"
+                    color="warning"
+                    disabled={!selectedRow}
+                    onClick={handleInactivate}
+                >
+                    Inactivar
                 </Button>
                 <Button
                     variant="outlined"
