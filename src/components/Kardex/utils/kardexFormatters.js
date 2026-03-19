@@ -3,6 +3,14 @@
  */
 
 /**
+ * @description Convierte datetime a string formateado para display
+ * @param {string|Date} val Valor de fecha
+ * @returns {string} Fecha formateada o ""
+ */
+export const safeDateTime = (val) =>
+    val ? new Date(val).toLocaleString("es-ES") : "";
+
+/**
  * @description Extrae nombres de objetos anidados con fallback
  * @param {object} item Objeto con propiedades nombre/name
  * @param {string} fallback Valor por defecto
