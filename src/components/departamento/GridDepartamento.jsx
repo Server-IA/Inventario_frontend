@@ -19,7 +19,6 @@ export default function GridDepartamento({
 }) {
   /* ---------- Columnas ---------- */
   const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 90, type: "number" },
     { field: "name", headerName: "Departamento", width: 220, type: "string" },
     {
       field: "paisNombre",

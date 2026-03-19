@@ -11,24 +11,36 @@ import {
   InputLabel,
   Select,
   FormHelperText,
+  DialogContentText,
 } from "@mui/material";
 import axios from "../axiosConfig";
 import { validateCamposBase } from "../utils/validations";
+import StackButtons from "../StackButtons";
+
+// ===========================
+// ERROR HANDLER
+// ===========================
+const getErrorMessage = (err, defaultMsg) => {
+  if (err?.response?.data) {
+    const { detail, title } = err.response.data;
+    return detail || title || defaultMsg;
+  }
+  return err?.message || defaultMsg;
+};
 
 export default function FormDepartamento({
-  open = false,
-  setOpen = () => {},
-  formMode = "create",
-  selectedRow = null,
-  paisId = "",                     // puede venir del filtro
-  paises = [],                     // [{id, nombre}]
-  reloadData = () => {},
-  setMessage = () => {},
-  authHeaders = {},
+  selectedRow,
+  setSelectedRow,
+  setMessage,
+  reloadData,
+  paisId = "",
+  paises = [],
+  externalMethods,
 }) {
-  // ===========================
-  // ESTADO Y CONFIGURACIÓN INICIAL
-  // ===========================
+  const [open, setOpen] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [formMode, setFormMode] = useState("create");
+
   const initialData = {
     nombre: "",
     codigo: "",
@@ -40,61 +52,111 @@ export default function FormDepartamento({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
 
-  // ===========================
-  // UTILIDADES Y HELPERS
-  // ===========================
-  const toNum = (v, def = 0) => (v === null || v === undefined || v === "" ? def : Number(v));
-  
+  const toNum = (v, def = 0) =>
+    v === null || v === undefined || v === "" ? def : Number(v);
+
   const invalidCharsRegex = /[<>/"'`;(){}[\]\\]/;
 
   // ===========================
-  // EFECTOS
+  // ACTIONS (BOTONES)
   // ===========================
-  useEffect(() => {
-    if (!open) return;
+  const create = () => {
+    setFormMode("create");
+    setFormData({
+      ...initialData,
+      estadoId: 1,
+      paisId: toNum(paisId, ""),
+    });
+    setErrors({});
+    setOpen(true);
+  };
 
-    if (formMode === "edit" && selectedRow) {
-      setFormData({
-        id: toNum(selectedRow.id),
-        paisId: toNum(selectedRow.paisId || paisId, ""),
-        nombre: selectedRow.nombre ?? "",
-        codigo: selectedRow.codigo ?? "",
-        acronimo: selectedRow.acronimo ?? "",
-        estadoId: toNum(selectedRow.estadoId, 1),
+  const update = () => {
+    if (!selectedRow?.id) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Selecciona un departamento para editar.",
       });
-    } else {
-      setFormData({
-        ...initialData,
-        paisId: toNum(paisId, ""), // si no hay filtro, obligar a elegir
-      });
+      return;
     }
 
+    setFormMode("edit");
+    setFormData({
+      id: selectedRow.id,
+      nombre: selectedRow.nombre || "",
+      codigo: selectedRow.codigo || "",
+      acronimo: selectedRow.acronimo || "",
+      estadoId: selectedRow.estadoId,
+      paisId: selectedRow.paisId,
+    });
+
     setErrors({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, formMode, selectedRow, paisId]);
+    setOpen(true);
+  };
+
+  const deleteRow = () => {
+    if (!selectedRow?.id) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Selecciona un departamento para eliminar.",
+      });
+      return;
+    }
+
+    setOpenConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const res = await axios.delete(`/v1/departamento/${selectedRow.id}`);
+
+      if (res.status === 204 || res.status === 200) {
+        setMessage({
+          open: true,
+          severity: "success",
+          text: "Departamento eliminado correctamente.",
+        });
+        setSelectedRow({});
+        reloadData();
+      }
+    } catch (err) {
+      const msg = getErrorMessage(
+        err,
+        "No se pudo eliminar el departamento."
+      );
+
+      setMessage({
+        open: true,
+        severity: "error",
+        text: msg,
+      });
+    } finally {
+      setOpenConfirm(false);
+    }
+  };
 
   // ===========================
-  // HANDLERS DE EVENTOS
+  // HANDLE CHANGE
   // ===========================
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (["estadoId", "paisId"].includes(name)) {
       setFormData((prev) => ({ ...prev, [name]: toNum(value, "") }));
       return;
     }
-    
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // ===========================
-  // VALIDACIONES
+  // VALIDATE
   // ===========================
   const validate = () => {
     const newErrors = {};
 
-    // 1) Validación CENTRAL (nombre/estado)
-    //    Pasamos descripcion: "N/A" para no exigir un campo que este form no tiene.
     const baseErrors = validateCamposBase({
       nombre: formData.nombre,
       descripcion: "N/A",
@@ -102,38 +164,31 @@ export default function FormDepartamento({
     });
 
     if (baseErrors.nombre) newErrors.nombre = baseErrors.nombre;
-    if (baseErrors.estado) newErrors.estadoId = baseErrors.estado; // mapear a estadoId
-    if (baseErrors._security) newErrors._security = baseErrors._security;
-    // (Ignoramos baseErrors.descripcion)
 
-    // 2) Validaciones LOCALES (mantengo tu lógica)
-    // Nombre (refuerzo local por caracteres no permitidos)
+    if (formMode === "edit" && baseErrors.estado) {
+      newErrors.estadoId = baseErrors.estado;
+    }
+
+    if (baseErrors._security) newErrors._security = baseErrors._security;
+
     if (!formData.nombre?.trim()) {
-      newErrors.nombre = newErrors.nombre || "El nombre es obligatorio.";
+      newErrors.nombre = "El nombre es obligatorio.";
     } else if (invalidCharsRegex.test(formData.nombre)) {
       newErrors.nombre = "El nombre contiene caracteres no permitidos.";
     }
 
-    // Código
     if (!formData.codigo?.toString().trim()) {
       newErrors.codigo = "El código es obligatorio.";
-    } else if (invalidCharsRegex.test(formData.codigo.toString())) {
-      newErrors.codigo = "El código contiene caracteres no permitidos.";
     }
 
-    // Acrónimo
     if (!formData.acronimo?.trim()) {
       newErrors.acronimo = "El acrónimo es obligatorio.";
-    } else if (invalidCharsRegex.test(formData.acronimo)) {
-      newErrors.acronimo = "El acrónimo contiene caracteres no permitidos.";
     }
 
-    // Estado (rango permitido)
-    if (![1, 2].includes(Number(formData.estadoId))) {
-      newErrors.estadoId = newErrors.estadoId || "Debe seleccionar un estado válido.";
+    if (formMode === "edit" && ![1, 2].includes(Number(formData.estadoId))) {
+      newErrors.estadoId = "Debe seleccionar un estado válido.";
     }
 
-    // País requerido
     if (!Number(formData.paisId)) {
       newErrors.paisId = "Debe seleccionar un país.";
     }
@@ -143,126 +198,184 @@ export default function FormDepartamento({
   };
 
   // ===========================
-  // PROCESAMIENTO DE DATOS
+  // SUBMIT
   // ===========================
-  const buildPayload = () => ({
-    paisId: Number(formData.paisId),
-    nombre: formData.nombre.trim(),
-    codigo: formData.codigo.toString().trim(),
-    acronimo: formData.acronimo.trim(),
-    estadoId: Number(formData.estadoId),
-  });
-
   const handleSubmit = async () => {
     if (!validate()) return;
-    const payload = buildPayload();
 
-    try {
-      if (formMode === "edit" && formData.id) {
-        await axios.put(`/v1/departamento/${formData.id}`, { id: Number(formData.id), ...payload }, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Departamento actualizado correctamente." });
-      } else {
-        await axios.post("/v1/departamento", payload, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Departamento creado correctamente." });
-      }
-      setOpen(false);
-      reloadData();
-    } catch (err) {
-      const api = err.response?.data || {};
+    const payload = {
+      paisId: parseInt(formData.paisId),
+      nombre: formData.nombre.trim(),
+      codigo: Number(formData.codigo),
+      acronimo: formData.acronimo.trim().toUpperCase(),
+      estadoId: formMode === "create" ? 1 : Number(formData.estadoId),
+    };
+   if (!formData.paisId || isNaN(formData.paisId)) {
       setMessage({
         open: true,
         severity: "error",
-        text: api.message || api.error || "Error al guardar departamento.",
+        text: "El país es obligatorio.",
+      });
+      return;
+    }
+    try {
+      if (formMode === "edit") {
+        const res = await axios.put(
+          `/v1/departamento/${formData.id}`,
+          { id: Number(formData.id), ...payload }
+        );
+
+        if (res.status === 200) {
+          setMessage({
+            open: true,
+            severity: "success",
+            text: "Departamento actualizado correctamente.",
+          });
+        }
+      } else {
+        const res = await axios.post("/v1/departamento", payload);
+
+        if (res.status === 201 || res.status === 200) {
+          setMessage({
+            open: true,
+            severity: "success",
+            text: "Departamento creado correctamente.",
+          });
+        }
+      }
+
+      setOpen(false);
+      setSelectedRow({});
+      reloadData();
+    } catch (err) {
+      const msg = getErrorMessage(
+        err,
+        "Error al guardar departamento."
+      );
+
+      setMessage({
+        open: true,
+        severity: "error",
+        text: msg,
       });
     }
   };
-
+  if (externalMethods) {
+  externalMethods.current = {
+    create,
+    update,
+    deleteRow,
+  };
+}
   // ===========================
   // RENDER
   // ===========================
   return (
-    <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {formMode === "edit" ? "Editar Departamento" : "Nuevo Departamento"}
-      </DialogTitle>
-      
-      <DialogContent>
-        {/* Selector de País (solo si no hay filtro) */}
-        {!paisId && (
-          <FormControl fullWidth margin="normal" error={!!errors.paisId}>
-            <InputLabel>País</InputLabel>
-            <Select
-              name="paisId"
-              value={formData.paisId || ""}
-              onChange={handleChange}
-              label="País"
-            >
-              {Array.isArray(paises) && paises.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.nombre}</MenuItem>
-              ))}
-            </Select>
-            {errors.paisId && <FormHelperText>{errors.paisId}</FormHelperText>}
-          </FormControl>
-        )}
+    <>
+      {/* ================= FORM ================= */}
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {formMode === "edit" ? "Editar Departamento" : "Nuevo Departamento"}
+        </DialogTitle>
 
-        {/* Campo Nombre */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Nombre"
-          name="nombre"
-          value={formData.nombre}
-          onChange={handleChange}
-          error={!!errors.nombre}
-          helperText={errors.nombre}
-        />
+        <DialogContent>
+          {!paisId && (
+            <FormControl fullWidth margin="normal" error={!!errors.paisId}>
+              <InputLabel>País</InputLabel>
+              <Select
+                name="paisId"
+                value={formData.paisId || ""}
+                onChange={handleChange}
+                label="País"
+              >
+                {paises.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.paisId && (
+                <FormHelperText>{errors.paisId}</FormHelperText>
+              )}
+            </FormControl>
+          )}
 
-        {/* Campo Código */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Código"
-          name="codigo"
-          value={formData.codigo}
-          onChange={handleChange}
-          error={!!errors.codigo}
-          helperText={errors.codigo}
-        />
-
-        {/* Campo Acrónimo */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Acrónimo"
-          name="acronimo"
-          value={formData.acronimo}
-          onChange={handleChange}
-          error={!!errors.acronimo}
-          helperText={errors.acronimo}
-        />
-
-        {/* Selector de Estado */}
-        <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
-          <InputLabel>Estado</InputLabel>
-          <Select
-            name="estadoId"
-            value={formData.estadoId}
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Nombre"
+            name="nombre"
+            value={formData.nombre}
             onChange={handleChange}
-            label="Estado"
-          >
-            <MenuItem value={1}>Activo</MenuItem>
-            <MenuItem value={2}>Inactivo</MenuItem>
-          </Select>
-          {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
-        </FormControl>
-      </DialogContent>
-      
-      <DialogActions>
-        <Button onClick={() => setOpen(false)}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained">
-          Guardar
-        </Button>
-      </DialogActions>
-    </Dialog>
+            error={!!errors.nombre}
+            helperText={errors.nombre}
+          />
+
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Código"
+            name="codigo"
+            value={formData.codigo}
+            onChange={handleChange}
+            error={!!errors.codigo}
+            helperText={errors.codigo}
+          />
+
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Acrónimo"
+            name="acronimo"
+            value={formData.acronimo}
+            onChange={handleChange}
+            error={!!errors.acronimo}
+            helperText={errors.acronimo}
+          />
+
+          {/* SOLO EDIT */}
+          {formMode === "edit" && (
+            <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                name="estadoId"
+                value={formData.estadoId}
+                onChange={handleChange}
+                label="Estado"
+              >
+                <MenuItem value={1}>Activo</MenuItem>
+                <MenuItem value={2}>Inactivo</MenuItem>
+              </Select>
+              {errors.estadoId && (
+                <FormHelperText>{errors.estadoId}</FormHelperText>
+              )}
+            </FormControl>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={handleSubmit} variant="contained">
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ================= DELETE MODAL ================= */}
+      <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+        <DialogTitle>Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de eliminar este departamento?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirm(false)}>Cancelar</Button>
+          <Button color="error" onClick={confirmDelete}>
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
