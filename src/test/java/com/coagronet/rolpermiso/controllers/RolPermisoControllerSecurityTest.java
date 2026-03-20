@@ -22,9 +22,11 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.exceptionHandler.Advice;
 import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
@@ -38,6 +40,7 @@ import com.coagronet.infrastructure.security.MyUserDetailsService;
 import com.coagronet.rolpermiso.dtos.response.ModuloPermisoResponse;
 import com.coagronet.rolpermiso.dtos.response.RolPermisoAsignadoResponse;
 import com.coagronet.rolpermiso.services.RolPermisoService;
+import com.coagronet.rolpermiso.utils.RolPermisoDualAuthResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -54,6 +57,9 @@ class RolPermisoControllerSecurityTest {
 
     @MockBean
     private RolPermisoService rolPermisoService;
+
+    @MockBean
+    private RolPermisoDualAuthResolver dualAuthResolver;
 
     @MockBean
     private JwtService jwtService;
@@ -229,6 +235,8 @@ class RolPermisoControllerSecurityTest {
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void asignarPermisosLegacy_returns201_whenPayloadIsValid() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildPermisosPayload()))
@@ -237,11 +245,41 @@ class RolPermisoControllerSecurityTest {
 
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
-        void asignarPermisosLegacy_returns201_whenUserIsAdminSistema() throws Exception {
+        void asignarPermisosLegacy_returns201_whenUserIsAdminSistemaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenReturn(99L);
+
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
+            .param("empresaId", "99")
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildPermisosPayload()))
             .andExpect(status().isCreated());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+        void asignarPermisosLegacy_returns400_whenUserIsAdminSistemaAndEmpresaIdMissing() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenThrow(
+            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "ADMINISTRADOR_SISTEMA debe especificar empresaId como parametro"));
+
+        mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(buildPermisosPayload()))
+            .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+        void asignarPermisosLegacy_returns403_whenUserIsAdminEmpresaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenThrow(
+            new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "ADMINISTRADOR_EMPRESA no puede especificar empresaId"));
+
+        mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
+            .param("empresaId", "99")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(buildPermisosPayload()))
+            .andExpect(status().isForbidden());
         }
 
         @Test

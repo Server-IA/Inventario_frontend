@@ -2,6 +2,9 @@ package com.coagronet.utils;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -73,6 +76,48 @@ public class UserRoleService {
 			log.warn("JWT inválido o expirado: {}", ex.getMessage());
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token JWT inválido o expirado");
 		}
+	}
+
+	/**
+	 * Verifica si el usuario autenticado tiene un rol específico.
+	 * 
+	 * @param roleName Nombre del rol a verificar (ej: "ROLE_ADMINISTRADOR_SISTEMA")
+	 * @return true si el usuario tiene el rol, false en caso contrario
+	 */
+	public boolean hasRole(String roleName) {
+		try {
+			String currentRole = getRoleFromCurrentRequest();
+			return currentRole != null && currentRole.equals(roleName);
+		} catch (ResponseStatusException ex) {
+			log.debug("No se pudo verificar rol desde JWT: {}", ex.getMessage());
+			return false;
+		}
+	}
+
+	/**
+	 * Obtiene la Authentication del contexto de seguridad actual de manera centralizada.
+	 * 
+	 * @return Authentication del contexto actual, null si no está autenticado
+	 */
+	public Authentication getAuthentication() {
+		return SecurityContextHolder.getContext().getAuthentication();
+	}
+
+	/**
+	 * Verifica si el usuario autenticado tiene un rol específico basándose en las GrantedAuthorities.
+	 * Útil cuando los roles están en el Authentication como GrantedAuthority.
+	 * 
+	 * @param roleName Nombre del rol a verificar (ej: "ROLE_ADMINISTRADOR_SISTEMA")
+	 * @return true si el usuario tiene el rol en sus authorities, false en caso contrario
+	 */
+	public boolean hasRoleInAuthentication(String roleName) {
+		Authentication auth = getAuthentication();
+		if (auth == null) {
+			return false;
+		}
+		return auth.getAuthorities().stream()
+			.map(GrantedAuthority::getAuthority)
+			.anyMatch(authority -> authority.equals(roleName));
 	}
 
 }

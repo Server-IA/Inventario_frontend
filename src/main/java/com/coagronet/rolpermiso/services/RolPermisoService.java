@@ -308,6 +308,67 @@ public class RolPermisoService {
 	}
 
 	/**
+	 * Asigna permisos individuales a un rol de empresa.
+	 * Versión NUEVA que acepta empresaId como parámetro explícito.
+	 * 
+	 * Soporta dos casos de uso:
+	 * 1. ADMINISTRADOR_EMPRESA: empresaId viene resuelto del contexto
+	 * 2. ADMINISTRADOR_SISTEMA: empresaId viene del parámetro de la solicitud
+	 *
+	 * @param rolId ID del rol al cual asignar permisos
+	 * @param permisoIds Lista de IDs de permisos a asignar
+	 * @param empresaId ID de la empresa a la cual pertenece el rol (REQUERIDO)
+	 * 
+	 * @throws IllegalArgumentException si empresaId es null o permisos list está vacía
+	 * @throws EntityNotFoundException si rol o empresa no existen
+	 */
+	@Transactional
+	public void asignarPermisosAEmpresaRolWithEmpresaId(Long rolId, List<Long> permisoIds, Long empresaId) {
+		if (permisoIds == null || permisoIds.isEmpty())
+			return;
+
+		// ============================================================
+		// VALIDACIÓN CRÍTICA: empresaId no puede ser null
+		// ============================================================
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
+
+		// Validar que el rol existe y pertenece a la empresa especificada
+		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
+		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+		User currentUser = authenticationService.getAuthenticatedUser();
+
+		// 1. Extraer permisos válidos de DB
+		List<Permiso> permisos = permisoRepository.findByIdInAndAdminEmpresaTrue(permisoIds);
+
+		if (permisos.isEmpty())
+			return;
+
+		// 2. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
+		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
+		Set<Long> permisosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
+
+		// 3. Filtrado en memoria y construcción de Entidades
+		List<RolPermiso> nuevosPermisos = permisos.stream()
+			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
+			.map(permiso -> RolPermiso.builder()
+				.empresaRol(empresaRol)
+				.permiso(permiso)
+				.estado(estadoActivo)
+				.createdBy(currentUser)
+				.createdAt(Instant.now())
+				.build())
+			.toList();
+
+		// 4. Inserción por lotes (Unit of Work via @Transactional)
+		if (!nuevosPermisos.isEmpty()) {
+			rolPermisoRepository.saveAll(nuevosPermisos);
+		}
+	}
+
+	/**
 	 * Quita permisos de módulos específicos de un rol
 	 */
 	@Transactional

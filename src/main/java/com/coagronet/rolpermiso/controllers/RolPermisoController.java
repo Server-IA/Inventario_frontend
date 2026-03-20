@@ -28,6 +28,7 @@ import com.coagronet.rolpermiso.dtos.response.ModuloPermisoResponse;
 import com.coagronet.rolpermiso.dtos.response.PermisoResponse;
 import com.coagronet.rolpermiso.dtos.response.RolPermisoAsignadoResponse;
 import com.coagronet.rolpermiso.services.RolPermisoService;
+import com.coagronet.rolpermiso.utils.RolPermisoDualAuthResolver;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 public class RolPermisoController {
 
 	private final RolPermisoService rolPermisoService;
+	private final RolPermisoDualAuthResolver dualAuthResolver;
 
 	/**
 	 * GET: Obtener módulos disponibles con sus permisos agrupados (con paginación) Admin
@@ -191,16 +193,36 @@ public class RolPermisoController {
 	}
 
 	/**
-	 * Asignar permisos individuales a un rol (permiso a permiso)
-	 *
+	 * POST: Asignar permisos individuales a un rol (permiso a permiso)
+	 * 
+	 * Funciona para ambos roles:
+	 * - ADMINISTRADOR_EMPRESA: No requiere parámetro empresaId (se obtiene del contexto)
+	 * - ADMINISTRADOR_SISTEMA: Requiere parámetro empresaId como query param
+	 * 
+	 * @param rolId ID del rol a asignar permisos
+	 * @param dto DTO con lista de IDs de permisos
+	 * @param empresaIdParam Parámetro opcional para ADMINISTRADOR_SISTEMA
+	 * @return ResponseEntity con estado 201 CREATED
 	 */
 	@PostMapping("/rol/{rolId}/permisos")
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Void asignarPermisosARolDeEmpresa(@PathVariable Long rolId, @RequestBody @Valid AsignarPermisosRequest dto) {
+	public ResponseEntity<Void> asignarPermisosARolDeEmpresa(
+			@PathVariable Long rolId,
+			@RequestBody @Valid AsignarPermisosRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
 
-		rolPermisoService.asignarPermisosAEmpresaRol(rolId, dto.getPermisosId());
-		return null;
+		// El resolver detecta automáticamente qué empresaId usar según el rol
+		// - ADMIN_EMPRESA: Ignora parámetro, obtiene del contexto
+		// - ADMIN_SISTEMA: Requiere parámetro
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
+
+		// Usar el nuevo método con empresaId explícito
+		rolPermisoService.asignarPermisosAEmpresaRolWithEmpresaId(rolId, dto.getPermisosId(), empresaId);
+
+		return ResponseEntity
+			.created(URI.create("/api/v1/empresa-rol-permisos/rol/" + rolId + "/permisos"))
+			.build();
 	}
 
 	/**
