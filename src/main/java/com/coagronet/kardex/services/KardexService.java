@@ -1,5 +1,8 @@
 package com.coagronet.kardex.services;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -7,16 +10,30 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.coagronet.almacen.Almacen;
+import com.coagronet.articuloKardex.ArticuloKardex;
+import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.auditoria.RequestUtils;
+import com.coagronet.empresa.Empresa;
+import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.custom.MovimientoInvalidoException;
+import com.coagronet.exceptionHandler.custom.ProductoSinResponsableException;
 import com.coagronet.kardex.Kardex;
+import com.coagronet.kardex.dtos.ArticuloRequestDTO;
 import com.coagronet.kardex.dtos.KardexDTO;
+import com.coagronet.kardex.dtos.KardexRequestDTO;
+import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
+import com.coagronet.ordenCompra.OrdenCompra;
+import com.coagronet.presentacionProducto.PresentacionProducto;
+import com.coagronet.tipoMovimiento.TipoMovimiento;
+import com.coagronet.user.User;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +41,10 @@ import lombok.RequiredArgsConstructor;
 public class KardexService {
 
 	private final KardexRepository kardexRepository;
+
+	private final ArticuloKardexRepository articuloKardexRepository;
+
+	private final EntityManager entityManager;
 
 	private final KardexMapper kardexMapper;
 
@@ -119,6 +140,76 @@ public class KardexService {
 		// Si es posible, extrae esto en la capa del controlador.
 		kardex.setUsername(authenticationService.getAuthenticatedUser().getUsername());
 		kardex.setRol(requestUtils.getAuthenticatedRole());
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public Kardex procesarMovimientoKardex(KardexRequestDTO request, MetadatosSeguridad metadata, Long empresaId) {
+
+		request.getItems().forEach(itemDTO -> {
+			if (itemDTO.isDevolutivo() && itemDTO.getResponsableId() == null) {
+				throw new ProductoSinResponsableException(String.format(
+						"El producto de presentación '%s' es devolutivo y requiere un responsable asignado.",
+						itemDTO.getPresentacionProductoId()));
+			}
+		});
+
+		Empresa empresaProxy = entityManager.getReference(Empresa.class, empresaId);
+
+		Kardex kardex = Kardex.builder()
+			.empresa(empresaProxy)
+			.tipoMovimiento(entityManager.getReference(TipoMovimiento.class, request.getTipoMovimientoId()))
+			.almacen(entityManager.getReference(Almacen.class, request.getAlmacenId()))
+			.ordenCompra(request.getOrdenCompraId() != null
+					? entityManager.getReference(OrdenCompra.class, request.getOrdenCompraId()) : null)
+			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+			.username(metadata.username())
+			.rol(metadata.rol())
+			.ip(metadata.ip())
+			.host(metadata.host())
+			.build();
+
+		Kardex kardexGuardado = kardexRepository.save(kardex);
+
+		List<ArticuloKardex> articulosAPersistir = new ArrayList<>(request.getItems().size());
+
+		for (ArticuloRequestDTO itemDTO : request.getItems()) {
+			if (itemDTO.isDevolutivo()) {
+
+				for (int i = 0; i < itemDTO.getCantidad(); i++) {
+					articulosAPersistir
+						.add(construirArticulo(itemDTO, kardexGuardado, BigDecimal.ONE, metadata, empresaProxy));
+				}
+			}
+			else {
+
+				articulosAPersistir.add(construirArticulo(itemDTO, kardexGuardado,
+						BigDecimal.valueOf(itemDTO.getCantidad()), metadata, empresaProxy));
+			}
+		}
+
+		articuloKardexRepository.saveAll(articulosAPersistir);
+
+		return kardexGuardado;
+	}
+
+	private ArticuloKardex construirArticulo(ArticuloRequestDTO dto, Kardex kardex, BigDecimal cantidad,
+			MetadatosSeguridad metadata, Empresa empresaProxy) {
+
+		return ArticuloKardex.builder()
+			.kardex(kardex)
+			.presentacionProducto(
+					entityManager.getReference(PresentacionProducto.class, dto.getPresentacionProductoId()))
+			.empresa(empresaProxy)
+			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+			.responsable(dto.getResponsableId() != null ? entityManager.getReference(User.class, dto.getResponsableId())
+					: null)
+			.cantidad(cantidad)
+			.precio(dto.getPrecio())
+			.username(metadata.username())
+			.rol(metadata.rol())
+			.ip(metadata.ip())
+			.host(metadata.host())
+			.build();
 	}
 
 }

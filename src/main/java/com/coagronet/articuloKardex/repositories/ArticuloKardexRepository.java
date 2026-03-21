@@ -1,11 +1,14 @@
 package com.coagronet.articuloKardex.repositories;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,27 +18,33 @@ import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 
 @Repository
-public interface ArticuloKardexRepository extends JpaRepository<ArticuloKardex, Long> {
+public interface ArticuloKardexRepository
+		extends JpaRepository<ArticuloKardex, Long>, JpaSpecificationExecutor<ArticuloKardex> {
 
 	interface RowCantidad {
 
 		Long getPresentacionId();
 
-		Double getCantidad();
+		BigDecimal getCantidad();
 
 	}
 
+	Optional<ArticuloKardex> findByidentificadorProductoAndEmpresaId(String identificadorProducto, Long empresaId);
+
+	@EntityGraph(attributePaths = { "presentacionProducto", "estado" })
 	Optional<ArticuloKardex> findByIdAndEmpresaId(Long id, Long empresaId);
 
+	@EntityGraph(attributePaths = { "presentacionProducto", "estado" })
 	Page<ArticuloKardex> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
 
+	@EntityGraph(attributePaths = { "presentacionProducto", "estado", "responsable" })
 	List<ArticuloKardex> findByEmpresaIdAndKardexIdOrderByIdAsc(Long empresaId, Long kardexId);
 
-	Optional<ArticuloKardex> findByidentificadorProductoAndEmpresaId(String identificadorProducto, Long empresaId);
+	Optional<ArticuloKardex> findByIdentificadorProductoAndEmpresaId(String identificadorProducto, Long empresaId);
 
 	@Query("""
 			  select ki.presentacionProducto.id as presentacionId,
-			         coalesce(sum(ki.cantidad), 0)               as cantidad
+			         coalesce(sum(ki.cantidad), 0) as cantidad
 			  from ArticuloKardex ki
 			  join ki.kardex k
 			  join k.tipoMovimiento tm
@@ -107,8 +116,8 @@ public interface ArticuloKardexRepository extends JpaRepository<ArticuloKardex, 
 	List<ArticuloKardexDTO> findDtoByEmpresaIdAndKardexIdOrderByIdAsc(@Param("empresaId") Long empresaId,
 			@Param("kardexId") Long kardexId);
 
-	@Modifying
-	@Query("DELETE FROM ArticuloKardex a WHERE a.id = :id AND a.empresa.id = :empresaId")
-	int deleteByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("UPDATE ArticuloKardex a SET a.estado.id = 2 WHERE a.id = :id AND a.empresa.id = :empresaId")
+	int softDeleteByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
 }

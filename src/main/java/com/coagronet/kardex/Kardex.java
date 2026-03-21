@@ -1,11 +1,16 @@
 package com.coagronet.kardex;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.proxy.HibernateProxy;
-import org.springframework.data.annotation.CreatedBy;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.coagronet.almacen.Almacen;
@@ -39,6 +44,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicInsert
 @Table(name = "kardex",
 		indexes = { @Index(name = "idx_kardex_almacen_id", columnList = "kar_almacen_id"),
 				@Index(name = "idx_kardex_almacen_destino", columnList = "kar_almacen_destino_id"),
@@ -55,7 +61,7 @@ public class Kardex {
 	private Long id;
 
 	@Builder.Default
-	@Column(name = "kar_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@Column(name = "kar_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
 	private OffsetDateTime fechaHora = OffsetDateTime.now();
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -67,11 +73,11 @@ public class Kardex {
 	private Almacen almacenDestino;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kar_produccion_id", referencedColumnName = "pro_id", nullable = false)
+	@JoinColumn(name = "kar_produccion_id", referencedColumnName = "pro_id")
 	private Produccion produccion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kar_tipo_movimiento_id", referencedColumnName = "tim_id", nullable = false)
+	@JoinColumn(name = "kar_tipo_movimiento_id", referencedColumnName = "tim_id", nullable = false, updatable = false)
 	private TipoMovimiento tipoMovimiento;
 
 	@Column(name = "kar_descripcion", columnDefinition = "TEXT")
@@ -81,6 +87,7 @@ public class Kardex {
 	@JoinColumn(name = "kar_estado_id", referencedColumnName = "est_id", nullable = false)
 	private Estado estado;
 
+	// updatable = false requerido por trg_evitar_update_kar_empresa_id
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false, updatable = false)
 	private Empresa empresa;
@@ -99,22 +106,24 @@ public class Kardex {
 
 	// --- Metadatos de Auditoría y Seguridad ---
 
-	@CreatedBy
-	@Column(name = "kar_seg_username", length = 150, updatable = false)
+	@LastModifiedBy
+	@Column(name = "kar_seg_username", length = 150)
 	private String username;
 
-	@Column(name = "kar_seg_rol", length = 100, updatable = false)
+	@Column(name = "kar_seg_rol", length = 100)
 	private String rol;
 
-	@Column(name = "kar_seg_ip", columnDefinition = "inet", updatable = false)
+	@JdbcTypeCode(SqlTypes.INET)
+	@Column(name = "kar_seg_ip", columnDefinition = "inet")
 	private String ip;
 
-	@Column(name = "kar_seg_host", length = 255, updatable = false)
+	@Column(name = "kar_seg_host", length = 255)
 	private String host;
 
+	@LastModifiedDate
 	@CreatedDate
-	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE", updatable = false)
-	private OffsetDateTime segFechaHora;
+	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private LocalDateTime segFechaHora;
 
 	@Override
 	public final boolean equals(Object o) {

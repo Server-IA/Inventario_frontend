@@ -2,13 +2,18 @@ package com.coagronet.articuloKardex;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.coagronet.empresa.Empresa;
@@ -47,9 +52,7 @@ import lombok.Setter;
 		indexes = { @Index(name = "idx_kai_empresa_id", columnList = "kai_empresa_id"),
 				@Index(name = "idx_kai_kardex_id", columnList = "kai_kardex_id"),
 				@Index(name = "idx_kai_producto_id", columnList = "kai_producto_presentacion_id"),
-				@Index(name = "idx_kai_responsable_id", columnList = "kai_responsable_id") // Índice
-																							// añadido
-		},
+				@Index(name = "idx_kai_responsable_id", columnList = "kai_responsable_id") },
 		uniqueConstraints = { @UniqueConstraint(name = "kardex_item_kai_producto_identificador_key",
 				columnNames = "kai_producto_identificador") })
 @EntityListeners(AuditingEntityListener.class)
@@ -66,6 +69,7 @@ public class ArticuloKardex {
 	@Column(name = "kai_precio", nullable = false, precision = 16, scale = 4)
 	private BigDecimal precio;
 
+	@Generated
 	@Column(name = "kai_precio_total", insertable = false, updatable = false, precision = 16, scale = 4)
 	private BigDecimal precioTotal;
 
@@ -90,6 +94,7 @@ public class ArticuloKardex {
 			foreignKey = @ForeignKey(name = "kardex_item_kai_estado_id_fkey"))
 	private Estado estado;
 
+	// updatable=false requerido por trg_evitar_update_kai_empresa_id
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kai_empresa_id", referencedColumnName = "emp_id", nullable = false, updatable = false,
 			foreignKey = @ForeignKey(name = "kardex_item_kai_empresa_id_fkey"))
@@ -106,22 +111,24 @@ public class ArticuloKardex {
 	// --- Metadatos de Auditoría Integrados con Spring Data ---
 
 	@CreatedBy
-	@Column(name = "kai_seg_username", length = 150, nullable = false, updatable = false)
+	@LastModifiedBy
+	@Column(name = "kai_seg_username", length = 150, nullable = false)
 	private String username;
 
-	@Column(name = "kai_seg_rol", length = 100, nullable = false, updatable = false)
+	@Column(name = "kai_seg_rol", length = 100, nullable = false)
 	private String rol;
 
-	@Column(name = "kai_seg_ip", columnDefinition = "inet", nullable = false, updatable = false)
+	@JdbcTypeCode(SqlTypes.INET)
+	@Column(name = "kai_seg_ip", columnDefinition = "inet", nullable = false)
 	private String ip;
 
-	@Column(name = "kai_seg_host", length = 255, updatable = false)
+	@Column(name = "kai_seg_host", length = 255)
 	private String host;
 
 	@CreatedDate
-	@Column(name = "kai_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE", nullable = false,
-			updatable = false)
-	private OffsetDateTime fechaHora;
+	@LastModifiedDate
+	@Column(name = "kai_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE", nullable = false)
+	private LocalDateTime fechaHora;
 
 	@PrePersist
 	public void prePersist() {
