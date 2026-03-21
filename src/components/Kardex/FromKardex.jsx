@@ -79,7 +79,6 @@ const kardexSchema = Yup.object({
     .test("no-sql", "El texto contiene patrones no permitidos.", (v) =>
       !isSqlSuspicious(v)
     ),
-  estadoId: Yup.number().oneOf([0, 1]).required("Estado obligatorio."),
   empresaId: numberRequired("Empresa obligatoria.", { min: 1 }),
 
   // opcionales
@@ -136,7 +135,6 @@ export default function FormKardex({
     ordenCompraId: "",
     clienteProveedorId: "",
     descripcion: "",
-    estadoId: 1,
     empresaId: null,
   });
 
@@ -270,7 +268,6 @@ export default function FormKardex({
         ordenCompraId: "",
         clienteProveedorId: "",
         descripcion: "",
-        estadoId: 1,
         empresaId,
       });
       setErrors({});
@@ -347,7 +344,6 @@ export default function FormKardex({
       "almacenId",
       "produccionId",
       "tipoMovimientoId",
-      "estadoId",
       "pedidoId",
       "ordenCompraId",
       "clienteProveedorId",
@@ -540,6 +536,7 @@ export default function FormKardex({
       // 🔹 Flujo Kardex genérico (lo que ya tenías)
       const payload = {
         ...formData,
+        estadoId: 1,
         pedidoId: formData.pedidoId || null,
         ordenCompraId: formData.ordenCompraId || null,
         clienteProveedorId: formData.clienteProveedorId || null,
@@ -788,22 +785,6 @@ export default function FormKardex({
               />
             </Grid>
 
-            {/* Estado */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.estadoId}>
-                <InputLabel>Estado</InputLabel>
-                <Select
-                  name="estadoId"
-                  label="Estado"
-                  value={formData.estadoId}
-                  onChange={handleChange}
-                >
-                  <MenuItem value={1}>Activo</MenuItem>
-                  <MenuItem value={0}>Inactivo</MenuItem>
-                </Select>
-                <FormHelperText>{errors.estadoId}</FormHelperText>
-              </FormControl>
-            </Grid>
           </Grid>
 
           {/* ============================
@@ -878,7 +859,7 @@ export default function FormKardex({
 
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit}>Guardar</Button>
+          <Button onClick={handleSubmit}>Siguiente</Button>
         </DialogActions>
       </Dialog>
 

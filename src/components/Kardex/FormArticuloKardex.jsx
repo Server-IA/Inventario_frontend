@@ -1,5 +1,4 @@
-// src/components/FormArticuloKardex.jsx
-import React, { useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -26,63 +25,138 @@ export default function FormArticuloKardex({
   const [open, setOpen] = useState(false);
   const [methodName, setMethodName] = useState("");
   const [presentaciones, setPresentaciones] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [tiposPresentacion, setTiposPresentacion] = useState([]);
 
   const initialData = {
+    productoId: "",
+    presentacionProductoId: "",
     cantidad: "",
-    precio: "",
+    precioUnitario: "",
+    precioTotal: "",
     lote: "",
     fechaVencimiento: "",
-    kardexId: kardexId || "",
-    presentacionProductoId: "",
-    estadoId: "1",
   };
 
   const [formData, setFormData] = useState(initialData);
 
-  /* -------- Helpers catálogo -------- */
   const toArray = (d) =>
     Array.isArray(d)
       ? d
       : d?.content ?? d?.items ?? d?.data ?? d?.results ?? [];
 
-  const ppLabel = (p) => {
-    const base =
-      p.name ??
-      p.nombre ??
-      [
-        p.producto?.nombre ?? p.productoNombre,
-        p.presentacion?.nombre ?? p.presentacionNombre,
-        p.cantidad
-          ? `${p.cantidad} ${p.unidad?.nombre ?? p.unidadNombre ?? ""
-            }`.trim()
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-    return base || `Presentación ${p.id}`;
-  };
+  const getProductoId = (p) =>
+    p?.producto?.id ??
+    p?.productoId ??
+    p?.producto_id ??
+    p?.producto?.productoId ??
+    p?.proId ??
+    null;
+
+  const getPresentacionTipoId = (p) =>
+    p?.presentacion?.id ??
+    p?.presentacionId ??
+    p?.presentacion_id ??
+    null;
+
+  const getProductoLabel = (p) =>
+    p?.producto?.nombre ??
+    p?.producto?.name ??
+    p?.productoNombre ??
+    `Producto ${getProductoId(p) ?? ""}`;
+
+  const getPresentacionLabel = (p) =>
+    p?.presentacionProducto?.nombre ??
+    p?.presentacionProducto?.name ??
+    p?.presentacion?.nombre ??
+    p?.presentacion?.name ??
+    p?.presentacionNombre ??
+    p?.name ??
+    p?.nombre ??
+    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))
+      ?.nombre ??
+    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))
+      ?.name ??
+    `Presentacion ${p?.id ?? ""}`;
+
+  const presentacionesFiltradas = useMemo(() => {
+    if (!formData.productoId) return [];
+    const filtered = presentaciones.filter(
+      (p) => String(getProductoId(p)) === String(formData.productoId)
+    );
+    // Fallback defensivo: si el backend no trae productoId en items, no bloquear el combo.
+    return filtered.length ? filtered : presentaciones;
+  }, [presentaciones, formData.productoId]);
 
   const loadData = async () => {
+    const uniqueById = (arr) => {
+      const seen = new Set();
+      return arr.filter((x) => {
+        const id = x?.id;
+        if (id == null || seen.has(String(id))) return false;
+        seen.add(String(id));
+        return true;
+      });
+    };
+
     try {
-      const res = await axios.get("/v1/items/producto_presentacion/0");
-      setPresentaciones(toArray(res.data));
+      const [prodRes, tipoPresRes, prpItemsRes, prpCrudRes] = await Promise.allSettled([
+        axios.get("/v1/items/producto/0"),
+        axios.get("/v1/items/presentacion/0"),
+        axios.get("/v1/items/producto_presentacion/0"),
+        axios.get("/v1/producto_presentacion", { params: { page: 0, size: 500 } }),
+      ]);
+
+      const productosItems =
+        prodRes.status === "fulfilled" ? toArray(prodRes.value.data) : [];
+      const tiposPresItems =
+        tipoPresRes.status === "fulfilled" ? toArray(tipoPresRes.value.data) : [];
+      const prpItems =
+        prpItemsRes.status === "fulfilled" ? toArray(prpItemsRes.value.data) : [];
+      const prpCrud =
+        prpCrudRes.status === "fulfilled" ? toArray(prpCrudRes.value.data) : [];
+
+      const mergedPrp = uniqueById([...prpItems, ...prpCrud]);
+      setPresentaciones(mergedPrp);
+      setTiposPresentacion(tiposPresItems);
+
+      if (productosItems.length) {
+        setProductos(
+          productosItems.map((p) => ({
+            id: Number(p.id),
+            label: p?.nombre ?? p?.name ?? `Producto ${p?.id ?? ""}`,
+          }))
+        );
+      } else {
+        const derived = uniqueById(
+          mergedPrp
+            .map((p) => {
+              const id = getProductoId(p);
+              if (id == null) return null;
+              return { id: Number(id), label: getProductoLabel(p) };
+            })
+            .filter(Boolean)
+        );
+        setProductos(derived);
+      }
     } catch (err) {
-      console.error("Error al cargar presentaciones:", err);
+      console.error("Error al cargar catalogos de articulo kardex:", err);
       setPresentaciones([]);
+      setProductos([]);
+      setTiposPresentacion([]);
     }
   };
 
-  /* -------- CRUD local -------- */
   const create = () => {
     if (!kardexId) {
       setMessage({
         open: true,
         severity: "error",
-        text: "Debes seleccionar un Kardex antes de crear un artículo.",
+        text: "Debes seleccionar un Kardex antes de crear un articulo.",
       });
       return;
     }
-    setFormData({ ...initialData, kardexId });
+    setFormData({ ...initialData });
     setMethodName("Agregar");
     loadData();
     setOpen(true);
@@ -93,20 +167,24 @@ export default function FormArticuloKardex({
       setMessage({
         open: true,
         severity: "error",
-        text: "Selecciona un artículo para editar.",
+        text: "Selecciona un articulo para editar.",
       });
       return;
     }
 
+    const productoId =
+      selectedRow.presentacionProducto?.producto?.id ?? selectedRow.productoId ?? "";
+    const cantidad = Number(selectedRow.cantidad ?? 0);
+    const precioUnitario = Number(selectedRow.precioUnitario ?? selectedRow.precio ?? 0);
+
     setFormData({
       ...initialData,
       ...selectedRow,
+      productoId,
       presentacionProductoId:
-        selectedRow.presentacionProducto?.id ??
-        selectedRow.presentacionProductoId ??
-        "",
-
-      estadoId: String(selectedRow.estadoId ?? 1),
+        selectedRow.presentacionProducto?.id ?? selectedRow.presentacionProductoId ?? "",
+      precioUnitario,
+      precioTotal: cantidad * precioUnitario,
     });
 
     setMethodName("Actualizar");
@@ -138,33 +216,49 @@ export default function FormArticuloKardex({
       });
   };
 
-  /* -------- Manejo de formulario -------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numeric = new Set([
-      "kardexId",
-      "presentacionProductoId",
-      "estadoId",
-      "cantidad",
-      "precio",
-    ]);
-    const cast = numeric.has(name) && value !== "" ? Number(value) : value;
-    setFormData((prev) => ({ ...prev, [name]: cast }));
+    setFormData((prev) => {
+      const next = { ...prev };
+
+      if (name === "productoId") {
+        next.productoId = value === "" ? "" : Number(value);
+        next.presentacionProductoId = "";
+      } else if (["presentacionProductoId", "cantidad", "precioUnitario"].includes(name)) {
+        next[name] = value === "" ? "" : Number(value);
+      } else {
+        next[name] = value;
+      }
+
+      const qty = Number(next.cantidad || 0);
+      const unit = Number(next.precioUnitario || 0);
+      next.precioTotal = qty * unit;
+      return next;
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (!formData.productoId || !formData.presentacionProductoId) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Debes seleccionar Producto y Presentacion.",
+      });
+      return;
+    }
+
     const payload = {
       ...formData,
-      id: selectedRow.id,
+      id: selectedRow?.id,
       cantidad: Number(formData.cantidad),
-      precio: Number(formData.precio),
+      precio: Number(formData.precioUnitario),
       lote: formData.lote,
-      kardexId: Number(formData.kardexId),
+      kardexId: Number(kardexId),
       presentacionProductoId: Number(formData.presentacionProductoId),
-      estadoId: Number(formData.estadoId),
-      fechaVencimiento: String(formData.fechaVencimiento).includes("T")
+      estadoId: 1,
+      fechaVencimiento: String(formData.fechaVencimiento || "").includes("T")
         ? formData.fechaVencimiento
         : `${formData.fechaVencimiento}T00:00:00`,
     };
@@ -213,48 +307,58 @@ export default function FormArticuloKardex({
 
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <form onSubmit={handleSubmit}>
-          <DialogTitle>{methodName} Artículo Kardex</DialogTitle>
+          <DialogTitle>Crear/Actualizar Articulo</DialogTitle>
 
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              {/* Renglón 1: Kardex ID + Producto Presentación */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  name="kardexId"
-                  label="Kardex ID"
-                  value={formData.kardexId}
-                  required
-                  disabled
-                />
-              </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel id="pp-label" shrink>
-                    Producto Presentación
-                  </InputLabel>
+                  <InputLabel id="producto-label">Producto</InputLabel>
                   <Select
-                    labelId="pp-label"
-                    label="Producto Presentación"
-                    name="presentacionProductoId"
-                    value={formData.presentacionProductoId ?? ""}
+                    labelId="producto-label"
+                    label="Producto"
+                    name="productoId"
+                    value={formData.productoId ?? ""}
                     onChange={handleChange}
-                    displayEmpty
                   >
                     <MenuItem value="">
                       <em>Seleccione...</em>
                     </MenuItem>
-                    {presentaciones.map((p) => (
+                    {productos.map((p) => (
                       <MenuItem key={p.id} value={p.id}>
-                        {ppLabel(p)}
+                        {p.label}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Grid>
 
-              {/* Renglón 2: Cantidad + Precio + Lote */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel id="pp-label" shrink>
+                    Presentacion
+                  </InputLabel>
+                  <Select
+                    labelId="pp-label"
+                    label="Presentacion"
+                    name="presentacionProductoId"
+                    value={formData.presentacionProductoId ?? ""}
+                    onChange={handleChange}
+                    displayEmpty
+                    disabled={!formData.productoId}
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione...</em>
+                    </MenuItem>
+                    {presentacionesFiltradas.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {getPresentacionLabel(p)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
@@ -269,9 +373,9 @@ export default function FormArticuloKardex({
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
-                  name="precio"
-                  label="Precio"
-                  value={formData.precio}
+                  name="precioUnitario"
+                  label="Precio Unitario"
+                  value={formData.precioUnitario}
                   onChange={handleChange}
                   required
                 />
@@ -280,24 +384,20 @@ export default function FormArticuloKardex({
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
-                  name="lote"
-                  label="Lote"
-                  value={formData.lote}
-                  onChange={handleChange}
-                  required
+                  name="precioTotal"
+                  label="Precio total"
+                  value={formData.precioTotal}
+                  disabled
                 />
               </Grid>
 
-              {/* Renglón 3: Fecha Vencimiento + Estado */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   type="date"
                   name="fechaVencimiento"
-                  label="Fecha Vencimiento"
-                  value={(
-                    formData.fechaVencimiento || ""
-                  ).toString().substring(0, 10)}
+                  label="Fecha de Vencimiento"
+                  value={(formData.fechaVencimiento || "").toString().substring(0, 10)}
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                   required
@@ -305,26 +405,20 @@ export default function FormArticuloKardex({
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel id="estado-label">Estado</InputLabel>
-                  <Select
-                    labelId="estado-label"
-                    label="Estado"
-                    name="estadoId"
-                    value={formData.estadoId}
-                    onChange={handleChange}
-                  >
-                    <MenuItem value={1}>Activo</MenuItem>
-                    <MenuItem value={2}>Inactivo</MenuItem>
-                  </Select>
-                </FormControl>
+                <TextField
+                  fullWidth
+                  name="lote"
+                  label="Lote"
+                  value={formData.lote}
+                  onChange={handleChange}
+                />
               </Grid>
             </Grid>
           </DialogContent>
 
           <DialogActions>
             <Button onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit">{methodName}</Button>
+            <Button type="submit">Guardar</Button>
           </DialogActions>
         </form>
       </Dialog>
