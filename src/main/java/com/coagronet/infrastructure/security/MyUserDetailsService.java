@@ -53,17 +53,14 @@ public class MyUserDetailsService implements UserDetailsService {
 		authorities.addAll(nombresRoles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()));
 
 		boolean isSystemAdmin = nombresRoles.contains("ROLE_ADMINISTRADOR_SISTEMA");
-
 		if (!isSystemAdmin && user.getPreferredEmpresaId() != null) {
 			List<String> permisos = permisoRepository.findPermisosByUsuarioAndEmpresa(user.getId(),
 					user.getPreferredEmpresaId());
-
 			authorities.addAll(permisos.stream().map(SimpleGrantedAuthority::new).toList());
 		}
 
-		user.setAuthorities(authorities);
-
-		return user;
+		return new CustomUserDetails(user.getId(), user.getUsername(), user.getPassword(), user.getPreferredEmpresaId(),
+				user.getTokenVersion(), authorities);
 	}
 
 }

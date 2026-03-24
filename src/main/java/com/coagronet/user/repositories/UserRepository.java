@@ -35,4 +35,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	boolean existsByUsernameAndUsuarioEstado(String email, UsuarioEstado estado);
 
+@Query("SELECT u.tokenVersion FROM User u WHERE u.username = :username")
+Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
+
 }
