@@ -142,79 +142,79 @@ public class KardexService {
 	}
 
 	@Transactional(rollbackFor = Exception.class)
-	public Kardex procesarMovimientoKardex(KardexRequestDTO request, MetadatosSeguridad metadata, Long empresaId) {
+    // Ya no necesitas recibir el Long empresaId como parámetro si no lo usas para otra cosa
+    public Kardex procesarMovimientoKardex(KardexRequestDTO request, MetadatosSeguridad metadata) {
 
-		request.items().forEach(item -> {
-			if (item.devolutivo() && item.responsableId() == null) {
-				throw new ProductoSinResponsableException(String.format(
-						"El producto de presentación '%s' es devolutivo y requiere un responsable asignado.",
-						item.presentacionProductoId()));
-			}
-		});
+        request.items().forEach(item -> {
+            if (item.devolutivo() && item.responsableId() == null) {
+                throw new ProductoSinResponsableException(String.format(
+                        "El producto de presentación '%s' es devolutivo y requiere un responsable asignado.",
+                        item.presentacionProductoId()));
+            }
+        });
 
-		Empresa empresaProxy = entityManager.getReference(Empresa.class, empresaId);
+        // ELIMINADO: Empresa empresaProxy = entityManager.getReference(Empresa.class, empresaId);
 
-		Kardex kardex = Kardex.builder()
-			.empresa(empresaProxy)
-			.tipoMovimiento(entityManager.getReference(TipoMovimiento.class, request.tipoMovimientoId()))
-			.almacen(entityManager.getReference(Almacen.class, request.almacenId()))
-			.almacenDestino(request.almacenDestinoId() != null
-					? entityManager.getReference(Almacen.class, request.almacenDestinoId()) : null)
-			.ordenCompra(request.ordenCompraId() != null
-					? entityManager.getReference(OrdenCompra.class, request.ordenCompraId()) : null)
-			.pedido(request.pedidoId() != null ? entityManager.getReference(Pedido.class, request.pedidoId()) : null)
-			.produccion(request.produccionId() != null
-					? entityManager.getReference(Produccion.class, request.produccionId()) : null)
-			.clienteProveedor(request.clienteProveedorId() != null
-					? entityManager.getReference(Empresa.class, request.clienteProveedorId()) : null)
-			.descripcion(request.descripcion())
-			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-			.username(metadata.username())
-			.rol(metadata.rol())
-			.ip(metadata.ip())
-			.host(metadata.host())
-			.build();
+        Kardex kardex = Kardex.builder()
+            // ELIMINADO: .empresa(empresaProxy) -> Hibernate 6 inyectará el tenantId por ti
+            .tipoMovimiento(entityManager.getReference(TipoMovimiento.class, request.tipoMovimientoId()))
+            .almacen(entityManager.getReference(Almacen.class, request.almacenId()))
+            .almacenDestino(request.almacenDestinoId() != null
+                    ? entityManager.getReference(Almacen.class, request.almacenDestinoId()) : null)
+            .ordenCompra(request.ordenCompraId() != null
+                    ? entityManager.getReference(OrdenCompra.class, request.ordenCompraId()) : null)
+            .pedido(request.pedidoId() != null ? entityManager.getReference(Pedido.class, request.pedidoId()) : null)
+            .produccion(request.produccionId() != null
+                    ? entityManager.getReference(Produccion.class, request.produccionId()) : null)
+            .clienteProveedor(request.clienteProveedorId() != null
+                    ? entityManager.getReference(Empresa.class, request.clienteProveedorId()) : null)
+            .descripcion(request.descripcion())
+            .estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+            .username(metadata.username())
+            .rol(metadata.rol())
+            .ip(metadata.ip())
+            .host(metadata.host())
+            .build();
 
-		Kardex kardexGuardado = kardexRepository.save(kardex);
+        Kardex kardexGuardado = kardexRepository.save(kardex);
 
-		List<ArticuloKardex> articulosAPersistir = new ArrayList<>(request.items().size());
+        List<ArticuloKardex> articulosAPersistir = new ArrayList<>(); // Evita inicializar con request.items().size() porque el desglose por cantidad lo hará crecer dinámicamente
 
-		for (ArticuloRequestDTO itemDTO : request.items()) {
-			if (itemDTO.devolutivo()) {
-				for (int i = 0; i < itemDTO.cantidad(); i++) {
-					articulosAPersistir
-						.add(construirArticulo(itemDTO, kardexGuardado, BigDecimal.ONE, metadata, empresaProxy));
-				}
-			}
-			else {
-				articulosAPersistir.add(construirArticulo(itemDTO, kardexGuardado,
-						BigDecimal.valueOf(itemDTO.cantidad()), metadata, empresaProxy));
-			}
-		}
+        for (ArticuloRequestDTO itemDTO : request.items()) {
+            if (itemDTO.devolutivo()) {
+                // Desglose 1 a 1 para devolutivos
+                for (int i = 0; i < itemDTO.cantidad(); i++) {
+                    articulosAPersistir.add(construirArticulo(itemDTO, kardexGuardado, BigDecimal.ONE, metadata));
+                }
+            } else {
+                // Inserción agrupada
+                articulosAPersistir.add(construirArticulo(itemDTO, kardexGuardado, BigDecimal.valueOf(itemDTO.cantidad()), metadata));
+            }
+        }
 
-		articuloKardexRepository.saveAll(articulosAPersistir);
+        articuloKardexRepository.saveAll(articulosAPersistir);
 
-		return kardexGuardado;
-	}
+        return kardexGuardado;
+    }
 
-	private ArticuloKardex construirArticulo(ArticuloRequestDTO dto, Kardex kardex, BigDecimal cantidad,
-			MetadatosSeguridad metadata, Empresa empresaProxy) {
-		return ArticuloKardex.builder()
-			.kardex(kardex)
-			.presentacionProducto(entityManager.getReference(PresentacionProducto.class, dto.presentacionProductoId()))
-			.empresa(empresaProxy)
-			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-			.responsable(
-					dto.responsableId() != null ? entityManager.getReference(User.class, dto.responsableId()) : null)
-			.cantidad(cantidad)
-			.precio(dto.precio())
-			.lote(dto.lote())
-			.fechaVencimiento(dto.fechaVencimiento())
-			.username(metadata.username())
-			.rol(metadata.rol())
-			.ip(metadata.ip())
-			.host(metadata.host())
-			.build();
-	}
+    // ELIMINADO: Empresa empresaProxy de la firma
+    private ArticuloKardex construirArticulo(ArticuloRequestDTO dto, Kardex kardex, BigDecimal cantidad, MetadatosSeguridad metadata) {
+        return ArticuloKardex.builder()
+            .kardex(kardex)
+            .presentacionProducto(entityManager.getReference(PresentacionProducto.class, dto.presentacionProductoId()))
+            // ELIMINADO: .empresa(empresaProxy) -> Asegúrate de que ArticuloKardex también tenga el desdoblamiento @TenantId
+            .estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+            .responsable(
+                    dto.responsableId() != null ? entityManager.getReference(User.class, dto.responsableId()) : null)
+            .cantidad(cantidad)
+            .precio(dto.precio())
+            .lote(dto.lote())
+            .fechaVencimiento(dto.fechaVencimiento())
+            .username(metadata.username())
+            .rol(metadata.rol())
+            .ip(metadata.ip())
+            .host(metadata.host())
+            .build();
+    }
 
 }

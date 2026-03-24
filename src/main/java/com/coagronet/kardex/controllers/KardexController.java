@@ -1,6 +1,7 @@
 package com.coagronet.kardex.controllers;
 
 import java.net.URI;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,7 +9,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,9 +20,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.auditoria.RequestUtils;
+import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
@@ -92,26 +97,44 @@ public class KardexController {
 	}
 
 	@Operation(summary = "Registrar un movimiento de Kardex",
-			description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignación de responsables para productos devolutivos.")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Movimiento de Kardex registrado exitosamente."),
-			@ApiResponse(responseCode = "422",
-					description = "Error de validación (ej. falta de responsable para producto devolutivo o el JSON es inválido).",
-					content = @Content(mediaType = "application/problem+json",
-							schema = @Schema(implementation = ProblemDetail.class))) })
-	@PostMapping("/movimientos")
-	public ResponseEntity<Void> registrarMovimiento(@Valid @RequestBody KardexRequestDTO request,
-			HttpServletRequest httpRequest, Authentication authentication) {
+            description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignación de responsables para productos devolutivos.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Movimiento de Kardex registrado exitosamente."),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado. Rol insuficiente."),
+            @ApiResponse(responseCode = "422",
+                    description = "Error de validación (ej. falta de responsable para producto devolutivo o el JSON es inválido).",
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class))) })
+    @PostMapping("/movimientos")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')") // Blindaje por anotación
+    public ResponseEntity<Void> registrarMovimiento(
+            @Valid @RequestBody KardexRequestDTO request,
+            HttpServletRequest httpRequest, 
+            Authentication authentication) {
 
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		String rolPrincipal = authentication.getAuthorities().iterator().next().getAuthority();
+        // 1. Extracción segura de roles (Evita NoSuchElementException y soporta múltiples roles)
+        String roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
 
-		MetadatosSeguridad metadata = new MetadatosSeguridad(authentication.getName(), rolPrincipal,
-				httpRequest.getRemoteAddr(), httpRequest.getRemoteHost());
+        MetadatosSeguridad metadata = new MetadatosSeguridad(
+                authentication.getName(), 
+                roles.isEmpty() ? "SIN_ROL" : roles, // Fallback seguro
+                httpRequest.getRemoteAddr(), 
+                httpRequest.getRemoteHost()
+        );
 
-		kardexService.procesarMovimientoKardex(request, metadata, empresaId);
+        // 2. Procesamiento (El tenant se inyecta automáticamente bajo el capó vía ThreadLocal de Security)
+        Kardex kardexGuardado = kardexService.procesarMovimientoKardex(request, metadata);
 
-		return ResponseEntity.status(HttpStatus.CREATED).build();
-	}
+        // 3. Construcción dinámica del header 'Location' según el estándar REST
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(kardexGuardado.getId()) // Requiere que el método retorne la entidad persistida
+                .toUri();
+
+        return ResponseEntity.created(location).build();
+    }
 
 }
