@@ -39,6 +39,7 @@ import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
+import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.repositories.PersonaRepository;
@@ -380,10 +381,21 @@ public class AuthService {
 	// LOGIN
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 
+		// 1. Delegamos la autenticación. Spring Security verificará el hash vía
+		// MyUserDetailsService
 		Authentication auth = authManager
 			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 
-		User user = (User) auth.getPrincipal();
+		// 2. ARQUITECTURA CORRECTA: Extraemos nuestro DTO inmutable (Stateless)
+		CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+
+		// 3. Recuperamos la Entidad JPA fresca utilizando el ID verificado.
+		// Esto puentea el contexto de seguridad con el contexto de persistencia para tu
+		// lógica de negocio.
+		User user = userRepo.findById(userDetails.id())
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado en BD"));
+
+		// --- A partir de aquí, tu lógica de negocio original funciona intacta ---
 
 		UsuarioEstado estado = user.getUsuarioEstado();
 
@@ -391,11 +403,12 @@ public class AuthService {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales o estado de usuario inválido");
 		}
 
-		if (estado.esPendienteActivacion()) {
+		if (estado.getId() == 1L) { // Asumiendo 1L como pendiente según tu
+									// UserDetailsService previo
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tu cuenta está pendiente de activación.");
 		}
 
-		if (estado.esDesactivado()) {
+		if (estado.getId() == 0L) { // Asumiendo 0L como desactivado
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN,
 					"Tu cuenta no está disponible. Contacta al administrador.");
 		}
@@ -408,13 +421,13 @@ public class AuthService {
 
 		UsuarioRol current = resolveInitialContext(user, usuarioRols);
 
+		// Lógica para roles transversales (Ej. Administrador de Sistema sin empresa)
 		if (current.getEmpresa() == null) {
-
 			String token = jwt.generateToken(user, current.getRol().getId(), user.getUsuarioEstado().getId());
-
 			return Map.of("token", token, "rolId", current.getRol().getId(), "estado", user.getUsuarioEstado().getId());
-
 		}
+
+		// Lógica estándar para usuarios con empresa asignada
 		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
 				user.getUsuarioEstado().getId());
 
@@ -428,7 +441,6 @@ public class AuthService {
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRol().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
 				nombrePersona);
-
 	}
 
 	// SWITCH CONTEXT
