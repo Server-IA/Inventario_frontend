@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +27,11 @@ import com.coagronet.kardex.services.KardexService;
 import com.coagronet.utils.UriBuilderUtil;
 import com.coagronet.utils.UserEmpresaService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -85,12 +91,19 @@ public class KardexController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@Operation(summary = "Registrar un movimiento de Kardex",
+			description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignación de responsables para productos devolutivos.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Movimiento de Kardex registrado exitosamente."),
+			@ApiResponse(responseCode = "422",
+					description = "Error de validación (ej. falta de responsable para producto devolutivo o el JSON es inválido).",
+					content = @Content(mediaType = "application/problem+json",
+							schema = @Schema(implementation = ProblemDetail.class))) })
 	@PostMapping("/movimientos")
 	public ResponseEntity<Void> registrarMovimiento(@Valid @RequestBody KardexRequestDTO request,
 			HttpServletRequest httpRequest, Authentication authentication) {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-
 		String rolPrincipal = authentication.getAuthorities().iterator().next().getAuthority();
 
 		MetadatosSeguridad metadata = new MetadatosSeguridad(authentication.getName(), rolPrincipal,

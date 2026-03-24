@@ -3,6 +3,7 @@ package com.coagronet.ordenCompra;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.proxy.HibernateProxy;
 
 import com.coagronet.empresa.Empresa;
@@ -33,6 +34,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicInsert
 @Table(name = "orden_compra", schema = "public")
 public class OrdenCompra {
 

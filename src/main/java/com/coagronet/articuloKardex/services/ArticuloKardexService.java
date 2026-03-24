@@ -104,10 +104,7 @@ public class ArticuloKardexService {
 	public void delete(Long id) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		// Usando @Modifying en el repositorio:
-		// @Modifying @Query("DELETE FROM ArticuloKardex a WHERE a.id = :id AND
-		// a.empresa.id = :empresaId")
-		int eliminados = articuloKardexRepository.deleteByIdAndEmpresaId(id, empresaId);
+		int eliminados = articuloKardexRepository.softDeleteByIdAndEmpresaId(id, empresaId);
 
 		if (eliminados == 0) {
 			throw new NotFoundException("El artículo de kardex no fue encontrado.");

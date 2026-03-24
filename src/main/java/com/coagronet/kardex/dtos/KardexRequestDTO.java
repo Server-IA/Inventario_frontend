@@ -5,33 +5,17 @@ import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class KardexRequestDTO {
+public record KardexRequestDTO(@NotNull(message = "El ID del tipo de movimiento es obligatorio") Long tipoMovimientoId,
 
-	@NotNull(message = "El ID del tipo de movimiento es obligatorio")
-	private Long tipoMovimientoId;
+		@NotNull(message = "El ID del almacén es obligatorio") Long almacenId,
 
-	@NotNull(message = "El ID del almacén es obligatorio")
-	private Long almacenId;
+		Long almacenDestinoId, Long ordenCompraId, Long pedidoId, Long produccionId,
 
-	private Long almacenDestinoId;
+		Long clienteProveedorId,
 
-	private Long ordenCompraId;
+		String descripcion,
 
-	private Long pedidoId;
-
-	private Long produccionId;
-
-	@NotEmpty(message = "El movimiento de Kardex debe contener al menos un artículo")
-	@Valid
-	private List<ArticuloRequestDTO> items;
-
+		@NotEmpty(
+				message = "El movimiento de Kardex debe contener al menos un artículo") @Valid List<ArticuloRequestDTO> items) {
 }

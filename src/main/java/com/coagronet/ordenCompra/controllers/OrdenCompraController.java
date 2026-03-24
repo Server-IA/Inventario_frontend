@@ -2,19 +2,29 @@ package com.coagronet.ordenCompra.controllers;
 
 import java.util.List;
 
-import com.coagronet.ordenCompra.dtos.OrdenCompraCreateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.articuloOrdenCompra.dtos.ArticuloOrdenCompraDTO;
 import com.coagronet.articuloOrdenCompra.services.ArticuloOrdenCompraService;
+import com.coagronet.ordenCompra.dtos.OrdenCompraCreateDTO;
 import com.coagronet.ordenCompra.dtos.OrdenCompraDTO;
+import com.coagronet.ordenCompra.dtos.OrdenCompraLookupDTO;
 import com.coagronet.ordenCompra.services.OrdenCompraService;
 import com.coagronet.utils.UriBuilderUtil;
+import com.coagronet.utils.UserEmpresaService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +39,8 @@ public class OrdenCompraController {
 	private final ArticuloOrdenCompraService articuloOrdenCompraService;
 
 	private final UriBuilderUtil uriBuilderUtil;
+
+	private final UserEmpresaService userEmpresaService;
 
 	@GetMapping
 	public ResponseEntity<Page<OrdenCompraDTO>> findAll(@PageableDefault Pageable pageable) {
@@ -61,7 +73,7 @@ public class OrdenCompraController {
 	}
 
 	@PatchMapping("/enviar-al-proveedor/{ordenCompraId}")
-	public ResponseEntity<Void> enviarOrdenCompraAlProveedor(@PathVariable Long ordenCompraId){
+	public ResponseEntity<Void> enviarOrdenCompraAlProveedor(@PathVariable Long ordenCompraId) {
 		ordenCompraService.enviarOrdenCompraAlProveedor(ordenCompraId);
 		return ResponseEntity.noContent().build();
 	}
@@ -70,6 +82,13 @@ public class OrdenCompraController {
 	public ResponseEntity<Void> deleteOrdenCompra(@PathVariable Long id) {
 		ordenCompraService.delete(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/pedido/{pedidoId}/lookup")
+	public ResponseEntity<List<OrdenCompraLookupDTO>> getLookup(@PathVariable Long pedidoId) {
+
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return ResponseEntity.ok(ordenCompraService.listarParaSeleccion(pedidoId, empresaId));
 	}
 
 }

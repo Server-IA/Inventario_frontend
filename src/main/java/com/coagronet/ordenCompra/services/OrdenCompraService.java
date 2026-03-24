@@ -20,6 +20,7 @@ import com.coagronet.ordenCompra.constantes.OrdenCompraConstantes;
 import com.coagronet.ordenCompra.constantes.PedidoConstantes;
 import com.coagronet.ordenCompra.dtos.OrdenCompraCreateDTO;
 import com.coagronet.ordenCompra.dtos.OrdenCompraDTO;
+import com.coagronet.ordenCompra.dtos.OrdenCompraLookupDTO;
 import com.coagronet.ordenCompra.mappers.OrdenCompraMapper;
 import com.coagronet.ordenCompra.repositories.OrdenCompraRepository;
 import com.coagronet.pedido.Pedido;
@@ -156,6 +157,11 @@ public class OrdenCompraService {
 			ordenCompraRepository.save(ordenCompra);
 			log.info("✅ Estado de OC actualizado a {}", nuevoEstado.getId());
 		}
+	}
+
+	@Transactional(readOnly = true)
+	public List<OrdenCompraLookupDTO> listarParaSeleccion(Long pedidoId, Long empresaId) {
+		return ordenCompraRepository.findLookupByPedidoAndEmpresaAndEstadoId(pedidoId, empresaId);
 	}
 
 }

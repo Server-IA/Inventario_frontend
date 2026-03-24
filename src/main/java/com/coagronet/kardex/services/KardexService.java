@@ -27,7 +27,9 @@ import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.ordenCompra.OrdenCompra;
+import com.coagronet.pedido.Pedido;
 import com.coagronet.presentacionProducto.PresentacionProducto;
+import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
 import com.coagronet.user.User;
 import com.coagronet.utils.UserEmpresaService;
@@ -135,9 +137,6 @@ public class KardexService {
 	private void asignarDatosAuditoria(Kardex kardex, String ip, String host) {
 		kardex.setIp(ip);
 		kardex.setHost(host);
-		// Sugerencia: El AuthenticationService también pertenece a un contexto Web
-		// Security.
-		// Si es posible, extrae esto en la capa del controlador.
 		kardex.setUsername(authenticationService.getAuthenticatedUser().getUsername());
 		kardex.setRol(requestUtils.getAuthenticatedRole());
 	}
@@ -145,11 +144,11 @@ public class KardexService {
 	@Transactional(rollbackFor = Exception.class)
 	public Kardex procesarMovimientoKardex(KardexRequestDTO request, MetadatosSeguridad metadata, Long empresaId) {
 
-		request.getItems().forEach(itemDTO -> {
-			if (itemDTO.isDevolutivo() && itemDTO.getResponsableId() == null) {
+		request.items().forEach(item -> {
+			if (item.devolutivo() && item.responsableId() == null) {
 				throw new ProductoSinResponsableException(String.format(
 						"El producto de presentación '%s' es devolutivo y requiere un responsable asignado.",
-						itemDTO.getPresentacionProductoId()));
+						item.presentacionProductoId()));
 			}
 		});
 
@@ -157,10 +156,18 @@ public class KardexService {
 
 		Kardex kardex = Kardex.builder()
 			.empresa(empresaProxy)
-			.tipoMovimiento(entityManager.getReference(TipoMovimiento.class, request.getTipoMovimientoId()))
-			.almacen(entityManager.getReference(Almacen.class, request.getAlmacenId()))
-			.ordenCompra(request.getOrdenCompraId() != null
-					? entityManager.getReference(OrdenCompra.class, request.getOrdenCompraId()) : null)
+			.tipoMovimiento(entityManager.getReference(TipoMovimiento.class, request.tipoMovimientoId()))
+			.almacen(entityManager.getReference(Almacen.class, request.almacenId()))
+			.almacenDestino(request.almacenDestinoId() != null
+					? entityManager.getReference(Almacen.class, request.almacenDestinoId()) : null)
+			.ordenCompra(request.ordenCompraId() != null
+					? entityManager.getReference(OrdenCompra.class, request.ordenCompraId()) : null)
+			.pedido(request.pedidoId() != null ? entityManager.getReference(Pedido.class, request.pedidoId()) : null)
+			.produccion(request.produccionId() != null
+					? entityManager.getReference(Produccion.class, request.produccionId()) : null)
+			.clienteProveedor(request.clienteProveedorId() != null
+					? entityManager.getReference(Empresa.class, request.clienteProveedorId()) : null)
+			.descripcion(request.descripcion())
 			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
 			.username(metadata.username())
 			.rol(metadata.rol())
@@ -170,20 +177,18 @@ public class KardexService {
 
 		Kardex kardexGuardado = kardexRepository.save(kardex);
 
-		List<ArticuloKardex> articulosAPersistir = new ArrayList<>(request.getItems().size());
+		List<ArticuloKardex> articulosAPersistir = new ArrayList<>(request.items().size());
 
-		for (ArticuloRequestDTO itemDTO : request.getItems()) {
-			if (itemDTO.isDevolutivo()) {
-
-				for (int i = 0; i < itemDTO.getCantidad(); i++) {
+		for (ArticuloRequestDTO itemDTO : request.items()) {
+			if (itemDTO.devolutivo()) {
+				for (int i = 0; i < itemDTO.cantidad(); i++) {
 					articulosAPersistir
 						.add(construirArticulo(itemDTO, kardexGuardado, BigDecimal.ONE, metadata, empresaProxy));
 				}
 			}
 			else {
-
 				articulosAPersistir.add(construirArticulo(itemDTO, kardexGuardado,
-						BigDecimal.valueOf(itemDTO.getCantidad()), metadata, empresaProxy));
+						BigDecimal.valueOf(itemDTO.cantidad()), metadata, empresaProxy));
 			}
 		}
 
@@ -194,17 +199,17 @@ public class KardexService {
 
 	private ArticuloKardex construirArticulo(ArticuloRequestDTO dto, Kardex kardex, BigDecimal cantidad,
 			MetadatosSeguridad metadata, Empresa empresaProxy) {
-
 		return ArticuloKardex.builder()
 			.kardex(kardex)
-			.presentacionProducto(
-					entityManager.getReference(PresentacionProducto.class, dto.getPresentacionProductoId()))
+			.presentacionProducto(entityManager.getReference(PresentacionProducto.class, dto.presentacionProductoId()))
 			.empresa(empresaProxy)
 			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-			.responsable(dto.getResponsableId() != null ? entityManager.getReference(User.class, dto.getResponsableId())
-					: null)
+			.responsable(
+					dto.responsableId() != null ? entityManager.getReference(User.class, dto.responsableId()) : null)
 			.cantidad(cantidad)
-			.precio(dto.getPrecio())
+			.precio(dto.precio())
+			.lote(dto.lote())
+			.fechaVencimiento(dto.fechaVencimiento())
 			.username(metadata.username())
 			.rol(metadata.rol())
 			.ip(metadata.ip())

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import org.hibernate.annotations.Generated;
 import org.hibernate.proxy.HibernateProxy;
 
 import com.coagronet.almacen.Almacen;
@@ -67,6 +68,7 @@ public class CierreInventario {
 			foreignKey = @ForeignKey(name = "cierre_inventario_cii_estado_id_fkey"))
 	private Estado estado;
 
+	@Generated
 	@Column(name = "cii_fecha_creacion", insertable = false, updatable = false, nullable = false)
 	private LocalDateTime fechaCreacion;
 
