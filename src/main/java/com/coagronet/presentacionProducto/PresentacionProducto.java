@@ -1,5 +1,7 @@
 package com.coagronet.presentacionProducto;
 
+import org.hibernate.annotations.TenantId;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.marca.Marca;
@@ -65,8 +67,12 @@ public class PresentacionProducto {
 	private Presentacion presentacion;
 
 	@ManyToOne
-	@JoinColumn(name = "prp_empresa_id")
+	@JoinColumn(name = "prp_empresa_id", nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
+
+	@TenantId
+    @Column(name = "prp_empresa_id")
+    private Long tenantEmpresaId;
 
 	@Column(name = "prp_desgregar")
 	private Boolean desgregar;

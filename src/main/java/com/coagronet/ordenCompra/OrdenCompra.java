@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.TenantId;
 import org.hibernate.proxy.HibernateProxy;
 
 import com.coagronet.empresa.Empresa;
@@ -66,9 +67,13 @@ public class OrdenCompra {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id", nullable = false,
+	@JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false,
 			foreignKey = @ForeignKey(name = "orden_compra_orc_empresa_id_fkey"))
 	private Empresa empresa;
+
+	@TenantId
+    @Column(name = "orc_empresa_id")
+    private Long tenantEmpresaId;
 
 	@Override
 	public final boolean equals(Object o) {

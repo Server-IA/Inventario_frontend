@@ -1,5 +1,7 @@
 package com.coagronet.almacen;
 
+import org.hibernate.annotations.TenantId;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
 import com.coagronet.estado.Estado;
@@ -59,7 +61,11 @@ public class Almacen {
 	private String direccion;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "alm_empresa_id", referencedColumnName = "emp_id", nullable = false)
+	@JoinColumn(name = "alm_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
+
+	@TenantId
+    @Column(name = "alm_empresa_id")
+    private Long tenantEmpresaId;
 
 }

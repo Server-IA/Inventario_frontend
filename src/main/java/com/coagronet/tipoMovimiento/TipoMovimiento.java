@@ -1,5 +1,7 @@
 package com.coagronet.tipoMovimiento;
 
+import org.hibernate.annotations.TenantId;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 
@@ -45,8 +47,12 @@ public class TipoMovimiento {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "tim_empresa_id", referencedColumnName = "emp_id")
+	@JoinColumn(name = "tim_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
+
+	@TenantId 
+    @Column(name = "tim_empresa_id")
+    private Long tenantEmpresaId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "tim_movimiento_id", referencedColumnName = "mov_id")

@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.TenantId;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -87,10 +88,13 @@ public class Kardex {
 	@JoinColumn(name = "kar_estado_id", referencedColumnName = "est_id", nullable = false)
 	private Estado estado;
 
-	// updatable = false requerido por trg_evitar_update_kar_empresa_id
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false, updatable = false)
-	private Empresa empresa;
+    @JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false)
+    private Empresa empresa;
+
+	@TenantId 
+    @Column(name = "kar_empresa_id")
+    private Long tenantEmpresaId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_cliente_proveedor_id", referencedColumnName = "emp_id")

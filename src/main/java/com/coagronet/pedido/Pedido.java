@@ -2,6 +2,8 @@ package com.coagronet.pedido;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.TenantId;
+
 import com.coagronet.almacen.Almacen;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
@@ -55,7 +57,11 @@ public class Pedido {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ped_empresa_id", referencedColumnName = "emp_id")
+	@JoinColumn(name = "ped_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
+
+	@TenantId
+    @Column(name = "ped_empresa_id")
+    private Long tenantEmpresaId;
 
 }

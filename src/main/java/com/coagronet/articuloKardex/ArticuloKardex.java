@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.TenantId;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedBy;
@@ -96,9 +97,13 @@ public class ArticuloKardex {
 
 	// updatable=false requerido por trg_evitar_update_kai_empresa_id
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kai_empresa_id", referencedColumnName = "emp_id", nullable = false, updatable = false,
+	@JoinColumn(name = "kai_empresa_id", referencedColumnName = "emp_id", nullable = false, insertable = false, updatable = false,
 			foreignKey = @ForeignKey(name = "kardex_item_kai_empresa_id_fkey"))
 	private Empresa empresa;
+
+	@TenantId
+    @Column(name = "kai_empresa_id")
+    private Long tenantEmpresaId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kai_responsable_id", referencedColumnName = "usu_id",

@@ -2,6 +2,8 @@ package com.coagronet.produccion;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.TenantId;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.espacio.Espacio;
 import com.coagronet.estado.Estado;
@@ -65,7 +67,11 @@ public class Produccion {
 	private Estado estado;
 
 	@ManyToOne
-	@JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id", nullable = false)
+	@JoinColumn(name = "pro_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
+
+	@TenantId
+    @Column(name = "pro_empresa_id")
+    private Long tenantEmpresaId;
 
 }
