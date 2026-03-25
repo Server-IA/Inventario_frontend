@@ -32,4 +32,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
 	List<OrdenCompraLookupDTO> findLookupByPedidoAndEmpresaAndEstadoId(@Param("pedidoId") Long pedidoId,
 			@Param("empresaId") Long empresaId);
 
+	@Query("SELECT o FROM OrdenCompra o WHERE o.id = :id AND o.estado.id = :estadoId")
+	Optional<OrdenCompra> findByIdAndEstadoId(@Param("id") Long id, @Param("estadoId") Long estadoId);
+
 }

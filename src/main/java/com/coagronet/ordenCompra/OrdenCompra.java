@@ -19,6 +19,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
@@ -36,7 +37,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @DynamicInsert
-@Table(name = "orden_compra", schema = "public")
+@Table(name = "orden_compra", schema = "public",
+		indexes = { @Index(name = "idx_orc_empresa_id", columnList = "orc_empresa_id"),
+				@Index(name = "idx_orc_pedido_id", columnList = "orc_pedido_id"),
+				@Index(name = "idx_orc_estado_id", columnList = "orc_estado_id") })
 public class OrdenCompra {
 
 	@Id
@@ -67,13 +71,13 @@ public class OrdenCompra {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false,
-			foreignKey = @ForeignKey(name = "orden_compra_orc_empresa_id_fkey"))
+	@JoinColumn(name = "orc_empresa_id", referencedColumnName = "emp_id", nullable = false, insertable = false,
+			updatable = false, foreignKey = @ForeignKey(name = "orden_compra_orc_empresa_id_fkey"))
 	private Empresa empresa;
 
 	@TenantId
-    @Column(name = "orc_empresa_id")
-    private Long tenantEmpresaId;
+	@Column(name = "orc_empresa_id", nullable = false)
+	private Long tenantEmpresaId;
 
 	@Override
 	public final boolean equals(Object o) {

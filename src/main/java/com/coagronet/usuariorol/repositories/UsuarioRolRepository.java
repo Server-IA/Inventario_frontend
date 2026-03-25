@@ -2,6 +2,7 @@ package com.coagronet.usuariorol.repositories;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,5 +43,15 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 	Page<UsuarioRol> findByDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(Pageable pageable, Long estadoId);
 
 	Optional<UsuarioRol> findByIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long estadoId);
+
+	@Query("""
+			SELECT ur.user.id FROM UsuarioRol ur
+			WHERE ur.user.id IN :userIds
+			  AND ur.empresa.id = :empresaId
+			  AND ur.estado.id = :estadoId
+			  AND ur.finalizaContratoEn IS NULL
+			""")
+	Set<Long> findResponsablesValidos(@Param("userIds") Set<Long> userIds, @Param("empresaId") Long empresaId,
+			@Param("estadoId") Long estadoId);
 
 }
