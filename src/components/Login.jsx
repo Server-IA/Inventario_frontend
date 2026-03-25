@@ -415,7 +415,7 @@ switch (estado) {
             }
             sx={{ color: theme.palette.primary.main, textTransform: "none" }}
           >
-            ¿Olvidaste tu contraseña?
+            ¿Olvidaste tus contraseñas?
           </Button>
         </Box>
 
