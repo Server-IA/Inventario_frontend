@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -148,6 +148,7 @@ export default function FormKardex({
   const [tiposMovimiento, setTiposMovimiento] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [ordenesCompra, setOrdenesCompra] = useState([]);
+  const [ordenesCompraByPedido, setOrdenesCompraByPedido] = useState([]);
   const [empresas, setEmpresas] = useState([]);
 
   /* ============================
@@ -348,14 +349,41 @@ export default function FormKardex({
       "ordenCompraId",
       "clienteProveedorId",
     ];
-    setFormData((prev) => ({
-      ...prev,
-      [name]: numeric.includes(name) && value !== "" ? Number(value) : value,
-    }));
+    const castValue =
+      numeric.includes(name) && value !== "" ? Number(value) : value;
+
+    setFormData((prev) => {
+      const next = { ...prev, [name]: castValue };
+
+      if (name === "pedidoId") {
+        next.ordenCompraId = "";
+      }
+
+      if (name === "tipoMovimientoId") {
+        const tipoSel = tiposMovimiento.find(
+          (t) => String(t.id) === String(castValue)
+        );
+        const tipoNombre = String(
+          tipoSel?.name ?? tipoSel?.nombre ?? tipoSel?.descripcion ?? ""
+        ).toLowerCase();
+        const esEntrada = tipoNombre.includes("entrada");
+
+        if (!esEntrada) {
+          next.pedidoId = "";
+          next.ordenCompraId = "";
+        }
+      }
+
+      return next;
+    });
     setErrors((prev) => ({ ...prev, [name]: undefined }));
 
     // Si cambia la OC o el tipo de movimiento, reseteo items
-    if (name === "ordenCompraId" || name === "tipoMovimientoId") {
+    if (
+      name === "ordenCompraId" ||
+      name === "tipoMovimientoId" ||
+      name === "pedidoId"
+    ) {
       setOcItems([]);
     }
   };
@@ -430,7 +458,12 @@ export default function FormKardex({
   };
 
   const handleSelectPedido = (ped) => {
-    setFormData((prev) => ({ ...prev, pedidoId: ped.id }));
+    setFormData((prev) => ({
+      ...prev,
+      pedidoId: ped.id,
+      ordenCompraId: "",
+    }));
+    setOcItems([]);
     setPedidoSearchOpen(false);
     setPedidoSearchNombre("");
     setPedidosCompletos([]);
@@ -582,6 +615,95 @@ export default function FormKardex({
   const renderName = (it) =>
     it?.name ?? it?.nombre ?? it?.descripcion ?? `#${it?.id}`;
 
+  const getPedidoIdFromOrdenCompra = (oc) =>
+    oc?.pedidoId ??
+    oc?.pedido_id ??
+    oc?.ped_id ??
+    oc?.orc_pedido_id ??
+    oc?.pedido?.id ??
+    oc?.pedido?.pedidoId ??
+    null;
+
+  const tipoMovimientoSeleccionado = useMemo(
+    () =>
+      tiposMovimiento.find(
+        (t) => String(t.id) === String(formData.tipoMovimientoId)
+      ) ?? null,
+    [tiposMovimiento, formData.tipoMovimientoId]
+  );
+
+  const tipoMovimientoTexto = String(
+    tipoMovimientoSeleccionado?.name ??
+      tipoMovimientoSeleccionado?.nombre ??
+      tipoMovimientoSeleccionado?.descripcion ??
+      ""
+  ).toLowerCase();
+
+  const isEntradaUi = tipoMovimientoTexto.includes("entrada");
+
+  const ordenesCompraFiltradas = useMemo(() => {
+    if (!isEntradaUi || !formData.pedidoId) return [];
+    if (ordenesCompraByPedido.length) return ordenesCompraByPedido;
+    return ordenesCompra.filter(
+      (oc) =>
+        String(getPedidoIdFromOrdenCompra(oc)) === String(formData.pedidoId)
+    );
+  }, [isEntradaUi, formData.pedidoId, ordenesCompra, ordenesCompraByPedido]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (!isEntradaUi && (formData.pedidoId || formData.ordenCompraId)) {
+      setFormData((prev) => ({
+        ...prev,
+        pedidoId: "",
+        ordenCompraId: "",
+      }));
+      setOcItems([]);
+    }
+  }, [open, isEntradaUi]);
+
+  useEffect(() => {
+    if (!open || !isEntradaUi || !formData.pedidoId) {
+      setOrdenesCompraByPedido([]);
+      return;
+    }
+
+    const localFiltered = ordenesCompra.filter(
+      (oc) =>
+        String(getPedidoIdFromOrdenCompra(oc)) === String(formData.pedidoId)
+    );
+    if (localFiltered.length) {
+      setOrdenesCompraByPedido(localFiltered);
+      return;
+    }
+
+    const fetchOrdenesByPedido = async () => {
+      const candidates = ["/v1/orden-compra", "/v1/orden_compra", "/v1/ordenCompra"];
+      const paramCandidates = ["pedidoId", "pedido_id", "ped_id"];
+
+      for (const url of candidates) {
+        for (const paramKey of paramCandidates) {
+          try {
+            const res = await axios.get(url, {
+              ...headers,
+              params: { [paramKey]: Number(formData.pedidoId), page: 0, size: 200 },
+            });
+            const list = pickList(res);
+            if (list.length) {
+              setOrdenesCompraByPedido(list);
+              return;
+            }
+          } catch {
+            // probar siguiente combinacion endpoint/parametro
+          }
+        }
+      }
+      setOrdenesCompraByPedido([]);
+    };
+
+    fetchOrdenesByPedido();
+  }, [open, isEntradaUi, formData.pedidoId, ordenesCompra]);
+
   const isEntradaCompraUi =
     Number(formData.tipoMovimientoId) === TIPO_MOV_ENTRADA_COMPRA;
 
@@ -690,63 +812,75 @@ export default function FormKardex({
               />
             </Grid>
 
-            {/* Pedido + Orden compra */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Pedido"
-                value={
-                  formData.pedidoId
-                    ? pedidos.find((p) => p.id === formData.pedidoId)
-                      ?.nombre ||
-                    pedidos.find((p) => p.id === formData.pedidoId)?.name ||
-                    `ID: ${formData.pedidoId}`
-                    : ""
-                }
-                InputProps={{
-                  readOnly: true,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button
-                        size="small"
-                        onClick={handleOpenPedidoSearch}
-                        sx={{ minWidth: "40px", p: 0.5 }}
-                      >
-                        <SearchIcon fontSize="small" />
-                      </Button>
-                    </InputAdornment>
-                  ),
-                }}
-                error={!!errors.pedidoId}
-                helperText={errors.pedidoId}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl
-                fullWidth
-                error={!!errors.ordenCompraId && isEntradaCompraUi}
-              >
-                <InputLabel>Orden de Compra</InputLabel>
-                <Select
-                  name="ordenCompraId"
-                  label="Orden de Compra"
-                  value={formData.ordenCompraId}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="">
-                    <em>Sin orden asociada</em>
-                  </MenuItem>
-                  {ordenesCompra.map((o) => (
-                    <MenuItem key={o.id} value={o.id}>
-                      {renderName(o)}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>
-                  {isEntradaCompraUi ? errors.ordenCompraId : ""}
-                </FormHelperText>
-              </FormControl>
-            </Grid>
+            {/* Pedido + Orden compra (solo para tipo Entrada) */}
+            {isEntradaUi && (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Pedido"
+                    value={
+                      formData.pedidoId
+                        ? pedidos.find((p) => p.id === formData.pedidoId)
+                            ?.nombre ||
+                          pedidos.find((p) => p.id === formData.pedidoId)
+                            ?.name ||
+                          `ID: ${formData.pedidoId}`
+                        : ""
+                    }
+                    InputProps={{
+                      readOnly: true,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            size="small"
+                            onClick={handleOpenPedidoSearch}
+                            sx={{ minWidth: "40px", p: 0.5 }}
+                          >
+                            <SearchIcon fontSize="small" />
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    }}
+                    error={!!errors.pedidoId}
+                    helperText={errors.pedidoId}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl
+                    fullWidth
+                    error={!!errors.ordenCompraId && isEntradaCompraUi}
+                    disabled={!formData.pedidoId}
+                  >
+                    <InputLabel>Orden de Compra</InputLabel>
+                    <Select
+                      name="ordenCompraId"
+                      label="Orden de Compra"
+                      value={formData.ordenCompraId}
+                      onChange={handleChange}
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {formData.pedidoId
+                            ? "Sin orden asociada"
+                            : "Seleccione pedido primero"}
+                        </em>
+                      </MenuItem>
+                      {ordenesCompraFiltradas.map((o) => (
+                        <MenuItem key={o.id} value={o.id}>
+                          {renderName(o)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText>
+                      {isEntradaCompraUi
+                        ? errors.ordenCompraId
+                        : ""}
+                    </FormHelperText>
+                  </FormControl>
+                </Grid>
+              </>
+            )}
 
             {/* Cliente/proveedor (full row) */}
             <Grid item xs={12}>
