@@ -4,16 +4,11 @@ import java.net.URI;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.coagronet.usuariorol.dtos.UsuarioRolRequestDTO;
 import com.coagronet.usuariorol.dtos.UsuarioRolRequestForCurrentEmpresaDTO;
@@ -119,5 +114,23 @@ public class UsuarioRolController {
     public ResponseEntity<Void> deleteForCurrentEmpresa(@PathVariable Long id) {
         usuarioRolService.deleteForCurrentEmpresa(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/usuario-roles/{id}/toggle-estado")
+    @PreAuthorize("hasAuthority('USUARIO_ROL_INACTIVATE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Void> toggleEstado(
+            @PathVariable Long id,
+            @RequestParam(name = "empresaId") Long empresaId) {
+        usuarioRolService.toggleEstado(id, empresaId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/usuario-roles/{id}/toggle-estado/empresa")
+    @PreAuthorize("hasAuthority('USUARIO_ROL_INACTIVATE')")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Void> toggleEstadoForCurrentEmpresa(@PathVariable Long id) {
+        usuarioRolService.toggleEstadoForCurrentEmpresa(id);
+        return ResponseEntity.ok().build();
     }
 }
