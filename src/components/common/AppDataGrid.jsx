@@ -26,6 +26,7 @@ export default function AppDataGrid({
   leftActions,
   rightActions,
   containerSx,
+  onEscape,
 }) {
   const serverPagination = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
 
@@ -140,6 +141,18 @@ export default function AppDataGrid({
         </Stack>
       )}
       <DataGrid
+        onCellKeyDown={(params, e) => {
+          if (e?.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedRow?.(null);
+            onEscape?.();
+            try {
+              const active = document.activeElement;
+              if (active && typeof active.blur === "function") active.blur();
+            } catch {}
+          }
+        }}
         rows={Array.isArray(rows) ? rows : []}
         columns={columnsMemo}
         getRowId={getRowId}
@@ -169,7 +182,19 @@ export default function AppDataGrid({
               },
             })}
         onRowClick={selectOnClick ? (params) => setSelectedRow?.(params.row) : undefined}
-        rowSelectionModel={selectOnClick && selectedRow?.id ? [selectedRow.id] : []}
+        rowSelectionModel={
+          selectOnClick && (selectedRow && getRowId ? [getRowId(selectedRow)] : selectedRow?.id ? [selectedRow.id] : [])
+        }
+        onRowSelectionModelChange={(selection) => {
+          if (!selectOnClick) return;
+          const id = Array.isArray(selection) && selection.length ? selection[0] : null;
+          if (id == null) {
+            setSelectedRow?.(null);
+            return;
+          }
+          const row = (Array.isArray(rows) ? rows : []).find((r) => getRowId ? getRowId(r) === id : r?.id === id) || null;
+          setSelectedRow?.(row);
+        }}
         disableRowSelectionOnClick={!selectOnClick}
         slots={quickFilter ? { toolbar: Toolbar } : undefined}
         columnVisibilityModel={columnVisibilityModel}
@@ -208,4 +233,5 @@ AppDataGrid.propTypes = {
   leftActions: PropTypes.node,
   rightActions: PropTypes.node,
   containerSx: PropTypes.object,
+  onEscape: PropTypes.func,
 };
