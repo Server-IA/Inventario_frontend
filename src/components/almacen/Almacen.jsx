@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormAlmacen from "./FormAlmacen";
-import GridAlmacen from "./GridAlmacen";
-import { Box, Typography, Button, Tooltip, Stack } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { Box, Button, Stack } from "@mui/material";
+import SectionHeader from "../common/SectionHeader";
+import GridActionBar from "../common/GridActionBar";
+import AppDataGrid from "../common/AppDataGrid";
 
 // Modal genérico de filtros + loaders
 import CrudFilterModal from "../common/CrudFilterModal";
@@ -155,62 +154,64 @@ export default function Almacen() {
   // ===========================
   // RENDER
   // ===========================
+  const columns = useMemo(() => ([
+    { field: "id", headerName: "ID", width: 80, type: "number" },
+    { field: "nombre", headerName: "Nombre", width: 200 },
+    {
+      field: "espacioNombre",
+      headerName: "Espacio",
+      width: 180,
+      valueGetter: (p) =>
+        p?.row?.espacioNombre ??
+        p?.row?.espacio?.nombre ??
+        p?.row?.espacio?.name ??
+        "",
+    },
+    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 240 },
+    { field: "direccion", headerName: "Dirección", width: 220 },
+    { field: "geolocalizacion", headerName: "Geolocalización", width: 170 },
+    { field: "coordenadas", headerName: "Coordenadas", width: 170 },
+    {
+      field: "estadoId",
+      headerName: "Estado",
+      width: 120,
+      valueGetter: (p) =>
+        p?.row?.estado?.name ??
+        p?.row?.estado?.nombre ??
+        (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+    },
+  ]), []);
   return (
     <Box sx={{ p: 2 }}>
-      {/* Header con título y filtros */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Typography variant="h5">Gestión de Almacenes</Typography>
+      <SectionHeader
+        title="Gestión de Almacenes"
+        rightNode={
+          <Stack direction="row" spacing={1}>
+            <Button onClick={() => setOpenFilters(true)}>Mostrar filtros</Button>
+            {Boolean(filters.paisId || filters.deptoId || filters.municipioId || filters.sedeId || filters.bloqueId || filters.espacioId) && (
+              <Button onClick={handleFiltersClear}>Limpiar filtros</Button>
+            )}
+          </Stack>
+        }
+      />
 
-        <Stack direction="row" spacing={1}>
-          <Button onClick={() => setOpenFilters(true)}>
-            Mostrar filtros
-          </Button>
-          {Boolean(filters.paisId || filters.deptoId || filters.municipioId || filters.sedeId || filters.bloqueId || filters.espacioId) && (
-            <Button onClick={handleFiltersClear}>
-              Limpiar filtros
-            </Button>
-          )}
-        </Stack>
-      </Stack>
+      <GridActionBar
+        onAdd={() => { setFormMode("create"); setSelectedRow(null); setFormOpen(true); }}
+        onUpdate={() => { setFormMode("edit"); setFormOpen(true); }}
+        onDelete={handleDelete}
+        canUpdate={Boolean(selectedRow)}
+        canDelete={Boolean(selectedRow)}
+      />
 
-      {/* Botones de acción CRUD */}
-      <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
-        <Tooltip title="Crear">
-          <Button
-            variant="contained"
-            onClick={() => { setFormMode("create"); setSelectedRow(null); setFormOpen(true); }}
-            startIcon={<AddIcon />}
-          >
-            Agregar
-          </Button>
-        </Tooltip>
-
-        <Tooltip title="Editar">
-          <Button
-            variant="outlined"
-            onClick={() => { setFormMode("edit"); setFormOpen(true); }}
-            disabled={!selectedRow}
-            startIcon={<EditIcon />}
-          >
-            Actualizar
-          </Button>
-        </Tooltip>
-
-        <Tooltip title="Eliminar">
-          <Button
-            variant="outlined"
-            color="error"
-            onClick={handleDelete}
-            disabled={!selectedRow}
-            startIcon={<DeleteIcon />}
-          >
-            Eliminar
-          </Button>
-        </Tooltip>
-      </Box>
-
-      {/* Grid de almacenes */}
-      <GridAlmacen almacenes={almacenes} setSelectedRow={setSelectedRow} />
+      <AppDataGrid
+        rows={almacenes}
+        columns={columns}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        quickFilter={false}
+        containerSx={{ borderRadius: 4 }}
+        onEscape={() => setFormOpen(false)}
+      />
 
       {/* Formulario modal */}
       <FormAlmacen
