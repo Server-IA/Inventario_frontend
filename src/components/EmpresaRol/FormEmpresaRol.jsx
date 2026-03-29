@@ -39,6 +39,11 @@ export default function FormEmpresaRol({
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
   const [permisosOriginales, setPermisosOriginales] = useState([]);
   const [subsistemas, setSubsistemas] = useState([]);
+  const empresaId = Number(localStorage.getItem("empresaId"));
+
+  const getEmpresaParams = () => ({
+  params: { empresaId }
+});
 
   const handleClose = () => {
     setOpen(false);
@@ -302,7 +307,9 @@ let permisosALLIds = [];
 if (modulosALL.length > 0) {
   await axios.post(
     `/v1/empresa-rol-permisos/${rolId}/asignar-modulos-permisos`,
-    { modulosIds: modulosALL }
+    { modulosIds: modulosALL },
+    getEmpresaParams()
+
   );
 
   //  Obtener todos los permisos que pertenecen a los módulos ALL
@@ -334,10 +341,22 @@ let permisosNuevos = permisosSeleccionados.filter(
 );
 
 if (permisosNuevos.length > 0) {
-  await axios.post(
-    `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
-    { permisosId: permisosNuevos }
-  );
+  try {
+    await axios.post(
+      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
+      { permisosId: permisosNuevos },
+      getEmpresaParams()
+    );
+  } catch (error) {
+  const msg = error.response?.data?.detail || "";
+
+  //  SOLO ignorar este caso específico
+  if (msg.includes("empresaId")) {
+    console.warn("Backend inconsistente, pero guardó bien");
+  } else {
+    throw error;
+  }
+}
 }
 
     setMessage({

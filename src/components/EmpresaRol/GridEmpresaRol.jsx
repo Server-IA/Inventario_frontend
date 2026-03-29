@@ -12,8 +12,6 @@ export default function GridEmpresaRol({
 const theme = useTheme();
 const isDark = theme.palette.mode === "dark";
   const columns = [
-    { field: "id", headerName: "ID", width: 80 },
-
     { field: "rolNombre", headerName: "Rol", flex: 1 },
     {
   field: "permisos",

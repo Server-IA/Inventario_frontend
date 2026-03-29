@@ -27,7 +27,7 @@ export default function EmpresaRol() {
     text: "",
   });
 
-  const empresaId = Number(localStorage.getItem("empresaId"));
+  
   const [confirmOpen, setConfirmOpen] = useState(false);
  const reloadData = useCallback(async () => {
   try {
@@ -41,36 +41,56 @@ export default function EmpresaRol() {
     const resRoles = await axios.get("/v1/items/rol/0");
     const rolesCatalogo = resRoles.data;
 
-    const enriched = await Promise.all(
-      empresaRoles.map(async (empresaRol) => {
+   const enriched = await Promise.all(
+  empresaRoles.map(async (empresaRol) => {
 
-        //  Buscar rolId por nombre
-        const rolBase = rolesCatalogo.find(
-          r => r.name === empresaRol.rolNombre
-        );
-
-        if (!rolBase) {
-          return { ...empresaRol, permisos: [] };
-        }
-
-        try {
-          const permisosRes = await axios.get(
-            `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
-          );
-
-          return {
-            ...empresaRol,
-            permisos: permisosRes.data || [],
-          };
-
-        } catch {
-          return {
-            ...empresaRol,
-            permisos: [],
-          };
-        }
-      })
+    //  Buscar rol en catálogo (match seguro)
+    const rolBase = rolesCatalogo.find(
+      (r) =>
+        r.name?.trim().toUpperCase() ===
+        empresaRol.rolNombre?.trim().toUpperCase()
     );
+
+    //  Si no encuentra el rol → no llamar backend
+    if (!rolBase?.id) {
+      console.warn("Rol no encontrado en catálogo:", empresaRol.rolNombre);
+
+      return {
+        ...empresaRol,
+        permisos: [],
+      };
+    }
+
+    try {
+      const permisosRes = await axios.get(
+        `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
+      );
+
+      return {
+        ...empresaRol,
+        permisos: permisosRes.data || [],
+      };
+
+    } catch (error) {
+
+      // Backend devuelve 500 → lo tratamos como vacío
+      if (error.response?.status === 500) {
+        return {
+          ...empresaRol,
+          permisos: [],
+        };
+      }
+
+      // Otros errores sí se loguean
+      console.error("Error real cargando permisos:", error);
+
+      return {
+        ...empresaRol,
+        permisos: [],
+      };
+    }
+  })
+);
 
     setRows(enriched);
 
@@ -80,7 +100,7 @@ export default function EmpresaRol() {
   } finally {
     setLoading(false);
   }
-}, []);
+}, [])
 
   // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
           const loadRoles = useCallback(async () => {
@@ -121,19 +141,18 @@ const confirmarEliminacion = async () => {
     const permisosRes = await axios.get(
       `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
     );
-
     const permisos = permisosRes.data || [];
     const permisosIds = permisos.map(p => p.id);
 
     if (permisosIds.length > 0) {
-      await axios.delete(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        {
-          data: { permisosId: permisosIds }
-        }
-      );
+  await axios.delete(
+    `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+    {
+      data: { permisosId: permisosIds },
+      
     }
-
+      );
+    }     
     await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
 
     setMessage({
@@ -233,7 +252,7 @@ deleteRow: () => {
         setMessage={setMessage}
         reloadData={reloadData}
         roles={roles}
-        empresaId={empresaId}
+        
       />
 
       <ModalVerPermisos
