@@ -13,6 +13,7 @@ import GridEmpresaRol from "./GridEmpresaRol.jsx";
 import ModalVerPermisos from "./ModalVerPermisos";
 import StackButtons from "../StackButtons";
 
+const normalize = (str) => str?.trim().toUpperCase();
 export default function EmpresaRol() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState([]);
@@ -47,18 +48,19 @@ export default function EmpresaRol() {
     //  Buscar rol en catálogo (match seguro)
     const rolBase = rolesCatalogo.find(
       (r) =>
-        r.name?.trim().toUpperCase() ===
-        empresaRol.rolNombre?.trim().toUpperCase()
+        normalize(r.name) === normalize(empresaRol.rolNombre)
+
     );
 
     //  Si no encuentra el rol → no llamar backend
     if (!rolBase?.id) {
       console.warn("Rol no encontrado en catálogo:", empresaRol.rolNombre);
 
-      return {
-        ...empresaRol,
-        permisos: [],
-      };
+return {
+  ...empresaRol,
+  permisos: [],
+  permisosError: true,
+};
     }
 
     try {
@@ -68,26 +70,28 @@ export default function EmpresaRol() {
 
       return {
         ...empresaRol,
+        rolId: rolBase?.id,
         permisos: permisosRes.data || [],
       };
 
     } catch (error) {
 
-      // Backend devuelve 500 → lo tratamos como vacío
-      if (error.response?.status === 500) {
-        return {
-          ...empresaRol,
-          permisos: [],
-        };
-      }
-
-      // Otros errores sí se loguean
-      console.error("Error real cargando permisos:", error);
-
+    if (error.response?.status === 500) {
+      console.error("Error 500 cargando permisos:", error);
       return {
         ...empresaRol,
         permisos: [],
+        permisosError: true,
       };
+    }
+
+    console.error("Error real cargando permisos:", error);
+
+    return {
+      ...empresaRol,
+      permisos: [],
+      permisosError: true,
+    };
     }
   })
 );
@@ -131,10 +135,21 @@ const confirmarEliminacion = async () => {
 
     const resRoles = await axios.get("/v1/items/rol/0");
     const rolBase = resRoles.data.find(
-      r => r.name === selectedRow.rolNombre
+      r => normalize(r.name) === normalize(selectedRow.rolNombre)
     );
 
-    if (!rolBase) throw new Error("Rol base no encontrado");
+
+  if (!rolBase) {
+    setMessage({
+      open: true,
+      severity: "error",
+      text: "No se encontró el rol en el catálogo",
+    });
+    setLoading(false);
+    setConfirmOpen(false);
+    return;
+  }
+
 
     const rolId = rolBase.id;
 

@@ -18,15 +18,24 @@ const isDark = theme.palette.mode === "dark";
   headerName: "Permisos",
   flex: 2,
   renderCell: (params) => {
-    const permisos = params.row.permisos;
+  const permisos = params.row.permisos;
 
-    if (!Array.isArray(permisos) || permisos.length === 0) {
-      return (
-        <span style={{ color: theme.palette.text.secondary, fontStyle: "italic" }}>
-          Sin permisos
-        </span>
-      );
-    }
+  if (params.row.permisosError) {
+    return (
+      <span style={{ color: "red", fontStyle: "italic" }}>
+        Error cargando permisos
+      </span>
+    );
+  }
+
+  if (!Array.isArray(permisos) || permisos.length === 0) {
+    return (
+      <span style={{ color: theme.palette.text.secondary, fontStyle: "italic" }}>
+        Sin permisos
+      </span>
+    );
+  }
+
 
     const visibles = permisos.slice(0, 3);
 

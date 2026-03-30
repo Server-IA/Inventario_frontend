@@ -41,9 +41,14 @@ export default function FormEmpresaRol({
   const [subsistemas, setSubsistemas] = useState([]);
   const empresaId = Number(localStorage.getItem("empresaId"));
 
-  const getEmpresaParams = () => ({
-  params: { empresaId }
-});
+  const getEmpresaParams = () => {
+  if (!Number.isFinite(empresaId) || empresaId <= 0) {
+    console.error("empresaId inválido:", empresaId);
+    return {};
+  }
+
+  return { params: { empresaId } };
+  };
 
   const handleClose = () => {
     setOpen(false);
@@ -59,8 +64,11 @@ export default function FormEmpresaRol({
   const obtenerRolIdPorNombre = async (nombreRol) => {
     try {
       const res = await axios.get("/v1/items/rol/0");
-      const rolEncontrado = res.data.find((r) => r.name === nombreRol);
-      return rolEncontrado?.id || null;
+      const normalize = (str) => str?.trim().toUpperCase();
+      const rolEncontrado = res.data.find(
+      (r) => normalize(r.name) === normalize(nombreRol)
+      );
+        return rolEncontrado?.id || null;
     } catch (error) {
       console.error("Error obteniendo roles:", error);
       return null;
@@ -348,14 +356,7 @@ if (permisosNuevos.length > 0) {
       getEmpresaParams()
     );
   } catch (error) {
-  const msg = error.response?.data?.detail || "";
-
-  //  SOLO ignorar este caso específico
-  if (msg.includes("empresaId")) {
-    console.warn("Backend inconsistente, pero guardó bien");
-  } else {
-    throw error;
-  }
+    console.error(error.response?.data);
 }
 }
 
