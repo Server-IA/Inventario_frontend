@@ -90,8 +90,8 @@ class UsuarioRolServiceImplTest {
 
         when(authenticatedUser.getCurrentUser()).thenReturn(currentUser);
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
-        when(usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(usuarioRolId, empresaId,
-                ESTADO_INACTIVO_ID)).thenReturn(Optional.of(entity));
+        when(usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNull(usuarioRolId, empresaId))
+                .thenReturn(Optional.of(entity));
         when(estadoRepository.findById(requireNonNull(ESTADO_INACTIVO_ID))).thenReturn(Optional.of(inactivo));
 
         usuarioRolService.toggleEstadoForCurrentEmpresa(usuarioRolId);
@@ -122,8 +122,8 @@ class UsuarioRolServiceImplTest {
 
         when(authenticatedUser.getCurrentUser()).thenReturn(currentUser);
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
-        when(usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(usuarioRolId, empresaId,
-                ESTADO_INACTIVO_ID)).thenReturn(Optional.of(entity));
+        when(usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNull(usuarioRolId, empresaId))
+                .thenReturn(Optional.of(entity));
         when(estadoRepository.findById(requireNonNull(ESTADO_ACTIVO_ID))).thenReturn(Optional.of(activo));
 
         usuarioRolService.toggleEstadoForCurrentEmpresa(usuarioRolId);
@@ -141,8 +141,8 @@ class UsuarioRolServiceImplTest {
 
         when(authenticatedUser.getCurrentUser()).thenReturn(new User());
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaDelToken);
-        when(usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(usuarioRolId, empresaDelToken,
-                ESTADO_INACTIVO_ID)).thenReturn(Optional.empty());
+        when(usuarioRolRepository.findByIdAndEmpresaIdAndDeletedAtIsNull(usuarioRolId, empresaDelToken))
+                .thenReturn(Optional.empty());
 
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> usuarioRolService.toggleEstadoForCurrentEmpresa(usuarioRolId));

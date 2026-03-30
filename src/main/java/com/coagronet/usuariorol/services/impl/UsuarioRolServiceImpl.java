@@ -491,7 +491,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 User currentUser = authenticatedUser.getCurrentUser();
 
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id + " para la empresa " + empresaId));
 
@@ -515,7 +515,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id + " para la empresa actual"));
 
