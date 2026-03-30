@@ -66,4 +66,13 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 			@Param("estadoActivo") Long estadoActivo,
 			@Param("fechaActual") OffsetDateTime fechaActual);
 
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoActivo
+			and ur.user.id = :userId
+			order by ur.id asc
+			""")
+	List<UsuarioRol> findActivasByUserId(@Param("estadoActivo") Long estadoActivo, @Param("userId") Long userId);
+
 }

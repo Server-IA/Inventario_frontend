@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.user.User;
+import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 
@@ -26,6 +28,7 @@ public class UsuarioRolContratoService {
 
 	private final UsuarioRolRepository usuarioRolRepository;
 	private final EstadoRepository estadoRepository;
+	private final UserRepository userRepository;
 
 	@Transactional
 	public void procesarContratos() {
@@ -73,6 +76,35 @@ public class UsuarioRolContratoService {
 			ur.setEstado(estadoInactivo);
 			ur.setUpdatedAt(OffsetDateTime.now());
 			usuarioRolRepository.save(ur);
+
+			User user = ur.getUser();
+			boolean eraPreferida = user.getPreferredEmpresaId() != null
+					&& user.getPreferredRolId() != null
+					&& user.getPreferredEmpresaId().equals(ur.getEmpresa().getId())
+					&& user.getPreferredRolId().equals(ur.getRol().getId());
+
+			if (eraPreferida) {
+				user.setPreferredEmpresaId(null);
+				user.setPreferredRolId(null);
+
+				List<UsuarioRol> otrasActivas = usuarioRolRepository
+						.findActivasByUserId(ESTADO_ACTIVO_ID, user.getId());
+				UsuarioRol nuevaPreferida = otrasActivas.stream()
+						.filter(a -> !a.getId().equals(ur.getId()))
+						.findFirst()
+						.orElse(null);
+
+				if (nuevaPreferida != null) {
+					user.setPreferredEmpresaId(nuevaPreferida.getEmpresa().getId());
+					user.setPreferredRolId(nuevaPreferida.getRol().getId());
+					logger.debug("Usuario id={}: preferencia cambiada a empresaId={}, rolId={}",
+							user.getId(), nuevaPreferida.getEmpresa().getId(), nuevaPreferida.getRol().getId());
+				}
+
+				userRepository.save(user);
+				logger.debug("UsuarioRol id={} inactivado - preferencia removida del usuario id={}", ur.getId(), user.getId());
+			}
+
 			logger.debug("UsuarioRol id={} inactivado por fecha de fin contrato", ur.getId());
 		}
 
