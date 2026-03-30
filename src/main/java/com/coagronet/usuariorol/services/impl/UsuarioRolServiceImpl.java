@@ -486,4 +486,51 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 usuarioRolRepository.save(entity);
         }
 
+        @Override
+        public void toggleEstado(Long id, Long empresaId) {
+                User currentUser = authenticatedUser.getCurrentUser();
+
+                UsuarioRol entity = usuarioRolRepository
+                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id + " para la empresa " + empresaId));
+
+                boolean isActivo = ESTADO_ACTIVO_ID.equals(entity.getEstado().getId());
+                Long nuevoEstadoId = isActivo ? ESTADO_INACTVIO_ID : ESTADO_ACTIVO_ID;
+
+                Estado nuevoEstado = estadoRepository.findById(nuevoEstadoId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Estado no encontrado con id " + nuevoEstadoId));
+
+                entity.setEstado(nuevoEstado);
+                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedBy(currentUser);
+
+                usuarioRolRepository.save(entity);
+        }
+
+        @Override
+        public void toggleEstadoForCurrentEmpresa(Long id) {
+                User currentUser = authenticatedUser.getCurrentUser();
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+                UsuarioRol entity = usuarioRolRepository
+                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id + " para la empresa actual"));
+
+                boolean isActivo = ESTADO_ACTIVO_ID.equals(entity.getEstado().getId());
+                Long nuevoEstadoId = isActivo ? ESTADO_INACTVIO_ID : ESTADO_ACTIVO_ID;
+
+                Estado nuevoEstado = estadoRepository.findById(nuevoEstadoId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Estado no encontrado con id " + nuevoEstadoId));
+
+                entity.setEstado(nuevoEstado);
+                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedBy(currentUser);
+
+                usuarioRolRepository.save(entity);
+        }
+
 }
