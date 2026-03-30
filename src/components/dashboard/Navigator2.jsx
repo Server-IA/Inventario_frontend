@@ -189,6 +189,7 @@ import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
 import EmpresaRolsystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
+import Usuario from "../Usuario/Usuario.jsx";
 // Imágenes
 import img1 from "/images/cards/1.jpg";
 import img2 from "/images/cards/2.jpg";
@@ -380,6 +381,7 @@ const components = {
   EmpresaRol: EmpresaRol,
   UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
+  Usuario: Usuario,
   PedidoCotizacion: PedidoCotizacion,
   Estado: Estado,
   tipoidentificacion: TipoIdentificacion,
@@ -741,6 +743,21 @@ export default function Navigator2({
             })),
           })
         );
+
+        const segIndex = adapted.findIndex((m) => toKey(m.id) === "Seguridad");
+        if (segIndex !== -1) {
+          const children = adapted[segIndex].children || [];
+          const exists = children.some((c) => toKey(c.id) === "Usuario");
+          if (!exists) {
+            children.push({
+              id: "Usuario",
+              text: "Usuario",
+              icon: "PersonOutline",
+              url: "/api/v1/usuario",
+            });
+            adapted[segIndex] = { ...adapted[segIndex], children };
+          }
+        }
 
         setMenuItems(adapted);
 
