@@ -12,12 +12,14 @@ import com.coagronet.modulo.Modulo;
 /**
  * Repositorio de lectura para construir el menú a partir de los módulos disponibles.
  * <p>
- * Usa una consulta nativa para traer filas planas (proyección {@link SubModuloRow}) que incluyen datos del subsistema y
- * del módulo, filtradas por empresa, estado, tipo de aplicación y rol.
+ * Usa una consulta nativa para traer filas planas (proyección {@link SubModuloRow}) que
+ * incluyen datos del subsistema y del módulo, filtradas por empresa, estado, tipo de
+ * aplicación y rol.
  * </p>
  *
  * <p>
- * <strong>Notas:</strong> Se ordena por nombre de subsistema y luego de módulo para mantener estabilidad en la UI.
+ * <strong>Notas:</strong> Se ordena por nombre de subsistema y luego de módulo para
+ * mantener estabilidad en la UI.
  * </p>
  *
  * @author Juan J. Castro
@@ -56,18 +58,22 @@ public interface MenuModuloRepository extends Repository<Modulo, Long> {
 			ORDER BY s.sub_nombre ASC, m.mod_nombre ASC;
 						""", nativeQuery = true)
 	List<SubModuloRow> findSubmodulosByEmpresaTipoAppAndRolId(@Param("empresaId") Long empresaId,
-			@Param("tipoAppId") Integer tipoAppId, @Param("rolId") Integer rolId);
+			@Param("tipoAppId") Integer tipoAppId, @Param("rolId") Long rolId);
 
 	/**
-	 * Consulta la base de datos para recuperar los módulos que no están asociados a una empresa específica.
+	 * Consulta la base de datos para recuperar los módulos que no están asociados a una
+	 * empresa específica.
 	 * <p>
-	 * Ejecuta una consulta JPQL que selecciona las entidades {@link Modulo} cuyo identificador no se encuentra en la
-	 * tabla de relación <code>ModuloEmpresa</code> para el <code>empresaId</code> proporcionado. Los resultados se
-	 * ordenan ascendentemente por el nombre del subsistema y posteriormente por el nombre del módulo.
+	 * Ejecuta una consulta JPQL que selecciona las entidades {@link Modulo} cuyo
+	 * identificador no se encuentra en la tabla de relación <code>ModuloEmpresa</code>
+	 * para el <code>empresaId</code> proporcionado. Los resultados se ordenan
+	 * ascendentemente por el nombre del subsistema y posteriormente por el nombre del
+	 * módulo.
 	 * </p>
-	 *
-	 * @param empresaId El identificador único de la empresa para la cual se filtran los módulos ya asignados.
-	 * @return Una lista de entidades {@link Modulo} disponibles (no asignadas) para la empresa indicada.
+	 * @param empresaId El identificador único de la empresa para la cual se filtran los
+	 * módulos ya asignados.
+	 * @return Una lista de entidades {@link Modulo} disponibles (no asignadas) para la
+	 * empresa indicada.
 	 */
 	@Query("SELECT m FROM Modulo m " + "JOIN FETCH m.subSistema s " + "WHERE m.id NOT IN (" + "   SELECT me.modulo.id "
 			+ "   FROM ModuloEmpresa me " + "   WHERE me.empresa.id = :empresaId" + ") "

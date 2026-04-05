@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,7 +18,7 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.menu.dtos.MenuModuloResponseDTO;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.repositories.MenuModuloRepository;
@@ -30,163 +32,174 @@ import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
 import com.coagronet.utils.UserEmpresaService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Servicio de dominio responsable de construir el menú visible para el usuario.
  * <p>
- * Resuelve la empresa y el rol desde el contexto de seguridad, traduce el {@code tipoAplicacion} a
- * {@link TipoAplicacionEnum}, consulta el repositorio y agrupa los módulos por subsistema para producir la estructura
- * final del menú.
+ * Resuelve la empresa y el rol desde el contexto de seguridad, traduce el
+ * {@code tipoAplicacion} a {@link TipoAplicacionEnum}, consulta el repositorio y agrupa
+ * los módulos por subsistema para producir la estructura final del menú.
  * </p>
  *
  * <p>
- * <strong>Principios:</strong> SRP (construcción del menú), SoC (consulta en repository), y uso de {@link ModuloMapper}
- * para separar el mapeo entidad→DTO.
+ * <strong>Principios:</strong> SRP (construcción del menú), SoC (consulta en repository),
+ * y uso de {@link ModuloMapper} para separar el mapeo entidad→DTO.
  * </p>
  *
  * @author Juan J. Castro
  * @since 0.3.1
  */
-@Service @RequiredArgsConstructor
+@Service
+@RequiredArgsConstructor
 public class MenuService {
 
-    private final MenuModuloRepository menuModuloRepository;
-    private final ModuloMapper moduloMapper;
-    private final UserEmpresaService userEmpresaService;
-    private final ModuloRepository moduloRepository;
-    private final ModuloEmpresaRepository moduloEmpresaRepository;
-    private final EmpresaRepository empresaRepository;
-    private final EstadoRepository estadoRepository;
-    private final JwtService jwtService;
-    private final HttpServletRequest request;
+	private final MenuModuloRepository menuModuloRepository;
 
-    public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
-        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+	private final ModuloMapper moduloMapper;
 
-        // 1. Manejo del tipo de aplicación (400 Bad Request)
-        int tipoAppId;
-        try {
-            tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El tipo de aplicación proporcionado no es válido: " + tipoAplicacion);
-        }
+	private final UserEmpresaService userEmpresaService;
 
-        String authHeader = request.getHeader("Authorization");
-        Integer rolId = null;
+	private final ModuloRepository moduloRepository;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            rolId = jwtService.extractRoleId(token);
-        }
+	private final ModuloEmpresaRepository moduloEmpresaRepository;
 
-        // 2. Manejo de la falta de Rol (403 Forbidden)
-        if (rolId == null) {
-            throw new AccessDeniedException("No se pudo extraer el rol del token de seguridad");
-        }
+	private final EmpresaRepository empresaRepository;
 
-        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
+	private final EstadoRepository estadoRepository;
 
-        record SubSistemaKey(String nombre, String icono) {
-        }
+	public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-        Map<SubSistemaKey, List<SubModuloRow>> agrupado = rows.stream().collect(Collectors.groupingBy(
-                r -> new SubSistemaKey(r.getSubNombre(), r.getSubIcon()), LinkedHashMap::new, Collectors.toList()));
+		// 1. Manejo del tipo de aplicación (400 Bad Request)
+		int tipoAppId;
+		try {
+			tipoAppId = TipoAplicacionEnum.from(tipoAplicacion).id();
+		}
+		catch (IllegalArgumentException | NullPointerException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"El tipo de aplicación proporcionado no es válido: " + tipoAplicacion);
+		}
 
-        List<MenuSubSistemaResponseDTO> out = new ArrayList<>();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		Long rolId = null;
 
-        for (var entry : agrupado.entrySet()) {
-            SubSistemaKey key = entry.getKey();
-            List<MenuModuloResponseDTO> modulos = entry.getValue().stream().map(moduloMapper::toDTO).toList();
+		if (auth != null && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+			rolId = userDetails.rolId();
+		}
 
-            out.add(MenuSubSistemaResponseDTO.builder().nombre(key.nombre()).icono(key.icono()).modulos(modulos)
-                    .build());
-        }
+		// 2. Manejo de la falta de Rol (403 Forbidden)
+		if (rolId == null) {
+			throw new AccessDeniedException("No se pudo extraer el rol del token de seguridad");
+		}
 
-        return out;
-    }
+		var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
 
-    /**
-     * Obtiene y estructura los módulos que aún no han sido asignados a la empresa asociada a la petición actual.
-     * <p>
-     * El proceso recupera el identificador de la empresa del contexto de seguridad o petición, consulta los módulos no
-     * asignados en el repositorio y los agrupa por su {@link SubSistema} correspondiente. Finalmente, transforma las
-     * entidades en objetos de transferencia de datos (DTO) para su respuesta.
-     * </p>
-     *
-     * @return Una lista de {@link MenuSubSistemaResponseDTO} que representa la jerarquía de subsistemas y sus
-     * respectivos módulos no asignados. Retorna una lista vacía si no existen módulos pendientes.
-     * @see #findModulosNoAsignados(Long)
-     */
-    @Transactional(readOnly = true)
-    public List<MenuSubSistemaResponseDTO> obtenerModulosDisponiblesParaEmpresa() {
+		record SubSistemaKey(String nombre, String icono) {
+		}
 
-        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		Map<SubSistemaKey, List<SubModuloRow>> agrupado = rows.stream()
+			.collect(Collectors.groupingBy(r -> new SubSistemaKey(r.getSubNombre(), r.getSubIcon()), LinkedHashMap::new,
+					Collectors.toList()));
 
-        List<Modulo> modulosFaltantes = menuModuloRepository.findModulosNoAsignados(empresaId);
+		List<MenuSubSistemaResponseDTO> out = new ArrayList<>();
 
-        Map<SubSistema, List<Modulo>> modulosPorSubsistema = modulosFaltantes.stream()
-                .collect(Collectors.groupingBy(Modulo::getSubSistema));
+		for (var entry : agrupado.entrySet()) {
+			SubSistemaKey key = entry.getKey();
+			List<MenuModuloResponseDTO> modulos = entry.getValue().stream().map(moduloMapper::toDTO).toList();
 
-        List<MenuSubSistemaResponseDTO> respuesta = new ArrayList<>();
+			out.add(MenuSubSistemaResponseDTO.builder()
+				.nombre(key.nombre())
+				.icono(key.icono())
+				.modulos(modulos)
+				.build());
+		}
 
-        modulosPorSubsistema.forEach((subsistema, listaModulos) -> {
+		return out;
+	}
 
-            List<MenuModuloResponseDTO> modulosDto = listaModulos.stream()
-                    .map(m -> new MenuModuloResponseDTO(m.getNombreId(), m.getNombre(), m.getUrl(), m.getIcon()))
-                    .collect(Collectors.toList());
+	/**
+	 * Obtiene y estructura los módulos que aún no han sido asignados a la empresa
+	 * asociada a la petición actual.
+	 * <p>
+	 * El proceso recupera el identificador de la empresa del contexto de seguridad o
+	 * petición, consulta los módulos no asignados en el repositorio y los agrupa por su
+	 * {@link SubSistema} correspondiente. Finalmente, transforma las entidades en objetos
+	 * de transferencia de datos (DTO) para su respuesta.
+	 * </p>
+	 * @return Una lista de {@link MenuSubSistemaResponseDTO} que representa la jerarquía
+	 * de subsistemas y sus respectivos módulos no asignados. Retorna una lista vacía si
+	 * no existen módulos pendientes.
+	 * @see #findModulosNoAsignados(Long)
+	 */
+	@Transactional(readOnly = true)
+	public List<MenuSubSistemaResponseDTO> obtenerModulosDisponiblesParaEmpresa() {
 
-            respuesta.add(new MenuSubSistemaResponseDTO(subsistema.getNombre(), subsistema.getIcon(), modulosDto));
-        });
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-        return respuesta;
-    }
+		List<Modulo> modulosFaltantes = menuModuloRepository.findModulosNoAsignados(empresaId);
 
-    @Transactional
-    public void asignarModulosAEmpresa(List<String> modulosIds) {
+		Map<SubSistema, List<Modulo>> modulosPorSubsistema = modulosFaltantes.stream()
+			.collect(Collectors.groupingBy(Modulo::getSubSistema));
 
-        // 1. Obtener la empresa del contexto actual
-        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		List<MenuSubSistemaResponseDTO> respuesta = new ArrayList<>();
 
-        Empresa empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
+		modulosPorSubsistema.forEach((subsistema, listaModulos) -> {
 
-        // 2. Obtener las entidades de los módulos solicitados
-        List<Modulo> modulosSolicitados = moduloRepository.findByNombreIdIn(modulosIds);
+			List<MenuModuloResponseDTO> modulosDto = listaModulos.stream()
+				.map(m -> new MenuModuloResponseDTO(m.getNombreId(), m.getNombre(), m.getUrl(), m.getIcon()))
+				.collect(Collectors.toList());
 
-        if (modulosSolicitados.isEmpty()) {
-            throw new RuntimeException("No se encontraron módulos válidos con los IDs proporcionados");
-        }
+			respuesta.add(new MenuSubSistemaResponseDTO(subsistema.getNombre(), subsistema.getIcon(), modulosDto));
+		});
 
-        // 3. Obtener el estado "Activo" (Asumiendo ID 1, o búscalo por nombre)
-        Estado estadoActivo = estadoRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Estado activo no configurado"));
+		return respuesta;
+	}
 
-        // 4. Iterar y guardar SOLO si no existe
-        List<ModuloEmpresa> nuevasAsignaciones = new ArrayList<>();
+	@Transactional
+	public void asignarModulosAEmpresa(List<String> modulosIds) {
 
-        for (Modulo modulo : modulosSolicitados) {
+		// 1. Obtener la empresa del contexto actual
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-            // VALIDACIÓN ANTI-DUPLICADOS
-            boolean yaExiste = moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo);
+		Empresa empresa = empresaRepository.findById(empresaId)
+			.orElseThrow(() -> new RuntimeException("Empresa no encontrada"));
 
-            if (!yaExiste) {
-                ModuloEmpresa nuevaRelacion = new ModuloEmpresa();
-                nuevaRelacion.setEmpresa(empresa);
-                nuevaRelacion.setModulo(modulo);
-                nuevaRelacion.setEstado(estadoActivo); // moe_estado_id
+		// 2. Obtener las entidades de los módulos solicitados
+		List<Modulo> modulosSolicitados = moduloRepository.findByNombreIdIn(modulosIds);
 
-                nuevasAsignaciones.add(nuevaRelacion);
-            }
-            // Si ya existe, simplemente lo ignoramos (o podrías lanzar error si prefieres ser estricto)
-        }
+		if (modulosSolicitados.isEmpty()) {
+			throw new RuntimeException("No se encontraron módulos válidos con los IDs proporcionados");
+		}
 
-        // 5. Guardar en lote (Batch save)
-        if (!nuevasAsignaciones.isEmpty()) {
-            moduloEmpresaRepository.saveAll(nuevasAsignaciones);
-        }
-    }
+		// 3. Obtener el estado "Activo" (Asumiendo ID 1, o búscalo por nombre)
+		Estado estadoActivo = estadoRepository.findById(1L)
+			.orElseThrow(() -> new RuntimeException("Estado activo no configurado"));
+
+		// 4. Iterar y guardar SOLO si no existe
+		List<ModuloEmpresa> nuevasAsignaciones = new ArrayList<>();
+
+		for (Modulo modulo : modulosSolicitados) {
+
+			// VALIDACIÓN ANTI-DUPLICADOS
+			boolean yaExiste = moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo);
+
+			if (!yaExiste) {
+				ModuloEmpresa nuevaRelacion = new ModuloEmpresa();
+				nuevaRelacion.setEmpresa(empresa);
+				nuevaRelacion.setModulo(modulo);
+				nuevaRelacion.setEstado(estadoActivo); // moe_estado_id
+
+				nuevasAsignaciones.add(nuevaRelacion);
+			}
+			// Si ya existe, simplemente lo ignoramos (o podrías lanzar error si prefieres
+			// ser estricto)
+		}
+
+		// 5. Guardar en lote (Batch save)
+		if (!nuevasAsignaciones.isEmpty()) {
+			moduloEmpresaRepository.saveAll(nuevasAsignaciones);
+		}
+	}
 
 }

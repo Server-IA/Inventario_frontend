@@ -59,8 +59,15 @@ public class MyUserDetailsService implements UserDetailsService {
 			authorities.addAll(permisos.stream().map(SimpleGrantedAuthority::new).toList());
 		}
 
+		Long primaryRolId = user.getRolesAsignados()
+			.stream()
+			.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
+			.findFirst()
+			.map(ur -> ur.getRol().getId())
+			.orElse(null);
+
 		return new CustomUserDetails(user.getId(), user.getUsername(), user.getPassword(), user.getPreferredEmpresaId(),
-				user.getTokenVersion(), authorities);
+				primaryRolId, user.getTokenVersion(), authorities);
 	}
 
 }

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Repository;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
+import com.coagronet.kardex.dtos.ArticuloKardexListDto;
+import com.coagronet.kardex.dtos.MovimientoKardexDTO;
 
 @Repository
 public interface ArticuloKardexRepository
@@ -119,5 +121,33 @@ public interface ArticuloKardexRepository
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query("UPDATE ArticuloKardex a SET a.estado.id = 2 WHERE a.id = :id AND a.empresa.id = :empresaId")
 	int softDeleteByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
+
+	@Query("""
+			    SELECT new com.coagronet.kardex.dtos.MovimientoKardexDTO(
+			        ak.id, k.id, k.fechaHora, tm.nombre, a.nombre,
+			        ak.identificadorProducto, ak.cantidad, ak.precioTotal, e.nombre
+			    )
+			    FROM ArticuloKardex ak
+			    JOIN ak.kardex k
+			    JOIN k.tipoMovimiento tm
+			    JOIN k.almacen a
+			    JOIN ak.estado e
+			    ORDER BY k.fechaHora DESC
+			""")
+	Page<MovimientoKardexDTO> findMovimientosPaginados(Pageable pageable);
+
+	@Query("""
+			    SELECT new com.coagronet.kardex.dtos.ArticuloKardexListDto(
+			        ak.id, ak.cantidad, ak.precio, ak.precioTotal,
+			        k.fechaHora, tm.nombre, pp.nombre, ak.lote, est.nombre
+			    )
+			    FROM ArticuloKardex ak
+			    JOIN ak.kardex k
+			    JOIN k.tipoMovimiento tm
+			    JOIN ak.presentacionProducto pp
+			    JOIN ak.estado est
+			    WHERE k.almacen.id = :almacenId
+			""")
+	Page<ArticuloKardexListDto> findMovimientosByAlmacenId(@Param("almacenId") Long almacenId, Pageable pageable);
 
 }

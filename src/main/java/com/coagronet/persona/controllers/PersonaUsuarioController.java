@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.dtos.PersonaDTO;
 import com.coagronet.persona.mappers.PersonaMapper;
@@ -33,7 +33,7 @@ public class PersonaUsuarioController {
 
 	// Suponiendo que tienes una instancia de JwtService
 	@Autowired
-	private JwtService jwtService;
+	private JwtUtil jwtUtil;
 
 	@Autowired
 	private UsuarioEstadoRepository usuarioEstadoRepository;
@@ -46,7 +46,7 @@ public class PersonaUsuarioController {
 		String token = authorizationHeader.replace("Bearer ", "").trim();
 
 		// Extraer el username desde el JWT usando la instancia de JwtService
-		String username = jwtService.extractUsername(token);
+		String username = jwtUtil.extractUsername(token);
 
 		User user = userRepository.findByUsername(username)
 			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));

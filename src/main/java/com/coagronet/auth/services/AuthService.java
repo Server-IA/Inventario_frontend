@@ -109,6 +109,8 @@ public class AuthService {
 
 	private final TipoIdentificacionRepository tipoIdentificacionRepository;
 
+	private final JwtUtil jwtUtil;
+
 	private final RequestUtils requestUtils;
 
 	private final ApplicationEventPublisher applicationEventPublisher;
@@ -378,24 +380,15 @@ public class AuthService {
 		return new ApiResponse(true, message);
 	}
 
-	// LOGIN
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 
-		// 1. Delegamos la autenticación. Spring Security verificará el hash vía
-		// MyUserDetailsService
 		Authentication auth = authManager
 			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 
-		// 2. ARQUITECTURA CORRECTA: Extraemos nuestro DTO inmutable (Stateless)
 		CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 
-		// 3. Recuperamos la Entidad JPA fresca utilizando el ID verificado.
-		// Esto puentea el contexto de seguridad con el contexto de persistencia para tu
-		// lógica de negocio.
 		User user = userRepo.findById(userDetails.id())
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado en BD"));
-
-		// --- A partir de aquí, tu lógica de negocio original funciona intacta ---
 
 		UsuarioEstado estado = user.getUsuarioEstado();
 
@@ -403,12 +396,11 @@ public class AuthService {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales o estado de usuario inválido");
 		}
 
-		if (estado.getId() == 1L) { // Asumiendo 1L como pendiente según tu
-									// UserDetailsService previo
+		if (estado.getId() == 1L) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tu cuenta está pendiente de activación.");
 		}
 
-		if (estado.getId() == 0L) { // Asumiendo 0L como desactivado
+		if (estado.getId() == 0L) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN,
 					"Tu cuenta no está disponible. Contacta al administrador.");
 		}
@@ -421,15 +413,14 @@ public class AuthService {
 
 		UsuarioRol current = resolveInitialContext(user, usuarioRols);
 
-		// Lógica para roles transversales (Ej. Administrador de Sistema sin empresa)
 		if (current.getEmpresa() == null) {
-			String token = jwt.generateToken(user, current.getRol().getId(), user.getUsuarioEstado().getId());
+			String token = jwtUtil.generateToken(user, null, current.getRol().getId(), current.getRol().getNombre(),
+					user.getUsuarioEstado().getId());
 			return Map.of("token", token, "rolId", current.getRol().getId(), "estado", user.getUsuarioEstado().getId());
 		}
 
-		// Lógica estándar para usuarios con empresa asignada
-		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
-				user.getUsuarioEstado().getId());
+		String token = jwtUtil.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
+				current.getRol().getNombre(), user.getUsuarioEstado().getId());
 
 		var nombrePersona = user.getPersona().getNombre() + " " + user.getPersona().getApellido();
 
@@ -441,19 +432,25 @@ public class AuthService {
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRol().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
 				nombrePersona);
+
 	}
 
-	// SWITCH CONTEXT
 	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
-		User user = userRepo.findByUsername(username)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-		userRoleRepo
+		User user = userRepo.findByUsername(username)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+		UsuarioRol usuarioRol = userRoleRepo
 			.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
 					ESTADO_INACTVIO_ID)
 			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
-		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId(), user.getUsuarioEstado().getId());
+		String rolName = usuarioRol.getRol().getNombre();
+
+		// 3. INYECTAR EL ROL en la generación del token (Stateless RBAC).
+		String token = jwtUtil.generateToken(user, dto.empresaId(), dto.rolId(), rolName,
+				user.getUsuarioEstado().getId());
+
 		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
 			user.setPreferredEmpresaId(dto.empresaId());
 			user.setPreferredRolId(dto.rolId());
