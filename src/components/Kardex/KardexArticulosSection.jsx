@@ -1,13 +1,16 @@
-import React, { useState } from "react";
-import { Box, Typography } from "@mui/material";
+﻿import React, { useState } from "react";
+import { Box, Typography, Button } from "@mui/material";
 import GridArticuloKardex from "./GridArticuloKardex";
 import FormArticuloKardex from "./FormArticuloKardex";
 
 /**
- * @description Sección de artículos del kardex seleccionado
+ * @description Seccion de articulos del kardex seleccionado
  */
 export function KardexArticulosSection({
+    sectionRef,
     selectedRow,
+    setSelectedKardex,
+    onReloadArticulos,
     articuloItems,
     articuloLoading,
     articuloPaginationModel,
@@ -17,12 +20,12 @@ export function KardexArticulosSection({
     setMessage,
 }) {
     const [selectedArticulo, setSelectedArticulo] = useState({});
-    const [reloadArticulos, setReloadArticulos] = useState(false);
 
     if (!selectedRow) return null;
 
     return (
         <Box
+            ref={sectionRef}
             sx={{
                 backgroundColor: (theme) =>
                     theme.palette.mode === "dark" ? "#2c383b" : "#caddf3",
@@ -37,17 +40,22 @@ export function KardexArticulosSection({
                 alignItems="center"
                 mb={2}
             >
-                <Typography variant="h6">
-                    Artículos del Kardex seleccionado
-                </Typography>
+                <Typography variant="h6">Articulos del Kardex seleccionado</Typography>
                 <Box display="flex" gap={2}>
                     <FormArticuloKardex
                         selectedRow={selectedArticulo}
                         kardexId={selectedRow?.id || ""}
                         setSelectedRow={setSelectedArticulo}
                         setMessage={setMessage}
-                        reloadData={() => setReloadArticulos((prev) => !prev)}
+                        reloadData={onReloadArticulos}
                     />
+                    <Button
+                        variant="outlined"
+                        sx={{ textTransform: "none" }}
+                        onClick={() => setSelectedKardex?.(null)}
+                    >
+                        Cerrar
+                    </Button>
                 </Box>
             </Box>
 

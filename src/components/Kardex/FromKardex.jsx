@@ -163,6 +163,7 @@ export default function FormKardex({
   ============================ */
   const [produccionSearchOpen, setProduccionSearchOpen] = useState(false);
   const [produccionSearchNombre, setProduccionSearchNombre] = useState("");
+  const [produccionSearchFecha, setProduccionSearchFecha] = useState("");
   const [produccionesCompletas, setProduccionesCompletas] = useState([]);
   const [loadingProduccionesCompletas, setLoadingProduccionesCompletas] =
     useState(false);
@@ -172,6 +173,7 @@ export default function FormKardex({
   ============================ */
   const [pedidoSearchOpen, setPedidoSearchOpen] = useState(false);
   const [pedidoSearchNombre, setPedidoSearchNombre] = useState("");
+  const [pedidoSearchFecha, setPedidoSearchFecha] = useState("");
   const [pedidosCompletos, setPedidosCompletos] = useState([]);
   const [loadingPedidosCompletos, setLoadingPedidosCompletos] = useState(false);
 
@@ -416,6 +418,7 @@ export default function FormKardex({
   const handleOpenProduccionSearch = async () => {
     setProduccionSearchOpen(true);
     setProduccionSearchNombre("");
+    setProduccionSearchFecha("");
     setLoadingProduccionesCompletas(true);
 
     try {
@@ -439,6 +442,7 @@ export default function FormKardex({
   const handleOpenPedidoSearch = () => {
     setPedidoSearchOpen(true);
     setPedidoSearchNombre("");
+    setPedidoSearchFecha("");
     // cargar desde estado existente
     setPedidosCompletos(pedidos);
   };
@@ -446,6 +450,7 @@ export default function FormKardex({
   const handleClosePedidoSearch = () => {
     setPedidoSearchOpen(false);
     setPedidoSearchNombre("");
+    setPedidoSearchFecha("");
     setPedidosCompletos([]);
   };
 
@@ -453,7 +458,15 @@ export default function FormKardex({
     return pedidosCompletos.filter((ped) => {
       const nombre = (ped.nombre || ped.name || "").toLowerCase();
       const search = (pedidoSearchNombre || "").toLowerCase();
-      return nombre.includes(search);
+      const fechaPed = String(
+        ped.fecha ||
+          ped.fechaHora ||
+          ped.createdAt ||
+          ""
+      ).substring(0, 10);
+      const byName = nombre.includes(search);
+      const byDate = !pedidoSearchFecha || fechaPed === pedidoSearchFecha;
+      return byName && byDate;
     });
   };
 
@@ -475,7 +488,16 @@ export default function FormKardex({
     const search = (produccionSearchNombre || "").toLowerCase();
     return produccionesCompletas.filter((prod) => {
       const nombre = (prod.nombre || prod.name || "").toLowerCase();
-      return nombre.includes(search);
+      const fechaProd = String(
+        prod.fecha ||
+          prod.fechaInicio ||
+          prod.fechaHora ||
+          prod.createdAt ||
+          ""
+      ).substring(0, 10);
+      const byName = nombre.includes(search);
+      const byDate = !produccionSearchFecha || fechaProd === produccionSearchFecha;
+      return byName && byDate;
     });
   };
 
@@ -492,6 +514,7 @@ export default function FormKardex({
   const handleCloseProduccionSearch = () => {
     setProduccionSearchOpen(false);
     setProduccionSearchNombre("");
+    setProduccionSearchFecha("");
     setProduccionesCompletas([]);
   };
 
@@ -706,6 +729,7 @@ export default function FormKardex({
 
   const isEntradaCompraUi =
     Number(formData.tipoMovimientoId) === TIPO_MOV_ENTRADA_COMPRA;
+  const isEditMode = formMode === "edit";
 
   /* ============================
      🔹 UI
@@ -747,6 +771,7 @@ export default function FormKardex({
                   label="Tipo Movimiento"
                   value={formData.tipoMovimientoId}
                   onChange={handleChange}
+                  disabled={isEditMode}
                 >
                   <MenuItem value="">
                     <em>Seleccione...</em>
@@ -1008,17 +1033,27 @@ export default function FormKardex({
       >
         <DialogTitle>Buscar Producción</DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
-          <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
-            <Grid item xs={12} sm={6}>
-              <TextField
+            <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
+              <Grid item xs={12} sm={6}>
+                <TextField
                 fullWidth
                 label="Nombre"
                 value={produccionSearchNombre}
                 onChange={(e) => setProduccionSearchNombre(e.target.value)}
-                placeholder="Escribe para filtrar por nombre..."
-              />
+                  placeholder="Escribe para filtrar por nombre..."
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Fecha"
+                  value={produccionSearchFecha}
+                  onChange={(e) => setProduccionSearchFecha(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
             </Grid>
-          </Grid>
 
           {/* Tabla de resultados */}
           {loadingProduccionesCompletas ? (
@@ -1074,17 +1109,27 @@ export default function FormKardex({
       >
         <DialogTitle>Buscar Pedido</DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
-          <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
-            <Grid item xs={12} sm={6}>
-              <TextField
+            <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
+              <Grid item xs={12} sm={6}>
+                <TextField
                 fullWidth
                 label="Nombre"
                 value={pedidoSearchNombre}
                 onChange={(e) => setPedidoSearchNombre(e.target.value)}
-                placeholder="Escribe para filtrar por nombre..."
-              />
+                  placeholder="Escribe para filtrar por nombre..."
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Fecha"
+                  value={pedidoSearchFecha}
+                  onChange={(e) => setPedidoSearchFecha(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
             </Grid>
-          </Grid>
 
           {/* Tabla de resultados */}
           {getFilteredPedidos().length === 0 ? (

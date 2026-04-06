@@ -28,7 +28,7 @@ export const useKardexData = () => {
     const reloadCatalogs = useCallback(async () => {
         setLoadingCatalogs(true);
         try {
-            const [rAlm, rProd, rTmov, rPres, rPed, rOc, rEmp] = await Promise.all([
+            const [rAlm, rProd, rTmov, rPres, rPed, rOc, rEmp, rProv] = await Promise.all([
                 axios.get("/v1/items/almacen/0"),
                 axios.get("/v1/items/produccion/0"),
                 axios.get("/v1/items/tipo_movimiento/0"),
@@ -36,7 +36,21 @@ export const useKardexData = () => {
                 axios.get("/v1/items/pedido/0"),
                 axios.get("/v1/items/orden_compra/0"),
                 axios.get("/v1/items/empresa/0"),
+                axios
+                    .get("/v1/items/proveedor/0")
+                    .catch(() => ({ data: [] })),
             ]);
+
+            const empresasBase = toArray(rEmp.data);
+            const proveedoresBase = toArray(rProv.data);
+            const empresasMerged = [...empresasBase];
+            const seen = new Set(empresasBase.map((e) => String(e?.id)));
+            for (const prov of proveedoresBase) {
+                const id = prov?.id;
+                if (id == null || seen.has(String(id))) continue;
+                empresasMerged.push(prov);
+                seen.add(String(id));
+            }
 
             setCatalogs({
                 almacenes: toArray(rAlm.data),
@@ -45,7 +59,7 @@ export const useKardexData = () => {
                 presentaciones: toArray(rPres.data),
                 pedidos: toArray(rPed.data),
                 ordenesCompra: toArray(rOc.data),
-                empresas: toArray(rEmp.data),
+                empresas: empresasMerged,
             });
         } catch (e) {
             console.error("Error cargando catálogos:", e);

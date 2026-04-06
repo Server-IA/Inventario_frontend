@@ -4,6 +4,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Box,
   Button,
   TextField,
   FormControl,
@@ -13,7 +14,6 @@ import {
   Grid,
 } from "@mui/material";
 import axios from "../axiosConfig";
-import StackButtons from "../StackButtons";
 
 export default function FormArticuloKardex({
   selectedRow,
@@ -192,26 +192,26 @@ export default function FormArticuloKardex({
     setOpen(true);
   };
 
-  const deleteRow = () => {
+  const inactivateRow = () => {
     if (!selectedRow?.id) return;
 
     axios
-      .delete(`/v1/articulo-kardex/${selectedRow.id}`)
+      .put(`/v1/articulo-kardex/${selectedRow.id}/inactivate`)
       .then(() => {
         setMessage({
           open: true,
           severity: "success",
-          text: "Eliminado correctamente.",
+          text: "Anulado correctamente.",
         });
         reloadData();
         setSelectedRow({});
       })
       .catch((err) => {
-        console.error("Error al eliminar:", err?.response || err);
+        console.error("Error al anular:", err?.response || err);
         setMessage({
           open: true,
           severity: "error",
-          text: "Error al eliminar",
+          text: "Error al anular",
         });
       });
   };
@@ -303,11 +303,26 @@ export default function FormArticuloKardex({
 
   return (
     <>
-      <StackButtons methods={{ create, update, deleteRow }} />
+      <Box display="flex" gap={2} justifyContent="flex-end" mb={2}>
+        <Button variant="outlined" sx={{ textTransform: "none" }} onClick={create}>
+          + Agregar
+        </Button>
+        <Button variant="outlined" sx={{ textTransform: "none" }} onClick={update}>
+          Actualizar
+        </Button>
+        <Button
+          variant="outlined"
+          color="warning"
+          sx={{ textTransform: "none" }}
+          onClick={inactivateRow}
+        >
+          Anular
+        </Button>
+      </Box>
 
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <form onSubmit={handleSubmit}>
-          <DialogTitle>Crear/Actualizar Articulo</DialogTitle>
+          <DialogTitle>Crear/Actualizar Artículo</DialogTitle>
 
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>

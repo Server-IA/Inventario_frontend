@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import GridKardex from "./GridKardex";
@@ -51,6 +51,7 @@ export default function Kardex() {
     const [reloadArticulos, setReloadArticulos] = useState(false);
 
     const theme = useTheme();
+    const articulosSectionRef = useRef(null);
 
     // Cargar artículos del kardex seleccionado
     const loadArticulos = useCallback(async (kardexId) => {
@@ -131,6 +132,12 @@ export default function Kardex() {
                     setSelectedRow={setSelectedRow}
                     reloadData={reloadData}
                     setMessage={setMessage}
+                    onViewArticulos={() =>
+                        articulosSectionRef.current?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                        })
+                    }
                 />
 
                 {/* Grid de Kardex */}
@@ -161,7 +168,10 @@ export default function Kardex() {
 
             {/* Sección Artículos */}
             <KardexArticulosSection
+                sectionRef={articulosSectionRef}
                 selectedRow={selectedRow}
+                setSelectedKardex={setSelectedRow}
+                onReloadArticulos={() => setReloadArticulos((prev) => !prev)}
                 articuloItems={articuloItems}
                 articuloLoading={articuloLoading}
                 articuloPaginationModel={articuloPaginationModel}

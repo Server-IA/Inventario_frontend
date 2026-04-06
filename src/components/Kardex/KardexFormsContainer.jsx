@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Box, Button } from "@mui/material";
 import FormKardex from "./FromKardex";
 
@@ -10,39 +10,17 @@ export function KardexFormsContainer({
     setSelectedRow,
     reloadData,
     setMessage,
+    onViewArticulos,
 }) {
     const [formOpen, setFormOpen] = useState(false);
     const [formMode, setFormMode] = useState("create");
-
-    const handleDelete = async () => {
-        if (!selectedRow) return;
-        if (!window.confirm("¿Eliminar el Kardex seleccionado?")) return;
-
-        try {
-            const axios = (await import("../axiosConfig")).default;
-            await axios.delete(`/v1/kardex/${selectedRow.id}`);
-            setMessage({
-                open: true,
-                severity: "success",
-                text: "Kardex eliminado correctamente.",
-            });
-            setSelectedRow(null);
-            reloadData();
-        } catch {
-            setMessage({
-                open: true,
-                severity: "error",
-                text: "Error al eliminar el Kardex.",
-            });
-        }
-    };
 
     const handleInactivate = async () => {
         if (!selectedRow) return;
 
         const confirmMessage =
-            "¿Inactivar este movimiento de Kardex?\n\n" +
-            "⚠️ Se revertirán los cambios de stock asociados.\n" +
+            "¿Anular este movimiento de Kardex?\n\n" +
+            "Se revertirán los cambios de stock asociados.\n" +
             "Si el stock resultante es negativo, la operación será bloqueada.";
 
         if (!window.confirm(confirmMessage)) return;
@@ -54,12 +32,12 @@ export function KardexFormsContainer({
             setMessage({
                 open: true,
                 severity: "success",
-                text: response?.data?.message || "Kardex inactivado correctamente. Stock revertido.",
+                text: response?.data?.message || "Kardex anulado correctamente. Stock revertido.",
             });
             setSelectedRow(null);
             reloadData();
         } catch (err) {
-            const errorMsg = err?.response?.data?.message || "Error al inactivar el Kardex.";
+            const errorMsg = err?.response?.data?.message || "Error al anular el Kardex.";
             setMessage({
                 open: true,
                 severity: "error",
@@ -70,10 +48,11 @@ export function KardexFormsContainer({
 
     return (
         <>
-            <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
+            <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
                 <Button
                     variant="contained"
                     color="primary"
+                    sx={{ textTransform: "none" }}
                     onClick={() => {
                         setFormMode("create");
                         setFormOpen(true);
@@ -83,6 +62,7 @@ export function KardexFormsContainer({
                 </Button>
                 <Button
                     variant="outlined"
+                    sx={{ textTransform: "none" }}
                     onClick={() => {
                         setFormMode("edit");
                         setFormOpen(true);
@@ -94,18 +74,19 @@ export function KardexFormsContainer({
                 <Button
                     variant="outlined"
                     color="warning"
+                    sx={{ textTransform: "none" }}
                     disabled={!selectedRow}
                     onClick={handleInactivate}
                 >
-                    Inactivar
+                    Anular
                 </Button>
                 <Button
                     variant="outlined"
-                    color="error"
+                    sx={{ textTransform: "none" }}
                     disabled={!selectedRow}
-                    onClick={handleDelete}
+                    onClick={() => onViewArticulos?.()}
                 >
-                    Eliminar
+                    Ver Articulos
                 </Button>
             </Box>
 
@@ -121,3 +102,4 @@ export function KardexFormsContainer({
         </>
     );
 }
+

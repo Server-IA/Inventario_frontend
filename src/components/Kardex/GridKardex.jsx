@@ -1,9 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import {
-    DataGrid,
-    esES,
-} from "@mui/x-data-grid";
+import { DataGrid, esES } from "@mui/x-data-grid";
 import { KardexToolbar } from "./KardexToolbar";
 import { createLookupMap, safeDateTime, formatEstado } from "./utils/kardexFormatters";
 
@@ -13,7 +10,6 @@ const LS_KEY = "gridKardex:columnVisibility:v1";
  * @description Grid para visualizar listado de kardexes con filtros
  */
 export default function GridKardex({
-    // Datos
     kardexes = [],
     almacenes = [],
     producciones = [],
@@ -21,23 +17,32 @@ export default function GridKardex({
     pedidos = [],
     ordenesCompra = [],
     empresas = [],
-
-    // Selección
     selectedRow = null,
     setSelectedRow,
-
-    // Paginación
     loading = false,
     rowCount,
     paginationModel,
     setPaginationModel,
-
-    // Admin y filtros
     isAdmin = false,
     filters = {},
     setFilters = () => { },
 }) {
-    // Crear mapas lookup para mostrar nombres
+    const getClienteProveedorId = (row) =>
+        row?.clienteProveedorId ??
+        row?.cliente_proveedor_id ??
+        row?.cliProId ??
+        row?.cli_pro_id ??
+        row?.proveedorId ??
+        row?.proveedor_id ??
+        row?.clienteId ??
+        row?.cliente_id ??
+        row?.empresaClienteProveedorId ??
+        row?.clienteProveedor?.id ??
+        row?.proveedor?.id ??
+        row?.cliente?.id ??
+        row?.clienteProveedor?.empresaId ??
+        null;
+
     const almById = useMemo(
         () => createLookupMap(almacenes, (a) => a?.nombre || a?.name),
         [almacenes]
@@ -50,48 +55,18 @@ export default function GridKardex({
         () => createLookupMap(tiposMovimiento, (t) => t?.nombre || t?.name),
         [tiposMovimiento]
     );
-    const pedidoById = useMemo(
-        () => createLookupMap(pedidos, (p) => p?.codigo || p?.numero || p?.nombre),
-        [pedidos]
-    );
-    const ocById = useMemo(
-        () => createLookupMap(ordenesCompra, (o) => o?.codigo || o?.numero || o?.nombre),
-        [ordenesCompra]
-    );
     const empresaById = useMemo(
-        () => createLookupMap(empresas, (e) => e?.nombreComercial || e?.razonSocial),
+        () => createLookupMap(empresas, (e) => e?.nombreComercial || e?.razonSocial || e?.nombre || e?.name),
         [empresas]
     );
 
-    // Definir columnas
     const columns = useMemo(() => {
         const baseColumns = [
-            { field: "id", headerName: "ID", width: 90 },
             {
                 field: "fechaHora",
-                headerName: "Fecha/Hora",
+                headerName: "Fecha y Hora",
                 width: 180,
                 valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
-            },
-            {
-                field: "almacenId",
-                headerName: "Almacén",
-                width: 200,
-                valueGetter: (p) =>
-                    p?.row?.almacen?.name ??
-                    p?.row?.almacen?.nombre ??
-                    almById[String(p?.row?.almacenId)] ??
-                    String(p?.row?.almacenId ?? ""),
-            },
-            {
-                field: "produccionId",
-                headerName: "Producción",
-                width: 200,
-                valueGetter: (p) =>
-                    p?.row?.produccion?.name ??
-                    p?.row?.produccion?.nombre ??
-                    prodById[String(p?.row?.produccionId)] ??
-                    String(p?.row?.produccionId ?? ""),
             },
             {
                 field: "tipoMovimientoId",
@@ -104,40 +79,56 @@ export default function GridKardex({
                     String(p?.row?.tipoMovimientoId ?? ""),
             },
             {
-                field: "pedidoId",
-                headerName: "Pedido",
-                width: 140,
+                field: "almacenId",
+                headerName: "Almacen",
+                width: 200,
                 valueGetter: (p) =>
-                    p?.row?.pedido?.codigo ??
-                    p?.row?.pedido?.numero ??
-                    pedidoById[String(p?.row?.pedidoId)] ??
-                    String(p?.row?.pedidoId ?? ""),
+                    p?.row?.almacen?.name ??
+                    p?.row?.almacen?.nombre ??
+                    almById[String(p?.row?.almacenId)] ??
+                    String(p?.row?.almacenId ?? ""),
             },
             {
-                field: "ordenCompraId",
-                headerName: "Orden compra",
-                width: 160,
+                field: "produccionId",
+                headerName: "Produccion",
+                width: 200,
                 valueGetter: (p) =>
-                    p?.row?.ordenCompra?.codigo ??
-                    p?.row?.ordenCompra?.numero ??
-                    ocById[String(p?.row?.ordenCompraId)] ??
-                    String(p?.row?.ordenCompraId ?? ""),
+                    p?.row?.produccion?.name ??
+                    p?.row?.produccion?.nombre ??
+                    prodById[String(p?.row?.produccionId)] ??
+                    String(p?.row?.produccionId ?? ""),
             },
             {
                 field: "clienteProveedorId",
-                headerName: "Cliente / Proveedor",
+                headerName: "Cliente/Proveedor",
                 width: 220,
-                valueGetter: (p) =>
-                    p?.row?.clienteProveedor?.nombre ??
-                    p?.row?.clienteProveedor?.nombreComercial ??
-                    empresaById[String(p?.row?.clienteProveedorId)] ??
-                    String(p?.row?.clienteProveedorId ?? ""),
+                valueGetter: (p) => {
+                    const row = p?.row ?? {};
+                    const clienteProveedorId = getClienteProveedorId(row);
+                    return (
+                        row?.clienteProveedorNombre ??
+                        row?.clienteProveedorName ??
+                        row?.cliente_proveedor_nombre ??
+                        row?.cliente_proveedor_name ??
+                        row?.clienteProveedor?.razonSocial ??
+                        row?.clienteProveedor?.nombre ??
+                        row?.clienteProveedor?.nombreComercial ??
+                        row?.clienteProveedor?.name ??
+                        row?.proveedor?.razonSocial ??
+                        row?.proveedor?.nombre ??
+                        row?.proveedor?.nombreComercial ??
+                        row?.proveedor?.name ??
+                        row?.cliente?.razonSocial ??
+                        row?.cliente?.nombre ??
+                        row?.cliente?.nombreComercial ??
+                        row?.cliente?.name ??
+                        (typeof row?.clienteProveedor === "string" ? row?.clienteProveedor : null) ??
+                        empresaById[String(clienteProveedorId)] ??
+                        (clienteProveedorId != null ? `#${clienteProveedorId}` : "")
+                    );
+                },
             },
-            { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
-            // Columna Empresa SOLO para administrador
-            ...(isAdmin
-                ? [{ field: "empresaId", headerName: "Empresa", width: 120 }]
-                : []),
+            ...(isAdmin ? [{ field: "empresaId", headerName: "Empresa", width: 140 }] : []),
             {
                 field: "estadoId",
                 headerName: "Estado",
@@ -146,9 +137,8 @@ export default function GridKardex({
             },
         ];
         return baseColumns;
-    }, [almById, prodById, tmovById, pedidoById, ocById, empresaById, isAdmin]);
+    }, [almById, prodById, tmovById, empresaById, isAdmin]);
 
-    // Gestionar visibilidad de columnas
     const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
     useEffect(() => {
@@ -172,7 +162,6 @@ export default function GridKardex({
         setColumnVisibilityModel({});
     };
 
-    // Determinar modo paginación
     const serverPaging =
         typeof rowCount === "number" && paginationModel && setPaginationModel;
 
@@ -253,3 +242,4 @@ GridKardex.propTypes = {
     filters: PropTypes.object,
     setFilters: PropTypes.func,
 };
+
