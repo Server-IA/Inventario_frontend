@@ -5,7 +5,7 @@ PROVIDER="claude"
 
 # Backend Java
 FILE_PATTERNS="*.java"
-EXCLUDE_PATTERNS=""
+EXCLUDE_PATTERNS=""h
 
 # Reglas locales para revisión
 RULES_FILE="AGENTS.md"
