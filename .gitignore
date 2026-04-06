@@ -58,3 +58,6 @@ build/
 .vscode/
 .env
 eclipse-formatter.xml
+
+AGENTS.md
+.gga
