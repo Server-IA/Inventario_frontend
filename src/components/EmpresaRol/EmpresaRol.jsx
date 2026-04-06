@@ -3,17 +3,48 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Button,
 } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import axios from "../axiosConfig";
-import { Box, Button } from "@mui/material";
 import MessageSnackBar from "../MessageSnackBar.jsx";
 import FormEmpresaRol from "./FormEmpresaRol.jsx";
 import GridEmpresaRol from "./GridEmpresaRol.jsx";
 import ModalVerPermisos from "./ModalVerPermisos";
-import StackButtons from "../StackButtons";
+import SectionHeader from "../common/SectionHeader.jsx";
+import GridActionBar from "../common/GridActionBar.jsx";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+const SYSTEM_ROLE_REGEX = /(ROLE_ADMINISTRADOR_SISTEMA|ADMINISTRADOR[_\s-]*SISTEMA|ADMIN\s*SISTEMA)/i;
+
+const parseRolesByCompany = () => {
+  try {
+    return JSON.parse(localStorage.getItem("rolesByCompany") || "[]");
+  } catch {
+    return [];
+  }
+};
+
+const resolveCurrentRoleName = () => {
+  const empresaId = Number(localStorage.getItem("empresaId"));
+  const rolId = Number(localStorage.getItem("rolId"));
+  const rolesByCompany = parseRolesByCompany();
+
+  const byContext = rolesByCompany.find(
+    (r) => Number(r?.empresaId) === empresaId && Number(r?.rolId) === rolId
+  );
+
+  return (
+    byContext?.rolNombre ||
+    localStorage.getItem("rolNombre") ||
+    ""
+  );
+};
 
 export default function EmpresaRol() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
@@ -28,13 +59,21 @@ export default function EmpresaRol() {
   });
 
   const empresaId = Number(localStorage.getItem("empresaId"));
+  const currentRoleName = resolveCurrentRoleName();
+  const isSystemAdmin = SYSTEM_ROLE_REGEX.test(currentRoleName);
+
+  const permisosLegacyParams = (targetEmpresaId) =>
+    isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
+
   const [confirmOpen, setConfirmOpen] = useState(false);
  const reloadData = useCallback(async () => {
   try {
     setLoading(true);
 
     //  Cargar empresa-rol
-    const resEmpresaRol = await axios.get("/v1/empresa-rol");
+    const resEmpresaRol = await axios.get(
+      isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol"
+    );
     const empresaRoles = resEmpresaRol.data;
 
     //  Cargar catálogo roles
@@ -55,7 +94,8 @@ export default function EmpresaRol() {
 
         try {
           const permisosRes = await axios.get(
-            `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
+            `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`,
+            permisosLegacyParams(empresaRol.empresaId ?? empresaId)
           );
 
           return {
@@ -80,7 +120,7 @@ export default function EmpresaRol() {
   } finally {
     setLoading(false);
   }
-}, []);
+}, [isSystemAdmin, empresaId]);
 
   // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
           const loadRoles = useCallback(async () => {
@@ -119,7 +159,8 @@ const confirmarEliminacion = async () => {
     const rolId = rolBase.id;
 
     const permisosRes = await axios.get(
-      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
+      permisosLegacyParams(selectedRow?.empresaId ?? empresaId)
     );
 
     const permisos = permisosRes.data || [];
@@ -134,7 +175,11 @@ const confirmarEliminacion = async () => {
       );
     }
 
-    await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
+    await axios.delete(
+      isSystemAdmin
+        ? `/v1/system/empresa-rol/${selectedRow.id}`
+        : `/v1/empresa-rol/${selectedRow.id}`
+    );
 
     setMessage({
       open: true,
@@ -156,50 +201,60 @@ const confirmarEliminacion = async () => {
   }
 };
 
+const extraActions = (
+  <Button
+    variant="outlined"
+    startIcon={<VisibilityIcon />}
+    onClick={() => {
+      if (!selectedRow?.id) {
+        return setMessage({
+          open: true,
+          severity: "warning",
+          text: "Selecciona un rol primero",
+        });
+      }
+      setModalPermisosOpen(true);
+    }}
+    disabled={!selectedRow?.id}
+    sx={{
+      px: 2.5,
+      py: 1,
+      borderRadius: 2,
+      textTransform: "uppercase",
+      fontWeight: 700,
+      fontSize: "0.75rem",
+      borderColor: theme.palette.divider,
+      color: theme.palette.text.primary,
+      backgroundColor: isDark ? alpha(theme.palette.common.white, 0.12) : theme.palette.grey[100],
+      boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, isDark ? 0.35 : 0.1)}`,
+      "&:hover": {
+        borderColor: theme.palette.text.secondary,
+        backgroundColor: isDark ? alpha(theme.palette.common.white, 0.18) : theme.palette.grey[200],
+      },
+      "&.Mui-disabled": {
+        color: theme.palette.text.disabled,
+        borderColor: theme.palette.action.disabledBackground,
+      },
+      "& .MuiButton-startIcon svg": { fontSize: 16 },
+    }}
+  >
+    Ver permisos
+  </Button>
+);
+
           return (
             <div>
-              <h1>Roles de Empresa</h1>
+              <SectionHeader
+                title={isSystemAdmin ? "Roles de Empresas en el Sistema" : "Roles de la Empresa"}
+              />
 
               <MessageSnackBar message={message} setMessage={setMessage} />
-              <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-          }}
-        >
-
-          {/* IZQUIERDA (si quieres dejar vacío o título secundario) */}
-          <Box />
-
-          {/* DERECHA: Botones */}
-          <Box sx={{ display: "flex", gap: 2 }}>
-
-            <Button
-              variant="outlined"
-              onClick={() => {
-                if (!selectedRow?.id) {
-                  return setMessage({
-                    open: true,
-                    severity: "warning",
-                    text: "Selecciona un rol primero",
-                  });
-                }
-
-                setModalPermisosOpen(true);
-              }}
-            >
-              Ver permisos
-            </Button>
-
-            <StackButtons
-              methods={{
-                create: () => {
+              <GridActionBar
+                onAdd={() => {
                   setSelectedRow(null);
                   setFormOpen(true);
-                },
-                update: () => {
+                }}
+                onUpdate={() => {
                   if (!selectedRow?.id)
                     return setMessage({
                       open: true,
@@ -208,65 +263,67 @@ const confirmarEliminacion = async () => {
                     });
 
                   setFormOpen(true);
-                },
-deleteRow: () => {
-  if (!selectedRow?.id)
-    return setMessage({
-      open: true,
-      severity: "warning",
-      text: "Selecciona una fila",
-    });
+                }}
+                onDelete={() => {
+                  if (!selectedRow?.id)
+                    return setMessage({
+                      open: true,
+                      severity: "warning",
+                      text: "Selecciona una fila",
+                    });
 
-  setConfirmOpen(true); // SOLO abre el modal
-}
-              }}
-            />
+                  setConfirmOpen(true);
+                }}
+                canUpdate={Boolean(selectedRow?.id)}
+                canDelete={Boolean(selectedRow?.id)}
+                extraActions={extraActions}
+              />
 
-          </Box>
-        </Box>
-          
-      <FormEmpresaRol
-        open={formOpen}
-        setOpen={setFormOpen}
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        setMessage={setMessage}
-        reloadData={reloadData}
-        roles={roles}
-        empresaId={empresaId}
-      />
+              <FormEmpresaRol
+                open={formOpen}
+                setOpen={setFormOpen}
+                selectedRow={selectedRow}
+                setSelectedRow={setSelectedRow}
+                setMessage={setMessage}
+                reloadData={reloadData}
+                roles={roles}
+                empresaId={empresaId}
+                isSystemAdmin={isSystemAdmin}
+              />
 
-      <ModalVerPermisos
-        open={modalPermisosOpen}
-        onClose={() => setModalPermisosOpen(false)}
-        permisos={selectedRow?.permisos || []}
-        rolNombre={selectedRow?.rolNombre}
-      />
+              <ModalVerPermisos
+                open={modalPermisosOpen}
+                onClose={() => setModalPermisosOpen(false)}
+                permisos={selectedRow?.permisos || []}
+                rolNombre={selectedRow?.rolNombre}
+              />
 
-      <GridEmpresaRol
-        rows={rows}
-        loading={loading}
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-      />
-<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-  <DialogTitle>Confirmar eliminación</DialogTitle>
-  <DialogContent>
-    ¿Está seguro que desea eliminar este rol y todos sus permisos?
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setConfirmOpen(false)}>
-      Cancelar
-    </Button>
-    <Button
-      color="error"
-      variant="contained"
-      onClick={confirmarEliminacion}
-    >
-      Eliminar
-    </Button>
-  </DialogActions>
-</Dialog>
-    </div>
-  );
+              <GridEmpresaRol
+                rows={rows}
+                loading={loading}
+                selectedRow={selectedRow}
+                setSelectedRow={setSelectedRow}
+                isSystemAdmin={isSystemAdmin}
+              />
+
+              <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <DialogTitle>Confirmar eliminación</DialogTitle>
+                <DialogContent>
+                  ¿Está seguro que desea eliminar este rol y todos sus permisos?
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setConfirmOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    color="error"
+                    variant="contained"
+                    onClick={confirmarEliminacion}
+                  >
+                    Eliminar
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </div>
+          );
 }

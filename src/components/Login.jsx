@@ -187,10 +187,10 @@ switch (estado) {
         }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-localStorage.removeItem("activeModule");
-localStorage.removeItem("activeMenu");
-props.setIsAuthenticated?.(true);
-navigate("/coagronet/onboarding/persona", { replace: true });
+        localStorage.removeItem("activeModule");
+        localStorage.removeItem("activeMenu");
+        props.setIsAuthenticated?.(true);
+        navigate("/coagronet/onboarding/persona", { replace: true });
         break;
     }
     case 3: {
@@ -201,10 +201,10 @@ navigate("/coagronet/onboarding/persona", { replace: true });
         }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
-localStorage.removeItem("activeModule");
-localStorage.removeItem("activeMenu");
-props.setIsAuthenticated?.(true);
-navigate("/coagronet/onboarding/empresa", { replace: true });
+        localStorage.removeItem("activeModule");
+        localStorage.removeItem("activeMenu");
+        props.setIsAuthenticated?.(true);
+        navigate("/coagronet/onboarding/empresa", { replace: true });
         break;
     }
 
@@ -230,13 +230,13 @@ navigate("/coagronet/onboarding/empresa", { replace: true });
 
         // 3. Navegamos a la ruta que renderiza el componente ChangePasswordInitial
         // Asegúrate de que esta ruta exista en tu archivo de rutas
-localStorage.removeItem("activeModule");
-localStorage.removeItem("activeMenu");
+        localStorage.removeItem("activeModule");
+        localStorage.removeItem("activeMenu");
 
-navigate("/coagronet/auth/change-password-initial", { replace: true });
-        break;
-    }
-    // ---------------------------
+      navigate("/coagronet/auth/change-password-initial", { replace: true });
+              break;
+          }
+          // ---------------------------
 
     case 4:
     default: { // Completo

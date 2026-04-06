@@ -12,7 +12,15 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "start": "serve -s dist"
+    "start": "serve -s dist",
+    "mailhog:start": "docker run -d --rm --name mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog",
+    "mailhog:stop": "docker stop mailhog",
+    "mailhog:logs": "docker logs -n 100 mailhog",
+    "test:e2e": "playwright test",
+    "test:e2e:onboarding": "playwright test tests/e2e/onboarding.autoregistro.spec.js tests/e2e/onboarding.autoregistro.validation.spec.js",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@babel/parser": "^7.26.10",
@@ -58,6 +66,7 @@
     "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@babel/core": "^7.26.10",
     "@babel/preset-env": "^7.26.9",
     "@babel/preset-react": "^7.26.3",
@@ -67,6 +76,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "clean-jsdoc-theme": "^4.3.0",
     "docdash": "^2.0.2",
+    "dotenv": "^16.6.1",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^4.6.0",
