@@ -1,18 +1,30 @@
 import React from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import PropTypes from "prop-types";
 import { Chip } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import AppDataGrid from "../common/AppDataGrid.jsx";
 
 export default function GridEmpresaRol({
   rows,
   loading,
   selectedRow,
   setSelectedRow,
+  isSystemAdmin = false,
 }) {
 const theme = useTheme();
 const isDark = theme.palette.mode === "dark";
+  const estadosMap = {
+    1: "Activo",
+    0: "Inactivo",
+    23: "Activo",
+    24: "Inactivo",
+  };
+
   const columns = [
     { field: "id", headerName: "ID", width: 80 },
+    ...(isSystemAdmin
+      ? [{ field: "empresaNombre", headerName: "Empresa", flex: 1 }]
+      : []),
 
     { field: "rolNombre", headerName: "Rol", flex: 1 },
     {
@@ -30,7 +42,7 @@ const isDark = theme.palette.mode === "dark";
       );
     }
 
-    const visibles = permisos.slice(0, 3);
+    const visibles = permisos.slice(0, 2);
 
     return (
       <div
@@ -47,7 +59,7 @@ const isDark = theme.palette.mode === "dark";
           label={permiso.nombre}
           size="small"
           sx={{
-            fontSize: "11px",
+            fontSize: "9px",
             fontWeight: 500,
 
             backgroundColor: isDark
@@ -70,7 +82,7 @@ const isDark = theme.palette.mode === "dark";
         {permisos.length > 3 && (
           <span
             style={{
-              fontSize: "11px",
+              fontSize: "10px",
               color: theme.palette.text.secondary,
               alignSelf: "center",
             }}
@@ -95,48 +107,32 @@ const isDark = theme.palette.mode === "dark";
   ];
 
 return (
-  <DataGrid
+  <AppDataGrid
     rows={rows}
     columns={columns}
     loading={loading}
-    autoHeight
+    selectedRow={selectedRow}
+    setSelectedRow={setSelectedRow}
     pageSizeOptions={[5, 10, 20, 50]}
-    initialState={{
-      pagination: {
-        paginationModel: { pageSize: 5, page: 0 },
-      },
-    }}
-    getRowId={(row) => row.id}
-    onRowClick={(params) => setSelectedRow(params.row)}
+    containerSx={{ borderRadius: 4 }}
     sx={{
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
       border: `1px solid ${theme.palette.divider}`,
-
       "& .MuiDataGrid-columnHeaders": {
-        backgroundColor: alpha(
-          theme.palette.primary.main,
-          isDark ? 0.15 : 0.05
-        ),
+        backgroundColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.05),
         color: theme.palette.text.primary,
         fontWeight: 600,
-      },
-
-      "& .MuiDataGrid-row": {
-        borderBottom: `1px solid ${theme.palette.divider}`,
-      },
-
-      "& .MuiDataGrid-cell": {
-        borderBottom: `1px solid ${theme.palette.divider}`,
-      },
-
-      "& .MuiDataGrid-row:hover": {
-        backgroundColor: alpha(
-          theme.palette.primary.main,
-          isDark ? 0.08 : 0.04
-        ),
       },
     }}
   />
 );
 }
+
+GridEmpresaRol.propTypes = {
+  rows: PropTypes.array,
+  loading: PropTypes.bool,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
+  isSystemAdmin: PropTypes.bool,
+};
