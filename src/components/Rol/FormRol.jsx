@@ -16,10 +16,9 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import StackButtons from "../StackButtons";
 
 export default function FormRol({
-  selectedRow,
+  selectedRow = null,
   setSelectedRow,
   setMessage,
   reloadData,
@@ -59,7 +58,7 @@ export default function FormRol({
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedRow({});
+    setSelectedRow(null);
     setFormData(initialData);
     setErrors({});
   };
@@ -144,124 +143,67 @@ export default function FormRol({
     }
   };
 
-  const deleteRow = async () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona un registro para eliminar",
-      });
-      return;
-    }
-    if (!window.confirm(`¿Eliminar el rol "${selectedRow.nombre}"?`)) return;
-
-    try {
-      await axios.delete(`/v1/roles/${selectedRow.id}`);
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Rol eliminado",
-      });
-      handleClose();
-      reloadData();
-    } catch {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "No se pudo eliminar el rol",
-      });
-    }
-  };
-
   return (
-    <>
-      <StackButtons
-        methods={{
-          create: () => {
-            setMethodName("Agregar");
-            setSelectedRow({});
-            setFormData(initialData);
-            setErrors({});
-            setOpen(true);
-          },
-          update: () => {
-            if (!selectedRow?.id)
-              return setMessage({
-                open: true,
-                severity: "error",
-                text: "Selecciona un registro",
-              });
-            setMethodName("Actualizar");
-            setErrors({});
-            setOpen(true);
-          },
-          deleteRow,
-        }}
-      />
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>{methodName} Rol</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Formulario para gestionar roles</DialogContentText>
 
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <form onSubmit={handleSubmit}>
-          <DialogTitle>{methodName} Rol</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Formulario para gestionar roles
-            </DialogContentText>
+          <TextField
+            fullWidth
+            margin="dense"
+            name="nombre"
+            label="Nombre (ej: ROLE_ADMIN)"
+            value={formData.nombre}
+            onChange={handleChange}
+            error={!!errors.nombre}
+            helperText={errors.nombre}
+          />
 
-            <TextField
-              fullWidth
-              margin="dense"
-              name="nombre"
-              label="Nombre (ej: ROLE_ADMIN)"
-              value={formData.nombre}
+          <TextField
+            fullWidth
+            margin="dense"
+            name="descripcion"
+            label="Descripción"
+            value={formData.descripcion}
+            onChange={handleChange}
+            error={!!errors.descripcion}
+            helperText={errors.descripcion}
+          />
+
+          <FormControl fullWidth margin="dense" error={!!errors.estadoId}>
+            <InputLabel id="estadoId-label">Estado</InputLabel>
+            <Select
+              labelId="estadoId-label"
+              label="Estado"
+              name="estadoId"
+              value={formData.estadoId ?? 1}
               onChange={handleChange}
-              error={!!errors.nombre}
-              helperText={errors.nombre}
-            />
+            >
+              {estados.map((e) => (
+                <MenuItem key={e.id} value={e.id}>
+                  {e.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.estadoId}</FormHelperText>
+          </FormControl>
+        </DialogContent>
 
-            <TextField
-              fullWidth
-              margin="dense"
-              name="descripcion"
-              label="Descripción"
-              value={formData.descripcion}
-              onChange={handleChange}
-              error={!!errors.descripcion}
-              helperText={errors.descripcion}
-            />
-
-            <FormControl fullWidth margin="dense" error={!!errors.estadoId}>
-              <InputLabel id="estadoId-label">Estado</InputLabel>
-              <Select
-                labelId="estadoId-label"
-                label="Estado"
-                name="estadoId"
-                value={formData.estadoId ?? 1}
-                onChange={handleChange}
-              >
-                {estados.map((e) => (
-                  <MenuItem key={e.id} value={e.id}>
-                    {e.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{errors.estadoId}</FormHelperText>
-            </FormControl>
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={handleClose}>Cancelar</Button>
-            <Button type="submit" variant="contained">
-              {methodName}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancelar</Button>
+          <Button type="submit" variant="contained">
+            {methodName}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 }
 
 FormRol.propTypes = {
-  selectedRow: PropTypes.object.isRequired,
+  selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func.isRequired,
   setMessage: PropTypes.func.isRequired,
   reloadData: PropTypes.func.isRequired,
