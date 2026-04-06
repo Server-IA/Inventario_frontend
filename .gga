@@ -1,0 +1,14 @@
+# Gentleman Guardian Angel Configuration
+
+# Provider estable en este entorno (Claude CLI ya instalado)
+PROVIDER="claude"
+
+# Backend Java
+FILE_PATTERNS="*.java"
+EXCLUDE_PATTERNS=""
+
+# Reglas locales para revisión
+RULES_FILE="AGENTS.md"
+
+STRICT_MODE="true"
+TIMEOUT="300"

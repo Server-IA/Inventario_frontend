@@ -29,6 +29,7 @@ import com.coagronet.estado.Estado;
 import com.coagronet.metodo.Metodo;
 import com.coagronet.metodo.repositories.MetodoRepository;
 import com.coagronet.modulo.Modulo;
+import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
 import com.coagronet.permiso.Permiso;
 import com.coagronet.permiso.repositories.PermisoRepository;
 import com.coagronet.rol.Rol;
@@ -65,6 +66,9 @@ class RolPermisoServiceTest {
     @Mock
     private AuthenticationService authenticationService;
 
+    @Mock
+    private ModuloEmpresaRepository moduloEmpresaRepository;
+
     @InjectMocks
     private RolPermisoService rolPermisoService;
 
@@ -90,14 +94,19 @@ class RolPermisoServiceTest {
         when(permisoRepository.findPermisosByModulosIds(List.of(10L))).thenReturn(List.of(permiso1, permiso2));
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
-        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, 101L)).thenReturn(false);
-        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, 102L)).thenReturn(false);
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(101L, 102L)))
+                .thenReturn(Collections.emptySet());
 
         RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisos(rolId, List.of(10L));
 
         assertThat(response.getRolId()).isEqualTo(rolId);
         assertThat(response.getPermisosAsignados()).isEqualTo(2);
-        verify(rolPermisoRepository, times(2)).save(any(RolPermiso.class));
+        ArgumentCaptor<List<RolPermiso>> captor = ArgumentCaptor.forClass(List.class);
+        verify(rolPermisoRepository, times(1)).saveAll(captor.capture());
+        assertThat(captor.getValue()).hasSize(2);
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
     }
 
     @Test
@@ -148,16 +157,19 @@ class RolPermisoServiceTest {
         when(permisoRepository.findPermisosByModulosIds(List.of(10L))).thenReturn(List.of(readByMethod, readByAuthority, write));
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
-        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, 1L)).thenReturn(false);
-        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, 2L)).thenReturn(false);
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(1L, 2L)))
+                .thenReturn(Collections.emptySet());
 
         RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisosLectura(rolId, List.of(10L));
 
         assertThat(response.getPermisosAsignados()).isEqualTo(2);
 
-        ArgumentCaptor<RolPermiso> captor = ArgumentCaptor.forClass(RolPermiso.class);
-        verify(rolPermisoRepository, times(2)).save(captor.capture());
-        assertThat(captor.getAllValues()).extracting(rp -> rp.getPermiso().getId()).containsExactlyInAnyOrder(1L, 2L);
+        ArgumentCaptor<List<RolPermiso>> captor = ArgumentCaptor.forClass(List.class);
+        verify(rolPermisoRepository, times(1)).saveAll(captor.capture());
+        assertThat(captor.getValue()).extracting(rp -> rp.getPermiso().getId()).containsExactlyInAnyOrder(1L, 2L);
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
     }
 
     @Test
@@ -177,7 +189,10 @@ class RolPermisoServiceTest {
         when(permisoRepository.findPermisosByModuloId(100L)).thenReturn(List.of(getPermiso, postPermiso));
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
-        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, 10L)).thenReturn(false);
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(10L)))
+                .thenReturn(Collections.emptySet());
 
         ModuloMetodoRequest request = ModuloMetodoRequest.builder()
                 .moduloId(100L)
@@ -187,7 +202,8 @@ class RolPermisoServiceTest {
         RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisosConMetodos(rolId, List.of(request));
 
         assertThat(response.getPermisosAsignados()).isEqualTo(1);
-        verify(rolPermisoRepository, times(1)).save(any(RolPermiso.class));
+        verify(rolPermisoRepository, times(1)).saveAll(any());
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
     }
 
     @Test
@@ -225,6 +241,8 @@ class RolPermisoServiceTest {
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
         when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(301L, 999L)))
             .thenReturn(List.of(permisoAdminEmpresa));
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
         when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(301L)))
             .thenReturn(Collections.emptySet());
 
@@ -234,6 +252,7 @@ class RolPermisoServiceTest {
         verify(permisoRepository, never()).findAllById(any());
         verify(rolPermisoRepository).findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(301L));
         verify(rolPermisoRepository).saveAll(any());
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
     }
 
     @Test
@@ -258,6 +277,8 @@ class RolPermisoServiceTest {
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
         when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(401L, 402L)))
             .thenReturn(List.of(permisoEmpresa));
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
         when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(402L)))
             .thenReturn(Collections.emptySet());
 
@@ -267,6 +288,127 @@ class RolPermisoServiceTest {
         verify(permisoRepository, never()).findAllById(any());
         verify(rolPermisoRepository).findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(402L));
         verify(rolPermisoRepository).saveAll(any());
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
+
+    }
+
+    @Test
+    void asignarPermisosAEmpresaRol_doesNotCreateModuloEmpresa_whenRelationAlreadyExists() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(99L, "admin-empresa");
+        Permiso permisoAdminEmpresa = buildPermiso(301L, "Permiso Empresa", "EMPRESA_READ", "GET", "Inventario");
+        permisoAdminEmpresa.getModulo().setId(100L);
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(301L)))
+                .thenReturn(List.of(permisoAdminEmpresa));
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Set.of(100L));
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(301L)))
+                .thenReturn(Collections.emptySet());
+
+        rolPermisoService.asignarPermisosAEmpresaRol(rolId, List.of(301L));
+
+        verify(moduloEmpresaRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void asignarPermisosAEmpresaRolWithEmpresaId_throwsIllegalArgumentException_whenEmpresaIdIsNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> rolPermisoService.asignarPermisosAEmpresaRolWithEmpresaId(2L, List.of(301L), null));
+    }
+
+    @Test
+    void asignarPermisosAEmpresaRolWithEmpresaId_createsModuloEmpresaRelation_whenMissing() {
+        Long empresaId = 9L;
+        Long rolId = 2L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(101L, "admin-sistema");
+        Permiso permiso = buildPermiso(500L, "Permiso Empresa", "EMPRESA_READ", "GET", "Inventario");
+        permiso.getModulo().setId(900L);
+
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(500L))).thenReturn(List.of(permiso));
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(500L)))
+                .thenReturn(Collections.emptySet());
+
+        rolPermisoService.asignarPermisosAEmpresaRolWithEmpresaId(rolId, List.of(500L), empresaId);
+
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
+        verify(rolPermisoRepository, times(1)).saveAll(any());
+    }
+
+    @Test
+    void reemplazarPermisoDeEmpresaRol_createsModuloEmpresaRelation_whenMissing() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+        Long permisoActualId = 11L;
+        Long nuevoPermisoId = 12L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(201L, "admin-empresa");
+        Permiso nuevoPermiso = buildPermiso(nuevoPermisoId, "Nuevo", "INV_WRITE", "POST", "Inventario");
+        nuevoPermiso.getModulo().setId(910L);
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, permisoActualId)).thenReturn(true);
+        when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, nuevoPermisoId)).thenReturn(false);
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(permisoRepository.findById(nuevoPermisoId)).thenReturn(java.util.Optional.of(nuevoPermiso));
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+
+        rolPermisoService.reemplazarPermisoDeEmpresaRol(rolId, permisoActualId, nuevoPermisoId);
+
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
+    }
+
+    @Test
+    void reemplazarModuloPermisosDeEmpresaRol_createsModuloEmpresaRelation_whenMissing() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+        Long moduloActualId = 200L;
+        Long nuevoModuloId = 300L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(202L, "admin-empresa");
+        Permiso permisoActual = buildPermiso(701L, "Actual", "INV_READ", "GET", "Actual");
+        Permiso permisoNuevo = buildPermiso(801L, "Nuevo", "INV_WRITE", "POST", "Nuevo");
+        permisoNuevo.getModulo().setId(950L);
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(permisoRepository.findPermisosByModuloId(moduloActualId)).thenReturn(List.of(permisoActual));
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(701L)))
+                .thenReturn(Set.of(701L));
+        when(permisoRepository.findPermisosByModuloId(nuevoModuloId)).thenReturn(List.of(permisoNuevo));
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(801L)))
+                .thenReturn(Collections.emptySet());
+
+        rolPermisoService.reemplazarModuloPermisosDeEmpresaRol(rolId, moduloActualId, nuevoModuloId);
+
+        verify(moduloEmpresaRepository, times(1)).saveAll(any());
     }
 
     private EmpresaRol buildEmpresaRol(Long empresaRolId, Long rolId, String rolNombre) {
@@ -282,6 +424,7 @@ class RolPermisoServiceTest {
         metodo.setNombre(metodoNombre);
 
         Modulo modulo = new Modulo();
+        modulo.setId(id + 1000);
         modulo.setNombre(moduloNombre);
 
         Estado estado = new Estado();
