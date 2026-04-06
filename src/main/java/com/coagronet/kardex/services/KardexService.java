@@ -29,12 +29,10 @@ import com.coagronet.exceptionHandler.custom.MovimientoInvalidoException;
 import com.coagronet.exceptionHandler.custom.ProductoSinResponsableException;
 import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.dtos.ArticuloKardexListDto;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
-import com.coagronet.kardex.dtos.MovimientoKardexDTO;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -322,15 +320,6 @@ public class KardexService {
 			.ip(metadata.ip())
 			.host(metadata.host())
 			.build();
-	}
-
-	public Page<MovimientoKardexDTO> listarMovimientos(Pageable pageable) {
-		return articuloKardexRepository.findMovimientosPaginados(pageable);
-	}
-
-	@Transactional(readOnly = true)
-	public Page<ArticuloKardexListDto> obtenerMovimientosPorAlmacen(Long almacenId, Pageable pageable) {
-		return articuloKardexRepository.findMovimientosByAlmacenId(almacenId, pageable);
 	}
 
 }

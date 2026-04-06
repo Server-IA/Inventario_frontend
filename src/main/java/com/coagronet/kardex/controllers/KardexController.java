@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +24,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.dtos.ArticuloKardexListDto;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
-import com.coagronet.kardex.dtos.MovimientoKardexDTO;
 import com.coagronet.kardex.services.KardexService;
 import com.coagronet.utils.UriBuilderUtil;
 
@@ -132,22 +129,6 @@ public class KardexController {
 			.toUri();
 
 		return ResponseEntity.created(location).build();
-	}
-
-	@GetMapping("/movimientos")
-	@PreAuthorize("hasAnyRole('USUARIO_EMPRESA', 'ADMINISTRADOR_SISTEMA')")
-	public ResponseEntity<Page<MovimientoKardexDTO>> obtenerMovimientos(@PageableDefault(size = 20) Pageable pageable) {
-		Page<MovimientoKardexDTO> movimientos = kardexService.listarMovimientos(pageable);
-		return ResponseEntity.ok(movimientos);
-	}
-
-	@GetMapping("/{almacenId}/movimientos")
-	// @PreAuthorize("hasAnyRole('ROLE_ADMINISTRADOR_SISTEMA', 'ROLE_USUARIO_EMPRESA')")
-	public ResponseEntity<Page<ArticuloKardexListDto>> listarMovimientosKardex(@PathVariable Long almacenId,
-			@PageableDefault(size = 20, sort = "kardex.fechaHora", direction = Sort.Direction.DESC) Pageable pageable) {
-
-		Page<ArticuloKardexListDto> movimientos = kardexService.obtenerMovimientosPorAlmacen(almacenId, pageable);
-		return ResponseEntity.ok(movimientos);
 	}
 
 }
