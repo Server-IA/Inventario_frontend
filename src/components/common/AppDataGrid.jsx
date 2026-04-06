@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box, Paper, Stack } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
 
 export default function AppDataGrid({
@@ -28,6 +29,8 @@ export default function AppDataGrid({
   containerSx,
   onEscape,
 }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const serverPagination = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
 
   const columnsMemo = useMemo(() => columns, [columns]);
@@ -120,6 +123,23 @@ export default function AppDataGrid({
       borderBottomLeftRadius: "4px",
     },
     ...(highlightOnHover ? { "& .MuiDataGrid-row:hover": { bgcolor: "action.hover" } } : {}),
+    ...(isDark
+      ? {
+          bgcolor: "transparent",
+          "& .MuiDataGrid-columnHeaders": {
+            bgcolor: alpha("#FFFFFF", 0.1),
+          },
+          "& .MuiDataGrid-footerContainer": {
+            bgcolor: alpha("#FFFFFF", 0.1),
+          },
+          "& .MuiDataGrid-row.Mui-selected": {
+            bgcolor: `${alpha("#4FC3F7", 0.32)} !important`,
+          },
+          "& .MuiDataGrid-row.Mui-selected::before": {
+            bgcolor: "#4FC3F7",
+          },
+        }
+      : {}),
     ...sx,
   };
 
@@ -128,12 +148,23 @@ export default function AppDataGrid({
     if (columnVisibilityKey) {
       try {
         localStorage.setItem(columnVisibilityKey, JSON.stringify(model));
-      } catch {}
+      } catch {
+        // ignore localStorage errors (quota/private mode)
+      }
     }
   };
 
   return (
-    <Paper sx={{ p: 0, borderRadius: 4, boxShadow: "0 4px 14px rgba(0,0,0,0.04)", border: "1px solid #ffffff", bgcolor: "transparent", ...containerSx }}>
+    <Paper
+      sx={{
+        p: 0,
+        borderRadius: 4,
+        boxShadow: isDark ? "0 4px 14px rgba(0,0,0,0.32)" : "0 4px 14px rgba(0,0,0,0.04)",
+        border: `1px solid ${isDark ? alpha("#FFFFFF", 0.18) : "#ffffff"}`,
+        bgcolor: "transparent",
+        ...containerSx,
+      }}
+    >
       {(leftActions || rightActions) && (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", gap: 1 }}>{leftActions}</Box>
@@ -150,7 +181,9 @@ export default function AppDataGrid({
             try {
               const active = document.activeElement;
               if (active && typeof active.blur === "function") active.blur();
-            } catch {}
+            } catch {
+              // ignore focus handling errors
+            }
           }
         }}
         rows={Array.isArray(rows) ? rows : []}
