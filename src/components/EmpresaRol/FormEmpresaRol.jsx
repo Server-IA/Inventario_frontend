@@ -264,35 +264,10 @@ const agruparPorSubsistema = (modulosArray) => {
   };
 
   /* ===============================
-     Quitar permiso inmediato
+     Quitar permiso (solo estado local)
   =============================== */
-  const quitarPermiso = async (permisoId) => {
-    try {
-      await axios.delete(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        {
-          data: { permisosId: [permisoId] },
-          ...(isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : {}),
-        }
-      );
-
-      setPermisosSeleccionados((prev) =>
-        prev.filter((id) => id !== permisoId)
-      );
-
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Permiso eliminado correctamente",
-      });
-    } catch (error) {
-      console.error(error.response?.data);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error eliminando permiso",
-      });
-    }
+  const quitarPermiso = (permisoId) => {
+    setPermisosSeleccionados((prev) => prev.filter((id) => id !== permisoId));
   };
 
   /* ===============================
@@ -379,22 +354,27 @@ if (modulosALL.length > 0) {
 }
 
 /* ===============================
-    Limpiar duplicados
+   Sincronizar diferencias (alta/baja)
 =============================== */
 
-permisosINDIVIDUAL = permisosINDIVIDUAL.filter(
-  (id) =>
-    !permisosOriginales.includes(id) &&
-    !permisosALLIds.includes(id)
-);
+const originalesSet = new Set(permisosOriginales);
+const seleccionadosSet = new Set(permisosSeleccionados);
 
-/* ===============================
-   INDIVIDUAL SEGURO
-=============================== */
+const permisosAQuitar = permisosOriginales.filter((id) => !seleccionadosSet.has(id));
 
-let permisosNuevos = permisosSeleccionados.filter(
-  (id) => !permisosOriginales.includes(id)
-);
+let permisosNuevos = permisosSeleccionados.filter((id) => !originalesSet.has(id));
+
+permisosNuevos = permisosNuevos.filter((id) => !permisosALLIds.includes(id));
+
+if (permisosAQuitar.length > 0) {
+  await axios.delete(
+    `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+    {
+      data: { permisosId: permisosAQuitar },
+      ...(isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : {}),
+    }
+  );
+}
 
 if (permisosNuevos.length > 0) {
   await axios.post(
@@ -428,15 +408,11 @@ if (permisosNuevos.length > 0) {
      Separar módulos
   =============================== */
     const modulosConPermiso = modulos.filter((modulo) =>
-      modulo.permisos.some((p) =>
-        permisosOriginales.includes(p.id)
-      )
+      modulo.permisos.some((p) => permisosSeleccionados.includes(p.id))
     );
 
     const modulosSinPermiso = modulos.filter((modulo) =>
-      !modulo.permisos.some((p) =>
-        permisosOriginales.includes(p.id)
-      )
+      !modulo.permisos.some((p) => permisosSeleccionados.includes(p.id))
     );
 
 const subsConPermiso = agruparPorSubsistema(modulosConPermiso);
