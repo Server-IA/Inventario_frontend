@@ -245,7 +245,7 @@ const extraActions = (
           return (
             <div>
               <SectionHeader
-                title="Roles de Empresa"
+                title={isSystemAdmin ? "Roles de Empresas en el Sistema" : "Roles de la Empresa"}
               />
 
               <MessageSnackBar message={message} setMessage={setMessage} />
@@ -278,51 +278,52 @@ const extraActions = (
                 canDelete={Boolean(selectedRow?.id)}
                 extraActions={extraActions}
               />
-          
-      <FormEmpresaRol
-        open={formOpen}
-        setOpen={setFormOpen}
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        setMessage={setMessage}
-        reloadData={reloadData}
-        roles={roles}
-        empresaId={empresaId}
-        isSystemAdmin={isSystemAdmin}
-      />
 
-      <ModalVerPermisos
-        open={modalPermisosOpen}
-        onClose={() => setModalPermisosOpen(false)}
-        permisos={selectedRow?.permisos || []}
-        rolNombre={selectedRow?.rolNombre}
-      />
+              <FormEmpresaRol
+                open={formOpen}
+                setOpen={setFormOpen}
+                selectedRow={selectedRow}
+                setSelectedRow={setSelectedRow}
+                setMessage={setMessage}
+                reloadData={reloadData}
+                roles={roles}
+                empresaId={empresaId}
+                isSystemAdmin={isSystemAdmin}
+              />
 
-      <GridEmpresaRol
-        rows={rows}
-        loading={loading}
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        isSystemAdmin={isSystemAdmin}
-      />
-<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-  <DialogTitle>Confirmar eliminación</DialogTitle>
-  <DialogContent>
-    ¿Está seguro que desea eliminar este rol y todos sus permisos?
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setConfirmOpen(false)}>
-      Cancelar
-    </Button>
-    <Button
-      color="error"
-      variant="contained"
-      onClick={confirmarEliminacion}
-    >
-      Eliminar
-    </Button>
-  </DialogActions>
-</Dialog>
-    </div>
-  );
+              <ModalVerPermisos
+                open={modalPermisosOpen}
+                onClose={() => setModalPermisosOpen(false)}
+                permisos={selectedRow?.permisos || []}
+                rolNombre={selectedRow?.rolNombre}
+              />
+
+              <GridEmpresaRol
+                rows={rows}
+                loading={loading}
+                selectedRow={selectedRow}
+                setSelectedRow={setSelectedRow}
+                isSystemAdmin={isSystemAdmin}
+              />
+
+              <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <DialogTitle>Confirmar eliminación</DialogTitle>
+                <DialogContent>
+                  ¿Está seguro que desea eliminar este rol y todos sus permisos?
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setConfirmOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    color="error"
+                    variant="contained"
+                    onClick={confirmarEliminacion}
+                  >
+                    Eliminar
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </div>
+          );
 }
