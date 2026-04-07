@@ -19,20 +19,4 @@ public class EmpresaRolResponseDTO {
 
     private String estadoNombre;
 
-    public EmpresaRolResponseDTO(Long id, String empresaNombre, String rolNombre, String estadoNombre) {
-        this.id = id;
-        this.empresaNombre = empresaNombre;
-        this.rolNombre = rolNombre;
-        this.estadoNombre = estadoNombre;
-    }
-
-    public EmpresaRolResponseDTO(Long id, Long empresaId, String empresaNombre, String rolNombre, String estadoNombre) {
-        this.id = id;
-        this.empresaId = empresaId;
-        this.empresaNombre = empresaNombre;
-        this.rolNombre = rolNombre;
-        this.estadoNombre = estadoNombre;
-    }
-
-
 }
