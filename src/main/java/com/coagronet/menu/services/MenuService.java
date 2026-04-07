@@ -65,6 +65,7 @@ public class MenuService {
     private final RolRepository rolRepository;
     private final HttpServletRequest request;
 
+    @Transactional(readOnly = true)
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
@@ -178,15 +179,18 @@ public class MenuService {
         Estado estadoActivo = estadoRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Estado activo no configurado"));
 
-        // 4. Iterar y guardar SOLO si no existe
+        // 4. Resolver asignaciones existentes en una sola consulta (batch)
+        java.util.Set<Long> modulosSolicitadosIds = modulosSolicitados.stream()
+                .map(Modulo::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        java.util.Set<Long> moduloIdsYaAsignados = moduloEmpresaRepository
+                .findModuloIdsByEmpresaIdAndModuloIdIn(empresaId, modulosSolicitadosIds);
+
         List<ModuloEmpresa> nuevasAsignaciones = new ArrayList<>();
 
         for (Modulo modulo : modulosSolicitados) {
-
-            // VALIDACIÓN ANTI-DUPLICADOS
-            boolean yaExiste = moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo);
-
-            if (!yaExiste) {
+            if (!moduloIdsYaAsignados.contains(modulo.getId())) {
                 ModuloEmpresa nuevaRelacion = new ModuloEmpresa();
                 nuevaRelacion.setEmpresa(empresa);
                 nuevaRelacion.setModulo(modulo);
@@ -194,7 +198,6 @@ public class MenuService {
 
                 nuevasAsignaciones.add(nuevaRelacion);
             }
-            // Si ya existe, simplemente lo ignoramos (o podrías lanzar error si prefieres ser estricto)
         }
 
         // 5. Guardar en lote (Batch save)

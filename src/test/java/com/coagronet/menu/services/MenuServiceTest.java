@@ -195,8 +195,8 @@ class MenuServiceTest {
         when(empresaRepository.findById(empresaId)).thenReturn(java.util.Optional.of(empresa));
         when(moduloRepository.findByNombreIdIn(List.of("kardex", "producto"))).thenReturn(List.of(modulo1, modulo2));
         when(estadoRepository.findById(1L)).thenReturn(java.util.Optional.of(estadoActivo));
-        when(moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo1)).thenReturn(false);
-        when(moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo2)).thenReturn(true);
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(empresaId, java.util.Set.of(101L, 102L)))
+                .thenReturn(java.util.Set.of(102L));
 
         menuService.asignarModulosAEmpresa(List.of("kardex", "producto"));
 
