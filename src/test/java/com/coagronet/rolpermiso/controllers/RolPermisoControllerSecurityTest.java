@@ -119,13 +119,34 @@ class RolPermisoControllerSecurityTest {
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void asignarModulosPermisos_returns201_whenPayloadIsValid() throws Exception {
-        when(rolPermisoService.asignarModulosPermisos(any(), any())).thenReturn(
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+        when(rolPermisoService.asignarModulosPermisos(any(), any(), any())).thenReturn(
                 RolPermisoAsignadoResponse.builder().rolId(5L).rolNombre("Operario").permisosAsignados(2).build());
 
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/{rolId}/asignar-modulos-permisos", 5L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(buildModulosPayload()))
                 .andExpect(status().isCreated());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verify(rolPermisoService).asignarModulosPermisos(5L, List.of(10L, 20L), 10L);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+    void asignarModulosPermisos_returns201_whenUserIsAdminSistemaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenReturn(99L);
+        when(rolPermisoService.asignarModulosPermisos(any(), any(), any())).thenReturn(
+                RolPermisoAsignadoResponse.builder().rolId(5L).rolNombre("Operario").permisosAsignados(2).build());
+
+        mockMvc.perform(post("/api/v1/empresa-rol-permisos/{rolId}/asignar-modulos-permisos", 5L)
+                .param("empresaId", "99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(buildModulosPayload()))
+                .andExpect(status().isCreated());
+
+        verify(dualAuthResolver).resolveEmpresaId(99L);
+        verify(rolPermisoService).asignarModulosPermisos(5L, List.of(10L, 20L), 99L);
     }
 
     @Test
@@ -159,10 +180,15 @@ class RolPermisoControllerSecurityTest {
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void quitarModulosPermisos_returns204_whenPayloadIsValid() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+
         mockMvc.perform(delete("/api/v1/empresa-rol-permisos/{rolId}/quitar-modulos-permisos", 5L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(buildModulosPayload()))
                 .andExpect(status().isNoContent());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verify(rolPermisoService).quitarModulosPermisos(5L, List.of(10L, 20L), 10L);
     }
 
         @Test
@@ -187,54 +213,123 @@ class RolPermisoControllerSecurityTest {
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void asignarModulosPermisosLectura_returns201_whenPayloadIsValid() throws Exception {
-        when(rolPermisoService.asignarModulosPermisosLectura(any(), any())).thenReturn(
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+        when(rolPermisoService.asignarModulosPermisosLectura(any(), any(), any())).thenReturn(
             RolPermisoAsignadoResponse.builder().rolId(5L).rolNombre("Operario").permisosAsignados(2).build());
 
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/{rolId}/asignar-modulos-lectura", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildModulosPayload()))
             .andExpect(status().isCreated());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verify(rolPermisoService).asignarModulosPermisosLectura(5L, List.of(10L, 20L), 10L);
         }
 
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void asignarModulosPermisosConMetodos_returns201_whenPayloadIsValid() throws Exception {
-        when(rolPermisoService.asignarModulosPermisosConMetodos(any(), any())).thenReturn(
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+        when(rolPermisoService.asignarModulosPermisosConMetodos(any(), any(), any())).thenReturn(
             RolPermisoAsignadoResponse.builder().rolId(5L).rolNombre("Operario").permisosAsignados(1).build());
 
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/{rolId}/asignar-modulos-metodos", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildModulosMetodosPayload()))
             .andExpect(status().isCreated());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
         }
 
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void reemplazarPermiso_returns200_whenPayloadIsValid() throws Exception {
-        when(rolPermisoService.reemplazarPermisoDeEmpresaRol(any(), any(), any())).thenReturn(
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+        when(rolPermisoService.reemplazarPermisoDeEmpresaRol(any(), any(), any(), any())).thenReturn(
             RolPermisoAsignadoResponse.builder().rolId(5L).rolNombre("Operario").permisosAsignados(1).build());
 
         mockMvc.perform(put("/api/v1/empresa-rol-permisos/{rolId}/reemplazar-permiso", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildReemplazarPermisoPayload()))
             .andExpect(status().isOk());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
         }
 
         @Test
         @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
         void reemplazarModulo_returns200_whenPayloadIsValid() throws Exception {
-        when(rolPermisoService.reemplazarModuloPermisosDeEmpresaRol(any(), any(), any())).thenReturn(
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+        when(rolPermisoService.reemplazarModuloPermisosDeEmpresaRol(any(), any(), any(), any())).thenReturn(
             RolPermisoAsignadoResponse.builder().rolId(5L).rolNombre("Operario").permisosAsignados(2).build());
 
         mockMvc.perform(put("/api/v1/empresa-rol-permisos/{rolId}/reemplazar-modulo", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildReemplazarModuloPayload()))
             .andExpect(status().isOk());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
         }
 
-        @Test
-        @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
-        void asignarPermisosLegacy_returns201_whenPayloadIsValid() throws Exception {
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void getPermisosLegacy_returns200_whenUserIsAdminEmpresa() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+        when(rolPermisoService.getPermisosByEmpresaRol(5L, 10L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L))
+            .andExpect(status().isOk());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verify(rolPermisoService).getPermisosByEmpresaRol(5L, 10L);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+    void getPermisosLegacy_returns200_whenUserIsAdminSistemaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenReturn(99L);
+        when(rolPermisoService.getPermisosByEmpresaRol(5L, 99L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
+            .param("empresaId", "99"))
+            .andExpect(status().isOk());
+
+        verify(dualAuthResolver).resolveEmpresaId(99L);
+        verify(rolPermisoService).getPermisosByEmpresaRol(5L, 99L);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+    void getPermisosLegacy_returns400_whenUserIsAdminSistemaAndEmpresaIdMissing() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenThrow(
+            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "ADMINISTRADOR_SISTEMA debe especificar empresaId como parámetro"));
+
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L))
+            .andExpect(status().isBadRequest());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verifyNoInteractions(rolPermisoService);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void getPermisosLegacy_returns403_whenUserIsAdminEmpresaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenThrow(
+            new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "ADMINISTRADOR_EMPRESA no puede especificar empresaId"));
+
+        mockMvc.perform(get("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
+            .param("empresaId", "99"))
+            .andExpect(status().isForbidden());
+
+        verify(dualAuthResolver).resolveEmpresaId(99L);
+        verifyNoInteractions(rolPermisoService);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void asignarPermisosLegacy_returns201_whenPayloadIsValid() throws Exception {
         when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
 
         mockMvc.perform(post("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos", 5L)
@@ -282,14 +377,67 @@ class RolPermisoControllerSecurityTest {
             .andExpect(status().isForbidden());
         }
 
-        @Test
-        @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
-        void quitarPermisosLegacy_returns204_whenPayloadIsValid() throws Exception {
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void quitarPermisosLegacy_returns204_whenPayloadIsValid() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenReturn(10L);
+
         mockMvc.perform(delete("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos/quitar", 5L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(buildPermisosPayload()))
             .andExpect(status().isNoContent());
-        }
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verify(rolPermisoService).quitarPermisosDeEmpresaRol(5L, List.of(1L, 2L), 10L);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+    void quitarPermisosLegacy_returns204_whenUserIsAdminSistemaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenReturn(99L);
+
+        mockMvc.perform(delete("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos/quitar", 5L)
+            .param("empresaId", "99")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(buildPermisosPayload()))
+            .andExpect(status().isNoContent());
+
+        verify(dualAuthResolver).resolveEmpresaId(99L);
+        verify(rolPermisoService).quitarPermisosDeEmpresaRol(5L, List.of(1L, 2L), 99L);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+    void quitarPermisosLegacy_returns400_whenUserIsAdminSistemaAndEmpresaIdMissing() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(null)).thenThrow(
+            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "ADMINISTRADOR_SISTEMA debe especificar empresaId como parámetro"));
+
+        mockMvc.perform(delete("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos/quitar", 5L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(buildPermisosPayload()))
+            .andExpect(status().isBadRequest());
+
+        verify(dualAuthResolver).resolveEmpresaId(null);
+        verifyNoInteractions(rolPermisoService);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
+    void quitarPermisosLegacy_returns403_whenUserIsAdminEmpresaAndEmpresaIdProvided() throws Exception {
+        when(dualAuthResolver.resolveEmpresaId(99L)).thenThrow(
+            new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "ADMINISTRADOR_EMPRESA no puede especificar empresaId"));
+
+        mockMvc.perform(delete("/api/v1/empresa-rol-permisos/rol/{rolId}/permisos/quitar", 5L)
+            .param("empresaId", "99")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(buildPermisosPayload()))
+            .andExpect(status().isForbidden());
+
+        verify(dualAuthResolver).resolveEmpresaId(99L);
+        verifyNoInteractions(rolPermisoService);
+    }
 
     private String buildModulosPayload() throws Exception {
         ObjectNode json = objectMapper.createObjectNode();

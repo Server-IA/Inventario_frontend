@@ -26,6 +26,8 @@ import com.coagronet.modulo.mappers.ModuloMapper;
 import com.coagronet.modulo.repositories.ModuloRepository;
 import com.coagronet.moduloempresa.ModuloEmpresa;
 import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
 import com.coagronet.utils.UserEmpresaService;
@@ -60,8 +62,10 @@ public class MenuService {
     private final EmpresaRepository empresaRepository;
     private final EstadoRepository estadoRepository;
     private final JwtService jwtService;
+    private final RolRepository rolRepository;
     private final HttpServletRequest request;
 
+    @Transactional(readOnly = true)
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
@@ -87,7 +91,18 @@ public class MenuService {
             throw new AccessDeniedException("No se pudo extraer el rol del token de seguridad");
         }
 
-        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
+        final Integer rolIdFinal = rolId;
+
+        Rol rol = rolRepository.findById(rolIdFinal.longValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado: " + rolIdFinal));
+
+        String rolNombre = rol.getNombre();
+        boolean esAdminSistema = "ADMINISTRADOR_SISTEMA".equalsIgnoreCase(rolNombre)
+                || "ROLE_ADMINISTRADOR_SISTEMA".equalsIgnoreCase(rolNombre);
+        boolean filtrarAdminEmpresa = !esAdminSistema;
+
+        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolIdFinal,
+                filtrarAdminEmpresa);
 
         record SubSistemaKey(String nombre, String icono) {
         }
@@ -164,15 +179,18 @@ public class MenuService {
         Estado estadoActivo = estadoRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Estado activo no configurado"));
 
-        // 4. Iterar y guardar SOLO si no existe
+        // 4. Resolver asignaciones existentes en una sola consulta (batch)
+        java.util.Set<Long> modulosSolicitadosIds = modulosSolicitados.stream()
+                .map(Modulo::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        java.util.Set<Long> moduloIdsYaAsignados = moduloEmpresaRepository
+                .findModuloIdsByEmpresaIdAndModuloIdIn(empresaId, modulosSolicitadosIds);
+
         List<ModuloEmpresa> nuevasAsignaciones = new ArrayList<>();
 
         for (Modulo modulo : modulosSolicitados) {
-
-            // VALIDACIÓN ANTI-DUPLICADOS
-            boolean yaExiste = moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo);
-
-            if (!yaExiste) {
+            if (!moduloIdsYaAsignados.contains(modulo.getId())) {
                 ModuloEmpresa nuevaRelacion = new ModuloEmpresa();
                 nuevaRelacion.setEmpresa(empresa);
                 nuevaRelacion.setModulo(modulo);
@@ -180,7 +198,6 @@ public class MenuService {
 
                 nuevasAsignaciones.add(nuevaRelacion);
             }
-            // Si ya existe, simplemente lo ignoramos (o podrías lanzar error si prefieres ser estricto)
         }
 
         // 5. Guardar en lote (Batch save)

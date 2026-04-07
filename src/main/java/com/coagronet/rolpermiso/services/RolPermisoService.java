@@ -12,9 +12,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +20,6 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.metodo.repositories.MetodoRepository;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.moduloempresa.ModuloEmpresa;
@@ -63,10 +59,6 @@ public class RolPermisoService {
 	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	private final AuthenticationService authenticationService;
-
-	private final EstadoRepository estadoRepository; // Kept just in case you use it
-																// elsewhere, though it's no
-																// longer strictly needed here.
 
 	private final ModuloEmpresaRepository moduloEmpresaRepository;
 
@@ -163,6 +155,15 @@ public class RolPermisoService {
 	@Transactional(readOnly = true)
 	public List<Permiso> getPermisosByEmpresaRol(Long rolId) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return getPermisosByEmpresaRol(rolId, empresaId);
+	}
+
+	@Transactional(readOnly = true)
+	public List<Permiso> getPermisosByEmpresaRol(Long rolId, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
+
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		return rolPermisoRepository.findPermisosByEmpresaRolId(empresaRol.getId());
@@ -176,14 +177,21 @@ public class RolPermisoService {
 	 */
 	@Transactional
 	public RolPermisoAsignadoResponse asignarModulosPermisos(Long rolId, List<Long> modulosIds) {
-
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return asignarModulosPermisos(rolId, modulosIds, empresaId);
+	}
+
+	@Transactional
+	public RolPermisoAsignadoResponse asignarModulosPermisos(Long rolId, List<Long> modulosIds, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
 
 		// Validar que el rol existe y está activo en la empresa
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		// Obtener TODOS los permisos de los módulos seleccionados
-		List<Permiso> permisos = permisoRepository.findPermisosByModulosIds(modulosIds);
+		List<Permiso> permisos = permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds);
 
 		if (permisos.isEmpty()) {
 			throw new RuntimeException("No se encontraron permisos para los módulos seleccionados");
@@ -222,7 +230,7 @@ public class RolPermisoService {
 		return RolPermisoAsignadoResponse.builder()
 			.rolId(empresaRol.getRol().getId())
 			.rolNombre(empresaRol.getRol().getNombre())
-			.permisosAsignados(permisos.size())
+			.permisosAsignados(nuevosPermisos.size())
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();
@@ -236,9 +244,17 @@ public class RolPermisoService {
 	public RolPermisoAsignadoResponse asignarModulosPermisosLectura(Long rolId, List<Long> modulosIds) {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return asignarModulosPermisosLectura(rolId, modulosIds, empresaId);
+	}
+
+	@Transactional
+	public RolPermisoAsignadoResponse asignarModulosPermisosLectura(Long rolId, List<Long> modulosIds, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
-		List<Permiso> permisos = permisoRepository.findPermisosByModulosIds(modulosIds)
+		List<Permiso> permisos = permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds)
 			.stream()
 			.filter(p -> (p.getMetodo() != null && "GET".equalsIgnoreCase(p.getMetodo().getNombre()))
 					|| (p.getAutoridad() != null && p.getAutoridad().toUpperCase().contains("READ")))
@@ -279,7 +295,7 @@ public class RolPermisoService {
 		return RolPermisoAsignadoResponse.builder()
 			.rolId(empresaRol.getRol().getId())
 			.rolNombre(empresaRol.getRol().getNombre())
-			.permisosAsignados(permisos.size())
+			.permisosAsignados(nuevosPermisos.size())
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();
@@ -395,9 +411,18 @@ public class RolPermisoService {
 	@Transactional
 	public void quitarModulosPermisos(Long rolId, List<Long> modulosIds) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		quitarModulosPermisos(rolId, modulosIds, empresaId);
+	}
+
+	@Transactional
+	public void quitarModulosPermisos(Long rolId, List<Long> modulosIds, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
+
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
-		List<Permiso> permisos = permisoRepository.findPermisosByModulosIds(modulosIds);
+		List<Permiso> permisos = permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds);
 		List<Long> permisoIds = permisos.stream().map(Permiso::getId).collect(Collectors.toList());
 
 		if (!permisoIds.isEmpty()) {
@@ -417,8 +442,17 @@ public class RolPermisoService {
 	@Transactional
 	public RolPermisoAsignadoResponse reemplazarPermisoDeEmpresaRol(Long rolId, Long permisoIdActual,
 			Long nuevoPermisoId) {
-
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return reemplazarPermisoDeEmpresaRol(rolId, permisoIdActual, nuevoPermisoId, empresaId);
+	}
+
+	@Transactional
+	public RolPermisoAsignadoResponse reemplazarPermisoDeEmpresaRol(Long rolId, Long permisoIdActual,
+			Long nuevoPermisoId, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
+
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		// Validar que el permiso actual existe y está asignado
@@ -437,7 +471,7 @@ public class RolPermisoService {
 		// Asignar el nuevo permiso
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
-		Permiso nuevoPermiso = permisoRepository.findById(nuevoPermisoId)
+		Permiso nuevoPermiso = permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(nuevoPermisoId)).stream().findFirst()
 			.orElseThrow(() -> new RuntimeException("Permiso destino no encontrado con ID: " + nuevoPermisoId));
 
 		asegurarModuloEmpresaActivo(empresaId, List.of(nuevoPermiso));
@@ -473,12 +507,21 @@ public class RolPermisoService {
 	@Transactional
 	public RolPermisoAsignadoResponse reemplazarModuloPermisosDeEmpresaRol(Long rolId, Long moduloIdActual,
 			Long nuevoModuloId) {
-
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return reemplazarModuloPermisosDeEmpresaRol(rolId, moduloIdActual, nuevoModuloId, empresaId);
+	}
+
+	@Transactional
+	public RolPermisoAsignadoResponse reemplazarModuloPermisosDeEmpresaRol(Long rolId, Long moduloIdActual,
+			Long nuevoModuloId, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
+
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		// Obtener permisos del módulo actual asignados a este rol
-		List<Permiso> permisosActuales = permisoRepository.findPermisosByModuloId(moduloIdActual);
+		List<Permiso> permisosActuales = permisoRepository.findPermisosByModuloIdAndAdminEmpresaTrue(moduloIdActual);
 		if (permisosActuales.isEmpty()) {
 			throw new RuntimeException("No hay permisos del módulo actual asignados a este rol");
 		}
@@ -498,7 +541,7 @@ public class RolPermisoService {
 		}
 
 		// Obtener permisos del nuevo módulo
-		List<Permiso> permisosNuevos = permisoRepository.findPermisosByModuloId(nuevoModuloId);
+		List<Permiso> permisosNuevos = permisoRepository.findPermisosByModuloIdAndAdminEmpresaTrue(nuevoModuloId);
 		if (permisosNuevos.isEmpty()) {
 			throw new RuntimeException("El nuevo módulo no tiene permisos disponibles");
 		}
@@ -550,6 +593,14 @@ public class RolPermisoService {
 	public void quitarPermisosDeEmpresaRol(Long rolId, List<Long> permisoIds) {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		quitarPermisosDeEmpresaRol(rolId, permisoIds, empresaId);
+	}
+
+	@Transactional
+	public void quitarPermisosDeEmpresaRol(Long rolId, List<Long> permisoIds, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
 
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
@@ -569,29 +620,49 @@ public class RolPermisoService {
 			List<ModuloMetodoRequest> modulosMetodos) {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return asignarModulosPermisosConMetodos(rolId, modulosMetodos, empresaId);
+	}
+
+	@Transactional
+	public RolPermisoAsignadoResponse asignarModulosPermisosConMetodos(Long rolId,
+			List<ModuloMetodoRequest> modulosMetodos, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		Set<Long> permisoIdsToAssign = new HashSet<>();
 		List<Permiso> permisosToAssign = new ArrayList<>();
 
+		List<Long> modulosIds = modulosMetodos.stream()
+			.map(ModuloMetodoRequest::getModuloId)
+			.filter(java.util.Objects::nonNull)
+			.distinct()
+			.toList();
+
+		Map<Long, List<Permiso>> permisosPorModulo = permisoRepository
+			.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds)
+			.stream()
+			.collect(Collectors.groupingBy(p -> p.getModulo().getId()));
+
 		for (ModuloMetodoRequest mm : modulosMetodos) {
-			List<Permiso> permisosModulo = permisoRepository.findPermisosByModuloId(mm.getModuloId());
+			List<Permiso> permisosModulo = permisosPorModulo.getOrDefault(mm.getModuloId(), Collections.emptyList());
 			if (permisosModulo == null || permisosModulo.isEmpty())
 				continue;
 
-			Set<String> métodos = mm.getMetodos()
+			Set<String> metodos = mm.getMetodos()
 				.stream()
 				.map(m -> m == null ? "" : m.trim().toUpperCase())
 				.collect(Collectors.toSet());
 
-			boolean all = métodos.contains("ALL");
-			boolean readRequested = métodos.contains("READ");
+			boolean all = metodos.contains("ALL");
+			boolean readRequested = metodos.contains("READ");
 
 			for (Permiso p : permisosModulo) {
 				boolean include = false;
 				if (all)
 					include = true;
-				else if (p.getMetodo() != null && métodos.contains(p.getMetodo().getNombre().toUpperCase()))
+				else if (p.getMetodo() != null && metodos.contains(p.getMetodo().getNombre().toUpperCase()))
 					include = true;
 				else if (readRequested && ((p.getMetodo() != null && "GET".equalsIgnoreCase(p.getMetodo().getNombre()))
 						|| (p.getAutoridad() != null && p.getAutoridad().toUpperCase().contains("READ"))))
@@ -642,7 +713,7 @@ public class RolPermisoService {
 		return RolPermisoAsignadoResponse.builder()
 			.rolId(empresaRol.getRol().getId())
 			.rolNombre(empresaRol.getRol().getNombre())
-			.permisosAsignados(permisosToAssign.size())
+			.permisosAsignados(nuevosPermisos.size())
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();

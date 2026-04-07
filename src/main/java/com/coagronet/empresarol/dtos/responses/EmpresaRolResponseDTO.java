@@ -1,21 +1,22 @@
 package com.coagronet.empresarol.dtos.responses;
 
 
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
+@NoArgsConstructor
 public class EmpresaRolResponseDTO {
 
     private Long id;
+
+    private Long empresaId;
 
     private String empresaNombre;
 
     private String rolNombre;
 
     private String estadoNombre;
-
 
 }
