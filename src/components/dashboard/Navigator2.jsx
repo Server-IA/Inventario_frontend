@@ -187,7 +187,6 @@ import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
 import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
-import EmpresaRolsystem from "../EmpresaRolsystem/EmpresaRolsystem.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 import Usuario from "../Usuario/Usuario.jsx";
 // Imágenes
@@ -251,7 +250,6 @@ import prodcutos_vencidos from "/images/cards/prodcutos_vencidos.webp";
 import r_orden_compra from "/images/cards/r_orden_compra.webp";
 import pedido_coti from "/images/cards/pedido_coti.webp";
 import usariorol from "/images/cards/usariorol.webp";
-import rol_sistema from "/images/cards/rol_sistema.webp";
 import usai_rol_sistema from "/images/cards/usai_rol_sistema.webp";
 import rol_empresa from "/images/cards/rol_empresa.webp";
 
@@ -377,7 +375,6 @@ const icons = {
 const components = {
   modulo: modulo,
   Rol_usuario: Rol_usuario,
-  EmpresaRolsystem: EmpresaRolsystem,
   EmpresaRol: EmpresaRol,
   UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
@@ -438,7 +435,6 @@ const components = {
 const moduleImages = {
   EmpresaRol: rol_empresa,
   UsuarioRoles: usai_rol_sistema,
-  EmpresaRolsystem: rol_sistema,
   UsuarioRol: usariorol,
   PedidoCotizacion:pedido_coti,
   persona,
