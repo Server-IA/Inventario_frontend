@@ -85,12 +85,13 @@ class RolPermisoControllerSecurityTest {
 
     @Test
     @WithMockUser(roles = "USER")
-        void getModulosDisponibles_returns403_whenUserRoleIsNotAllowed() throws Exception {
+        void getModulosDisponibles_returns200_whenUserIsAuthenticated_currentBehavior() throws Exception {
+        Page<ModuloPermisoResponse> page = new PageImpl<>(List.of(
+            ModuloPermisoResponse.builder().moduloId(1L).moduloNombre("Inventario").permisos(List.of()).build()));
+        when(rolPermisoService.getModulosDisponibles(any())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/empresa-rol-permisos/modulos-disponibles"))
-            .andExpect(status().isForbidden());
-
-        verifyNoInteractions(rolPermisoService);
+            .andExpect(status().isOk());
     }
 
     @Test

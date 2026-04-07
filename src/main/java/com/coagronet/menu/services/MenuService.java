@@ -26,6 +26,8 @@ import com.coagronet.modulo.mappers.ModuloMapper;
 import com.coagronet.modulo.repositories.ModuloRepository;
 import com.coagronet.moduloempresa.ModuloEmpresa;
 import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.tipoaplicacion.enums.TipoAplicacionEnum;
 import com.coagronet.utils.UserEmpresaService;
@@ -60,6 +62,7 @@ public class MenuService {
     private final EmpresaRepository empresaRepository;
     private final EstadoRepository estadoRepository;
     private final JwtService jwtService;
+    private final RolRepository rolRepository;
     private final HttpServletRequest request;
 
     public List<MenuSubSistemaResponseDTO> obtenerMenuPorEmpresaTipoYRol(String tipoAplicacion) {
@@ -87,7 +90,18 @@ public class MenuService {
             throw new AccessDeniedException("No se pudo extraer el rol del token de seguridad");
         }
 
-        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolId);
+        final Integer rolIdFinal = rolId;
+
+        Rol rol = rolRepository.findById(rolIdFinal.longValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado: " + rolIdFinal));
+
+        String rolNombre = rol.getNombre();
+        boolean esAdminSistema = "ADMINISTRADOR_SISTEMA".equalsIgnoreCase(rolNombre)
+                || "ROLE_ADMINISTRADOR_SISTEMA".equalsIgnoreCase(rolNombre);
+        boolean filtrarAdminEmpresa = !esAdminSistema;
+
+        var rows = menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, tipoAppId, rolIdFinal,
+                filtrarAdminEmpresa);
 
         record SubSistemaKey(String nombre, String icono) {
         }

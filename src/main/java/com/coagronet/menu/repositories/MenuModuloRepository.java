@@ -52,14 +52,15 @@ public interface MenuModuloRepository extends Repository<Modulo, Long> {
 			      WHERE p.modulo_id = m.mod_id
 			        AND p.estado_id = 1
 			        AND rp.estado_id = 1
-			        AND p.admin_empresa = true
+			        AND (:filtrarAdminEmpresa = false OR p.admin_empresa = true)
 			        AND er.empresa_id = :empresaId
 			        AND er.rol_id = :rolId
 			  )
 			ORDER BY s.sub_nombre ASC, m.mod_nombre ASC;
 						""", nativeQuery = true)
 	List<SubModuloRow> findSubmodulosByEmpresaTipoAppAndRolId(@Param("empresaId") Long empresaId,
-			@Param("tipoAppId") Integer tipoAppId, @Param("rolId") Integer rolId);
+			@Param("tipoAppId") Integer tipoAppId, @Param("rolId") Integer rolId,
+			@Param("filtrarAdminEmpresa") boolean filtrarAdminEmpresa);
 
 	/**
 	 * Consulta la base de datos para recuperar los módulos que no están asociados a una empresa específica.
