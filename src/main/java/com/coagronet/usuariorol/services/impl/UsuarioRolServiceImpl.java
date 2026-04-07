@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class UsuarioRolServiceImpl implements UsuarioRolService {
 
         private static final Long ESTADO_ACTIVO_ID = 1L;
-        private static final Long ESTADO_INACTVIO_ID = 2L;
+        private static final Long ESTADO_INACTIVO_ID = 2L;
 
         private final UsuarioRolRepository usuarioRolRepository;
         private final UsuarioRolMapper usuarioRolMapper;
@@ -59,7 +59,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         @Transactional(readOnly = true)
         public Page<UsuarioRolResponseDTO> findAll(Pageable pageable) {
                 return usuarioRolRepository
-                                .findByDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(pageable, ESTADO_INACTVIO_ID)
+                                .findByDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(pageable, ESTADO_INACTIVO_ID)
                                 .map(usuarioRolMapper::toResponse);
         }
 
@@ -69,7 +69,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
                 return usuarioRolRepository
                                 .findAllByEmpresaIdAndDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(pageable, empresaId,
-                                                ESTADO_INACTVIO_ID)
+                                                ESTADO_INACTIVO_ID)
                                 .map(usuarioRolMapper::toResponseForCurrentEmpresa);
         }
 
@@ -77,7 +77,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         @Transactional(readOnly = true)
         public UsuarioRolResponseDTO findById(Long id) {
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndDeletedAtIsNullAndEstadoIdNot(id, ESTADO_INACTVIO_ID)
+                                .findByIdAndDeletedAtIsNullAndEstadoIdNot(id, ESTADO_INACTIVO_ID)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
                 return usuarioRolMapper.toResponse(entity);
@@ -88,7 +88,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
         public UsuarioRolResponseForCurrentEmpresaDTO findByIdForCurrentEmpresa(Long id) {
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTIVO_ID)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
                 return usuarioRolMapper.toResponseForCurrentEmpresa(entity);
@@ -217,7 +217,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 User currentUser = authenticatedUser.getCurrentUser();
 
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndDeletedAtIsNullAndEstadoIdNot(id, ESTADO_INACTVIO_ID)
+                                .findByIdAndDeletedAtIsNullAndEstadoIdNot(id, ESTADO_INACTIVO_ID)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
 
@@ -333,7 +333,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
 
                 // Aseguramos que el registro pertenece a la empresa del token
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTIVO_ID)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id + " para la empresa actual"));
 
@@ -448,11 +448,11 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 User currentUser = authenticatedUser.getCurrentUser();
 
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndDeletedAtIsNullAndEstadoIdNot(id, ESTADO_INACTVIO_ID)
+                                .findByIdAndDeletedAtIsNullAndEstadoIdNot(id, ESTADO_INACTIVO_ID)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
 
-                Long estadoId = ESTADO_INACTVIO_ID;
+                Long estadoId = ESTADO_INACTIVO_ID;
                 Estado estado = estadoRepository.findById(estadoId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "Estado no encontrado con id " + estadoId));
@@ -470,11 +470,11 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
                 UsuarioRol entity = usuarioRolRepository
-                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTVIO_ID)
+                                .findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(id, empresaId, ESTADO_INACTIVO_ID)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "UsuarioRol no encontrado con id " + id));
 
-                Long estadoId = ESTADO_INACTVIO_ID;
+                Long estadoId = ESTADO_INACTIVO_ID;
                 Estado estado = estadoRepository.findById(estadoId)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "Estado no encontrado con id " + estadoId));
@@ -482,6 +482,53 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 entity.setDeletedAt(OffsetDateTime.now());
                 entity.setDeletedBy(currentUser);
                 entity.setEstado(estado);
+
+                usuarioRolRepository.save(entity);
+        }
+
+        @Override
+        public void toggleEstado(Long id, Long empresaId) {
+                User currentUser = authenticatedUser.getCurrentUser();
+
+                UsuarioRol entity = usuarioRolRepository
+                                .findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id + " para la empresa " + empresaId));
+
+                boolean isActivo = ESTADO_ACTIVO_ID.equals(entity.getEstado().getId());
+                Long nuevoEstadoId = isActivo ? ESTADO_INACTIVO_ID : ESTADO_ACTIVO_ID;
+
+                Estado nuevoEstado = estadoRepository.findById(nuevoEstadoId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Estado no encontrado con id " + nuevoEstadoId));
+
+                entity.setEstado(nuevoEstado);
+                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedBy(currentUser);
+
+                usuarioRolRepository.save(entity);
+        }
+
+        @Override
+        public void toggleEstadoForCurrentEmpresa(Long id) {
+                User currentUser = authenticatedUser.getCurrentUser();
+                Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+                UsuarioRol entity = usuarioRolRepository
+                                .findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "UsuarioRol no encontrado con id " + id + " para la empresa actual"));
+
+                boolean isActivo = ESTADO_ACTIVO_ID.equals(entity.getEstado().getId());
+                Long nuevoEstadoId = isActivo ? ESTADO_INACTIVO_ID : ESTADO_ACTIVO_ID;
+
+                Estado nuevoEstado = estadoRepository.findById(nuevoEstadoId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Estado no encontrado con id " + nuevoEstadoId));
+
+                entity.setEstado(nuevoEstado);
+                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedBy(currentUser);
 
                 usuarioRolRepository.save(entity);
         }

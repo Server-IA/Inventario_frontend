@@ -19,12 +19,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.auditoria.AuthenticationService;
+import com.coagronet.empresa.Empresa;
 import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.metodo.repositories.MetodoRepository;
 import com.coagronet.modulo.Modulo;
+import com.coagronet.moduloempresa.ModuloEmpresa;
+import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
 import com.coagronet.permiso.Permiso;
 import com.coagronet.permiso.repositories.PermisoRepository;
 import com.coagronet.rolpermiso.RolPermiso;
@@ -62,8 +65,10 @@ public class RolPermisoService {
 	private final AuthenticationService authenticationService;
 
 	private final EstadoRepository estadoRepository; // Kept just in case you use it
-														// elsewhere, though it's no
-														// longer strictly needed here.
+																// elsewhere, though it's no
+																// longer strictly needed here.
+
+	private final ModuloEmpresaRepository moduloEmpresaRepository;
 
 	/**
 	 * Obtiene módulos disponibles con sus permisos agrupados, con paginación. Optimizado
@@ -184,25 +189,30 @@ public class RolPermisoService {
 			throw new RuntimeException("No se encontraron permisos para los módulos seleccionados");
 		}
 
+		asegurarModuloEmpresaActivo(empresaId, permisos);
+
 		// Obtener estado activo y usuario actual
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		// Asignar cada permiso al rol
-		permisos.forEach(permiso -> {
-			// Evitar duplicados
-			if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permiso.getId())) {
-				RolPermiso rolPermiso = RolPermiso.builder()
-					.empresaRol(empresaRol)
-					.permiso(permiso)
-					.estado(estadoActivo)
-					.createdBy(currentUser)
-					.createdAt(Instant.now())
-					.build();
+		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
+		Set<Long> permisosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
 
-				rolPermisoRepository.save(rolPermiso);
-			}
-		});
+		List<RolPermiso> nuevosPermisos = permisos.stream()
+			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
+			.map(permiso -> RolPermiso.builder()
+				.empresaRol(empresaRol)
+				.permiso(permiso)
+				.estado(estadoActivo)
+				.createdBy(currentUser)
+				.createdAt(Instant.now())
+				.build())
+			.toList();
+
+		if (!nuevosPermisos.isEmpty()) {
+			rolPermisoRepository.saveAll(nuevosPermisos);
+		}
 
 		// Preparar respuesta con confirmación visual
 		List<String> modulos = permisos.stream().map(p -> p.getModulo().getNombre()).distinct().toList();
@@ -238,22 +248,29 @@ public class RolPermisoService {
 			throw new RuntimeException("No se encontraron permisos de lectura para los módulos seleccionados");
 		}
 
+		asegurarModuloEmpresaActivo(empresaId, permisos);
+
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		permisos.forEach(permiso -> {
-			if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permiso.getId())) {
-				RolPermiso rolPermiso = RolPermiso.builder()
-					.empresaRol(empresaRol)
-					.permiso(permiso)
-					.estado(estadoActivo)
-					.createdBy(currentUser)
-					.createdAt(Instant.now())
-					.build();
+		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
+		Set<Long> permisosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
 
-				rolPermisoRepository.save(rolPermiso);
-			}
-		});
+		List<RolPermiso> nuevosPermisos = permisos.stream()
+			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
+			.map(permiso -> RolPermiso.builder()
+				.empresaRol(empresaRol)
+				.permiso(permiso)
+				.estado(estadoActivo)
+				.createdBy(currentUser)
+				.createdAt(Instant.now())
+				.build())
+			.toList();
+
+		if (!nuevosPermisos.isEmpty()) {
+			rolPermisoRepository.saveAll(nuevosPermisos);
+		}
 
 		List<String> modulos = permisos.stream().map(p -> p.getModulo().getNombre()).distinct().toList();
 
@@ -283,6 +300,8 @@ public class RolPermisoService {
 
 		if (permisos.isEmpty())
 			return;
+
+		asegurarModuloEmpresaActivo(empresaId, permisos);
 
 		// 2. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
 		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
@@ -344,6 +363,8 @@ public class RolPermisoService {
 
 		if (permisos.isEmpty())
 			return;
+
+		asegurarModuloEmpresaActivo(empresaId, permisos);
 
 		// 2. OPTIMIZACIÓN: Extraer IDs de permisos ya asignados en 1 sola consulta
 		List<Long> validPermisoIds = permisos.stream().map(Permiso::getId).toList();
@@ -419,6 +440,8 @@ public class RolPermisoService {
 		Permiso nuevoPermiso = permisoRepository.findById(nuevoPermisoId)
 			.orElseThrow(() -> new RuntimeException("Permiso destino no encontrado con ID: " + nuevoPermisoId));
 
+		asegurarModuloEmpresaActivo(empresaId, List.of(nuevoPermiso));
+
 		RolPermiso rolPermiso = RolPermiso.builder()
 			.empresaRol(empresaRol)
 			.permiso(nuevoPermiso)
@@ -461,9 +484,13 @@ public class RolPermisoService {
 		}
 
 		// Filtrar solo los que están asignados a este rol-empresa
+		List<Long> permisoIdsActuales = permisosActuales.stream().map(Permiso::getId).toList();
+		Set<Long> permisoIdsAsignadosSet = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), permisoIdsActuales);
+
 		List<Long> permisoIdsAsignados = permisosActuales.stream()
-			.filter(p -> rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), p.getId()))
 			.map(Permiso::getId)
+			.filter(permisoIdsAsignadosSet::contains)
 			.toList();
 
 		if (permisoIdsAsignados.isEmpty()) {
@@ -476,6 +503,8 @@ public class RolPermisoService {
 			throw new RuntimeException("El nuevo módulo no tiene permisos disponibles");
 		}
 
+		asegurarModuloEmpresaActivo(empresaId, permisosNuevos);
+
 		// Quitar todos los permisos del módulo actual
 		rolPermisoRepository.deleteByEmpresaRolIdAndPermisoIds(empresaRol.getId(), permisoIdsAsignados);
 
@@ -483,20 +512,26 @@ public class RolPermisoService {
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		int permisosAsignados = 0;
-		for (Permiso permiso : permisosNuevos) {
-			if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permiso.getId())) {
-				RolPermiso rolPermiso = RolPermiso.builder()
-					.empresaRol(empresaRol)
-					.permiso(permiso)
-					.estado(estadoActivo)
-					.createdBy(currentUser)
-					.createdAt(Instant.now())
-					.build();
-				rolPermisoRepository.save(rolPermiso);
-				permisosAsignados++;
-			}
+		List<Long> nuevosPermisoIds = permisosNuevos.stream().map(Permiso::getId).toList();
+		Set<Long> permisosNuevosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), nuevosPermisoIds);
+
+		List<RolPermiso> nuevosRolPermisos = permisosNuevos.stream()
+			.filter(permiso -> !permisosNuevosYaAsignados.contains(permiso.getId()))
+			.map(permiso -> RolPermiso.builder()
+				.empresaRol(empresaRol)
+				.permiso(permiso)
+				.estado(estadoActivo)
+				.createdBy(currentUser)
+				.createdAt(Instant.now())
+				.build())
+			.toList();
+
+		if (!nuevosRolPermisos.isEmpty()) {
+			rolPermisoRepository.saveAll(nuevosRolPermisos);
 		}
+
+		int permisosAsignados = nuevosRolPermisos.size();
 
 		List<String> modulos = permisosNuevos.stream().map(p -> p.getModulo().getNombre()).distinct().toList();
 
@@ -573,20 +608,28 @@ public class RolPermisoService {
 			throw new RuntimeException("No se encontraron permisos para los módulos/metodos solicitados");
 		}
 
+		asegurarModuloEmpresaActivo(empresaId, permisosToAssign);
+
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
 
-		for (Permiso permiso : permisosToAssign) {
-			if (!rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(empresaRol.getId(), permiso.getId())) {
-				RolPermiso rp = RolPermiso.builder()
-					.empresaRol(empresaRol)
-					.permiso(permiso)
-					.estado(estadoActivo)
-					.createdBy(currentUser)
-					.createdAt(Instant.now())
-					.build();
-				rolPermisoRepository.save(rp);
-			}
+		List<Long> validPermisoIds = permisosToAssign.stream().map(Permiso::getId).toList();
+		Set<Long> permisosYaAsignados = rolPermisoRepository
+			.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(empresaRol.getId(), validPermisoIds);
+
+		List<RolPermiso> nuevosPermisos = permisosToAssign.stream()
+			.filter(permiso -> !permisosYaAsignados.contains(permiso.getId()))
+			.map(permiso -> RolPermiso.builder()
+				.empresaRol(empresaRol)
+				.permiso(permiso)
+				.estado(estadoActivo)
+				.createdBy(currentUser)
+				.createdAt(Instant.now())
+				.build())
+			.toList();
+
+		if (!nuevosPermisos.isEmpty()) {
+			rolPermisoRepository.saveAll(nuevosPermisos);
 		}
 
 		List<String> modulos = permisosToAssign.stream()
@@ -603,6 +646,59 @@ public class RolPermisoService {
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();
+	}
+
+	private void asegurarModuloEmpresaActivo(Long empresaId, List<Permiso> permisos) {
+		if (permisos == null || permisos.isEmpty()) {
+			return;
+		}
+
+		Set<Long> moduloIds = permisos.stream()
+			.map(Permiso::getModulo)
+			.filter(java.util.Objects::nonNull)
+			.map(Modulo::getId)
+			.filter(java.util.Objects::nonNull)
+			.collect(Collectors.toSet());
+
+		if (moduloIds.isEmpty()) {
+			return;
+		}
+
+		Set<Long> moduloIdsYaRelacionados = moduloEmpresaRepository
+			.findModuloIdsByEmpresaIdAndModuloIdIn(empresaId, moduloIds);
+
+		if (moduloIdsYaRelacionados == null) {
+			moduloIdsYaRelacionados = Collections.emptySet();
+		}
+
+		Set<Long> moduloIdsFaltantes = new HashSet<>(moduloIds);
+		moduloIdsFaltantes.removeAll(moduloIdsYaRelacionados);
+
+		if (moduloIdsFaltantes.isEmpty()) {
+			return;
+		}
+
+		Empresa empresa = Empresa.builder().id(empresaId).build();
+
+		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+
+		List<ModuloEmpresa> nuevasRelaciones = permisos.stream()
+			.map(Permiso::getModulo)
+			.filter(java.util.Objects::nonNull)
+			.filter(modulo -> modulo.getId() != null && moduloIdsFaltantes.contains(modulo.getId()))
+			.collect(Collectors.toMap(Modulo::getId, modulo -> modulo, (existente, ignored) -> existente))
+			.values()
+			.stream()
+			.map(modulo -> ModuloEmpresa.builder()
+				.empresa(empresa)
+				.modulo(modulo)
+				.estado(estadoActivo)
+				.build())
+			.toList();
+
+		if (!nuevasRelaciones.isEmpty()) {
+			moduloEmpresaRepository.saveAll(nuevasRelaciones);
+		}
 	}
 
 }

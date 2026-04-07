@@ -1,5 +1,6 @@
 package com.coagronet.usuariorol.repositories;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,8 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long empresaId, Long estadoId);
 
+	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNull(Long id, Long empresaId);
+
 	List<UsuarioRol> findByUserOrderByUserId(User user);
 
 	UsuarioRol findByUser(User user);
@@ -42,5 +45,36 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 	Page<UsuarioRol> findByDeletedAtIsNullAndEstadoIdNotOrderByIdDesc(Pageable pageable, Long estadoId);
 
 	Optional<UsuarioRol> findByIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long estadoId);
+
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoInactivo
+			and ur.iniciaContratoEn <= :fechaActual
+			and (ur.finalizaContratoEn is null or ur.finalizaContratoEn >= :fechaActual)
+			""")
+	List<UsuarioRol> findByEstadoInactivoYFechaActivacion(
+			@Param("estadoInactivo") Long estadoInactivo,
+			@Param("fechaActual") OffsetDateTime fechaActual);
+
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoActivo
+			and ur.finalizaContratoEn is not null
+			and ur.finalizaContratoEn < :fechaActual
+			""")
+	List<UsuarioRol> findByEstadoActivoYFechaFinalizacionPasada(
+			@Param("estadoActivo") Long estadoActivo,
+			@Param("fechaActual") OffsetDateTime fechaActual);
+
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoActivo
+			and ur.user.id = :userId
+			order by ur.id asc
+			""")
+	List<UsuarioRol> findActivasByUserId(@Param("estadoActivo") Long estadoActivo, @Param("userId") Long userId);
 
 }
