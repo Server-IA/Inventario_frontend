@@ -83,9 +83,13 @@ public class RolPermisoController {
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<RolPermisoAsignadoResponse> asignarModulosPermisos(@PathVariable Long rolId,
-			@RequestBody @Valid AsignarModulosPermisoRequest dto) {
+			@RequestBody @Valid AsignarModulosPermisoRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
 
-		RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisos(rolId, dto.getModulosIds());
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
+
+		RolPermisoAsignadoResponse response = rolPermisoService
+			.asignarModulosPermisos(rolId, dto.getModulosIds(), empresaId);
 
 		return ResponseEntity.created(URI.create("/api/v1/empresa-rol/" + rolId)).body(response);
 	}
@@ -100,10 +104,13 @@ public class RolPermisoController {
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<RolPermisoAsignadoResponse> asignarModulosPermisosLectura(@PathVariable Long rolId,
-			@RequestBody @Valid AsignarModulosPermisoRequest dto) {
+			@RequestBody @Valid AsignarModulosPermisoRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
 
-		RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisosLectura(rolId,
-				dto.getModulosIds());
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
+
+		RolPermisoAsignadoResponse response = rolPermisoService
+			.asignarModulosPermisosLectura(rolId, dto.getModulosIds(), empresaId);
 
 		return ResponseEntity.created(URI.create("/api/v1/empresa-rol/" + rolId + "/lectura")).body(response);
 	}
@@ -118,10 +125,13 @@ public class RolPermisoController {
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<RolPermisoAsignadoResponse> asignarModulosPermisosConMetodos(@PathVariable Long rolId,
-			@RequestBody @Valid AsignarModulosMetodosRequest dto) {
+			@RequestBody @Valid AsignarModulosMetodosRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
+
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
 
 		RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisosConMetodos(rolId,
-				dto.getModulosMetodos());
+				dto.getModulosMetodos(), empresaId);
 
 		return ResponseEntity.created(URI.create("/api/v1/empresa-rol/" + rolId + "/metodos")).body(response);
 	}
@@ -132,8 +142,13 @@ public class RolPermisoController {
 	@DeleteMapping("/{rolId}/quitar-modulos-permisos")
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void quitarModulosPermisos(@PathVariable Long rolId, @RequestBody @Valid AsignarModulosPermisoRequest dto) {
-		rolPermisoService.quitarModulosPermisos(rolId, dto.getModulosIds());
+	public void quitarModulosPermisos(
+			@PathVariable Long rolId,
+			@RequestBody @Valid AsignarModulosPermisoRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
+
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
+		rolPermisoService.quitarModulosPermisos(rolId, dto.getModulosIds(), empresaId);
 	}
 
 	/**
@@ -146,10 +161,13 @@ public class RolPermisoController {
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.OK)
 	public ResponseEntity<RolPermisoAsignadoResponse> reemplazarPermiso(@PathVariable Long rolId,
-			@RequestBody @Valid ReemplazarPermisoRequest dto) {
+			@RequestBody @Valid ReemplazarPermisoRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
+
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
 
 		RolPermisoAsignadoResponse response = rolPermisoService.reemplazarPermisoDeEmpresaRol(rolId,
-				dto.getPermisoIdActual(), dto.getNuevoPermisoId());
+				dto.getPermisoIdActual(), dto.getNuevoPermisoId(), empresaId);
 
 		return ResponseEntity.ok(response);
 	}
@@ -164,10 +182,13 @@ public class RolPermisoController {
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.OK)
 	public ResponseEntity<RolPermisoAsignadoResponse> reemplazarModulo(@PathVariable Long rolId,
-			@RequestBody @Valid ReemplazarModuloRequest dto) {
+			@RequestBody @Valid ReemplazarModuloRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
+
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
 
 		RolPermisoAsignadoResponse response = rolPermisoService.reemplazarModuloPermisosDeEmpresaRol(rolId,
-				dto.getModuloIdActual(), dto.getNuevoModuloId());
+				dto.getModuloIdActual(), dto.getNuevoModuloId(), empresaId);
 
 		return ResponseEntity.ok(response);
 	}

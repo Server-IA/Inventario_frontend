@@ -91,7 +91,8 @@ class EmpresaRolControllerSecurityTest {
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void findAll_returns200_whenUserIsAdminEmpresa() throws Exception {
-        when(empresaRolService.findAll()).thenReturn(List.of(new EmpresaRolResponseDTO(1L, "Empresa A", "Operario", "Activo")));
+        EmpresaRolResponseDTO dto = buildResponseDto(1L, 10L, "Empresa A", "Operario", "Activo");
+        when(empresaRolService.findAll()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/v1/empresa-rol"))
                 .andExpect(status().isOk());
@@ -100,7 +101,8 @@ class EmpresaRolControllerSecurityTest {
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
     void findAll_returns200_whenUserIsAdminSistema() throws Exception {
-        when(empresaRolService.findAll()).thenReturn(List.of(new EmpresaRolResponseDTO(1L, "Empresa A", "Operario", "Activo")));
+        EmpresaRolResponseDTO dto = buildResponseDto(1L, 10L, "Empresa A", "Operario", "Activo");
+        when(empresaRolService.findAll()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/v1/empresa-rol"))
                 .andExpect(status().isOk());
@@ -109,7 +111,8 @@ class EmpresaRolControllerSecurityTest {
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void create_returns201_whenPayloadIsValid() throws Exception {
-        when(empresaRolService.create(any())).thenReturn(new EmpresaRolResponseDTO(99L, "Empresa A", "Operario", "Activo"));
+        EmpresaRolResponseDTO dto = buildResponseDto(99L, 10L, "Empresa A", "Operario", "Activo");
+        when(empresaRolService.create(any())).thenReturn(dto);
 
         mockMvc.perform(post("/api/v1/empresa-rol")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -204,5 +207,16 @@ class EmpresaRolControllerSecurityTest {
         ObjectNode json = objectMapper.createObjectNode();
         json.put("rolId", 1L);
         return objectMapper.writeValueAsString(json);
+    }
+
+    private EmpresaRolResponseDTO buildResponseDto(Long id, Long empresaId, String empresaNombre, String rolNombre,
+            String estadoNombre) {
+        EmpresaRolResponseDTO dto = new EmpresaRolResponseDTO();
+        dto.setId(id);
+        dto.setEmpresaId(empresaId);
+        dto.setEmpresaNombre(empresaNombre);
+        dto.setRolNombre(rolNombre);
+        dto.setEstadoNombre(estadoNombre);
+        return dto;
     }
 }

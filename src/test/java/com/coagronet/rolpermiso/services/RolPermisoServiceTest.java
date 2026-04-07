@@ -183,6 +183,8 @@ class RolPermisoServiceTest {
 
         Permiso getPermiso = buildPermiso(10L, "Read", "INV_READ", "GET", "Inventario");
         Permiso postPermiso = buildPermiso(11L, "Create", "INV_CREATE", "POST", "Inventario");
+        getPermiso.getModulo().setId(100L);
+        postPermiso.getModulo().setId(100L);
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
@@ -217,6 +219,8 @@ class RolPermisoServiceTest {
 
         Permiso getPermiso = buildPermiso(10L, "Read", "INV_READ", "GET", "Inventario");
         Permiso postPermiso = buildPermiso(11L, "Create", "INV_CREATE", "POST", "Inventario");
+        getPermiso.getModulo().setId(100L);
+        postPermiso.getModulo().setId(100L);
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
