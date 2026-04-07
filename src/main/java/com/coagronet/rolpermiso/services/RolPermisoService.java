@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -158,6 +159,15 @@ public class RolPermisoService {
 	@Transactional(readOnly = true)
 	public List<Permiso> getPermisosByEmpresaRol(Long rolId) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return getPermisosByEmpresaRol(rolId, empresaId);
+	}
+
+	@Transactional(readOnly = true)
+	public List<Permiso> getPermisosByEmpresaRol(Long rolId, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
+
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		return rolPermisoRepository.findPermisosByEmpresaRolId(empresaRol.getId());
@@ -545,6 +555,14 @@ public class RolPermisoService {
 	public void quitarPermisosDeEmpresaRol(Long rolId, List<Long> permisoIds) {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		quitarPermisosDeEmpresaRol(rolId, permisoIds, empresaId);
+	}
+
+	@Transactional
+	public void quitarPermisosDeEmpresaRol(Long rolId, List<Long> permisoIds, Long empresaId) {
+		if (empresaId == null) {
+			throw new IllegalArgumentException("empresaId no puede ser null");
+		}
 
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
@@ -703,7 +721,12 @@ public class RolPermisoService {
 			.toList();
 
 		if (!nuevasRelaciones.isEmpty()) {
-			moduloEmpresaRepository.saveAll(nuevasRelaciones);
+			try {
+				moduloEmpresaRepository.saveAll(nuevasRelaciones);
+			} catch (DataIntegrityViolationException ignored) {
+				// Idempotencia concurrente: otra transacción pudo insertar la misma relación
+				// (empresa, módulo) entre la lectura y la persistencia.
+			}
 		}
 	}
 

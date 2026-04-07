@@ -184,9 +184,13 @@ public class RolPermisoController {
 	@GetMapping("/rol/{rolId}/permisos")
 	@PreAuthorize("hasRole('ADMINISTRADOR_EMPRESA') or hasRole('ADMINISTRADOR_SISTEMA')")
 	@ResponseStatus(HttpStatus.OK)
-	public List<PermisoResponse> getPermisos(@PathVariable Long rolId) {
+	public List<PermisoResponse> getPermisos(
+			@PathVariable Long rolId,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
 
-		return rolPermisoService.getPermisosByEmpresaRol(rolId)
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
+
+		return rolPermisoService.getPermisosByEmpresaRol(rolId, empresaId)
 			.stream()
 			.map(p -> new PermisoResponse(p.getId(), p.getNombre(), p.getAutoridad()))
 			.toList();
@@ -231,8 +235,13 @@ public class RolPermisoController {
 	@DeleteMapping("/rol/{rolId}/permisos/quitar")
 	@PreAuthorize("hasRole('ADMINISTRADOR_SISTEMA') or hasRole('ADMINISTRADOR_EMPRESA')")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void removePermiso(@PathVariable Long rolId, @RequestBody @Valid AsignarPermisosRequest dto) {
-		rolPermisoService.quitarPermisosDeEmpresaRol(rolId, dto.getPermisosId());
+	public void removePermiso(
+			@PathVariable Long rolId,
+			@RequestBody @Valid AsignarPermisosRequest dto,
+			@RequestParam(name = "empresaId", required = false) Long empresaIdParam) {
+
+		Long empresaId = dualAuthResolver.resolveEmpresaId(empresaIdParam);
+		rolPermisoService.quitarPermisosDeEmpresaRol(rolId, dto.getPermisosId(), empresaId);
 	}
 
 }

@@ -358,6 +358,28 @@ class RolPermisoServiceTest {
     }
 
     @Test
+    void getPermisosByEmpresaRol_withEmpresaId_usesProvidedEmpresaId() {
+        Long empresaId = 15L;
+        Long rolId = 2L;
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Permiso permiso = buildPermiso(601L, "Ver", "EMPRESA_READ", "GET", "Inventario");
+
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(rolPermisoRepository.findPermisosByEmpresaRolId(22L)).thenReturn(List.of(permiso));
+
+        var result = rolPermisoService.getPermisosByEmpresaRol(rolId, empresaId);
+
+        assertThat(result).hasSize(1);
+        verify(entidadValidatorFacade).validarRolDeEmpresaActivo(empresaId, rolId);
+    }
+
+    @Test
+    void getPermisosByEmpresaRol_withEmpresaId_throwsIllegalArgumentException_whenEmpresaIdIsNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> rolPermisoService.getPermisosByEmpresaRol(2L, null));
+    }
+
+    @Test
     void asignarPermisosAEmpresaRolWithEmpresaId_createsModuloEmpresaRelation_whenMissing() {
         Long empresaId = 9L;
         Long rolId = 2L;
@@ -469,6 +491,25 @@ class RolPermisoServiceTest {
         rolPermisoService.quitarPermisosDeEmpresaRol(rolId, Collections.emptyList());
 
         verify(rolPermisoRepository, never()).deleteByEmpresaRolIdAndPermisoIds(any(), any());
+    }
+
+    @Test
+    void quitarPermisosDeEmpresaRol_withEmpresaId_deletesPermisos_whenIdsProvided() {
+        Long empresaId = 15L;
+        Long rolId = 2L;
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+
+        rolPermisoService.quitarPermisosDeEmpresaRol(rolId, List.of(10L, 20L), empresaId);
+
+        verify(rolPermisoRepository).deleteByEmpresaRolIdAndPermisoIds(22L, List.of(10L, 20L));
+    }
+
+    @Test
+    void quitarPermisosDeEmpresaRol_withEmpresaId_throwsIllegalArgumentException_whenEmpresaIdIsNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> rolPermisoService.quitarPermisosDeEmpresaRol(2L, List.of(10L), null));
     }
 
     private EmpresaRol buildEmpresaRol(Long empresaRolId, Long rolId, String rolNombre) {
