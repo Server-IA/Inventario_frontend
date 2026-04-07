@@ -30,6 +30,8 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long empresaId, Long estadoId);
 
+	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNull(Long id, Long empresaId);
+
 	List<UsuarioRol> findByUserOrderByUserId(User user);
 
 	UsuarioRol findByUser(User user);
