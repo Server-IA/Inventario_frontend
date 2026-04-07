@@ -32,6 +32,8 @@ import com.coagronet.modulo.mappers.ModuloMapper;
 import com.coagronet.modulo.repositories.ModuloRepository;
 import com.coagronet.moduloempresa.ModuloEmpresa;
 import com.coagronet.moduloempresa.repositories.ModuloEmpresaRepository;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.utils.UserEmpresaService;
 
@@ -65,6 +67,9 @@ class MenuServiceTest {
     private JwtService jwtService;
 
     @Mock
+    private RolRepository rolRepository;
+
+    @Mock
     private HttpServletRequest request;
 
     @InjectMocks
@@ -79,7 +84,11 @@ class MenuServiceTest {
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(request.getHeader("Authorization")).thenReturn("Bearer token-123");
         when(jwtService.extractRoleId("token-123")).thenReturn(2);
-        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 2)).thenReturn(List.of(row1, row2));
+        Rol rolAdminEmpresa = new Rol();
+        rolAdminEmpresa.setId(2L);
+        rolAdminEmpresa.setNombre("ADMINISTRADOR_EMPRESA");
+        when(rolRepository.findById(2L)).thenReturn(java.util.Optional.of(rolAdminEmpresa));
+        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 2, true)).thenReturn(List.of(row1, row2));
         when(moduloMapper.toDTO(row1)).thenReturn(new MenuModuloResponseDTO("kardex", "Kardex", "/kardex", "icon-kardex"));
         when(moduloMapper.toDTO(row2)).thenReturn(new MenuModuloResponseDTO("producto", "Producto", "/producto", "icon-producto"));
 
@@ -88,6 +97,25 @@ class MenuServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).nombre()).isEqualTo("Inventario");
         assertThat(result.get(0).modulos()).hasSize(2);
+    }
+
+    @Test
+    void obtenerMenuPorEmpresaTipoYRol_doesNotFilterAdminEmpresa_whenRoleIsAdminSistema() {
+        Long empresaId = 10L;
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(request.getHeader("Authorization")).thenReturn("Bearer token-123");
+        when(jwtService.extractRoleId("token-123")).thenReturn(1);
+        Rol rolAdminSistema = new Rol();
+        rolAdminSistema.setId(1L);
+        rolAdminSistema.setNombre("ADMINISTRADOR_SISTEMA");
+        when(rolRepository.findById(1L)).thenReturn(java.util.Optional.of(rolAdminSistema));
+        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 1, false)).thenReturn(List.of());
+
+        List<MenuSubSistemaResponseDTO> result = menuService.obtenerMenuPorEmpresaTipoYRol("web");
+
+        assertThat(result).isEmpty();
+        verify(menuModuloRepository).findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 1, false);
     }
 
     @Test
@@ -167,8 +195,8 @@ class MenuServiceTest {
         when(empresaRepository.findById(empresaId)).thenReturn(java.util.Optional.of(empresa));
         when(moduloRepository.findByNombreIdIn(List.of("kardex", "producto"))).thenReturn(List.of(modulo1, modulo2));
         when(estadoRepository.findById(1L)).thenReturn(java.util.Optional.of(estadoActivo));
-        when(moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo1)).thenReturn(false);
-        when(moduloEmpresaRepository.existsByEmpresaAndModulo(empresa, modulo2)).thenReturn(true);
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(empresaId, java.util.Set.of(101L, 102L)))
+                .thenReturn(java.util.Set.of(102L));
 
         menuService.asignarModulosAEmpresa(List.of("kardex", "producto"));
 

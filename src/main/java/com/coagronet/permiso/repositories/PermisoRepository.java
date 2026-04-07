@@ -47,6 +47,16 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
 			""")
 	List<Permiso> findPermisosByModuloId(@Param("moduloId") Long moduloId);
 
+	@Query("""
+			    SELECT p
+			    FROM Permiso p
+			    WHERE p.modulo.id = :moduloId
+			      AND p.estado.id = 1
+			      AND p.adminEmpresa = true
+			    ORDER BY p.nombre
+			""")
+	List<Permiso> findPermisosByModuloIdAndAdminEmpresaTrue(@Param("moduloId") Long moduloId);
+
 	/**
 	 * Obtiene todos los permisos de múltiples módulos. Usado para asignar todos los
 	 * permisos de módulos seleccionados a un rol.
@@ -59,6 +69,16 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
 			    ORDER BY p.modulo.nombre, p.nombre
 			""")
 	List<Permiso> findPermisosByModulosIds(@Param("modulosIds") List<Long> modulosIds);
+
+	@Query("""
+			    SELECT p
+			    FROM Permiso p
+			    WHERE p.modulo.id IN :modulosIds
+			      AND p.estado.id = 1
+			      AND p.adminEmpresa = true
+			    ORDER BY p.modulo.nombre, p.nombre
+			""")
+	List<Permiso> findPermisosByModulosIdsAndAdminEmpresaTrue(@Param("modulosIds") List<Long> modulosIds);
 
 	/**
 	 * Obtiene módulos únicos (DISTINCT) con permisos activos, con paginación. Está
@@ -103,13 +123,13 @@ public interface PermisoRepository extends JpaRepository<Permiso, Long> {
 	 * todos los módulos de uno o varios subsistemas para selección UI.
 	 */
 	@Query(value = """
-			SELECT DISTINCT p.modulo_id, m.mod_nombre
+			SELECT DISTINCT p.modulo_id
 			FROM permiso p
 			JOIN modulo m ON m.mod_id = p.modulo_id
 			WHERE p.estado_id = 1
 			  AND m.mod_estado_id = 1
 			  AND m.mod_subsistema_id IN :subsistemaIds
-			ORDER BY m.mod_nombre
+			ORDER BY p.modulo_id
 			""", nativeQuery = true)
 	List<Long> findDistinctModuloIdsBySubsistemas(@Param("subsistemaIds") List<Long> subsistemaIds);
 
