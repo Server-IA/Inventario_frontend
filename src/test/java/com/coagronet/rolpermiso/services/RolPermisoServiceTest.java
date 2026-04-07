@@ -91,7 +91,7 @@ class RolPermisoServiceTest {
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
-        when(permisoRepository.findPermisosByModulosIds(List.of(10L))).thenReturn(List.of(permiso1, permiso2));
+        when(permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(List.of(10L))).thenReturn(List.of(permiso1, permiso2));
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
         when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
@@ -116,7 +116,7 @@ class RolPermisoServiceTest {
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(buildEmpresaRol(22L, rolId, "Operario"));
-        when(permisoRepository.findPermisosByModulosIds(List.of(10L))).thenReturn(List.of());
+        when(permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(List.of(10L))).thenReturn(List.of());
 
         assertThrows(RuntimeException.class, () -> rolPermisoService.asignarModulosPermisos(rolId, List.of(10L)));
     }
@@ -132,7 +132,7 @@ class RolPermisoServiceTest {
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
-        when(permisoRepository.findPermisosByModulosIds(List.of(5L))).thenReturn(List.of(permisoA, permisoB));
+        when(permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(List.of(5L))).thenReturn(List.of(permisoA, permisoB));
 
         rolPermisoService.quitarModulosPermisos(rolId, List.of(5L));
 
@@ -154,7 +154,7 @@ class RolPermisoServiceTest {
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
-        when(permisoRepository.findPermisosByModulosIds(List.of(10L))).thenReturn(List.of(readByMethod, readByAuthority, write));
+        when(permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(List.of(10L))).thenReturn(List.of(readByMethod, readByAuthority, write));
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
         when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
@@ -186,7 +186,7 @@ class RolPermisoServiceTest {
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
-        when(permisoRepository.findPermisosByModuloId(100L)).thenReturn(List.of(getPermiso, postPermiso));
+        when(permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(List.of(100L))).thenReturn(List.of(getPermiso, postPermiso));
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
         when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
@@ -204,6 +204,38 @@ class RolPermisoServiceTest {
         assertThat(response.getPermisosAsignados()).isEqualTo(1);
         verify(rolPermisoRepository, times(1)).saveAll(any());
         verify(moduloEmpresaRepository, times(1)).saveAll(any());
+    }
+
+    @Test
+    void asignarModulosPermisosConMetodos_reportsOnlyNewAssignments_whenSomeAlreadyAssigned() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+        Estado estadoActivo = buildEstado(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        User currentUser = buildUser(99L, "admin");
+
+        Permiso getPermiso = buildPermiso(10L, "Read", "INV_READ", "GET", "Inventario");
+        Permiso postPermiso = buildPermiso(11L, "Create", "INV_CREATE", "POST", "Inventario");
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+        when(permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(List.of(100L))).thenReturn(List.of(getPermiso, postPermiso));
+        when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
+        when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
+        when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
+                .thenReturn(Collections.emptySet());
+        when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(10L, 11L)))
+                .thenReturn(Set.of(10L));
+
+        ModuloMetodoRequest request = ModuloMetodoRequest.builder()
+                .moduloId(100L)
+                .metodos(List.of("ALL"))
+                .build();
+
+        RolPermisoAsignadoResponse response = rolPermisoService.asignarModulosPermisosConMetodos(rolId, List.of(request));
+
+        assertThat(response.getPermisosAsignados()).isEqualTo(1);
     }
 
     @Test
@@ -370,7 +402,7 @@ class RolPermisoServiceTest {
         when(rolPermisoRepository.existsByEmpresaRolIdAndPermisoId(22L, nuevoPermisoId)).thenReturn(false);
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
         when(authenticationService.getAuthenticatedUser()).thenReturn(currentUser);
-        when(permisoRepository.findById(nuevoPermisoId)).thenReturn(java.util.Optional.of(nuevoPermiso));
+        when(permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(nuevoPermisoId))).thenReturn(List.of(nuevoPermiso));
         when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
                 .thenReturn(Collections.emptySet());
 
@@ -395,10 +427,10 @@ class RolPermisoServiceTest {
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
-        when(permisoRepository.findPermisosByModuloId(moduloActualId)).thenReturn(List.of(permisoActual));
+        when(permisoRepository.findPermisosByModuloIdAndAdminEmpresaTrue(moduloActualId)).thenReturn(List.of(permisoActual));
         when(rolPermisoRepository.findPermisoIdsByEmpresaRolIdAndPermisoIdIn(22L, List.of(701L)))
                 .thenReturn(Set.of(701L));
-        when(permisoRepository.findPermisosByModuloId(nuevoModuloId)).thenReturn(List.of(permisoNuevo));
+        when(permisoRepository.findPermisosByModuloIdAndAdminEmpresaTrue(nuevoModuloId)).thenReturn(List.of(permisoNuevo));
         when(moduloEmpresaRepository.findModuloIdsByEmpresaIdAndModuloIdIn(org.mockito.ArgumentMatchers.eq(empresaId), any()))
                 .thenReturn(Collections.emptySet());
         when(entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO)).thenReturn(estadoActivo);
@@ -409,6 +441,34 @@ class RolPermisoServiceTest {
         rolPermisoService.reemplazarModuloPermisosDeEmpresaRol(rolId, moduloActualId, nuevoModuloId);
 
         verify(moduloEmpresaRepository, times(1)).saveAll(any());
+    }
+
+    @Test
+    void quitarPermisosDeEmpresaRol_deletesPermisos_whenIdsProvided() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+
+        rolPermisoService.quitarPermisosDeEmpresaRol(rolId, List.of(10L, 20L));
+
+        verify(rolPermisoRepository).deleteByEmpresaRolIdAndPermisoIds(22L, List.of(10L, 20L));
+    }
+
+    @Test
+    void quitarPermisosDeEmpresaRol_doesNothing_whenIdsAreEmpty() {
+        Long empresaId = 1L;
+        Long rolId = 2L;
+        EmpresaRol empresaRol = buildEmpresaRol(22L, rolId, "Operario");
+
+        when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
+        when(entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId)).thenReturn(empresaRol);
+
+        rolPermisoService.quitarPermisosDeEmpresaRol(rolId, Collections.emptyList());
+
+        verify(rolPermisoRepository, never()).deleteByEmpresaRolIdAndPermisoIds(any(), any());
     }
 
     private EmpresaRol buildEmpresaRol(Long empresaRolId, Long rolId, String rolNombre) {

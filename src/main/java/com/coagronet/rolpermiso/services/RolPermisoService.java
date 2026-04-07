@@ -23,7 +23,6 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
-import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.metodo.repositories.MetodoRepository;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.moduloempresa.ModuloEmpresa;
@@ -63,10 +62,6 @@ public class RolPermisoService {
 	private final EntidadValidatorFacade entidadValidatorFacade;
 
 	private final AuthenticationService authenticationService;
-
-	private final EstadoRepository estadoRepository; // Kept just in case you use it
-																// elsewhere, though it's no
-																// longer strictly needed here.
 
 	private final ModuloEmpresaRepository moduloEmpresaRepository;
 
@@ -183,7 +178,7 @@ public class RolPermisoService {
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		// Obtener TODOS los permisos de los módulos seleccionados
-		List<Permiso> permisos = permisoRepository.findPermisosByModulosIds(modulosIds);
+		List<Permiso> permisos = permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds);
 
 		if (permisos.isEmpty()) {
 			throw new RuntimeException("No se encontraron permisos para los módulos seleccionados");
@@ -222,7 +217,7 @@ public class RolPermisoService {
 		return RolPermisoAsignadoResponse.builder()
 			.rolId(empresaRol.getRol().getId())
 			.rolNombre(empresaRol.getRol().getNombre())
-			.permisosAsignados(permisos.size())
+			.permisosAsignados(nuevosPermisos.size())
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();
@@ -238,7 +233,7 @@ public class RolPermisoService {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
-		List<Permiso> permisos = permisoRepository.findPermisosByModulosIds(modulosIds)
+		List<Permiso> permisos = permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds)
 			.stream()
 			.filter(p -> (p.getMetodo() != null && "GET".equalsIgnoreCase(p.getMetodo().getNombre()))
 					|| (p.getAutoridad() != null && p.getAutoridad().toUpperCase().contains("READ")))
@@ -279,7 +274,7 @@ public class RolPermisoService {
 		return RolPermisoAsignadoResponse.builder()
 			.rolId(empresaRol.getRol().getId())
 			.rolNombre(empresaRol.getRol().getNombre())
-			.permisosAsignados(permisos.size())
+			.permisosAsignados(nuevosPermisos.size())
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();
@@ -397,7 +392,7 @@ public class RolPermisoService {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
-		List<Permiso> permisos = permisoRepository.findPermisosByModulosIds(modulosIds);
+		List<Permiso> permisos = permisoRepository.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds);
 		List<Long> permisoIds = permisos.stream().map(Permiso::getId).collect(Collectors.toList());
 
 		if (!permisoIds.isEmpty()) {
@@ -437,7 +432,7 @@ public class RolPermisoService {
 		// Asignar el nuevo permiso
 		Estado estadoActivo = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 		User currentUser = authenticationService.getAuthenticatedUser();
-		Permiso nuevoPermiso = permisoRepository.findById(nuevoPermisoId)
+		Permiso nuevoPermiso = permisoRepository.findByIdInAndAdminEmpresaTrue(List.of(nuevoPermisoId)).stream().findFirst()
 			.orElseThrow(() -> new RuntimeException("Permiso destino no encontrado con ID: " + nuevoPermisoId));
 
 		asegurarModuloEmpresaActivo(empresaId, List.of(nuevoPermiso));
@@ -478,7 +473,7 @@ public class RolPermisoService {
 		EmpresaRol empresaRol = entidadValidatorFacade.validarRolDeEmpresaActivo(empresaId, rolId);
 
 		// Obtener permisos del módulo actual asignados a este rol
-		List<Permiso> permisosActuales = permisoRepository.findPermisosByModuloId(moduloIdActual);
+		List<Permiso> permisosActuales = permisoRepository.findPermisosByModuloIdAndAdminEmpresaTrue(moduloIdActual);
 		if (permisosActuales.isEmpty()) {
 			throw new RuntimeException("No hay permisos del módulo actual asignados a este rol");
 		}
@@ -498,7 +493,7 @@ public class RolPermisoService {
 		}
 
 		// Obtener permisos del nuevo módulo
-		List<Permiso> permisosNuevos = permisoRepository.findPermisosByModuloId(nuevoModuloId);
+		List<Permiso> permisosNuevos = permisoRepository.findPermisosByModuloIdAndAdminEmpresaTrue(nuevoModuloId);
 		if (permisosNuevos.isEmpty()) {
 			throw new RuntimeException("El nuevo módulo no tiene permisos disponibles");
 		}
@@ -574,24 +569,35 @@ public class RolPermisoService {
 		Set<Long> permisoIdsToAssign = new HashSet<>();
 		List<Permiso> permisosToAssign = new ArrayList<>();
 
+		List<Long> modulosIds = modulosMetodos.stream()
+			.map(ModuloMetodoRequest::getModuloId)
+			.filter(java.util.Objects::nonNull)
+			.distinct()
+			.toList();
+
+		Map<Long, List<Permiso>> permisosPorModulo = permisoRepository
+			.findPermisosByModulosIdsAndAdminEmpresaTrue(modulosIds)
+			.stream()
+			.collect(Collectors.groupingBy(p -> p.getModulo().getId()));
+
 		for (ModuloMetodoRequest mm : modulosMetodos) {
-			List<Permiso> permisosModulo = permisoRepository.findPermisosByModuloId(mm.getModuloId());
+			List<Permiso> permisosModulo = permisosPorModulo.getOrDefault(mm.getModuloId(), Collections.emptyList());
 			if (permisosModulo == null || permisosModulo.isEmpty())
 				continue;
 
-			Set<String> métodos = mm.getMetodos()
+			Set<String> metodos = mm.getMetodos()
 				.stream()
 				.map(m -> m == null ? "" : m.trim().toUpperCase())
 				.collect(Collectors.toSet());
 
-			boolean all = métodos.contains("ALL");
-			boolean readRequested = métodos.contains("READ");
+			boolean all = metodos.contains("ALL");
+			boolean readRequested = metodos.contains("READ");
 
 			for (Permiso p : permisosModulo) {
 				boolean include = false;
 				if (all)
 					include = true;
-				else if (p.getMetodo() != null && métodos.contains(p.getMetodo().getNombre().toUpperCase()))
+				else if (p.getMetodo() != null && metodos.contains(p.getMetodo().getNombre().toUpperCase()))
 					include = true;
 				else if (readRequested && ((p.getMetodo() != null && "GET".equalsIgnoreCase(p.getMetodo().getNombre()))
 						|| (p.getAutoridad() != null && p.getAutoridad().toUpperCase().contains("READ"))))
@@ -642,7 +648,7 @@ public class RolPermisoService {
 		return RolPermisoAsignadoResponse.builder()
 			.rolId(empresaRol.getRol().getId())
 			.rolNombre(empresaRol.getRol().getNombre())
-			.permisosAsignados(permisosToAssign.size())
+			.permisosAsignados(nuevosPermisos.size())
 			.modulos(modulos)
 			.autoridades(autoridades)
 			.build();

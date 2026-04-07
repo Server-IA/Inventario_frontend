@@ -50,6 +50,9 @@ public interface MenuModuloRepository extends Repository<Modulo, Long> {
 			      JOIN public.empresa_rol er
 			           ON er.id = rp.empresa_rol_id
 			      WHERE p.modulo_id = m.mod_id
+			        AND p.estado_id = 1
+			        AND rp.estado_id = 1
+			        AND p.admin_empresa = true
 			        AND er.empresa_id = :empresaId
 			        AND er.rol_id = :rolId
 			  )
