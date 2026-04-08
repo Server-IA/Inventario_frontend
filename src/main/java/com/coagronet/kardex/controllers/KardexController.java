@@ -1,6 +1,7 @@
 package com.coagronet.kardex.controllers;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
+import com.coagronet.articuloKardex.services.ArticuloKardexService;
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
@@ -49,6 +52,8 @@ import lombok.RequiredArgsConstructor;
 public class KardexController {
 
 	private final KardexService kardexService;
+
+	private final ArticuloKardexService articuloKardexService;
 
 	private final UriBuilderUtil uriBuilderUtil;
 
@@ -141,6 +146,24 @@ public class KardexController {
                 fechaInicio, fechaFin, tipoMovimientoId, estadoId, pageable);
         
         return ResponseEntity.ok(resultado);
+    }
+
+	@GetMapping("/{kardexId}/items")
+	@PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+    //@PreAuthorize("hasAuthority('placeholder')")
+    public ResponseEntity<Page<KardexItemResponseDto>> listItems(
+            @PathVariable Long kardexId,
+            @RequestParam(required = false) Long productoId,
+            @RequestParam(required = false) Long estadoId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        Page<KardexItemResponseDto> results = articuloKardexService.getKardexItems(
+                kardexId, productoId, estadoId, fechaInicio, fechaFin, pageable
+        );
+
+        return ResponseEntity.ok(results);
     }
 
 }

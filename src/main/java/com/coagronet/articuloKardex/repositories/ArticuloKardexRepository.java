@@ -1,6 +1,7 @@
 package com.coagronet.articuloKardex.repositories;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
+import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 
 @Repository
 public interface ArticuloKardexRepository
@@ -119,5 +121,33 @@ public interface ArticuloKardexRepository
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query("UPDATE ArticuloKardex a SET a.estado.id = 2 WHERE a.id = :id AND a.empresa.id = :empresaId")
 	int softDeleteByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
+
+	@Query("""
+        SELECT new com.coagronet.articuloKardex.dtos.KardexItemResponseDto(
+            k.id, 
+            p.nombre, 
+            k.cantidad, 
+            k.precio, 
+            k.lote, 
+            k.fechaVencimiento, 
+            e.nombre
+        )
+        FROM ArticuloKardex k
+        JOIN k.presentacionProducto p
+        JOIN k.estado e
+        WHERE k.kardex.id = :kardexId
+          AND (:productoId IS NULL OR p.id = :productoId)
+          AND (:estadoId IS NULL OR e.id = :estadoId)
+          AND (cast(:fechaInicio as timestamp) IS NULL OR k.fechaHora >= :fechaInicio)
+          AND (cast(:fechaFin as timestamp) IS NULL OR k.fechaHora <= :fechaFin)
+    """)
+    Page<KardexItemResponseDto> findItemsByKardexIdWithFilters(
+            @Param("kardexId") Long kardexId,
+            @Param("productoId") Long productoId,
+            @Param("estadoId") Long estadoId,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin,
+            Pageable pageable
+    );
 
 }

@@ -1,5 +1,6 @@
 package com.coagronet.articuloKardex.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
+import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.articuloKardex.services.factory.ArticuloKardexFactory;
@@ -110,5 +112,19 @@ public class ArticuloKardexService {
 			throw new NotFoundException("El artículo de kardex no fue encontrado.");
 		}
 	}
+
+	@Transactional(readOnly = true)
+    public Page<KardexItemResponseDto> getKardexItems(
+            Long kardexId, 
+            Long productoId, 
+            Long estadoId, 
+            LocalDateTime fechaInicio, 
+            LocalDateTime fechaFin, 
+            Pageable pageable) {
+        
+        return articuloKardexRepository.findItemsByKardexIdWithFilters(
+                kardexId, productoId, estadoId, fechaInicio, fechaFin, pageable
+        );
+    }
 
 }
