@@ -98,25 +98,6 @@ public class KardexService {
 
 	private static final Long ESTADO_INACTIVO = 2L;
 
-	@Transactional(readOnly = true)
-	public Optional<KardexDTO> findById(Long requestedId) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return kardexRepository.findDtoByIdAndEmpresaId(requestedId, empresaId);
-	}
-
-	@Transactional
-	public KardexDTO create(KardexDTO kardexDTO, String clientIp, String clientHost) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		kardexDTO.setEmpresaId(empresaId);
-
-		Kardex kardex = kardexMapper.toEntity(kardexDTO);
-		aplicarValidacionesYRelaciones(kardexDTO, kardex, empresaId);
-		asignarDatosAuditoria(kardex, clientIp, clientHost);
-
-		Kardex guardado = kardexRepository.save(kardex);
-		return kardexMapper.toDto(guardado);
-	}
-
 	@Transactional
 	public void update(Long requestedId, KardexDTO kardexDTO, String clientIp, String clientHost) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();

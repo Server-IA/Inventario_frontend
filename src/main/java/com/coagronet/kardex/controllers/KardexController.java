@@ -59,24 +59,6 @@ public class KardexController {
 
 	private final RequestUtils requestUtils;
 
-	@GetMapping("/{requestedId}")
-	public ResponseEntity<KardexDTO> findById(@PathVariable Long requestedId) {
-		return kardexService.findById(requestedId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-	}
-
-	@PostMapping
-	public ResponseEntity<Void> crearKardex(@RequestBody @Valid KardexDTO kardexDTO, HttpServletRequest request,
-			UriComponentsBuilder ucb) {
-
-		String ip = requestUtils.getClientIp(request);
-		String host = requestUtils.getClientHost(request);
-
-		KardexDTO savedKardexDTO = kardexService.create(kardexDTO, ip, host);
-
-		URI locationOfNewKardex = uriBuilderUtil.buildKardexUri(savedKardexDTO.getId(), ucb);
-		return ResponseEntity.created(locationOfNewKardex).build();
-	}
-
 	@PutMapping("/{requestedId}")
 	public ResponseEntity<Void> actualizarKardex(@PathVariable Long requestedId,
 			@RequestBody @Valid KardexDTO kardexDTO, HttpServletRequest request) {

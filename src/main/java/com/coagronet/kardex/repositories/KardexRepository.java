@@ -9,28 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.dtos.KardexDTO;
 
 public interface KardexRepository extends JpaRepository<Kardex, Long>, JpaSpecificationExecutor<Kardex> {
-
-	@Query("""
-			    SELECT new com.coagronet.kardex.dtos.KardexDTO(
-			        k.id, k.fechaHora, a.id, p.id, tm.id,
-			        k.descripcion, ped.id, oc.id, est.id,
-			        emp.id, cp.id
-			    )
-			    FROM Kardex k
-			    JOIN k.almacen a
-			    JOIN k.produccion p
-			    JOIN k.tipoMovimiento tm
-			    JOIN k.estado est
-			    JOIN k.empresa emp
-			    LEFT JOIN k.pedido ped
-			    LEFT JOIN k.ordenCompra oc
-			    LEFT JOIN k.clienteProveedor cp
-			    WHERE k.id = :id AND emp.id = :empresaId
-			""")
-	Optional<KardexDTO> findDtoByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE Kardex k SET k.estado.id = 2 WHERE k.id = :id AND k.empresa.id = :empresaId")
