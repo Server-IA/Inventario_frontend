@@ -1,11 +1,13 @@
 package com.coagronet.kardex.controllers;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
+import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.services.KardexService;
@@ -49,13 +53,6 @@ public class KardexController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	private final RequestUtils requestUtils;
-
-	@GetMapping
-	public ResponseEntity<Page<KardexDTO>> findAll(@PageableDefault Pageable pageable) {
-		Page<KardexDTO> page = kardexService.findAll(pageable);
-
-		return ResponseEntity.ok(page);
-	}
 
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<KardexDTO> findById(@PathVariable Long requestedId) {
@@ -130,5 +127,20 @@ public class KardexController {
 
 		return ResponseEntity.created(location).build();
 	}
+
+	@GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+    public ResponseEntity<Page<KardexListDto>> listarMovimientos(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
+            @RequestParam(required = false) Long tipoMovimientoId,
+            @RequestParam(required = false) Long estadoId,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        Page<KardexListDto> resultado = kardexService.listarMovimientos(
+                fechaInicio, fechaFin, tipoMovimientoId, estadoId, pageable);
+        
+        return ResponseEntity.ok(resultado);
+    }
 
 }

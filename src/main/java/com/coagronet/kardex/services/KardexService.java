@@ -1,6 +1,7 @@
 package com.coagronet.kardex.services;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +34,12 @@ import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
 import com.coagronet.kardex.dtos.KardexDTO;
+import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
+import com.coagronet.kardex.repositories.KardexSpecifications;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.repositories.OrdenCompraRepository;
 import com.coagronet.pedido.Pedido;
@@ -94,12 +99,6 @@ public class KardexService {
 	private static final Long ESTADO_INACTIVO = 2L;
 
 	@Transactional(readOnly = true)
-	public Page<KardexDTO> findAll(Pageable pageable) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-		return kardexRepository.findDtoByEmpresaIdOrderByIdAsc(empresaId, pageable);
-	}
-
-	@Transactional(readOnly = true)
 	public Optional<KardexDTO> findById(Long requestedId) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return kardexRepository.findDtoByIdAndEmpresaId(requestedId, empresaId);
@@ -122,7 +121,7 @@ public class KardexService {
 	public void update(Long requestedId, KardexDTO kardexDTO, String clientIp, String clientHost) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		// Esta entidad ya está dentro del Unit of Work
+		// Esta entidad ya est� dentro del Unit of Work
 		Kardex kardexExistente = entidadValidatorFacade.obtenerParaMutacion(requestedId, empresaId);
 
 		kardexMapper.updateEntityFromDto(kardexDTO, kardexExistente);
@@ -142,9 +141,9 @@ public class KardexService {
 		}
 	}
 
-	// Nota Arquitectónica: Si EntidadValidatorFacade.validarAlmacen() solo retorna la
+	// Nota Arquitect�nica: Si EntidadValidatorFacade.validarAlmacen() solo retorna la
 	// entidad
-	// sin hacer validaciones complejas de BD, cámbialo a EntityManager.getReference()
+	// sin hacer validaciones complejas de BD, c�mbialo a EntityManager.getReference()
 	// para usar Proxies y evitar ejecutar consultas SELECT masivas (N+1).
 	private void aplicarValidacionesYRelaciones(KardexDTO kardexDTO, Kardex kardex, Long empresaId) {
 		kardex.setEstado(entidadValidatorFacade.validarEstadoGeneral(kardexDTO.getEstadoId()));
@@ -197,18 +196,18 @@ public class KardexService {
 			}
 		}
 
-		// 3. VALIDACIÓN BULK DE RESPONSABLES CONTRA LA EMPRESA ACTUAL
+		// 3. VALIDACI�N BULK DE RESPONSABLES CONTRA LA EMPRESA ACTUAL
 		if (!idsResponsables.isEmpty()) {
 			Set<Long> responsablesValidos = usuarioRolRepository.findResponsablesValidos(idsResponsables,
 					currentEmpresaId, ESTADO_ACTIVO);
 
 			if (responsablesValidos.size() != idsResponsables.size()) {
 				throw new IllegalStateException(
-						"Uno o más responsables asignados no existen o no son empleados activos de tu empresa.");
+						"Uno o m�s responsables asignados no existen o no son empleados activos de tu empresa.");
 			}
 		}
 
-		// 4. VALIDACIÓN BULK DE PRESENTACIONES
+		// 4. VALIDACI�N BULK DE PRESENTACIONES
 		Map<Long, PresentacionProducto> mapaPresentaciones = presentacionProductoRepository
 			.findByIdInAndEstadoId(idsPresentaciones, ESTADO_ACTIVO)
 			.stream()
@@ -223,7 +222,7 @@ public class KardexService {
 			throw new EntidadNoEncontradaException("PresentacionProducto", idFaltante);
 		}
 
-		// 5. HIDRATACIÓN DEL KARDEX (Cabecera)
+		// 5. HIDRATACI�N DEL KARDEX (Cabecera)
 		TipoMovimiento tipoMovimiento = tipoMovimientoRepository
 			.findByIdAndEstadoId(request.tipoMovimientoId(), ESTADO_ACTIVO)
 			.orElseThrow(() -> new EntidadNoEncontradaException("TipoMovimiento", request.tipoMovimientoId()));
@@ -279,7 +278,7 @@ public class KardexService {
 
 		Kardex kardexGuardado = kardexRepository.save(kardex);
 
-		// 6. CREACIÓN DE ARTÍCULOS
+		// 6. CREACI�N DE ART�CULOS
 		List<ArticuloKardex> articulosAPersistir = new ArrayList<>();
 
 		for (ArticuloRequestDTO itemDTO : request.items()) {
@@ -321,5 +320,30 @@ public class KardexService {
 			.host(metadata.host())
 			.build();
 	}
+
+	@Transactional(readOnly = true)
+    public Page<KardexListDto> listarMovimientos(
+            OffsetDateTime fechaInicio, 
+            OffsetDateTime fechaFin, 
+            Long tipoMovimientoId, 
+            Long estadoId, 
+            Pageable pageable) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
+        
+        return kardexRepository.findAll(spec, pageable).map(kardex -> new KardexListDto(
+                kardex.getId(),
+                kardex.getFechaHora(),
+                kardex.getAlmacen().getNombre(),
+                kardex.getTipoMovimiento().getNombre(),
+                kardex.getEstado().getNombre(),
+                isAdmin && kardex.getEmpresa() != null ? kardex.getEmpresa().getNombre() : null
+        ));
+    }
 
 }
