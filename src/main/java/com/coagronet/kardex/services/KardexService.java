@@ -23,8 +23,6 @@ import com.coagronet.almacen.Almacen;
 import com.coagronet.almacen.repositories.AlmacenRepository;
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
-import com.coagronet.auditoria.AuthenticationService;
-import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
@@ -37,13 +35,11 @@ import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateResponseDTO;
-import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
-import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.kardex.repositories.KardexSpecifications;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -59,7 +55,6 @@ import com.coagronet.tipoMovimiento.repositories.TipoMovimientoRepository;
 import com.coagronet.user.User;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 import com.coagronet.utils.UserEmpresaService;
-import com.coagronet.validator.EntidadValidatorFacade;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -91,32 +86,11 @@ public class KardexService {
 
 	private final EntityManager entityManager;
 
-	private final KardexMapper kardexMapper;
-
 	private final UserEmpresaService userEmpresaService;
-
-	private final EntidadValidatorFacade entidadValidatorFacade;
-
-	private final AuthenticationService authenticationService;
-
-	private final RequestUtils requestUtils;
 
 	private static final Long ESTADO_ACTIVO = 1L;
 
 	private static final Long ESTADO_INACTIVO = 2L;
-
-	@Transactional
-	public void update(Long requestedId, KardexDTO kardexDTO, String clientIp, String clientHost) {
-		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
-
-		// Esta entidad ya est? dentro del Unit of Work
-		Kardex kardexExistente = entidadValidatorFacade.obtenerParaMutacion(requestedId, empresaId);
-
-		kardexMapper.updateEntityFromDto(kardexDTO, kardexExistente);
-		aplicarValidacionesYRelaciones(kardexDTO, kardexExistente, empresaId);
-		asignarDatosAuditoria(kardexExistente, clientIp, clientHost);
-
-	}
 
 	@Transactional
 	public void inactivarMovimiento(Long kardexId) {
@@ -127,36 +101,6 @@ public class KardexService {
 		if (filasAfectadas == 0) {
 			throw new MovimientoInvalidoException(kardexId);
 		}
-	}
-
-	// Nota Arquitect?nica: Si EntidadValidatorFacade.validarAlmacen() solo retorna la
-	// entidad
-	// sin hacer validaciones complejas de BD, c?mbialo a EntityManager.getReference()
-	// para usar Proxies y evitar ejecutar consultas SELECT masivas (N+1).
-	private void aplicarValidacionesYRelaciones(KardexDTO kardexDTO, Kardex kardex, Long empresaId) {
-		kardex.setEstado(entidadValidatorFacade.validarEstadoGeneral(kardexDTO.getEstadoId()));
-		kardex.setAlmacen(entidadValidatorFacade.validarAlmacen(kardexDTO.getAlmacenId(), empresaId));
-		kardex.setProduccion(entidadValidatorFacade.validarProduccion(kardexDTO.getProduccionId(), empresaId));
-		kardex.setTipoMovimiento(
-				entidadValidatorFacade.validarTipoMovimiento(kardexDTO.getTipoMovimientoId(), empresaId));
-
-		kardex.setPedido(kardexDTO.getPedidoId() != null
-				? entidadValidatorFacade.validarPedido(kardexDTO.getPedidoId(), empresaId) : null);
-
-		kardex.setOrdenCompra(kardexDTO.getOrdenCompraId() != null
-				? entidadValidatorFacade.validarOrdenCompra(kardexDTO.getOrdenCompraId(), empresaId) : null);
-
-		if (kardexDTO.getClienteProveedorId() != null) {
-			kardex
-				.setClienteProveedor(entidadValidatorFacade.validarClienteProveedor(kardexDTO.getClienteProveedorId()));
-		}
-	}
-
-	private void asignarDatosAuditoria(Kardex kardex, String ip, String host) {
-		kardex.setIp(ip);
-		kardex.setHost(host);
-		kardex.setUsername(authenticationService.getAuthenticatedUser().getUsername());
-		kardex.setRol(requestUtils.getAuthenticatedRole());
 	}
 
 	@Transactional(rollbackFor = Exception.class)

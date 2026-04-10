@@ -27,16 +27,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 import com.coagronet.articuloKardex.services.ArticuloKardexService;
-import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.services.KardexService;
-import com.coagronet.utils.UriBuilderUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,21 +52,6 @@ public class KardexController {
 	private final KardexService kardexService;
 
 	private final ArticuloKardexService articuloKardexService;
-
-	private final UriBuilderUtil uriBuilderUtil;
-
-	private final RequestUtils requestUtils;
-
-	@PutMapping("/{requestedId}")
-	public ResponseEntity<Void> actualizarKardex(@PathVariable Long requestedId,
-			@RequestBody @Valid KardexDTO kardexDTO, HttpServletRequest request) {
-
-		String ip = requestUtils.getClientIp(request);
-		String host = requestUtils.getClientHost(request);
-
-		kardexService.update(requestedId, kardexDTO, ip, host);
-		return ResponseEntity.noContent().build();
-	}
 
 	@DeleteMapping("/{requestedId}")
 	public ResponseEntity<Void> eliminarKardex(@PathVariable Long requestedId) {
