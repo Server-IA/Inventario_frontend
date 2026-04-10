@@ -22,7 +22,10 @@ public interface PresentacionProductoRepository extends JpaRepository<Presentaci
 
 	PresentacionProducto getReferenceByIdAndEmpresaId(Long id, Long empresaId);
 
-	@Query("SELECT p FROM PresentacionProducto p WHERE p.id IN :ids AND p.estado.id = :estadoId")
-	List<PresentacionProducto> findByIdInAndEstadoId(@Param("ids") Set<Long> ids, @Param("estadoId") Long estadoId);
+	@Query("SELECT p FROM PresentacionProducto p WHERE p.id = :id AND p.estado.id = :estadoId")
+	Optional<PresentacionProducto> findByIdInAndEstadoId(@Param("id") Long id, @Param("estadoId") Long estadoId);
+
+	@Query("SELECT p FROM PresentacionProducto p WHERE p.id IN :ids AND p.estado.id = :estado")
+	List<PresentacionProducto> findAllByIdInAndEstado(@Param("ids") Set<Long> ids, @Param("estado") Long estado);
 
 }

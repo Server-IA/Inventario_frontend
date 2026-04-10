@@ -32,6 +32,7 @@ import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
+import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.services.KardexService;
@@ -143,6 +144,25 @@ public class KardexController {
 	public ResponseEntity<KardexUpdateResponseDTO> getForUpdate(@PathVariable Long id) {
 		KardexUpdateResponseDTO response = kardexService.getKardexForUpdate(id);
 		return ResponseEntity.ok(response);
+	}
+
+	@PutMapping("/{id}")
+	@PreAuthorize("hasAuthority('KARDEX_UPDATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Void> actualizarMovimiento(@PathVariable Long id,
+			@Valid @RequestBody KardexUpdateRequestDTO request, HttpServletRequest httpRequest,
+			Authentication authentication) {
+
+		String roles = authentication.getAuthorities()
+			.stream()
+			.map(GrantedAuthority::getAuthority)
+			.collect(Collectors.joining(","));
+
+		MetadatosSeguridad metadata = new MetadatosSeguridad(authentication.getName(),
+				roles.isEmpty() ? "SIN_ROL" : roles, httpRequest.getRemoteAddr(), httpRequest.getRemoteHost());
+
+		kardexService.actualizarMovimientoKardex(id, request, metadata);
+
+		return ResponseEntity.noContent().build();
 	}
 
 }

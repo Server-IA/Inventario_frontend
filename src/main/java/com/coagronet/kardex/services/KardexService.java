@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -29,13 +31,16 @@ import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException;
 import com.coagronet.exceptionHandler.custom.MovimientoInvalidoException;
 import com.coagronet.exceptionHandler.custom.ProductoSinResponsableException;
+import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
+import com.coagronet.kardex.dtos.ArticuloUpdateRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateResponseDTO;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
+import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.mappers.KardexMapper;
@@ -192,7 +197,7 @@ public class KardexService {
 
 		// 4. VALIDACI?N BULK DE PRESENTACIONES
 		Map<Long, PresentacionProducto> mapaPresentaciones = presentacionProductoRepository
-			.findByIdInAndEstadoId(idsPresentaciones, ESTADO_ACTIVO)
+			.findAllByIdInAndEstado(idsPresentaciones, ESTADO_ACTIVO)
 			.stream()
 			.collect(Collectors.toMap(PresentacionProducto::getId, p -> p));
 
@@ -347,6 +352,210 @@ public class KardexService {
 				item.getCantidad(), item.getPrecio(),
 				item.getResponsable() != null ? item.getResponsable().getId() : null, item.getLote(),
 				item.getFechaVencimiento());
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public Kardex actualizarMovimientoKardex(Long kardexId, KardexUpdateRequestDTO request,
+			MetadatosSeguridad metadata) {
+
+		// 1. Carga de cabecera
+		Kardex kardex = kardexRepository.findById(kardexId)
+			.orElseThrow(() -> new RecursoNoEncontradoException("Kardex", kardexId));
+
+		// 2. Validaci?n de integridad empresarial (multitenancy)
+		validarRelacionesEmpresa(kardex, request);
+
+		// 3. Actualizaci?n de campos maestros
+		actualizarCamposMaestros(kardex, request, metadata);
+
+		// 4. Sincronizaci?n de ?tems con l?gica de devolutivos y sin eliminaci?n f?sica
+		sincronizarItems(kardex, request.items(), metadata);
+
+		return kardex;
+	}
+
+	private void validarRelacionesEmpresa(Kardex kardex, KardexUpdateRequestDTO request) {
+		almacenRepository.findByIdAndEstadoId(request.almacenId(), ESTADO_ACTIVO)
+			.orElseThrow(() -> new EntidadNoEncontradaException("Almacen", request.almacenId()));
+
+		if (request.almacenDestinoId() != null) {
+			almacenRepository.findByIdAndEstadoId(request.almacenDestinoId(), ESTADO_ACTIVO)
+				.orElseThrow(() -> new EntidadNoEncontradaException("Almacen Destino", request.almacenDestinoId()));
+
+		}
+
+		if (request.ordenCompraId() != null) {
+			ordenCompraRepository.findByIdAndEstadoId(request.ordenCompraId(), ESTADO_ACTIVO)
+				.orElseThrow(() -> new EntidadNoEncontradaException("OrdenCompra", request.ordenCompraId()));
+
+		}
+
+		if (request.pedidoId() != null) {
+			pedidoRepository.findByIdAndEstadoId(request.pedidoId(), ESTADO_ACTIVO)
+				.orElseThrow(() -> new EntidadNoEncontradaException("Pedido", request.pedidoId()));
+
+		}
+
+		if (request.produccionId() != null) {
+			produccionRepository.findByIdAndEstadoId(request.produccionId(), ESTADO_ACTIVO)
+				.orElseThrow(() -> new EntidadNoEncontradaException("Produccion", request.produccionId()));
+		}
+
+		if (request.clienteProveedorId() != null) {
+			empresaRepository.findByIdAndEstadoId(request.clienteProveedorId(), ESTADO_ACTIVO)
+				.orElseThrow(
+						() -> new EntidadNoEncontradaException("ClienteProveedorId", request.clienteProveedorId()));
+		}
+	}
+
+	private void actualizarCamposMaestros(Kardex kardex, KardexUpdateRequestDTO request, MetadatosSeguridad metadata) {
+		// Asignaci?n de almacenes, OC, pedido, producci?n, cliente/proveedor
+		// y metadatos de auditor?a.
+		kardex.setAlmacen(entityManager.getReference(Almacen.class, request.almacenId()));
+		kardex.setAlmacenDestino(request.almacenDestinoId() != null
+				? entityManager.getReference(Almacen.class, request.almacenDestinoId()) : null);
+		kardex.setOrdenCompra(request.ordenCompraId() != null
+				? entityManager.getReference(OrdenCompra.class, request.ordenCompraId()) : null);
+		kardex.setPedido(
+				request.pedidoId() != null ? entityManager.getReference(Pedido.class, request.pedidoId()) : null);
+		kardex.setProduccion(request.produccionId() != null
+				? entityManager.getReference(Produccion.class, request.produccionId()) : null);
+		kardex.setClienteProveedor(request.clienteProveedorId() != null
+				? entityManager.getReference(Empresa.class, request.clienteProveedorId()) : null);
+		kardex.setDescripcion(request.descripcion());
+	}
+
+	private void sincronizarItems(Kardex kardex, List<ArticuloUpdateRequestDTO> itemsRequest,
+			MetadatosSeguridad metadata) {
+
+		Map<Long, ArticuloKardex> itemsExistentes = kardex.getItems()
+			.stream()
+			.filter(item -> item.getId() != null)
+			.collect(Collectors.toMap(ArticuloKardex::getId, Function.identity()));
+
+		Set<Long> idsProcesados = new HashSet<>();
+
+		for (ArticuloUpdateRequestDTO itemDTO : itemsRequest) {
+			PresentacionProducto presentacion = presentacionProductoRepository
+				.findByIdInAndEstadoId(itemDTO.presentacionProductoId(), ESTADO_ACTIVO)
+				.orElseThrow(() -> new EntidadNoEncontradaException("PresentacionProducto",
+						itemDTO.presentacionProductoId()));
+			if (itemDTO.id() != null && itemsExistentes.containsKey(itemDTO.id())) {
+				// Actualizaci?n de ?tem existente
+				ArticuloKardex existente = itemsExistentes.get(itemDTO.id());
+				procesarActualizacionItem(existente, itemDTO, presentacion, metadata, kardex);
+				idsProcesados.add(itemDTO.id());
+			}
+			else if (itemDTO.id() == null) {
+				// Nuevo ?tem
+				List<ArticuloKardex> nuevos = crearItemsDesdeDTO(itemDTO, presentacion, kardex, metadata);
+				kardex.getItems().addAll(nuevos);
+			}
+		}
+
+		// Inactivaci?n l?gica de ?tems no incluidos (NO ELIMINACI?N F?SICA)
+		for (ArticuloKardex item : kardex.getItems()) {
+			if (item.getId() != null && !idsProcesados.contains(item.getId())) {
+				item.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO));
+				actualizarAuditoriaItem(item, metadata);
+			}
+		}
+	}
+
+	private void procesarActualizacionItem(ArticuloKardex existente, ArticuloUpdateRequestDTO dto,
+			PresentacionProducto presentacion, MetadatosSeguridad metadata, Kardex kardex) {
+
+		boolean esDevolutivo = presentacion.getDesgregar();
+
+		if (esDevolutivo) {
+			// Para productos devolutivos, no se permite actualizar cantidad directamente
+			// Se debe inactivar el ?tem actual y generar los nuevos seg?n la cantidad
+			// solicitada
+			if (!Objects.equals(existente.getCantidad(), dto.cantidad())) {
+				// Inactivar ?tem antiguo
+				existente.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO));
+				actualizarAuditoriaItem(existente, metadata);
+
+				// Crear nuevos ?tems individuales (uno por unidad)
+				List<ArticuloKardex> nuevos = crearItemsDesdeDTO(dto, presentacion, kardex, metadata);
+				kardex.getItems().addAll(nuevos);
+				return;
+			}
+			// Si cantidad no cambi?, se actualizan otros campos
+		}
+
+		// Actualizaci?n normal para productos no devolutivos
+		existente.setCantidad(dto.cantidad());
+		existente.setPrecio(dto.precio());
+		existente.setPresentacionProducto(presentacion);
+		existente.setLote(dto.lote());
+		existente.setFechaVencimiento(dto.fechaVencimiento());
+		existente.setResponsable(obtenerReferenciaUsuario(dto.responsableId()));
+		actualizarAuditoriaItem(existente, metadata);
+	}
+
+	private List<ArticuloKardex> crearItemsDesdeDTO(ArticuloUpdateRequestDTO dto, PresentacionProducto presentacion,
+			Kardex kardex, MetadatosSeguridad metadata) {
+
+		boolean esDevolutivo = presentacion.getDesgregar();
+		List<ArticuloKardex> items = new ArrayList<>();
+
+		if (esDevolutivo) {
+			// Validaci?n: responsable obligatorio
+			if (dto.responsableId() == null) {
+				throw new ProductoSinResponsableException("Producto devolutivo requiere responsable asignado");
+			}
+			// Crear un ?tem por cada unidad
+			for (int i = 0; i < dto.cantidad().intValueExact(); i++) {
+				ArticuloKardex item = ArticuloKardex.builder()
+					.kardex(kardex)
+					.presentacionProducto(presentacion)
+					.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+					.responsable(obtenerReferenciaUsuario(dto.responsableId()))
+					.cantidad(BigDecimal.ONE)
+					.precio(dto.precio())
+					.lote(dto.lote())
+					.fechaVencimiento(dto.fechaVencimiento())
+					.username(metadata.username())
+					.rol(metadata.rol())
+					.ip(metadata.ip())
+					.host(metadata.host())
+					.build();
+				items.add(item);
+			}
+		}
+		else {
+			// Producto normal: un solo ?tem con la cantidad indicada
+			ArticuloKardex item = ArticuloKardex.builder()
+				.kardex(kardex)
+				.presentacionProducto(presentacion)
+				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+				.responsable(obtenerReferenciaUsuario(dto.responsableId()))
+				.cantidad(dto.cantidad())
+				.precio(dto.precio())
+				.lote(dto.lote())
+				.fechaVencimiento(dto.fechaVencimiento())
+				.username(metadata.username())
+				.rol(metadata.rol())
+				.ip(metadata.ip())
+				.host(metadata.host())
+				.build();
+			items.add(item);
+		}
+		return items;
+	}
+
+	private void actualizarAuditoriaItem(ArticuloKardex item, MetadatosSeguridad metadata) {
+		item.setUsername(metadata.username());
+		item.setRol(metadata.rol());
+		item.setIp(metadata.ip());
+		item.setHost(metadata.host());
+	}
+
+	private User obtenerReferenciaUsuario(Long usuarioId) {
+		if (usuarioId == null)
+			return null;
+		return entityManager.getReference(User.class, usuarioId);
 	}
 
 }
