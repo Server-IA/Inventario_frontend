@@ -74,7 +74,7 @@ public class ArticuloKardexService {
 	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO, HttpServletRequest request) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		Kardex kardex = entidadValidatorFacade.obtenerParaMutacion(articuloKardexDTO.getKardexId(), empresaId);
+		Kardex kardex = kardexRepository.findById(articuloKardexDTO.getKardexId()).orElseThrow();
 		entidadValidatorFacade.validarEstadoGeneral(articuloKardexDTO.getEstadoId());
 		entidadValidatorFacade.validarProductoPresentacion(articuloKardexDTO.getPresentacionProductoId(), empresaId);
 
@@ -90,11 +90,11 @@ public class ArticuloKardexService {
 	public void update(Long requestedId, ArticuloKardexDTO dto) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		ArticuloKardex articuloExistente = articuloKardexRepository.findByIdAndEmpresaId(requestedId, empresaId)
-			.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
+			.orElseThrow(() -> new NotFoundException("El art?culo de kardex no fue encontrado."));
 
 		articuloKardexMapper.updateEntityFromDto(dto, articuloExistente);
 
-		articuloExistente.setKardex(kardexRepository.getReferenceByIdAndEmpresaId(dto.getKardexId(), empresaId));
+		articuloExistente.setKardex(kardexRepository.findById(dto.getKardexId()).orElseThrow());
 		articuloExistente.setPresentacionProducto(presentacionProductoRepository
 			.getReferenceByIdAndEmpresaId(dto.getPresentacionProductoId(), empresaId));
 		articuloExistente.setEstado(estadoRepository.getReferenceById(dto.getEstadoId()));
@@ -109,22 +109,16 @@ public class ArticuloKardexService {
 		int eliminados = articuloKardexRepository.softDeleteByIdAndEmpresaId(id, empresaId);
 
 		if (eliminados == 0) {
-			throw new NotFoundException("El artículo de kardex no fue encontrado.");
+			throw new NotFoundException("El art?culo de kardex no fue encontrado.");
 		}
 	}
 
 	@Transactional(readOnly = true)
-    public Page<KardexItemResponseDto> getKardexItems(
-            Long kardexId, 
-            Long productoId, 
-            Long estadoId, 
-            LocalDateTime fechaInicio, 
-            LocalDateTime fechaFin, 
-            Pageable pageable) {
-        
-        return articuloKardexRepository.findItemsByKardexIdWithFilters(
-                kardexId, productoId, estadoId, fechaInicio, fechaFin, pageable
-        );
-    }
+	public Page<KardexItemResponseDto> getKardexItems(Long kardexId, Long productoId, Long estadoId,
+			LocalDateTime fechaInicio, LocalDateTime fechaFin, Pageable pageable) {
+
+		return articuloKardexRepository.findItemsByKardexIdWithFilters(kardexId, productoId, estadoId, fechaInicio,
+				fechaFin, pageable);
+	}
 
 }

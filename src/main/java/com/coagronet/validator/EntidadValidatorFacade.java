@@ -15,7 +15,6 @@ import com.coagronet.espacio.Espacio;
 import com.coagronet.estado.Estado;
 import com.coagronet.evaluacion.Evaluacion;
 import com.coagronet.evaluacionitem.EvaluacionItem;
-import com.coagronet.kardex.Kardex;
 import com.coagronet.movimiento.Movimiento;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.pedido.Pedido;
@@ -39,7 +38,6 @@ import com.coagronet.validator.inventario.entidades.EmpresaValidator;
 import com.coagronet.validator.inventario.entidades.EspacioValidator;
 import com.coagronet.validator.inventario.entidades.EvaluacionItemValidator;
 import com.coagronet.validator.inventario.entidades.EvaluacionValidator;
-import com.coagronet.validator.inventario.entidades.KardexValidator;
 import com.coagronet.validator.inventario.entidades.MovimientoValidator;
 import com.coagronet.validator.inventario.entidades.OrdenCompraValidator;
 import com.coagronet.validator.inventario.entidades.PedidoCotizacionValidator;
@@ -65,8 +63,6 @@ public class EntidadValidatorFacade {
 	private final ValidatorRegistry validatorRegistry;
 
 	private final TipoMovimientoValidator tipoMovimientoValidator;
-
-	private final KardexValidator kardexValidator;
 
 	private final PedidoValidator pedidoValidator;
 
@@ -137,11 +133,6 @@ public class EntidadValidatorFacade {
 
 	public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
 		return tipoMovimientoValidator.validarTipoMovimiento(tipoMovimientoId, empresaId);
-	}
-
-	// Si tu servicio update() necesita la entidad para inyectarle DTOs:
-	public Kardex obtenerParaMutacion(Long kardexId, Long empresaId) {
-		return kardexValidator.obtenerKardexParaActualizar(kardexId, empresaId);
 	}
 
 	public OrdenCompra validarOrdenCompra(Long ordenCompraId, Long empresaId) {

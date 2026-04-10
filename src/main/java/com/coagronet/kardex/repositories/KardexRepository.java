@@ -13,23 +13,6 @@ import com.coagronet.kardex.Kardex;
 
 public interface KardexRepository extends JpaRepository<Kardex, Long>, JpaSpecificationExecutor<Kardex> {
 
-	@Modifying(clearAutomatically = true)
-	@Query("UPDATE Kardex k SET k.estado.id = 2 WHERE k.id = :id AND k.empresa.id = :empresaId")
-	int inactivarByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
-
-	Optional<Kardex> findByIdAndEmpresaId(Long id, Long empresaId);
-
-	Optional<Kardex> findByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId);
-
-	boolean existsByIdAndEmpresaId(Long id, Long empresaId);
-
-	boolean existsByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId);
-
-	@Query("SELECT k.estado.id FROM Kardex k WHERE k.id = :id AND k.empresa.id = :empresaId")
-	Optional<Long> findEstadoIdByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
-
-	Kardex getReferenceByIdAndEmpresaId(Long id, Long empresaId);
-
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query("UPDATE Kardex k SET k.estado.id = :estadoInactivoId WHERE k.id = :kardexId AND k.estado.id = :estadoActivoId AND k.empresa.id = :empresaId")
 	int inactivarKardex(@Param("kardexId") Long kardexId, @Param("empresaId") Long empresaId,
