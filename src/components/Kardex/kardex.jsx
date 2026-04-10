@@ -170,7 +170,6 @@ export default function Kardex() {
             <KardexArticulosSection
                 sectionRef={articulosSectionRef}
                 selectedRow={selectedRow}
-                setSelectedKardex={setSelectedRow}
                 onReloadArticulos={() => setReloadArticulos((prev) => !prev)}
                 articuloItems={articuloItems}
                 articuloLoading={articuloLoading}

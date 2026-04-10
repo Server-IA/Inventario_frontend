@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import GridArticuloKardex from "./GridArticuloKardex";
 import FormArticuloKardex from "./FormArticuloKardex";
 
@@ -9,7 +9,6 @@ import FormArticuloKardex from "./FormArticuloKardex";
 export function KardexArticulosSection({
     sectionRef,
     selectedRow,
-    setSelectedKardex,
     onReloadArticulos,
     articuloItems,
     articuloLoading,
@@ -34,30 +33,16 @@ export function KardexArticulosSection({
                 mt: 4,
             }}
         >
-            <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mb={2}
-            >
-                <Typography variant="h6">Articulos del Kardex seleccionado</Typography>
-                <Box display="flex" gap={2}>
-                    <FormArticuloKardex
-                        selectedRow={selectedArticulo}
-                        kardexId={selectedRow?.id || ""}
-                        setSelectedRow={setSelectedArticulo}
-                        setMessage={setMessage}
-                        reloadData={onReloadArticulos}
-                    />
-                    <Button
-                        variant="outlined"
-                        sx={{ textTransform: "none" }}
-                        onClick={() => setSelectedKardex?.(null)}
-                    >
-                        Cerrar
-                    </Button>
-                </Box>
-            </Box>
+            <Typography variant="h6" mb={1}>
+                Articulos del Kardex seleccionado
+            </Typography>
+            <FormArticuloKardex
+                selectedRow={selectedArticulo}
+                kardexId={selectedRow?.id || ""}
+                setSelectedRow={setSelectedArticulo}
+                setMessage={setMessage}
+                reloadData={onReloadArticulos}
+            />
 
             <GridArticuloKardex
                 items={articuloItems}

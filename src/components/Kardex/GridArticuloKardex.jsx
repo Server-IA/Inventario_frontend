@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  DataGrid,
   esES,
   GridToolbarContainer,
   GridToolbarColumnsButton,
@@ -11,6 +10,7 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import AppDataGrid from "../common/AppDataGrid";
 
 const LS_KEY = "gridArticuloKardex:columnVisibility:v1";
 
@@ -166,49 +166,47 @@ export default function GridArticuloKardex({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <DataGrid
+      <AppDataGrid
         rows={Array.isArray(filteredRows) ? filteredRows : []}
         columns={columns}
         getRowId={(row) => row.id}
         loading={loading}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
         checkboxSelection
-        disableRowSelectionOnClick
-        autoHeight
-        pagination
-        pageSizeOptions={[5, 10, 20, 50]}
-        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         rowSelectionModel={rowSelectionModel ?? undefined}
         onRowSelectionModelChange={onRowSelectionModelChange ?? handleLocalSelection}
-        onRowClick={(params) => setSelectedRow?.(params.row)}
+        pageSizeOptions={[5, 10, 20, 50]}
+        localeText={esES.components.MuiDataGrid.defaultProps.localeText}
+        paginationModel={
+          serverPaging
+            ? {
+                page: paginationModel.page ?? 0,
+                size: paginationModel.pageSize ?? paginationModel.size ?? 10,
+              }
+            : undefined
+        }
+        setPaginationModel={
+          serverPaging
+            ? (next) => {
+                onPaginationModelChange?.({
+                  page: next.page ?? 0,
+                  pageSize: next.size ?? next.pageSize ?? 10,
+                  size: next.size ?? next.pageSize ?? 10,
+                });
+              }
+            : undefined
+        }
+        rowCount={
+          serverPaging
+            ? Math.max(Number(rowCount ?? 0), Array.isArray(filteredRows) ? filteredRows.length : 0)
+            : undefined
+        }
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         slots={{ toolbar: ArticuloToolbar }}
         slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
-        paginationMode={serverPaging ? "server" : "client"}
-        {...(serverPaging
-          ? {
-              rowCount: Math.max(
-                Number(rowCount ?? 0),
-                Array.isArray(filteredRows) ? filteredRows.length : 0
-              ),
-              paginationModel: {
-                page: paginationModel.page ?? 0,
-                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
-              },
-              onPaginationModelChange: (model) => {
-                const next = {
-                  page: model.page ?? 0,
-                  pageSize: model.pageSize ?? 10,
-                  size: model.pageSize ?? 10,
-                };
-                onPaginationModelChange?.(next);
-              },
-            }
-          : {
-              initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
-              },
-            })}
+        containerSx={{ borderRadius: 4 }}
       />
     </Box>
   );
@@ -232,4 +230,3 @@ GridArticuloKardex.propTypes = {
   }),
   onPaginationModelChange: PropTypes.func,
 };
-

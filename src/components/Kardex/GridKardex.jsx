@@ -1,14 +1,12 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { DataGrid, esES } from "@mui/x-data-grid";
+import { esES } from "@mui/x-data-grid";
 import { KardexToolbar } from "./KardexToolbar";
+import AppDataGrid from "../common/AppDataGrid";
 import { createLookupMap, safeDateTime, formatEstado } from "./utils/kardexFormatters";
 
 const LS_KEY = "gridKardex:columnVisibility:v1";
 
-/**
- * @description Grid para visualizar listado de kardexes con filtros
- */
 export default function GridKardex({
     kardexes = [],
     almacenes = [],
@@ -170,19 +168,23 @@ export default function GridKardex({
 
     return (
         <div style={{ width: "100%" }}>
-            <DataGrid
+            <AppDataGrid
                 rows={Array.isArray(kardexes) ? kardexes : []}
                 columns={columns}
                 getRowId={(row) => row.id}
                 loading={loading}
+                selectedRow={selectedRow}
+                setSelectedRow={setSelectedRow}
                 autoHeight
-                pagination
                 pageSizeOptions={[5, 10, 20, 50]}
-                disableRowSelectionOnClick
-                rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-                onRowClick={(params) => setSelectedRow?.(params.row)}
                 localeText={esES.components.MuiDataGrid.defaultProps.localeText}
-                paginationMode={serverPaging ? "server" : "client"}
+                paginationModel={serverPaging ? { page: modelPage, size: modelPageSize } : undefined}
+                setPaginationModel={serverPaging ? setPaginationModel : undefined}
+                rowCount={
+                    serverPaging
+                        ? Math.max(Number(rowCount ?? 0), Array.isArray(kardexes) ? kardexes.length : 0)
+                        : undefined
+                }
                 columnVisibilityModel={columnVisibilityModel}
                 onColumnVisibilityModelChange={handleVisibilityChange}
                 slots={{ toolbar: KardexToolbar }}
@@ -194,27 +196,8 @@ export default function GridKardex({
                         tiposMovimiento,
                     },
                 }}
-                {...(serverPaging
-                    ? {
-                        rowCount: Math.max(
-                            Number(rowCount ?? 0),
-                            Array.isArray(kardexes) ? kardexes.length : 0
-                        ),
-                        paginationModel: { page: modelPage, pageSize: modelPageSize },
-                        onPaginationModelChange: (model) => {
-                            const next = {
-                                page: model.page ?? 0,
-                                pageSize: model.pageSize ?? 10,
-                                size: model.pageSize ?? 10,
-                            };
-                            setPaginationModel?.(next);
-                        },
-                    }
-                    : {
-                        initialState: {
-                            pagination: { paginationModel: { page: 0, pageSize: 10 } },
-                        },
-                    })}
+                containerSx={{ borderRadius: 4 }}
+                sx={{ minHeight: 360 }}
             />
         </div>
     );
@@ -242,4 +225,3 @@ GridKardex.propTypes = {
     filters: PropTypes.object,
     setFilters: PropTypes.func,
 };
-

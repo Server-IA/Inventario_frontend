@@ -303,7 +303,7 @@ export default function FormArticuloKardex({
 
   return (
     <>
-      <Box display="flex" gap={2} justifyContent="flex-end" mb={2}>
+      <Box display="flex" gap={2} justifyContent="flex-start" mb={2}>
         <Button variant="outlined" sx={{ textTransform: "none" }} onClick={create}>
           + Agregar
         </Button>
