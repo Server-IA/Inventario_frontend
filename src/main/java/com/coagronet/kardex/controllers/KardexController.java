@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 import com.coagronet.articuloKardex.services.ArticuloKardexService;
@@ -33,6 +32,7 @@ import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
+import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.services.KardexService;
 import com.coagronet.utils.UriBuilderUtil;
@@ -77,75 +77,72 @@ public class KardexController {
 	}
 
 	@Operation(summary = "Registrar un movimiento de Kardex",
-			description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignación de responsables para productos devolutivos.")
+			description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignaci?n de responsables para productos devolutivos.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Movimiento de Kardex registrado exitosamente."),
 			@ApiResponse(responseCode = "403", description = "Acceso denegado. Rol insuficiente."),
 			@ApiResponse(responseCode = "422",
-					description = "Error de validación (ej. falta de responsable para producto devolutivo o el JSON es inválido).",
+					description = "Error de validaci?n (ej. falta de responsable para producto devolutivo o el JSON es inv?lido).",
 					content = @Content(mediaType = "application/problem+json",
 							schema = @Schema(implementation = ProblemDetail.class))) })
 	@PostMapping("/movimientos")
-	@PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('KARDEX_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> registrarMovimiento(@Valid @RequestBody KardexRequestDTO request,
 			HttpServletRequest httpRequest, Authentication authentication) {
 
-		// 1. Extracción segura de roles (Evita NoSuchElementException y soporta múltiples
-		// roles)
 		String roles = authentication.getAuthorities()
 			.stream()
 			.map(GrantedAuthority::getAuthority)
 			.collect(Collectors.joining(","));
 
 		MetadatosSeguridad metadata = new MetadatosSeguridad(authentication.getName(),
-				roles.isEmpty() ? "SIN_ROL" : roles, // Fallback seguro
-				httpRequest.getRemoteAddr(), httpRequest.getRemoteHost());
+				roles.isEmpty() ? "SIN_ROL" : roles, httpRequest.getRemoteAddr(), httpRequest.getRemoteHost());
 
-		// 2. Procesamiento (El tenant se inyecta automáticamente bajo el capó vía
-		// ThreadLocal de Security)
 		Kardex kardexGuardado = kardexService.procesarMovimientoKardex(request, metadata);
 
-		// 3. Construcción dinámica del header 'Location' según el estándar REST
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
 			.path("/{id}")
-			.buildAndExpand(kardexGuardado.getId()) // Requiere que el método retorne la
-													// entidad persistida
+			.buildAndExpand(kardexGuardado.getId())
 			.toUri();
 
 		return ResponseEntity.created(location).build();
 	}
 
 	@GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
-    public ResponseEntity<Page<KardexListDto>> listarMovimientos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
-            @RequestParam(required = false) Long tipoMovimientoId,
-            @RequestParam(required = false) Long estadoId,
-            @PageableDefault(size = 20) Pageable pageable) {
+	@PreAuthorize("hasAuthority('KARDEX_READ_ALL') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Page<KardexListDto>> listarMovimientos(
+			@RequestParam(required = false) @DateTimeFormat(
+					iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
+			@RequestParam(required = false) Long tipoMovimientoId, @RequestParam(required = false) Long estadoId,
+			@PageableDefault(size = 20) Pageable pageable) {
 
-        Page<KardexListDto> resultado = kardexService.listarMovimientos(
-                fechaInicio, fechaFin, tipoMovimientoId, estadoId, pageable);
-        
-        return ResponseEntity.ok(resultado);
-    }
+		Page<KardexListDto> resultado = kardexService.listarMovimientos(fechaInicio, fechaFin, tipoMovimientoId,
+				estadoId, pageable);
+
+		return ResponseEntity.ok(resultado);
+	}
 
 	@GetMapping("/{kardexId}/items")
-	@PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
-    //@PreAuthorize("hasAuthority('placeholder')")
-    public ResponseEntity<Page<KardexItemResponseDto>> listItems(
-            @PathVariable Long kardexId,
-            @RequestParam(required = false) Long productoId,
-            @RequestParam(required = false) Long estadoId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
-            @PageableDefault(size = 20) Pageable pageable) {
+	@PreAuthorize("hasAuthority('KARDEX_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Page<KardexItemResponseDto>> listItems(@PathVariable Long kardexId,
+			@RequestParam(required = false) Long productoId, @RequestParam(required = false) Long estadoId,
+			@RequestParam(required = false) @DateTimeFormat(
+					iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
+			@PageableDefault(size = 20) Pageable pageable) {
 
-        Page<KardexItemResponseDto> results = articuloKardexService.getKardexItems(
-                kardexId, productoId, estadoId, fechaInicio, fechaFin, pageable
-        );
+		Page<KardexItemResponseDto> results = articuloKardexService.getKardexItems(kardexId, productoId, estadoId,
+				fechaInicio, fechaFin, pageable);
 
-        return ResponseEntity.ok(results);
-    }
+		return ResponseEntity.ok(results);
+	}
+
+	@GetMapping("/{id}/update-form")
+	@PreAuthorize("hasAuthority('KARDEX_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<KardexUpdateResponseDTO> getForUpdate(@PathVariable Long id) {
+		KardexUpdateResponseDTO response = kardexService.getKardexForUpdate(id);
+		return ResponseEntity.ok(response);
+	}
 
 }

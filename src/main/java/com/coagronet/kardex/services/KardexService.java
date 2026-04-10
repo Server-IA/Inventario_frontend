@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,9 +32,11 @@ import com.coagronet.exceptionHandler.custom.ProductoSinResponsableException;
 import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
+import com.coagronet.kardex.dtos.ArticuloUpdateResponseDTO;
 import com.coagronet.kardex.dtos.KardexDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
+import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.mappers.KardexMapper;
 import com.coagronet.kardex.repositories.KardexRepository;
@@ -56,6 +57,7 @@ import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -102,7 +104,7 @@ public class KardexService {
 	public void update(Long requestedId, KardexDTO kardexDTO, String clientIp, String clientHost) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		// Esta entidad ya est� dentro del Unit of Work
+		// Esta entidad ya est? dentro del Unit of Work
 		Kardex kardexExistente = entidadValidatorFacade.obtenerParaMutacion(requestedId, empresaId);
 
 		kardexMapper.updateEntityFromDto(kardexDTO, kardexExistente);
@@ -122,9 +124,9 @@ public class KardexService {
 		}
 	}
 
-	// Nota Arquitect�nica: Si EntidadValidatorFacade.validarAlmacen() solo retorna la
+	// Nota Arquitect?nica: Si EntidadValidatorFacade.validarAlmacen() solo retorna la
 	// entidad
-	// sin hacer validaciones complejas de BD, c�mbialo a EntityManager.getReference()
+	// sin hacer validaciones complejas de BD, c?mbialo a EntityManager.getReference()
 	// para usar Proxies y evitar ejecutar consultas SELECT masivas (N+1).
 	private void aplicarValidacionesYRelaciones(KardexDTO kardexDTO, Kardex kardex, Long empresaId) {
 		kardex.setEstado(entidadValidatorFacade.validarEstadoGeneral(kardexDTO.getEstadoId()));
@@ -177,18 +179,18 @@ public class KardexService {
 			}
 		}
 
-		// 3. VALIDACI�N BULK DE RESPONSABLES CONTRA LA EMPRESA ACTUAL
+		// 3. VALIDACI?N BULK DE RESPONSABLES CONTRA LA EMPRESA ACTUAL
 		if (!idsResponsables.isEmpty()) {
 			Set<Long> responsablesValidos = usuarioRolRepository.findResponsablesValidos(idsResponsables,
 					currentEmpresaId, ESTADO_ACTIVO);
 
 			if (responsablesValidos.size() != idsResponsables.size()) {
 				throw new IllegalStateException(
-						"Uno o m�s responsables asignados no existen o no son empleados activos de tu empresa.");
+						"Uno o m?s responsables asignados no existen o no son empleados activos de tu empresa.");
 			}
 		}
 
-		// 4. VALIDACI�N BULK DE PRESENTACIONES
+		// 4. VALIDACI?N BULK DE PRESENTACIONES
 		Map<Long, PresentacionProducto> mapaPresentaciones = presentacionProductoRepository
 			.findByIdInAndEstadoId(idsPresentaciones, ESTADO_ACTIVO)
 			.stream()
@@ -203,7 +205,7 @@ public class KardexService {
 			throw new EntidadNoEncontradaException("PresentacionProducto", idFaltante);
 		}
 
-		// 5. HIDRATACI�N DEL KARDEX (Cabecera)
+		// 5. HIDRATACI?N DEL KARDEX (Cabecera)
 		TipoMovimiento tipoMovimiento = tipoMovimientoRepository
 			.findByIdAndEstadoId(request.tipoMovimientoId(), ESTADO_ACTIVO)
 			.orElseThrow(() -> new EntidadNoEncontradaException("TipoMovimiento", request.tipoMovimientoId()));
@@ -259,7 +261,7 @@ public class KardexService {
 
 		Kardex kardexGuardado = kardexRepository.save(kardex);
 
-		// 6. CREACI�N DE ART�CULOS
+		// 6. CREACI?N DE ART?CULOS
 		List<ArticuloKardex> articulosAPersistir = new ArrayList<>();
 
 		for (ArticuloRequestDTO itemDTO : request.items()) {
@@ -303,28 +305,48 @@ public class KardexService {
 	}
 
 	@Transactional(readOnly = true)
-    public Page<KardexListDto> listarMovimientos(
-            OffsetDateTime fechaInicio, 
-            OffsetDateTime fechaFin, 
-            Long tipoMovimientoId, 
-            Long estadoId, 
-            Pageable pageable) {
+	public Page<KardexListDto> listarMovimientos(OffsetDateTime fechaInicio, OffsetDateTime fechaFin,
+			Long tipoMovimientoId, Long estadoId, Pageable pageable) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = auth != null && auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		boolean isAdmin = auth != null && auth.getAuthorities()
+			.stream()
+			.map(GrantedAuthority::getAuthority)
+			.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
 
-        var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
-        
-        return kardexRepository.findAll(spec, pageable).map(kardex -> new KardexListDto(
-                kardex.getId(),
-                kardex.getFechaHora(),
-                kardex.getAlmacen().getNombre(),
-                kardex.getTipoMovimiento().getNombre(),
-                kardex.getEstado().getNombre(),
-                isAdmin && kardex.getEmpresa() != null ? kardex.getEmpresa().getNombre() : null
-        ));
-    }
+		var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
+
+		return kardexRepository.findAll(spec, pageable)
+			.map(kardex -> new KardexListDto(kardex.getId(), kardex.getFechaHora(), kardex.getAlmacen().getNombre(),
+					kardex.getTipoMovimiento().getNombre(), kardex.getEstado().getNombre(),
+					isAdmin && kardex.getEmpresa() != null ? kardex.getEmpresa().getNombre() : null));
+	}
+
+	@Transactional(readOnly = true)
+	public KardexUpdateResponseDTO getKardexForUpdate(Long id) {
+		return kardexRepository.findWithItemsById(id)
+			.map(this::mapToUpdateDTO)
+			.orElseThrow(() -> new EntityNotFoundException("Kardex no encontrado con ID: " + id));
+	}
+
+	private KardexUpdateResponseDTO mapToUpdateDTO(Kardex kardex) {
+		return new KardexUpdateResponseDTO(kardex.getId(),
+				kardex.getTipoMovimiento() != null ? kardex.getTipoMovimiento().getId() : null,
+				kardex.getAlmacen() != null ? kardex.getAlmacen().getId() : null,
+				kardex.getAlmacenDestino() != null ? kardex.getAlmacenDestino().getId() : null,
+				kardex.getOrdenCompra() != null ? kardex.getOrdenCompra().getId() : null,
+				kardex.getPedido() != null ? kardex.getPedido().getId() : null,
+				kardex.getProduccion() != null ? kardex.getProduccion().getId() : null,
+				kardex.getClienteProveedor() != null ? kardex.getClienteProveedor().getId() : null,
+				kardex.getDescripcion(), kardex.getItems().stream().map(this::mapItemToUpdateDTO).toList());
+	}
+
+	private ArticuloUpdateResponseDTO mapItemToUpdateDTO(ArticuloKardex item) {
+		return new ArticuloUpdateResponseDTO(item.getId(),
+				item.getPresentacionProducto() != null ? item.getPresentacionProducto().getId() : null,
+				item.getCantidad(), item.getPrecio(),
+				item.getResponsable() != null ? item.getResponsable().getId() : null, item.getLote(),
+				item.getFechaVencimiento());
+	}
 
 }

@@ -2,6 +2,8 @@ package com.coagronet.kardex;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.annotations.DynamicInsert;
@@ -15,6 +17,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.coagronet.almacen.Almacen;
+import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -22,6 +25,7 @@ import com.coagronet.pedido.Pedido;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -32,6 +36,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -89,12 +94,13 @@ public class Kardex {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id",nullable = false, insertable = false, updatable = false)
-    private Empresa empresa;
+	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false, insertable = false,
+			updatable = false)
+	private Empresa empresa;
 
-	@TenantId 
-    @Column(name = "kar_empresa_id")
-    private Long tenantEmpresaId;
+	@TenantId
+	@Column(name = "kar_empresa_id")
+	private Long tenantEmpresaId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kar_cliente_proveedor_id", referencedColumnName = "emp_id")
@@ -108,7 +114,7 @@ public class Kardex {
 	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
 	private OrdenCompra ordenCompra;
 
-	// --- Metadatos de Auditoría y Seguridad ---
+	// --- Metadatos de Auditor?a y Seguridad ---
 
 	@LastModifiedBy
 	@Column(name = "kar_seg_username", length = 150)
@@ -128,6 +134,9 @@ public class Kardex {
 	@CreatedDate
 	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private LocalDateTime segFechaHora;
+
+	@OneToMany(mappedBy = "kardex", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ArticuloKardex> items = new ArrayList<>();
 
 	@Override
 	public final boolean equals(Object o) {
