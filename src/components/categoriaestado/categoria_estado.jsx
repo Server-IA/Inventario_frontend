@@ -39,6 +39,7 @@ export default function CategoriaEstado() {
 
       <GridCategoriaEstado
         rows={rows}
+        selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
       />
     </div>

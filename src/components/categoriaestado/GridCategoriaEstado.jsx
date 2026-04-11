@@ -1,35 +1,37 @@
-import React, { useState } from "react";
+﻿import React from "react";
 import PropTypes from "prop-types";
-import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
+import AppDataGrid from "../common/AppDataGrid";
 
-export default function GridCategoriaEstado({ rows = [], setSelectedRow = () => {} }) {
-  const [paginationModel, setPaginationModel] = useState({ pageSize: 5, page: 0 });
-
+export default function GridCategoriaEstado({
+  rows = [],
+  selectedRow = null,
+  setSelectedRow = () => {},
+}) {
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "nombre", headerName: "Nombre", width: 250 },
-    { field: "descripcion", headerName: "Descripción", width: 400 },
+    { field: "descripcion", headerName: "Descripcion", width: 400 },
   ];
 
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
-      <DataGrid
-        autoHeight
-        rows={rows}
+      <AppDataGrid
+        rows={Array.isArray(rows) ? rows : []}
         columns={columns}
         getRowId={(r) => r.id}
-        onRowClick={(p) => setSelectedRow(p.row)}
-        disableRowSelectionOnClick
-        paginationModel={paginationModel}
-        onPaginationModelChange={setPaginationModel}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
         pageSizeOptions={[5, 10, 25, 50]}
+        autoHeight
+        containerSx={{ borderRadius: 4 }}
       />
     </Box>
   );
 }
 
 GridCategoriaEstado.propTypes = {
-  rows: PropTypes.array.isRequired,
-  setSelectedRow: PropTypes.func.isRequired,
+  rows: PropTypes.array,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
 };
