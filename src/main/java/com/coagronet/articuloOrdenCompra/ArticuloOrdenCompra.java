@@ -1,5 +1,7 @@
 package com.coagronet.articuloOrdenCompra;
 
+import java.math.BigDecimal;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -37,7 +39,7 @@ public class ArticuloOrdenCompra {
 	private Long id;
 
 	@Column(name = "oci_cantidad")
-	private Double cantidad;
+	private BigDecimal cantidad;
 
 	@Column(name = "oci_precio")
 	private Double precio;

@@ -2,6 +2,7 @@ package com.coagronet.user.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import com.coagronet.user.User;
 import com.coagronet.user.dtos.UserDTO;
@@ -18,7 +19,15 @@ public interface UserMapper {
 
 	@Mapping(source = "personaId", target = "persona.id")
 	@Mapping(source = "usuarioEstadoId", target = "usuarioEstado.id")
-	@Mapping(target = "roles", ignore = true)
+	@Mapping(target = "rolesAsignados", ignore = true)
+	@Mapping(target = "authorities", ignore = true)
 	User toEntity(UserDTO userDTO);
+
+	@Mapping(source = "personaId", target = "persona.id")
+	@Mapping(source = "usuarioEstadoId", target = "usuarioEstado.id")
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "rolesAsignados", ignore = true)
+	@Mapping(target = "authorities", ignore = true)
+	void updateEntityFromDto(UserDTO userDTO, @MappingTarget User user);
 
 }
