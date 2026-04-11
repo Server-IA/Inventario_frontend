@@ -75,6 +75,7 @@ export default function Estado() {
 
       <GridEstado
         rows={rows}
+        selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
       />
     </div>
