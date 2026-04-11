@@ -1,5 +1,6 @@
 package com.coagronet.usuariorol.repositories;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,10 @@ import com.coagronet.usuariorol.UsuarioRol;
 
 public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
+	/**
+	 * Excelente uso de 'join fetch' para mitigar el problema N+1 al hidratar las relaciones 
+	 * de primera línea requeridas por el contexto transaccional.
+	 */
 	@Query("""
 			select ur from UsuarioRol ur
 			join fetch ur.user u
@@ -30,6 +35,8 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long empresaId, Long estadoId);
 
+	Optional<UsuarioRol> findByIdAndEmpresaIdAndDeletedAtIsNull(Long id, Long empresaId);
+
 	List<UsuarioRol> findByUserOrderByUserId(User user);
 
 	UsuarioRol findByUser(User user);
@@ -44,6 +51,52 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	Optional<UsuarioRol> findByIdAndDeletedAtIsNullAndEstadoIdNot(Long id, Long estadoId);
 
+	// ========================================================================
+	// Adiciones de la rama: develop
+	// ========================================================================
+
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoInactivo
+			and ur.iniciaContratoEn <= :fechaActual
+			and (ur.finalizaContratoEn is null or ur.finalizaContratoEn >= :fechaActual)
+			""")
+	List<UsuarioRol> findByEstadoInactivoYFechaActivacion(
+			@Param("estadoInactivo") Long estadoInactivo,
+			@Param("fechaActual") OffsetDateTime fechaActual);
+
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoActivo
+			and ur.finalizaContratoEn is not null
+			and ur.finalizaContratoEn < :fechaActual
+			""")
+	List<UsuarioRol> findByEstadoActivoYFechaFinalizacionPasada(
+			@Param("estadoActivo") Long estadoActivo,
+			@Param("fechaActual") OffsetDateTime fechaActual);
+
+	@Query("""
+			select ur from UsuarioRol ur
+			where ur.deletedAt is null
+			and ur.estado.id = :estadoActivo
+			and ur.user.id = :userId
+			order by ur.id asc
+			""")
+	List<UsuarioRol> findActivasByUserId(
+			@Param("estadoActivo") Long estadoActivo, 
+			@Param("userId") Long userId);
+
+	// ========================================================================
+	// Adiciones de la rama: feature/rf-025-1-gestion-kardex
+	// ========================================================================
+
+	/**
+	 * Proyección optimizada. Retornar Set<Long> en lugar de la entidad completa 
+	 * evita la sobrecarga del contexto de persistencia (Hibernate Session) cuando 
+	 * solo se requiere evaluar pertenencia de IDs.
+	 */
 	@Query("""
 			SELECT ur.user.id FROM UsuarioRol ur
 			WHERE ur.user.id IN :userIds
@@ -51,7 +104,9 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 			  AND ur.estado.id = :estadoId
 			  AND ur.finalizaContratoEn IS NULL
 			""")
-	Set<Long> findResponsablesValidos(@Param("userIds") Set<Long> userIds, @Param("empresaId") Long empresaId,
+	Set<Long> findResponsablesValidos(
+			@Param("userIds") Set<Long> userIds, 
+			@Param("empresaId") Long empresaId,
 			@Param("estadoId") Long estadoId);
 
 }

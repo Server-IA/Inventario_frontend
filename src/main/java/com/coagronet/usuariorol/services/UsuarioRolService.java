@@ -34,4 +34,8 @@ public interface UsuarioRolService {
 
     void deleteForCurrentEmpresa(Long id);
 
+    void toggleEstado(Long id, Long empresaId);
+
+    void toggleEstadoForCurrentEmpresa(Long id);
+
 }

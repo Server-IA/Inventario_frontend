@@ -60,7 +60,7 @@ class EmpresaRolServiceTest {
         EmpresaRol entity = new EmpresaRol();
         entity.setId(10L);
 
-        EmpresaRolResponseDTO dto = new EmpresaRolResponseDTO(10L, "Empresa A", "Operario", "Activo");
+        EmpresaRolResponseDTO dto = buildResponseDto(10L, empresaId, "Empresa A", "Operario", "Activo");
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(empresaRolRepository.findByEmpresaId(empresaId)).thenReturn(List.of(entity));
@@ -90,7 +90,7 @@ class EmpresaRolServiceTest {
         EmpresaRol saved = new EmpresaRol();
         saved.setId(100L);
 
-        EmpresaRolResponseDTO expected = new EmpresaRolResponseDTO(100L, "Empresa A", "Operario", "Activo");
+        EmpresaRolResponseDTO expected = buildResponseDto(100L, empresaId, "Empresa A", "Operario", "Activo");
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
         when(entidadValidatorFacade.validarEmpresa(empresaId)).thenReturn(empresa);
@@ -179,5 +179,16 @@ class EmpresaRolServiceTest {
         verify(entidadValidatorFacade).validarRol(RolConstantes.ROLE_ADMINISTRADOR_SISTEMA);
         verify(authenticationService).getAuthenticatedUser();
         verifyNoMoreInteractions(entidadValidatorFacade);
+    }
+
+    private EmpresaRolResponseDTO buildResponseDto(Long id, Long empresaId, String empresaNombre, String rolNombre,
+            String estadoNombre) {
+        EmpresaRolResponseDTO dto = new EmpresaRolResponseDTO();
+        dto.setId(id);
+        dto.setEmpresaId(empresaId);
+        dto.setEmpresaNombre(empresaNombre);
+        dto.setRolNombre(rolNombre);
+        dto.setEstadoNombre(estadoNombre);
+        return dto;
     }
 }

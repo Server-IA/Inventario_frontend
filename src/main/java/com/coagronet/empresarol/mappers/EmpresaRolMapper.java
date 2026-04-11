@@ -11,6 +11,7 @@ public interface EmpresaRolMapper {
 
 
     @Mapping(target = "empresaNombre", source = "empresa.nombre")
+    @Mapping(target = "empresaId", source = "empresa.id")
     @Mapping(target = "rolNombre", source = "rol.nombre")
     @Mapping(target = "estadoNombre", source = "estado.nombre")
     EmpresaRolResponseDTO toResponseDto(EmpresaRol empresaRol);

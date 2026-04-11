@@ -191,7 +191,7 @@ com.coagronet.reports.controllers
 com.coagronet.reports.services
 com.coagronet.role
 com.coagronet.role.repositories
-com.coagronet.scheduledTasks
+com.coagronet.scheduledtasks
 com.coagronet.sede
 com.coagronet.sede.controllers
 com.coagronet.sede.dtos
