@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -36,10 +37,13 @@ import com.coagronet.kardex.dtos.MetadatosSeguridad;
 import com.coagronet.kardex.services.KardexService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +51,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/kardex")
 @RequiredArgsConstructor
+@Tag(name = "Kardex", description = "API para la gestión de movimientos de Kardex")
 public class KardexController {
 
 	private final KardexService kardexService;
@@ -59,24 +64,20 @@ public class KardexController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@Operation(summary = "Registrar un movimiento de Kardex",
-			description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignaci?n de responsables para productos devolutivos.")
+	@Operation(summary = "Registrar un movimiento de Kardex", description = "Registra un nuevo movimiento en el Kardex. Verifica reglas de negocio como la asignaci?n de responsables para productos devolutivos.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "201", description = "Movimiento de Kardex registrado exitosamente."),
 			@ApiResponse(responseCode = "403", description = "Acceso denegado. Rol insuficiente."),
-			@ApiResponse(responseCode = "422",
-					description = "Error de validaci?n (ej. falta de responsable para producto devolutivo o el JSON es inv?lido).",
-					content = @Content(mediaType = "application/problem+json",
-							schema = @Schema(implementation = ProblemDetail.class))) })
+			@ApiResponse(responseCode = "422", description = "Error de validaci?n (ej. falta de responsable para producto devolutivo o el JSON es inv?lido).", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))) })
 	@PostMapping("/movimientos")
 	@PreAuthorize("hasAuthority('KARDEX_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> registrarMovimiento(@Valid @RequestBody KardexRequestDTO request,
 			HttpServletRequest httpRequest, Authentication authentication) {
 
 		String roles = authentication.getAuthorities()
-			.stream()
-			.map(GrantedAuthority::getAuthority)
-			.collect(Collectors.joining(","));
+				.stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.joining(","));
 
 		MetadatosSeguridad metadata = new MetadatosSeguridad(authentication.getName(),
 				roles.isEmpty() ? "SIN_ROL" : roles, httpRequest.getRemoteAddr(), httpRequest.getRemoteHost());
@@ -84,9 +85,9 @@ public class KardexController {
 		Kardex kardexGuardado = kardexService.procesarMovimientoKardex(request, metadata);
 
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-			.path("/{id}")
-			.buildAndExpand(kardexGuardado.getId())
-			.toUri();
+				.path("/{id}")
+				.buildAndExpand(kardexGuardado.getId())
+				.toUri();
 
 		return ResponseEntity.created(location).build();
 	}
@@ -94,8 +95,7 @@ public class KardexController {
 	@GetMapping
 	@PreAuthorize("hasAuthority('KARDEX_READ_ALL') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Page<KardexListDto>> listarMovimientos(
-			@RequestParam(required = false) @DateTimeFormat(
-					iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
 			@RequestParam(required = false) Long tipoMovimientoId, @RequestParam(required = false) Long estadoId,
 			@PageableDefault(size = 20) Pageable pageable) {
@@ -106,14 +106,26 @@ public class KardexController {
 		return ResponseEntity.ok(resultado);
 	}
 
+	@Operation(summary = "Listar ítems de un Kardex", description = "Obtiene una lista paginada de los ítems asociados a un movimiento de Kardex específico. Permite aplicar filtros opcionales por producto, estado y rangos de fecha y hora.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Lista paginada de ítems recuperada exitosamente"),
+			@ApiResponse(responseCode = "401", description = "No autorizado - Token JWT inválido o ausente", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Prohibido - No tiene los permisos requeridos (KARDEX_READ o roles superiores)", content = @Content)
+	})
 	@GetMapping("/{kardexId}/items")
 	@PreAuthorize("hasAuthority('KARDEX_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
-	public ResponseEntity<Page<KardexItemResponseDto>> listItems(@PathVariable Long kardexId,
-			@RequestParam(required = false) Long productoId, @RequestParam(required = false) Long estadoId,
-			@RequestParam(required = false) @DateTimeFormat(
-					iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
-			@PageableDefault(size = 20) Pageable pageable) {
+	public ResponseEntity<Page<KardexItemResponseDto>> listItems(
+			@Parameter(description = "ID del Kardex del cual se desean listar los ítems", example = "1", required = true) @PathVariable Long kardexId,
+
+			@Parameter(description = "Filtro opcional por ID del producto", example = "15") @RequestParam(required = false) Long productoId,
+
+			@Parameter(description = "Filtro opcional por ID del estado", example = "2") @RequestParam(required = false) Long estadoId,
+
+			@Parameter(description = "Filtro opcional por fecha y hora de inicio (Formato ISO-8601)", example = "2026-04-01T08:00:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
+
+			@Parameter(description = "Filtro opcional por fecha y hora de fin (Formato ISO-8601)", example = "2026-04-30T18:00:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
+
+			@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
 
 		Page<KardexItemResponseDto> results = articuloKardexService.getKardexItems(kardexId, productoId, estadoId,
 				fechaInicio, fechaFin, pageable);
@@ -121,13 +133,32 @@ public class KardexController {
 		return ResponseEntity.ok(results);
 	}
 
+	@Operation(summary = "Obtener formulario de actualización de Kardex", description = "Recupera la información actual de un movimiento de Kardex (cabecera y artículos) para precargar los datos en un formulario de actualización.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Datos del Kardex recuperados exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = KardexUpdateResponseDTO.class))),
+			@ApiResponse(responseCode = "401", description = "No autenticado (Token ausente o inválido)", content = @Content),
+			@ApiResponse(responseCode = "403", description = "No autorizado (El usuario no tiene el permiso KARDEX_READ o los roles necesarios)", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Kardex no encontrado", content = @Content)
+	})
 	@GetMapping("/{id}/update-form")
 	@PreAuthorize("hasAuthority('KARDEX_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
-	public ResponseEntity<KardexUpdateResponseDTO> getForUpdate(@PathVariable Long id) {
+	public ResponseEntity<KardexUpdateResponseDTO> getForUpdate(
+			@Parameter(description = "ID único del movimiento de Kardex a consultar", required = true, example = "1024") @PathVariable Long id) {
+
 		KardexUpdateResponseDTO response = kardexService.getKardexForUpdate(id);
 		return ResponseEntity.ok(response);
 	}
 
+	@Operation(summary = "Actualizar movimiento de Kardex", description = "Actualiza la cabecera y sincroniza los artículos de un movimiento de Kardex existente. "
+			+
+			"Realiza inactivación lógica de los ítems removidos y maneja automáticamente la desagregación de productos devolutivos.", security = {
+					@SecurityRequirement(name = "bearer-jwt") })
+	@ApiResponses({ @ApiResponse(responseCode = "204", description = "Movimiento actualizado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Errores de validación en el cuerpo de la petición o lógica de negocio"),
+			@ApiResponse(responseCode = "401", description = "Usuario no autenticado"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere KARDEX_UPDATE o rol de Administrador"),
+			@ApiResponse(responseCode = "404", description = "Kardex no encontrada o inactiva"),
+			@ApiResponse(responseCode = "422", description = "Producto devolutivo sin responsable o relaciones invalidas") })
 	@PutMapping("/{id}")
 	@PreAuthorize("hasAuthority('KARDEX_UPDATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> actualizarMovimiento(@PathVariable Long id,
@@ -135,9 +166,9 @@ public class KardexController {
 			Authentication authentication) {
 
 		String roles = authentication.getAuthorities()
-			.stream()
-			.map(GrantedAuthority::getAuthority)
-			.collect(Collectors.joining(","));
+				.stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(Collectors.joining(","));
 
 		MetadatosSeguridad metadata = new MetadatosSeguridad(authentication.getName(),
 				roles.isEmpty() ? "SIN_ROL" : roles, httpRequest.getRemoteAddr(), httpRequest.getRemoteHost());
