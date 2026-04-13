@@ -11,18 +11,20 @@ import jakarta.persistence.criteria.JoinType;
 public class KardexSpecifications {
 
     public static Specification<Kardex> conFiltros(
-            OffsetDateTime fechaInicio, 
-            OffsetDateTime fechaFin, 
-            Long tipoMovimientoId, 
+            OffsetDateTime fechaInicio,
+            OffsetDateTime fechaFin,
+            Long tipoMovimientoId,
             Long estadoId) {
-        
+
         return (root, query, cb) -> {
             // Prevención de N+1 (Fetch Joins para @ManyToOne)
             if (Long.class != query.getResultType()) { // Evitar fetch en consultas count() paginadas
                 root.fetch("almacen", JoinType.INNER);
                 root.fetch("tipoMovimiento", JoinType.INNER);
                 root.fetch("estado", JoinType.INNER);
-                root.fetch("empresa", JoinType.LEFT); 
+                root.fetch("empresa", JoinType.LEFT);
+                root.fetch("clienteProveedor", JoinType.LEFT);
+                root.fetch("produccion", JoinType.LEFT);
             }
 
             var predicates = cb.conjunction();
@@ -40,5 +42,4 @@ public class KardexSpecifications {
             return predicates;
         };
     }
-
 }

@@ -108,8 +108,8 @@ public class KardexService {
 
 		// 1. EXTRAER EL TENANT DEL CONTEXTO DE SEGURIDAD (Stateless)
 		CustomUserDetails currentUser = (CustomUserDetails) SecurityContextHolder.getContext()
-			.getAuthentication()
-			.getPrincipal();
+				.getAuthentication()
+				.getPrincipal();
 		Long currentEmpresaId = currentUser.empresaId();
 
 		// 2. VALIDACIONES PREVIAS Y PRE-CARGA EN LOTE (Evita el N+1)
@@ -121,7 +121,8 @@ public class KardexService {
 
 			if (item.devolutivo() && item.responsableId() == null) {
 				throw new ProductoSinResponsableException(String
-					.format("El producto '%s' es devolutivo y requiere responsable.", item.presentacionProductoId()));
+						.format("El producto '%s' es devolutivo y requiere responsable.",
+								item.presentacionProductoId()));
 			}
 			if (item.responsableId() != null) {
 				idsResponsables.add(item.responsableId());
@@ -141,72 +142,72 @@ public class KardexService {
 
 		// 4. VALIDACI?N BULK DE PRESENTACIONES
 		Map<Long, PresentacionProducto> mapaPresentaciones = presentacionProductoRepository
-			.findAllByIdInAndEstado(idsPresentaciones, ESTADO_ACTIVO)
-			.stream()
-			.collect(Collectors.toMap(PresentacionProducto::getId, p -> p));
+				.findAllByIdInAndEstado(idsPresentaciones, ESTADO_ACTIVO)
+				.stream()
+				.collect(Collectors.toMap(PresentacionProducto::getId, p -> p));
 
 		if (mapaPresentaciones.size() != idsPresentaciones.size()) {
 			Long idFaltante = idsPresentaciones.stream()
-				.filter(id -> !mapaPresentaciones.containsKey(id))
-				.findFirst()
-				.orElse(null);
+					.filter(id -> !mapaPresentaciones.containsKey(id))
+					.findFirst()
+					.orElse(null);
 
 			throw new EntidadNoEncontradaException("PresentacionProducto", idFaltante);
 		}
 
 		// 5. HIDRATACI?N DEL KARDEX (Cabecera)
 		TipoMovimiento tipoMovimiento = tipoMovimientoRepository
-			.findByIdAndEstadoId(request.tipoMovimientoId(), ESTADO_ACTIVO)
-			.orElseThrow(() -> new EntidadNoEncontradaException("TipoMovimiento", request.tipoMovimientoId()));
+				.findByIdAndEstadoId(request.tipoMovimientoId(), ESTADO_ACTIVO)
+				.orElseThrow(() -> new EntidadNoEncontradaException("TipoMovimiento", request.tipoMovimientoId()));
 
 		Almacen almacen = almacenRepository.findByIdAndEstadoId(request.almacenId(), ESTADO_ACTIVO)
-			.orElseThrow(() -> new EntidadNoEncontradaException("Almacen", request.almacenId()));
+				.orElseThrow(() -> new EntidadNoEncontradaException("Almacen", request.almacenId()));
 
 		Almacen almacenDestino = null;
 		if (request.almacenDestinoId() != null) {
 			almacenDestino = almacenRepository.findByIdAndEstadoId(request.almacenDestinoId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("AlmacenDestino", request.almacenDestinoId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("AlmacenDestino", request.almacenDestinoId()));
 		}
 
 		OrdenCompra ordenCompra = null;
 		if (request.ordenCompraId() != null) {
 			ordenCompra = ordenCompraRepository.findByIdAndEstadoId(request.ordenCompraId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("OrdenCompra", request.ordenCompraId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("OrdenCompra", request.ordenCompraId()));
 		}
 
 		Pedido pedido = null;
 		if (request.pedidoId() != null) {
 			pedido = pedidoRepository.findByIdAndEstadoId(request.pedidoId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("Pedido", request.pedidoId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("Pedido", request.pedidoId()));
 		}
 
 		Produccion produccion = null;
 		if (request.produccionId() != null) {
 			produccion = produccionRepository.findByIdAndEstadoId(request.produccionId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("Produccion", request.produccionId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("Produccion", request.produccionId()));
 		}
 
 		Empresa clienteProveedor = null;
 		if (request.clienteProveedorId() != null) {
 			clienteProveedor = empresaRepository.findByIdAndEstadoId(request.clienteProveedorId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("Empresa", request.clienteProveedorId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("Empresa", request.clienteProveedorId()));
 		}
 
 		Kardex kardex = Kardex.builder()
-			.tipoMovimiento(tipoMovimiento)
-			.almacen(almacen)
-			.almacenDestino(almacenDestino)
-			.ordenCompra(ordenCompra)
-			.pedido(pedido)
-			.produccion(produccion)
-			.clienteProveedor(clienteProveedor)
-			.descripcion(request.descripcion())
-			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-			.username(metadata.username())
-			.rol(metadata.rol())
-			.ip(metadata.ip())
-			.host(metadata.host())
-			.build();
+				.tipoMovimiento(tipoMovimiento)
+				.almacen(almacen)
+				.almacenDestino(almacenDestino)
+				.ordenCompra(ordenCompra)
+				.pedido(pedido)
+				.produccion(produccion)
+				.clienteProveedor(clienteProveedor)
+				.descripcion(request.descripcion())
+				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+				.username(metadata.username())
+				.rol(metadata.rol())
+				.ip(metadata.ip())
+				.host(metadata.host())
+				.build();
 
 		Kardex kardexGuardado = kardexRepository.save(kardex);
 
@@ -221,8 +222,7 @@ public class KardexService {
 					articulosAPersistir.add(
 							construirArticulo(itemDTO, kardexGuardado, presentacionValidada, BigDecimal.ONE, metadata));
 				}
-			}
-			else {
+			} else {
 				articulosAPersistir.add(construirArticulo(itemDTO, kardexGuardado, presentacionValidada,
 						BigDecimal.valueOf(itemDTO.cantidad()), metadata));
 			}
@@ -237,20 +237,21 @@ public class KardexService {
 			BigDecimal cantidad, MetadatosSeguridad metadata) {
 
 		return ArticuloKardex.builder()
-			.kardex(kardex)
-			.presentacionProducto(presentacion)
-			.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-			.responsable(
-					dto.responsableId() != null ? entityManager.getReference(User.class, dto.responsableId()) : null)
-			.cantidad(cantidad)
-			.precio(dto.precio())
-			.lote(dto.lote())
-			.fechaVencimiento(dto.fechaVencimiento())
-			.username(metadata.username())
-			.rol(metadata.rol())
-			.ip(metadata.ip())
-			.host(metadata.host())
-			.build();
+				.kardex(kardex)
+				.presentacionProducto(presentacion)
+				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+				.responsable(
+						dto.responsableId() != null ? entityManager.getReference(User.class, dto.responsableId())
+								: null)
+				.cantidad(cantidad)
+				.precio(dto.precio())
+				.lote(dto.lote())
+				.fechaVencimiento(dto.fechaVencimiento())
+				.username(metadata.username())
+				.rol(metadata.rol())
+				.ip(metadata.ip())
+				.host(metadata.host())
+				.build();
 	}
 
 	@Transactional(readOnly = true)
@@ -259,23 +260,29 @@ public class KardexService {
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		boolean isAdmin = auth != null && auth.getAuthorities()
-			.stream()
-			.map(GrantedAuthority::getAuthority)
-			.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
+				.stream()
+				.map(GrantedAuthority::getAuthority)
+				.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
 
 		var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
 
 		return kardexRepository.findAll(spec, pageable)
-			.map(kardex -> new KardexListDto(kardex.getId(), kardex.getFechaHora(), kardex.getAlmacen().getNombre(),
-					kardex.getTipoMovimiento().getNombre(), kardex.getEstado().getNombre(),
-					isAdmin && kardex.getEmpresa() != null ? kardex.getEmpresa().getNombre() : null));
+				.map(kardex -> new KardexListDto(
+						kardex.getId(),
+						kardex.getFechaHora(),
+						kardex.getAlmacen().getNombre(),
+						kardex.getTipoMovimiento().getNombre(),
+						kardex.getEstado().getNombre(),
+						isAdmin && kardex.getEmpresa() != null ? kardex.getEmpresa().getNombre() : null,
+						kardex.getClienteProveedor() != null ? kardex.getClienteProveedor().getNombre() : null,
+						kardex.getProduccion() != null ? kardex.getProduccion().getNombre() : null));
 	}
 
 	@Transactional(readOnly = true)
 	public KardexUpdateResponseDTO getKardexForUpdate(Long id) {
 		return kardexRepository.findWithItemsById(id)
-			.map(this::mapToUpdateDTO)
-			.orElseThrow(() -> new EntityNotFoundException("Kardex no encontrado con ID: " + id));
+				.map(this::mapToUpdateDTO)
+				.orElseThrow(() -> new EntityNotFoundException("Kardex no encontrado con ID: " + id));
 	}
 
 	private KardexUpdateResponseDTO mapToUpdateDTO(Kardex kardex) {
@@ -304,7 +311,7 @@ public class KardexService {
 
 		// 1. Carga de cabecera
 		Kardex kardex = kardexRepository.findById(kardexId)
-			.orElseThrow(() -> new RecursoNoEncontradoException("Kardex", kardexId));
+				.orElseThrow(() -> new RecursoNoEncontradoException("Kardex", kardexId));
 
 		// 2. Validaci?n de integridad empresarial (multitenancy)
 		validarRelacionesEmpresa(kardex, request);
@@ -320,35 +327,35 @@ public class KardexService {
 
 	private void validarRelacionesEmpresa(Kardex kardex, KardexUpdateRequestDTO request) {
 		almacenRepository.findByIdAndEstadoId(request.almacenId(), ESTADO_ACTIVO)
-			.orElseThrow(() -> new EntidadNoEncontradaException("Almacen", request.almacenId()));
+				.orElseThrow(() -> new EntidadNoEncontradaException("Almacen", request.almacenId()));
 
 		if (request.almacenDestinoId() != null) {
 			almacenRepository.findByIdAndEstadoId(request.almacenDestinoId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("Almacen Destino", request.almacenDestinoId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("Almacen Destino", request.almacenDestinoId()));
 
 		}
 
 		if (request.ordenCompraId() != null) {
 			ordenCompraRepository.findByIdAndEstadoId(request.ordenCompraId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("OrdenCompra", request.ordenCompraId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("OrdenCompra", request.ordenCompraId()));
 
 		}
 
 		if (request.pedidoId() != null) {
 			pedidoRepository.findByIdAndEstadoId(request.pedidoId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("Pedido", request.pedidoId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("Pedido", request.pedidoId()));
 
 		}
 
 		if (request.produccionId() != null) {
 			produccionRepository.findByIdAndEstadoId(request.produccionId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("Produccion", request.produccionId()));
+					.orElseThrow(() -> new EntidadNoEncontradaException("Produccion", request.produccionId()));
 		}
 
 		if (request.clienteProveedorId() != null) {
 			empresaRepository.findByIdAndEstadoId(request.clienteProveedorId(), ESTADO_ACTIVO)
-				.orElseThrow(
-						() -> new EntidadNoEncontradaException("ClienteProveedorId", request.clienteProveedorId()));
+					.orElseThrow(
+							() -> new EntidadNoEncontradaException("ClienteProveedorId", request.clienteProveedorId()));
 		}
 	}
 
@@ -357,15 +364,19 @@ public class KardexService {
 		// y metadatos de auditor?a.
 		kardex.setAlmacen(entityManager.getReference(Almacen.class, request.almacenId()));
 		kardex.setAlmacenDestino(request.almacenDestinoId() != null
-				? entityManager.getReference(Almacen.class, request.almacenDestinoId()) : null);
+				? entityManager.getReference(Almacen.class, request.almacenDestinoId())
+				: null);
 		kardex.setOrdenCompra(request.ordenCompraId() != null
-				? entityManager.getReference(OrdenCompra.class, request.ordenCompraId()) : null);
+				? entityManager.getReference(OrdenCompra.class, request.ordenCompraId())
+				: null);
 		kardex.setPedido(
 				request.pedidoId() != null ? entityManager.getReference(Pedido.class, request.pedidoId()) : null);
 		kardex.setProduccion(request.produccionId() != null
-				? entityManager.getReference(Produccion.class, request.produccionId()) : null);
+				? entityManager.getReference(Produccion.class, request.produccionId())
+				: null);
 		kardex.setClienteProveedor(request.clienteProveedorId() != null
-				? entityManager.getReference(Empresa.class, request.clienteProveedorId()) : null);
+				? entityManager.getReference(Empresa.class, request.clienteProveedorId())
+				: null);
 		kardex.setDescripcion(request.descripcion());
 	}
 
@@ -373,24 +384,23 @@ public class KardexService {
 			MetadatosSeguridad metadata) {
 
 		Map<Long, ArticuloKardex> itemsExistentes = kardex.getItems()
-			.stream()
-			.filter(item -> item.getId() != null)
-			.collect(Collectors.toMap(ArticuloKardex::getId, Function.identity()));
+				.stream()
+				.filter(item -> item.getId() != null)
+				.collect(Collectors.toMap(ArticuloKardex::getId, Function.identity()));
 
 		Set<Long> idsProcesados = new HashSet<>();
 
 		for (ArticuloUpdateRequestDTO itemDTO : itemsRequest) {
 			PresentacionProducto presentacion = presentacionProductoRepository
-				.findByIdInAndEstadoId(itemDTO.presentacionProductoId(), ESTADO_ACTIVO)
-				.orElseThrow(() -> new EntidadNoEncontradaException("PresentacionProducto",
-						itemDTO.presentacionProductoId()));
+					.findByIdInAndEstadoId(itemDTO.presentacionProductoId(), ESTADO_ACTIVO)
+					.orElseThrow(() -> new EntidadNoEncontradaException("PresentacionProducto",
+							itemDTO.presentacionProductoId()));
 			if (itemDTO.id() != null && itemsExistentes.containsKey(itemDTO.id())) {
 				// Actualizaci?n de ?tem existente
 				ArticuloKardex existente = itemsExistentes.get(itemDTO.id());
 				procesarActualizacionItem(existente, itemDTO, presentacion, metadata, kardex);
 				idsProcesados.add(itemDTO.id());
-			}
-			else if (itemDTO.id() == null) {
+			} else if (itemDTO.id() == null) {
 				// Nuevo ?tem
 				List<ArticuloKardex> nuevos = crearItemsDesdeDTO(itemDTO, presentacion, kardex, metadata);
 				kardex.getItems().addAll(nuevos);
@@ -452,11 +462,29 @@ public class KardexService {
 			// Crear un ?tem por cada unidad
 			for (int i = 0; i < dto.cantidad().intValueExact(); i++) {
 				ArticuloKardex item = ArticuloKardex.builder()
+						.kardex(kardex)
+						.presentacionProducto(presentacion)
+						.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
+						.responsable(obtenerReferenciaUsuario(dto.responsableId()))
+						.cantidad(BigDecimal.ONE)
+						.precio(dto.precio())
+						.lote(dto.lote())
+						.fechaVencimiento(dto.fechaVencimiento())
+						.username(metadata.username())
+						.rol(metadata.rol())
+						.ip(metadata.ip())
+						.host(metadata.host())
+						.build();
+				items.add(item);
+			}
+		} else {
+			// Producto normal: un solo ?tem con la cantidad indicada
+			ArticuloKardex item = ArticuloKardex.builder()
 					.kardex(kardex)
 					.presentacionProducto(presentacion)
 					.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
 					.responsable(obtenerReferenciaUsuario(dto.responsableId()))
-					.cantidad(BigDecimal.ONE)
+					.cantidad(dto.cantidad())
 					.precio(dto.precio())
 					.lote(dto.lote())
 					.fechaVencimiento(dto.fechaVencimiento())
@@ -465,25 +493,6 @@ public class KardexService {
 					.ip(metadata.ip())
 					.host(metadata.host())
 					.build();
-				items.add(item);
-			}
-		}
-		else {
-			// Producto normal: un solo ?tem con la cantidad indicada
-			ArticuloKardex item = ArticuloKardex.builder()
-				.kardex(kardex)
-				.presentacionProducto(presentacion)
-				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-				.responsable(obtenerReferenciaUsuario(dto.responsableId()))
-				.cantidad(dto.cantidad())
-				.precio(dto.precio())
-				.lote(dto.lote())
-				.fechaVencimiento(dto.fechaVencimiento())
-				.username(metadata.username())
-				.rol(metadata.rol())
-				.ip(metadata.ip())
-				.host(metadata.host())
-				.build();
 			items.add(item);
 		}
 		return items;

@@ -58,9 +58,23 @@ public class KardexController {
 
 	private final ArticuloKardexService articuloKardexService;
 
+	@Operation(summary = "Inactivar un movimiento de Kardex", description = "Realiza una eliminación lógica (inactivación) de un movimiento de Kardex a través de su ID. "
+			+
+			"El sistema verifica internamente que el registro pertenezca a la empresa actual en sesión " +
+			"y que se encuentre en estado activo antes de proceder.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "204", description = "Movimiento de Kardex inactivado exitosamente. No retorna contenido."),
+			@ApiResponse(responseCode = "409", description = "Movimiento inválido. Ocurre si el Kardex no existe, ya se encuentra inactivo, "
+					+
+					"o no pertenece a la empresa actual (MovimientoInvalidoException)."),
+			@ApiResponse(responseCode = "401", description = "No autorizado. El usuario no ha iniciado sesión o no tiene un token válido.")
+	})
 	@DeleteMapping("/{requestedId}")
-	public ResponseEntity<Void> eliminarKardex(@PathVariable Long requestedId) {
+	public ResponseEntity<Void> eliminarKardex(
+			@Parameter(description = "ID único del movimiento de Kardex que se desea inactivar", required = true, example = "158") @PathVariable Long requestedId) {
+
 		kardexService.inactivarMovimiento(requestedId);
+
 		return ResponseEntity.noContent().build();
 	}
 
@@ -92,13 +106,24 @@ public class KardexController {
 		return ResponseEntity.created(location).build();
 	}
 
+	@Operation(summary = "Listar movimientos de Kardex", description = "Obtiene una lista paginada de los movimientos de kardex. Permite filtrar por rango de fechas, tipo de movimiento y estado. Retorna la empresa asociada solo si el usuario tiene rol de ADMINISTRADOR_SISTEMA.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Lista de movimientos obtenida exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = KardexListDto.class))),
+			@ApiResponse(responseCode = "401", description = "Usuario no autenticado", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Usuario no autorizado para acceder a este recurso", content = @Content)
+	})
 	@GetMapping
 	@PreAuthorize("hasAuthority('KARDEX_READ_ALL') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Page<KardexListDto>> listarMovimientos(
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
-			@RequestParam(required = false) Long tipoMovimientoId, @RequestParam(required = false) Long estadoId,
-			@PageableDefault(size = 20) Pageable pageable) {
+			@Parameter(description = "Fecha de inicio para el filtro (formato ISO 8601 con offset)", example = "2026-04-13T00:00:00-05:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
+
+			@Parameter(description = "Fecha de fin para el filtro (formato ISO 8601 con offset)", example = "2026-04-13T23:59:59-05:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
+
+			@Parameter(description = "ID del tipo de movimiento (ej. Entrada, Salida)", example = "1") @RequestParam(required = false) Long tipoMovimientoId,
+
+			@Parameter(description = "ID del estado del movimiento", example = "2") @RequestParam(required = false) Long estadoId,
+
+			@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
 
 		Page<KardexListDto> resultado = kardexService.listarMovimientos(fechaInicio, fechaFin, tipoMovimientoId,
 				estadoId, pageable);
