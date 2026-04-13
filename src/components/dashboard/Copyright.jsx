@@ -11,7 +11,7 @@ export default function Copyright({
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
-  const softBg = isDark ? alpha(theme.palette.primary.light, 0.08) : "#e7f6f7";
+  const softBg = isDark ? alpha(theme.palette.primary.light, 0.08) : "#ffffff";
 
   return (
     <Box

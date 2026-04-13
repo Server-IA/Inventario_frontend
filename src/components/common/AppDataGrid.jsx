@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box, Paper, Stack } from "@mui/material";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
+import { useTheme, alpha } from "@mui/material/styles";
 
 export default function AppDataGrid({
   rows = [],
@@ -28,6 +29,14 @@ export default function AppDataGrid({
   containerSx,
   onEscape,
 }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+  const headerBg = isDark ? "#1a2a28" : "#dfeae6";
+  const footerBg = isDark ? "#152422" : "#ecf3f0";
+  const bodyBg = isDark ? "#0f1b1a" : "#f6fbf9";
+  const paperShadow = isDark
+    ? "0 8px 22px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25)"
+    : "0 6px 18px rgba(23,63,57,0.08), 0 2px 6px rgba(0,0,0,0.06)";
   const serverPagination = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
 
   const columnsMemo = useMemo(() => columns, [columns]);
@@ -46,16 +55,18 @@ export default function AppDataGrid({
 
   const mergedSx = {
     border: 0,
-    bgcolor: "grey.50",
+    bgcolor: "#fff",
     borderRadius: 4,
     overflow: "hidden",
     "& .MuiDataGrid-columnSeparator": { display: "none" },
     "& .MuiDataGrid-columnHeaders": {
-      bgcolor: "grey.200",
-      borderBottom: "none",
+      bgcolor: headerBg,
       borderTopLeftRadius: 4,
       borderTopRightRadius: 4,
       px: 0,
+      boxShadow: isDark
+        ? "inset 0 -1px 0 rgba(255,255,255,0.08)"
+        : "inset 0 -1px 0 rgba(23,63,57,0.12)",
     },
     "& .MuiDataGrid-columnHeader": {
       pl: "12px !important",
@@ -69,11 +80,12 @@ export default function AppDataGrid({
     "& .MuiDataGrid-columnHeaderTitle": {
       fontWeight: 700,
       textAlign: "left",
+      color: isDark ? "#dfeae6" : undefined,
     },
     "& .MuiDataGrid-footerContainer": {
       borderTop: "none",
       px: 2,
-      bgcolor: "grey.200",
+      bgcolor: footerBg,
       borderBottomLeftRadius: 4,
       borderBottomRightRadius: 4,
     },
@@ -87,15 +99,6 @@ export default function AppDataGrid({
       pl: "12px !important",
       pr: "12px !important",
     },
-    "& .MuiDataGrid-columnHeader.col-estado": {
-      pl: "12px !important",
-      pr: "12px !important",
-      justifyContent: "flex-start",
-    },
-    "& .MuiDataGrid-cell.col-estado": {
-      pl: "12px !important",
-      pr: "12px !important",
-    },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
       position: "relative",
@@ -103,11 +106,15 @@ export default function AppDataGrid({
     "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
       outline: "none",
     },
-    "& .MuiDataGrid-row.Mui-selected": {
-      outline: "none",
-      boxShadow: "none",
-      bgcolor: "rgba(47,106,245,0.08) !important",
-    },
+    ...(isDark
+      ? {}
+      : {
+          "& .MuiDataGrid-row.Mui-selected": {
+            outline: "none",
+            boxShadow: "none",
+            bgcolor: "rgba(23,63,57,0.08) !important",
+          },
+        }),
     "& .MuiDataGrid-row.Mui-selected::before": {
       content: '""',
       position: "absolute",
@@ -115,13 +122,23 @@ export default function AppDataGrid({
       top: 0,
       bottom: 0,
       width: "4px",
-      bgcolor: "#2F6AF5",
+      bgcolor: "#173f39",
       borderTopLeftRadius: "4px",
       borderBottomLeftRadius: "4px",
     },
-    ...(highlightOnHover ? { "& .MuiDataGrid-row:hover": { bgcolor: "action.hover" } } : {}),
+    "& .MuiDataGrid-virtualScroller": {
+      bgcolor: bodyBg,
+    },
+    ...(highlightOnHover
+      ? {
+          "& .MuiDataGrid-row:hover": {
+            bgcolor: isDark ? "rgba(255,255,255,0.04)" : "action.hover",
+          },
+        }
+      : {}),
     ...sx,
   };
+
 
   const handleVisibilityChange = (model) => {
     onColumnVisibilityModelChange?.(model);
@@ -133,7 +150,7 @@ export default function AppDataGrid({
   };
 
   return (
-    <Paper sx={{ p: 0, borderRadius: 4, boxShadow: "0 4px 14px rgba(0,0,0,0.04)", border: "1px solid #ffffff", bgcolor: "transparent", ...containerSx }}>
+    <Paper sx={{ p: 0, width: "100%", maxWidth: "100%", overflowX: "auto", borderRadius: 6, boxShadow: paperShadow, bgcolor: "transparent", ...containerSx }}>
       {(leftActions || rightActions) && (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", gap: 1 }}>{leftActions}</Box>
@@ -200,6 +217,7 @@ export default function AppDataGrid({
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         localeText={localeText}
+        autosizeOnMount={false}
         sx={mergedSx}
       />
     </Paper>

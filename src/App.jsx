@@ -134,6 +134,12 @@ const [isAuthenticated, setIsAuthenticated] = useState(hasValidToken());
     return saved ? JSON.parse(saved) : true;
   });
 useEffect(() => {
+  const timers = [50, 180, 320].map((ms) =>
+    setTimeout(() => window.dispatchEvent(new Event("resize")), ms)
+  );
+  return () => timers.forEach(clearTimeout);
+}, [menuOpen]);
+useEffect(() => {
   const hasValidToken = () => {
     const token = localStorage.getItem("token");
     const exp = Number(localStorage.getItem("token_expiration"));
@@ -221,16 +227,24 @@ const isPublic = !isAuthenticated || isOnboarding;
         component="main"
         sx={{
           flexGrow: 1,
+          width: isAuthenticated
+            ? {
+                xs: '100%',
+                sm: menuOpen ? 'calc(100% - 220px)' : 'calc(100% - 70px)',
+                md: menuOpen ? 'calc(100% - 250px)' : 'calc(100% - 70px)',
+              }
+            : '100%',
+          minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
           ml: isAuthenticated
             ? {
-                xs: menuOpen ? '200px' : '60px',
+                xs: 0,
                 sm: menuOpen ? '220px' : '70px',
                 md: menuOpen ? '250px' : '70px',
               }
             : 0,
-          transition: 'margin-left 0.3s ease',
+          transition: 'margin-left 0.42s cubic-bezier(0.22, 1, 0.36, 1), width 0.42s cubic-bezier(0.22, 1, 0.36, 1)',
           bgcolor: 'transparent',
         }}
       >
@@ -259,12 +273,15 @@ const isPublic = !isAuthenticated || isOnboarding;
           </Box>
         ) : (
           <Container
-            maxWidth="lg"
+            maxWidth={false}
             disableGutters
             sx={{
               flex: 1,
+              width: '100%',
+              maxWidth: '100% !important',
               py: 1,
-              px: { xs: 1, sm: 2 },
+              pb: { xs: 10, sm: 1 },
+              px: { xs: 1, sm: 2, md: 3 },
               display: 'flex',
               flexDirection: 'column',
               bgcolor: 'transparent',
@@ -274,6 +291,7 @@ const isPublic = !isAuthenticated || isOnboarding;
               sx={{
                 flex: 1,
                 width: '100%',
+                minWidth: 0,
                 minHeight: 'calc(100vh - 160px)',
                 overflow: 'auto',
                 bgcolor: 'transparent',

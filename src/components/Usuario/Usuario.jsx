@@ -7,6 +7,7 @@ import AppDataGrid from "../common/AppDataGrid.jsx";
 import FormUsuario from "./FormUsuario.jsx";
 import UserDetailDialog from "./UserDetailDialog.jsx";
 import MessageSnackBar from "../MessageSnackBar";
+import axios from "../axiosConfig";
 
 const emptyRow = {
   id: null,
@@ -27,13 +28,7 @@ const emptyRow = {
   asignaciones: [],
 };
 
-const mockUsers = [
-  { id: 1, username: "admin@inmero.co", nombre: "Cesar", apellido: "Medina", correo: "admin@inmero.co", celular: "3001112222", rolPreferido: "Administrador", empresaId: 1, empresaNombre: "Inmero S.A.", genero: "Masculino", documento: "CC 12345678", fechaNacimiento: "1985-01-20", direccion: "Cra 10 # 12-34", estadoId: 1, asignaciones: [{ rolNombre: "Administrador", empresaNombre: "Inmero S.A.", iniciaContratoEn: "2020-01-01", finalizaContratoEn: "", estadoId: 1, preferido: true }] },
-  { id: 2, username: "jlopez@inmero.co", nombre: "Juan", apellido: "Lopez", correo: "jlopez@inmero.co", celular: "3002223333", rolPreferido: "Gerente", empresaId: 1, empresaNombre: "Inmero S.A.", genero: "Masculino", documento: "CC 87654321", fechaNacimiento: "1990-04-15", direccion: "Calle 80 # 45-10", estadoId: 1, asignaciones: [{ rolNombre: "Gerente", empresaNombre: "Inmero S.A.", iniciaContratoEn: "2021-02-01", finalizaContratoEn: "", estadoId: 1, preferido: true }] },
-  { id: 3, username: "maria.suarez@agrotech.co", nombre: "Maria", apellido: "Suarez", correo: "maria.suarez@agrotech.co", celular: "3015556666", rolPreferido: "Operario", empresaId: 2, empresaNombre: "Agrotech Ltda.", genero: "Femenino", documento: "CC 11223344", fechaNacimiento: "1995-08-10", direccion: "Av 68 # 90-12", estadoId: 2, asignaciones: [{ rolNombre: "Operario", empresaNombre: "Agrotech Ltda.", iniciaContratoEn: "2022-03-01", finalizaContratoEn: "2025-03-01", estadoId: 2, preferido: true }] },
-  { id: 4, username: "pedro.mtz@inmero.co", nombre: "Pedro", apellido: "Martinez", correo: "pedro.mtz@inmero.co", celular: "3023334444", rolPreferido: "Supervisor", empresaId: 1, empresaNombre: "Inmero S.A.", genero: "Masculino", documento: "CC 99887766", fechaNacimiento: "1988-12-05", direccion: "Transv 25 # 12-05", estadoId: 1, asignaciones: [{ rolNombre: "Supervisor", empresaNombre: "Inmero S.A.", iniciaContratoEn: "2023-05-15", finalizaContratoEn: "", estadoId: 1, preferido: true }] },
-  { id: 5, username: "ana.castro@agrotech.co", nombre: "Ana", apellido: "Castro", correo: "ana.castro@agrotech.co", celular: "3037778888", rolPreferido: "Analista", empresaId: 2, empresaNombre: "Agrotech Ltda.", genero: "Femenino", documento: "CC 55667788", fechaNacimiento: "1992-03-22", direccion: "Calle 26 # 30-20", estadoId: 1, asignaciones: [{ rolNombre: "Analista", empresaNombre: "Agrotech Ltda.", iniciaContratoEn: "2024-01-01", finalizaContratoEn: "", estadoId: 1, preferido: true }] },
-];
+const extractItems = (resp) => resp.data?.content ?? resp.data ?? [];
 
 export default function Usuario() {
   const [rows, setRows] = useState([]);
@@ -47,53 +42,98 @@ export default function Usuario() {
   const [formData, setFormData] = useState(emptyRow);
   const [openDetail, setOpenDetail] = useState(false);
   const [detail, setDetail] = useState(null);
+  const [inactivatedCache, setInactivatedCache] = useState([]);
 
   const isAdmin = String(localStorage.getItem("rolId")) === "1";
   const empresaIdOwn = Number(localStorage.getItem("empresaId"));
 
-  const empresasList = useMemo(() => {
-    const set = new Map();
-    mockUsers.forEach((u) => {
-      if (!set.has(u.empresaId)) set.set(u.empresaId, { id: u.empresaId, nombre: u.empresaNombre });
-    });
-    return Array.from(set.values());
-  }, []);
+  const [empresasList, setEmpresasList] = useState([]);
+  const [rolesList, setRolesList] = useState([]);
 
-  const rolesList = useMemo(() => {
-    const s = new Set();
-    mockUsers.forEach((u) => { if (u.rolPreferido) s.add(u.rolPreferido); });
-    return Array.from(s.values());
-  }, []);
-
-  const baseRows = useMemo(() => {
-    if (isAdmin) return mockUsers;
-    if (!Number.isFinite(empresaIdOwn)) return mockUsers;
-    const byCompany = mockUsers.filter((u) => Number(u.empresaId) === Number(empresaIdOwn));
-    return byCompany.length ? byCompany : mockUsers;
-  }, [isAdmin, empresaIdOwn]);
+  const baseRows = useMemo(() => rows, [rows]);
 
   const columns = useMemo(() => {
     const cols = [
-      { field: "nombre", headerName: "Nombre", width: 180 },
-      { field: "apellido", headerName: "Apellido", width: 180 },
-      { field: "correo", headerName: "Correo", width: 240 },
-      { field: "celular", headerName: "Teléfono", width: 160 },
-      { field: "rolPreferido", headerName: "Rol", width: 200 },
-      { field: "estadoId", headerName: "Estado", width: 140, align: "left", headerAlign: "left", headerClassName: "col-estado", cellClassName: "col-estado", renderCell: (p) => (<Box sx={{ display: "flex", justifyContent: "flex-start" }}><Chip label={Number(p.row.estadoId) === 1 ? "Activo" : "Inactivo"} color={Number(p.row.estadoId) === 1 ? "success" : "error"} size="small" /></Box>) },
-      ...(isAdmin ? [{ field: "empresaNombre", headerName: "Empresa", width: 220 }] : []),
+      { field: "nombreCompleto", headerName: "Nombre", flex: 1.15, minWidth: 220 },
+      { field: "username", headerName: "Correo", flex: 1.3, minWidth: 250 },
+      { field: "rolNombre", headerName: "Rol", flex: 1.1, minWidth: 220 },
+      {
+        field: "estadoId",
+        headerName: "Estado",
+        flex: 0.7,
+        minWidth: 140,
+        align: "left",
+        headerAlign: "left",
+        headerClassName: "col-estado",
+        cellClassName: "col-estado",
+        renderCell: (p) => (
+          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+            <Chip
+              label={Number(p.row.estadoId) === 1 ? "Activo" : "Inactivo"}
+              color={Number(p.row.estadoId) === 1 ? "success" : "error"}
+              size="small"
+            />
+          </Box>
+        ),
+      },
+      ...(isAdmin ? [{ field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 }] : []),
     ];
     return cols;
   }, [isAdmin]);
 
-  const loadData = () => {
+  const loadData = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setRows(baseRows);
+    try {
+      const url = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
+      const resp = await axios.get(url, { params: { page: 0, size: 200 } });
+      const list = extractItems(resp);
+      let mapped = (Array.isArray(list) ? list : []).map((a) => ({
+        id: a.usuarioId ?? a.id,
+        username: a.usuarioEmail ?? "",
+        nombreCompleto: a.personaNombreCompleto ?? "",
+        empresaNombre: a.empresaNombre ?? "",
+        rolNombre: a.rolNombre ?? "",
+        estadoId: a.estadoId ?? 1,
+        raw: a,
+      }));
+      // fusiona inactivados locales para garantizar visibilidad
+      if (Array.isArray(inactivatedCache) && inactivatedCache.length) {
+        const byId = new Map(mapped.map((r) => [r.id, r]));
+        inactivatedCache.forEach((g) => {
+          const existing = byId.get(g.id);
+          if (existing) {
+            byId.set(g.id, { ...existing, estadoId: 2 });
+          } else {
+            byId.set(g.id, g);
+          }
+        });
+        mapped = Array.from(byId.values());
+      }
+      setRows(mapped);
+    } catch (e) {
+      console.error("Error cargando usuarios desde asignaciones", e);
+      setRows([]);
+    } finally {
       setLoading(false);
-    }, 120);
+    }
   };
 
-  useEffect(() => { loadData(); }, [baseRows]);
+  useEffect(() => {
+    loadData();
+    // combos
+    Promise.all([
+      axios.get("/v1/items/empresa/0"),
+      axios.get("/v1/items/rol/0"),
+    ])
+      .then(([eRes, rRes]) => {
+        setEmpresasList(extractItems(eRes));
+        setRolesList(extractItems(rRes) || []);
+      })
+      .catch(() => {
+        setEmpresasList([]);
+        setRolesList([]);
+      });
+  }, []);
 
   const handlePaginationModelChange = (model) => {
     if (model.size !== pageSize) {
@@ -112,7 +152,21 @@ export default function Usuario() {
   const handleEdit = () => {
     if (!selectedRow) return;
     setFormMode("edit");
-    setFormData({ ...emptyRow, ...selectedRow });
+    setFormData({
+      username: selectedRow.username,
+      rolId: selectedRow.raw?.rolId ?? "",
+      nombre: selectedRow.nombreCompleto?.split(" ")[0] ?? "",
+      apellido: selectedRow.nombreCompleto?.split(" ").slice(1).join(" ") ?? "",
+      genero: "",
+      tipoDocumentoIdentidadId: "",
+      codigoIdentificacion: "",
+      fechaNacimiento: "",
+      estrato: "",
+      direccion: "",
+      celular: "",
+      estadoId: selectedRow.estadoId ?? 1,
+      asignaciones: [],
+    });
     setOpenForm(true);
   };
   const handleView = () => {
@@ -120,42 +174,109 @@ export default function Usuario() {
     setDetail(selectedRow);
     setOpenDetail(true);
   };
-  const handleToggleActive = () => {
+  const handleDelete = async () => {
     if (!selectedRow) return;
-    const inactive = Number(selectedRow.estadoId) !== 1;
-    setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: inactive ? 1 : 2 } : r));
-    setSelectedRow((prev) => prev ? { ...prev, estadoId: inactive ? 1 : 2 } : prev);
-    setMessage({ open: true, severity: inactive ? "success" : "info", text: inactive ? "Usuario activado" : "Usuario inactivado" });
-  };
-  const handleDelete = () => {
-    if (!selectedRow) return;
-    setRows((prev) => (Array.isArray(prev) ? prev : []).filter((r) => r.id !== selectedRow.id));
-    setSelectedRow(null);
-    setMessage({ open: true, severity: "info", text: "Usuario eliminado" });
+    const ok = window.confirm("¿Seguro que deseas INACTIVAR este usuario? (Debe permanecer visible)");
+    if (!ok) return;
+    const assignId = selectedRow?.raw?.id;
+    const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
+    try {
+      // intento toggle (si existe)
+      try {
+        const params = isAdmin ? { params: { empresaId: empresaIdOwn } } : undefined;
+        await axios.patch(`${base}/${assignId}/toggle-estado`, null, params);
+        const ghost = { ...selectedRow, estadoId: 2 };
+        setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: 2 } : r));
+        setInactivatedCache((prev) => {
+          const map = new Map((prev || []).map((x) => [x.id, x]));
+          map.set(ghost.id, ghost);
+          return Array.from(map.values());
+        });
+        setSelectedRow(null);
+        return;
+      } catch (e) {
+        if (e?.response?.status && e.response.status !== 404) throw e;
+      }
+      // intento PUT forzando estado inactivo
+      try {
+        await axios.put(`${base}/${assignId}`, {
+          id: assignId,
+          usuarioId: selectedRow.raw.usuarioId,
+          rolId: selectedRow.raw.rolId,
+          estadoId: 2,
+        });
+        const ghost = { ...selectedRow, estadoId: 2 };
+        setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: 2 } : r));
+        setInactivatedCache((prev) => {
+          const map = new Map((prev || []).map((x) => [x.id, x]));
+          map.set(ghost.id, ghost);
+          return Array.from(map.values());
+        });
+        setSelectedRow(null);
+        return;
+      } catch (e) {
+        // continúa a DELETE si no permite
+      }
+      // DELETE lógico
+      await axios.delete(`${base}/${assignId}`);
+      const ghost = { ...selectedRow, estadoId: 2 };
+      setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: 2 } : r));
+      setInactivatedCache((prev) => {
+        const map = new Map((prev || []).map((x) => [x.id, x]));
+        map.set(ghost.id, ghost);
+        return Array.from(map.values());
+      });
+      setSelectedRow(null);
+    } catch (err) {
+      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? "No se pudo inactivar" });
+    }
   };
 
   const handleSubmit = async (dataFromForm) => {
     const payload = { ...(dataFromForm || formData) };
-    const pref = Array.isArray(payload.asignaciones) ? payload.asignaciones.find((a) => Boolean(a.preferido)) : null;
-    if (pref) {
-      payload.rolPreferido = pref.rolNombre || payload.rolPreferido || "";
-      payload.empresaId = pref.empresaId ?? payload.empresaId;
-      payload.empresaNombre = pref.empresaNombre || payload.empresaNombre || "";
+    try {
+      if (formMode === "create") {
+        // Orden exacto del payload de registro (con tipos numéricos donde aplica)
+        const body = {};
+        body.username = payload.username;
+        const resolvedRolId = payload.rolId ?? (Array.isArray(payload.asignaciones) ? payload.asignaciones[0]?.rolId : undefined);
+        body.rolId = resolvedRolId != null ? Number(resolvedRolId) : resolvedRolId;
+        body.nombre = payload.nombre;
+        body.apellido = payload.apellido;
+        body.genero = payload.genero;
+        body.tipoDocumentoIdentidadId = payload.tipoDocumentoIdentidadId ? Number(payload.tipoDocumentoIdentidadId) : payload.tipoDocumentoIdentidadId;
+        body.codigoIdentificacion = payload.codigoIdentificacion;
+        body.fechaNacimiento = payload.fechaNacimiento;
+        body.estrato = Number(payload.estrato || 0);
+        body.direccion = payload.direccion;
+        body.celular = payload.celular;
+        const ABS_AUTH_URL = `${import.meta.env.VITE_BACKEND_URI}/auth/empresa/usuario-roles`;
+        await axios.post(ABS_AUTH_URL, body);
+      } else {
+        const assignId = selectedRow?.raw?.id;
+        if (assignId) {
+          const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
+          // Orden exacto del payload de asignación (mismo que POST)
+          const body = {};
+          body.usuarioId = selectedRow.raw.usuarioId;
+          body.rolId = Number(payload.rolId ?? selectedRow.raw.rolId);
+          body.estadoId = payload.estadoId ?? selectedRow.raw.estadoId;
+          body.iniciaContratoEn = payload.iniciaContratoEn ?? selectedRow.raw.iniciaContratoEn;
+          body.finalizaContratoEn = payload.finalizaContratoEn ?? selectedRow.raw.finalizaContratoEn;
+          await axios.put(`${base}/${assignId}`, body);
+        }
+      }
+      setOpenForm(false);
+      await loadData();
+      setMessage({ open: true, severity: "success", text: "Operación exitosa" });
+    } catch (err) {
+      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? "Error en la operación" });
     }
-    if (formMode === "create") {
-      const nextId = (rows.reduce((mx, r) => Math.max(mx, Number(r.id)), 0) || 0) + 1;
-      payload.id = nextId;
-      setRows((prev) => [payload, ...(Array.isArray(prev) ? prev : [])]);
-    } else {
-      setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => (r.id === payload.id ? { ...r, ...payload } : r)));
-    }
-    setOpenForm(false);
-    setMessage({ open: true, severity: "success", text: "Usuario guardado correctamente" });
   };
 
   return (
     <Box p={2}>
-      <SectionHeader title="Usuarios" />
+      <SectionHeader title="Gestión de Usuarios" />
 
       <GridActionBar
         onAdd={handleCreate}
@@ -163,25 +284,18 @@ export default function Usuario() {
         onDelete={handleDelete}
         canUpdate={Boolean(selectedRow)}
         canDelete={Boolean(selectedRow)}
+        onFilters={() =>
+          setMessage({
+            open: true,
+            severity: "info",
+            text: "Filtros disponibles próximamente",
+          })
+        }
         extraActions={
           <Button
             onClick={handleView}
             startIcon={<VisibilityIcon />}
             disabled={!selectedRow}
-            sx={{
-              bgcolor: "#f4f5f7",
-              color: "#2a2e35",
-              px: 2.5,
-              py: 1,
-              borderRadius: 2,
-              textTransform: "uppercase",
-              fontWeight: 700,
-              fontSize: "0.75rem",
-              boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
-              "&:hover": { bgcolor: "#e9eaee" },
-              "&.Mui-disabled": { color: "#9aa0a6" },
-              "& .MuiButton-startIcon svg": { fontSize: 16 },
-            }}
           >
             Ver detalle
           </Button>
@@ -198,6 +312,7 @@ export default function Usuario() {
         setPaginationModel={handlePaginationModelChange}
         rowCount={rows.length}
         containerSx={{ borderRadius: 4 }}
+        onEscape={() => setOpenForm(false)}
       />
 
       <FormUsuario

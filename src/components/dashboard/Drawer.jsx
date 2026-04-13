@@ -16,6 +16,8 @@ export const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 
     ({ theme, open }) => ({
       '& .MuiDrawer-paper': {
         position: 'relative',
+        backgroundColor: '#E7F6F7',
+        color: '#173f39',
         whiteSpace: 'nowrap',
         width: SiteProps.drawerWidth,
         transition: theme.transitions.create('width', {
@@ -23,6 +25,14 @@ export const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 
           duration: theme.transitions.duration.enteringScreen,
         }),
         boxSizing: 'border-box',
+        // vínculos/iconos dentro del drawer
+        '& .MuiListItemButton-root': {
+          color: '#173f39',
+          '&:hover': { backgroundColor: 'rgba(23,63,57,0.08)' },
+        },
+        '& .MuiListItemIcon-root': {
+          color: '#173f39',
+        },
         ...(!open && {
           overflowX: 'hidden',
           transition: theme.transitions.create('width', {

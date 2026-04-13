@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormAlmacen from "./FormAlmacen";
-import { Box, Button, Stack } from "@mui/material";
+import { Box } from "@mui/material";
 import SectionHeader from "../common/SectionHeader";
 import GridActionBar from "../common/GridActionBar";
 import AppDataGrid from "../common/AppDataGrid";
@@ -183,17 +183,7 @@ export default function Almacen() {
   ]), []);
   return (
     <Box sx={{ p: 2 }}>
-      <SectionHeader
-        title="Gestión de Almacenes"
-        rightNode={
-          <Stack direction="row" spacing={1}>
-            <Button onClick={() => setOpenFilters(true)}>Mostrar filtros</Button>
-            {Boolean(filters.paisId || filters.deptoId || filters.municipioId || filters.sedeId || filters.bloqueId || filters.espacioId) && (
-              <Button onClick={handleFiltersClear}>Limpiar filtros</Button>
-            )}
-          </Stack>
-        }
-      />
+      <SectionHeader title="Gestión de Almacenes" />
 
       <GridActionBar
         onAdd={() => { setFormMode("create"); setSelectedRow(null); setFormOpen(true); }}
@@ -201,6 +191,9 @@ export default function Almacen() {
         onDelete={handleDelete}
         canUpdate={Boolean(selectedRow)}
         canDelete={Boolean(selectedRow)}
+        onFilters={() => setOpenFilters(true)}
+        onClearFilters={handleFiltersClear}
+        hasActiveFilters={Boolean(filters.paisId || filters.deptoId || filters.municipioId || filters.sedeId || filters.bloqueId || filters.espacioId)}
       />
 
       <AppDataGrid

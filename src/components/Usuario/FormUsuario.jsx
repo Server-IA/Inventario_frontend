@@ -11,20 +11,21 @@ export default function FormUsuario({
   isAdmin = false,
 }) {
   const [formData, setFormData] = useState(initialData);
-  const [assignDraft, setAssignDraft] = useState({ rolNombre: "", empresaId: "", empresaNombre: "", iniciaContratoEn: "", finalizaContratoEn: "", preferido: false, estadoId: 1 });
+  const [assignDraft, setAssignDraft] = useState({ rolId: "", rolNombre: "", empresaId: "", empresaNombre: "", iniciaContratoEn: "", finalizaContratoEn: "", preferido: false, estadoId: 1 });
   useEffect(() => {
     setFormData(initialData);
-    setAssignDraft({ rolNombre: "", empresaId: "", empresaNombre: "", iniciaContratoEn: "", finalizaContratoEn: "", preferido: false, estadoId: 1 });
+    setAssignDraft({ rolId: "", rolNombre: "", empresaId: "", empresaNombre: "", iniciaContratoEn: "", finalizaContratoEn: "", preferido: false, estadoId: 1 });
   }, [initialData, open]);
   const handleChange = (name, value) => setFormData((p) => ({ ...p, [name]: value }));
   const addAssign = () => {
     const empresa = empresas.find((e) => String(e.id) === String(assignDraft.empresaId));
-    const draft = { ...assignDraft, empresaNombre: empresa?.nombre ?? assignDraft.empresaNombre };
+    const rol = roles.find((r) => String(r.id) === String(assignDraft.rolId));
+    const draft = { ...assignDraft, empresaNombre: empresa?.nombre ?? assignDraft.empresaNombre, rolNombre: rol?.nombre ?? assignDraft.rolNombre };
     let asignaciones = Array.isArray(formData.asignaciones) ? [...formData.asignaciones] : [];
     if (draft.preferido) asignaciones = asignaciones.map((a) => ({ ...a, preferido: false }));
     asignaciones.push(draft);
     setFormData((p) => ({ ...p, asignaciones }));
-    setAssignDraft({ rolNombre: "", empresaId: "", empresaNombre: "", iniciaContratoEn: "", finalizaContratoEn: "", preferido: false, estadoId: 1 });
+    setAssignDraft({ rolId: "", rolNombre: "", empresaId: "", empresaNombre: "", iniciaContratoEn: "", finalizaContratoEn: "", preferido: false, estadoId: 1 });
   };
   const removeAssign = (idx) => {
     const asignaciones = Array.isArray(formData.asignaciones) ? [...formData.asignaciones] : [];
@@ -37,7 +38,7 @@ export default function FormUsuario({
     setFormData((p) => ({ ...p, asignaciones }));
   };
   const handleSave = () => onSubmit?.(formData);
-  const rolesOptions = useMemo(() => roles.map((r) => ({ value: r, label: r })), [roles]);
+  const rolesOptions = useMemo(() => (Array.isArray(roles) ? roles : []).map((r) => ({ value: String(r.id), label: r.nombre ?? r.name ?? String(r.id) })), [roles]);
   const empresasOptions = useMemo(() => empresas.map((e) => ({ value: String(e.id), label: e.nombre })), [empresas]);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -74,7 +75,7 @@ export default function FormUsuario({
             <Stack spacing={2}>
               <Paper sx={{ p: 2 }}>
                 <Stack spacing={2}>
-                  <TextField select label="Rol" required value={assignDraft.rolNombre} onChange={(e) => setAssignDraft((p) => ({ ...p, rolNombre: e.target.value }))} fullWidth>
+                  <TextField select label="Rol" required value={assignDraft.rolId} onChange={(e) => setAssignDraft((p) => ({ ...p, rolId: e.target.value }))} fullWidth>
                     <MenuItem value="">Seleccione</MenuItem>
                     {rolesOptions.map((r) => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
                   </TextField>
