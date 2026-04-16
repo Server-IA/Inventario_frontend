@@ -3,10 +3,16 @@ import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormCategoriaEstado from "./FormCategoriaEstado.jsx";
 import GridCategoriaEstado from "./GridCategoriaEstado.jsx";
+import GridActionBar from "../common/GridActionBar";
+import SectionHeader from "../common/SectionHeader";
 
 export default function CategoriaEstado() {
-  const [selectedRow, setSelectedRow] = useState({});
-  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [message, setMessage] = useState({
+    open: false,
+    severity: "success",
+    text: "",
+  });
   const [rows, setRows] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -14,24 +20,74 @@ export default function CategoriaEstado() {
     try {
       const res = await axios.get("/v1/categoria-estado");
       const data = res?.data ?? [];
-      const list = Array.isArray(data) ? data : (data.content ?? []);
+      const list = Array.isArray(data) ? data : data.content ?? [];
       setRows(list);
     } catch {
-      setMessage({ open: true, severity: "error", text: "Error al cargar categorías" });
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Error al cargar categorias",
+      });
     }
   }, []);
 
-  useEffect(() => { reloadData(); }, [reloadData]);
+  useEffect(() => {
+    reloadData();
+  }, [reloadData]);
+
+  const handleOpenCreate = () => {
+    setSelectedRow(null);
+    setFormOpen(true);
+  };
+
+  const handleOpenUpdate = () => {
+    if (!selectedRow?.id) {
+      setMessage({ open: true, severity: "warning", text: "Selecciona un registro" });
+      return;
+    }
+    setFormOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedRow?.id) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona un registro para eliminar",
+      });
+      return;
+    }
+
+    if (!window.confirm(`�Eliminar "${selectedRow.nombre}"?`)) return;
+
+    try {
+      await axios.delete(`/v1/categoria-estado/${selectedRow.id}`);
+      setMessage({ open: true, severity: "success", text: "Eliminado" });
+      setSelectedRow(null);
+      reloadData();
+    } catch {
+      setMessage({ open: true, severity: "error", text: "No se pudo eliminar" });
+    }
+  };
 
   return (
     <div>
-      <h1>Categoría Estado</h1>
+      <SectionHeader title="Categoria Estado" />
+
       <MessageSnackBar message={message} setMessage={setMessage} />
+
+      <GridActionBar
+        onAdd={handleOpenCreate}
+        onUpdate={handleOpenUpdate}
+        onDelete={handleDelete}
+        canUpdate={Boolean(selectedRow?.id)}
+        canDelete={Boolean(selectedRow?.id)}
+      />
 
       <FormCategoriaEstado
         open={formOpen}
         setOpen={setFormOpen}
-        selectedRow={selectedRow || {}}
+        selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
         reloadData={reloadData}
