@@ -3,9 +3,11 @@ import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormEstado from "./FormEstado.jsx";
 import GridEstado from "./GridEstado.jsx";
+import GridActionBar from "../common/GridActionBar";
+import SectionHeader from "../common/SectionHeader";
 
 export default function Estado() {
-  const [selectedRow, setSelectedRow] = useState({});
+  const [selectedRow, setSelectedRow] = useState(null);
   const [message, setMessage] = useState({
     open: false,
     severity: "success",
@@ -16,19 +18,14 @@ export default function Estado() {
   const [formOpen, setFormOpen] = useState(false);
   const [categorias, setCategorias] = useState([]);
 
-  // 🔹 Traer TODOS los estados (sin /api, solo /v1/estado)
   const reloadData = useCallback(async () => {
     try {
-      // Si el backend NO usa paginación, ignora estos params.
-      // Si SÍ usa paginación (size=20 por defecto), con size grande traes todo.
       const res = await axios.get("/v1/estado", {
         params: { page: 0, size: 1000 },
       });
 
       const data = res?.data ?? [];
       const list = Array.isArray(data) ? data : data.content ?? [];
-
-      console.log("Estados recibidos:", list.length);
       setRows(list);
     } catch (error) {
       console.error(error);
@@ -40,7 +37,6 @@ export default function Estado() {
     }
   }, []);
 
-  // 🔹 Categorías para el combo del formulario
   const loadCategorias = useCallback(async () => {
     try {
       const res = await axios.get("/v1/categoria-estado");
@@ -57,16 +53,71 @@ export default function Estado() {
     loadCategorias();
   }, [reloadData, loadCategorias]);
 
+  const handleOpenCreate = () => {
+    setSelectedRow(null);
+    setFormOpen(true);
+  };
+
+  const handleOpenUpdate = () => {
+    if (!selectedRow?.id) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona un registro",
+      });
+      return;
+    }
+    setFormOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedRow?.id) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona un registro para eliminar",
+      });
+      return;
+    }
+
+    if (!window.confirm(`�Eliminar "${selectedRow.nombre}"?`)) return;
+
+    try {
+      await axios.delete(`/v1/estado/${selectedRow.id}`);
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Eliminado",
+      });
+      setSelectedRow(null);
+      reloadData();
+    } catch {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "No se pudo eliminar",
+      });
+    }
+  };
+
   return (
     <div>
-      <h1>Estado</h1>
+      <SectionHeader title="Estado" />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
+
+      <GridActionBar
+        onAdd={handleOpenCreate}
+        onUpdate={handleOpenUpdate}
+        onDelete={handleDelete}
+        canUpdate={Boolean(selectedRow?.id)}
+        canDelete={Boolean(selectedRow?.id)}
+      />
 
       <FormEstado
         open={formOpen}
         setOpen={setFormOpen}
-        selectedRow={selectedRow || {}}
+        selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         setMessage={setMessage}
         reloadData={reloadData}
@@ -75,6 +126,7 @@ export default function Estado() {
 
       <GridEstado
         rows={rows}
+        selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
       />
     </div>
