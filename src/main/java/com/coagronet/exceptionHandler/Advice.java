@@ -268,19 +268,12 @@ public class Advice extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({ DataAccessException.class, RuntimeException.class })
-    public void handleCustomDatabaseExceptions(Exception ex) throws Exception {
+    public ProblemDetail handleCustomDatabaseExceptions(Exception ex) throws Exception {
 
-        // 1. Extract the root cause of the exception
         Throwable rootCause = getRootCause(ex);
 
-        // 2. Check if the root cause is a PostgreSQL exception
         if (rootCause instanceof PSQLException psqlException) {
-
-            // 3. Verify the custom ERRCODE you defined in the trigger ('45000')
             if ("45000".equals(psqlException.getSQLState())) {
-
-                // 4. Build the ProblemDetail body for the ErrorResponseException
-                // Using 409 Conflict as it represents a business rule/state violation
                 ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                         HttpStatus.CONFLICT,
                         psqlException.getServerErrorMessage() != null
@@ -288,17 +281,12 @@ public class Advice extends ResponseEntityExceptionHandler {
                                 : psqlException.getMessage());
                 problemDetail.setTitle("Violación de Regla de Negocio");
 
-                // 5. Throw the ErrorResponseException
-                // Spring MVC will automatically handle this and return the ProblemDetail JSON
-                throw new ErrorResponseException(
-                        HttpStatus.CONFLICT,
-                        problemDetail,
-                        psqlException);
+                // RETURN the object directly so Spring translates it into the HTTP response
+                return problemDetail;
             }
         }
 
-        // If it's not our specific 45000 exception, rethrow it so Spring
-        // can handle it normally (or let it bubble up to a 500 error).
+        // Rethrow if it's not the specific PSQLException we are looking for
         throw ex;
     }
 
@@ -313,7 +301,6 @@ public class Advice extends ResponseEntityExceptionHandler {
                 return root;
         }
 
-        // Fallback manual extraction
         Throwable cause = throwable;
         while (cause.getCause() != null && cause != cause.getCause()) {
             cause = cause.getCause();
