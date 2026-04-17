@@ -114,7 +114,7 @@ public class KardexController {
 	})
 	@GetMapping
 	@PreAuthorize("hasAuthority('KARDEX_READ_ALL') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
-	public ResponseEntity<Page<KardexListDto>> listarMovimientos(
+	public ResponseEntity<Page<?>> listarMovimientos(
 			@Parameter(description = "Fecha de inicio para el filtro (formato ISO 8601 con offset)", example = "2026-04-13T00:00:00-05:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
 
 			@Parameter(description = "Fecha de fin para el filtro (formato ISO 8601 con offset)", example = "2026-04-13T23:59:59-05:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin,
@@ -125,7 +125,7 @@ public class KardexController {
 
 			@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
 
-		Page<KardexListDto> resultado = kardexService.listarMovimientos(fechaInicio, fechaFin, tipoMovimientoId,
+		Page<?> resultado = kardexService.listarMovimientos(fechaInicio, fechaFin, tipoMovimientoId,
 				estadoId, pageable);
 
 		return ResponseEntity.ok(resultado);

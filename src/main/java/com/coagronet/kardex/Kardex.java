@@ -51,13 +51,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @DynamicInsert
-@Table(name = "kardex",
-		indexes = { @Index(name = "idx_kardex_almacen_id", columnList = "kar_almacen_id"),
-				@Index(name = "idx_kardex_almacen_destino", columnList = "kar_almacen_destino_id"),
-				@Index(name = "idx_kardex_empresa_id", columnList = "kar_empresa_id"),
-				@Index(name = "idx_kardex_orden_compra_id", columnList = "kar_orden_compra_id"),
-				@Index(name = "idx_kardex_pedido_id", columnList = "kar_pedido_id"),
-				@Index(name = "idx_kardex_produccion_id", columnList = "kar_produccion_id") })
+@Table(name = "kardex", indexes = { @Index(name = "idx_kardex_almacen_id", columnList = "kar_almacen_id"),
+		@Index(name = "idx_kardex_almacen_destino", columnList = "kar_almacen_destino_id"),
+		@Index(name = "idx_kardex_empresa_id", columnList = "kar_empresa_id"),
+		@Index(name = "idx_kardex_orden_compra_id", columnList = "kar_orden_compra_id"),
+		@Index(name = "idx_kardex_pedido_id", columnList = "kar_pedido_id"),
+		@Index(name = "idx_kardex_produccion_id", columnList = "kar_produccion_id") })
 @EntityListeners(AuditingEntityListener.class)
 public class Kardex {
 
@@ -94,8 +93,7 @@ public class Kardex {
 	private Estado estado;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false, insertable = false,
-			updatable = false)
+	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id", nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
 
 	@TenantId
@@ -135,6 +133,7 @@ public class Kardex {
 	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private LocalDateTime segFechaHora;
 
+	@Builder.Default
 	@OneToMany(mappedBy = "kardex", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ArticuloKardex> items = new ArrayList<>();
 
@@ -145,9 +144,11 @@ public class Kardex {
 		if (o == null)
 			return false;
 		Class<?> oEffectiveClass = o instanceof HibernateProxy
-				? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
+				? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass()
+				: o.getClass();
 		Class<?> thisEffectiveClass = this instanceof HibernateProxy
-				? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
+				? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
+				: this.getClass();
 		if (thisEffectiveClass != oEffectiveClass)
 			return false;
 		Kardex kardex = (Kardex) o;

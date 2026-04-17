@@ -35,11 +35,14 @@ import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateResponseDTO;
+import com.coagronet.kardex.dtos.KardexAdminListDTO;
 import com.coagronet.kardex.dtos.KardexListDto;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
 import com.coagronet.kardex.dtos.MetadatosSeguridad;
+import com.coagronet.kardex.repositories.KardexAdminSpecifications;
+import com.coagronet.kardex.repositories.KardexAdminViewRepository;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.kardex.repositories.KardexSpecifications;
 import com.coagronet.ordenCompra.OrdenCompra;
@@ -91,6 +94,8 @@ public class KardexService {
 	private static final Long ESTADO_ACTIVO = 1L;
 
 	private static final Long ESTADO_INACTIVO = 2L;
+
+	private final KardexAdminViewRepository kardexAdminViewRepository;
 
 	@Transactional
 	public void inactivarMovimiento(Long kardexId) {
@@ -255,7 +260,7 @@ public class KardexService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<KardexListDto> listarMovimientos(OffsetDateTime fechaInicio, OffsetDateTime fechaFin,
+	public Page<?> listarMovimientos(OffsetDateTime fechaInicio, OffsetDateTime fechaFin,
 			Long tipoMovimientoId, Long estadoId, Pageable pageable) {
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -263,6 +268,22 @@ public class KardexService {
 				.stream()
 				.map(GrantedAuthority::getAuthority)
 				.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+		if (isAdmin) {
+			var specAdmin = KardexAdminSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
+
+			return kardexAdminViewRepository.findAll(specAdmin, pageable)
+					.map(view -> new KardexAdminListDTO(
+							view.getId(),
+							view.getFechaHora(),
+							view.getNombreAlmacen(),
+							view.getNombreTipoMovimiento(),
+							view.getNombreProduccion(),
+							view.getNombreEstado(),
+							view.getNombreEmpresa(),
+							view.getNombreClienteProveedor(),
+							view.getNombreAlmacenDestino()));
+		}
 
 		var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
 
@@ -273,7 +294,6 @@ public class KardexService {
 						kardex.getAlmacen().getNombre(),
 						kardex.getTipoMovimiento().getNombre(),
 						kardex.getEstado().getNombre(),
-						isAdmin && kardex.getEmpresa() != null ? kardex.getEmpresa().getNombre() : null,
 						kardex.getClienteProveedor() != null ? kardex.getClienteProveedor().getNombre() : null,
 						kardex.getProduccion() != null ? kardex.getProduccion().getNombre() : null));
 	}
