@@ -30,6 +30,7 @@ import com.coagronet.exceptionHandler.custom.EntidadNoEncontradaException;
 import com.coagronet.exceptionHandler.custom.MovimientoInvalidoException;
 import com.coagronet.exceptionHandler.custom.ProductoSinResponsableException;
 import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
+import com.coagronet.exceptionHandler.custom.ValidacionKardexException;
 import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.kardex.Kardex;
 import com.coagronet.kardex.dtos.ArticuloRequestDTO;
@@ -351,12 +352,18 @@ public class KardexService {
 				.orElseThrow(() -> new EntidadNoEncontradaException("Almacen", request.almacenId()));
 
 		if (request.almacenDestinoId() != null) {
+			if (request.almacenId().equals(request.almacenDestinoId())) {
+				throw new ValidacionKardexException(
+						"El almacén de origen y el almacén de destino no pueden ser el mismo.");
+			}
+
 			almacenRepository.findByIdAndEstadoId(request.almacenDestinoId(), ESTADO_ACTIVO)
 					.orElseThrow(() -> new EntidadNoEncontradaException("Almacen Destino", request.almacenDestinoId()));
-
 		}
 
-		if (request.ordenCompraId() != null) {
+		if (request.ordenCompraId() != null)
+
+		{
 			ordenCompraRepository.findByIdAndEstadoId(request.ordenCompraId(), ESTADO_ACTIVO)
 					.orElseThrow(() -> new EntidadNoEncontradaException("OrdenCompra", request.ordenCompraId()));
 
