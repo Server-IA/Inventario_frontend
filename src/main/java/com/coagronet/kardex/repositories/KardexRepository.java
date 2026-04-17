@@ -1,20 +1,24 @@
 package com.coagronet.kardex.repositories;
 
-
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.coagronet.kardex.Kardex;
 
-public interface KardexRepository extends JpaRepository<Kardex, Long> {
+public interface KardexRepository extends JpaRepository<Kardex, Long>, JpaSpecificationExecutor<Kardex> {
 
-	Optional<Kardex> findByIdAndEmpresaId(Long id, Long empresaId);
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("UPDATE Kardex k SET k.estado.id = :estadoInactivoId WHERE k.id = :kardexId AND k.estado.id = :estadoActivoId AND k.empresa.id = :empresaId")
+	int inactivarKardex(@Param("kardexId") Long kardexId, @Param("empresaId") Long empresaId,
+			@Param("estadoActivoId") Long estadoActivoId, @Param("estadoInactivoId") Long estadoInactivoId);
 
-	Page<Kardex> findByEmpresaIdOrderByIdAsc(Long empresaId, Pageable pageable);
-
-	Optional<Kardex> findByOrdenCompraIdAndEmpresaId(Long ordenCompraId, Long empresaId );
+	@EntityGraph(attributePaths = { "items" })
+	Optional<Kardex> findWithItemsById(Long id);
 
 }

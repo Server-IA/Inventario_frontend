@@ -1,5 +1,6 @@
 package com.coagronet.articuloKardex.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -11,14 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
+import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.articuloKardex.services.factory.ArticuloKardexFactory;
-import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.kardex.Kardex;
+import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.ordenCompra.services.OrdenCompraService;
-import com.coagronet.presentacionProducto.PresentacionProducto;
+import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 
@@ -30,35 +33,48 @@ import lombok.RequiredArgsConstructor;
 public class ArticuloKardexService {
 
 	private final UserEmpresaService userEmpresaService;
+
 	private final ArticuloKardexMapper articuloKardexMapper;
+
 	private final ArticuloKardexRepository articuloKardexRepository;
+
 	private final EntidadValidatorFacade entidadValidatorFacade;
+
 	private final OrdenCompraService ordenCompraService;
+
 	private final ArticuloKardexFactory articuloKardexFactory;
+
+	private final KardexRepository kardexRepository;
+
+	private final PresentacionProductoRepository presentacionProductoRepository;
+
+	private final EstadoRepository estadoRepository;
 
 	public Page<ArticuloKardexDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return articuloKardexRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-				.map(articuloKardexMapper::toListDTO);
+			.map(articuloKardexMapper::toListDTO);
 	}
 
 	public List<ArticuloKardexDTO> findAllByKardexId(Long kardexId) {
 		return articuloKardexRepository
-				.findByEmpresaIdAndKardexIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), kardexId)
-				.stream().map(articuloKardexMapper::toListDTO).collect(Collectors.toList());
+			.findByEmpresaIdAndKardexIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), kardexId)
+			.stream()
+			.map(articuloKardexMapper::toListDTO)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<ArticuloKardexDTO> findById(Long requestedId) {
 		return articuloKardexRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(articuloKardexMapper::toListDTO);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(articuloKardexMapper::toListDTO);
 	}
 
 	@Transactional
 	public ArticuloKardexDTO create(ArticuloKardexDTO articuloKardexDTO, HttpServletRequest request) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		Kardex kardex = entidadValidatorFacade.validarKardex(articuloKardexDTO.getKardexId(), empresaId);
+		Kardex kardex = kardexRepository.findById(articuloKardexDTO.getKardexId()).orElseThrow();
 		entidadValidatorFacade.validarEstadoGeneral(articuloKardexDTO.getEstadoId());
 		entidadValidatorFacade.validarProductoPresentacion(articuloKardexDTO.getPresentacionProductoId(), empresaId);
 
@@ -71,30 +87,38 @@ public class ArticuloKardexService {
 	}
 
 	@Transactional
-	public void update(Long requestedId, ArticuloKardexDTO articuloKardexDTO) {
+	public void update(Long requestedId, ArticuloKardexDTO dto) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		ArticuloKardex articuloExistente = articuloKardexRepository.findByIdAndEmpresaId(requestedId, empresaId)
+			.orElseThrow(() -> new NotFoundException("El art?culo de kardex no fue encontrado."));
 
-		ArticuloKardex articuloKardexExistente = entidadValidatorFacade.validarArticuloKardex(requestedId, empresaId);
+		articuloKardexMapper.updateEntityFromDto(dto, articuloExistente);
 
-		Kardex kardex = entidadValidatorFacade.validarKardex(articuloKardexDTO.getKardexId(), empresaId);
+		articuloExistente.setKardex(kardexRepository.findById(dto.getKardexId()).orElseThrow());
+		articuloExistente.setPresentacionProducto(presentacionProductoRepository
+			.getReferenceByIdAndEmpresaId(dto.getPresentacionProductoId(), empresaId));
+		articuloExistente.setEstado(estadoRepository.getReferenceById(dto.getEstadoId()));
 
-		PresentacionProducto presentacion = entidadValidatorFacade
-				.validarProductoPresentacion(articuloKardexDTO.getPresentacionProductoId(), empresaId);
-
-		Estado estado = entidadValidatorFacade.validarEstadoGeneral(articuloKardexDTO.getEstadoId());
-
-		articuloKardexExistente.setKardex(kardex);
-		articuloKardexExistente.setPresentacionProducto(presentacion);
-		articuloKardexExistente.setEstado(estado);
-
-		articuloKardexRepository.save(articuloKardexExistente);
+		articuloKardexRepository.save(articuloExistente);
 	}
 
+	@Transactional
 	public void delete(Long id) {
-		articuloKardexRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("El artículo de kardex no fue encontrado."));
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		articuloKardexRepository.deleteById(id);
+		int eliminados = articuloKardexRepository.softDeleteByIdAndEmpresaId(id, empresaId);
+
+		if (eliminados == 0) {
+			throw new NotFoundException("El art?culo de kardex no fue encontrado.");
+		}
+	}
+
+	@Transactional(readOnly = true)
+	public Page<KardexItemResponseDto> getKardexItems(Long kardexId, Long productoId, Long estadoId,
+			LocalDateTime fechaInicio, LocalDateTime fechaFin, Pageable pageable) {
+
+		return articuloKardexRepository.findItemsByKardexIdWithFilters(kardexId, productoId, estadoId, fechaInicio,
+				fechaFin, pageable);
 	}
 
 }

@@ -1,25 +1,39 @@
 package com.coagronet.user;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.coagronet.persona.Persona;
-import com.coagronet.rol.Rol;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuariorol.UsuarioRol; // Importar la clase asociativa correcta
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -45,17 +59,12 @@ public class User implements UserDetails {
 	@JoinColumn(name = "usu_persona_id", referencedColumnName = "per_id")
 	private Persona persona;
 
-	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "usuario_rol", joinColumns = @JoinColumn(name = "usuario_id", // nombre de la columna en
-																					// usuario_rol
-			referencedColumnName = "usu_id" // PK de usuario
-	), inverseJoinColumns = @JoinColumn(name = "rol_id", // nombre de la columna en usuario_rol
-			referencedColumnName = "id" // PK de rol
-	))
-	private Set<Rol> roles;
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private Set<UsuarioRol> rolesAsignados = new HashSet<>();
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id")
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id", nullable = false)
 	private UsuarioEstado usuarioEstado;
 
 	@Column(name = "usu_preferred_empresa_id")
@@ -69,34 +78,24 @@ public class User implements UserDetails {
 	private Integer tokenVersion = 0;
 
 	public void incrementTokenVersion() {
-		this.tokenVersion = (this.tokenVersion == null ? 1 : this.tokenVersion + 1);
+		this.tokenVersion++;
 	}
 
-	/*@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return roles.stream().map(r -> new SimpleGrantedAuthority(r.getNombre())).collect(Collectors.toSet());
-	}*/
+	// ====== Spring Security / UserDetails Implementation ======
 
-
-
-	/**
-	 * <h4> * Si authorities ya fueron cargadas (permiso + roles), se usan.
-	 * 	 * Si no, devuelve solo roles (compatibilidad con endpoints quemados)</h4>
-
-	 */
 	@Transient
 	private Collection<? extends GrantedAuthority> authorities;
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return authorities != null ? authorities :
-				roles.stream()
-						.map(r -> new SimpleGrantedAuthority(r.getNombre()))
-						.collect(Collectors.toSet());
-	}
+		if (authorities != null) {
+			return authorities;
+		}
 
-	public void setUsuarioEstado(UsuarioEstado usuarioEstado) {
-		this.usuarioEstado = usuarioEstado;
+		return rolesAsignados.stream()
+			.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
+			.map(ur -> new SimpleGrantedAuthority("ROLE_" + ur.getRol().getNombre()))
+			.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -116,10 +115,50 @@ public class User implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return this.usuarioEstado.getId() >= 2;
+		return this.usuarioEstado != null && this.usuarioEstado.getId() >= 2;
 	}
 
+	/*
+	 * ==================================================================== HELPER METHODS
+	 * PARA RELACIONES BIDIRECCIONALES (JPA Best Practices)
+	 * ====================================================================
+	 */
 
+	/**
+	 * Sincroniza ambos lados de la relación al agregar un nuevo rol/contrato. Obligatorio
+	 * para evitar FKs nulas y mantener el Contexto de Persistencia coherente.
+	 */
+	public void addUsuarioRol(UsuarioRol usuarioRol) {
+		// 1. Añade el contrato a la lista del usuario
+		this.rolesAsignados.add(usuarioRol);
+		// 2. Asigna este usuario como el dueño (owner) en la entidad hija
+		usuarioRol.setUser(this);
+	}
 
+	/**
+	 * Sincroniza ambos lados de la relación al remover un rol/contrato. Activa el
+	 * orphanRemoval = true si está configurado.
+	 */
+	public void removeUsuarioRol(UsuarioRol usuarioRol) {
+		this.rolesAsignados.remove(usuarioRol);
+		usuarioRol.setUser(null);
+	}
+
+	// ====== JPA Equals & HashCode ======
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof User))
+			return false;
+		User user = (User) o;
+		return id != null && id.equals(user.getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
+	}
 
 }

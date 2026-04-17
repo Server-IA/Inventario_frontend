@@ -39,6 +39,7 @@ import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
+import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.repositories.PersonaRepository;
@@ -50,6 +51,7 @@ import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 import com.coagronet.utils.AuthenticatedUser;
@@ -70,6 +72,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
 	private static final int MIN_PASSWORD_LENGTH = 8;
+
 	private static final int MAX_PASSWORD_LENGTH = 64;
 
 	private static final Long ESTADO_INACTVIO_ID = 2L;
@@ -106,9 +109,15 @@ public class AuthService {
 
 	private final TipoIdentificacionRepository tipoIdentificacionRepository;
 
+	private final JwtUtil jwtUtil;
+
 	private final RequestUtils requestUtils;
 
 	private final ApplicationEventPublisher applicationEventPublisher;
+
+	private final UsuarioEstadoRepository usuarioEstadoRepository;
+
+	private final EstadoRepository estadoRolRepository;
 
 	private static final Set<String> COMMON_PASSWORDS = Set.of("123456", "123456789", "12345678", "password", "qwerty",
 			"11111111", "123123", "000000", "password1", "abc123", "admin", "admin123");
@@ -117,44 +126,64 @@ public class AuthService {
 	@Transactional
 	public ApiResponse register(@Valid RegisterRequestDTO dto) {
 
-		// 1?? Does the user already exist? ----------------------------------
+		// 1. Verificación de existencia previa
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
 
 		if (existing != null) {
-
-			// 1a. Still pending verification ? 409 Conflict + resend email
-			if (existing.getUsuarioEstado() == UsuarioEstado.PENDIENTE_VERIFICACION) {
-
-				// resend: generate (or reuse) token and send email again
+			// Evaluamos el ID de la entidad estado (Ej. 1L = PENDIENTE_VERIFICACION)
+			if (existing.getUsuarioEstado().getId() == 1L) {
 				String token = emailService.createVerificationToken(existing.getUsername());
 				emailService.sendVerificationEmail(existing.getUsername(), token);
 
 				throw new ResponseStatusException(HttpStatus.CONFLICT,
-						"El correo electrónico ya está registrado, pero no verificado. Se ha reenviado el enlace de verificación.");
+						"El correo ya está registrado, pero no verificado. Se reenvió el enlace.");
 			}
-
-			// 1b. Already active/in use ? 400 Bad Request
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso.");
 		}
 
-		// 2?? Create a new user ----------------------------------------------
+		// 2. Creación del nuevo usuario (Aggregate Root)
 		User user = new User();
 		user.setUsername(dto.getUsername());
 
-		// 🔐 Validación NIST/OWASP de la contraseña
+		// Validación NIST/OWASP
 		validatePasswordPolicy(dto.getPassword());
-
 		user.setPassword(encoder.encode(dto.getPassword()));
-		user.setUsuarioEstado(UsuarioEstado.PENDIENTE_VERIFICACION);
 
+		// Obtener la entidad de estado de usuario (Ej: 1 = PENDIENTE_VERIFICACION)
+		// getReferenceById usa un Proxy de Hibernate, evitando una consulta SELECT a la
+		// base de datos
+		UsuarioEstado estadoUsuarioPendiente = usuarioEstadoRepository.getReferenceById(1L);
+		user.setUsuarioEstado(estadoUsuarioPendiente);
+
+		// 3. Obtener el Rol por defecto
 		Rol role = rolRepository.findByNombre(props.getDefaultRole())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
-		user.setRoles(Set.of(role));
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
 
-		// 3?? Register and send email (listener) -----------------------------
+		// Obtener el estado activo para el contrato/rol (Ej: 1 = ACTIVO)
+		Estado estadoRolActivo = estadoRolRepository.getReferenceById(1L);
+
+		// 4. Construcción de la Entidad Asociativa (UsuarioRol)
+		UsuarioRol nuevoContratoRol = UsuarioRol.builder()
+			.rol(role)
+			.estado(estadoRolActivo)
+			.iniciaContratoEn(OffsetDateTime.now())
+			// .empresa(empresa) // Si el registro requiere empresa, inyéctala aquí
+			.build();
+
+		/*
+		 * 5. Sincronización Bidireccional Este helper method (que definimos en User)
+		 * añade el UsuarioRol a la lista y le asigna el User actual, garantizando
+		 * coherencia en memoria antes del flush().
+		 */
+		user.addUsuarioRol(nuevoContratoRol);
+
+		/*
+		 * 6. Persistencia Al guardar el 'user', Hibernate ejecutará: 1x INSERT en la
+		 * tabla 'usuario' 1x INSERT en la tabla 'usuario_rol' (gracias a cascade =
+		 * CascadeType.ALL)
+		 */
 		registrationService.registerUser(user);
 
-		// 4?? Success ? 201 Created ------------------------------------------
 		return new ApiResponse(true, "Correo electrónico de verificación enviado a " + user.getUsername());
 	}
 
@@ -163,32 +192,28 @@ public class AuthService {
 	 * <p>
 	 * Este método maneja dos flujos principales:
 	 * <ol>
-	 * <li><b>Usuario Existente:</b> Si el usuario ya existe en el sistema, se le
-	 * asigna el nuevo rol dentro de la empresa actual, validando que no tenga el
-	 * rol activo previamente.</li>
-	 * <li><b>Usuario Nuevo:</b> Si el usuario no existe, se crea la Persona, el
-	 * Usuario (con contraseña temporal) y la asignación del Rol en la empresa.</li>
+	 * <li><b>Usuario Existente:</b> Si el usuario ya existe en el sistema, se le asigna
+	 * el nuevo rol dentro de la empresa actual, validando que no tenga el rol activo
+	 * previamente.</li>
+	 * <li><b>Usuario Nuevo:</b> Si el usuario no existe, se crea la Persona, el Usuario
+	 * (con contraseña temporal) y la asignación del Rol en la empresa.</li>
 	 * </ol>
 	 * <p>
 	 * En ambos casos se generan eventos de auditoría y notificaciones asíncronas.
-	 *
-	 * @param dto         Objeto de transferencia de datos con la información del
-	 *                    usuario, rol y datos personales.
-	 * @param httpRequest La petición HTTP actual, utilizada para extraer metadatos
-	 *                    de auditoría (IP y Host).
+	 * @param dto Objeto de transferencia de datos con la información del usuario, rol y
+	 * datos personales.
+	 * @param httpRequest La petición HTTP actual, utilizada para extraer metadatos de
+	 * auditoría (IP y Host).
 	 * @return ApiResponse Contiene el estado de la operación y un mensaje de
-	 *         confirmación.
-	 * @throws EntityNotFoundException Si no se encuentran entidades requeridas
-	 *                                 (Rol, Estado, Empresa, TipoID).
+	 * confirmación.
+	 * @throws EntityNotFoundException Si no se encuentran entidades requeridas (Rol,
+	 * Estado, Empresa, TipoID).
 	 * @throws ResponseStatusException
-	 *                                 <ul>
-	 *                                 <li>{@code HttpStatus.FORBIDDEN}: Si el
-	 *                                 usuario existente no está activo.</li>
-	 *                                 <li>{@code HttpStatus.CONFLICT}: Si el
-	 *                                 usuario ya tiene el rol activo, o si ya
-	 *                                 existe una persona con el mismo
-	 *                                 documento/email.</li>
-	 *                                 </ul>
+	 * <ul>
+	 * <li>{@code HttpStatus.FORBIDDEN}: Si el usuario existente no está activo.</li>
+	 * <li>{@code HttpStatus.CONFLICT}: Si el usuario ya tiene el rol activo, o si ya
+	 * existe una persona con el mismo documento/email.</li>
+	 * </ul>
 	 */
 	@Transactional
 	public ApiResponse registerForCurrentEmpresa(@Valid RegisterForCurrentEmpresaRequestDTO dto,
@@ -208,18 +233,18 @@ public class AuthService {
 			}
 
 			Rol rol = rolRepository.findById(dto.getRolId())
-					.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+				.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
 
 			Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
-					.orElseThrow(() -> new EntityNotFoundException(
-							"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
 
 			Empresa empresa = empresaRepository.findById(empresaId)
-					.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+				.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
 
 			boolean existsActivo = usuarioRolRepository
-					.existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(existing.getId(),
-							empresa.getId(), rol.getId(), EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+				.existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(existing.getId(),
+						empresa.getId(), rol.getId(), EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 
 			if (existsActivo == true) {
 
@@ -265,18 +290,19 @@ public class AuthService {
 		}
 
 		Rol rol = rolRepository.findById(dto.getRolId())
-				.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+			.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
 
 		Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
-				.orElseThrow(() -> new EntityNotFoundException(
-						"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+			.orElseThrow(() -> new EntityNotFoundException(
+					"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
 
 		Empresa empresa = empresaRepository.findById(empresaId)
-				.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+			.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
 
 		TipoIdentificacion tipoDocumentoIdentidad = tipoIdentificacionRepository
-				.findById(dto.getTipoDocumentoIdentidadId()).orElseThrow(() -> new EntityNotFoundException(
-						"Tipo de documento de identidad no encontrado con id: " + dto.getTipoDocumentoIdentidadId()));
+			.findById(dto.getTipoDocumentoIdentidadId())
+			.orElseThrow(() -> new EntityNotFoundException(
+					"Tipo de documento de identidad no encontrado con id: " + dto.getTipoDocumentoIdentidadId()));
 
 		boolean personaExiste = personaRepository.existsByTipoIdentificacion_IdAndIdentificacionAndEstado_Id(
 				dto.getTipoDocumentoIdentidadId(), dto.getCodigoIdentificacion(),
@@ -312,7 +338,8 @@ public class AuthService {
 		User user = new User();
 		user.setUsername(dto.getUsername());
 		user.setPassword(encoder.encode(tempPassword));
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_DEBE_CAMBIAR_CONTRASENA);
+		user.setUsuarioEstado(
+				usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_DEBE_CAMBIAR_CONTRASENA));
 		user.setPersona(savedPersona);
 		user.setPreferredEmpresaId(empresaId);
 		User savedUser = userRepo.save(user);
@@ -353,13 +380,15 @@ public class AuthService {
 		return new ApiResponse(true, message);
 	}
 
-	// LOGIN
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 
 		Authentication auth = authManager
-				.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
+			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 
-		User user = (User) auth.getPrincipal();
+		CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+
+		User user = userRepo.findById(userDetails.id())
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado en BD"));
 
 		UsuarioEstado estado = user.getUsuarioEstado();
 
@@ -367,11 +396,11 @@ public class AuthService {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales o estado de usuario inválido");
 		}
 
-		if (estado.esPendienteActivacion()) {
+		if (estado.getId() == 1L) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tu cuenta está pendiente de activación.");
 		}
 
-		if (estado.esDesactivado()) {
+		if (estado.getId() == 0L) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN,
 					"Tu cuenta no está disponible. Contacta al administrador.");
 		}
@@ -385,19 +414,20 @@ public class AuthService {
 		UsuarioRol current = resolveInitialContext(user, usuarioRols);
 
 		if (current.getEmpresa() == null) {
-
-			String token = jwt.generateToken(user, current.getRol().getId(), user.getUsuarioEstado().getId());
-
+			String token = jwtUtil.generateToken(user, null, current.getRol().getId(), current.getRol().getNombre(),
+					user.getUsuarioEstado().getId());
 			return Map.of("token", token, "rolId", current.getRol().getId(), "estado", user.getUsuarioEstado().getId());
-
 		}
-		String token = jwt.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
-				user.getUsuarioEstado().getId());
+
+		String token = jwtUtil.generateToken(user, current.getEmpresa().getId(), current.getRol().getId(),
+				current.getRol().getNombre(), user.getUsuarioEstado().getId());
 
 		var nombrePersona = user.getPersona().getNombre() + " " + user.getPersona().getApellido();
 
-		List<EmpresaRolDTO> rolesByCompany = usuarioRols.stream().map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(),
-				ur.getEmpresa().getNombre(), ur.getRol().getId(), ur.getRol().getNombre())).toList();
+		List<EmpresaRolDTO> rolesByCompany = usuarioRols.stream()
+			.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRol().getId(),
+					ur.getRol().getNombre()))
+			.toList();
 
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRol().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
@@ -405,17 +435,22 @@ public class AuthService {
 
 	}
 
-	// SWITCH CONTEXT
 	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
+
 		User user = userRepo.findByUsername(username)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-		userRoleRepo
-				.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
-						ESTADO_INACTVIO_ID)
-				.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
+		UsuarioRol usuarioRol = userRoleRepo
+			.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
+					ESTADO_INACTVIO_ID)
+			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
-		String token = jwt.generateToken(user, dto.empresaId(), dto.rolId(), user.getUsuarioEstado().getId());
+		String rolName = usuarioRol.getRol().getNombre();
+
+		// 3. INYECTAR EL ROL en la generación del token (Stateless RBAC).
+		String token = jwtUtil.generateToken(user, dto.empresaId(), dto.rolId(), rolName,
+				user.getUsuarioEstado().getId());
+
 		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
 			user.setPreferredEmpresaId(dto.empresaId());
 			user.setPreferredRolId(dto.rolId());
@@ -433,9 +468,9 @@ public class AuthService {
 		// 1) Si hay preferido en User, ?salo si existe a?n
 		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
 			Optional<UsuarioRol> preferred = usuarioRols.stream()
-					.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
-							&& ur.getRol().getId().equals(user.getPreferredRolId()))
-					.findFirst();
+				.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
+						&& ur.getRol().getId().equals(user.getPreferredRolId()))
+				.findFirst();
 			if (preferred.isPresent()) {
 				return preferred.get();
 			}
@@ -480,7 +515,7 @@ public class AuthService {
 		}
 
 		User user = userRepo.findByUsername(username)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -500,7 +535,8 @@ public class AuthService {
 	public ApiResponse changePasswordInitial(@Valid InitialPasswordChangeRequestDTO dto) {
 		User user = getCurrentUser(); // ya lo usas en changePassword
 
-		if (user.getUsuarioEstado() == UsuarioEstado.ACTIVADO_CON_EMPRESA) {
+		if (user.getUsuarioEstado() == usuarioEstadoRepository
+			.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"Este usuario no requiere cambio de contraseña obligatorio.");
 		}
@@ -519,7 +555,7 @@ public class AuthService {
 		validatePasswordPolicy(dto.nuevaClave());
 
 		user.setPassword(encoder.encode(dto.nuevaClave()));
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
+		user.setUsuarioEstado(usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA));
 		user.incrementTokenVersion(); // revoca JWT previos
 		userRepo.save(user);
 
@@ -557,19 +593,21 @@ public class AuthService {
 		if (auth == null || !(auth.getPrincipal() instanceof UserDetails ud)) {
 			return Set.of();
 		}
-		return ud.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-				.collect(java.util.stream.Collectors.toSet());
+		return ud.getAuthorities()
+			.stream()
+			.map(GrantedAuthority::getAuthority)
+			.collect(java.util.stream.Collectors.toSet());
 	}
 
 	private User getCurrentUser() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || auth
-				.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+			.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
 		}
 
 		return userRepo.findByUsername(auth.getName())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	private void validatePasswordPolicy(String rawPassword) {

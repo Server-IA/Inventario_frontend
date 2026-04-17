@@ -20,7 +20,7 @@ import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.modulo.Modulo;
 import com.coagronet.modulo.enums.AlcanceModulo;
 import com.coagronet.modulo.repositories.ModuloRepository;
@@ -35,6 +35,7 @@ import com.coagronet.rolpermiso.repositories.RolPermisoRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 import com.coagronet.usuariorol.UsuarioRol;
 import com.coagronet.usuariorol.repositories.UsuarioRolRepository;
 
@@ -48,7 +49,7 @@ public class EmpresaUsuarioController {
 
 	private final EmpresaService empresaService;
 
-	private final JwtService jwtService;
+	private final JwtUtil jwtUtil;
 
 	private final UserRepository userRepository;
 
@@ -68,13 +69,15 @@ public class EmpresaUsuarioController {
 
 	private final RolPermisoRepository rolPermisoRepository;
 
+	private final UsuarioEstadoRepository usuarioEstadoRepository;
+
 	@Transactional
 	@PostMapping("/empresa-usuario")
 	public ResponseEntity<Map<String, Integer>> createEmpresa(@RequestBody EmpresaDTO empresaDTO,
 			@RequestHeader("Authorization") String authorizationHeader) {
 
 		String token = authorizationHeader.replace("Bearer ", "").trim();
-		String username = jwtService.extractUsername(token);
+		String username = jwtUtil.extractUsername(token);
 
 		User user = userRepository.findByUsername(username)
 			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -89,7 +92,6 @@ public class EmpresaUsuarioController {
 		// INICIO DE INICIALIZACIÓN DE PERMISOS BASE
 		// ==========================================
 
-		// A. Habilitar módulos base para la empresa (modulo_empresa)
 		List<Modulo> modulosBase = moduloRepository.findByAlcanceAndRequeridoTrue(AlcanceModulo.EMPRESA);
 		Estado estadoActivo = estadoRepository.getReferenceById(1L);
 		List<ModuloEmpresa> modulosEmpresa = modulosBase.stream().map(modulo -> {
@@ -103,7 +105,6 @@ public class EmpresaUsuarioController {
 		}).toList();
 		moduloEmpresaRepository.saveAll(modulosEmpresa);
 
-		// B. Crear el vínculo Empresa - Rol para el Rol 2 (empresa_rol)
 		Rol rolAdmin = rolRepository.findById(2L)
 			.orElseThrow(() -> new RuntimeException("Rol Administrador no encontrado"));
 
@@ -113,7 +114,6 @@ public class EmpresaUsuarioController {
 		empresaRol.setEstado(estadoActivo);
 		EmpresaRol savedEmpresaRol = empresaRolRepository.save(empresaRol);
 
-		// C. Asignar los permisos específicos al rol en esta empresa (rol_permiso)
 		List<Long> modulosIds = modulosBase.stream().map(Modulo::getId).toList();
 
 		if (!modulosIds.isEmpty()) {
@@ -124,10 +124,6 @@ public class EmpresaUsuarioController {
 				rp.setEmpresaRol(savedEmpresaRol);
 				rp.setPermiso(permiso);
 				rp.setEstado(estadoActivo);
-
-				// ¡LA SOLUCIÓN! Asigna la fecha manualmente.
-				// (Nota: Usa LocalDateTime.now(), LocalDate.now() o new Date()
-				// dependiendo del tipo de dato que tengas en tu entidad RolPermiso)
 				rp.setCreatedAt(Instant.now());
 
 				return rp;
@@ -139,7 +135,7 @@ public class EmpresaUsuarioController {
 		// FIN DE INICIALIZACIÓN
 		// ==========================================
 
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_CON_EMPRESA);
+		user.setUsuarioEstado(usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA));
 		userRepository.save(user);
 
 		UsuarioRol usuarioRol = usuarioRolRepository.findByUser(user);

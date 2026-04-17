@@ -17,20 +17,23 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
 import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
-import com.coagronet.infrastructure.security.JwtRequestFilter;
-import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
-@Configuration @EnableWebSecurity @RequiredArgsConstructor
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final JwtService jwtService;
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAccessDeniedHandler accessDeniedHandler,
 			CustomAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
-		http.cors(Customizer.withDefaults()).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth
+		http.cors(Customizer.withDefaults())
+			.csrf(AbstractHttpConfigurer::disable)
+			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**",
 						"/api/v1/empresas/**", "/api/v1/personas/**", "/api/v2/menu/**", "/change-password-initial/**")
 				.permitAll()
@@ -41,14 +44,22 @@ public class SecurityConfig {
 						"/api/v1/tipo-aplicaciones/**")
 				.hasAuthority("ROLE_ADMINISTRADOR_SISTEMA")
 				// Especifidad para unidad y tipoUnidad
-				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**").authenticated()
-				.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**").authenticated()
-				.requestMatchers(HttpMethod.POST, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-				.requestMatchers(HttpMethod.PUT, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-				.requestMatchers(HttpMethod.DELETE, "/api/v1/unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-				.requestMatchers(HttpMethod.POST, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-				.requestMatchers(HttpMethod.PUT, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
-				.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**").hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.GET, "/api/v1/tipo-unidad/**")
+				.authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/v1/unidad/**")
+				.authenticated()
+				.requestMatchers(HttpMethod.POST, "/api/v1/unidad/**")
+				.hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.PUT, "/api/v1/unidad/**")
+				.hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.DELETE, "/api/v1/unidad/**")
+				.hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.POST, "/api/v1/tipo-unidad/**")
+				.hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.PUT, "/api/v1/tipo-unidad/**")
+				.hasRole("ADMINISTRADOR_SISTEMA")
+				.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**")
+				.hasRole("ADMINISTRADOR_SISTEMA")
 				.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**",
 						"/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**", "/api/v1/tipo_sede/**",
 						"/api/v1/grupo/**", "/api/v1/sede/**", "/api/v1/bloque/**", "/api/v1/espacio/**",
@@ -66,20 +77,18 @@ public class SecurityConfig {
 						"/api/v1/factura/**", "/api/v1/pedido-cotizacion/**", "/api/v2/menu", "/api/v1/metricas/**",
 						"/api/v1/estado_categoria/**", "/api/v1/empresa-rol/**", "/api/v1/usuario-roles/**",
 						"/empresa/usuarios-roles/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA").requestMatchers("/api/v2/report/**")
-				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE").anyRequest().authenticated())
-				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.exceptionHandling(exceptions -> exceptions.accessDeniedHandler(accessDeniedHandler)
-						.authenticationEntryPoint(authenticationEntryPoint));
+				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
+				.requestMatchers("/api/v2/report/**")
+				.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
+				.anyRequest()
+				.authenticated())
+			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.exceptionHandling(exceptions -> exceptions.accessDeniedHandler(accessDeniedHandler)
+				.authenticationEntryPoint(authenticationEntryPoint));
 
-		http.addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
-	}
-
-	@Bean
-	JwtRequestFilter jwtRequestFilter() {
-		return new JwtRequestFilter(jwtService);
 	}
 
 	@Bean

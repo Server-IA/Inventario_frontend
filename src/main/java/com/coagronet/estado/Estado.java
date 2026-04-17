@@ -30,7 +30,7 @@ public class Estado {
 	@Column(name = "est_acronimo", length = 100)
 	private String acronimo;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "est_estado_categoria_id", referencedColumnName = "esc_id")
 	private EstadoCategoria estadoCategoria;
 

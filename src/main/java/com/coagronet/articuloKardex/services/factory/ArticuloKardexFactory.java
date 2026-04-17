@@ -1,5 +1,11 @@
 package com.coagronet.articuloKardex.services.factory;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
@@ -12,95 +18,90 @@ import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepos
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ArticuloKardexFactory {
 
-    private final ArticuloKardexMapper articuloKardexMapper;
-    private final ArticuloKardexRepository articuloKardexRepository;
-    private final PresentacionProductoRepository presentacionProductoRepository;
-    private final RequestUtils requestUtils;
-    private final AuthenticationService authenticationService;
+	private final ArticuloKardexMapper articuloKardexMapper;
 
-    public List<ArticuloKardex> crearArticulos(
-            ArticuloKardexDTO dto,
-            Long empresaId,
-            HttpServletRequest request) {
-        if (esDesgregado(dto, empresaId)) {
-            return crearArticulosDesgregados(dto, empresaId, request);
-        } else {
-            dto.setEmpresaId(empresaId);
-            ArticuloKardex entidad = articuloKardexMapper.toEntity(dto);
+	private final ArticuloKardexRepository articuloKardexRepository;
 
-            asignarDatosAuditoria(entidad, request);
+	private final PresentacionProductoRepository presentacionProductoRepository;
 
-            return List.of(articuloKardexRepository.save(entidad));
-        }
-    }
+	private final RequestUtils requestUtils;
 
-    private boolean esDesgregado(ArticuloKardexDTO dto, Long empresaId) {
-        return presentacionProductoRepository.findByIdAndEmpresaId(dto.getPresentacionProductoId(), empresaId)
-                .map(PresentacionProducto::getDesgregar)
-                .orElse(false);
-    }
+	private final AuthenticationService authenticationService;
 
-    private List<ArticuloKardex> crearArticulosDesgregados(
-            ArticuloKardexDTO dto,
-            Long empresaId,
-            HttpServletRequest request) {
-        double cantidad = dto.getCantidad();
-        long unidades = Math.round(cantidad);
+	public List<ArticuloKardex> crearArticulos(ArticuloKardexDTO dto, Long empresaId, HttpServletRequest request) {
+		if (esDesgregado(dto, empresaId)) {
+			return crearArticulosDesgregados(dto, empresaId, request);
+		}
+		else {
+			dto.setEmpresaId(empresaId);
+			ArticuloKardex entidad = articuloKardexMapper.toEntity(dto);
 
-        if (Math.abs(cantidad - unidades) > 1e-9) {
-            throw new BadRequestException(
-                    "Para presentaciones desgregadas, la cantidad debe ser un número entero.");
-        }
+			asignarDatosAuditoria(entidad, request);
 
-        List<ArticuloKardex> creados = new ArrayList<>();
-        for (int i = 0; i < unidades; i++) {
-            ArticuloKardexDTO item = construirArticuloKardexUnitario(dto, empresaId);
-            ArticuloKardex entidad = articuloKardexMapper.toEntity(item);
+			return List.of(articuloKardexRepository.save(entidad));
+		}
+	}
 
-            // ahora recibe el request
-            asignarDatosAuditoria(entidad, request);
+	private boolean esDesgregado(ArticuloKardexDTO dto, Long empresaId) {
+		return presentacionProductoRepository.findByIdAndEmpresaId(dto.getPresentacionProductoId(), empresaId)
+			.map(PresentacionProducto::getDesgregar)
+			.orElse(false);
+	}
 
-            creados.add(articuloKardexRepository.save(entidad));
-        }
-        return creados;
-    }
+	private List<ArticuloKardex> crearArticulosDesgregados(ArticuloKardexDTO dto, Long empresaId,
+			HttpServletRequest request) {
 
-    private void asignarDatosAuditoria(ArticuloKardex entidad, HttpServletRequest request) {
+		BigDecimal cantidad = dto.getCantidad();
 
-        entidad.setIp(requestUtils.getClientIp(request));
-        entidad.setHost(requestUtils.getClientHost(request));
+		// Validar si tiene parte decimal usando BigDecimal (Ej: 1.5 % 1 != 0)
+		if (cantidad.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) != 0) {
+			throw new BadRequestException("Para presentaciones desgregadas, la cantidad debe ser un número entero.");
+		}
 
-        entidad.setUsername(authenticationService
-                .getAuthenticatedUser()
-                .getUsername());
+		int unidades = cantidad.intValue();
+		List<ArticuloKardex> creados = new ArrayList<>();
 
-        entidad.setRol(requestUtils.getAuthenticatedRole());
-    }
+		for (int i = 0; i < unidades; i++) {
+			ArticuloKardexDTO item = construirArticuloKardexUnitario(dto, empresaId);
+			ArticuloKardex entidad = articuloKardexMapper.toEntity(item);
+			asignarDatosAuditoria(entidad, request);
+			creados.add(entidad);
+		}
 
-    private static ArticuloKardexDTO construirArticuloKardexUnitario(ArticuloKardexDTO articuloKardexDTO,
-            Long empresaId) {
-        ArticuloKardexDTO item = new ArticuloKardexDTO();
-        item.setEmpresaId(empresaId);
-        item.setKardexId(articuloKardexDTO.getKardexId());
-        item.setPresentacionProductoId(articuloKardexDTO.getPresentacionProductoId());
-        item.setEstadoId(articuloKardexDTO.getEstadoId());
+		// OPTIMIZACIÓN: Inserción en lote (Batch Insert). 1 solo viaje a la BD.
+		return articuloKardexRepository.saveAll(creados);
+	}
 
-        item.setCantidad(1.0);
+	private void asignarDatosAuditoria(ArticuloKardex entidad, HttpServletRequest request) {
 
-        item.setPrecio(articuloKardexDTO.getPrecio());
-        item.setFechaVencimiento(articuloKardexDTO.getFechaVencimiento());
-        item.setIdentificadorProducto(articuloKardexDTO.getIdentificadorProducto());
-        item.setLote(articuloKardexDTO.getLote());
-        return item;
-    }
+		entidad.setIp(requestUtils.getClientIp(request));
+		entidad.setHost(requestUtils.getClientHost(request));
+
+		entidad.setUsername(authenticationService.getAuthenticatedUser().getUsername());
+
+		entidad.setRol(requestUtils.getAuthenticatedRole());
+	}
+
+	private static ArticuloKardexDTO construirArticuloKardexUnitario(ArticuloKardexDTO articuloKardexDTO,
+			Long empresaId) {
+		ArticuloKardexDTO item = new ArticuloKardexDTO();
+		item.setEmpresaId(empresaId);
+		item.setKardexId(articuloKardexDTO.getKardexId());
+		item.setPresentacionProductoId(articuloKardexDTO.getPresentacionProductoId());
+		item.setEstadoId(articuloKardexDTO.getEstadoId());
+
+		item.setCantidad(BigDecimal.ONE);
+
+		item.setPrecio(articuloKardexDTO.getPrecio());
+		item.setFechaVencimiento(articuloKardexDTO.getFechaVencimiento());
+		item.setIdentificadorProducto(articuloKardexDTO.getIdentificadorProducto());
+		item.setLote(articuloKardexDTO.getLote());
+		return item;
+	}
 
 }
