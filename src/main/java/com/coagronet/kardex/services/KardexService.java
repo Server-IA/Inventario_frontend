@@ -36,7 +36,7 @@ import com.coagronet.kardex.dtos.ArticuloRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateRequestDTO;
 import com.coagronet.kardex.dtos.ArticuloUpdateResponseDTO;
 import com.coagronet.kardex.dtos.KardexAdminListDTO;
-import com.coagronet.kardex.dtos.KardexListDto;
+import com.coagronet.kardex.dtos.KardexListDTO;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
@@ -288,14 +288,15 @@ public class KardexService {
 		var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
 
 		return kardexRepository.findAll(spec, pageable)
-				.map(kardex -> new KardexListDto(
+				.map(kardex -> new KardexListDTO(
 						kardex.getId(),
 						kardex.getFechaHora(),
 						kardex.getAlmacen().getNombre(),
 						kardex.getTipoMovimiento().getNombre(),
+						kardex.getProduccion() != null ? kardex.getProduccion().getNombre() : null,
 						kardex.getEstado().getNombre(),
 						kardex.getClienteProveedor() != null ? kardex.getClienteProveedor().getNombre() : null,
-						kardex.getProduccion() != null ? kardex.getProduccion().getNombre() : null));
+						kardex.getAlmacenDestino() != null ? kardex.getAlmacenDestino().getNombre() : null));
 	}
 
 	@Transactional(readOnly = true)

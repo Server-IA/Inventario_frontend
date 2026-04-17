@@ -29,7 +29,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 import com.coagronet.articuloKardex.services.ArticuloKardexService;
 import com.coagronet.kardex.Kardex;
-import com.coagronet.kardex.dtos.KardexListDto;
+import com.coagronet.kardex.dtos.KardexAdminListDTO;
+import com.coagronet.kardex.dtos.KardexListDTO;
 import com.coagronet.kardex.dtos.KardexRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateRequestDTO;
 import com.coagronet.kardex.dtos.KardexUpdateResponseDTO;
@@ -108,7 +109,10 @@ public class KardexController {
 
 	@Operation(summary = "Listar movimientos de Kardex", description = "Obtiene una lista paginada de los movimientos de kardex. Permite filtrar por rango de fechas, tipo de movimiento y estado. Retorna la empresa asociada solo si el usuario tiene rol de ADMINISTRADOR_SISTEMA.")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lista de movimientos obtenida exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = KardexListDto.class))),
+			@ApiResponse(responseCode = "200", description = "Lista de movimientos obtenida exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(oneOf = {
+					KardexListDTO.class,
+					KardexAdminListDTO.class
+			}))),
 			@ApiResponse(responseCode = "401", description = "Usuario no autenticado", content = @Content),
 			@ApiResponse(responseCode = "403", description = "Usuario no autorizado para acceder a este recurso", content = @Content)
 	})
