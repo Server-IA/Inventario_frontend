@@ -171,6 +171,11 @@ public class KardexService {
 
 		Almacen almacenDestino = null;
 		if (request.almacenDestinoId() != null) {
+			if (request.almacenId().equals(request.almacenDestinoId())) {
+				throw new ValidacionKardexException(
+						"El almacén de origen y el almacén de destino no pueden ser el mismo.");
+			}
+
 			almacenDestino = almacenRepository.findByIdAndEstadoId(request.almacenDestinoId(), ESTADO_ACTIVO)
 					.orElseThrow(() -> new EntidadNoEncontradaException("AlmacenDestino", request.almacenDestinoId()));
 		}
