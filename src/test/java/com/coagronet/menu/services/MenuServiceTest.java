@@ -16,13 +16,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.menu.dtos.MenuModuloResponseDTO;
 import com.coagronet.menu.dtos.MenuSubSistemaResponseDTO;
 import com.coagronet.menu.repositories.MenuModuloRepository;
@@ -36,8 +38,6 @@ import com.coagronet.rol.Rol;
 import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.subsistema.SubSistema;
 import com.coagronet.utils.UserEmpresaService;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 @ExtendWith(MockitoExtension.class)
 class MenuServiceTest {
@@ -64,16 +64,22 @@ class MenuServiceTest {
     private EstadoRepository estadoRepository;
 
     @Mock
-    private JwtService jwtService;
-
-    @Mock
     private RolRepository rolRepository;
-
-    @Mock
-    private HttpServletRequest request;
 
     @InjectMocks
     private MenuService menuService;
+
+    @org.junit.jupiter.api.AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void setSecurityContext(Long rolId, String authority) {
+        CustomUserDetails userDetails = new CustomUserDetails(1L, "tester", "pwd", 10L, rolId, 1,
+                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(authority)));
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+    }
 
     @Test
     void obtenerMenuPorEmpresaTipoYRol_returnsGroupedMenu_whenDataIsValid() {
@@ -82,13 +88,12 @@ class MenuServiceTest {
         SubModuloRow row2 = row("Inventario", "box", "producto", "Producto", "/producto", "icon-producto");
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
-        when(request.getHeader("Authorization")).thenReturn("Bearer token-123");
-        when(jwtService.extractRoleId("token-123")).thenReturn(2);
+        setSecurityContext(2L, "ROLE_ADMINISTRADOR_EMPRESA");
         Rol rolAdminEmpresa = new Rol();
         rolAdminEmpresa.setId(2L);
         rolAdminEmpresa.setNombre("ADMINISTRADOR_EMPRESA");
         when(rolRepository.findById(2L)).thenReturn(java.util.Optional.of(rolAdminEmpresa));
-        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 2, true)).thenReturn(List.of(row1, row2));
+        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 2L, true)).thenReturn(List.of(row1, row2));
         when(moduloMapper.toDTO(row1)).thenReturn(new MenuModuloResponseDTO("kardex", "Kardex", "/kardex", "icon-kardex"));
         when(moduloMapper.toDTO(row2)).thenReturn(new MenuModuloResponseDTO("producto", "Producto", "/producto", "icon-producto"));
 
@@ -104,18 +109,17 @@ class MenuServiceTest {
         Long empresaId = 10L;
 
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(empresaId);
-        when(request.getHeader("Authorization")).thenReturn("Bearer token-123");
-        when(jwtService.extractRoleId("token-123")).thenReturn(1);
+        setSecurityContext(1L, "ROLE_ADMINISTRADOR_SISTEMA");
         Rol rolAdminSistema = new Rol();
         rolAdminSistema.setId(1L);
         rolAdminSistema.setNombre("ADMINISTRADOR_SISTEMA");
         when(rolRepository.findById(1L)).thenReturn(java.util.Optional.of(rolAdminSistema));
-        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 1, false)).thenReturn(List.of());
+        when(menuModuloRepository.findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 1L, false)).thenReturn(List.of());
 
         List<MenuSubSistemaResponseDTO> result = menuService.obtenerMenuPorEmpresaTipoYRol("web");
 
         assertThat(result).isEmpty();
-        verify(menuModuloRepository).findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 1, false);
+        verify(menuModuloRepository).findSubmodulosByEmpresaTipoAppAndRolId(empresaId, 1, 1L, false);
     }
 
     @Test
@@ -129,9 +133,8 @@ class MenuServiceTest {
     }
 
     @Test
-    void obtenerMenuPorEmpresaTipoYRol_throwsAccessDenied_whenAuthorizationHeaderIsMissing() {
+    void obtenerMenuPorEmpresaTipoYRol_throwsAccessDenied_whenSecurityContextIsMissing() {
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(10L);
-        when(request.getHeader("Authorization")).thenReturn(null);
 
         assertThrows(AccessDeniedException.class, () -> menuService.obtenerMenuPorEmpresaTipoYRol("web"));
 
@@ -139,10 +142,10 @@ class MenuServiceTest {
     }
 
     @Test
-    void obtenerMenuPorEmpresaTipoYRol_throwsAccessDenied_whenRoleCannotBeExtracted() {
+    void obtenerMenuPorEmpresaTipoYRol_throwsAccessDenied_whenPrincipalIsNotCustomUserDetails() {
         when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(10L);
-        when(request.getHeader("Authorization")).thenReturn("Bearer token-123");
-        when(jwtService.extractRoleId("token-123")).thenReturn(null);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("plain-user", null, List.of()));
 
         assertThrows(AccessDeniedException.class, () -> menuService.obtenerMenuPorEmpresaTipoYRol("web"));
 

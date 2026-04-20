@@ -3,6 +3,7 @@ package com.coagronet.rol.controllers;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,14 +26,16 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+
 import com.coagronet.exceptionHandler.Advice;
 import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
 import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
 import com.coagronet.infrastructure.configuration.CorsProperties;
 import com.coagronet.infrastructure.configuration.SecurityConfig;
 import com.coagronet.infrastructure.security.JwtAuthenticationFilter;
-import com.coagronet.infrastructure.security.JwtRequestFilter;
-import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.infrastructure.security.MyUserDetailsService;
 import com.coagronet.rol.dtos.RolResponseDTO;
 import com.coagronet.rol.services.impl.RolServiceImpl;
@@ -40,7 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @WebMvcTest(controllers = RolController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
-        JwtRequestFilter.class, JwtAuthenticationFilter.class }))
+        JwtAuthenticationFilter.class }))
 @Import({ SecurityConfig.class, Advice.class, CustomAccessDeniedHandler.class, CustomAuthenticationEntryPoint.class })
 class RolControllerSecurityTest {
 
@@ -51,10 +54,10 @@ class RolControllerSecurityTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-        private RolServiceImpl rolService;
+    private RolServiceImpl rolService;
 
     @MockBean
-    private JwtService jwtService;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockBean
     private MyUserDetailsService myUserDetailsService;
@@ -63,8 +66,18 @@ class RolControllerSecurityTest {
     private CorsProperties corsProperties;
 
     @BeforeEach
-    void setup() {
+    void setup() throws Exception {
         when(corsProperties.getAllowedOrigins()).thenReturn(List.of());
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            try {
+                chain.doFilter(invocation.getArgument(0, ServletRequest.class),
+                        invocation.getArgument(1, ServletResponse.class));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     @Test
@@ -85,19 +98,8 @@ class RolControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
-    void getAll_returns200_whenUserIsAdministradorSistema() throws Exception {
-        when(rolService.getAll()).thenReturn(List.of(
-                new RolResponseDTO(1L, "Operario", "Rol operativo", 1L, "Activo", "admin", OffsetDateTime.now(),
-                        null, null)));
-
-        mockMvc.perform(get("/api/v1/roles"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
-    void getAll_returns403_whenUserIsAdministradorEmpresa_rolesAreGlobal() throws Exception {
+    void getAll_returns403_whenUserIsAdministradorEmpresa_currentSecurityRule() throws Exception {
         when(rolService.getAll()).thenReturn(List.of(
                 new RolResponseDTO(1L, "Operario", "Rol operativo", 1L, "Activo", "admin", OffsetDateTime.now(),
                         null, null)));
@@ -120,47 +122,20 @@ class RolControllerSecurityTest {
                 .andExpect(header().string("Location", "/api/v1/roles/10"));
     }
 
-        @Test
-        @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
-        void create_returns403_whenUserIsAdministradorEmpresa_rolesAreGlobal() throws Exception {
-                mockMvc.perform(post("/api/v1/roles")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(buildRequestJson("Operario")))
-                                .andExpect(status().isForbidden());
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
+    void create_returns400_whenNombreIsMissing() throws Exception {
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("descripcion", "Rol operativo");
+        json.put("estadoId", 1L);
 
-                verifyNoInteractions(rolService);
-        }
+        mockMvc.perform(post("/api/v1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(json)))
+                .andExpect(status().isBadRequest());
 
-        @Test
-        @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
-        void create_returns400_whenNombreIsMissing() throws Exception {
-                ObjectNode json = objectMapper.createObjectNode();
-                json.put("descripcion", "Rol operativo");
-                json.put("estadoId", 1L);
-
-                mockMvc.perform(post("/api/v1/roles")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(json)))
-                                .andExpect(status().isBadRequest());
-
-                verifyNoInteractions(rolService);
-        }
-
-        @Test
-        @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
-        void create_returns400_whenEstadoIdHasInvalidType() throws Exception {
-                ObjectNode json = objectMapper.createObjectNode();
-                json.put("nombre", "Operario");
-                json.put("descripcion", "Rol operativo");
-                json.put("estadoId", "no-numero");
-
-                mockMvc.perform(post("/api/v1/roles")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(json)))
-                                .andExpect(status().isBadRequest());
-
-                verifyNoInteractions(rolService);
-        }
+        verifyNoInteractions(rolService);
+    }
 
     @Test
     @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")

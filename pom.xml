@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.4</version>
+        <version>3.5.12</version>
         <relativePath />
     </parent>
 
@@ -26,7 +26,7 @@
         <org.projectlombok.lombok.version>1.18.38</org.projectlombok.lombok.version>
         <org.projectlombok.lombok-mapstruct-binding.version>0.2.0</org.projectlombok.lombok-mapstruct-binding.version>
         <net.sf.jasperreports.version>7.0.3</net.sf.jasperreports.version>
-        <org.springdoc.version>2.8.9</org.springdoc.version>
+        <org.springdoc.version>2.8.16</org.springdoc.version>
         <org.apache.maven.plugins.maven-compiler-plugin.version>3.14.0</org.apache.maven.plugins.maven-compiler-plugin.version>
     </properties>
 
@@ -66,7 +66,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
         </dependency>
         <!--  E-mail  -->
         <dependency>

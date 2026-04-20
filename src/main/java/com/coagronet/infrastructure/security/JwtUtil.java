@@ -1,6 +1,7 @@
 package com.coagronet.infrastructure.security;
 
 import java.util.Date;
+import java.util.function.Function;
 
 import javax.crypto.SecretKey;
 
@@ -28,23 +29,12 @@ public class JwtUtil {
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
-	public String generateToken(User user, Long empresaId, Long rolId, Long estado) {
+	public String generateToken(User user, Long empresaId, Long rolId, String rolName, Long estado) {
 		return Jwts.builder()
 			.subject(user.getUsername())
 			.claim("empresaId", empresaId)
 			.claim("rolId", rolId)
-			.claim("tver", user.getTokenVersion())
-			.claim("estado", estado)
-			.issuedAt(new Date())
-			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-			.signWith(secretKey)
-			.compact();
-	}
-
-	public String generateToken(User user, Long rolId, Long estado) {
-		return Jwts.builder()
-			.subject(user.getUsername())
-			.claim("rolId", rolId)
+			.claim("rolName", rolName)
 			.claim("tver", user.getTokenVersion())
 			.claim("estado", estado)
 			.issuedAt(new Date())
@@ -57,8 +47,19 @@ public class JwtUtil {
 		return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
 	}
 
+	// --- MÉTODOS MIGRADOS DESDE JwtService PARA RETROCOMPATIBILIDAD ---
+
+	public <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
+		final Claims claims = extractAllClaims(token);
+		return claimsResolvers.apply(claims);
+	}
+
 	public String extractUsername(String token) {
 		return extractAllClaims(token).getSubject();
+	}
+
+	public Integer extractRoleId(String token) {
+		return extractClaim(token, claims -> claims.get("rolId", Integer.class));
 	}
 
 	public Integer extractTokenVersion(String token) {
@@ -68,6 +69,10 @@ public class JwtUtil {
 
 	public boolean isTokenExpired(String token) {
 		return extractAllClaims(token).getExpiration().before(new Date());
+	}
+
+	public boolean isTokenValid(String token) {
+		return !isTokenExpired(token);
 	}
 
 	public boolean validateToken(String token, String username) {

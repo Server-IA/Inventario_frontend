@@ -1,6 +1,7 @@
 package com.coagronet.empresarol.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -24,6 +25,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+
 import com.coagronet.empresarol.dtos.responses.EmpresaRolResponseDTO;
 import com.coagronet.empresarol.services.EmpresaRolService;
 import com.coagronet.exceptionHandler.Advice;
@@ -33,15 +38,13 @@ import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
 import com.coagronet.infrastructure.configuration.CorsProperties;
 import com.coagronet.infrastructure.configuration.SecurityConfig;
 import com.coagronet.infrastructure.security.JwtAuthenticationFilter;
-import com.coagronet.infrastructure.security.JwtRequestFilter;
-import com.coagronet.infrastructure.security.JwtService;
 import com.coagronet.infrastructure.security.MyUserDetailsService;
 import com.coagronet.utils.UriBuilderUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @WebMvcTest(controllers = EmpresaRolController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
-        JwtRequestFilter.class, JwtAuthenticationFilter.class }))
+        JwtAuthenticationFilter.class }))
 @Import({ SecurityConfig.class, Advice.class, CustomAccessDeniedHandler.class, CustomAuthenticationEntryPoint.class })
 class EmpresaRolControllerSecurityTest {
 
@@ -55,10 +58,10 @@ class EmpresaRolControllerSecurityTest {
     private EmpresaRolService empresaRolService;
 
     @MockBean
-    private UriBuilderUtil uriBuilderUtil;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockBean
-    private JwtService jwtService;
+    private UriBuilderUtil uriBuilderUtil;
 
     @MockBean
     private MyUserDetailsService myUserDetailsService;
@@ -67,8 +70,18 @@ class EmpresaRolControllerSecurityTest {
     private CorsProperties corsProperties;
 
     @BeforeEach
-    void setup() {
+    void setup() throws Exception {
         when(corsProperties.getAllowedOrigins()).thenReturn(List.of());
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            try {
+                chain.doFilter(invocation.getArgument(0, ServletRequest.class),
+                        invocation.getArgument(1, ServletResponse.class));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     @Test

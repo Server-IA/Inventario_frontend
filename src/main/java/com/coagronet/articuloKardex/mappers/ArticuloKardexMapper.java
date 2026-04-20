@@ -2,6 +2,7 @@ package com.coagronet.articuloKardex.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
@@ -26,5 +27,13 @@ public interface ArticuloKardexMapper {
 	@Mapping(source = "estado.id", target = "estadoId")
 	@Mapping(source = "empresa.id", target = "empresaId", ignore = true)
 	ArticuloKardexDTO toListDTO(ArticuloKardex articuloKardex);
+
+	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "kardex", ignore = true)
+	@Mapping(target = "presentacionProducto", ignore = true)
+	@Mapping(target = "estado", ignore = true)
+	@Mapping(target = "empresa", ignore = true)
+	@Mapping(target = "fechaHora", ignore = true)
+	void updateEntityFromDto(ArticuloKardexDTO dto, @MappingTarget ArticuloKardex entity);
 
 }

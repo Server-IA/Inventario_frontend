@@ -1,34 +1,49 @@
 package com.coagronet.productopresentacionstock.controllers;
 
-import com.coagronet.productopresentacionstock.dtos.ProductoPresentacionStockResponseDTO;
-import com.coagronet.productopresentacionstock.services.ProductoPresentacionStockService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coagronet.productopresentacionstock.dtos.ProductoPresentacionStockResponseDTO;
+import com.coagronet.productopresentacionstock.services.ProductoPresentacionStockService;
+import com.coagronet.utils.UserEmpresaService;
+
+import lombok.RequiredArgsConstructor;
+
 @RestController
-@RequestMapping("api/v1/stock")
+@RequestMapping
 @RequiredArgsConstructor
 public class ProductoPresentacionStockController {
 
-    private final ProductoPresentacionStockService productoPresentacionStockService;
+	private final ProductoPresentacionStockService productoPresentacionStockService;
 
-    @GetMapping
-    public ResponseEntity<Page<ProductoPresentacionStockResponseDTO>>findAll(@PageableDefault Pageable pageable){
-        Page<ProductoPresentacionStockResponseDTO> page = productoPresentacionStockService.findAll(pageable);
+	private final UserEmpresaService userEmpresaService;
 
-        return ResponseEntity.ok(page);
-    }
+	@GetMapping("api/v1/stock")
+	public ResponseEntity<Page<ProductoPresentacionStockResponseDTO>> findAll(@PageableDefault Pageable pageable) {
+		Page<ProductoPresentacionStockResponseDTO> page = productoPresentacionStockService.findAll(pageable);
 
-    @GetMapping("/{productoPresentacionId}")
-    public ResponseEntity<ProductoPresentacionStockResponseDTO>findByProductoPresentacionId(@PathVariable Long productoPresentacionId){
-        return ResponseEntity.ok(productoPresentacionStockService.findByProductoPresentacionId(productoPresentacionId));
-    }
+		return ResponseEntity.ok(page);
+	}
+
+	@GetMapping("api/v2/stock")
+	public ResponseEntity<List<ProductoPresentacionStockResponseDTO>> findStockByAlmacenAndProducto(
+			@RequestParam(name = "productoPresentacionId", required = false) Long productoPresentacionId,
+			@RequestParam(name = "almacenId", required = false) Long almacenId) {
+
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+		List<ProductoPresentacionStockResponseDTO> response = productoPresentacionStockService
+			.findStockDinamico(productoPresentacionId, almacenId, empresaId);
+
+		return ResponseEntity.ok(response);
+	}
 
 }

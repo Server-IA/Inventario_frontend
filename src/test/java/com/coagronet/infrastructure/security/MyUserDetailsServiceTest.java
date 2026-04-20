@@ -16,13 +16,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.core.GrantedAuthority;
 
+import com.coagronet.estado.Estado;
 import com.coagronet.permiso.repositories.PermisoRepository;
 import com.coagronet.rol.Rol;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuariorol.UsuarioRol;
 
 @ExtendWith(MockitoExtension.class)
 class MyUserDetailsServiceTest {
@@ -40,10 +41,11 @@ class MyUserDetailsServiceTest {
     void loadUserByUsername_deniesAccessWhenUserIsDeactivated() {
         String username = "desactivado@coagronet.com";
 
-        User user = new User();
-        user.setId(1L);
-        user.setUsername(username);
-        user.setUsuarioEstado(new UsuarioEstado(0L));
+        User user = User.builder()
+                .id(1L)
+                .username(username)
+                .usuarioEstado(UsuarioEstado.builder().id(UsuarioEstado.ID_DESACTIVADO).build())
+                .build();
 
         when(userRepository.findByUsernameWithRolesAndEstado(username)).thenReturn(Optional.of(user));
 
@@ -56,28 +58,30 @@ class MyUserDetailsServiceTest {
         String username = "admin.empresa@coagronet.com";
         Long empresaId = 5L;
 
-        Rol role = Rol.builder().id(7L).nombre("ROLE_ADMINISTRADOR_EMPRESA").build();
+        Estado estadoActivo = Estado.builder().id(1L).nombre("Activo").build();
+        Rol role = Rol.builder().id(7L).nombre("ROLE_ADMINISTRADOR_EMPRESA").estado(estadoActivo).build();
+        UsuarioRol contrato = UsuarioRol.builder().rol(role).estado(estadoActivo).build();
 
-        User user = new User();
-        user.setId(2L);
-        user.setUsername(username);
-        user.setRoles(Set.of(role));
-        user.setUsuarioEstado(new UsuarioEstado(4L));
-        user.setPreferredEmpresaId(empresaId);
+        User user = User.builder()
+                .id(2L)
+                .username(username)
+                .password("pwd")
+                .usuarioEstado(UsuarioEstado.builder().id(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA).build())
+                .preferredEmpresaId(empresaId)
+                .rolesAsignados(Set.of(contrato))
+                .build();
 
         when(userRepository.findByUsernameWithRolesAndEstado(username)).thenReturn(Optional.of(user));
         when(permisoRepository.findPermisosByUsuarioAndEmpresa(2L, empresaId))
                 .thenReturn(List.of("USUARIO_ROL_INACTIVATE"));
 
-        User loaded = (User) myUserDetailsService.loadUserByUsername(username);
+        CustomUserDetails loaded = (CustomUserDetails) myUserDetailsService.loadUserByUsername(username);
 
         Set<String> authorities = loaded.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
+                .map(a -> a.getAuthority())
                 .collect(java.util.stream.Collectors.toSet());
 
-        assertThat(authorities)
-                .contains("ROLE_ADMINISTRADOR_EMPRESA", "USUARIO_ROL_INACTIVATE");
+        assertThat(authorities).contains("ROLE_ADMINISTRADOR_EMPRESA", "USUARIO_ROL_INACTIVATE");
         verify(permisoRepository).findPermisosByUsuarioAndEmpresa(2L, empresaId);
     }
-
 }

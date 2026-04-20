@@ -20,17 +20,18 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "usuario_rol", uniqueConstraints = {
-		@UniqueConstraint(name = "ux_usuario_empresa_rol", columnNames = { "usuario_id", "empresa_id", "rol_id" })
-})
+		@UniqueConstraint(name = "ux_usuario_empresa_rol", columnNames = { "usuario_id", "empresa_id", "rol_id" }) })
 public class UsuarioRol implements Serializable {
 
 	private static final long serialVersionUID = -1706389808605756133L;
@@ -102,4 +103,20 @@ public class UsuarioRol implements Serializable {
 	public String getNombre() {
 		return rol != null ? rol.getNombre() : null;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof UsuarioRol))
+			return false;
+		UsuarioRol that = (UsuarioRol) o;
+		return id != null && id.equals(that.getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
+	}
+
 }

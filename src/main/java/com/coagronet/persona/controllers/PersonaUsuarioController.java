@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.coagronet.infrastructure.security.JwtService;
+import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.dtos.PersonaDTO;
 import com.coagronet.persona.mappers.PersonaMapper;
@@ -19,6 +19,7 @@ import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuarioEstado.UsuarioEstado;
+import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 
 @RestController
 @RequestMapping("/api/v1/personas")
@@ -32,7 +33,10 @@ public class PersonaUsuarioController {
 
 	// Suponiendo que tienes una instancia de JwtService
 	@Autowired
-	private JwtService jwtService;
+	private JwtUtil jwtUtil;
+
+	@Autowired
+	private UsuarioEstadoRepository usuarioEstadoRepository;
 
 	@PostMapping("/persona-usuario")
 	public ResponseEntity<Map<String, Integer>> createPersona(@RequestBody PersonaDTO newPersonaRequest,
@@ -42,7 +46,7 @@ public class PersonaUsuarioController {
 		String token = authorizationHeader.replace("Bearer ", "").trim();
 
 		// Extraer el username desde el JWT usando la instancia de JwtService
-		String username = jwtService.extractUsername(token);
+		String username = jwtUtil.extractUsername(token);
 
 		User user = userRepository.findByUsername(username)
 			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -51,7 +55,7 @@ public class PersonaUsuarioController {
 		persona = personaRepository.save(persona);
 
 		user.setPersona(persona);
-		user.setUsuarioEstado(UsuarioEstado.ACTIVADO_SIN_EMPRESA);
+		user.setUsuarioEstado(usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_SIN_EMPRESA));
 
 		userRepository.save(user);
 

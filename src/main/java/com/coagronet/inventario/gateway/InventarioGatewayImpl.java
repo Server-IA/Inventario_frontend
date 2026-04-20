@@ -1,5 +1,10 @@
 package com.coagronet.inventario.gateway;
 
+// Importación estática para limpiar el código
+import static com.coagronet.kardex.movimientos.MovimientoConst.ENTRADA;
+
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -14,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InventarioGatewayImpl implements InventarioGateway {
 
-	private static final double EPS = 1e-6; // tolerancia num?rica
+	private static final BigDecimal EPS = new BigDecimal("1e-6");
 
 	private final ArticuloPedidoRepository articuloPedidoRepository;
 
@@ -23,57 +28,57 @@ public class InventarioGatewayImpl implements InventarioGateway {
 	@Override
 	@Transactional(readOnly = true)
 	public Result validarRequisitosParaCompletar(Long pedidoId) {
-		if (!validarTodoRecibido(pedidoId)) {
-			return Result.builder()
-				.ok(false)
-				.motivoFallo("Existen ?tems pendientes por recibir (comparativo Pedido vs Kardex ENTRADA).")
-				.build();
-		}
 		if (!validarMovimientosKardex(pedidoId)) {
 			return Result.builder()
 				.ok(false)
 				.motivoFallo("Faltan asientos de inventario (Kardex ENTRADA) para el pedido.")
 				.build();
 		}
+
+		if (!validarTodoRecibido(pedidoId)) {
+			return Result.builder()
+				.ok(false)
+				.motivoFallo("Existen ítems pendientes por recibir (comparativo Pedido vs Kardex ENTRADA).")
+				.build();
+		}
+
 		return Result.builder().ok(true).build();
 	}
 
-	boolean validarTodoRecibido(Long pedidoId) {
-		var pedidas = articuloPedidoRepository.sumCantidadesPedidasGroupByPresentacion(pedidoId)
+	private boolean validarTodoRecibido(Long pedidoId) {
+		Map<Long, BigDecimal> pedidas = articuloPedidoRepository.sumCantidadesPedidasGroupByPresentacion(pedidoId)
 			.stream()
-			.collect(Collectors.toMap(ArticuloPedidoRepository.RowCantidad::getPresentacionId,
-					r -> safe(r.getCantidad())));
+			.collect(Collectors.<ArticuloPedidoRepository.RowCantidad, Long, BigDecimal>toMap(
+					ArticuloPedidoRepository.RowCantidad::getPresentacionId, r -> safe(r.getCantidad())));
 
-		if (pedidas.isEmpty())
-			return false; // sin ?tems no se completa
+		if (pedidas.isEmpty()) {
+			return false;
+		}
 
-		var entradas = articuloKardexRepository
-			.sumCantidadesKardexByPedidoAndMovimientoGroupByPresentacion(pedidoId,
-					com.coagronet.kardex.movimientos.MovimientoConst.ENTRADA)
+		Map<Long, BigDecimal> entradas = articuloKardexRepository
+			.sumCantidadesKardexByPedidoAndMovimientoGroupByPresentacion(pedidoId, ENTRADA)
 			.stream()
-			.collect(Collectors.toMap(ArticuloKardexRepository.RowCantidad::getPresentacionId,
-					r -> safe(r.getCantidad())));
+			.collect(Collectors.<ArticuloKardexRepository.RowCantidad, Long, BigDecimal>toMap(
+					ArticuloKardexRepository.RowCantidad::getPresentacionId, r -> safe(r.getCantidad())));
 
-		for (var e : pedidas.entrySet()) {
+		for (Map.Entry<Long, BigDecimal> e : pedidas.entrySet()) {
 			Long presentacionId = e.getKey();
-			double cantPedida = e.getValue();
-			double cantEntrada = entradas.getOrDefault(presentacionId, 0.0);
-			// requiere: cantEntrada >= cantPedida - EPS
-			if (cantEntrada + EPS < cantPedida)
+			BigDecimal cantPedida = e.getValue();
+			BigDecimal cantEntrada = entradas.getOrDefault(presentacionId, BigDecimal.ZERO);
+
+			if (cantEntrada.add(EPS).compareTo(cantPedida) < 0) {
 				return false;
+			}
 		}
 		return true;
 	}
 
-	boolean validarMovimientosKardex(Long pedidoId) {
-		return articuloKardexRepository.existsItemsByPedidoAndMovimiento(pedidoId,
-				com.coagronet.kardex.movimientos.MovimientoConst.ENTRADA);
+	private boolean validarMovimientosKardex(Long pedidoId) {
+		return articuloKardexRepository.existsItemsByPedidoAndMovimiento(pedidoId, ENTRADA);
 	}
 
-	private static double safe(Double v) {
-		if (v == null || v.isNaN() || v.isInfinite())
-			return 0.0;
-		return v;
+	private static BigDecimal safe(BigDecimal v) {
+		return v == null ? BigDecimal.ZERO : v;
 	}
 
 }
