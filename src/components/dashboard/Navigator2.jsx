@@ -132,6 +132,8 @@ import modulo from "../modulo/modulos.jsx";
 
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
+const APPBAR_HEIGHT = 72;
+
 const sidebarToBottom = keyframes`
   0% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -840,11 +842,11 @@ export default function Navigator2({
     <Box
       sx={{
         position: "fixed",
-        top: { xs: "auto", sm: 65 },
+        top: { xs: "auto", sm: `calc(${APPBAR_HEIGHT}px - 7px)` },
         bottom: { xs: 0, sm: "auto" },
         left: 0,
         width: { xs: "100%", sm: open ? 220 : 70, md: open ? 250 : 70 },
-        height: { xs: 72, sm: "calc(100vh - 65px)" },
+        height: { xs: 72, sm: `calc(100vh - ${APPBAR_HEIGHT - 1}px)` },
         bgcolor: sidebarBg,
         borderRight: { xs: "none", sm: `1px solid ${dividerColor}` },
         borderTop: { xs: `1px solid ${dividerColor}`, sm: "none" },

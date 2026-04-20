@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Paper, Stack } from "@mui/material";
+import { Box, Paper, Stack, Chip } from "@mui/material";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
 import { useTheme, alpha } from "@mui/material/styles";
 
@@ -39,7 +39,48 @@ export default function AppDataGrid({
     : "0 6px 18px rgba(23,63,57,0.08), 0 2px 6px rgba(0,0,0,0.06)";
   const serverPagination = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
 
-  const columnsMemo = useMemo(() => columns, [columns]);
+  const resolveStatusMeta = (params, column) => {
+    const raw =
+      params?.value ??
+      params?.row?.[column.field] ??
+      params?.row?.estadoNombre ??
+      params?.row?.estadoId;
+
+    const normalized = String(raw ?? "").trim().toLowerCase();
+    const isActive =
+      raw === 1 ||
+      raw === "1" ||
+      normalized === "activo" ||
+      normalized === "active" ||
+      normalized === "activa";
+
+    return {
+      label: isActive ? "Activo" : "Inactivo",
+      color: isActive ? "success" : "error",
+    };
+  };
+
+  const columnsMemo = useMemo(
+    () =>
+      (Array.isArray(columns) ? columns : []).map((column) => {
+        if (!column?.statusChip) return column;
+        return {
+          ...column,
+          headerClassName: [column.headerClassName, "col-estado"].filter(Boolean).join(" "),
+          cellClassName: [column.cellClassName, "col-estado"].filter(Boolean).join(" "),
+          sortable: column.sortable ?? true,
+          renderCell: (params) => {
+            const meta = resolveStatusMeta(params, column);
+            return (
+              <Box sx={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
+                <Chip label={meta.label} color={meta.color} size="small" />
+              </Box>
+            );
+          },
+        };
+      }),
+    [columns]
+  );
 
   const Toolbar = quickFilter
     ? function Toolbar() {

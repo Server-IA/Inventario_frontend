@@ -197,6 +197,10 @@ export default function GridActionBar({
         minWidth: 0,
       }}
     >
+      {(onFilters || (hasActiveFilters && onClearFilters) || rightActions) ? (
+        <Box sx={rightActionsSx}>{rightContent}</Box>
+      ) : null}
+      <Box sx={{ flex: 1, minWidth: { xs: 12, md: 24 } }} />
       <Stack
         direction="row"
         spacing={{ xs: 1, md: 2 }}
@@ -206,6 +210,7 @@ export default function GridActionBar({
           minWidth: "max-content",
         }}
       >
+        {extraActions ? <Box sx={extraActionsSx}>{extraActions}</Box> : null}
         <Tooltip title="Agregar">
           <Button
             onClick={onAdd}
@@ -225,7 +230,6 @@ export default function GridActionBar({
             Actualizar
           </Button>
         </Tooltip>
-        {extraActions ? <Box sx={extraActionsSx}>{extraActions}</Box> : null}
         <Tooltip title="Eliminar">
           <Button
             onClick={onDelete}
@@ -237,10 +241,6 @@ export default function GridActionBar({
           </Button>
         </Tooltip>
       </Stack>
-      <Box sx={{ flex: 1, minWidth: { xs: 12, md: 24 } }} />
-      {(onFilters || (hasActiveFilters && onClearFilters) || rightActions) ? (
-        <Box sx={rightActionsSx}>{rightContent}</Box>
-      ) : null}
     </Stack>
   );
 }

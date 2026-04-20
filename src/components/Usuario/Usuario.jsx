@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Chip, Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import GridActionBar from "../common/GridActionBar.jsx";
 import SectionHeader from "../common/SectionHeader.jsx";
@@ -64,17 +64,7 @@ export default function Usuario() {
         minWidth: 140,
         align: "left",
         headerAlign: "left",
-        headerClassName: "col-estado",
-        cellClassName: "col-estado",
-        renderCell: (p) => (
-          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-            <Chip
-              label={Number(p.row.estadoId) === 1 ? "Activo" : "Inactivo"}
-              color={Number(p.row.estadoId) === 1 ? "success" : "error"}
-              size="small"
-            />
-          </Box>
-        ),
+        statusChip: true,
       },
       ...(isAdmin ? [{ field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 }] : []),
     ];

@@ -115,6 +115,7 @@ const moduleMap = {
 };
 
 const APPBAR_GREEN = '#0F2327';
+const APPBAR_HEIGHT = 72;
 
 const App = () => {
   useTranslation();
@@ -258,6 +259,7 @@ const isPublic = !isAuthenticated || isOnboarding;
         <Toolbar
           disableGutters
           sx={{
+            minHeight: `${APPBAR_HEIGHT}px`,
             bgcolor: APPBAR_GREEN,
             boxShadow: 'none',
             border: 0,
@@ -279,8 +281,8 @@ const isPublic = !isAuthenticated || isOnboarding;
               flex: 1,
               width: '100%',
               maxWidth: '100% !important',
-              py: 1,
-              pb: { xs: 10, sm: 1 },
+              pt: { xs: 2, sm: 2.25, md: 1.5 },
+              pb: { xs: 9.5, sm: 3, md: 2 },
               px: { xs: 1, sm: 2, md: 3 },
               display: 'flex',
               flexDirection: 'column',
@@ -289,17 +291,17 @@ const isPublic = !isAuthenticated || isOnboarding;
           >
             <Box
               sx={{
-                flex: 1,
+                flex: { xs: '0 0 auto', sm: 1 },
                 width: '100%',
                 minWidth: 0,
-                minHeight: 'calc(100vh - 160px)',
-                overflow: 'auto',
+                minHeight: { xs: 'auto', sm: 'calc(100vh - 185px)', md: 'calc(100vh - 170px)' },
+                overflow: { xs: 'visible', sm: 'auto' },
                 bgcolor: 'transparent',
               }}
             >
               {currentModule}
             </Box>
-            <Box sx={{ pt: 2 }}>
+            <Box sx={{ pt: { xs: 1.5, sm: 2.25, md: 2 }, pb: { xs: 1.25, sm: 0 } }}>
               <Copyright />
             </Box>
           </Container>

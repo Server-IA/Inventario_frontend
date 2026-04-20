@@ -6,7 +6,9 @@ import {
   Typography,
   Switch,
   Box,
+  Tooltip,
   FormControlLabel,
+  useMediaQuery,
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -20,6 +22,7 @@ import Inicio from "../Inicio.jsx";
 import { useThemeToggle } from "./ThemeToggleProvider";
 
 const APPBAR_GREEN = "#114232";
+const APPBAR_HEIGHT = 72;
 
 // Rutas donde NO quieres mostrar Login/Register
 const HIDE_AUTH_BTNS_ROUTES = [
@@ -56,6 +59,7 @@ export default function AppBarComponent({
   const location = useLocation();
   const { toggleTheme, darkMode } = useThemeToggle();
   const theme = useTheme();
+  const isCompact = useMediaQuery(theme.breakpoints.down("md"));
 
   const BASE_PATH =
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.BASE_URL) ||
@@ -144,7 +148,7 @@ export default function AppBarComponent({
         borderRadius: 0,
       }}
     >
-      <Toolbar>
+      <Toolbar sx={{ minHeight: `${APPBAR_HEIGHT}px`, gap: { xs: 1, sm: 1.5 } }}>
         {/* Logo / Título */}
         {!showProfileUI ? (
           <Button
@@ -170,36 +174,98 @@ export default function AppBarComponent({
             Inventario Usco
           </Button>
         ) : (
-          <Box sx={{ mr: "auto", display: "flex", alignItems: "center", gap: 1.25 }}>
+          <Box
+            sx={{
+              mr: "auto",
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+            }}
+          >
             <Box
               component="img"
               src={LOGO_SRC}
               alt="Inventario Usco"
               sx={{ width: 28, height: 28, objectFit: "contain" }}
             />
-            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }} component="span">
-              Inventario Usco
-            </Typography>
-
-            {/* Sufijo con el nombre de la empresa SOLO si estado === 4 y hay nombre */}
-            {estadoActivo && empresaNombre && (
-              <Typography
-                variant="h6"
-                component="span"
-                sx={{ fontWeight: 700, lineHeight: 1, ml: 1 }}
-              >
-                — {empresaNombre}
-              </Typography>
+            {isCompact ? (
+              <Box sx={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    lineHeight: 1.05,
+                    fontSize: { xs: "1rem", sm: "1.05rem" },
+                  }}
+                  component="span"
+                >
+                  Inventario Usco
+                </Typography>
+                {estadoActivo && empresaNombre && (
+                  <Typography
+                    variant="body2"
+                    component="span"
+                    sx={{
+                      fontWeight: 600,
+                      lineHeight: 1.1,
+                      mt: 0.15,
+                      color: alpha(theme.palette.common.white, 0.84),
+                      fontSize: { xs: "0.72rem", sm: "0.78rem" },
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: { xs: 150, sm: 220 },
+                    }}
+                  >
+                    {empresaNombre}
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Box sx={{ minWidth: 0, display: "flex", alignItems: "baseline", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    lineHeight: 1.05,
+                    fontSize: { md: "1.2rem", lg: "1.25rem" },
+                    whiteSpace: "nowrap",
+                  }}
+                  component="span"
+                >
+                  Inventario Usco
+                </Typography>
+                {estadoActivo && empresaNombre && (
+                  <Typography
+                    variant="body2"
+                    component="span"
+                    sx={{
+                      fontWeight: 600,
+                      color: alpha(theme.palette.common.white, 0.84),
+                      fontSize: { md: "0.84rem", lg: "0.9rem" },
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: { md: 260, lg: 420 },
+                    }}
+                  >
+                    — {empresaNombre}
+                  </Typography>
+                )}
+              </Box>
             )}
           </Box>
         )}
 
-        <FormControlLabel
-          control={
+        {isCompact ? (
+          <Tooltip title={darkMode ? "Modo oscuro" : "Modo claro"}>
             <Switch
               checked={darkMode}
               onChange={toggleTheme}
               sx={{
+                ml: { xs: 0.5, sm: 1 },
+                mr: { xs: 0.5, sm: 1.5 },
                 width: 44,
                 height: 24,
                 padding: 0,
@@ -229,33 +295,75 @@ export default function AppBarComponent({
                   opacity: 1,
                 },
               }}
-              icon={<Brightness7Icon sx={{ fontSize: 20 }} />}     // ☀️
-              checkedIcon={<DarkModeIcon sx={{ fontSize: 20 }} />} // 🌙
+              icon={<Brightness7Icon sx={{ fontSize: 20 }} />}
+              checkedIcon={<DarkModeIcon sx={{ fontSize: 20 }} />}
             />
-          }
-          label={darkMode ? "Modo oscuro" : "Modo claro"}
-          labelPlacement="start"
-          sx={{
-            ml: 2,
-            mr: 2,
-            color: "inherit",
-            display: "flex",
-            alignItems: "center",
-            gap: 1.2,
-            "& .MuiFormControlLabel-label": { fontWeight: 600 },
-          }}
-        />
+          </Tooltip>
+        ) : (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={darkMode}
+                onChange={toggleTheme}
+                sx={{
+                  width: 44,
+                  height: 24,
+                  padding: 0,
+                  "& .MuiSwitch-switchBase": {
+                    padding: 0.3,
+                    "&.Mui-checked": {
+                      transform: "translateX(20px)",
+                      color: "#fff",
+                      "& + .MuiSwitch-track": {
+                        backgroundColor: theme.palette.primary.main,
+                        opacity: 1,
+                      },
+                    },
+                  },
+                  "& .MuiSwitch-thumb": {
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                  },
+                  "& .MuiSwitch-track": {
+                    borderRadius: 20,
+                    backgroundColor: alpha(theme.palette.common.white, 0.5),
+                    opacity: 1,
+                  },
+                }}
+                icon={<Brightness7Icon sx={{ fontSize: 20 }} />}
+                checkedIcon={<DarkModeIcon sx={{ fontSize: 20 }} />}
+              />
+            }
+            label={darkMode ? "Modo oscuro" : "Modo claro"}
+            labelPlacement="start"
+            sx={{
+              ml: 2,
+              mr: 2,
+              color: "inherit",
+              display: "flex",
+              alignItems: "center",
+              gap: 1.2,
+              "& .MuiFormControlLabel-label": { fontWeight: 600 },
+            }}
+          />
+        )}
 
         {!showProfileUI ? (
           <>
-            <Button color="inherit" onClick={handleLogin}>Login</Button>
-            <Button color="inherit" onClick={handleRegister}>Register</Button>
+            {!isCompact && <Button color="inherit" onClick={handleLogin}>Login</Button>}
+            {!isCompact && <Button color="inherit" onClick={handleRegister}>Register</Button>}
           </>
         ) : (
           <ProfileMenu
             setCurrentModule={setCurrentModule}
             setIsAuthenticated={setIsAuthenticated}
             onLogout={onLogout}
+            compact={isCompact}
           />
         )}
       </Toolbar>

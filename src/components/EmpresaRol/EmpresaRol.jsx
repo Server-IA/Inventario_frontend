@@ -1,19 +1,26 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Box,
+  Button,
+  Chip,
 } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useTheme, alpha } from "@mui/material/styles";
 import axios from "../axiosConfig";
-import { Box, Button } from "@mui/material";
 import MessageSnackBar from "../MessageSnackBar.jsx";
 import FormEmpresaRol from "./FormEmpresaRol.jsx";
-import GridEmpresaRol from "./GridEmpresaRol.jsx";
 import ModalVerPermisos from "./ModalVerPermisos";
-import StackButtons from "../StackButtons";
+import SectionHeader from "../common/SectionHeader.jsx";
+import GridActionBar from "../common/GridActionBar.jsx";
+import AppDataGrid from "../common/AppDataGrid.jsx";
 
 export default function EmpresaRol() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
@@ -29,202 +36,253 @@ export default function EmpresaRol() {
 
   const empresaId = Number(localStorage.getItem("empresaId"));
   const [confirmOpen, setConfirmOpen] = useState(false);
- const reloadData = useCallback(async () => {
-  try {
-    setLoading(true);
+  const reloadData = useCallback(async () => {
+    try {
+      setLoading(true);
 
-    //  Cargar empresa-rol
-    const resEmpresaRol = await axios.get("/v1/empresa-rol");
-    const empresaRoles = resEmpresaRol.data;
+      const resEmpresaRol = await axios.get("/v1/empresa-rol");
+      const empresaRoles = resEmpresaRol.data;
 
-    //  Cargar catálogo roles
-    const resRoles = await axios.get("/v1/items/rol/0");
-    const rolesCatalogo = resRoles.data;
+      const resRoles = await axios.get("/v1/items/rol/0");
+      const rolesCatalogo = resRoles.data;
 
-    const enriched = await Promise.all(
-      empresaRoles.map(async (empresaRol) => {
+      const enriched = await Promise.all(
+        empresaRoles.map(async (empresaRol) => {
+          const rolBase = rolesCatalogo.find((r) => r.name === empresaRol.rolNombre);
 
-        //  Buscar rolId por nombre
-        const rolBase = rolesCatalogo.find(
-          r => r.name === empresaRol.rolNombre
-        );
+          if (!rolBase) {
+            return { ...empresaRol, permisos: [] };
+          }
 
-        if (!rolBase) {
-          return { ...empresaRol, permisos: [] };
-        }
+          try {
+            const permisosRes = await axios.get(
+              `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
+            );
 
-        try {
-          const permisosRes = await axios.get(
-            `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
-          );
+            return {
+              ...empresaRol,
+              permisos: permisosRes.data || [],
+            };
+          } catch {
+            return {
+              ...empresaRol,
+              permisos: [],
+            };
+          }
+        })
+      );
 
-          return {
-            ...empresaRol,
-            permisos: permisosRes.data || [],
-          };
-
-        } catch {
-          return {
-            ...empresaRol,
-            permisos: [],
-          };
-        }
-      })
-    );
-
-    setRows(enriched);
-
-  } catch (error) {
-    console.error(error);
-    setRows([]);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+      setRows(enriched);
+    } catch (error) {
+      console.error(error);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
-          const loadRoles = useCallback(async () => {
-            try {
-              const rolRes = await axios.get("/v1/items/rol/0");
+  const loadRoles = useCallback(async () => {
+    try {
+      const rolRes = await axios.get("/v1/items/rol/0");
 
-              const list = Array.isArray(rolRes?.data)
-                ? rolRes.data
-                : Array.isArray(rolRes?.data?.content)
-                ? rolRes.data.content
-                : [];
+      const list = Array.isArray(rolRes?.data)
+        ? rolRes.data
+        : Array.isArray(rolRes?.data?.content)
+        ? rolRes.data.content
+        : [];
 
-              setRoles(list);
-            } catch (err) {
-              console.error("Error cargando roles catálogo:", err);
-              setRoles([]);
-            }
-          }, []);
-
-          useEffect(() => {
-            reloadData();
-            loadRoles();
-          }, [reloadData, loadRoles]);
-          
-const confirmarEliminacion = async () => {
-  try {
-    setLoading(true);
-
-    const resRoles = await axios.get("/v1/items/rol/0");
-    const rolBase = resRoles.data.find(
-      r => r.name === selectedRow.rolNombre
-    );
-
-    if (!rolBase) throw new Error("Rol base no encontrado");
-
-    const rolId = rolBase.id;
-
-    const permisosRes = await axios.get(
-      `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
-    );
-
-    const permisos = permisosRes.data || [];
-    const permisosIds = permisos.map(p => p.id);
-
-    if (permisosIds.length > 0) {
-      await axios.delete(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
-        {
-          data: { permisosId: permisosIds }
-        }
-      );
+      setRoles(list);
+    } catch (err) {
+      console.error("Error cargando roles catálogo:", err);
+      setRoles([]);
     }
+  }, []);
 
-    await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
-
-    setMessage({
-      open: true,
-      severity: "success",
-      text: "Rol y permisos eliminados correctamente",
-    });
-
+  useEffect(() => {
     reloadData();
+    loadRoles();
+  }, [reloadData, loadRoles]);
 
-  } catch (error) {
-    setMessage({
-      open: true,
-      severity: "error",
-      text: "Error al eliminar. Revisa dependencias o permisos.",
-    });
-  } finally {
-    setLoading(false);
-    setConfirmOpen(false);
-  }
-};
+  const handleCreate = () => {
+    setSelectedRow(null);
+    setFormOpen(true);
+  };
 
+  const handleUpdate = () => {
+    if (!selectedRow?.id) {
+      return setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona una fila",
+      });
+    }
+    setFormOpen(true);
+  };
+
+  const handleViewPermisos = () => {
+    if (!selectedRow?.id) {
+      return setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona un rol primero",
+      });
+    }
+    setModalPermisosOpen(true);
+  };
+
+  const handleDeleteIntent = () => {
+    if (!selectedRow?.id) {
+      return setMessage({
+        open: true,
+        severity: "warning",
+        text: "Selecciona una fila",
+      });
+    }
+    setConfirmOpen(true);
+  };
+
+  const confirmarEliminacion = async () => {
+    try {
+      setLoading(true);
+
+      const resRoles = await axios.get("/v1/items/rol/0");
+      const rolBase = resRoles.data.find((r) => r.name === selectedRow.rolNombre);
+
+      if (!rolBase) throw new Error("Rol base no encontrado");
+
+      const rolId = rolBase.id;
+
+      const permisosRes = await axios.get(
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+      );
+
+      const permisos = permisosRes.data || [];
+      const permisosIds = permisos.map((p) => p.id);
+
+      if (permisosIds.length > 0) {
+        await axios.delete(`/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`, {
+          data: { permisosId: permisosIds },
+        });
+      }
+
+      await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
+
+      setMessage({
+        open: true,
+        severity: "success",
+        text: "Rol y permisos eliminados correctamente",
+      });
+
+      reloadData();
+      setSelectedRow(null);
+    } catch (error) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Error al eliminar. Revisa dependencias o permisos.",
+      });
+    } finally {
+      setLoading(false);
+      setConfirmOpen(false);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      { field: "id", headerName: "ID", width: 90, type: "number" },
+      { field: "rolNombre", headerName: "Rol", flex: 1, minWidth: 220 },
+      {
+        field: "permisos",
+        headerName: "Permisos",
+        flex: 1.8,
+        minWidth: 320,
+        sortable: false,
+        renderCell: (params) => {
+          const permisos = Array.isArray(params.row.permisos) ? params.row.permisos : [];
+          if (permisos.length === 0) {
+            return (
+              <Box sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                Sin permisos
+              </Box>
+            );
+          }
+
+          const visibles = permisos.slice(0, 3);
           return (
-            <div>
-              <h1>Roles de Empresa</h1>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, py: 0.5 }}>
+              {visibles.map((permiso) => (
+                <Chip
+                  key={permiso.id}
+                  label={permiso.nombre}
+                  size="small"
+                  sx={{
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    bgcolor: isDark
+                      ? alpha(theme.palette.primary.light, 0.22)
+                      : alpha(theme.palette.primary.main, 0.12),
+                    color: isDark
+                      ? theme.palette.primary.light
+                      : theme.palette.primary.dark,
+                    border: `1px solid ${
+                      isDark ? alpha(theme.palette.primary.light, 0.4) : alpha(theme.palette.primary.main, 0.24)
+                    }`,
+                  }}
+                />
+              ))}
+              {permisos.length > 3 && (
+                <Box sx={{ fontSize: "11px", color: "text.secondary", alignSelf: "center" }}>
+                  +{permisos.length - 3} mas
+                </Box>
+              )}
+            </Box>
+          );
+        },
+      },
+      {
+        field: "estadoNombre",
+        headerName: "Estado",
+        flex: 0.7,
+        minWidth: 140,
+        statusChip: true,
+        valueGetter: (params) =>
+          params.row.estadoNombre ?? params.row.estado?.nombre ?? params.row.estadoId ?? "",
+      },
+    ],
+    [isDark, theme]
+  );
 
-              <MessageSnackBar message={message} setMessage={setMessage} />
-              <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-          }}
-        >
+  return (
+    <Box p={2}>
+      <SectionHeader title="Roles de Empresa" />
 
-          {/* IZQUIERDA (si quieres dejar vacío o título secundario) */}
-          <Box />
+      <MessageSnackBar message={message} setMessage={setMessage} />
 
-          {/* DERECHA: Botones */}
-          <Box sx={{ display: "flex", gap: 2 }}>
+      <GridActionBar
+        onAdd={handleCreate}
+        onUpdate={handleUpdate}
+        onDelete={handleDeleteIntent}
+        canUpdate={Boolean(selectedRow)}
+        canDelete={Boolean(selectedRow)}
+        onFilters={() =>
+          setMessage({
+            open: true,
+            severity: "info",
+            text: "Filtros disponibles proximamente",
+          })
+        }
+        extraActions={
+          <Button
+            onClick={handleViewPermisos}
+            startIcon={<VisibilityIcon />}
+            disabled={!selectedRow}
+          >
+            Ver permisos
+          </Button>
+        }
+      />
 
-            <Button
-              variant="outlined"
-              onClick={() => {
-                if (!selectedRow?.id) {
-                  return setMessage({
-                    open: true,
-                    severity: "warning",
-                    text: "Selecciona un rol primero",
-                  });
-                }
-
-                setModalPermisosOpen(true);
-              }}
-            >
-              Ver permisos
-            </Button>
-
-            <StackButtons
-              methods={{
-                create: () => {
-                  setSelectedRow(null);
-                  setFormOpen(true);
-                },
-                update: () => {
-                  if (!selectedRow?.id)
-                    return setMessage({
-                      open: true,
-                      severity: "warning",
-                      text: "Selecciona una fila",
-                    });
-
-                  setFormOpen(true);
-                },
-deleteRow: () => {
-  if (!selectedRow?.id)
-    return setMessage({
-      open: true,
-      severity: "warning",
-      text: "Selecciona una fila",
-    });
-
-  setConfirmOpen(true); // SOLO abre el modal
-}
-              }}
-            />
-
-          </Box>
-        </Box>
-          
       <FormEmpresaRol
         open={formOpen}
         setOpen={setFormOpen}
@@ -243,30 +301,38 @@ deleteRow: () => {
         rolNombre={selectedRow?.rolNombre}
       />
 
-      <GridEmpresaRol
+      <AppDataGrid
         rows={rows}
+        columns={columns}
         loading={loading}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
+        containerSx={{ borderRadius: 4 }}
+        onEscape={() => {
+          setFormOpen(false);
+          setModalPermisosOpen(false);
+          setConfirmOpen(false);
+        }}
       />
-<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-  <DialogTitle>Confirmar eliminación</DialogTitle>
-  <DialogContent>
-    ¿Está seguro que desea eliminar este rol y todos sus permisos?
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setConfirmOpen(false)}>
-      Cancelar
-    </Button>
-    <Button
-      color="error"
-      variant="contained"
-      onClick={confirmarEliminacion}
-    >
-      Eliminar
-    </Button>
-  </DialogActions>
-</Dialog>
-    </div>
+
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Confirmar eliminacion</DialogTitle>
+        <DialogContent>
+          ¿Esta seguro que desea eliminar este rol y todos sus permisos?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmarEliminacion}
+          >
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

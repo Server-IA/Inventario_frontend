@@ -8,7 +8,7 @@ export default function SectionHeader({ title, subtitle, icon, rightNode }) {
   const dividerColor = isDark ? alpha("#dfeae6", 0.18) : "#9fb4ad";
 
   return (
-    <Stack spacing={1.25} sx={{ mb: 2.5, mt: { xs: 1.25, sm: 0 }, width: "100%" }}>
+    <Stack spacing={1.25} sx={{ mb: 2.5, mt: { xs: 1.75, sm: 1.25, md: 1, lg: 0 }, width: "100%" }}>
       <Box
         sx={{
           position: "relative",
