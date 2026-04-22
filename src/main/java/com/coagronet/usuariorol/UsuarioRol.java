@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.TenantId;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -55,7 +56,6 @@ public class UsuarioRol implements Serializable {
 	// ===== Relaciones principales =====
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	// updatable = false alinea la entidad con trg_evitar_update_usuario_id
 	@JoinColumn(name = "usuario_id", nullable = false, updatable = false)
 	private User user;
 
@@ -64,9 +64,12 @@ public class UsuarioRol implements Serializable {
 	private Rol rol;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	// updatable = false alinea la entidad con trg_evitar_update_empresa_id
 	@JoinColumn(name = "empresa_id", nullable = true, updatable = false)
 	private Empresa empresa;
+
+	@TenantId
+	@Column(name = "empresa_id", nullable = false, updatable = false)
+	private Long tenantEmpresaId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "estado_id", nullable = false)
