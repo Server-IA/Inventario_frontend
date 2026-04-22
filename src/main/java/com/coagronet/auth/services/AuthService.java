@@ -323,7 +323,8 @@ public class AuthService {
 					"Ya existe una persona con ese tipo y código de identificación.");
 		}
 
-		if (personaRepository.existsByEmailAndEstado_Id(dto.getUsername(), EstadoConstantes.ESTADO_GENERAL_ACTIVO)) {
+		if (personaRepository.existsByEmailPersonalAndEstado_Id(dto.getUsername(),
+				EstadoConstantes.ESTADO_GENERAL_ACTIVO)) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una persona con ese correo.");
 		}
 
@@ -415,7 +416,7 @@ public class AuthService {
 					"Tu cuenta no está disponible. Contacta al administrador.");
 		}
 
-		List<UsuarioRol> usuarioRols = userRoleRepo.findByUserOrderByUserId(user);
+		List<UsuarioRol> usuarioRols = userRoleRepo.findByUsuarioIdForLogin(user.getId());
 
 		if (usuarioRols.isEmpty()) {
 			throw new UserRoleForbiddenException("El usuario no tiene asignado ningún rol dentro de una empresa.");
