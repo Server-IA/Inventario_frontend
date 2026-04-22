@@ -157,18 +157,18 @@ public class AuthService {
 
 		// 3. Obtener el Rol por defecto
 		Rol role = rolRepository.findByNombre(props.getDefaultRole())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
 
 		// Obtener el estado activo para el contrato/rol (Ej: 1 = ACTIVO)
 		Estado estadoRolActivo = estadoRolRepository.getReferenceById(1L);
 
 		// 4. Construcción de la Entidad Asociativa (UsuarioRol)
 		UsuarioRol nuevoContratoRol = UsuarioRol.builder()
-			.rol(role)
-			.estado(estadoRolActivo)
-			.iniciaContratoEn(OffsetDateTime.now())
-			// .empresa(empresa) // Si el registro requiere empresa, inyéctala aquí
-			.build();
+				.rol(role)
+				.estado(estadoRolActivo)
+				.iniciaContratoEn(OffsetDateTime.now())
+				// .empresa(empresa) // Si el registro requiere empresa, inyéctala aquí
+				.build();
 
 		/*
 		 * 5. Sincronización Bidireccional Este helper method (que definimos en User)
@@ -192,28 +192,38 @@ public class AuthService {
 	 * <p>
 	 * Este método maneja dos flujos principales:
 	 * <ol>
-	 * <li><b>Usuario Existente:</b> Si el usuario ya existe en el sistema, se le asigna
-	 * el nuevo rol dentro de la empresa actual, validando que no tenga el rol activo
+	 * <li><b>Usuario Existente:</b> Si el usuario ya existe en el sistema, se le
+	 * asigna
+	 * el nuevo rol dentro de la empresa actual, validando que no tenga el rol
+	 * activo
 	 * previamente.</li>
-	 * <li><b>Usuario Nuevo:</b> Si el usuario no existe, se crea la Persona, el Usuario
+	 * <li><b>Usuario Nuevo:</b> Si el usuario no existe, se crea la Persona, el
+	 * Usuario
 	 * (con contraseña temporal) y la asignación del Rol en la empresa.</li>
 	 * </ol>
 	 * <p>
 	 * En ambos casos se generan eventos de auditoría y notificaciones asíncronas.
-	 * @param dto Objeto de transferencia de datos con la información del usuario, rol y
-	 * datos personales.
-	 * @param httpRequest La petición HTTP actual, utilizada para extraer metadatos de
-	 * auditoría (IP y Host).
+	 * 
+	 * @param dto         Objeto de transferencia de datos con la información del
+	 *                    usuario, rol y
+	 *                    datos personales.
+	 * @param httpRequest La petición HTTP actual, utilizada para extraer metadatos
+	 *                    de
+	 *                    auditoría (IP y Host).
 	 * @return ApiResponse Contiene el estado de la operación y un mensaje de
-	 * confirmación.
-	 * @throws EntityNotFoundException Si no se encuentran entidades requeridas (Rol,
-	 * Estado, Empresa, TipoID).
+	 *         confirmación.
+	 * @throws EntityNotFoundException Si no se encuentran entidades requeridas
+	 *                                 (Rol,
+	 *                                 Estado, Empresa, TipoID).
 	 * @throws ResponseStatusException
-	 * <ul>
-	 * <li>{@code HttpStatus.FORBIDDEN}: Si el usuario existente no está activo.</li>
-	 * <li>{@code HttpStatus.CONFLICT}: Si el usuario ya tiene el rol activo, o si ya
-	 * existe una persona con el mismo documento/email.</li>
-	 * </ul>
+	 *                                 <ul>
+	 *                                 <li>{@code HttpStatus.FORBIDDEN}: Si el
+	 *                                 usuario existente no está activo.</li>
+	 *                                 <li>{@code HttpStatus.CONFLICT}: Si el
+	 *                                 usuario ya tiene el rol activo, o si ya
+	 *                                 existe una persona con el mismo
+	 *                                 documento/email.</li>
+	 *                                 </ul>
 	 */
 	@Transactional
 	public ApiResponse registerForCurrentEmpresa(@Valid RegisterForCurrentEmpresaRequestDTO dto,
@@ -233,18 +243,18 @@ public class AuthService {
 			}
 
 			Rol rol = rolRepository.findById(dto.getRolId())
-				.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+					.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
 
 			Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
-				.orElseThrow(() -> new EntityNotFoundException(
-						"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+					.orElseThrow(() -> new EntityNotFoundException(
+							"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
 
 			Empresa empresa = empresaRepository.findById(empresaId)
-				.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+					.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
 
 			boolean existsActivo = usuarioRolRepository
-				.existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(existing.getId(),
-						empresa.getId(), rol.getId(), EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+					.existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(existing.getId(),
+							empresa.getId(), rol.getId(), EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 
 			if (existsActivo == true) {
 
@@ -290,19 +300,19 @@ public class AuthService {
 		}
 
 		Rol rol = rolRepository.findById(dto.getRolId())
-			.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+				.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
 
 		Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
-			.orElseThrow(() -> new EntityNotFoundException(
-					"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
 
 		Empresa empresa = empresaRepository.findById(empresaId)
-			.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+				.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
 
 		TipoIdentificacion tipoDocumentoIdentidad = tipoIdentificacionRepository
-			.findById(dto.getTipoDocumentoIdentidadId())
-			.orElseThrow(() -> new EntityNotFoundException(
-					"Tipo de documento de identidad no encontrado con id: " + dto.getTipoDocumentoIdentidadId()));
+				.findById(dto.getTipoDocumentoIdentidadId())
+				.orElseThrow(() -> new EntityNotFoundException(
+						"Tipo de documento de identidad no encontrado con id: " + dto.getTipoDocumentoIdentidadId()));
 
 		boolean personaExiste = personaRepository.existsByTipoIdentificacion_IdAndIdentificacionAndEstado_Id(
 				dto.getTipoDocumentoIdentidadId(), dto.getCodigoIdentificacion(),
@@ -330,7 +340,7 @@ public class AuthService {
 		persona.setEstrato(dto.getEstrato());
 		persona.setDireccion(dto.getDireccion());
 		persona.setCelular(dto.getCelular());
-		persona.setEmail(dto.getUsername());
+		persona.setEmailPersonal(dto.getUsername());
 		persona.setEstado(estado);
 
 		Persona savedPersona = personaRepository.save(persona);
@@ -383,12 +393,12 @@ public class AuthService {
 	public Map<String, Object> login(@Valid LoginRequestDTO dto) {
 
 		Authentication auth = authManager
-			.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
+				.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
 
 		CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 
 		User user = userRepo.findById(userDetails.id())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado en BD"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado en BD"));
 
 		UsuarioEstado estado = user.getUsuarioEstado();
 
@@ -425,9 +435,9 @@ public class AuthService {
 		var nombrePersona = user.getPersona().getNombre() + " " + user.getPersona().getApellido();
 
 		List<EmpresaRolDTO> rolesByCompany = usuarioRols.stream()
-			.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRol().getId(),
-					ur.getRol().getNombre()))
-			.toList();
+				.map(ur -> new EmpresaRolDTO(ur.getEmpresa().getId(), ur.getEmpresa().getNombre(), ur.getRol().getId(),
+						ur.getRol().getNombre()))
+				.toList();
 
 		return Map.of("token", token, "empresaId", current.getEmpresa().getId(), "rolId", current.getRol().getId(),
 				"rolesByCompany", rolesByCompany, "estado", user.getUsuarioEstado().getId(), "nombrePersona",
@@ -438,12 +448,12 @@ public class AuthService {
 	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
 
 		User user = userRepo.findByUsername(username)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
 		UsuarioRol usuarioRol = userRoleRepo
-			.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
-					ESTADO_INACTVIO_ID)
-			.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
+				.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
+						ESTADO_INACTVIO_ID)
+				.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
 
 		String rolName = usuarioRol.getRol().getNombre();
 
@@ -468,9 +478,9 @@ public class AuthService {
 		// 1) Si hay preferido en User, ?salo si existe a?n
 		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
 			Optional<UsuarioRol> preferred = usuarioRols.stream()
-				.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
-						&& ur.getRol().getId().equals(user.getPreferredRolId()))
-				.findFirst();
+					.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
+							&& ur.getRol().getId().equals(user.getPreferredRolId()))
+					.findFirst();
 			if (preferred.isPresent()) {
 				return preferred.get();
 			}
@@ -515,7 +525,7 @@ public class AuthService {
 		}
 
 		User user = userRepo.findByUsername(username)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -536,7 +546,7 @@ public class AuthService {
 		User user = getCurrentUser(); // ya lo usas en changePassword
 
 		if (user.getUsuarioEstado() == usuarioEstadoRepository
-			.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
+				.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 					"Este usuario no requiere cambio de contraseña obligatorio.");
 		}
@@ -594,20 +604,20 @@ public class AuthService {
 			return Set.of();
 		}
 		return ud.getAuthorities()
-			.stream()
-			.map(GrantedAuthority::getAuthority)
-			.collect(java.util.stream.Collectors.toSet());
+				.stream()
+				.map(GrantedAuthority::getAuthority)
+				.collect(java.util.stream.Collectors.toSet());
 	}
 
 	private User getCurrentUser() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || auth
-			.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+				.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
 		}
 
 		return userRepo.findByUsername(auth.getName())
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	private void validatePasswordPolicy(String rawPassword) {
