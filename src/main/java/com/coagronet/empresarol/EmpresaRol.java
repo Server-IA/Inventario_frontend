@@ -1,53 +1,84 @@
 package com.coagronet.empresarol;
 
+import java.time.OffsetDateTime;
+
+import org.hibernate.annotations.TenantId;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.rol.Rol;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.OffsetDateTime;
+import lombok.Setter;
 
 @Entity
-@Data
+@Table(name = "empresa_rol", schema = "public", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_empresa_rol_empresa_id_rol_id", columnNames = { "empresa_id", "rol_id" })
+})
+@EntityListeners(AuditingEntityListener.class)
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Table(schema = "public", name = "empresa_rol")
 public class EmpresaRol {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "empresa_rol_generator")
-    @SequenceGenerator(name = "empresa_rol_generator", sequenceName = "empresa_rol_emr_id_seq", allocationSize = 1)
-    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "empresa_rol_seq")
+    @SequenceGenerator(name = "empresa_rol_seq", sequenceName = "empresa_rol_emr_id_seq", allocationSize = 1)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "empresa_id", referencedColumnName = "emp_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "empresa_id", nullable = false, foreignKey = @ForeignKey(name = "fk_empresa_rol_empresa"))
     private Empresa empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "rol_id", referencedColumnName = "id")
+    @TenantId
+    @Column(name = "empresa_id")
+    private Long tenantEmpresaId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "rol_id", nullable = false, foreignKey = @ForeignKey(name = "fk_empresa_rol_rol"))
     private Rol rol;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "estado_id", referencedColumnName = "est_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "estado_id", nullable = false, foreignKey = @ForeignKey(name = "empresa_rol_estado_id_fkey"))
     private Estado estado;
 
-    @Column(name = "created_at", insertable = false)
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false)
+    @LastModifiedDate
+    @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    @Column(name = "created_by")
+    @CreatedBy
+    @Column(name = "created_by", length = 150)
     private String createdBy;
 
-    @Column(name = "updated_by")
+    @LastModifiedBy
+    @Column(name = "updated_by", length = 150)
     private String updatedBy;
-
 
 }
