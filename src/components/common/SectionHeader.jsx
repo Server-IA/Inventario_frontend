@@ -1,11 +1,15 @@
 import React from "react";
 import { Stack, Typography, Box } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
-export default function SectionHeader({ title, subtitle, icon, rightNode }) {
+export default function SectionHeader({ title, titleKey, subtitle, subtitleKey, icon, rightNode, titleOptions, subtitleOptions }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const isDark = theme.palette.mode === "dark";
   const dividerColor = isDark ? alpha("#dfeae6", 0.18) : "#9fb4ad";
+  const resolvedTitle = titleKey ? t(titleKey, titleOptions) : title;
+  const resolvedSubtitle = subtitleKey ? t(subtitleKey, subtitleOptions) : subtitle;
 
   return (
     <Stack spacing={1.25} sx={{ mb: 2.5, mt: { xs: 1.75, sm: 1.25, md: 1, lg: 0 }, width: "100%" }}>
@@ -43,11 +47,11 @@ export default function SectionHeader({ title, subtitle, icon, rightNode }) {
                 letterSpacing: "-0.02em",
               }}
             >
-              {title}
+              {resolvedTitle}
             </Typography>
-            {subtitle && (
+            {resolvedSubtitle && (
               <Typography variant="body2" color="text.secondary" textAlign="center">
-                {subtitle}
+                {resolvedSubtitle}
               </Typography>
             )}
           </Stack>

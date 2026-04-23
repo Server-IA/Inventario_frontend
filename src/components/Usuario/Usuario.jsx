@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Button } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useTranslation } from "react-i18next";
 import GridActionBar from "../common/GridActionBar.jsx";
 import SectionHeader from "../common/SectionHeader.jsx";
 import AppDataGrid from "../common/AppDataGrid.jsx";
@@ -31,6 +32,7 @@ const emptyRow = {
 const extractItems = (resp) => resp.data?.content ?? resp.data ?? [];
 
 export default function Usuario() {
+  const { t } = useTranslation();
   const [rows, setRows] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -54,19 +56,19 @@ export default function Usuario() {
 
   const columns = useMemo(() => {
     const cols = [
-      { field: "nombreCompleto", headerName: "Nombre", flex: 1.15, minWidth: 220 },
-      { field: "username", headerName: "Correo", flex: 1.3, minWidth: 250 },
-      { field: "rolNombre", headerName: "Rol", flex: 1.1, minWidth: 220 },
+      { field: "nombreCompleto", headerKey: "usuario.columns.name", type: "text", flex: 1.15, minWidth: 220 },
+      { field: "username", headerKey: "usuario.columns.email", type: "text", flex: 1.3, minWidth: 250 },
+      { field: "rolNombre", headerKey: "usuario.columns.role", type: "text", flex: 1.1, minWidth: 220 },
       {
         field: "estadoId",
-        headerName: "Estado",
+        headerKey: "usuario.columns.status",
+        type: "status",
         flex: 0.7,
         minWidth: 140,
         align: "left",
         headerAlign: "left",
-        statusChip: true,
       },
-      ...(isAdmin ? [{ field: "empresaNombre", headerName: "Empresa", flex: 1.2, minWidth: 220 }] : []),
+      ...(isAdmin ? [{ field: "empresaNombre", headerKey: "usuario.columns.company", type: "text", flex: 1.2, minWidth: 220 }] : []),
     ];
     return cols;
   }, [isAdmin]);
@@ -101,7 +103,7 @@ export default function Usuario() {
       }
       setRows(mapped);
     } catch (e) {
-      console.error("Error cargando usuarios desde asignaciones", e);
+      console.error(t("usuario.messages.loadError"), e);
       setRows([]);
     } finally {
       setLoading(false);
@@ -166,7 +168,7 @@ export default function Usuario() {
   };
   const handleDelete = async () => {
     if (!selectedRow) return;
-    const ok = window.confirm("¿Seguro que deseas INACTIVAR este usuario? (Debe permanecer visible)");
+    const ok = window.confirm(t("usuario.messages.confirmInactivate"));
     if (!ok) return;
     const assignId = selectedRow?.raw?.id;
     const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
@@ -218,7 +220,7 @@ export default function Usuario() {
       });
       setSelectedRow(null);
     } catch (err) {
-      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? "No se pudo inactivar" });
+      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? t("usuario.messages.cannotInactivate") });
     }
   };
 
@@ -258,15 +260,19 @@ export default function Usuario() {
       }
       setOpenForm(false);
       await loadData();
-      setMessage({ open: true, severity: "success", text: "Operación exitosa" });
+      setMessage({
+        open: true,
+        severity: "success",
+        text: formMode === "create" ? t("usuario.messages.createSuccess") : t("usuario.messages.updateSuccess"),
+      });
     } catch (err) {
-      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? "Error en la operación" });
+      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? t("common.messages.operationError") });
     }
   };
 
   return (
     <Box p={2}>
-      <SectionHeader title="Gestión de Usuarios" />
+      <SectionHeader titleKey="usuario.title" />
 
       <GridActionBar
         onAdd={handleCreate}
@@ -278,7 +284,7 @@ export default function Usuario() {
           setMessage({
             open: true,
             severity: "info",
-            text: "Filtros disponibles próximamente",
+            text: t("common.messages.filtersComingSoon"),
           })
         }
         extraActions={
@@ -287,7 +293,7 @@ export default function Usuario() {
             startIcon={<VisibilityIcon />}
             disabled={!selectedRow}
           >
-            Ver detalle
+            {t("common.actions.viewDetail")}
           </Button>
         }
       />

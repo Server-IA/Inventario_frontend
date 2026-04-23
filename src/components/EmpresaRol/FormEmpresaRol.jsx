@@ -20,6 +20,7 @@ import {
   AccordionDetails,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useTranslation } from "react-i18next";
 
 export default function FormEmpresaRol({
   open,
@@ -30,6 +31,7 @@ export default function FormEmpresaRol({
   reloadData,
   roles,
 }) {
+  const { t } = useTranslation();
   const isEdit = Boolean(selectedRow?.id);
 
   const [rolId, setRolId] = useState("");
@@ -77,7 +79,7 @@ const cargarSubsistemas = async () => {
     setMessage({
       open: true,
       severity: "error",
-      text: "Error al cargar subsistemas",
+      text: t("empresaRol.messages.subsystemsLoadError"),
     });
   }
 };
@@ -108,7 +110,7 @@ const cargarModulos = async () => {
     setMessage({
       open: true,
       severity: "error",
-      text: "Error al cargar módulos",
+      text: t("empresaRol.messages.modulesLoadError"),
     });
   } finally {
     setLoadingModulos(false);
@@ -236,14 +238,14 @@ const agruparPorSubsistema = (modulosArray) => {
       setMessage({
         open: true,
         severity: "success",
-        text: "Permiso eliminado correctamente",
+        text: t("empresaRol.messages.permissionRemoved"),
       });
     } catch (error) {
       console.error(error.response?.data);
       setMessage({
         open: true,
         severity: "error",
-        text: "Error eliminando permiso",
+        text: t("empresaRol.messages.permissionRemoveError"),
       });
     }
   };
@@ -256,7 +258,7 @@ const handleSave = async () => {
     setMessage({
       open: true,
       severity: "warning",
-      text: "Debe seleccionar un rol",
+      text: t("empresaRol.messages.roleRequired"),
     });
     return;
   }
@@ -343,7 +345,7 @@ if (permisosNuevos.length > 0) {
     setMessage({
       open: true,
       severity: "success",
-      text: "Permisos actualizados correctamente",
+      text: t("empresaRol.messages.saveSuccess"),
     });
 
     reloadData();
@@ -354,7 +356,7 @@ if (permisosNuevos.length > 0) {
     setMessage({
       open: true,
       severity: "error",
-      text: "Error al guardar permisos",
+      text: t("empresaRol.messages.saveError"),
     });
   } finally {
     setLoading(false);
@@ -401,7 +403,7 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
             }
           />
           <Typography sx={{ fontWeight: 600 }}>
-            Todos los permisos
+            {t("common.labels.allPermissions")}
           </Typography>
         </Box>
 
@@ -459,7 +461,7 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
                       quitarPermiso(permiso.id)
                     }
                   >
-                    Quitar
+                    {t("common.actions.remove")}
                   </Button>
                 )}
               </Box>
@@ -487,13 +489,13 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
         {isEdit
-          ? "Editar Rol y Permisos"
-          : "Crear Rol y Asignar Permisos"}
+          ? t("empresaRol.form.editTitle")
+          : t("empresaRol.form.createTitle")}
       </DialogTitle>
 
       <DialogContent>
         <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>Rol</InputLabel>
+          <InputLabel>{t("empresaRol.form.roleLabel")}</InputLabel>
           <Select
             value={rolId}
             onChange={(e) => setRolId(e.target.value)}
@@ -517,7 +519,7 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
           {subsConPermiso.length > 0 && (
             <>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                Este rol tiene permisos en los siguientes módulos
+                {t("empresaRol.permissions.withPermissionsModules")}
               </Typography>
               {subsConPermiso.map(renderSubsistema)}
             </>
@@ -526,10 +528,10 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
           {subsSinPermiso.length > 0 && (
             <>
               <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
-                Módulos sin permisos asignados
+                {t("empresaRol.permissions.withoutAssignedPermissions")}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2, opacity: 0.7 }}>
-                Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.
+                {t("empresaRol.permissions.withoutAssignedPermissionsHelp")}
               </Typography>
               {subsSinPermiso.map(renderSubsistema)}
             </>
@@ -543,13 +545,13 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose}>Cerrar</Button>
+        <Button onClick={handleClose}>{t("common.actions.close")}</Button>
         <Button
           variant="contained"
           onClick={handleSave}
           disabled={loading}
         >
-          {loading ? "Guardando..." : "Guardar"}
+          {loading ? t("common.labels.loading") : t("common.actions.save")}
         </Button>
       </DialogActions>
     </Dialog>

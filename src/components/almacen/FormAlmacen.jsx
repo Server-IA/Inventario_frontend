@@ -5,6 +5,7 @@ import {
   Select, MenuItem, FormHelperText
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { useTranslation } from "react-i18next";
 
 export default function FormAlmacen({
   open = false,
@@ -16,6 +17,7 @@ export default function FormAlmacen({
   setMessage = () => {},
   authHeaders = {},
 }) {
+  const { t } = useTranslation();
   // ===========================
   // ESTADO Y CONFIGURACIÓN INICIAL
   // ===========================
@@ -103,47 +105,47 @@ export default function FormAlmacen({
 
     // Validación de nombre
     if (!formData.nombre?.trim()) {
-      newErrors.nombre = "El nombre es obligatorio.";
+      newErrors.nombre = t("almacen.form.validation.nameRequired");
     } else if (invalidCharsRegex.test(formData.nombre)) {
-      newErrors.nombre = "El nombre contiene caracteres no permitidos.";
+      newErrors.nombre = t("almacen.form.validation.nameInvalid");
     }
 
     // Validación de descripción
     if (!formData.descripcion?.trim()) {
-      newErrors.descripcion = "La descripción es obligatoria.";
+      newErrors.descripcion = t("almacen.form.validation.descriptionRequired");
     } else if (invalidCharsRegex.test(formData.descripcion)) {
-      newErrors.descripcion = "La descripción contiene caracteres no permitidos.";
+      newErrors.descripcion = t("almacen.form.validation.descriptionInvalid");
     }
 
     // Validación de dirección
     if (!formData.direccion?.trim()) {
-      newErrors.direccion = "La dirección es obligatoria.";
+      newErrors.direccion = t("almacen.form.validation.addressRequired");
     } else if (invalidCharsRegex.test(formData.direccion)) {
-      newErrors.direccion = "La dirección contiene caracteres no permitidos.";
+      newErrors.direccion = t("almacen.form.validation.addressInvalid");
     }
 
     // Validación de geolocalización
     if (!formData.geolocalizacion?.trim()) {
-      newErrors.geolocalizacion = "La geolocalización es obligatoria.";
+      newErrors.geolocalizacion = t("almacen.form.validation.geolocationRequired");
     } else if (invalidCharsRegex.test(formData.geolocalizacion)) {
-      newErrors.geolocalizacion = "La geolocalización contiene caracteres no permitidos.";
+      newErrors.geolocalizacion = t("almacen.form.validation.geolocationInvalid");
     }
 
     // Validación de coordenadas
     if (!formData.coordenadas?.trim()) {
-      newErrors.coordenadas = "Las coordenadas son obligatorias.";
+      newErrors.coordenadas = t("almacen.form.validation.coordinatesRequired");
     } else if (invalidCharsRegex.test(formData.coordenadas)) {
-      newErrors.coordenadas = "Las coordenadas contienen caracteres no permitidos.";
+      newErrors.coordenadas = t("almacen.form.validation.coordinatesInvalid");
     }
 
     // Validación de estado
     if (![1, 2].includes(formData.estadoId)) {
-      newErrors.estadoId = "Debe seleccionar un estado válido.";
+      newErrors.estadoId = t("almacen.form.validation.statusInvalid");
     }
 
     // Validación de espacio
     if (!Number(formData.espacioId)) {
-      newErrors.espacioId = "Debe seleccionar un espacio.";
+      newErrors.espacioId = t("almacen.form.validation.spaceRequired");
     }
 
     setErrors(newErrors);
@@ -170,10 +172,10 @@ export default function FormAlmacen({
     try {
       if (formMode === "edit" && formData.id) {
         await axios.put(`/v1/almacen/${formData.id}`, { id: Number(formData.id), ...payload }, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Almacén actualizado correctamente." });
+        setMessage({ open: true, severity: "success", text: t("almacen.messages.updateSuccess") });
       } else {
         await axios.post("/v1/almacen", payload, authHeaders);
-        setMessage({ open: true, severity: "success", text: "Almacén creado correctamente." });
+        setMessage({ open: true, severity: "success", text: t("almacen.messages.createSuccess") });
       }
       setOpen(false);
       reloadData();
@@ -182,7 +184,7 @@ export default function FormAlmacen({
       setMessage({
         open: true,
         severity: "error",
-        text: api.message || api.error || "Error al guardar almacén.",
+        text: api.message || api.error || t("almacen.messages.saveError"),
       });
     }
   };
@@ -192,18 +194,18 @@ export default function FormAlmacen({
   // ===========================
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-      <DialogTitle>{formMode === "edit" ? "Editar Almacén" : "Nuevo Almacén"}</DialogTitle>
+      <DialogTitle>{formMode === "edit" ? t("almacen.form.editTitle") : t("almacen.form.createTitle")}</DialogTitle>
       
       <DialogContent>
         {/* Selector de Espacio (solo si no hay filtro) */}
         {!espacioId && (
           <FormControl fullWidth margin="normal" error={!!errors.espacioId}>
-            <InputLabel>Espacio</InputLabel>
+            <InputLabel>{t("almacen.form.fields.space")}</InputLabel>
             <Select
               name="espacioId"
               value={formData.espacioId || ""}
               onChange={handleChange}
-              label="Espacio"
+              label={t("almacen.form.fields.space")}
             >
               {espaciosLocal.map((e) => (
                 <MenuItem key={e.id} value={e.id}>{e.nombre}</MenuItem>
@@ -217,7 +219,7 @@ export default function FormAlmacen({
         <TextField
           fullWidth
           margin="normal"
-          label="Nombre"
+          label={t("almacen.form.fields.name")}
           name="nombre"
           value={formData.nombre}
           onChange={handleChange}
@@ -229,7 +231,7 @@ export default function FormAlmacen({
         <TextField
           fullWidth
           margin="normal"
-          label="Descripción"
+          label={t("almacen.form.fields.description")}
           name="descripcion"
           value={formData.descripcion}
           onChange={handleChange}
@@ -241,7 +243,7 @@ export default function FormAlmacen({
         <TextField
           fullWidth
           margin="normal"
-          label="Dirección"
+          label={t("almacen.form.fields.address")}
           name="direccion"
           value={formData.direccion}
           onChange={handleChange}
@@ -253,7 +255,7 @@ export default function FormAlmacen({
         <TextField
           fullWidth
           margin="normal"
-          label="Geolocalización"
+          label={t("almacen.form.fields.geolocation")}
           name="geolocalizacion"
           value={formData.geolocalizacion}
           onChange={handleChange}
@@ -265,7 +267,7 @@ export default function FormAlmacen({
         <TextField
           fullWidth
           margin="normal"
-          label="Coordenadas"
+          label={t("almacen.form.fields.coordinates")}
           name="coordenadas"
           value={formData.coordenadas}
           onChange={handleChange}
@@ -275,23 +277,23 @@ export default function FormAlmacen({
 
         {/* Selector de Estado */}
         <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
-          <InputLabel>Estado</InputLabel>
+          <InputLabel>{t("almacen.form.fields.status")}</InputLabel>
           <Select
             name="estadoId"
             value={formData.estadoId}
             onChange={handleChange}
-            label="Estado"
+            label={t("almacen.form.fields.status")}
           >
-            <MenuItem value={1}>Activo</MenuItem>
-            <MenuItem value={2}>Inactivo</MenuItem>
+            <MenuItem value={1}>{t("common.labels.active")}</MenuItem>
+            <MenuItem value={2}>{t("common.labels.inactive")}</MenuItem>
           </Select>
           {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
         </FormControl>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={() => setOpen(false)}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>Guardar</Button>
+        <Button onClick={() => setOpen(false)}>{t("common.actions.cancel")}</Button>
+        <Button variant="contained" onClick={handleSubmit}>{t("common.actions.save")}</Button>
       </DialogActions>
     </Dialog>
   );

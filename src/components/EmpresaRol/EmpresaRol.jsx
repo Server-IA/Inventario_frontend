@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar.jsx";
 import FormEmpresaRol from "./FormEmpresaRol.jsx";
@@ -19,6 +20,7 @@ import GridActionBar from "../common/GridActionBar.jsx";
 import AppDataGrid from "../common/AppDataGrid.jsx";
 
 export default function EmpresaRol() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [selectedRow, setSelectedRow] = useState(null);
@@ -114,7 +116,7 @@ export default function EmpresaRol() {
       return setMessage({
         open: true,
         severity: "warning",
-        text: "Selecciona una fila",
+        text: t("common.messages.selectRow"),
       });
     }
     setFormOpen(true);
@@ -125,7 +127,7 @@ export default function EmpresaRol() {
       return setMessage({
         open: true,
         severity: "warning",
-        text: "Selecciona un rol primero",
+        text: t("empresaRol.messages.selectRole"),
       });
     }
     setModalPermisosOpen(true);
@@ -136,7 +138,7 @@ export default function EmpresaRol() {
       return setMessage({
         open: true,
         severity: "warning",
-        text: "Selecciona una fila",
+        text: t("common.messages.selectRow"),
       });
     }
     setConfirmOpen(true);
@@ -149,7 +151,7 @@ export default function EmpresaRol() {
       const resRoles = await axios.get("/v1/items/rol/0");
       const rolBase = resRoles.data.find((r) => r.name === selectedRow.rolNombre);
 
-      if (!rolBase) throw new Error("Rol base no encontrado");
+      if (!rolBase) throw new Error(t("empresaRol.messages.baseRoleNotFound"));
 
       const rolId = rolBase.id;
 
@@ -171,7 +173,7 @@ export default function EmpresaRol() {
       setMessage({
         open: true,
         severity: "success",
-        text: "Rol y permisos eliminados correctamente",
+        text: t("empresaRol.messages.deleteSuccess"),
       });
 
       reloadData();
@@ -180,7 +182,7 @@ export default function EmpresaRol() {
       setMessage({
         open: true,
         severity: "error",
-        text: "Error al eliminar. Revisa dependencias o permisos.",
+        text: t("empresaRol.messages.deleteError"),
       });
     } finally {
       setLoading(false);
@@ -190,11 +192,12 @@ export default function EmpresaRol() {
 
   const columns = useMemo(
     () => [
-      { field: "id", headerName: "ID", width: 90, type: "number" },
-      { field: "rolNombre", headerName: "Rol", flex: 1, minWidth: 220 },
+      { field: "id", headerKey: "empresaRol.columns.id", width: 90, type: "number" },
+      { field: "rolNombre", headerKey: "empresaRol.columns.role", type: "text", flex: 1, minWidth: 220 },
       {
         field: "permisos",
-        headerName: "Permisos",
+        headerKey: "empresaRol.columns.permissions",
+        type: "custom",
         flex: 1.8,
         minWidth: 320,
         sortable: false,
@@ -203,7 +206,7 @@ export default function EmpresaRol() {
           if (permisos.length === 0) {
             return (
               <Box sx={{ color: "text.secondary", fontStyle: "italic" }}>
-                Sin permisos
+                {t("empresaRol.permissions.withoutPermissions")}
               </Box>
             );
           }
@@ -233,7 +236,7 @@ export default function EmpresaRol() {
               ))}
               {permisos.length > 3 && (
                 <Box sx={{ fontSize: "11px", color: "text.secondary", alignSelf: "center" }}>
-                  +{permisos.length - 3} mas
+                  {t("common.labels.moreCount", { count: permisos.length - 3 })}
                 </Box>
               )}
             </Box>
@@ -242,20 +245,20 @@ export default function EmpresaRol() {
       },
       {
         field: "estadoNombre",
-        headerName: "Estado",
+        headerKey: "empresaRol.columns.status",
+        type: "status",
         flex: 0.7,
         minWidth: 140,
-        statusChip: true,
         valueGetter: (params) =>
           params.row.estadoNombre ?? params.row.estado?.nombre ?? params.row.estadoId ?? "",
       },
     ],
-    [isDark, theme]
+    [isDark, t, theme]
   );
 
   return (
     <Box p={2}>
-      <SectionHeader title="Roles de Empresa" />
+      <SectionHeader titleKey="empresaRol.title" />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
@@ -269,7 +272,7 @@ export default function EmpresaRol() {
           setMessage({
             open: true,
             severity: "info",
-            text: "Filtros disponibles proximamente",
+            text: t("common.messages.filtersComingSoon"),
           })
         }
         extraActions={
@@ -278,7 +281,7 @@ export default function EmpresaRol() {
             startIcon={<VisibilityIcon />}
             disabled={!selectedRow}
           >
-            Ver permisos
+            {t("common.actions.viewPermissions")}
           </Button>
         }
       />
@@ -316,20 +319,20 @@ export default function EmpresaRol() {
       />
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Confirmar eliminacion</DialogTitle>
+        <DialogTitle>{t("empresaRol.confirmDelete.title")}</DialogTitle>
         <DialogContent>
-          ¿Esta seguro que desea eliminar este rol y todos sus permisos?
+          {t("empresaRol.confirmDelete.description")}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>
-            Cancelar
+            {t("common.actions.cancel")}
           </Button>
           <Button
             color="error"
             variant="contained"
             onClick={confirmarEliminacion}
           >
-            Eliminar
+            {t("common.actions.delete")}
           </Button>
         </DialogActions>
       </Dialog>

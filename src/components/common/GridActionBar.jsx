@@ -5,6 +5,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ModeEditOutlineIcon from "@mui/icons-material/ModeEditOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import { useTranslation } from "react-i18next";
 
 export default function GridActionBar({
   onAdd,
@@ -17,9 +18,18 @@ export default function GridActionBar({
   onClearFilters,
   hasActiveFilters = false,
   rightActions,
+  labels,
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const isDark = theme.palette.mode === "dark";
+  const resolvedLabels = {
+    add: labels?.add ?? t("common.actions.add"),
+    update: labels?.update ?? t("common.actions.update"),
+    delete: labels?.delete ?? t("common.actions.delete"),
+    filters: labels?.filters ?? t("common.actions.filters"),
+    clear: labels?.clear ?? t("common.actions.clear"),
+  };
   const softShadow = isDark
     ? "0 8px 20px rgba(0,0,0,0.24), 0 2px 8px rgba(0,0,0,0.16)"
     : "0 6px 18px rgba(23,63,57,0.08), 0 2px 6px rgba(0,0,0,0.06)";
@@ -162,16 +172,16 @@ export default function GridActionBar({
   const rightContent = (
     <>
       {onFilters ? (
-        <Tooltip title="Filtros">
+        <Tooltip title={resolvedLabels.filters}>
           <Button onClick={onFilters} startIcon={<FilterListIcon />}>
-            Filtros
+            {resolvedLabels.filters}
           </Button>
         </Tooltip>
       ) : null}
       {hasActiveFilters && onClearFilters ? (
-        <Tooltip title="Limpiar filtros">
+        <Tooltip title={resolvedLabels.clear}>
           <Button onClick={onClearFilters}>
-            Limpiar
+            {resolvedLabels.clear}
           </Button>
         </Tooltip>
       ) : null}
@@ -211,33 +221,33 @@ export default function GridActionBar({
         }}
       >
         {extraActions ? <Box sx={extraActionsSx}>{extraActions}</Box> : null}
-        <Tooltip title="Agregar">
+        <Tooltip title={resolvedLabels.add}>
           <Button
             onClick={onAdd}
             startIcon={<AddIcon />}
             sx={addButtonSx}
           >
-            Agregar
+            {resolvedLabels.add}
           </Button>
         </Tooltip>
-        <Tooltip title="Actualizar">
+        <Tooltip title={resolvedLabels.update}>
           <Button
             onClick={onUpdate}
             startIcon={<ModeEditOutlineIcon />}
             disabled={!canUpdate}
             sx={editButtonSx}
           >
-            Actualizar
+            {resolvedLabels.update}
           </Button>
         </Tooltip>
-        <Tooltip title="Eliminar">
+        <Tooltip title={resolvedLabels.delete}>
           <Button
             onClick={onDelete}
             startIcon={<DeleteOutlineIcon />}
             disabled={!canDelete}
             sx={deleteButtonSx}
           >
-            Eliminar
+            {resolvedLabels.delete}
           </Button>
         </Tooltip>
       </Stack>

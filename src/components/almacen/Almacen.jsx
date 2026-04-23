@@ -3,6 +3,7 @@ import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import FormAlmacen from "./FormAlmacen";
 import { Box } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import SectionHeader from "../common/SectionHeader";
 import GridActionBar from "../common/GridActionBar";
 import AppDataGrid from "../common/AppDataGrid";
@@ -12,6 +13,7 @@ import CrudFilterModal from "../common/CrudFilterModal";
 import { makeLoaders, unwrap as unwrapPage } from "../common/filtersLoaders";
 
 export default function Almacen() {
+  const { t } = useTranslation();
   // ===========================
   // ESTADO Y CONFIGURACIÓN
   // ===========================
@@ -48,12 +50,12 @@ export default function Almacen() {
 
   // Campos del modal para Almacén (cadena completa)
   const fieldsAlmacen = [
-    { name: "paisId", label: "País", getOptions: getPaises, clearChildren: ["deptoId", "municipioId", "sedeId", "bloqueId", "espacioId"] },
-    { name: "deptoId", label: "Departamento", getOptions: getDepartamentos, dependsOn: ["paisId"], disabled: (v) => !v.paisId, clearChildren: ["municipioId", "sedeId", "bloqueId", "espacioId"] },
-    { name: "municipioId", label: "Municipio", getOptions: getMunicipios, dependsOn: ["deptoId"], disabled: (v) => !v.deptoId, clearChildren: ["sedeId", "bloqueId", "espacioId"] },
-    { name: "sedeId", label: "Sede", getOptions: getSedes, dependsOn: ["municipioId"], disabled: (v) => !v.municipioId, clearChildren: ["bloqueId", "espacioId"] },
-    { name: "bloqueId", label: "Bloque", getOptions: getBloques, dependsOn: ["sedeId"], disabled: (v) => !v.sedeId, clearChildren: ["espacioId"] },
-    { name: "espacioId", label: "Espacio", getOptions: getEspacios, dependsOn: ["bloqueId"], disabled: (v) => !v.bloqueId },
+    { name: "paisId", labelKey: "almacen.filters.country", getOptions: getPaises, clearChildren: ["deptoId", "municipioId", "sedeId", "bloqueId", "espacioId"] },
+    { name: "deptoId", labelKey: "almacen.filters.department", getOptions: getDepartamentos, dependsOn: ["paisId"], disabled: (v) => !v.paisId, clearChildren: ["municipioId", "sedeId", "bloqueId", "espacioId"] },
+    { name: "municipioId", labelKey: "almacen.filters.municipality", getOptions: getMunicipios, dependsOn: ["deptoId"], disabled: (v) => !v.deptoId, clearChildren: ["sedeId", "bloqueId", "espacioId"] },
+    { name: "sedeId", labelKey: "almacen.filters.headquarters", getOptions: getSedes, dependsOn: ["municipioId"], disabled: (v) => !v.municipioId, clearChildren: ["bloqueId", "espacioId"] },
+    { name: "bloqueId", labelKey: "almacen.filters.block", getOptions: getBloques, dependsOn: ["sedeId"], disabled: (v) => !v.sedeId, clearChildren: ["espacioId"] },
+    { name: "espacioId", labelKey: "almacen.filters.space", getOptions: getEspacios, dependsOn: ["bloqueId"], disabled: (v) => !v.bloqueId },
   ];
 
   // ===========================
@@ -117,7 +119,7 @@ export default function Almacen() {
         setSelectedRow(null);
       })
       .catch(() =>
-        setMessage({ open: true, severity: "error", text: "Error al cargar almacenes." })
+        setMessage({ open: true, severity: "error", text: t("almacen.messages.loadError") })
       );
   };
 
@@ -128,14 +130,14 @@ export default function Almacen() {
   // Acciones CRUD
   const handleDelete = async () => {
     if (!selectedRow) return;
-    if (!window.confirm(`¿Eliminar el almacén "${selectedRow.nombre}"?`)) return;
+    if (!window.confirm(t("almacen.messages.confirmDelete", { name: selectedRow.nombre }))) return;
     try {
       await axios.delete(`/v1/almacen/${selectedRow.id}`, headers);
-      setMessage({ open: true, severity: "success", text: "Almacén eliminado correctamente." });
+      setMessage({ open: true, severity: "success", text: t("almacen.messages.deleteSuccess") });
       setSelectedRow(null);
       reloadData();
     } catch {
-      setMessage({ open: true, severity: "error", text: "Error al eliminar almacén." });
+      setMessage({ open: true, severity: "error", text: t("almacen.messages.deleteError") });
     }
   };
 
@@ -155,11 +157,12 @@ export default function Almacen() {
   // RENDER
   // ===========================
   const columns = useMemo(() => ([
-    { field: "id", headerName: "ID", width: 80, type: "number" },
-    { field: "nombre", headerName: "Nombre", width: 200 },
+    { field: "id", headerKey: "almacen.columns.id", width: 80, type: "number" },
+    { field: "nombre", headerKey: "almacen.columns.name", type: "text", width: 200 },
     {
       field: "espacioNombre",
-      headerName: "Espacio",
+      headerKey: "almacen.columns.space",
+      type: "text",
       width: 180,
       valueGetter: (p) =>
         p?.row?.espacioNombre ??
@@ -167,23 +170,24 @@ export default function Almacen() {
         p?.row?.espacio?.name ??
         "",
     },
-    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 240 },
-    { field: "direccion", headerName: "Dirección", width: 220 },
-    { field: "geolocalizacion", headerName: "Geolocalización", width: 170 },
-    { field: "coordenadas", headerName: "Coordenadas", width: 170 },
+    { field: "descripcion", headerKey: "almacen.columns.description", type: "text", flex: 1, minWidth: 240 },
+    { field: "direccion", headerKey: "almacen.columns.address", type: "text", width: 220 },
+    { field: "geolocalizacion", headerKey: "almacen.columns.geolocation", type: "text", width: 170 },
+    { field: "coordenadas", headerKey: "almacen.columns.coordinates", type: "text", width: 170 },
     {
       field: "estadoId",
-      headerName: "Estado",
+      headerKey: "almacen.columns.status",
+      type: "status",
       width: 120,
       valueGetter: (p) =>
         p?.row?.estado?.name ??
         p?.row?.estado?.nombre ??
-        (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+        p?.row?.estadoId,
     },
   ]), []);
   return (
     <Box sx={{ p: 2 }}>
-      <SectionHeader title="Gestión de Almacenes" />
+      <SectionHeader titleKey="almacen.title" />
 
       <GridActionBar
         onAdd={() => { setFormMode("create"); setSelectedRow(null); setFormOpen(true); }}
@@ -225,7 +229,7 @@ export default function Almacen() {
       <CrudFilterModal
         open={openFilters}
         onClose={() => setOpenFilters(false)}
-        title="Filtros de Almacén"
+        titleKey="almacen.filters.title"
         fields={fieldsAlmacen}
         values={filters}
         onChange={handleFiltersChange}
