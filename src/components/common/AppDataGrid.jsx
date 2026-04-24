@@ -307,7 +307,9 @@ export default function AppDataGrid({
     if (columnVisibilityKey) {
       try {
         localStorage.setItem(columnVisibilityKey, JSON.stringify(model));
-      } catch {}
+      } catch {
+        // ignore localStorage errors (quota/private mode)
+      }
     }
   };
 
@@ -329,7 +331,9 @@ export default function AppDataGrid({
             try {
               const active = document.activeElement;
               if (active && typeof active.blur === "function") active.blur();
-            } catch {}
+            } catch {
+              // ignore focus handling errors
+            }
           }
         }}
         rows={Array.isArray(rows) ? rows : []}

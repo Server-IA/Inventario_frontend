@@ -29,13 +29,15 @@ test.describe('RF-036 - Empresa Rol (admin empresa) validaciones', () => {
   });
 
   test('ERAV-02: actualizar sin seleccionar fila no abre modal', async ({ page }) => {
-    await clickActionButton(page, 'ACTUALIZAR');
-    await expect(page.getByText(/Selecciona una fila|Selecciona/i).first()).toBeVisible({ timeout: 10000 });
+    const updateBtn = page.getByRole('button', { name: /^ACTUALIZAR$/i });
+    await expect(updateBtn).toBeDisabled();
+    await expect(page.locator('[role="dialog"]:visible')).toHaveCount(0);
   });
 
   test('ERAV-03: eliminar sin seleccionar fila muestra advertencia', async ({ page }) => {
-    await clickActionButton(page, 'ELIMINAR');
-    await expect(page.getByText(/Selecciona una fila|Selecciona/i).first()).toBeVisible({ timeout: 10000 });
+    const deleteBtn = page.getByRole('button', { name: /^ELIMINAR$/i });
+    await expect(deleteBtn).toBeDisabled();
+    await expect(page.locator('[role="dialog"]:visible')).toHaveCount(0);
   });
 
   // Este caso se deja comentado porque el control de acceso a nivel de empresa aún no está implementado, pero se puede activar una vez esté listo

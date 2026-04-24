@@ -254,3 +254,12 @@ export default function GridActionBar({
     </Stack>
   );
 }
+
+GridActionBar.propTypes = {
+  onAdd: PropTypes.func,
+  onUpdate: PropTypes.func,
+  onDelete: PropTypes.func,
+  canUpdate: PropTypes.bool,
+  canDelete: PropTypes.bool,
+  extraActions: PropTypes.node,
+};

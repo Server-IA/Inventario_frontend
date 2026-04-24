@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import axios from "../axiosConfig";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTranslation } from "react-i18next";
 
@@ -45,6 +47,8 @@ export default function FormEmpresaRol({
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
   const [permisosOriginales, setPermisosOriginales] = useState([]);
   const [subsistemas, setSubsistemas] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState(empresaId ?? "");
 
   const handleClose = () => {
     setOpen(false);
@@ -52,6 +56,34 @@ export default function FormEmpresaRol({
     setRolId("");
     setPermisosSeleccionados([]);
     setPermisosOriginales([]);
+    setSelectedEmpresaId(empresaId ?? "");
+  };
+
+  const getTargetEmpresaId = () =>
+    Number(selectedEmpresaId || selectedRow?.empresaId || empresaId);
+
+  const getLegacyParams = () =>
+    isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : undefined;
+
+  const loadEmpresas = async () => {
+    if (!isSystemAdmin) return;
+
+    try {
+      const res = await axios.get("/v1/items/empresa/0");
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.content)
+        ? res.data.content
+        : [];
+      setEmpresas(list);
+    } catch {
+      setEmpresas([]);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: "Error al cargar empresas",
+      });
+    }
   };
 
   /* ===============================
@@ -166,11 +198,14 @@ const agruparPorSubsistema = (modulosArray) => {
       if (!open) return;
 
       const init = async () => {
+        if (isSystemAdmin) {
+          await loadEmpresas();
+        }
         await cargarSubsistemas();
       };
 
       init();
-    }, [open]);
+    }, [open, isSystemAdmin]);
     useEffect(() => {
       if (subsistemas.length > 0) {
         cargarModulos();
@@ -181,6 +216,10 @@ const agruparPorSubsistema = (modulosArray) => {
 
       const initRol = async () => {
         if (isEdit && selectedRow) {
+          if (isSystemAdmin && selectedRow?.empresaId) {
+            setSelectedEmpresaId(selectedRow.empresaId);
+          }
+
           let idRol = selectedRow.rolId;
 
           if (!idRol && selectedRow.rolNombre) {
@@ -195,7 +234,7 @@ const agruparPorSubsistema = (modulosArray) => {
       };
 
       initRol();
-    }, [open, selectedRow, subsistemas, modulos]);
+    }, [open, selectedRow, subsistemas, modulos, isSystemAdmin]);
 
   /* ===============================
      Toggle permiso (solo visual)
@@ -227,7 +266,7 @@ const agruparPorSubsistema = (modulosArray) => {
   };
 
   /* ===============================
-     Quitar permiso inmediato
+     Quitar permiso (solo estado local)
   =============================== */
   const quitarPermiso = async (permisoId) => {
     try {
@@ -264,6 +303,15 @@ const handleSave = async () => {
       open: true,
       severity: "warning",
       text: t("empresaRol.messages.roleRequired"),
+    });
+    return;
+  }
+
+  if (isSystemAdmin && !getTargetEmpresaId()) {
+    setMessage({
+      open: true,
+      severity: "warning",
+      text: "Debe seleccionar una empresa",
     });
     return;
   }
@@ -317,7 +365,8 @@ let permisosALLIds = [];
 if (modulosALL.length > 0) {
   await axios.post(
     `/v1/empresa-rol-permisos/${rolId}/asignar-modulos-permisos`,
-    { modulosIds: modulosALL }
+    { modulosIds: modulosALL },
+    getLegacyParams()
   );
 
   //  Obtener todos los permisos que pertenecen a los módulos ALL
@@ -331,27 +380,33 @@ if (modulosALL.length > 0) {
 }
 
 /* ===============================
-    Limpiar duplicados
+   Sincronizar diferencias (alta/baja)
 =============================== */
 
-permisosINDIVIDUAL = permisosINDIVIDUAL.filter(
-  (id) =>
-    !permisosOriginales.includes(id) &&
-    !permisosALLIds.includes(id)
-);
+const originalesSet = new Set(permisosOriginales);
+const seleccionadosSet = new Set(permisosSeleccionados);
 
-/* ===============================
-   INDIVIDUAL SEGURO
-=============================== */
+const permisosAQuitar = permisosOriginales.filter((id) => !seleccionadosSet.has(id));
 
-let permisosNuevos = permisosSeleccionados.filter(
-  (id) => !permisosOriginales.includes(id)
-);
+let permisosNuevos = permisosSeleccionados.filter((id) => !originalesSet.has(id));
+
+permisosNuevos = permisosNuevos.filter((id) => !permisosALLIds.includes(id));
+
+if (permisosAQuitar.length > 0) {
+  await axios.delete(
+    `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+    {
+      data: { permisosId: permisosAQuitar },
+      ...(isSystemAdmin ? { params: { empresaId: getTargetEmpresaId() } } : {}),
+    }
+  );
+}
 
 if (permisosNuevos.length > 0) {
   await axios.post(
     `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
-    { permisosId: permisosNuevos }
+    { permisosId: permisosNuevos },
+    getLegacyParams()
   );
 }
 
@@ -379,15 +434,11 @@ if (permisosNuevos.length > 0) {
      Separar módulos
   =============================== */
     const modulosConPermiso = modulos.filter((modulo) =>
-      modulo.permisos.some((p) =>
-        permisosOriginales.includes(p.id)
-      )
+      modulo.permisos.some((p) => permisosSeleccionados.includes(p.id))
     );
 
     const modulosSinPermiso = modulos.filter((modulo) =>
-      !modulo.permisos.some((p) =>
-        permisosOriginales.includes(p.id)
-      )
+      !modulo.permisos.some((p) => permisosSeleccionados.includes(p.id))
     );
 
 const subsConPermiso = agruparPorSubsistema(modulosConPermiso);
@@ -395,7 +446,14 @@ const subsSinPermiso = agruparPorSubsistema(modulosSinPermiso);
 const subsistemasAgrupados = agruparPorSubsistema(modulos);
 
   const renderModulo = (modulo) => (
-    <Accordion key={modulo.moduloId}>
+    <Accordion
+      key={modulo.moduloId}
+      sx={{
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        "&:before": { display: "none" },
+      }}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography sx={{ fontWeight: 600 }}>
           {modulo.moduloNombre}
@@ -439,11 +497,11 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
                   p: 2,
                   borderRadius: 3,
                   border: checked
-                    ? "1px solid #1976d2"
-                    : "1px solid rgba(255,255,255,0.1)",
+                    ? `1px solid ${theme.palette.primary.main}`
+                    : `1px solid ${theme.palette.divider}`,
                   backgroundColor: checked
-                    ? "rgba(25,118,210,0.1)"
-                    : "transparent",
+                    ? alpha(theme.palette.primary.main, isDark ? 0.2 : 0.08)
+                    : theme.palette.background.default,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
@@ -470,6 +528,11 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
                   <Button
                     size="small"
                     color="error"
+                    sx={{
+                      "&.Mui-disabled": {
+                        color: theme.palette.text.disabled,
+                      },
+                    }}
                     onClick={() =>
                       quitarPermiso(permiso.id)
                     }
@@ -485,7 +548,15 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
     </Accordion>
   );
   const renderSubsistema = (sub) => (
-  <Accordion key={sub.id}>
+  <Accordion
+    key={sub.id}
+    sx={{
+      mb: 1,
+      backgroundColor: theme.palette.background.paper,
+      border: `1px solid ${theme.palette.divider}`,
+      "&:before": { display: "none" },
+    }}
+  >
     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
       <Typography sx={{ fontWeight: 700 }}>
         {sub.nombre}
@@ -521,6 +592,24 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
             ))}
           </Select>
         </FormControl>
+
+        {isSystemAdmin && (
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel>Empresa</InputLabel>
+            <Select
+              value={selectedEmpresaId}
+              label="Empresa"
+              onChange={(e) => setSelectedEmpresaId(e.target.value)}
+              disabled={isEdit}
+            >
+              {empresas.map((e) => (
+                <MenuItem key={e.id} value={e.id}>
+                  {e.nombre ?? e.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <Divider sx={{ mb: 2 }} />        
               {loadingModulos ? (
