@@ -54,7 +54,7 @@ public class EmpresaRol {
     private Empresa empresa;
 
     @TenantId
-    @Column(name = "empresa_id")
+    @Column(name = "empresa_id", insertable = false, updatable = false)
     private Long tenantEmpresaId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
