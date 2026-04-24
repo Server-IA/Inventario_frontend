@@ -220,6 +220,7 @@ import Estado from "../estado/estado.jsx";
 import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
 import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
+import Usuario from "../Usuario/Usuario.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // Imágenes
@@ -409,6 +410,7 @@ const components = {
   modulo: modulo,
   Rol_usuario: Rol_usuario,
   EmpresaRol: EmpresaRol,
+  Usuario: Usuario,
   UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
   PedidoCotizacion: PedidoCotizacion,
@@ -466,6 +468,7 @@ const components = {
 
 const moduleImages = {
   EmpresaRol: rol_empresa,
+  Usuario: persona,
   UsuarioRoles: usai_rol_sistema,
   UsuarioRol: usariorol,
   PedidoCotizacion:pedido_coti,
@@ -585,7 +588,6 @@ export default function Navigator2({
   // ===== HELPERS =====
   const toKey = (x) => String(x ?? "").trim();
   const normalizeTipo = (t) => (t === "movil" ? "movil" : "web");
-
   const renderComponent = (key) => {
     const Component = components[key];
     setCurrentModuleItem(Component ? <Component /> : null);
@@ -784,6 +786,21 @@ export default function Navigator2({
             })),
           })
         );
+
+        const segIndex = adapted.findIndex((m) => toKey(m.id) === "Seguridad");
+        if (segIndex !== -1) {
+          const children = adapted[segIndex].children || [];
+          const exists = children.some((c) => toKey(c.id) === "Usuario");
+          if (!exists) {
+            children.push({
+              id: "Usuario",
+              text: "Usuario",
+              icon: "PersonOutline",
+              url: "/api/v1/usuario",
+            });
+            adapted[segIndex] = { ...adapted[segIndex], children };
+          }
+        }
 
         setMenuItems(adapted);
 
