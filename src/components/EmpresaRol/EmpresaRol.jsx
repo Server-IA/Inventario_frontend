@@ -19,6 +19,28 @@ import SectionHeader from "../common/SectionHeader.jsx";
 import GridActionBar from "../common/GridActionBar.jsx";
 import AppDataGrid from "../common/AppDataGrid.jsx";
 
+const SYSTEM_ROLE_REGEX = /(ROLE_ADMINISTRADOR_SISTEMA|ADMINISTRADOR[_\s-]*SISTEMA|ADMIN\s*SISTEMA)/i;
+
+const parseRolesByCompany = () => {
+  try {
+    return JSON.parse(localStorage.getItem("rolesByCompany") || "[]");
+  } catch {
+    return [];
+  }
+};
+
+const resolveCurrentRoleName = () => {
+  const empresaId = Number(localStorage.getItem("empresaId"));
+  const rolId = Number(localStorage.getItem("rolId"));
+  const rolesByCompany = parseRolesByCompany();
+
+  const byContext = rolesByCompany.find(
+    (r) => Number(r?.empresaId) === empresaId && Number(r?.rolId) === rolId
+  );
+
+  return byContext?.rolNombre || localStorage.getItem("rolNombre") || "";
+};
+
 export default function EmpresaRol() {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -37,12 +59,19 @@ export default function EmpresaRol() {
   });
 
   const empresaId = Number(localStorage.getItem("empresaId"));
+  const currentRoleName = resolveCurrentRoleName();
+  const isSystemAdmin = SYSTEM_ROLE_REGEX.test(currentRoleName);
+  const permisosLegacyParams = (targetEmpresaId) =>
+    isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
   const [confirmOpen, setConfirmOpen] = useState(false);
+
   const reloadData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const resEmpresaRol = await axios.get("/v1/empresa-rol");
+      const resEmpresaRol = await axios.get(
+        isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol"
+      );
       const empresaRoles = resEmpresaRol.data;
 
       const resRoles = await axios.get("/v1/items/rol/0");
@@ -58,7 +87,8 @@ export default function EmpresaRol() {
 
           try {
             const permisosRes = await axios.get(
-              `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`
+              `/v1/empresa-rol-permisos/rol/${rolBase.id}/permisos`,
+              permisosLegacyParams(empresaRol.empresaId ?? empresaId)
             );
 
             return {
@@ -81,7 +111,7 @@ export default function EmpresaRol() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [empresaId, isSystemAdmin]);
 
   // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
   const loadRoles = useCallback(async () => {
@@ -156,7 +186,8 @@ export default function EmpresaRol() {
       const rolId = rolBase.id;
 
       const permisosRes = await axios.get(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
+        permisosLegacyParams(selectedRow?.empresaId ?? empresaId)
       );
 
       const permisos = permisosRes.data || [];
@@ -168,7 +199,11 @@ export default function EmpresaRol() {
         });
       }
 
-      await axios.delete(`/v1/empresa-rol/${selectedRow.id}`);
+      await axios.delete(
+        isSystemAdmin
+          ? `/v1/system/empresa-rol/${selectedRow.id}`
+          : `/v1/empresa-rol/${selectedRow.id}`
+      );
 
       setMessage({
         open: true,
@@ -191,74 +226,93 @@ export default function EmpresaRol() {
   };
 
   const columns = useMemo(
-    () => [
-      { field: "id", headerKey: "empresaRol.columns.id", width: 90, type: "number" },
-      { field: "rolNombre", headerKey: "empresaRol.columns.role", type: "text", flex: 1, minWidth: 220 },
-      {
-        field: "permisos",
-        headerKey: "empresaRol.columns.permissions",
-        type: "custom",
-        flex: 1.8,
-        minWidth: 320,
-        sortable: false,
-        renderCell: (params) => {
-          const permisos = Array.isArray(params.row.permisos) ? params.row.permisos : [];
-          if (permisos.length === 0) {
+    () => {
+      const baseColumns = [
+        { field: "id", headerKey: "empresaRol.columns.id", width: 90, type: "number" },
+      ];
+
+      if (isSystemAdmin) {
+        baseColumns.push({
+          field: "empresaNombre",
+          headerKey: "common.labels.company",
+          type: "text",
+          flex: 1.2,
+          minWidth: 220,
+        });
+      }
+
+      baseColumns.push(
+        { field: "rolNombre", headerKey: "empresaRol.columns.role", type: "text", flex: 1, minWidth: 220 },
+        {
+          field: "permisos",
+          headerKey: "empresaRol.columns.permissions",
+          type: "custom",
+          flex: 1.8,
+          minWidth: 320,
+          sortable: false,
+          renderCell: (params) => {
+            const permisos = Array.isArray(params.row.permisos) ? params.row.permisos : [];
+            if (permisos.length === 0) {
+              return (
+                <Box sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                  {t("empresaRol.permissions.withoutPermissions")}
+                </Box>
+              );
+            }
+
+            const visibles = permisos.slice(0, 3);
             return (
-              <Box sx={{ color: "text.secondary", fontStyle: "italic" }}>
-                {t("empresaRol.permissions.withoutPermissions")}
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, py: 0.5 }}>
+                {visibles.map((permiso) => (
+                  <Chip
+                    key={permiso.id}
+                    label={permiso.nombre}
+                    size="small"
+                    sx={{
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      bgcolor: isDark
+                        ? alpha(theme.palette.primary.light, 0.22)
+                        : alpha(theme.palette.primary.main, 0.12),
+                      color: isDark
+                        ? theme.palette.primary.light
+                        : theme.palette.primary.dark,
+                      border: `1px solid ${
+                        isDark ? alpha(theme.palette.primary.light, 0.4) : alpha(theme.palette.primary.main, 0.24)
+                      }`,
+                    }}
+                  />
+                ))}
+                {permisos.length > 3 && (
+                  <Box sx={{ fontSize: "11px", color: "text.secondary", alignSelf: "center" }}>
+                    {t("common.labels.moreCount", { count: permisos.length - 3 })}
+                  </Box>
+                )}
               </Box>
             );
-          }
-
-          const visibles = permisos.slice(0, 3);
-          return (
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, py: 0.5 }}>
-              {visibles.map((permiso) => (
-                <Chip
-                  key={permiso.id}
-                  label={permiso.nombre}
-                  size="small"
-                  sx={{
-                    fontSize: "11px",
-                    fontWeight: 500,
-                    bgcolor: isDark
-                      ? alpha(theme.palette.primary.light, 0.22)
-                      : alpha(theme.palette.primary.main, 0.12),
-                    color: isDark
-                      ? theme.palette.primary.light
-                      : theme.palette.primary.dark,
-                    border: `1px solid ${
-                      isDark ? alpha(theme.palette.primary.light, 0.4) : alpha(theme.palette.primary.main, 0.24)
-                    }`,
-                  }}
-                />
-              ))}
-              {permisos.length > 3 && (
-                <Box sx={{ fontSize: "11px", color: "text.secondary", alignSelf: "center" }}>
-                  {t("common.labels.moreCount", { count: permisos.length - 3 })}
-                </Box>
-              )}
-            </Box>
-          );
+          },
         },
-      },
-      {
-        field: "estadoNombre",
-        headerKey: "empresaRol.columns.status",
-        type: "status",
-        flex: 0.7,
-        minWidth: 140,
-        valueGetter: (params) =>
-          params.row.estadoNombre ?? params.row.estado?.nombre ?? params.row.estadoId ?? "",
-      },
-    ],
-    [isDark, t, theme]
+        {
+          field: "estadoNombre",
+          headerKey: "empresaRol.columns.status",
+          type: "status",
+          flex: 0.7,
+          minWidth: 140,
+          valueGetter: (params) =>
+            params.row.estadoNombre ?? params.row.estado?.nombre ?? params.row.estadoId ?? "",
+        }
+      );
+
+      return baseColumns;
+    },
+    [empresaId, isDark, isSystemAdmin, t, theme]
   );
 
   return (
     <Box p={2}>
-      <SectionHeader titleKey="empresaRol.title" />
+      <SectionHeader
+        title={isSystemAdmin ? t("empresaRol.systemTitle") : t("empresaRol.companyTitle")}
+      />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
@@ -295,6 +349,7 @@ export default function EmpresaRol() {
         reloadData={reloadData}
         roles={roles}
         empresaId={empresaId}
+        isSystemAdmin={isSystemAdmin}
       />
 
       <ModalVerPermisos

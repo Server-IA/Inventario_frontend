@@ -192,6 +192,8 @@
   },
   "empresaRol": {
     "title": "Roles de Empresa",
+    "systemTitle": "Roles de Empresas en el Sistema",
+    "companyTitle": "Roles de la Empresa",
     "columns": {
       "id": "ID",
       "role": "Rol",

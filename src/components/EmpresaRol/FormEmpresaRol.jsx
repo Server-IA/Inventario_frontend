@@ -30,9 +30,13 @@ export default function FormEmpresaRol({
   setMessage,
   reloadData,
   roles,
+  empresaId,
+  isSystemAdmin = false,
 }) {
   const { t } = useTranslation();
   const isEdit = Boolean(selectedRow?.id);
+  const permisosLegacyParams = (targetEmpresaId) =>
+    isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
 
   const [rolId, setRolId] = useState("");
   const [modulos, setModulos] = useState([]);
@@ -143,7 +147,8 @@ const agruparPorSubsistema = (modulosArray) => {
   const cargarPermisosActuales = async (rolId) => {
     try {
       const res = await axios.get(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
+        permisosLegacyParams(selectedRow?.empresaId ?? empresaId)
       );
 
       const ids = res.data.map((p) => p.id);
@@ -267,9 +272,17 @@ const handleSave = async () => {
     setLoading(true);
 
     if (!isEdit) {
-      await axios.post("/v1/empresa-rol", {
-        rolId: Number(rolId),
-      });
+        await axios.post(
+          isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
+          isSystemAdmin
+            ? {
+                empresaId: Number(selectedRow?.empresaId ?? empresaId),
+                rolId: Number(rolId),
+              }
+            : {
+                rolId: Number(rolId),
+              }
+        );
     }
 
     let modulosALL = [];
