@@ -92,12 +92,10 @@ public class UserRegistrationService {
 
 		// 2. Determinar si la persona ya existe. Si no existe, se crea y persiste
 		// inmediatamente.
-		// La variable resultante es 'effectively final'.
 		final Persona persona = personaRepository.findByIdentificacion(request.identificacion())
 				.orElseGet(() -> personaRepository.save(crearNuevaPersona(request)));
 
 		// 3. Determinar si ya tiene un User asociado.
-		// Ahora es seguro usar 'persona' dentro de la lambda.
 		User user = userRepository.findByPersonaId(persona.getId())
 				.orElseGet(() -> crearNuevoUsuario(request, persona));
 
