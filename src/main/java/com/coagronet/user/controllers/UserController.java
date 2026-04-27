@@ -24,9 +24,14 @@ import com.coagronet.user.mappers.UserMapper;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "Usuarios", description = "API para la gestión y registro de usuarios")
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
@@ -88,6 +93,12 @@ public class UserController {
 		}
 	}
 
+	@Operation(summary = "Registrar un nuevo usuario", description = "Crea un nuevo usuario junto con su registro de Persona si no existe. Además, asigna los roles correspondientes en las empresas especificadas. Valida que el nombre de usuario no exista y que las fechas de los contratos sean congruentes.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "Usuario registrado y roles asignados exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Error de validación en los datos enviados o reglas de negocio (ej. username ya registrado, fechas de contrato inválidas, rol inactivo)"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado. Se requieren privilegios de administrador o permisos de creación.")
+	})
 	@PostMapping("/api/v1/usuarios/registro")
 	@PreAuthorize("hasAuthority('USUARIO_ROL_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> registrarUsuario(
