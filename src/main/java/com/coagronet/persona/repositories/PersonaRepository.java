@@ -23,4 +23,6 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
 	boolean existsByIdentificacion(String identificacion);
 
+	Optional<Persona> findByIdentificacion(String identificacion);
+
 }
