@@ -101,11 +101,11 @@ public class UserController {
 	})
 	@PostMapping("/api/v1/usuarios/registro")
 	@PreAuthorize("hasAuthority('USUARIO_ROL_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
-	public ResponseEntity<Void> registrarUsuario(
+	public ResponseEntity<Long> registrarUsuario(
 			@Valid @RequestBody UserRegistrationRequest request) {
 
-		userRegistrationService.registerOrUpdateUser(request);
-		return ResponseEntity.status(HttpStatus.CREATED).build();
+		Long userId = userRegistrationService.registerOrUpdateUser(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(userId);
 	}
 
 }

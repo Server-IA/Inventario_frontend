@@ -87,34 +87,26 @@ public class UserRegistrationService {
 
 	@Transactional
 	public Long registerOrUpdateUser(UserRegistrationRequest request) {
-		// 1. Validar fechas de contrato
 		validarFechasContrato(request);
 
-		// 2. Determinar si la persona ya existe. Si no existe, se crea y persiste
-		// inmediatamente.
 		final Persona persona = personaRepository.findByIdentificacion(request.identificacion())
 				.orElseGet(() -> personaRepository.save(crearNuevaPersona(request)));
 
-		// 3. Determinar si ya tiene un User asociado.
 		User user = userRepository.findByPersonaId(persona.getId())
 				.orElseGet(() -> crearNuevoUsuario(request, persona));
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-		// 4. Asignar Roles y Empresas según el contexto (Admin vs Empresa)
-		boolean isSystemAdmin = auth != null && auth.getAuthorities()
-				.stream()
-				.map(GrantedAuthority::getAuthority)
-				.anyMatch(role -> role.equals("ROLE_ADMINISTRADOR_SISTEMA"));
-
+		boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+				.anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
 		Long sessionEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+		boolean seAsignoPreferida = false;
 
 		for (AsignacionRequest asignacion : request.asignaciones()) {
 			Long empresaAsignarId = isSystemAdmin ? asignacion.empresaId() : sessionEmpresaId;
 
-			// Validación de integridad
 			if (empresaAsignarId == null) {
-				throw new RecursoDuplicadoException("No se pudo determinar la empresa para la asignación.");
+				throw new RecursoDuplicadoException("No se pudo determinar la empresa.");
 			}
 
 			UsuarioRol usuarioRol = UsuarioRol.builder()
@@ -123,21 +115,26 @@ public class UserRegistrationService {
 					.rol(empresaRolRepository
 							.findRolByEmpresaIdAndRolIdAndEstadoId(empresaAsignarId, asignacion.rolId(),
 									ESTADO_ACTIVO_ID)
-							.orElseThrow(() -> new RecursoDuplicadoException(
-									"El rol con ID " + asignacion.rolId() + " no está activo para la empresa")))
+							.orElseThrow(() -> new RecursoDuplicadoException("Rol no activo")))
 					.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO_ID))
 					.iniciaContratoEn(asignacion.iniciaContratoEn())
 					.finalizaContratoEn(asignacion.finalizaContratoEn())
 					.build();
 
 			user.addUsuarioRol(usuarioRol);
+
+			if (Boolean.TRUE.equals(asignacion.esPreferida())) {
+				user.setPreferredEmpresaId(empresaAsignarId);
+				user.setPreferredRolId(asignacion.rolId());
+				seAsignoPreferida = true;
+			}
 		}
 
-		// 5. Preferencias: Marcar la primera asignación como preferida por defecto
-		if (user.getPreferredEmpresaId() == null && !request.asignaciones().isEmpty()) {
-			Long prefferedEmpresa = isSystemAdmin ? request.asignaciones().get(0).empresaId() : sessionEmpresaId;
-			user.setPreferredEmpresaId(prefferedEmpresa);
-			user.setPreferredRolId(request.asignaciones().get(0).rolId());
+		if (!seAsignoPreferida && user.getPreferredEmpresaId() == null && !request.asignaciones().isEmpty()) {
+			AsignacionRequest primera = request.asignaciones().get(0);
+			Long empresaId = isSystemAdmin ? primera.empresaId() : sessionEmpresaId;
+			user.setPreferredEmpresaId(empresaId);
+			user.setPreferredRolId(primera.rolId());
 		}
 
 		userRepository.save(user);
