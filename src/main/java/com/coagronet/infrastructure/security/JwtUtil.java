@@ -29,18 +29,20 @@ public class JwtUtil {
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
+	// En JwtUtil.java
 	public String generateToken(User user, Long empresaId, Long rolId, String rolName, Long estado) {
 		return Jwts.builder()
-			.subject(user.getUsername())
-			.claim("empresaId", empresaId)
-			.claim("rolId", rolId)
-			.claim("rolName", rolName)
-			.claim("tver", user.getTokenVersion())
-			.claim("estado", estado)
-			.issuedAt(new Date())
-			.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-			.signWith(secretKey)
-			.compact();
+				.subject(user.getUsername())
+				.claim("userId", user.getId()) // <-- ¡Agrega esta línea!
+				.claim("empresaId", empresaId)
+				.claim("rolId", rolId)
+				.claim("rolName", rolName)
+				.claim("tver", user.getTokenVersion())
+				.claim("estado", estado)
+				.issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+				.signWith(secretKey)
+				.compact();
 	}
 
 	public Claims extractAllClaims(String token) {
