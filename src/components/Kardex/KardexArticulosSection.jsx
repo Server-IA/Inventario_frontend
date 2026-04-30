@@ -1,11 +1,9 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import GridArticuloKardex from "./GridArticuloKardex";
 import FormArticuloKardex from "./FormArticuloKardex";
+import { resolveKardexId } from "./utils/kardexFormatters";
 
-/**
- * @description Seccion de articulos del kardex seleccionado
- */
 export function KardexArticulosSection({
     sectionRef,
     selectedRow,
@@ -18,9 +16,10 @@ export function KardexArticulosSection({
     presentaciones,
     setMessage,
 }) {
-    const [selectedArticulo, setSelectedArticulo] = useState({});
+    const [selectedArticulo, setSelectedArticulo] = useState(null);
+    const kardexId = resolveKardexId(selectedRow);
 
-    if (!selectedRow) return null;
+    if (!selectedRow || !kardexId) return null;
 
     return (
         <Box
@@ -38,7 +37,7 @@ export function KardexArticulosSection({
             </Typography>
             <FormArticuloKardex
                 selectedRow={selectedArticulo}
-                kardexId={selectedRow?.id || ""}
+                kardexId={kardexId}
                 setSelectedRow={setSelectedArticulo}
                 setMessage={setMessage}
                 reloadData={onReloadArticulos}
@@ -49,10 +48,11 @@ export function KardexArticulosSection({
                 setSelectedRow={setSelectedArticulo}
                 loading={articuloLoading}
                 paginationModel={articuloPaginationModel}
-                setPaginationModel={setArticuloPaginationModel}
+                onPaginationModelChange={setArticuloPaginationModel}
                 rowCount={articuloRowCount}
                 presentaciones={presentaciones}
-                kardexId={selectedRow?.id}
+                kardexId={kardexId}
+                selectedRow={selectedArticulo}
             />
         </Box>
     );

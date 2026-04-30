@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
   esES,
@@ -11,6 +11,7 @@ import {
 import { Box, Button } from "@mui/material";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AppDataGrid from "../common/AppDataGrid";
+import { resolveArticuloKardexId } from "./utils/kardexFormatters";
 
 const LS_KEY = "gridArticuloKardex:columnVisibility:v1";
 
@@ -24,12 +25,7 @@ function ArticuloToolbar({ onResetColumns }) {
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <GridToolbarQuickFilter debounceMs={300} />
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<RestartAltIcon />}
-          onClick={onResetColumns}
-        >
+        <Button variant="outlined" size="small" startIcon={<RestartAltIcon />} onClick={onResetColumns}>
           Restablecer columnas
         </Button>
       </div>
@@ -54,11 +50,7 @@ export default function GridArticuloKardex({
   const presById = useMemo(() => {
     const m = {};
     for (const pr of presentaciones ?? []) {
-      const producto =
-        pr?.producto?.nombre ??
-        pr?.producto?.name ??
-        pr?.productoNombre ??
-        "";
+      const producto = pr?.producto?.nombre ?? pr?.producto?.name ?? pr?.productoNombre ?? "";
       const presentacion =
         pr?.presentacion?.nombre ??
         pr?.presentacion?.name ??
@@ -76,16 +68,9 @@ export default function GridArticuloKardex({
     if (!kardexId) return Array.isArray(items) ? items : [];
     const id = String(kardexId);
     const src = Array.isArray(items) ? items : [];
-    return src.filter((it) => {
-      const k =
-        it?.kardexId ??
-        it?.kardex_id ??
-        it?.karId ??
-        it?.kar_id ??
-        it?.kdxId ??
-        it?.kdx_id;
-      return String(k ?? "") === id;
-    });
+    const hasKardexRef = src.some((it) => it?.kardexId != null || it?.kardex_id != null);
+    if (!hasKardexRef) return src;
+    return src.filter((it) => String(it?.kardexId ?? it?.kardex_id ?? "") === id);
   }, [items, kardexId]);
 
   const columns = [
@@ -96,29 +81,26 @@ export default function GridArticuloKardex({
       minWidth: 220,
       valueGetter: (params) =>
         params?.row?.productoNombre ??
-        params?.row?.producto?.nombre ??
-        params?.row?.producto?.name ??
-        params?.row?.presentacionProducto?.producto?.nombre ??
-        params?.row?.presentacionProducto?.producto?.name ??
+        params?.row?.nombreProducto ??
+        params?.row?.identificadorProducto ??
         presById[String(params?.row?.presentacionProductoId)] ??
-        params?.row?.presentacionProducto?.nombre ??
-        params?.row?.presentacionProducto?.name ??
-        `Presentacion #${params?.row?.presentacionProductoId ?? params?.row?.id ?? ""}`,
+        `Presentacion #${params?.row?.presentacionProductoId ?? resolveArticuloKardexId(params?.row) ?? ""}`,
     },
     { field: "cantidad", headerName: "Cantidad", width: 120 },
     { field: "precio", headerName: "Precio", width: 120 },
+    { field: "lote", headerName: "Lote", width: 160 },
     {
       field: "fechaVencimiento",
       headerName: "Fecha Vencimiento",
       width: 170,
-      valueGetter: (params) =>
-        (params?.row?.fechaVencimiento || "").toString().substring(0, 10),
+      valueGetter: (params) => (params?.row?.fechaVencimiento || "").toString().substring(0, 10),
     },
     {
-      field: "estadoId",
+      field: "estado",
       headerName: "Estado",
       width: 140,
       valueGetter: (params) =>
+        params?.row?.estadoNombre ??
         params?.row?.estado?.name ??
         params?.row?.estado?.nombre ??
         (String(params?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
@@ -157,9 +139,13 @@ export default function GridArticuloKardex({
     typeof (paginationModel.pageSize ?? paginationModel.size) === "number" &&
     typeof onPaginationModelChange === "function";
 
+  const rowId = (r) =>
+    resolveArticuloKardexId(r) ??
+    `${r?.kardexId ?? kardexId ?? ""}-${r?.presentacionProductoId ?? ""}-${r?.lote ?? ""}`;
+
   const handleLocalSelection = (ids) => {
     const idSet = new Set(ids);
-    const selectedMany = (filteredRows ?? []).filter((r) => idSet.has(r.id));
+    const selectedMany = (filteredRows ?? []).filter((r) => idSet.has(rowId(r)));
     setSelectedRows(selectedMany);
     setSelectedRow(selectedMany[0] ?? null);
   };
@@ -169,7 +155,7 @@ export default function GridArticuloKardex({
       <AppDataGrid
         rows={Array.isArray(filteredRows) ? filteredRows : []}
         columns={columns}
-        getRowId={(row) => row.id}
+        getRowId={rowId}
         loading={loading}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
@@ -180,10 +166,7 @@ export default function GridArticuloKardex({
         localeText={esES.components.MuiDataGrid.defaultProps.localeText}
         paginationModel={
           serverPaging
-            ? {
-                page: paginationModel.page ?? 0,
-                size: paginationModel.pageSize ?? paginationModel.size ?? 10,
-              }
+            ? { page: paginationModel.page ?? 0, size: paginationModel.pageSize ?? paginationModel.size ?? 10 }
             : undefined
         }
         setPaginationModel={
@@ -197,11 +180,7 @@ export default function GridArticuloKardex({
               }
             : undefined
         }
-        rowCount={
-          serverPaging
-            ? Math.max(Number(rowCount ?? 0), Array.isArray(filteredRows) ? filteredRows.length : 0)
-            : undefined
-        }
+        rowCount={serverPaging ? Math.max(Number(rowCount ?? 0), filteredRows.length) : undefined}
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         slots={{ toolbar: ArticuloToolbar }}

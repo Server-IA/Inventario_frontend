@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,98 +12,30 @@ import {
   MenuItem,
   Box,
   FormHelperText,
-  Typography,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   Grid,
-  InputAdornment,
-  CircularProgress,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
+import GridArticuloKardex from "./GridArticuloKardex";
+import { resolveKardexId } from "./utils/kardexFormatters";
 
-/* ============================
-   🔹 Constante: ID tipo mov ENTRADA COMPRA
-   👉 AJUSTA ESTE VALOR SEGÚN TU CATÁLOGO
-============================ */
-const TIPO_MOV_ENTRADA_COMPRA = 2;
-
-/* ============================
-   🔹 Helpers Yup
-============================ */
 const numberRequired = (msg, opts = {}) => {
   let y = Yup.number().typeError(msg).required(msg);
-  if (opts.min !== undefined) y = y.min(opts.min, `${msg} (mín ${opts.min})`);
-  if (opts.max !== undefined) y = y.max(opts.max, `${msg} (máx ${opts.max})`);
+  if (opts.min !== undefined) y = y.min(opts.min, `${msg} (min ${opts.min})`);
   return y;
 };
 
-/* ============================
-   🔹 Anti-inyección
-============================ */
-const isSqlSuspicious = (val) => {
-  if (!val) return false;
-  const s = String(val).toLowerCase();
-  return [
-    "--",
-    ";",
-    "/*",
-    "*/",
-    " or ",
-    " and ",
-    " drop ",
-    " insert ",
-    " update ",
-    " delete ",
-    " select ",
-    " union ",
-  ].some((tok) => s.includes(tok));
-};
-
-/* ============================
-   🔹 Schema (incluye opcionales)
-============================ */
 const kardexSchema = Yup.object({
   fechaHora: Yup.string().required("Fecha/Hora obligatoria."),
-  almacenId: numberRequired("Almacén obligatorio.", { min: 1 }),
-  produccionId: numberRequired("Producción obligatoria.", { min: 1 }),
-  tipoMovimientoId: numberRequired("Tipo de movimiento obligatorio.", {
-    min: 1,
-  }),
-  descripcion: Yup.string()
-    .max(500, "Máx 500 caracteres.")
-    .test("no-sql", "El texto contiene patrones no permitidos.", (v) =>
-      !isSqlSuspicious(v)
-    ),
-  empresaId: numberRequired("Empresa obligatoria.", { min: 1 }),
-
-  // opcionales
-  pedidoId: Yup.number()
-    .nullable()
-    .transform((v, o) => (o === "" ? null : v)),
-
-  ordenCompraId: Yup.number()
-    .nullable()
-    .transform((v, o) => (o === "" ? null : v))
-    .when("tipoMovimientoId", {
-      is: TIPO_MOV_ENTRADA_COMPRA,
-      then: numberRequired("Orden de compra obligatoria.", { min: 1 }),
-      otherwise: (schema) =>
-        schema.nullable().transform((v, o) => (o === "" ? null : v)),
-    }),
-
-  clienteProveedorId: Yup.number()
-    .nullable()
-    .transform((v, o) => (o === "" ? null : v)),
+  almacenId: numberRequired("Almacen obligatorio.", { min: 1 }),
+  produccionId: numberRequired("Produccion obligatoria.", { min: 1 }),
+  tipoMovimientoId: numberRequired("Tipo de movimiento obligatorio.", { min: 1 }),
+  descripcion: Yup.string().max(500, "Max 500 caracteres."),
+  pedidoId: Yup.number().nullable().transform((v, o) => (o === "" ? null : v)),
+  ordenCompraId: Yup.number().nullable().transform((v, o) => (o === "" ? null : v)),
+  clienteProveedorId: Yup.number().nullable().transform((v, o) => (o === "" ? null : v)),
 });
 
-/* ============================
-   🔹 pickList Response helper
-============================ */
 const pickList = (res) => {
   const d = res?.data;
   if (Array.isArray(d)) return d;
@@ -113,13 +45,76 @@ const pickList = (res) => {
   return [];
 };
 
-/* ============================
-   🔹 Component
-============================ */
+const normalize = (v) =>
+  String(v ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const renderName = (it) => it?.name ?? it?.nombre ?? it?.descripcion ?? `#${it?.id}`;
+
+const renderPresentacion = (it) => {
+  const p = it?.producto?.nombre ?? it?.producto?.name ?? it?.productoNombre ?? "";
+  const pr =
+    it?.presentacion?.nombre ??
+    it?.presentacion?.name ??
+    it?.presentacionNombre ??
+    it?.nombre ??
+    it?.name ??
+    "";
+  return [p, pr].filter(Boolean).join(" - ") || `#${it?.id}`;
+};
+
+const extractApiMessage = (err, fallback) => {
+  const data = err?.response?.data;
+  return (typeof data === "string" && data) || data?.message || data?.detail || data?.title || fallback;
+};
+
+const toDateTimeLocal = (val) => {
+  if (!val) return "";
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const newArticleDraft = () => ({
+  id: null,
+  kardexItemId: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  presentacionProductoId: "",
+  productoId: "",
+  cantidad: "",
+  precio: "",
+  lote: "",
+  fechaVencimiento: "",
+  devolutivo: false,
+  responsableId: null,
+  estadoId: 1,
+});
+
+const toNumericIdOrNull = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+const isPresentacionDevolutiva = (p) =>
+  Boolean(
+    p?.desgregar ??
+      p?.desagregar ??
+      p?.devolutivo ??
+      p?.esDevolutivo ??
+      p?.requiereResponsable ??
+      p?.producto?.devolutivo ??
+      p?.producto?.esDevolutivo
+  );
+
 export default function FormKardex({
   open,
   setOpen,
   formMode = "create",
+  startInArticles = false,
   selectedRow,
   reloadData,
   setMessage,
@@ -135,213 +130,302 @@ export default function FormKardex({
     ordenCompraId: "",
     clienteProveedorId: "",
     descripcion: "",
-    empresaId: null,
   });
-
   const [errors, setErrors] = useState({});
 
-  /* ============================
-     🔹 Combos
-  ============================ */
   const [almacenes, setAlmacenes] = useState([]);
   const [producciones, setProducciones] = useState([]);
   const [tiposMovimiento, setTiposMovimiento] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [ordenesCompra, setOrdenesCompra] = useState([]);
   const [ordenesCompraByPedido, setOrdenesCompraByPedido] = useState([]);
   const [empresas, setEmpresas] = useState([]);
+  const [presentaciones, setPresentaciones] = useState([]);
+  const [responsables, setResponsables] = useState([]);
 
-  /* ============================
-     🔹 Items de la Orden de Compra
-     (para ENTRADA COMPRA)
-  ============================ */
-  const [ocItems, setOcItems] = useState([]);
-  const [loadingOcItems, setLoadingOcItems] = useState(false);
+  const [draftItems, setDraftItems] = useState([]);
+  const [articleModalOpen, setArticleModalOpen] = useState(false);
+  const [articleSelectedRow, setArticleSelectedRow] = useState(null);
 
-  /* ============================
-     🔹 Modal de Búsqueda de Producción
-  ============================ */
-  const [produccionSearchOpen, setProduccionSearchOpen] = useState(false);
-  const [produccionSearchNombre, setProduccionSearchNombre] = useState("");
-  const [produccionSearchFecha, setProduccionSearchFecha] = useState("");
-  const [produccionesCompletas, setProduccionesCompletas] = useState([]);
-  const [loadingProduccionesCompletas, setLoadingProduccionesCompletas] =
-    useState(false);
+  const [articleFormOpen, setArticleFormOpen] = useState(false);
+  const [articleFormMode, setArticleFormMode] = useState("create");
+  const [articleFormData, setArticleFormData] = useState(newArticleDraft());
 
-  /* ============================
-     🔹 Modal de Búsqueda de Pedido
-  ============================ */
-  const [pedidoSearchOpen, setPedidoSearchOpen] = useState(false);
-  const [pedidoSearchNombre, setPedidoSearchNombre] = useState("");
-  const [pedidoSearchFecha, setPedidoSearchFecha] = useState("");
-  const [pedidosCompletos, setPedidosCompletos] = useState([]);
-  const [loadingPedidosCompletos, setLoadingPedidosCompletos] = useState(false);
-
-  /* ============================
-     🔹 Token + empresaId
-  ============================ */
   const token = localStorage.getItem("token");
-  const headers = token
-    ? { headers: { Authorization: `Bearer ${token}` } }
-    : {};
+  const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-  const empresaId = (() => {
+  const findIdByName = (items, rawName) => {
+    const wanted = normalize(rawName);
+    if (!wanted) return "";
+    const found = (items || []).find((it) => normalize(renderName(it)) === wanted);
+    return found?.id ?? "";
+  };
+
+  const getProductoIdFromPresentacionObj = (p) =>
+    p?.producto?.id ??
+    p?.productoId ??
+    p?.producto_id ??
+    p?.proId ??
+    p?.idProducto ??
+    p?.producto?.productoId ??
+    p?.producto_presentacion?.productoId ??
+    "";
+
+  const getProductoIdFromPresentacion = (presentacionProductoId) => {
+    const found = (presentaciones || []).find((p) => String(p?.id) === String(presentacionProductoId));
+    return getProductoIdFromPresentacionObj(found);
+  };
+
+  const fetchProductoIdByPresentacion = async (presentacionProductoId) => {
+    if (!presentacionProductoId) return "";
     try {
-      return token
-        ? JSON.parse(atob(token.split(".")[1]))?.empresaId ?? null
-        : null;
+      const res = await axios.get(`/v1/producto_presentacion/${presentacionProductoId}`, headers);
+      const pp = res?.data ?? {};
+      return (
+        pp?.producto?.id ??
+        pp?.productoId ??
+        pp?.producto_id ??
+        pp?.proId ??
+        pp?.idProducto ??
+        pp?.producto?.productoId ??
+        ""
+      );
+    } catch {
+      return "";
+    }
+  };
+
+  const fetchPresentacionDetalle = async (presentacionProductoId) => {
+    if (!presentacionProductoId) return null;
+    try {
+      const res = await axios.get(`/v1/producto_presentacion/${presentacionProductoId}`, headers);
+      return res?.data ?? null;
     } catch {
       return null;
     }
-  })();
+  };
 
-  /* ============================
-     🔹 CARGA INICIAL DE LISTAS
-  ============================ */
+  const getDevolutivoByPresentacionId = (presentacionProductoId, fallback = false) => {
+    const pres = (presentaciones || []).find((p) => String(p?.id) === String(presentacionProductoId));
+    if (!pres) return Boolean(fallback);
+    return isPresentacionDevolutiva(pres);
+  };
+
+  const presentacionesByProducto = useMemo(() => {
+    const pid = articleFormData?.productoId;
+    if (!pid) return presentaciones;
+    const filtered = (presentaciones || []).filter(
+      (p) => String(getProductoIdFromPresentacionObj(p)) === String(pid)
+    );
+    return filtered.length ? filtered : presentaciones;
+  }, [presentaciones, articleFormData?.productoId]);
+
+  const presentacionSeleccionada = useMemo(
+    () =>
+      (presentaciones || []).find(
+        (p) => String(p?.id) === String(articleFormData?.presentacionProductoId)
+      ) ?? null,
+    [presentaciones, articleFormData?.presentacionProductoId]
+  );
+
+  const tipoMovimientoSeleccionado = useMemo(
+    () => tiposMovimiento.find((t) => String(t.id) === String(formData.tipoMovimientoId)) ?? null,
+    [tiposMovimiento, formData.tipoMovimientoId]
+  );
+
+  const isEntradaUi = normalize(renderName(tipoMovimientoSeleccionado)).includes("entrada");
+
+  const getPedidoIdFromOc = (oc) =>
+    oc?.pedidoId ?? oc?.pedido_id ?? oc?.ped_id ?? oc?.orc_pedido_id ?? oc?.pedido?.id ?? null;
+
+  const ordenesCompraFiltradas = useMemo(() => {
+    if (!isEntradaUi || !formData.pedidoId) return [];
+    if (ordenesCompraByPedido.length) return ordenesCompraByPedido;
+    return ordenesCompra.filter((oc) => String(getPedidoIdFromOc(oc)) === String(formData.pedidoId));
+  }, [isEntradaUi, formData.pedidoId, ordenesCompra, ordenesCompraByPedido]);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open && !articleModalOpen) return;
 
     const loadLists = async () => {
-      // OBLIGATORIAS
-      try {
-        const [mov, prod, alm] = await Promise.all([
-          axios.get("/v1/items/tipo_movimiento/0", headers),
-          axios.get("/v1/items/produccion/0", headers),
-          axios.get("/v1/items/almacen/0", headers),
-        ]);
+      const reqs = await Promise.allSettled([
+        axios.get("/v1/items/tipo_movimiento/0", headers),
+        axios.get("/v1/items/produccion/0", headers),
+        axios.get("/v1/items/almacen/0", headers),
+        axios.get("/v1/items/producto/0", headers),
+        axios.get("/v1/items/pedido/0", headers),
+        axios.get("/v1/items/orden_compra/0", headers),
+        axios.get("/v1/items/empresa/0", headers),
+        axios.get("/v1/items/proveedor/0", headers),
+        axios.get("/v1/items/producto_presentacion/0", headers),
+        axios.get("/v1/items/usuario_empresa/0", headers),
+      ]);
 
-        setTiposMovimiento(pickList(mov));
-        setProducciones(pickList(prod));
-        setAlmacenes(pickList(alm));
-      } catch (e) {
-        console.error("❌ Error cargando listas OBLIGATORIAS:", e);
-        setTiposMovimiento([]);
-        setProducciones([]);
-        setAlmacenes([]);
-        return;
-      }
+      const pick = (idx) => (reqs[idx]?.status === "fulfilled" ? pickList(reqs[idx].value) : []);
 
-      // OPCIONALES - cada una aislada
-      try {
-        const p = await axios.get("/v1/items/pedido/0", headers);
-        setPedidos(pickList(p));
-      } catch {
-        setPedidos([]);
-      }
+      setTiposMovimiento(pick(0));
+      setProducciones(pick(1));
+      setAlmacenes(pick(2));
+      setProductos(pick(3));
+      setPedidos(pick(4));
+      setOrdenesCompra(pick(5));
 
-      try {
-        const oc = await axios.get("/v1/items/orden_compra/0", headers);
-        setOrdenesCompra(pickList(oc));
-      } catch {
-        setOrdenesCompra([]);
+      const empresasBase = pick(6);
+      const proveedoresBase = pick(7);
+      const merged = [...empresasBase];
+      const seen = new Set(empresasBase.map((e) => String(e?.id)));
+      for (const p of proveedoresBase) {
+        const id = p?.id;
+        if (id == null || seen.has(String(id))) continue;
+        merged.push(p);
+        seen.add(String(id));
       }
-
-      try {
-        const cp = await axios.get("/v1/items/empresa/0", headers);
-        setEmpresas(pickList(cp));
-      } catch {
-        setEmpresas([]);
-      }
+      setEmpresas(merged);
+      setPresentaciones(pick(8));
+      setResponsables(pick(9));
     };
 
     loadLists();
-  }, [open]); // solo cuando se abre el modal
+  }, [open, articleModalOpen]);
 
-  /* ============================
-     🔹 Cargar datos en modo editar
-  ============================ */
   useEffect(() => {
-    if (open && formMode === "edit" && selectedRow) {
-      setFormData({
-        ...selectedRow,
-        pedidoId: selectedRow.pedidoId ?? "",
-        ordenCompraId: selectedRow.ordenCompraId ?? "",
-        clienteProveedorId: selectedRow.clienteProveedorId ?? "",
-        empresaId,
-      });
-      // en modo editar, podrías cargar los items si aplica
-    } else if (open) {
-      setFormData({
-        id: undefined,
-        fechaHora: "",
-        almacenId: "",
-        produccionId: "",
-        tipoMovimientoId: "",
-        pedidoId: "",
-        ordenCompraId: "",
-        clienteProveedorId: "",
-        descripcion: "",
-        empresaId,
-      });
-      setErrors({});
-      setOcItems([]);
+    if (!articleFormOpen) return;
+    if (articleFormData?.productoId || !articleFormData?.presentacionProductoId) return;
+    const pid = getProductoIdFromPresentacion(articleFormData.presentacionProductoId);
+    if (pid) {
+      setArticleFormData((prev) => ({ ...prev, productoId: Number(pid) }));
     }
-  }, [open, formMode, selectedRow, empresaId]);
+  }, [articleFormOpen, articleFormData?.productoId, articleFormData?.presentacionProductoId, presentaciones]);
 
-  /* ============================
-     🔹 Cargar items de OC cuando:
-       - es tipo ENTRADA COMPRA
-       - hay ordenCompraId
-  ============================ */
   useEffect(() => {
-    const { tipoMovimientoId, ordenCompraId } = formData;
+    if (!open) return;
 
-    if (
-      !open ||
-      !ordenCompraId ||
-      Number(tipoMovimientoId) !== TIPO_MOV_ENTRADA_COMPRA
-    ) {
-      setOcItems([]);
-      return;
-    }
+    const loadEditData = async () => {
+      if (formMode !== "edit") {
+        setFormData({
+          id: undefined,
+          fechaHora: "",
+          almacenId: "",
+          produccionId: "",
+          tipoMovimientoId: "",
+          pedidoId: "",
+          ordenCompraId: "",
+          clienteProveedorId: "",
+          descripcion: "",
+        });
+        setDraftItems([]);
+        setArticleSelectedRow(null);
+        return;
+      }
 
-    const loadOcItems = async () => {
-      setLoadingOcItems(true);
+      const kardexId = resolveKardexId(selectedRow);
+      if (!kardexId) return;
+
       try {
-        // 👉 AJUSTA ESTE ENDPOINT A TU BACKEND REAL
-        const res = await axios.get(
-          `/v1/orden_compra/${ordenCompraId}/items`,
-          headers
-        );
-        const items = pickList(res).map((it) => {
-          const cantidadPedida = Number(it.cantidadPedida ?? it.cantidad ?? 0);
-          const cantidadRecibida = Number(it.cantidadRecibida ?? 0);
-          const cantidadPendiente = cantidadPedida - cantidadRecibida;
+        const res = await axios.get(`/v1/kardex/${kardexId}/update-form`, headers);
+        const data = res?.data ?? {};
 
-          return {
-            id: it.id,
-            producto:
-              it.productoNombre ||
-              it.producto?.nombre ||
-              it.descripcion ||
-              `Item #${it.id}`,
-            cantidadPedida,
-            cantidadRecibida,
-            cantidadPendiente: cantidadPendiente < 0 ? 0 : cantidadPendiente,
-            cantidadARecibir: 0,
-          };
+        setFormData({
+          id: data.id ?? kardexId,
+          fechaHora: toDateTimeLocal(selectedRow?.fechaHora),
+          almacenId: data.almacenId ?? "",
+          produccionId: data.produccionId ?? "",
+          tipoMovimientoId: data.tipoMovimientoId ?? findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
+          pedidoId: data.pedidoId ?? "",
+          ordenCompraId: data.ordenCompraId ?? "",
+          clienteProveedorId: data.clienteProveedorId ?? "",
+          descripcion: data.descripcion ?? "",
         });
-        setOcItems(items);
-      } catch (e) {
-        console.error("❌ Error cargando items de OC:", e);
-        setOcItems([]);
-        setMessage?.({
-          open: true,
-          severity: "error",
-          text: "No se pudieron cargar los ítems de la orden de compra.",
+
+        const mapped = (data.items || []).map((it, idx) => ({
+          id: it?.id ?? null,
+          kardexItemId: it?.id ?? `tmp-edit-${idx}-${Date.now()}`,
+          presentacionProductoId: Number(it?.presentacionProductoId ?? 0),
+          productoId: "",
+          cantidad: Number(it?.cantidad ?? 0),
+          precio: Number(it?.precio ?? 0),
+          lote: it?.lote || "",
+          fechaVencimiento: it?.fechaVencimiento ? String(it.fechaVencimiento).substring(0, 10) : "",
+          devolutivo: Boolean(it?.devolutivo ?? false),
+          responsableId: it?.responsableId ? Number(it.responsableId) : null,
+          estadoId: it?.estadoId ?? 1,
+        }));
+
+        setDraftItems(mapped);
+      } catch {
+        const kardexIdFallback = resolveKardexId(selectedRow);
+        setFormData({
+          id: kardexIdFallback,
+          fechaHora: toDateTimeLocal(selectedRow?.fechaHora),
+          almacenId: findIdByName(almacenes, selectedRow?.nombreAlmacen),
+          produccionId: findIdByName(producciones, selectedRow?.nombreProduccion),
+          tipoMovimientoId: findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
+          pedidoId: "",
+          ordenCompraId: "",
+          clienteProveedorId: findIdByName(empresas, selectedRow?.nombreClienteProveedor),
+          descripcion: "",
         });
-      } finally {
-        setLoadingOcItems(false);
+
+        try {
+          const itemsRes = await axios.get(`/v1/kardex/${kardexIdFallback}/items`, {
+            ...headers,
+            params: { page: 0, size: 200, sort: "id,desc" },
+          });
+          const content = pickList(itemsRes);
+          const mapped = content.map((it, idx) => ({
+            id: it?.id ?? null,
+            kardexItemId: it?.id ?? `tmp-fallback-${idx}-${Date.now()}`,
+            presentacionProductoId: Number(it?.presentacionProductoId ?? 0),
+            productoId: "",
+            cantidad: Number(it?.cantidad ?? 0),
+            precio: Number(it?.precio ?? 0),
+            lote: it?.lote || "",
+            fechaVencimiento: it?.fechaVencimiento ? String(it.fechaVencimiento).substring(0, 10) : "",
+            devolutivo: Boolean(it?.devolutivo ?? false),
+            responsableId: it?.responsableId ? Number(it.responsableId) : null,
+            estadoId: it?.estadoId ?? 1,
+          }));
+          setDraftItems(mapped);
+        } catch {
+          setDraftItems([]);
+        }
       }
     };
 
-    loadOcItems();
-  }, [open, formData.tipoMovimientoId, formData.ordenCompraId]); // deps primitivas
+    loadEditData();
+  }, [open, formMode, selectedRow, tiposMovimiento, almacenes, producciones, empresas]);
 
-  /* ============================
-     🔹 Handlers
-  ============================ */
-  const handleChange = (e) => {
+  useEffect(() => {
+    if (!open || !isEntradaUi || !formData.pedidoId) {
+      setOrdenesCompraByPedido([]);
+      return;
+    }
+
+    const localFiltered = ordenesCompra.filter((oc) => String(getPedidoIdFromOc(oc)) === String(formData.pedidoId));
+    if (localFiltered.length) {
+      setOrdenesCompraByPedido(localFiltered);
+      return;
+    }
+
+    const fetchByPedido = async () => {
+      try {
+        const res = await axios.get(`/v1/orden-compra/pedido/${Number(formData.pedidoId)}/lookup`, headers);
+        setOrdenesCompraByPedido(pickList(res));
+      } catch {
+        setOrdenesCompraByPedido([]);
+      }
+    };
+
+    fetchByPedido();
+  }, [open, isEntradaUi, formData.pedidoId, ordenesCompra]);
+
+  useEffect(() => {
+    if (!open || !startInArticles || formMode !== "edit") return;
+    setArticleModalOpen(true);
+  }, [open, startInArticles, formMode]);
+
+  const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     const numeric = [
       "almacenId",
@@ -351,268 +435,60 @@ export default function FormKardex({
       "ordenCompraId",
       "clienteProveedorId",
     ];
-    const castValue =
-      numeric.includes(name) && value !== "" ? Number(value) : value;
+    const castValue = numeric.includes(name) && value !== "" ? Number(value) : value;
 
     setFormData((prev) => {
       const next = { ...prev, [name]: castValue };
-
-      if (name === "pedidoId") {
-        next.ordenCompraId = "";
-      }
-
+      if (name === "pedidoId") next.ordenCompraId = "";
       if (name === "tipoMovimientoId") {
-        const tipoSel = tiposMovimiento.find(
-          (t) => String(t.id) === String(castValue)
-        );
-        const tipoNombre = String(
-          tipoSel?.name ?? tipoSel?.nombre ?? tipoSel?.descripcion ?? ""
-        ).toLowerCase();
-        const esEntrada = tipoNombre.includes("entrada");
-
+        const tipoSel = tiposMovimiento.find((t) => String(t.id) === String(castValue));
+        const esEntrada = normalize(renderName(tipoSel)).includes("entrada");
         if (!esEntrada) {
           next.pedidoId = "";
           next.ordenCompraId = "";
         }
       }
-
       return next;
     });
+
     setErrors((prev) => ({ ...prev, [name]: undefined }));
-
-    // Si cambia la OC o el tipo de movimiento, reseteo items
-    if (
-      name === "ordenCompraId" ||
-      name === "tipoMovimientoId" ||
-      name === "pedidoId"
-    ) {
-      setOcItems([]);
-    }
   };
 
-  const handleChangeOcItemQty = (id, rawValue) => {
-    const value = rawValue === "" ? "" : Number(rawValue);
-    setOcItems((prev) =>
-      prev.map((it) => {
-        if (it.id !== id) return it;
-
-        let cantidadARecibir = value;
-        if (cantidadARecibir === "") {
-          return { ...it, cantidadARecibir: "" };
-        }
-
-        if (isNaN(cantidadARecibir) || cantidadARecibir < 0) {
-          cantidadARecibir = 0;
-        }
-        if (cantidadARecibir > it.cantidadPendiente) {
-          cantidadARecibir = it.cantidadPendiente;
-        }
-        return { ...it, cantidadARecibir };
-      })
-    );
-  };
-
-  /* ============================
-     🔹 Abrir modal de búsqueda de Producción
-  ============================ */
-  const handleOpenProduccionSearch = async () => {
-    setProduccionSearchOpen(true);
-    setProduccionSearchNombre("");
-    setProduccionSearchFecha("");
-    setLoadingProduccionesCompletas(true);
-
-    try {
-      // Cargar TODAS las producciones una sola vez
-      const res = await axios.get("/v1/items/produccion/0", headers);
-      const allProds = pickList(res);
-      setProduccionesCompletas(allProds);
-    } catch (e) {
-      console.error("❌ Error cargando producciones:", e);
-      setProduccionesCompletas([]);
-      setMessage?.({
-        open: true,
-        severity: "error",
-        text: "Error al cargar producciones.",
-      });
-    } finally {
-      setLoadingProduccionesCompletas(false);
-    }
-  };
-
-  const handleOpenPedidoSearch = () => {
-    setPedidoSearchOpen(true);
-    setPedidoSearchNombre("");
-    setPedidoSearchFecha("");
-    // cargar desde estado existente
-    setPedidosCompletos(pedidos);
-  };
-
-  const handleClosePedidoSearch = () => {
-    setPedidoSearchOpen(false);
-    setPedidoSearchNombre("");
-    setPedidoSearchFecha("");
-    setPedidosCompletos([]);
-  };
-
-  const getFilteredPedidos = () => {
-    return pedidosCompletos.filter((ped) => {
-      const nombre = (ped.nombre || ped.name || "").toLowerCase();
-      const search = (pedidoSearchNombre || "").toLowerCase();
-      const fechaPed = String(
-        ped.fecha ||
-          ped.fechaHora ||
-          ped.createdAt ||
-          ""
-      ).substring(0, 10);
-      const byName = nombre.includes(search);
-      const byDate = !pedidoSearchFecha || fechaPed === pedidoSearchFecha;
-      return byName && byDate;
+  const mapDraftItemsToPayload = () =>
+    (draftItems || []).map((it) => {
+      const mapped = {
+        presentacionProductoId: Number(it?.presentacionProductoId ?? 0),
+        cantidad: Number(it?.cantidad ?? 0),
+        precio: Number(it?.precio ?? 0),
+        devolutivo: Boolean(it?.devolutivo ?? false),
+        responsableId: toNumericIdOrNull(it?.responsableId),
+        lote: it?.lote || null,
+        fechaVencimiento: it?.fechaVencimiento ? String(it.fechaVencimiento).substring(0, 10) : null,
+      };
+      const parsedId = toNumericIdOrNull(it?.id);
+      if (parsedId != null) {
+        mapped.id = parsedId;
+      }
+      return mapped;
     });
-  };
 
-  const handleSelectPedido = (ped) => {
-    setFormData((prev) => ({
-      ...prev,
-      pedidoId: ped.id,
-      ordenCompraId: "",
-    }));
-    setOcItems([]);
-    setPedidoSearchOpen(false);
-    setPedidoSearchNombre("");
-    setPedidosCompletos([]);
-  };
-  /* ============================
-     🔹 Filtrar producciones localmente
-  ============================ */
-  const getFilteredProducciones = () => {
-    const search = (produccionSearchNombre || "").toLowerCase();
-    return produccionesCompletas.filter((prod) => {
-      const nombre = (prod.nombre || prod.name || "").toLowerCase();
-      const fechaProd = String(
-        prod.fecha ||
-          prod.fechaInicio ||
-          prod.fechaHora ||
-          prod.createdAt ||
-          ""
-      ).substring(0, 10);
-      const byName = nombre.includes(search);
-      const byDate = !produccionSearchFecha || fechaProd === produccionSearchFecha;
-      return byName && byDate;
-    });
-  };
+  const buildHeaderPayload = () => ({
+    tipoMovimientoId: formData.tipoMovimientoId ? Number(formData.tipoMovimientoId) : null,
+    almacenId: formData.almacenId ? Number(formData.almacenId) : null,
+    almacenDestinoId: null,
+    pedidoId: formData.pedidoId ? Number(formData.pedidoId) : null,
+    ordenCompraId: formData.ordenCompraId ? Number(formData.ordenCompraId) : null,
+    produccionId: formData.produccionId ? Number(formData.produccionId) : null,
+    clienteProveedorId: formData.clienteProveedorId ? Number(formData.clienteProveedorId) : null,
+    descripcion: formData.descripcion || null,
+  });
 
-  const handleSelectProduccion = (prod) => {
-    setFormData((prev) => ({
-      ...prev,
-      produccionId: prod.id,
-    }));
-    setProduccionSearchOpen(false);
-    setProduccionSearchNombre("");
-    setProduccionesCompletas([]);
-  };
-
-  const handleCloseProduccionSearch = () => {
-    setProduccionSearchOpen(false);
-    setProduccionSearchNombre("");
-    setProduccionSearchFecha("");
-    setProduccionesCompletas([]);
-  };
-
-  const handleSubmit = async () => {
+  const handleNext = async () => {
     try {
       await kardexSchema.validate(formData, { abortEarly: false });
       setErrors({});
-
-      const isEntradaCompra =
-        Number(formData.tipoMovimientoId) === TIPO_MOV_ENTRADA_COMPRA &&
-        !!formData.ordenCompraId;
-
-      // Si es entrada por compra, validar items
-      if (isEntradaCompra) {
-        if (!ocItems.length) {
-          setMessage?.({
-            open: true,
-            severity: "warning",
-            text: "No hay ítems de la orden de compra para recepcionar.",
-          });
-          return;
-        }
-
-        const itemsConCantidad = ocItems.filter(
-          (it) => Number(it.cantidadARecibir) > 0
-        );
-
-        if (!itemsConCantidad.length) {
-          setMessage?.({
-            open: true,
-            severity: "warning",
-            text: "Debe ingresar cantidad a recepcionar al menos en un ítem.",
-          });
-          return;
-        }
-
-        // Validación adicional: cantidadARecibir <= cantidadPendiente
-        const invalido = itemsConCantidad.find(
-          (it) => it.cantidadARecibir > it.cantidadPendiente
-        );
-        if (invalido) {
-          setMessage?.({
-            open: true,
-            severity: "warning",
-            text: `La cantidad a recepcionar del ítem ${invalido.id} excede lo pendiente.`,
-          });
-          return;
-        }
-
-        // Payload para /kardex/entrada-compra
-        const body = {
-          ordenCompraId: formData.ordenCompraId,
-          almacenId: formData.almacenId,
-          fechaHora: formData.fechaHora,
-          descripcion: formData.descripcion,
-          items: itemsConCantidad.map((it) => ({
-            ordenCompraItemId: it.id,
-            cantidad: it.cantidadARecibir,
-          })),
-        };
-
-        await axios.post("/v1/kardex/entrada-compra", body, headers);
-
-        reloadData?.();
-        setMessage?.({
-          open: true,
-          severity: "success",
-          text: "Entrada de compra registrada y orden de compra actualizada.",
-        });
-        setOpen(false);
-        setSelectedRow(null);
-        return;
-      }
-
-      // 🔹 Flujo Kardex genérico (lo que ya tenías)
-      const payload = {
-        ...formData,
-        estadoId: 1,
-        pedidoId: formData.pedidoId || null,
-        ordenCompraId: formData.ordenCompraId || null,
-        clienteProveedorId: formData.clienteProveedorId || null,
-      };
-
-      const method = formMode === "edit" ? axios.put : axios.post;
-      const url =
-        formMode === "edit" ? `/v1/kardex/${payload.id}` : "/v1/kardex";
-
-      await method(url, payload, headers);
-
-      reloadData?.();
-      setMessage?.({
-        open: true,
-        severity: "success",
-        text: `Kardex ${formMode === "edit" ? "actualizado" : "creado"
-          } correctamente.`,
-      });
       setOpen(false);
-      setSelectedRow(null);
+      setArticleModalOpen(true);
     } catch (err) {
       if (err.name === "ValidationError") {
         const map = {};
@@ -620,147 +496,269 @@ export default function FormKardex({
           if (e.path && !map[e.path]) map[e.path] = e.message;
         });
         setErrors(map);
-        return;
       }
+    }
+  };
 
-      console.error(err);
-      setMessage?.({
-        open: true,
-        severity: "error",
-        text: "Error al guardar Kardex / entrada de compra.",
+  const handleOpenCreateArticle = () => {
+    setArticleFormMode("create");
+    setArticleFormData(newArticleDraft());
+    setArticleFormOpen(true);
+  };
+
+  const handleOpenEditArticle = () => {
+    if (!articleSelectedRow) return;
+    const selectedKey = String(articleSelectedRow?.id ?? articleSelectedRow?.kardexItemId ?? "");
+    const latestRow =
+      draftItems.find((it) => String(it?.id ?? it?.kardexItemId ?? "") === selectedKey) ?? articleSelectedRow;
+    const productoId = getProductoIdFromPresentacion(latestRow.presentacionProductoId);
+    const devolutivoFromPresentacion = getDevolutivoByPresentacionId(
+      latestRow.presentacionProductoId,
+      latestRow?.devolutivo
+    );
+
+    setArticleFormMode("edit");
+    setArticleFormData({
+      ...newArticleDraft(),
+      ...latestRow,
+      productoId: productoId || "",
+      cantidad: latestRow?.cantidad ?? "",
+      precio: latestRow?.precio ?? "",
+      lote: latestRow?.lote ?? "",
+      devolutivo: Boolean(devolutivoFromPresentacion),
+      responsableId: Boolean(devolutivoFromPresentacion) ? toNumericIdOrNull(latestRow?.responsableId) : null,
+      fechaVencimiento: latestRow?.fechaVencimiento
+        ? String(latestRow.fechaVencimiento).substring(0, 10)
+        : "",
+    });
+    setArticleFormOpen(true);
+
+    if (!productoId && latestRow?.presentacionProductoId) {
+      fetchProductoIdByPresentacion(latestRow.presentacionProductoId).then((pid) => {
+        if (pid) {
+          setArticleFormData((prev) => ({ ...prev, productoId: Number(pid) }));
+        }
       });
     }
   };
 
-  /* ============================
-     🔹 Render Names
-  ============================ */
-  const renderName = (it) =>
-    it?.name ?? it?.nombre ?? it?.descripcion ?? `#${it?.id}`;
+  const handleDeleteArticle = () => {
+    if (!articleSelectedRow) return;
+    const key = articleSelectedRow?.id ?? articleSelectedRow?.kardexItemId;
+    setDraftItems((prev) => prev.filter((it) => (it?.id ?? it?.kardexItemId) !== key));
+    setArticleSelectedRow(null);
+  };
 
-  const getPedidoIdFromOrdenCompra = (oc) =>
-    oc?.pedidoId ??
-    oc?.pedido_id ??
-    oc?.ped_id ??
-    oc?.orc_pedido_id ??
-    oc?.pedido?.id ??
-    oc?.pedido?.pedidoId ??
-    null;
+  const handleArticleFormChange = (e) => {
+    const { name, value } = e.target;
+    setArticleFormData((prev) => {
+      const next = { ...prev };
 
-  const tipoMovimientoSeleccionado = useMemo(
-    () =>
-      tiposMovimiento.find(
-        (t) => String(t.id) === String(formData.tipoMovimientoId)
-      ) ?? null,
-    [tiposMovimiento, formData.tipoMovimientoId]
-  );
-
-  const tipoMovimientoTexto = String(
-    tipoMovimientoSeleccionado?.name ??
-      tipoMovimientoSeleccionado?.nombre ??
-      tipoMovimientoSeleccionado?.descripcion ??
-      ""
-  ).toLowerCase();
-
-  const isEntradaUi = tipoMovimientoTexto.includes("entrada");
-
-  const ordenesCompraFiltradas = useMemo(() => {
-    if (!isEntradaUi || !formData.pedidoId) return [];
-    if (ordenesCompraByPedido.length) return ordenesCompraByPedido;
-    return ordenesCompra.filter(
-      (oc) =>
-        String(getPedidoIdFromOrdenCompra(oc)) === String(formData.pedidoId)
-    );
-  }, [isEntradaUi, formData.pedidoId, ordenesCompra, ordenesCompraByPedido]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (!isEntradaUi && (formData.pedidoId || formData.ordenCompraId)) {
-      setFormData((prev) => ({
-        ...prev,
-        pedidoId: "",
-        ordenCompraId: "",
-      }));
-      setOcItems([]);
-    }
-  }, [open, isEntradaUi]);
-
-  useEffect(() => {
-    if (!open || !isEntradaUi || !formData.pedidoId) {
-      setOrdenesCompraByPedido([]);
-      return;
-    }
-
-    const localFiltered = ordenesCompra.filter(
-      (oc) =>
-        String(getPedidoIdFromOrdenCompra(oc)) === String(formData.pedidoId)
-    );
-    if (localFiltered.length) {
-      setOrdenesCompraByPedido(localFiltered);
-      return;
-    }
-
-    const fetchOrdenesByPedido = async () => {
-      const candidates = ["/v1/orden-compra", "/v1/orden_compra", "/v1/ordenCompra"];
-      const paramCandidates = ["pedidoId", "pedido_id", "ped_id"];
-
-      for (const url of candidates) {
-        for (const paramKey of paramCandidates) {
-          try {
-            const res = await axios.get(url, {
-              ...headers,
-              params: { [paramKey]: Number(formData.pedidoId), page: 0, size: 200 },
-            });
-            const list = pickList(res);
-            if (list.length) {
-              setOrdenesCompraByPedido(list);
-              return;
-            }
-          } catch {
-            // probar siguiente combinacion endpoint/parametro
-          }
+      if (name === "productoId") {
+        next.productoId = value === "" ? "" : Number(value);
+        next.presentacionProductoId = "";
+        next.devolutivo = false;
+        next.responsableId = null;
+      } else if (["presentacionProductoId", "cantidad", "precio"].includes(name)) {
+        next[name] = value === "" ? "" : Number(value);
+        if (name === "presentacionProductoId") {
+          const pres = (presentaciones || []).find((p) => String(p?.id) === String(next.presentacionProductoId));
+          next.devolutivo = isPresentacionDevolutiva(pres);
+          next.responsableId = null;
         }
+      } else if (name === "responsableId") {
+        next.responsableId = value === "" ? null : Number(value);
+      } else {
+        next[name] = value;
       }
-      setOrdenesCompraByPedido([]);
+
+      return next;
+    });
+  };
+
+  const handleSaveArticleDraft = () => {
+    const presentacionProductoId = Number(articleFormData.presentacionProductoId || 0);
+    const cantidad = Number(articleFormData.cantidad || 0);
+    const precio = Number(articleFormData.precio || 0);
+
+    if (!presentacionProductoId || cantidad <= 0 || Number.isNaN(precio) || precio < 0) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Debes diligenciar presentacion, cantidad y precio validos.",
+      });
+      return;
+    }
+
+    const devolutivo = Boolean(
+      articleFormData?.devolutivo ?? isPresentacionDevolutiva(presentacionSeleccionada)
+    );
+    if (devolutivo && !toNumericIdOrNull(articleFormData?.responsableId)) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "La presentacion seleccionada es devolutiva y requiere responsable asignado.",
+      });
+      return;
+    }
+
+    const payload = {
+      ...articleFormData,
+      presentacionProductoId,
+      cantidad,
+      precio,
+      devolutivo,
+      responsableId: toNumericIdOrNull(articleFormData?.responsableId),
+      fechaVencimiento: articleFormData.fechaVencimiento
+        ? String(articleFormData.fechaVencimiento).substring(0, 10)
+        : null,
+      lote: articleFormData.lote || null,
     };
 
-    fetchOrdenesByPedido();
-  }, [open, isEntradaUi, formData.pedidoId, ordenesCompra]);
+    setDraftItems((prev) => {
+      if (articleFormMode === "edit") {
+        const key = articleFormData?.id ?? articleFormData?.kardexItemId;
+        const nextRows = prev.map((it) =>
+          String(it?.id ?? it?.kardexItemId) === String(key) ? { ...it, ...payload } : it
+        );
+        const refreshed = nextRows.find((it) => String(it?.id ?? it?.kardexItemId) === String(key)) ?? null;
+        setArticleSelectedRow(refreshed);
+        return nextRows;
+      }
+      const createdRow = {
+        ...newArticleDraft(),
+        ...payload,
+        id: null,
+        kardexItemId: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        estadoId: 1,
+      };
+      setArticleSelectedRow(createdRow);
+      return [
+        ...prev,
+        createdRow,
+      ];
+    });
 
-  const isEntradaCompraUi =
-    Number(formData.tipoMovimientoId) === TIPO_MOV_ENTRADA_COMPRA;
-  const isEditMode = formMode === "edit";
+    setArticleFormOpen(false);
+  };
 
-  /* ============================
-     🔹 UI
-  ============================ */
+  useEffect(() => {
+    if (!articleFormOpen) return;
+    const ppId = articleFormData?.presentacionProductoId;
+    if (!ppId) return;
+
+    const localPres = (presentaciones || []).find((p) => String(p?.id) === String(ppId));
+    if (
+      localPres &&
+      (localPres?.desgregar !== undefined ||
+        localPres?.desagregar !== undefined ||
+        localPres?.devolutivo !== undefined)
+    )
+      return;
+
+    let active = true;
+    fetchPresentacionDetalle(ppId).then((detalle) => {
+      if (!active || !detalle) return;
+      const devolutivo = isPresentacionDevolutiva(detalle);
+      setArticleFormData((prev) => ({
+        ...prev,
+        devolutivo,
+        responsableId: devolutivo ? prev?.responsableId : null,
+      }));
+    });
+    return () => {
+      active = false;
+    };
+  }, [articleFormOpen, articleFormData?.presentacionProductoId, presentaciones]);
+
+  useEffect(() => {
+    if (!presentaciones.length) return;
+    setDraftItems((prev) =>
+      (prev || []).map((it) => {
+        const devolutivo = getDevolutivoByPresentacionId(it?.presentacionProductoId, it?.devolutivo);
+        return {
+          ...it,
+          devolutivo,
+          responsableId: devolutivo ? toNumericIdOrNull(it?.responsableId) : null,
+        };
+      })
+    );
+  }, [presentaciones]);
+
+  const handleSaveKardex = async () => {
+    const items = mapDraftItemsToPayload();
+    if (!items.length) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Debes registrar al menos un articulo en el Kardex.",
+      });
+      return;
+    }
+
+    const missingResponsable = items.find((it) => Boolean(it?.devolutivo) && !toNumericIdOrNull(it?.responsableId));
+    if (missingResponsable) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Hay articulos devolutivos sin responsable asignado. Completa ese dato antes de guardar.",
+      });
+      return;
+    }
+
+    const payload = {
+      ...buildHeaderPayload(),
+      items,
+    };
+
+    try {
+      if (formMode === "edit") {
+        await axios.put(`/v1/kardex/${formData.id}`, payload, headers);
+      } else {
+        await axios.post("/v1/kardex/movimientos", payload, headers);
+      }
+
+      reloadData?.();
+      setMessage({
+        open: true,
+        severity: "success",
+        text: `Kardex ${formMode === "edit" ? "actualizado" : "creado"} correctamente.`,
+      });
+
+      setArticleModalOpen(false);
+      setArticleFormOpen(false);
+      setOpen(false);
+      setSelectedRow(null);
+    } catch (err) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: extractApiMessage(err, "Error al guardar Kardex."),
+      });
+    }
+  };
+
   return (
     <Box>
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>
-          {formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}
-        </DialogTitle>
+      <Dialog open={open && !startInArticles} onClose={() => setOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>{formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}</DialogTitle>
 
-        <DialogContent sx={{ mt: 1 }}>
+        <DialogContent sx={{ pt: 2 }}>
           <Grid container spacing={2}>
-            {/* Fecha/Hora + Tipo movimiento */}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Fecha/Hora"
                 type="datetime-local"
                 name="fechaHora"
                 value={formData.fechaHora}
-                onChange={handleChange}
-                InputLabelProps={{
-                  shrink: true,
-                  sx: {
-                    ml: "5px",
-                    mt: "5px",
-                  }
-                }}
+                onChange={handleHeaderChange}
                 error={!!errors.fechaHora}
                 helperText={errors.fechaHora}
                 fullWidth
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { transform: "translate(14px, -9px) scale(0.75)" },
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -770,8 +768,8 @@ export default function FormKardex({
                   name="tipoMovimientoId"
                   label="Tipo Movimiento"
                   value={formData.tipoMovimientoId}
-                  onChange={handleChange}
-                  disabled={isEditMode}
+                  onChange={handleHeaderChange}
+                  disabled={formMode === "edit"}
                 >
                   <MenuItem value="">
                     <em>Seleccione...</em>
@@ -786,16 +784,10 @@ export default function FormKardex({
               </FormControl>
             </Grid>
 
-            {/* Almacén + Producción */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth error={!!errors.almacenId}>
-                <InputLabel>Almacén</InputLabel>
-                <Select
-                  name="almacenId"
-                  label="Almacén"
-                  value={formData.almacenId}
-                  onChange={handleChange}
-                >
+                <InputLabel>Almacen</InputLabel>
+                <Select name="almacenId" label="Almacen" value={formData.almacenId} onChange={handleHeaderChange}>
                   <MenuItem value="">
                     <em>Seleccione...</em>
                   </MenuItem>
@@ -809,87 +801,55 @@ export default function FormKardex({
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Producción"
-                value={
-                  formData.produccionId
-                    ? producciones.find((p) => p.id === formData.produccionId)
-                      ?.name || `ID: ${formData.produccionId}`
-                    : ""
-                }
-                InputProps={{
-                  readOnly: true,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button
-                        size="small"
-                        onClick={handleOpenProduccionSearch}
-                        sx={{ minWidth: "40px", p: 0.5 }}
-                      >
-                        <SearchIcon fontSize="small" />
-                      </Button>
-                    </InputAdornment>
-                  ),
-                }}
-                error={!!errors.produccionId}
-                helperText={errors.produccionId}
-              />
+              <FormControl fullWidth error={!!errors.produccionId}>
+                <InputLabel>Produccion</InputLabel>
+                <Select
+                  name="produccionId"
+                  label="Produccion"
+                  value={formData.produccionId}
+                  onChange={handleHeaderChange}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione...</em>
+                  </MenuItem>
+                  {producciones.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {renderName(p)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{errors.produccionId}</FormHelperText>
+              </FormControl>
             </Grid>
 
-            {/* Pedido + Orden compra (solo para tipo Entrada) */}
             {isEntradaUi && (
               <>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Pedido"
-                    value={
-                      formData.pedidoId
-                        ? pedidos.find((p) => p.id === formData.pedidoId)
-                            ?.nombre ||
-                          pedidos.find((p) => p.id === formData.pedidoId)
-                            ?.name ||
-                          `ID: ${formData.pedidoId}`
-                        : ""
-                    }
-                    InputProps={{
-                      readOnly: true,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Button
-                            size="small"
-                            onClick={handleOpenPedidoSearch}
-                            sx={{ minWidth: "40px", p: 0.5 }}
-                          >
-                            <SearchIcon fontSize="small" />
-                          </Button>
-                        </InputAdornment>
-                      ),
-                    }}
-                    error={!!errors.pedidoId}
-                    helperText={errors.pedidoId}
-                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Pedido</InputLabel>
+                    <Select name="pedidoId" label="Pedido" value={formData.pedidoId} onChange={handleHeaderChange}>
+                      <MenuItem value="">
+                        <em>Seleccione...</em>
+                      </MenuItem>
+                      {pedidos.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>
+                          {renderName(p)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <FormControl
-                    fullWidth
-                    error={!!errors.ordenCompraId && isEntradaCompraUi}
-                    disabled={!formData.pedidoId}
-                  >
+                  <FormControl fullWidth disabled={!formData.pedidoId}>
                     <InputLabel>Orden de Compra</InputLabel>
                     <Select
                       name="ordenCompraId"
                       label="Orden de Compra"
                       value={formData.ordenCompraId}
-                      onChange={handleChange}
+                      onChange={handleHeaderChange}
                     >
                       <MenuItem value="">
-                        <em>
-                          {formData.pedidoId
-                            ? "Sin orden asociada"
-                            : "Seleccione pedido primero"}
-                        </em>
+                        <em>{formData.pedidoId ? "Sin orden asociada" : "Seleccione pedido primero"}</em>
                       </MenuItem>
                       {ordenesCompraFiltradas.map((o) => (
                         <MenuItem key={o.id} value={o.id}>
@@ -897,17 +857,11 @@ export default function FormKardex({
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>
-                      {isEntradaCompraUi
-                        ? errors.ordenCompraId
-                        : ""}
-                    </FormHelperText>
                   </FormControl>
                 </Grid>
               </>
             )}
 
-            {/* Cliente/proveedor (full row) */}
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Cliente / Proveedor</InputLabel>
@@ -915,7 +869,7 @@ export default function FormKardex({
                   name="clienteProveedorId"
                   label="Cliente / Proveedor"
                   value={formData.clienteProveedorId}
-                  onChange={handleChange}
+                  onChange={handleHeaderChange}
                 >
                   <MenuItem value="">
                     <em>Sin cliente/proveedor</em>
@@ -929,244 +883,233 @@ export default function FormKardex({
               </FormControl>
             </Grid>
 
-            {/* Descripción (full row) */}
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 multiline
-                label="Descripción"
+                label="Descripcion"
                 name="descripcion"
                 value={formData.descripcion}
-                onChange={handleChange}
+                onChange={handleHeaderChange}
                 error={!!errors.descripcion}
                 helperText={errors.descripcion}
                 minRows={3}
               />
             </Grid>
-
           </Grid>
-
-          {/* ============================
-              🔹 Tabla de ítems OC
-              Solo si es ENTRADA COMPRA
-          ============================ */}
-          {isEntradaCompraUi && formData.ordenCompraId && (
-            <Box mt={2}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Ítems de la Orden de Compra
-              </Typography>
-
-              {loadingOcItems ? (
-                <Typography variant="body2">Cargando ítems...</Typography>
-              ) : !ocItems.length ? (
-                <Typography variant="body2">
-                  No hay ítems para esta orden de compra o ya están totalmente
-                  recibidos.
-                </Typography>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Producto</TableCell>
-                      <TableCell align="right">Pedida</TableCell>
-                      <TableCell align="right">Recibida</TableCell>
-                      <TableCell align="right">Pendiente</TableCell>
-                      <TableCell align="right">A recepcionar</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {ocItems.map((it) => (
-                      <TableRow key={it.id}>
-                        <TableCell>{it.producto}</TableCell>
-                        <TableCell align="right">
-                          {it.cantidadPedida}
-                        </TableCell>
-                        <TableCell align="right">
-                          {it.cantidadRecibida}
-                        </TableCell>
-                        <TableCell align="right">
-                          {it.cantidadPendiente}
-                        </TableCell>
-                        <TableCell align="right">
-                          <TextField
-                            type="number"
-                            size="small"
-                            inputProps={{
-                              min: 0,
-                              max: it.cantidadPendiente,
-                              step: "0.01",
-                            }}
-                            value={
-                              it.cantidadARecibir === ""
-                                ? ""
-                                : it.cantidadARecibir
-                            }
-                            onChange={(e) =>
-                              handleChangeOcItemQty(it.id, e.target.value)
-                            }
-                            sx={{ width: 100 }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </Box>
-          )}
         </DialogContent>
 
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit}>Siguiente</Button>
+          <Button onClick={handleNext}>Siguiente</Button>
         </DialogActions>
       </Dialog>
 
-      {/* ============================
-          🔹 Modal Búsqueda Producciones
-      ============================ */}
       <Dialog
-        open={produccionSearchOpen}
-        onClose={handleCloseProduccionSearch}
+        open={articleModalOpen}
+        onClose={() => {
+          setArticleModalOpen(false);
+          if (startInArticles) setOpen(false);
+        }}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
       >
-        <DialogTitle>Buscar Producción</DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-            <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
-              <Grid item xs={12} sm={6}>
-                <TextField
-                fullWidth
-                label="Nombre"
-                value={produccionSearchNombre}
-                onChange={(e) => setProduccionSearchNombre(e.target.value)}
-                  placeholder="Escribe para filtrar por nombre..."
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Fecha"
-                  value={produccionSearchFecha}
-                  onChange={(e) => setProduccionSearchFecha(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-            </Grid>
+        <DialogTitle>Articulos del Kardex</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Button variant="contained" sx={{ textTransform: "none" }} onClick={handleOpenCreateArticle}>
+              + Agregar
+            </Button>
+            <Button
+              variant="outlined"
+              sx={{ textTransform: "none" }}
+              onClick={handleOpenEditArticle}
+              disabled={!articleSelectedRow}
+            >
+              Actualizar
+            </Button>
+            <Button
+              variant="outlined"
+              color="warning"
+              sx={{ textTransform: "none" }}
+              onClick={handleDeleteArticle}
+              disabled={!articleSelectedRow}
+            >
+              Anular
+            </Button>
+          </Box>
 
-          {/* Tabla de resultados */}
-          {loadingProduccionesCompletas ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : getFilteredProducciones().length === 0 ? (
-            <Typography variant="body2" sx={{ py: 2 }}>
-              {produccionesCompletas.length === 0
-                ? "No hay producciones disponibles."
-                : "No hay producciones que coincidan con los filtros."}
-            </Typography>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nombre</TableCell>
-                  <TableCell align="center">Acción</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {getFilteredProducciones().map((prod) => (
-                  <TableRow key={prod.id}>
-                    <TableCell>{prod.nombre || prod.name || prod.id}</TableCell>
-                    <TableCell align="center">
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => handleSelectProduccion(prod)}
-                      >
-                        Seleccionar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <GridArticuloKardex
+            items={draftItems}
+            presentaciones={presentaciones}
+            selectedRow={articleSelectedRow}
+            setSelectedRow={setArticleSelectedRow}
+          />
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCloseProduccionSearch}>Cancelar</Button>
+          {!startInArticles && (
+            <Button
+              onClick={() => {
+                setArticleModalOpen(false);
+                setOpen(true);
+              }}
+            >
+              Volver
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              setArticleModalOpen(false);
+              if (startInArticles) setOpen(false);
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={handleSaveKardex}>
+            Guardar Kardex
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* ============================
-          🔹 Modal Búsqueda Pedidos
-      ============================ */}
-      <Dialog
-        open={pedidoSearchOpen}
-        onClose={handleClosePedidoSearch}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Buscar Pedido</DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-            <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
-              <Grid item xs={12} sm={6}>
-                <TextField
-                fullWidth
-                label="Nombre"
-                value={pedidoSearchNombre}
-                onChange={(e) => setPedidoSearchNombre(e.target.value)}
-                  placeholder="Escribe para filtrar por nombre..."
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Fecha"
-                  value={pedidoSearchFecha}
-                  onChange={(e) => setPedidoSearchFecha(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+      <Dialog open={articleFormOpen} onClose={() => setArticleFormOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>{articleFormMode === "edit" ? "Actualizar Articulo" : "Agregar Articulo"}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel id="kdx-art-product-label">Producto</InputLabel>
+                <Select
+                  labelId="kdx-art-product-label"
+                  label="Producto"
+                  name="productoId"
+                  value={articleFormData.productoId ?? ""}
+                  onChange={handleArticleFormChange}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione...</em>
+                  </MenuItem>
+                  {Array.from(
+                    (productos || []).map((p) => ({
+                      id: Number(p?.id),
+                      label: p?.nombre ?? p?.name ?? p?.descripcion ?? `Producto ${p?.id ?? ""}`,
+                    }))
+                  ).map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
 
-          {/* Tabla de resultados */}
-          {getFilteredPedidos().length === 0 ? (
-            <Typography variant="body2" sx={{ py: 2 }}>
-              {pedidosCompletos.length === 0
-                ? "No hay pedidos disponibles."
-                : "No hay pedidos que coincidan con el filtro."}
-            </Typography>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nombre</TableCell>
-                  <TableCell align="center">Acción</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {getFilteredPedidos().map((ped) => (
-                  <TableRow key={ped.id}>
-                    <TableCell>{ped.nombre || ped.name || ped.id}</TableCell>
-                    <TableCell align="center">
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => handleSelectPedido(ped)}
-                      >
-                        Seleccionar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel id="kdx-art-pp-label">Presentacion</InputLabel>
+                <Select
+                  labelId="kdx-art-pp-label"
+                  label="Presentacion"
+                  name="presentacionProductoId"
+                  value={articleFormData.presentacionProductoId ?? ""}
+                  onChange={handleArticleFormChange}
+                  disabled={!articleFormData.productoId}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione...</em>
+                  </MenuItem>
+                  {presentacionesByProducto.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {renderPresentacion(p)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                name="cantidad"
+                label="Cantidad"
+                type="number"
+                value={articleFormData.cantidad}
+                onChange={handleArticleFormChange}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                name="precio"
+                label="Precio Unitario"
+                type="number"
+                value={articleFormData.precio}
+                onChange={handleArticleFormChange}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                name="precioTotal"
+                label="Precio Total"
+                value={Number(articleFormData.cantidad || 0) * Number(articleFormData.precio || 0)}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="date"
+                name="fechaVencimiento"
+                label="Fecha de Vencimiento"
+                value={articleFormData.fechaVencimiento || ""}
+                onChange={handleArticleFormChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="lote"
+                label="Lote"
+                value={articleFormData.lote || ""}
+                onChange={handleArticleFormChange}
+              />
+            </Grid>
+
+            {Boolean(articleFormData?.devolutivo) && (
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel id="kdx-art-responsable-label">Responsable</InputLabel>
+                  <Select
+                    labelId="kdx-art-responsable-label"
+                    label="Responsable"
+                    name="responsableId"
+                    value={articleFormData.responsableId ?? ""}
+                    onChange={handleArticleFormChange}
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione...</em>
+                    </MenuItem>
+                    {responsables.map((r) => (
+                      <MenuItem key={r.id} value={r.id}>
+                        {r?.nombre ?? r?.name ?? r?.personaNombreCompleto ?? r?.descripcion ?? `Responsable ${r?.id}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
+          </Grid>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleClosePedidoSearch}>Cancelar</Button>
+          <Button onClick={() => setArticleFormOpen(false)}>Cancelar</Button>
+          <Button onClick={handleSaveArticleDraft}>Guardar</Button>
         </DialogActions>
       </Dialog>
     </Box>

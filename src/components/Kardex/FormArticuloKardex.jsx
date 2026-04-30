@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,6 +14,21 @@ import {
   Grid,
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { resolveArticuloKardexId } from "./utils/kardexFormatters";
+
+const toArray = (d) =>
+  Array.isArray(d) ? d : d?.content ?? d?.items ?? d?.data ?? d?.results ?? [];
+
+const mapHeaderAndItemsToKardexPayload = (data, items) => ({
+  almacenId: data?.almacenId ?? null,
+  almacenDestinoId: data?.almacenDestinoId ?? null,
+  ordenCompraId: data?.ordenCompraId ?? null,
+  pedidoId: data?.pedidoId ?? null,
+  produccionId: data?.produccionId ?? null,
+  clienteProveedorId: data?.clienteProveedorId ?? null,
+  descripcion: data?.descripcion ?? "",
+  items,
+});
 
 export default function FormArticuloKardex({
   selectedRow,
@@ -40,30 +55,14 @@ export default function FormArticuloKardex({
 
   const [formData, setFormData] = useState(initialData);
 
-  const toArray = (d) =>
-    Array.isArray(d)
-      ? d
-      : d?.content ?? d?.items ?? d?.data ?? d?.results ?? [];
-
   const getProductoId = (p) =>
-    p?.producto?.id ??
-    p?.productoId ??
-    p?.producto_id ??
-    p?.producto?.productoId ??
-    p?.proId ??
-    null;
+    p?.producto?.id ?? p?.productoId ?? p?.producto_id ?? p?.proId ?? p?.idProducto ?? null;
 
   const getPresentacionTipoId = (p) =>
-    p?.presentacion?.id ??
-    p?.presentacionId ??
-    p?.presentacion_id ??
-    null;
+    p?.presentacion?.id ?? p?.presentacionId ?? p?.presentacion_id ?? null;
 
   const getProductoLabel = (p) =>
-    p?.producto?.nombre ??
-    p?.producto?.name ??
-    p?.productoNombre ??
-    `Producto ${getProductoId(p) ?? ""}`;
+    p?.producto?.nombre ?? p?.producto?.name ?? p?.productoNombre ?? `Producto ${getProductoId(p) ?? ""}`;
 
   const getPresentacionLabel = (p) =>
     p?.presentacionProducto?.nombre ??
@@ -73,20 +72,26 @@ export default function FormArticuloKardex({
     p?.presentacionNombre ??
     p?.name ??
     p?.nombre ??
-    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))
-      ?.nombre ??
-    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))
-      ?.name ??
+    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))?.nombre ??
+    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))?.name ??
     `Presentacion ${p?.id ?? ""}`;
 
   const presentacionesFiltradas = useMemo(() => {
     if (!formData.productoId) return [];
-    const filtered = presentaciones.filter(
-      (p) => String(getProductoId(p)) === String(formData.productoId)
-    );
-    // Fallback defensivo: si el backend no trae productoId en items, no bloquear el combo.
+    const filtered = presentaciones.filter((p) => String(getProductoId(p)) === String(formData.productoId));
     return filtered.length ? filtered : presentaciones;
   }, [presentaciones, formData.productoId]);
+
+  useEffect(() => {
+    if (formData.productoId || !formData.presentacionProductoId || !presentaciones.length) return;
+    const selectedPresentacion = presentaciones.find(
+      (p) => String(p?.id) === String(formData.presentacionProductoId)
+    );
+    const productoId = getProductoId(selectedPresentacion);
+    if (productoId != null) {
+      setFormData((prev) => ({ ...prev, productoId: Number(productoId) }));
+    }
+  }, [formData.productoId, formData.presentacionProductoId, presentaciones]);
 
   const loadData = async () => {
     const uniqueById = (arr) => {
@@ -100,23 +105,17 @@ export default function FormArticuloKardex({
     };
 
     try {
-      const [prodRes, tipoPresRes, prpItemsRes, prpCrudRes] = await Promise.allSettled([
+      const [prodRes, tipoPresRes, prpItemsRes] = await Promise.allSettled([
         axios.get("/v1/items/producto/0"),
         axios.get("/v1/items/presentacion/0"),
         axios.get("/v1/items/producto_presentacion/0"),
-        axios.get("/v1/producto_presentacion", { params: { page: 0, size: 500 } }),
       ]);
 
-      const productosItems =
-        prodRes.status === "fulfilled" ? toArray(prodRes.value.data) : [];
-      const tiposPresItems =
-        tipoPresRes.status === "fulfilled" ? toArray(tipoPresRes.value.data) : [];
-      const prpItems =
-        prpItemsRes.status === "fulfilled" ? toArray(prpItemsRes.value.data) : [];
-      const prpCrud =
-        prpCrudRes.status === "fulfilled" ? toArray(prpCrudRes.value.data) : [];
+      const productosItems = prodRes.status === "fulfilled" ? toArray(prodRes.value.data) : [];
+      const tiposPresItems = tipoPresRes.status === "fulfilled" ? toArray(tipoPresRes.value.data) : [];
+      const prpItems = prpItemsRes.status === "fulfilled" ? toArray(prpItemsRes.value.data) : [];
 
-      const mergedPrp = uniqueById([...prpItems, ...prpCrud]);
+      const mergedPrp = uniqueById([...prpItems]);
       setPresentaciones(mergedPrp);
       setTiposPresentacion(tiposPresItems);
 
@@ -162,58 +161,79 @@ export default function FormArticuloKardex({
     setOpen(true);
   };
 
-  const update = () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona un articulo para editar.",
-      });
+  const update = async () => {
+    const articuloId = resolveArticuloKardexId(selectedRow);
+    if (!articuloId) {
+      setMessage({ open: true, severity: "error", text: "Selecciona un articulo para editar." });
       return;
     }
 
-    const productoId =
-      selectedRow.presentacionProducto?.producto?.id ?? selectedRow.productoId ?? "";
-    const cantidad = Number(selectedRow.cantidad ?? 0);
-    const precioUnitario = Number(selectedRow.precioUnitario ?? selectedRow.precio ?? 0);
+    try {
+      const res = await axios.get(`/v1/kardex/${kardexId}/update-form`);
+      const data = res?.data ?? {};
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const found = items.find((it) => String(it?.id ?? "") === String(articuloId));
 
-    setFormData({
-      ...initialData,
-      ...selectedRow,
-      productoId,
-      presentacionProductoId:
-        selectedRow.presentacionProducto?.id ?? selectedRow.presentacionProductoId ?? "",
-      precioUnitario,
-      precioTotal: cantidad * precioUnitario,
-    });
+      const cantidad = Number(found?.cantidad ?? selectedRow?.cantidad ?? 0);
+      const precioUnitario = Number(found?.precio ?? selectedRow?.precio ?? 0);
 
-    setMethodName("Actualizar");
-    loadData();
-    setOpen(true);
+      setFormData({
+        ...initialData,
+        ...selectedRow,
+        id: articuloId,
+        productoId: "",
+        presentacionProductoId: found?.presentacionProductoId ?? selectedRow?.presentacionProductoId ?? "",
+        cantidad,
+        precioUnitario,
+        precioTotal: cantidad * precioUnitario,
+        lote: found?.lote ?? selectedRow?.lote ?? "",
+        fechaVencimiento: found?.fechaVencimiento ?? selectedRow?.fechaVencimiento ?? "",
+      });
+    } catch (err) {
+      console.error("Error al precargar articulo para editar:", err);
+      const cantidad = Number(selectedRow?.cantidad ?? 0);
+      const precioUnitario = Number(selectedRow?.precioUnitario ?? selectedRow?.precio ?? 0);
+      setFormData({
+        ...initialData,
+        ...selectedRow,
+        id: articuloId,
+        productoId: "",
+        presentacionProductoId: selectedRow?.presentacionProductoId ?? "",
+        cantidad,
+        precioUnitario,
+        precioTotal: cantidad * precioUnitario,
+      });
+    } finally {
+      setMethodName("Actualizar");
+      loadData();
+      setOpen(true);
+    }
   };
 
-  const inactivateRow = () => {
-    if (!selectedRow?.id) return;
+  const inactivateRow = async () => {
+    const articuloId = resolveArticuloKardexId(selectedRow);
+    if (!articuloId) return;
 
-    axios
-      .put(`/v1/articulo-kardex/${selectedRow.id}/inactivate`)
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Anulado correctamente.",
-        });
-        reloadData();
-        setSelectedRow({});
-      })
-      .catch((err) => {
-        console.error("Error al anular:", err?.response || err);
-        setMessage({
-          open: true,
-          severity: "error",
-          text: "Error al anular",
-        });
+    try {
+      const formRes = await axios.get(`/v1/kardex/${kardexId}/update-form`);
+      const data = formRes?.data ?? {};
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const nextItems = items.filter((it) => String(it?.id ?? "") !== String(articuloId));
+
+      const payload = mapHeaderAndItemsToKardexPayload(data, nextItems);
+      await axios.put(`/v1/kardex/${kardexId}`, payload);
+
+      setMessage({ open: true, severity: "success", text: "Anulado correctamente." });
+      reloadData();
+      setSelectedRow(null);
+    } catch (err) {
+      const d = err?.response?.data;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: (typeof d === "string" && d) || d?.message || d?.detail || d?.title || "Error al anular",
       });
+    }
   };
 
   const handleChange = (e) => {
@@ -237,68 +257,87 @@ export default function FormArticuloKardex({
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.productoId || !formData.presentacionProductoId) {
-      setMessage({
-        open: true,
-        severity: "warning",
-        text: "Debes seleccionar Producto y Presentacion.",
-      });
+      setMessage({ open: true, severity: "warning", text: "Debes seleccionar Producto y Presentacion." });
       return;
     }
 
-    const payload = {
-      ...formData,
-      id: selectedRow?.id,
-      cantidad: Number(formData.cantidad),
-      precio: Number(formData.precioUnitario),
-      lote: formData.lote,
-      kardexId: Number(kardexId),
-      presentacionProductoId: Number(formData.presentacionProductoId),
-      estadoId: 1,
-      fechaVencimiento: String(formData.fechaVencimiento || "").includes("T")
-        ? formData.fechaVencimiento
-        : `${formData.fechaVencimiento}T00:00:00`,
-    };
+    if (!Number(formData.cantidad) || Number(formData.cantidad) <= 0) {
+      setMessage({ open: true, severity: "warning", text: "La cantidad debe ser mayor que cero." });
+      return;
+    }
 
-    const method = methodName === "Agregar" ? axios.post : axios.put;
-    const url =
-      methodName === "Agregar"
-        ? "/v1/articulo-kardex"
-        : `/v1/articulo-kardex/${selectedRow.id}`;
+    if (Number.isNaN(Number(formData.precioUnitario)) || Number(formData.precioUnitario) < 0) {
+      setMessage({ open: true, severity: "warning", text: "El precio unitario es invalido." });
+      return;
+    }
 
-    method(url, payload)
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Guardado correctamente.",
-        });
-        reloadData();
-        setOpen(false);
-      })
-      .catch((err) => {
-        const data = err?.response?.data;
-        console.error("Error al guardar:", data || err);
+    const isUpdate = methodName !== "Agregar";
+    const articuloId = resolveArticuloKardexId(selectedRow);
 
-        let errorMsg = "Error al guardar";
+    if (isUpdate && !articuloId) {
+      setMessage({ open: true, severity: "error", text: "No se encontro el ID del articulo a editar." });
+      return;
+    }
 
-        if (data) {
-          if (typeof data === "string") {
-            errorMsg = data;
-          } else if (data.message) {
-            errorMsg = data.message;
-          } else if (data.error) {
-            errorMsg = data.error;
-          } else if (data.detail) {
-            errorMsg = data.detail;
-          }
-        }
+    try {
+      const formRes = await axios.get(`/v1/kardex/${kardexId}/update-form`);
+      const data = formRes?.data ?? {};
+      const items = Array.isArray(data?.items) ? data.items : [];
 
-        setMessage({ open: true, severity: "error", text: errorMsg });
-      });
+      const nextItemPatch = {
+        presentacionProductoId: Number(formData.presentacionProductoId),
+        cantidad: Number(formData.cantidad),
+        precio: Number(formData.precioUnitario),
+        lote: formData.lote || null,
+        fechaVencimiento: formData.fechaVencimiento
+          ? String(formData.fechaVencimiento).substring(0, 10)
+          : null,
+      };
+
+      let nextItems;
+      if (isUpdate) {
+        nextItems = items.map((it) =>
+          String(it?.id ?? "") === String(articuloId)
+            ? {
+                ...it,
+                ...nextItemPatch,
+                id: Number(articuloId),
+              }
+            : it
+        );
+      } else {
+        nextItems = [
+          ...items,
+          {
+            ...nextItemPatch,
+            devolutivo: false,
+            responsableId: null,
+          },
+        ];
+      }
+
+      const payload = mapHeaderAndItemsToKardexPayload(data, nextItems);
+      await axios.put(`/v1/kardex/${kardexId}`, payload);
+
+      setMessage({ open: true, severity: "success", text: "Guardado correctamente." });
+      reloadData();
+      setOpen(false);
+    } catch (err) {
+      const data = err?.response?.data;
+      console.error("Error al guardar:", data || err);
+
+      let errorMsg = "Error al guardar";
+      if (data) {
+        if (typeof data === "string") errorMsg = data;
+        else errorMsg = data?.message || data?.error || data?.detail || data?.title || errorMsg;
+      }
+
+      setMessage({ open: true, severity: "error", text: errorMsg });
+    }
   };
 
   return (
@@ -310,19 +349,14 @@ export default function FormArticuloKardex({
         <Button variant="outlined" sx={{ textTransform: "none" }} onClick={update}>
           Actualizar
         </Button>
-        <Button
-          variant="outlined"
-          color="warning"
-          sx={{ textTransform: "none" }}
-          onClick={inactivateRow}
-        >
+        <Button variant="outlined" color="warning" sx={{ textTransform: "none" }} onClick={inactivateRow}>
           Anular
         </Button>
       </Box>
 
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <form onSubmit={handleSubmit}>
-          <DialogTitle>Crear/Actualizar Artículo</DialogTitle>
+          <DialogTitle>Crear/Actualizar Articulo</DialogTitle>
 
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -375,14 +409,7 @@ export default function FormArticuloKardex({
               </Grid>
 
               <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  name="cantidad"
-                  label="Cantidad"
-                  value={formData.cantidad}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth name="cantidad" label="Cantidad" value={formData.cantidad} onChange={handleChange} required />
               </Grid>
 
               <Grid item xs={12} sm={4}>
@@ -400,9 +427,9 @@ export default function FormArticuloKardex({
                 <TextField
                   fullWidth
                   name="precioTotal"
-                  label="Precio total"
-                  value={formData.precioTotal}
-                  disabled
+                  label="Precio Total"
+                  value={formData.precioTotal || 0}
+                  InputProps={{ readOnly: true }}
                 />
               </Grid>
 
@@ -412,21 +439,14 @@ export default function FormArticuloKardex({
                   type="date"
                   name="fechaVencimiento"
                   label="Fecha de Vencimiento"
-                  value={(formData.fechaVencimiento || "").toString().substring(0, 10)}
+                  value={formData.fechaVencimiento || ""}
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
-                  required
                 />
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  name="lote"
-                  label="Lote"
-                  value={formData.lote}
-                  onChange={handleChange}
-                />
+                <TextField fullWidth name="lote" label="Lote" value={formData.lote || ""} onChange={handleChange} />
               </Grid>
             </Grid>
           </DialogContent>

@@ -1,18 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import axios from "../../axiosConfig";
-import { toArray, normalizePageResponse } from "../utils/kardexFormatters";
+import { toArray } from "../utils/kardexFormatters";
 import { MAX_RECORDS } from "../constants/kardexConstants";
 
-/**
- * @description Hook para manejar carga de datos de kardex y catálogos
- * @returns {object} { kardexesRaw, catalogs, loading, reloadData, reloadCatalogs }
- */
 export const useKardexData = () => {
-    // Kardex
     const [kardexesRaw, setKardexesRaw] = useState([]);
     const [loadingKardex, setLoadingKardex] = useState(false);
 
-    // Catálogos
     const [catalogs, setCatalogs] = useState({
         almacenes: [],
         producciones: [],
@@ -24,11 +18,10 @@ export const useKardexData = () => {
     });
     const [loadingCatalogs, setLoadingCatalogs] = useState(false);
 
-    // Cargar catálogos
     const reloadCatalogs = useCallback(async () => {
         setLoadingCatalogs(true);
         try {
-            const [rAlm, rProd, rTmov, rPres, rPed, rOc, rEmp, rProv] = await Promise.all([
+            const reqs = await Promise.allSettled([
                 axios.get("/v1/items/almacen/0"),
                 axios.get("/v1/items/produccion/0"),
                 axios.get("/v1/items/tipo_movimiento/0"),
@@ -36,13 +29,14 @@ export const useKardexData = () => {
                 axios.get("/v1/items/pedido/0"),
                 axios.get("/v1/items/orden_compra/0"),
                 axios.get("/v1/items/empresa/0"),
-                axios
-                    .get("/v1/items/proveedor/0")
-                    .catch(() => ({ data: [] })),
+                axios.get("/v1/items/proveedor/0"),
             ]);
 
-            const empresasBase = toArray(rEmp.data);
-            const proveedoresBase = toArray(rProv.data);
+            const pick = (idx) =>
+                reqs[idx]?.status === "fulfilled" ? reqs[idx].value?.data : [];
+
+            const empresasBase = toArray(pick(6));
+            const proveedoresBase = toArray(pick(7));
             const empresasMerged = [...empresasBase];
             const seen = new Set(empresasBase.map((e) => String(e?.id)));
             for (const prov of proveedoresBase) {
@@ -53,16 +47,16 @@ export const useKardexData = () => {
             }
 
             setCatalogs({
-                almacenes: toArray(rAlm.data),
-                producciones: toArray(rProd.data),
-                tiposMovimiento: toArray(rTmov.data),
-                presentaciones: toArray(rPres.data),
-                pedidos: toArray(rPed.data),
-                ordenesCompra: toArray(rOc.data),
+                almacenes: toArray(pick(0)),
+                producciones: toArray(pick(1)),
+                tiposMovimiento: toArray(pick(2)),
+                presentaciones: toArray(pick(3)),
+                pedidos: toArray(pick(4)),
+                ordenesCompra: toArray(pick(5)),
                 empresas: empresasMerged,
             });
         } catch (e) {
-            console.error("Error cargando catálogos:", e);
+            console.error("Error cargando cat�logos:", e);
             setCatalogs({
                 almacenes: [],
                 producciones: [],
@@ -77,15 +71,13 @@ export const useKardexData = () => {
         }
     }, []);
 
-    // Cargar kardexes
     const reloadData = useCallback(async () => {
         setLoadingKardex(true);
         try {
             const res = await axios.get("/v1/kardex", {
-                params: { page: 0, size: MAX_RECORDS },
+                params: { page: 0, size: MAX_RECORDS, sort: "id,desc" },
             });
-            const rows = toArray(res.data);
-            setKardexesRaw(rows);
+            setKardexesRaw(toArray(res.data));
         } catch (e) {
             console.error("Error cargando kardexes:", e);
             setKardexesRaw([]);
@@ -94,7 +86,6 @@ export const useKardexData = () => {
         }
     }, []);
 
-    // Cargar al montar el componente
     useEffect(() => {
         reloadCatalogs();
         reloadData();
@@ -104,8 +95,6 @@ export const useKardexData = () => {
         kardexesRaw,
         catalogs,
         loading: loadingKardex || loadingCatalogs,
-        loadingKardex,
-        loadingCatalogs,
         reloadData,
         reloadCatalogs,
     };

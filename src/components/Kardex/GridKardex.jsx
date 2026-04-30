@@ -1,20 +1,15 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { esES } from "@mui/x-data-grid";
 import { KardexToolbar } from "./KardexToolbar";
 import AppDataGrid from "../common/AppDataGrid";
-import { createLookupMap, safeDateTime, formatEstado } from "./utils/kardexFormatters";
+import { safeDateTime, formatEstado, resolveKardexId } from "./utils/kardexFormatters";
 
 const LS_KEY = "gridKardex:columnVisibility:v1";
 
 export default function GridKardex({
     kardexes = [],
-    almacenes = [],
-    producciones = [],
     tiposMovimiento = [],
-    pedidos = [],
-    ordenesCompra = [],
-    empresas = [],
     selectedRow = null,
     setSelectedRow,
     loading = false,
@@ -23,119 +18,67 @@ export default function GridKardex({
     setPaginationModel,
     isAdmin = false,
     filters = {},
-    setFilters = () => { },
+    setFilters = () => {},
 }) {
-    const getClienteProveedorId = (row) =>
-        row?.clienteProveedorId ??
-        row?.cliente_proveedor_id ??
-        row?.cliProId ??
-        row?.cli_pro_id ??
-        row?.proveedorId ??
-        row?.proveedor_id ??
-        row?.clienteId ??
-        row?.cliente_id ??
-        row?.empresaClienteProveedorId ??
-        row?.clienteProveedor?.id ??
-        row?.proveedor?.id ??
-        row?.cliente?.id ??
-        row?.clienteProveedor?.empresaId ??
-        null;
-
-    const almById = useMemo(
-        () => createLookupMap(almacenes, (a) => a?.nombre || a?.name),
-        [almacenes]
-    );
-    const prodById = useMemo(
-        () => createLookupMap(producciones, (p) => p?.nombre || p?.name),
-        [producciones]
-    );
-    const tmovById = useMemo(
-        () => createLookupMap(tiposMovimiento, (t) => t?.nombre || t?.name),
-        [tiposMovimiento]
-    );
-    const empresaById = useMemo(
-        () => createLookupMap(empresas, (e) => e?.nombreComercial || e?.razonSocial || e?.nombre || e?.name),
-        [empresas]
-    );
-
     const columns = useMemo(() => {
         const baseColumns = [
             {
                 field: "fechaHora",
                 headerName: "Fecha y Hora",
-                width: 180,
+                width: 200,
                 valueGetter: (p) => safeDateTime(p?.row?.fechaHora),
             },
             {
-                field: "tipoMovimientoId",
+                field: "nombreTipoMovimiento",
                 headerName: "Tipo Movimiento",
                 width: 220,
                 valueGetter: (p) =>
+                    p?.row?.nombreTipoMovimiento ??
                     p?.row?.tipoMovimiento?.name ??
                     p?.row?.tipoMovimiento?.nombre ??
-                    tmovById[String(p?.row?.tipoMovimientoId)] ??
-                    String(p?.row?.tipoMovimientoId ?? ""),
+                    "-",
             },
             {
-                field: "almacenId",
+                field: "nombreAlmacen",
                 headerName: "Almacen",
-                width: 200,
-                valueGetter: (p) =>
-                    p?.row?.almacen?.name ??
-                    p?.row?.almacen?.nombre ??
-                    almById[String(p?.row?.almacenId)] ??
-                    String(p?.row?.almacenId ?? ""),
-            },
-            {
-                field: "produccionId",
-                headerName: "Produccion",
-                width: 200,
-                valueGetter: (p) =>
-                    p?.row?.produccion?.name ??
-                    p?.row?.produccion?.nombre ??
-                    prodById[String(p?.row?.produccionId)] ??
-                    String(p?.row?.produccionId ?? ""),
-            },
-            {
-                field: "clienteProveedorId",
-                headerName: "Cliente/Proveedor",
                 width: 220,
-                valueGetter: (p) => {
-                    const row = p?.row ?? {};
-                    const clienteProveedorId = getClienteProveedorId(row);
-                    return (
-                        row?.clienteProveedorNombre ??
-                        row?.clienteProveedorName ??
-                        row?.cliente_proveedor_nombre ??
-                        row?.cliente_proveedor_name ??
-                        row?.clienteProveedor?.razonSocial ??
-                        row?.clienteProveedor?.nombre ??
-                        row?.clienteProveedor?.nombreComercial ??
-                        row?.clienteProveedor?.name ??
-                        row?.proveedor?.razonSocial ??
-                        row?.proveedor?.nombre ??
-                        row?.proveedor?.nombreComercial ??
-                        row?.proveedor?.name ??
-                        row?.cliente?.razonSocial ??
-                        row?.cliente?.nombre ??
-                        row?.cliente?.nombreComercial ??
-                        row?.cliente?.name ??
-                        (typeof row?.clienteProveedor === "string" ? row?.clienteProveedor : null) ??
-                        empresaById[String(clienteProveedorId)] ??
-                        (clienteProveedorId != null ? `#${clienteProveedorId}` : "")
-                    );
-                },
+                valueGetter: (p) => p?.row?.nombreAlmacen ?? "-",
             },
-            ...(isAdmin ? [{ field: "empresaId", headerName: "Empresa", width: 140 }] : []),
             {
-                field: "estadoId",
+                field: "nombreProduccion",
+                headerName: "Produccion",
+                width: 220,
+                valueGetter: (p) => p?.row?.nombreProduccion ?? "-",
+            },
+            {
+                field: "nombreClienteProveedor",
+                headerName: "Cliente/Proveedor",
+                width: 240,
+                valueGetter: (p) =>
+                    p?.row?.nombreClienteProveedor ??
+                    p?.row?.nombreProveedor ??
+                    p?.row?.nombreCliente ??
+                    "-",
+            },
+            {
+                field: "nombreEstado",
                 headerName: "Estado",
                 width: 140,
-                valueGetter: (p) => formatEstado(p?.row?.estadoId),
+                valueGetter: (p) => p?.row?.nombreEstado ?? formatEstado(p?.row?.estadoId),
             },
         ];
+
+        if (isAdmin) {
+            baseColumns.splice(5, 0, {
+                field: "nombreEmpresa",
+                headerName: "Empresa",
+                width: 200,
+                valueGetter: (p) => p?.row?.nombreEmpresa ?? "-",
+            });
+        }
+
         return baseColumns;
-    }, [almById, prodById, tmovById, empresaById, isAdmin]);
+    }, [isAdmin]);
 
     const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
@@ -145,14 +88,18 @@ export default function GridKardex({
             if (saved && typeof saved === "object") {
                 setColumnVisibilityModel(saved);
             }
-        } catch { }
+        } catch {
+            // noop
+        }
     }, []);
 
     const handleVisibilityChange = (model) => {
         setColumnVisibilityModel(model);
         try {
             localStorage.setItem(LS_KEY, JSON.stringify(model));
-        } catch { }
+        } catch {
+            // noop
+        }
     };
 
     const handleResetColumns = () => {
@@ -160,9 +107,7 @@ export default function GridKardex({
         setColumnVisibilityModel({});
     };
 
-    const serverPaging =
-        typeof rowCount === "number" && paginationModel && setPaginationModel;
-
+    const serverPaging = typeof rowCount === "number" && paginationModel && setPaginationModel;
     const modelPage = paginationModel?.page ?? 0;
     const modelPageSize = paginationModel?.pageSize ?? paginationModel?.size ?? 10;
 
@@ -171,7 +116,7 @@ export default function GridKardex({
             <AppDataGrid
                 rows={Array.isArray(kardexes) ? kardexes : []}
                 columns={columns}
-                getRowId={(row) => row.id}
+                getRowId={(row) => resolveKardexId(row) ?? `${row?.fechaHora ?? ""}-${row?.nombreTipoMovimiento ?? ""}`}
                 loading={loading}
                 selectedRow={selectedRow}
                 setSelectedRow={setSelectedRow}
@@ -180,11 +125,7 @@ export default function GridKardex({
                 localeText={esES.components.MuiDataGrid.defaultProps.localeText}
                 paginationModel={serverPaging ? { page: modelPage, size: modelPageSize } : undefined}
                 setPaginationModel={serverPaging ? setPaginationModel : undefined}
-                rowCount={
-                    serverPaging
-                        ? Math.max(Number(rowCount ?? 0), Array.isArray(kardexes) ? kardexes.length : 0)
-                        : undefined
-                }
+                rowCount={serverPaging ? Math.max(Number(rowCount ?? 0), kardexes.length) : undefined}
                 columnVisibilityModel={columnVisibilityModel}
                 onColumnVisibilityModelChange={handleVisibilityChange}
                 slots={{ toolbar: KardexToolbar }}
@@ -205,12 +146,7 @@ export default function GridKardex({
 
 GridKardex.propTypes = {
     kardexes: PropTypes.array,
-    almacenes: PropTypes.array,
-    producciones: PropTypes.array,
     tiposMovimiento: PropTypes.array,
-    pedidos: PropTypes.array,
-    ordenesCompra: PropTypes.array,
-    empresas: PropTypes.array,
     selectedRow: PropTypes.object,
     setSelectedRow: PropTypes.func,
     paginationModel: PropTypes.shape({

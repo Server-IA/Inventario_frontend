@@ -77,3 +77,16 @@ export const normalizePageResponse = (res) => {
         rows.length;
     return { rows, total };
 };
+
+export const resolveKardexId = (row) =>
+    row?.id ??
+    row?.kardexId ??
+    row?.karId ??
+    row?.requestedId ??
+    null;
+
+export const resolveArticuloKardexId = (row) =>
+    row?.id ??
+    row?.articuloKardexId ??
+    row?.kardexItemId ??
+    null;

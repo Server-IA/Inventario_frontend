@@ -2,54 +2,63 @@ import { useState, useMemo } from "react";
 import { filterByDateRange } from "../utils/dateUtils";
 import { DEFAULT_FILTERS } from "../constants/kardexConstants";
 
-/**
- * @description Hook para gestionar filtros de kardex
- * @param {array} kardexesRaw Datos sin filtrar
- * @param {object} paginationModel { page, size }
- * @returns {object} { filters, setFilters, filteredKardexes, filtrationInfo }
- */
-export const useKardexFilters = (kardexesRaw = [], paginationModel = {}) => {
+const normalize = (v) =>
+    String(v ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+export const useKardexFilters = (kardexesRaw = [], paginationModel = {}, tiposMovimiento = []) => {
     const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
-    const filteredKardexes = useMemo(() => {
-        let filtered = kardexesRaw;
+    const tipoById = useMemo(() => {
+        const map = {};
+        for (const t of tiposMovimiento || []) {
+            map[String(t?.id)] = t?.name ?? t?.nombre ?? t?.descripcion ?? "";
+        }
+        return map;
+    }, [tiposMovimiento]);
 
-        // Filtro por rango de fechas
+    const filteredKardexes = useMemo(() => {
+        let filtered = Array.isArray(kardexesRaw) ? kardexesRaw : [];
+
         filtered = filterByDateRange(filtered, filters.fechaDesde, filters.fechaHasta);
 
-        // Filtro por tipo de movimiento
         if (filters.tipoMovimientoId) {
-            const tipoId = Number(filters.tipoMovimientoId);
-            filtered = filtered.filter((k) => k.tipoMovimientoId === tipoId);
+            const wantedName = normalize(tipoById[String(filters.tipoMovimientoId)]);
+            filtered = filtered.filter((k) => {
+                if (k?.tipoMovimientoId != null) {
+                    return String(k.tipoMovimientoId) === String(filters.tipoMovimientoId);
+                }
+                const rowName = normalize(k?.nombreTipoMovimiento ?? k?.tipoMovimiento ?? "");
+                return wantedName ? rowName === wantedName : false;
+            });
         }
 
-        // Filtro por estado
         if (filters.estadoId !== "") {
             const estId = Number(filters.estadoId);
-            filtered = filtered.filter((k) => k.estadoId === estId);
+            filtered = filtered.filter((k) => {
+                if (k?.estadoId != null) return Number(k.estadoId) === estId;
+                const estado = normalize(k?.nombreEstado ?? "");
+                if (estId === 1) return estado.includes("activo");
+                if (estId === 0) return estado.includes("inactivo");
+                return false;
+            });
         }
 
         return filtered;
-    }, [kardexesRaw, filters]);
+    }, [kardexesRaw, filters, tipoById]);
 
-    // Aplicar paginación
     const { page = 0, size = 10 } = paginationModel;
     const startIdx = page * size;
     const paginatedRows = filteredKardexes.slice(startIdx, startIdx + size);
 
-    const cleanFilters = () => {
-        setFilters(DEFAULT_FILTERS);
-    };
-
-    const hasActiveFilters = Object.values(filters).some((v) => v !== "");
-
     return {
         filters,
         setFilters,
-        cleanFilters,
         filteredKardexes,
         paginatedRows,
         totalFiltered: filteredKardexes.length,
-        hasActiveFilters,
     };
 };
