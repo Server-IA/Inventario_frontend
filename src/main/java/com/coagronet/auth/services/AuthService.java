@@ -335,7 +335,8 @@ public class AuthService {
 					msg("auth.register.persona.already.exists"));
 		}
 
-		if (personaRepository.existsByEmailAndEstado_Id(dto.getUsername(), EstadoConstantes.ESTADO_GENERAL_ACTIVO)) {
+		if (personaRepository.existsByEmailPersonalAndEstado_Id(dto.getUsername(),
+				EstadoConstantes.ESTADO_GENERAL_ACTIVO)) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, msg("auth.register.persona.email.already.exists"));
 		}
 
@@ -352,7 +353,7 @@ public class AuthService {
 		persona.setEstrato(dto.getEstrato());
 		persona.setDireccion(dto.getDireccion());
 		persona.setCelular(dto.getCelular());
-		persona.setEmail(dto.getUsername());
+		persona.setEmailPersonal(dto.getUsername());
 		persona.setEstado(estado);
 
 		Persona savedPersona = personaRepository.save(persona);
@@ -429,7 +430,7 @@ public class AuthService {
 					msg("auth.account.not.available"));
 		}
 
-		List<UsuarioRol> usuarioRols = userRoleRepo.findByUserOrderByUserId(user);
+		List<UsuarioRol> usuarioRols = userRoleRepo.findByUsuarioIdForLogin(user.getId());
 
 		if (usuarioRols.isEmpty()) {
 			throw new UserRoleForbiddenException(msg("auth.user.no.roles"));

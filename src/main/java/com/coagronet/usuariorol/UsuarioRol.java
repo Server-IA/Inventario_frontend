@@ -3,6 +3,14 @@ package com.coagronet.usuariorol;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.TenantId;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.rol.Rol;
@@ -10,6 +18,7 @@ import com.coagronet.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,8 +39,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicInsert
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "usuario_rol", uniqueConstraints = {
-		@UniqueConstraint(name = "ux_usuario_empresa_rol", columnNames = { "usuario_id", "empresa_id", "rol_id" }) })
+		@UniqueConstraint(name = "ux_usuario_empresa_rol", columnNames = { "usuario_id", "empresa_id", "rol_id" })
+})
 public class UsuarioRol implements Serializable {
 
 	private static final long serialVersionUID = -1706389808605756133L;
@@ -44,7 +56,7 @@ public class UsuarioRol implements Serializable {
 	// ===== Relaciones principales =====
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "usuario_id", nullable = false)
+	@JoinColumn(name = "usuario_id", nullable = false, updatable = false)
 	private User user;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -52,8 +64,12 @@ public class UsuarioRol implements Serializable {
 	private Rol rol;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "empresa_id", nullable = true)
+	@JoinColumn(name = "empresa_id", nullable = false, insertable = false, updatable = false)
 	private Empresa empresa;
+
+	@TenantId
+	@Column(name = "empresa_id", nullable = false)
+	private Long tenantEmpresaId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "estado_id", nullable = false)
@@ -69,19 +85,23 @@ public class UsuarioRol implements Serializable {
 
 	// ===== Auditoría =====
 
+	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private OffsetDateTime createdAt;
 
+	@LastModifiedDate
 	@Column(name = "updated_at")
 	private OffsetDateTime updatedAt;
 
 	@Column(name = "deleted_at")
 	private OffsetDateTime deletedAt;
 
+	@CreatedBy
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "created_by", updatable = false)
 	private User createdBy;
 
+	@LastModifiedBy
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "updated_by")
 	private User updatedBy;
@@ -118,5 +138,4 @@ public class UsuarioRol implements Serializable {
 	public int hashCode() {
 		return getClass().hashCode();
 	}
-
 }
