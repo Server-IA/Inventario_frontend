@@ -4,6 +4,7 @@ import {
   FormControl, InputLabel, Select, MenuItem,
   Button, Box
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 /**
  * Modal genérico de filtros con limpieza automática de campos dependientes.
@@ -13,11 +14,13 @@ import {
  * - disabled: Función que determina si el campo está deshabilitado basado en values
  */
 export default function CrudFilterModal({
-  open, onClose, title,
+  open, onClose, title, titleKey,
   fields, values, onChange,
   onApply, onClear
 }) {
+  const { t } = useTranslation();
   const [options, setOptions] = useState({});
+  const resolvedTitle = titleKey ? t(titleKey) : title;
 
   // Función para manejar cambios con limpieza automática de hijos
   const handleFieldChange = (fieldName, value) => {
@@ -54,19 +57,19 @@ export default function CrudFilterModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle>{resolvedTitle}</DialogTitle>
       <DialogContent>
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           {fields.map((f) => (
             <FormControl key={f.name} fullWidth disabled={f.disabled?.(values)}>
-              <InputLabel>{f.label}</InputLabel>
+              <InputLabel>{f.labelKey ? t(f.labelKey) : f.label}</InputLabel>
               <Select
                 value={values[f.name] || ""}
                 onChange={(e) =>
                   handleFieldChange(f.name, e.target.value)
                 }
               >
-                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="">{t("common.labels.all")}</MenuItem>
                 {(options[f.name] || []).map((o) => (
                   <MenuItem key={o.value} value={o.value}>
                     {o.label}
@@ -78,8 +81,8 @@ export default function CrudFilterModal({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClear}>Limpiar</Button>
-        <Button variant="contained" onClick={onApply}>Aplicar</Button>
+        <Button onClick={onClear}>{t("common.actions.clear")}</Button>
+        <Button variant="contained" onClick={onApply}>{t("common.actions.apply")}</Button>
       </DialogActions>
     </Dialog>
   );

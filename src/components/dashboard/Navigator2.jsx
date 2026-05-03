@@ -9,11 +9,13 @@ import {
   ListItemText,
   Grid,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 
 import { alpha, useTheme } from "@mui/material/styles";
+import { keyframes } from "@mui/system";
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -130,6 +132,38 @@ import modulo from "../modulo/modulos.jsx";
 
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 
+const APPBAR_HEIGHT = 72;
+
+const sidebarToBottom = keyframes`
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    border-radius: 0;
+  }
+  38% {
+    transform: translate3d(0, 22px, 0) scale(0.965);
+    border-radius: 18px;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    border-radius: 18px 18px 0 0;
+  }
+`;
+
+const bottomToSidebar = keyframes`
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    border-radius: 18px 18px 0 0;
+  }
+  38% {
+    transform: translate3d(0, -18px, 0) scale(0.97);
+    border-radius: 18px;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    border-radius: 0;
+  }
+`;
+
 
 // no tocar el orden de importación de los componentes
 
@@ -186,6 +220,7 @@ import Estado from "../estado/estado.jsx";
 import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
 import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
+import Usuario from "../Usuario/Usuario.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // Imágenes
@@ -375,6 +410,7 @@ const components = {
   modulo: modulo,
   Rol_usuario: Rol_usuario,
   EmpresaRol: EmpresaRol,
+  Usuario: Usuario,
   UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
   PedidoCotizacion: PedidoCotizacion,
@@ -432,6 +468,7 @@ const components = {
 
 const moduleImages = {
   EmpresaRol: rol_empresa,
+  Usuario: persona,
   UsuarioRoles: usai_rol_sistema,
   UsuarioRol: usariorol,
   PedidoCotizacion:pedido_coti,
@@ -494,13 +531,16 @@ export default function Navigator2({
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const isMobileView = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
   const isDark = theme.palette.mode === "dark";
+  const [navAnimation, setNavAnimation] = React.useState("none");
+  const prevIsMobileRef = React.useRef(isMobileView);
 
   // ===== TOKENS VISUALES =====
   const sidebarBg = isDark
     ? alpha(theme.palette.background.paper, 0.98)
-    : theme.palette.background.paper;
+    : '#E7F6F7';
 
   const dividerColor = alpha(
     isDark ? "#fff" : "#000",
@@ -548,7 +588,6 @@ export default function Navigator2({
   // ===== HELPERS =====
   const toKey = (x) => String(x ?? "").trim();
   const normalizeTipo = (t) => (t === "movil" ? "movil" : "web");
-
   const renderComponent = (key) => {
     const Component = components[key];
     setCurrentModuleItem(Component ? <Component /> : null);
@@ -716,6 +755,16 @@ export default function Navigator2({
   }, [open, setMenuOpen]);
 
   React.useEffect(() => {
+    if (prevIsMobileRef.current === isMobileView) return;
+    setNavAnimation(
+      isMobileView
+        ? `${sidebarToBottom} 520ms cubic-bezier(0.22, 1, 0.36, 1)`
+        : `${bottomToSidebar} 520ms cubic-bezier(0.22, 1, 0.36, 1)`
+    );
+    prevIsMobileRef.current = isMobileView;
+  }, [isMobileView]);
+
+  React.useEffect(() => {
     if (!isAuthenticated) return;
 
     const tipo = normalizeTipo(tipoAplicacion);
@@ -737,6 +786,21 @@ export default function Navigator2({
             })),
           })
         );
+
+        const segIndex = adapted.findIndex((m) => toKey(m.id) === "Seguridad");
+        if (segIndex !== -1) {
+          const children = adapted[segIndex].children || [];
+          const exists = children.some((c) => toKey(c.id) === "Usuario");
+          if (!exists) {
+            children.push({
+              id: "Usuario",
+              text: "Usuario",
+              icon: "PersonOutline",
+              url: "/api/v1/usuario",
+            });
+            adapted[segIndex] = { ...adapted[segIndex], children };
+          }
+        }
 
         setMenuItems(adapted);
 
@@ -774,22 +838,33 @@ export default function Navigator2({
     <Box
       sx={{
         position: "fixed",
-        top: 65,
+        top: { xs: "auto", sm: `calc(${APPBAR_HEIGHT}px - 7px)` },
+        bottom: { xs: 0, sm: "auto" },
         left: 0,
-        width: open ? 250 : 70,
-        height: "calc(100vh - 65px)",
+        width: { xs: "100%", sm: open ? 220 : 70, md: open ? 250 : 70 },
+        height: { xs: 72, sm: `calc(100vh - ${APPBAR_HEIGHT - 1}px)` },
         bgcolor: sidebarBg,
-        borderRight: `1px solid ${dividerColor}`,
-        transition: "width 0.25s ease",
+        borderRight: { xs: "none", sm: `1px solid ${dividerColor}` },
+        borderTop: { xs: `1px solid ${dividerColor}`, sm: "none" },
+        transition:
+          "width 0.52s cubic-bezier(0.22, 1, 0.36, 1), height 0.52s cubic-bezier(0.22, 1, 0.36, 1), top 0.52s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.52s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.52s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.52s cubic-bezier(0.22, 1, 0.36, 1)",
         zIndex: 1200,
         display: "flex",
-        flexDirection: "column",
+        flexDirection: { xs: "row", sm: "column" },
+        borderRadius: { xs: "18px 18px 0 0", sm: 0 },
+        boxShadow: {
+          xs: "0 -10px 24px rgba(0,0,0,0.12)",
+          sm: "none",
+        },
+        animation: navAnimation,
+        transformOrigin: { xs: "bottom center", sm: "left center" },
+        willChange: "width, height, top, bottom, transform, border-radius",
       }}
     >
       <Box
         onClick={toggleDrawer}
         sx={{
-          display: "flex",
+          display: { xs: "none", sm: "flex" },
           alignItems: "center",
           gap: 1,
           px: 2,
@@ -806,23 +881,41 @@ export default function Navigator2({
         )}
       </Box>
 
-      <List sx={{ px: 1, py: 1, flex: 1, overflowY: "auto" }}>
+      <List
+        sx={{
+          px: { xs: 0.5, sm: 1 },
+          py: { xs: 0.5, sm: 1 },
+          flex: 1,
+          overflowY: { xs: "hidden", sm: "auto" },
+          overflowX: { xs: "auto", sm: "hidden" },
+          display: { xs: "flex", sm: "block" },
+          alignItems: "stretch",
+        }}
+      >
         {menuItems.map(({ id, text, icon }) => {
           const key = toKey(id);
           const selected = selectedMenu === key;
 
           return (
-            <ListItem key={key} disablePadding>
+            <ListItem
+              key={key}
+              disablePadding
+              sx={{
+                width: { xs: `${100 / Math.max(menuItems.length || 1, 1)}%`, sm: "100%" },
+                minWidth: { xs: 64, sm: "auto" },
+                flex: { xs: 1, sm: "unset" },
+              }}
+            >
               <ListItemButton
                 selected={selected}
                 onClick={() => handleMenuClick(id)}
                 sx={{
                   borderRadius: 2,
-                  mx: 1,
-                  my: 0.5,
-                  justifyContent: open
-                    ? "flex-start"
-                    : "center",
+                  mx: { xs: 0.25, sm: 1 },
+                  my: { xs: 0, sm: 0.5 },
+                  minHeight: { xs: 56, sm: "auto" },
+                  justifyContent: { xs: "center", sm: open ? "flex-start" : "center" },
+                  flexDirection: { xs: "column", sm: "row" },
                   "&:hover": { bgcolor: hoverBg },
                   "&.Mui-selected": {
                     bgcolor: selectedBg,
@@ -833,11 +926,13 @@ export default function Navigator2({
                     "&::before": {
                       content: '""',
                       position: "absolute",
-                      left: 0,
-                      top: 6,
-                      bottom: 6,
-                      width: 3.5,
-                      borderRadius: "0 3px 3px 0",
+                      left: { xs: 8, sm: 0 },
+                      right: { xs: 8, sm: "auto" },
+                      top: { xs: 0, sm: 6 },
+                      bottom: { xs: "auto", sm: 6 },
+                      height: { xs: 3.5, sm: "auto" },
+                      width: { xs: "auto", sm: 3.5 },
+                      borderRadius: { xs: "0 0 3px 3px", sm: "0 3px 3px 0" },
                       backgroundColor: selectedBar,
                     },
                   },
@@ -847,7 +942,9 @@ export default function Navigator2({
                   sx={{
                     color: theme.palette.text.primary,
                     minWidth: 0,
-                    mr: open ? 2 : 0,
+                    mr: { xs: 0, sm: open ? 2 : 0 },
+                    mb: { xs: 0.25, sm: 0 },
+                    justifyContent: "center",
                   }}
                 >
                   {icons[icon] || <AppsIcon />}
@@ -858,7 +955,10 @@ export default function Navigator2({
                     primary={t(text)}
                     primaryTypographyProps={{
                       fontWeight: 600,
+                      fontSize: { xs: "0.65rem", sm: "1rem" },
+                      textAlign: "center",
                     }}
+                    sx={{ display: { xs: "none", sm: "block" } }}
                   />
                 )}
               </ListItemButton>

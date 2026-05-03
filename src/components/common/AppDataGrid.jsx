@@ -1,8 +1,9 @@
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Paper, Stack } from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
+import { Box, Paper, Stack, Chip } from "@mui/material";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
+import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 export default function AppDataGrid({
   rows = [],
@@ -37,10 +38,177 @@ export default function AppDataGrid({
   hideFooterSelectedRowCount = true,
 }) {
   const theme = useTheme();
+  const { t, i18n } = useTranslation();
   const isDark = theme.palette.mode === "dark";
+  const headerBg = isDark ? "#1a2a28" : "#dfeae6";
+  const footerBg = isDark ? "#152422" : "#ecf3f0";
+  const bodyBg = isDark ? "#0f1b1a" : "#f6fbf9";
+  const paperShadow = isDark
+    ? "0 8px 22px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25)"
+    : "0 6px 18px rgba(23,63,57,0.08), 0 2px 6px rgba(0,0,0,0.06)";
   const serverPagination = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
 
-  const columnsMemo = useMemo(() => columns, [columns]);
+  const gridLocaleText = useMemo(
+    () => ({
+      toolbarColumns: t("common.grid.toolbar.columns"),
+      toolbarFilters: t("common.grid.toolbar.filters"),
+      toolbarDensity: t("common.grid.toolbar.density"),
+      toolbarExport: t("common.grid.toolbar.export"),
+      noRowsLabel: t("common.grid.noRowsLabel"),
+      noResultsOverlayLabel: t("common.grid.noResultsOverlayLabel"),
+      columnsPanelTextFieldLabel: t("common.grid.columnsPanelTextFieldLabel"),
+      columnsPanelTextFieldPlaceholder: t("common.grid.columnsPanelTextFieldPlaceholder"),
+      columnsManagementShowHideAllText: t("common.grid.columnsManagementShowHideAllText"),
+      columnsManagementReset: t("common.grid.columnsManagementReset"),
+      toolbarQuickFilterPlaceholder: t("common.grid.toolbarQuickFilterPlaceholder"),
+      MuiTablePagination: {
+        labelRowsPerPage: t("common.grid.MuiTablePagination.labelRowsPerPage"),
+      },
+      ...localeText,
+    }),
+    [localeText, t, i18n.language]
+  );
+
+  const formatNumber = (value, column) => {
+    if (value === null || value === undefined || value === "") return "";
+    return new Intl.NumberFormat(i18n.language, column?.numberFormatOptions).format(Number(value));
+  };
+
+  const formatDate = (value, column) => {
+    if (!value) return "";
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat(i18n.language, column?.dateFormatOptions ?? (column?.type === "datetime"
+      ? { dateStyle: "medium", timeStyle: "short" }
+      : { dateStyle: "medium" })).format(date);
+  };
+
+  const resolveStatusMeta = (params, column) => {
+    const raw =
+      params?.value ??
+      params?.row?.[column.field] ??
+      params?.row?.estadoNombre ??
+      params?.row?.estadoId;
+
+    const normalized = String(raw ?? "").trim().toLowerCase();
+    const statusMap = column?.statusMap ?? {};
+    const mapped = statusMap[raw] ?? statusMap[String(raw)] ?? statusMap[normalized];
+    if (mapped) {
+      return {
+        label: mapped.labelKey ? t(mapped.labelKey, mapped.labelOptions) : mapped.label,
+        color: mapped.color ?? "default",
+      };
+    }
+    const isActive =
+      raw === 1 ||
+      raw === "1" ||
+      normalized === "activo" ||
+      normalized === "active" ||
+      normalized === "activa";
+
+    return {
+      label: isActive ? t("common.labels.active") : t("common.labels.inactive"),
+      color: isActive ? "success" : "error",
+    };
+  };
+
+  const resolveBooleanMeta = (params, column) => {
+    const raw = params?.value ?? params?.row?.[column.field];
+    const normalized = String(raw ?? "").trim().toLowerCase();
+    const value = typeof raw === "boolean"
+      ? raw
+      : raw === 1 ||
+        raw === "1" ||
+        normalized === "true" ||
+        normalized === "si" ||
+        normalized === "sí" ||
+        normalized === "yes";
+
+    return {
+      label: value ? t("common.labels.yes") : t("common.labels.no"),
+      color: value ? "success" : "default",
+    };
+  };
+
+  const columnsMemo = useMemo(
+    () =>
+      (Array.isArray(columns) ? columns : []).map((column) => {
+        const columnType = column?.statusChip ? "status" : column?.type ?? "text";
+        const baseColumn = {
+          ...column,
+          type: columnType === "custom" ? undefined : column.type,
+          headerName: column.headerKey ? t(column.headerKey, column.headerOptions) : column.headerName,
+        };
+
+        if (columnType === "status") {
+          return {
+            ...baseColumn,
+            headerClassName: [column.headerClassName, "col-estado"].filter(Boolean).join(" "),
+            cellClassName: [column.cellClassName, "col-estado"].filter(Boolean).join(" "),
+            sortable: column.sortable ?? true,
+            align: column.align ?? "left",
+            headerAlign: column.headerAlign ?? "left",
+            renderCell: column.renderCell ?? ((params) => {
+              const meta = resolveStatusMeta(params, column);
+              return (
+                <Box sx={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
+                  <Chip label={meta.label} color={meta.color} size="small" />
+                </Box>
+              );
+            }),
+          };
+        }
+
+        if (columnType === "boolean") {
+          return {
+            ...baseColumn,
+            align: column.align ?? "center",
+            headerAlign: column.headerAlign ?? "center",
+            renderCell: column.renderCell ?? ((params) => {
+              const meta = resolveBooleanMeta(params, column);
+              return <Chip label={meta.label} color={meta.color} size="small" variant="outlined" />;
+            }),
+          };
+        }
+
+        if (columnType === "number") {
+          return {
+            ...baseColumn,
+            align: column.align ?? "right",
+            headerAlign: column.headerAlign ?? "right",
+            valueFormatter: column.valueFormatter ?? ((params) => formatNumber(params?.value, column)),
+          };
+        }
+
+        if (columnType === "date" || columnType === "datetime") {
+          return {
+            ...baseColumn,
+            valueFormatter: column.valueFormatter ?? ((params) => formatDate(params?.value, column)),
+          };
+        }
+
+        if (columnType === "actions") {
+          return {
+            ...baseColumn,
+            sortable: column.sortable ?? false,
+            filterable: column.filterable ?? false,
+            disableColumnMenu: column.disableColumnMenu ?? true,
+            align: column.align ?? "center",
+            headerAlign: column.headerAlign ?? "center",
+            renderCell:
+              column.renderCell ??
+              ((params) => (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  {typeof column.getActions === "function" ? column.getActions(params) : null}
+                </Stack>
+              )),
+          };
+        }
+
+        return baseColumn;
+      }),
+    [columns, i18n.language, t]
+  );
 
   const Toolbar = quickFilter
     ? function Toolbar() {
@@ -56,16 +224,18 @@ export default function AppDataGrid({
 
   const mergedSx = {
     border: 0,
-    bgcolor: "grey.50",
+    bgcolor: "#fff",
     borderRadius: 4,
     overflow: "hidden",
     "& .MuiDataGrid-columnSeparator": { display: "none" },
     "& .MuiDataGrid-columnHeaders": {
-      bgcolor: "grey.200",
-      borderBottom: "none",
+      bgcolor: headerBg,
       borderTopLeftRadius: 4,
       borderTopRightRadius: 4,
       px: 0,
+      boxShadow: isDark
+        ? "inset 0 -1px 0 rgba(255,255,255,0.08)"
+        : "inset 0 -1px 0 rgba(23,63,57,0.12)",
     },
     "& .MuiDataGrid-columnHeader": {
       pl: "12px !important",
@@ -79,11 +249,12 @@ export default function AppDataGrid({
     "& .MuiDataGrid-columnHeaderTitle": {
       fontWeight: 700,
       textAlign: "left",
+      color: isDark ? "#dfeae6" : undefined,
     },
     "& .MuiDataGrid-footerContainer": {
       borderTop: "none",
       px: 2,
-      bgcolor: "grey.200",
+      bgcolor: footerBg,
       borderBottomLeftRadius: 4,
       borderBottomRightRadius: 4,
     },
@@ -97,15 +268,6 @@ export default function AppDataGrid({
       pl: "12px !important",
       pr: "12px !important",
     },
-    "& .MuiDataGrid-columnHeader.col-estado": {
-      pl: "12px !important",
-      pr: "12px !important",
-      justifyContent: "flex-start",
-    },
-    "& .MuiDataGrid-cell.col-estado": {
-      pl: "12px !important",
-      pr: "12px !important",
-    },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
       position: "relative",
@@ -113,11 +275,15 @@ export default function AppDataGrid({
     "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
       outline: "none",
     },
-    "& .MuiDataGrid-row.Mui-selected": {
-      outline: "none",
-      boxShadow: "none",
-      bgcolor: "rgba(47,106,245,0.08) !important",
-    },
+    ...(isDark
+      ? {}
+      : {
+          "& .MuiDataGrid-row.Mui-selected": {
+            outline: "none",
+            boxShadow: "none",
+            bgcolor: "rgba(23,63,57,0.08) !important",
+          },
+        }),
     "& .MuiDataGrid-row.Mui-selected::before": {
       content: '""',
       position: "absolute",
@@ -125,30 +291,23 @@ export default function AppDataGrid({
       top: 0,
       bottom: 0,
       width: "4px",
-      bgcolor: "#2F6AF5",
+      bgcolor: "#173f39",
       borderTopLeftRadius: "4px",
       borderBottomLeftRadius: "4px",
     },
-    ...(highlightOnHover ? { "& .MuiDataGrid-row:hover": { bgcolor: "action.hover" } } : {}),
-    ...(isDark
+    "& .MuiDataGrid-virtualScroller": {
+      bgcolor: bodyBg,
+    },
+    ...(highlightOnHover
       ? {
-          bgcolor: "transparent",
-          "& .MuiDataGrid-columnHeaders": {
-            bgcolor: alpha("#FFFFFF", 0.1),
-          },
-          "& .MuiDataGrid-footerContainer": {
-            bgcolor: alpha("#FFFFFF", 0.1),
-          },
-          "& .MuiDataGrid-row.Mui-selected": {
-            bgcolor: `${alpha("#4FC3F7", 0.32)} !important`,
-          },
-          "& .MuiDataGrid-row.Mui-selected::before": {
-            bgcolor: "#4FC3F7",
+          "& .MuiDataGrid-row:hover": {
+            bgcolor: isDark ? "rgba(255,255,255,0.04)" : "action.hover",
           },
         }
       : {}),
     ...sx,
   };
+
 
   const handleVisibilityChange = (model) => {
     onColumnVisibilityModelChange?.(model);
@@ -171,16 +330,7 @@ export default function AppDataGrid({
     (selectOnClick && (selectedRow && getRowId ? [getRowId(selectedRow)] : selectedRow?.id ? [selectedRow.id] : []));
 
   return (
-    <Paper
-      sx={{
-        p: 0,
-        borderRadius: 4,
-        boxShadow: isDark ? "0 4px 14px rgba(0,0,0,0.32)" : "0 4px 14px rgba(0,0,0,0.04)",
-        border: `1px solid ${isDark ? alpha("#FFFFFF", 0.18) : "#ffffff"}`,
-        bgcolor: "transparent",
-        ...containerSx,
-      }}
-    >
+    <Paper sx={{ p: 0, width: "100%", maxWidth: "100%", overflowX: "auto", borderRadius: 6, boxShadow: paperShadow, bgcolor: "transparent", ...containerSx }}>
       {(leftActions || rightActions) && (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", gap: 1 }}>{leftActions}</Box>
@@ -249,7 +399,8 @@ export default function AppDataGrid({
         slotProps={slotProps}
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
-        localeText={localeText}
+        localeText={gridLocaleText}
+        autosizeOnMount={false}
         sx={mergedSx}
       />
     </Paper>
