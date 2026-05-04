@@ -13,11 +13,15 @@ import {
   Box,
   FormHelperText,
   Grid,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
 import GridArticuloKardex from "./GridArticuloKardex";
 import { resolveKardexId } from "./utils/kardexFormatters";
+import AppDataGrid from "../common/AppDataGrid";
 
 const numberRequired = (msg, opts = {}) => {
   let y = Yup.number().typeError(msg).required(msg);
@@ -151,9 +155,20 @@ export default function FormKardex({
   const [articleFormOpen, setArticleFormOpen] = useState(false);
   const [articleFormMode, setArticleFormMode] = useState("create");
   const [articleFormData, setArticleFormData] = useState(newArticleDraft());
+  const [lookupOpen, setLookupOpen] = useState(false);
+  const [lookupType, setLookupType] = useState("");
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupSelectedRow, setLookupSelectedRow] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+  const openLookup = (type) => {
+    setLookupType(type);
+    setLookupQuery("");
+    setLookupSelectedRow(null);
+    setLookupOpen(true);
+  };
 
   const findIdByName = (items, rawName) => {
     const wanted = normalize(rawName);
@@ -244,6 +259,74 @@ export default function FormKardex({
     if (ordenesCompraByPedido.length) return ordenesCompraByPedido;
     return ordenesCompra.filter((oc) => String(getPedidoIdFromOc(oc)) === String(formData.pedidoId));
   }, [isEntradaUi, formData.pedidoId, ordenesCompra, ordenesCompraByPedido]);
+
+  const selectedProduccionLabel = useMemo(() => {
+    const it = producciones.find((p) => String(p?.id) === String(formData?.produccionId));
+    return it ? renderName(it) : "";
+  }, [producciones, formData?.produccionId]);
+
+  const selectedPedidoLabel = useMemo(() => {
+    const it = pedidos.find((p) => String(p?.id) === String(formData?.pedidoId));
+    return it ? renderName(it) : "";
+  }, [pedidos, formData?.pedidoId]);
+
+  const selectedProductoLabel = useMemo(() => {
+    const it = productos.find((p) => String(p?.id) === String(articleFormData?.productoId));
+    return it ? renderName(it) : "";
+  }, [productos, articleFormData?.productoId]);
+
+  const selectedPresentacionLabel = useMemo(() => {
+    const it = presentaciones.find((p) => String(p?.id) === String(articleFormData?.presentacionProductoId));
+    return it ? renderPresentacion(it) : "";
+  }, [presentaciones, articleFormData?.presentacionProductoId]);
+
+  const lookupBaseRows = useMemo(() => {
+    if (lookupType === "produccion") return producciones;
+    if (lookupType === "pedido") return pedidos;
+    if (lookupType === "producto") return productos;
+    if (lookupType === "presentacion") {
+      return articleFormData?.productoId ? presentacionesByProducto : presentaciones;
+    }
+    return [];
+  }, [lookupType, producciones, pedidos, productos, presentacionesByProducto, presentaciones, articleFormData?.productoId]);
+
+  const lookupRows = useMemo(() => {
+    const q = normalize(lookupQuery);
+    if (!q) return lookupBaseRows;
+    return (lookupBaseRows || []).filter((r) => {
+      const text =
+        lookupType === "presentacion"
+          ? renderPresentacion(r)
+          : renderName(r);
+      return normalize(text).includes(q) || normalize(String(r?.id ?? "")).includes(q);
+    });
+  }, [lookupBaseRows, lookupQuery, lookupType]);
+
+  const lookupColumns = useMemo(() => {
+    const nameHeader =
+      lookupType === "presentacion" ? "Producto - Presentacion" : "Nombre";
+    return [
+      { field: "id", headerName: "ID", width: 110, type: "number" },
+      {
+        field: "nombre",
+        headerName: nameHeader,
+        flex: 1,
+        minWidth: 260,
+        valueGetter: (params) =>
+          lookupType === "presentacion"
+            ? renderPresentacion(params?.row)
+            : renderName(params?.row),
+      },
+    ];
+  }, [lookupType]);
+
+  const lookupTitle = useMemo(() => {
+    if (lookupType === "produccion") return "Seleccionar Produccion";
+    if (lookupType === "pedido") return "Seleccionar Pedido";
+    if (lookupType === "producto") return "Seleccionar Producto";
+    if (lookupType === "presentacion") return "Seleccionar Presentacion";
+    return "Seleccionar";
+  }, [lookupType]);
 
   useEffect(() => {
     if (!open && !articleModalOpen) return;
@@ -452,6 +535,40 @@ export default function FormKardex({
     });
 
     setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const applyLookupSelection = () => {
+    if (!lookupSelectedRow) return;
+
+    if (lookupType === "produccion") {
+      setFormData((prev) => ({ ...prev, produccionId: Number(lookupSelectedRow.id) }));
+    } else if (lookupType === "pedido") {
+      setFormData((prev) => ({
+        ...prev,
+        pedidoId: Number(lookupSelectedRow.id),
+        ordenCompraId: "",
+      }));
+    } else if (lookupType === "producto") {
+      setArticleFormData((prev) => ({
+        ...prev,
+        productoId: Number(lookupSelectedRow.id),
+        presentacionProductoId: "",
+        devolutivo: false,
+        responsableId: null,
+      }));
+    } else if (lookupType === "presentacion") {
+      const productoId = getProductoIdFromPresentacionObj(lookupSelectedRow) || articleFormData?.productoId || "";
+      const devolutivo = isPresentacionDevolutiva(lookupSelectedRow);
+      setArticleFormData((prev) => ({
+        ...prev,
+        productoId: productoId ? Number(productoId) : prev.productoId,
+        presentacionProductoId: Number(lookupSelectedRow.id),
+        devolutivo,
+        responsableId: devolutivo ? prev?.responsableId : null,
+      }));
+    }
+
+    setLookupOpen(false);
   };
 
   const mapDraftItemsToPayload = () =>
@@ -801,43 +918,45 @@ export default function FormKardex({
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.produccionId}>
-                <InputLabel>Produccion</InputLabel>
-                <Select
-                  name="produccionId"
-                  label="Produccion"
-                  value={formData.produccionId}
-                  onChange={handleHeaderChange}
-                >
-                  <MenuItem value="">
-                    <em>Seleccione...</em>
-                  </MenuItem>
-                  {producciones.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {renderName(p)}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{errors.produccionId}</FormHelperText>
-              </FormControl>
+              <TextField
+                fullWidth
+                label="Produccion"
+                value={selectedProduccionLabel}
+                error={!!errors.produccionId}
+                helperText={errors.produccionId}
+                inputProps={{ readOnly: true }}
+                onClick={() => openLookup("produccion")}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton edge="end" onClick={() => openLookup("produccion")}>
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Grid>
 
             {isEntradaUi && (
               <>
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Pedido</InputLabel>
-                    <Select name="pedidoId" label="Pedido" value={formData.pedidoId} onChange={handleHeaderChange}>
-                      <MenuItem value="">
-                        <em>Seleccione...</em>
-                      </MenuItem>
-                      {pedidos.map((p) => (
-                        <MenuItem key={p.id} value={p.id}>
-                          {renderName(p)}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label="Pedido"
+                    value={selectedPedidoLabel}
+                    inputProps={{ readOnly: true }}
+                    onClick={() => openLookup("pedido")}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton edge="end" onClick={() => openLookup("pedido")}>
+                            <SearchIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth disabled={!formData.pedidoId}>
@@ -977,53 +1096,43 @@ export default function FormKardex({
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel id="kdx-art-product-label">Producto</InputLabel>
-                <Select
-                  labelId="kdx-art-product-label"
-                  label="Producto"
-                  name="productoId"
-                  value={articleFormData.productoId ?? ""}
-                  onChange={handleArticleFormChange}
-                >
-                  <MenuItem value="">
-                    <em>Seleccione...</em>
-                  </MenuItem>
-                  {Array.from(
-                    (productos || []).map((p) => ({
-                      id: Number(p?.id),
-                      label: p?.nombre ?? p?.name ?? p?.descripcion ?? `Producto ${p?.id ?? ""}`,
-                    }))
-                  ).map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {p.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                required
+                label="Producto"
+                value={selectedProductoLabel}
+                inputProps={{ readOnly: true }}
+                onClick={() => openLookup("producto")}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton edge="end" onClick={() => openLookup("producto")}>
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel id="kdx-art-pp-label">Presentacion</InputLabel>
-                <Select
-                  labelId="kdx-art-pp-label"
-                  label="Presentacion"
-                  name="presentacionProductoId"
-                  value={articleFormData.presentacionProductoId ?? ""}
-                  onChange={handleArticleFormChange}
-                  disabled={!articleFormData.productoId}
-                >
-                  <MenuItem value="">
-                    <em>Seleccione...</em>
-                  </MenuItem>
-                  {presentacionesByProducto.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {renderPresentacion(p)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                required
+                label="Presentacion"
+                value={selectedPresentacionLabel}
+                inputProps={{ readOnly: true }}
+                onClick={() => openLookup("presentacion")}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton edge="end" onClick={() => openLookup("presentacion")}>
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Grid>
 
             <Grid item xs={12} sm={4}>
@@ -1110,6 +1219,32 @@ export default function FormKardex({
         <DialogActions>
           <Button onClick={() => setArticleFormOpen(false)}>Cancelar</Button>
           <Button onClick={handleSaveArticleDraft}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={lookupOpen} onClose={() => setLookupOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>{lookupTitle}</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <TextField
+            fullWidth
+            placeholder="Buscar..."
+            value={lookupQuery}
+            onChange={(e) => setLookupQuery(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <AppDataGrid
+            rows={lookupRows}
+            columns={lookupColumns}
+            selectedRow={lookupSelectedRow}
+            setSelectedRow={setLookupSelectedRow}
+            pageSizeOptions={[5, 10, 20]}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLookupOpen(false)}>Cancelar</Button>
+          <Button variant="contained" disabled={!lookupSelectedRow} onClick={applyLookupSelection}>
+            Seleccionar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

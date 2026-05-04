@@ -1,8 +1,9 @@
-﻿import React, { useState } from "react";
-import { Box, Button } from "@mui/material";
-import FormKardex from "./FromKardex";
+import React, { useState } from "react";
+import { Button } from "@mui/material";
+import FormKardex from "./FormKardex";
 import axios from "../axiosConfig";
 import { resolveKardexId } from "./utils/kardexFormatters";
+import GridActionBar from "../common/GridActionBar";
 
 export function KardexFormsContainer({
   selectedRow,
@@ -61,49 +62,27 @@ export function KardexFormsContainer({
 
   return (
     <>
-      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ textTransform: "none" }}
-          onClick={() => {
-            setFormMode("create");
-            setStartInArticles(false);
-            setFormOpen(true);
-          }}
-        >
-          + Agregar
-        </Button>
-        <Button
-          variant="outlined"
-          sx={{ textTransform: "none" }}
-          onClick={() => {
-            setFormMode("edit");
-            setStartInArticles(false);
-            setFormOpen(true);
-          }}
-          disabled={!selectedRow}
-        >
-          Actualizar
-        </Button>
-        <Button
-          variant="outlined"
-          color="warning"
-          sx={{ textTransform: "none" }}
-          disabled={!selectedRow}
-          onClick={handleInactivate}
-        >
-          Anular
-        </Button>
-        <Button
-          variant="outlined"
-          sx={{ textTransform: "none" }}
-          disabled={!selectedRow}
-          onClick={handleViewArticulos}
-        >
-          Ver Articulos
-        </Button>
-      </Box>
+      <GridActionBar
+        onAdd={() => {
+          setFormMode("create");
+          setStartInArticles(false);
+          setFormOpen(true);
+        }}
+        onUpdate={() => {
+          setFormMode("edit");
+          setStartInArticles(false);
+          setFormOpen(true);
+        }}
+        onDelete={handleInactivate}
+        canUpdate={!!selectedRow}
+        canDelete={!!selectedRow}
+        labels={{ add: "+ Agregar", update: "Actualizar", delete: "Anular" }}
+        extraActions={
+          <Button variant="contained" onClick={handleViewArticulos} disabled={!selectedRow}>
+            Ver Articulos
+          </Button>
+        }
+      />
 
       <FormKardex
         open={formOpen}
