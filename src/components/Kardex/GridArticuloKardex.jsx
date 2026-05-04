@@ -1,37 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  esES,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
-import { Box, Button } from "@mui/material";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import { esES } from "@mui/x-data-grid";
+import { Box } from "@mui/material";
 import AppDataGrid from "../common/AppDataGrid";
 import { resolveArticuloKardexId } from "./utils/kardexFormatters";
 
 const LS_KEY = "gridArticuloKardex:columnVisibility:v1";
-
-function ArticuloToolbar({ onResetColumns }) {
-  return (
-    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
-      <div>
-        <GridToolbarColumnsButton />
-        <GridToolbarFilterButton />
-        <GridToolbarDensitySelector />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <GridToolbarQuickFilter debounceMs={300} />
-        <Button variant="outlined" size="small" startIcon={<RestartAltIcon />} onClick={onResetColumns}>
-          Restablecer columnas
-        </Button>
-      </div>
-    </GridToolbarContainer>
-  );
-}
 
 export default function GridArticuloKardex({
   items = [],
@@ -176,11 +150,6 @@ export default function GridArticuloKardex({
     }
   };
 
-  const handleResetColumns = () => {
-    localStorage.removeItem(LS_KEY);
-    setColumnVisibilityModel({});
-  };
-
   const serverPaging =
     typeof rowCount === "number" &&
     paginationModel &&
@@ -233,8 +202,6 @@ export default function GridArticuloKardex({
         rowCount={serverPaging ? Math.max(Number(rowCount ?? 0), filteredRows.length) : undefined}
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
-        slots={{ toolbar: ArticuloToolbar }}
-        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
         containerSx={{ borderRadius: 4 }}
       />
     </Box>

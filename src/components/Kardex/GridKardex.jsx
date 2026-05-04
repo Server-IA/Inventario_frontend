@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { esES } from "@mui/x-data-grid";
-import { KardexToolbar } from "./KardexToolbar";
 import AppDataGrid from "../common/AppDataGrid";
 import { safeDateTime, formatEstado, resolveKardexId } from "./utils/kardexFormatters";
 
@@ -9,7 +8,6 @@ const LS_KEY = "gridKardex:columnVisibility:v1";
 
 export default function GridKardex({
     kardexes = [],
-    tiposMovimiento = [],
     selectedRow = null,
     setSelectedRow,
     loading = false,
@@ -17,8 +15,6 @@ export default function GridKardex({
     paginationModel,
     setPaginationModel,
     isAdmin = false,
-    filters = {},
-    setFilters = () => {},
 }) {
     const columns = useMemo(() => {
         const baseColumns = [
@@ -102,11 +98,6 @@ export default function GridKardex({
         }
     };
 
-    const handleResetColumns = () => {
-        localStorage.removeItem(LS_KEY);
-        setColumnVisibilityModel({});
-    };
-
     const serverPaging = typeof rowCount === "number" && paginationModel && setPaginationModel;
     const modelPage = paginationModel?.page ?? 0;
     const modelPageSize = paginationModel?.pageSize ?? paginationModel?.size ?? 10;
@@ -128,15 +119,6 @@ export default function GridKardex({
                 rowCount={serverPaging ? Math.max(Number(rowCount ?? 0), kardexes.length) : undefined}
                 columnVisibilityModel={columnVisibilityModel}
                 onColumnVisibilityModelChange={handleVisibilityChange}
-                slots={{ toolbar: KardexToolbar }}
-                slotProps={{
-                    toolbar: {
-                        onResetColumns: handleResetColumns,
-                        filters,
-                        setFilters,
-                        tiposMovimiento,
-                    },
-                }}
                 containerSx={{ borderRadius: 4 }}
                 sx={{ minHeight: 360 }}
             />
@@ -146,7 +128,6 @@ export default function GridKardex({
 
 GridKardex.propTypes = {
     kardexes: PropTypes.array,
-    tiposMovimiento: PropTypes.array,
     selectedRow: PropTypes.object,
     setSelectedRow: PropTypes.func,
     paginationModel: PropTypes.shape({
@@ -158,6 +139,4 @@ GridKardex.propTypes = {
     rowCount: PropTypes.number,
     loading: PropTypes.bool,
     isAdmin: PropTypes.bool,
-    filters: PropTypes.object,
-    setFilters: PropTypes.func,
 };

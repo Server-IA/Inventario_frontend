@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import FormKardex from "./FormKardex";
 import axios from "../axiosConfig";
 import { resolveKardexId } from "./utils/kardexFormatters";
@@ -11,6 +11,10 @@ export function KardexFormsContainer({
   reloadData,
   setMessage,
   onViewArticulos,
+  onOpenReportes,
+  onOpenFilters,
+  onClearFilters,
+  hasActiveFilters = false,
 }) {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
@@ -76,11 +80,19 @@ export function KardexFormsContainer({
         onDelete={handleInactivate}
         canUpdate={!!selectedRow}
         canDelete={!!selectedRow}
-        labels={{ add: "+ Agregar", update: "Actualizar", delete: "Anular" }}
+        labels={{ add: "Agregar", update: "Actualizar", delete: "Anular" }}
+        onFilters={onOpenFilters}
+        onClearFilters={onClearFilters}
+        hasActiveFilters={hasActiveFilters}
         extraActions={
-          <Button variant="contained" onClick={handleViewArticulos} disabled={!selectedRow}>
-            Ver Articulos
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button variant="contained" onClick={onOpenReportes}>
+              Reportes
+            </Button>
+            <Button variant="contained" onClick={handleViewArticulos} disabled={!selectedRow}>
+              Ver Articulos
+            </Button>
+          </Stack>
         }
       />
 

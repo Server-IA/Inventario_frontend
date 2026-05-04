@@ -22,6 +22,7 @@ import * as Yup from "yup";
 import GridArticuloKardex from "./GridArticuloKardex";
 import { resolveKardexId } from "./utils/kardexFormatters";
 import AppDataGrid from "../common/AppDataGrid";
+import GridActionBar from "../common/GridActionBar";
 
 const numberRequired = (msg, opts = {}) => {
   let y = Yup.number().typeError(msg).required(msg);
@@ -110,6 +111,10 @@ const newArticleDraft = () => ({
   estadoId: 1,
 });
 
+const DEFAULT_ARTICLE_FILTERS = {
+  productoId: "",
+};
+
 const toNumericIdOrNull = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
@@ -174,6 +179,8 @@ export default function FormKardex({
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupSelectedRow, setLookupSelectedRow] = useState(null);
   const [fetchedPresentacionIds, setFetchedPresentacionIds] = useState({});
+  const [articleFiltersOpen, setArticleFiltersOpen] = useState(false);
+  const [articleFilters, setArticleFilters] = useState(DEFAULT_ARTICLE_FILTERS);
 
   const token = localStorage.getItem("token");
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -366,6 +373,45 @@ export default function FormKardex({
     if (it) return renderPresentacion(it);
     return articleFormData?.presentacionNombre ?? "";
   }, [presentaciones, articleFormData?.presentacionProductoId, articleFormData?.presentacionNombre]);
+
+  const getProductoNombreById = (productoId) => {
+    if (!productoId) return "";
+    const it = (productos || []).find((p) => String(p?.id) === String(productoId));
+    return it ? renderName(it) : "";
+  };
+
+  const articleProductoOptions = useMemo(() => {
+    const map = new Map();
+    (draftItems || []).forEach((it) => {
+      const productoId =
+        toNumericIdOrNull(it?.productoId) ??
+        toNumericIdOrNull(getProductoIdFromPresentacion(it?.presentacionProductoId));
+      if (!productoId) return;
+      const nombre =
+        it?.productoNombre ||
+        getProductoNombreByPresentacionId(it?.presentacionProductoId) ||
+        getProductoNombreById(productoId) ||
+        `Producto ${productoId}`;
+      map.set(String(productoId), { id: productoId, nombre });
+    });
+    return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [draftItems, presentaciones, productos]);
+
+  const hasActiveArticleFilters = Boolean(articleFilters.productoId !== "");
+
+  const filteredDraftItems = useMemo(() => {
+    let rows = Array.isArray(draftItems) ? [...draftItems] : [];
+    if (articleFilters.productoId !== "") {
+      rows = rows.filter((it) => {
+        const itemProductoId =
+          toNumericIdOrNull(it?.productoId) ??
+          toNumericIdOrNull(getProductoIdFromPresentacion(it?.presentacionProductoId));
+        return String(itemProductoId ?? "") === String(articleFilters.productoId);
+      });
+    }
+
+    return rows;
+  }, [draftItems, articleFilters]);
 
   const lookupBaseRows = useMemo(() => {
     if (lookupType === "produccion") return producciones;
@@ -1072,6 +1118,15 @@ export default function FormKardex({
     };
   }, [articleFormOpen, articleFormData?.presentacionProductoId, presentaciones]);
 
+  useEffect(() => {
+    if (!articleSelectedRow) return;
+    const selectedKey = String(articleSelectedRow?.id ?? articleSelectedRow?.kardexItemId ?? "");
+    const stillVisible = filteredDraftItems.some(
+      (it) => String(it?.id ?? it?.kardexItemId ?? "") === selectedKey
+    );
+    if (!stillVisible) setArticleSelectedRow(null);
+  }, [filteredDraftItems, articleSelectedRow]);
+
   const handleSaveKardex = async () => {
     if (savingKardex) return;
     const ppIds = Array.from(
@@ -1360,31 +1415,20 @@ export default function FormKardex({
       >
         <DialogTitle>Articulos del Kardex</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
-          <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
-            <Button variant="contained" sx={{ textTransform: "none" }} onClick={handleOpenCreateArticle}>
-              + Agregar
-            </Button>
-            <Button
-              variant="outlined"
-              sx={{ textTransform: "none" }}
-              onClick={handleOpenEditArticle}
-              disabled={!articleSelectedRow}
-            >
-              Actualizar
-            </Button>
-            <Button
-              variant="outlined"
-              color="warning"
-              sx={{ textTransform: "none" }}
-              onClick={handleDeleteArticle}
-              disabled={!articleSelectedRow}
-            >
-              Anular
-            </Button>
-          </Box>
+          <GridActionBar
+            onAdd={handleOpenCreateArticle}
+            onUpdate={handleOpenEditArticle}
+            onDelete={handleDeleteArticle}
+            canUpdate={Boolean(articleSelectedRow)}
+            canDelete={Boolean(articleSelectedRow)}
+            labels={{ add: "Agregar", update: "Actualizar", delete: "Anular" }}
+            onFilters={() => setArticleFiltersOpen(true)}
+            onClearFilters={() => setArticleFilters(DEFAULT_ARTICLE_FILTERS)}
+            hasActiveFilters={hasActiveArticleFilters}
+          />
 
           <GridArticuloKardex
-            items={draftItems}
+            items={filteredDraftItems}
             presentaciones={presentaciones}
             productos={productos}
             selectedRow={articleSelectedRow}
@@ -1545,6 +1589,36 @@ export default function FormKardex({
         <DialogActions>
           <Button onClick={() => setArticleFormOpen(false)}>Cancelar</Button>
           <Button onClick={handleSaveArticleDraft}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={articleFiltersOpen} onClose={() => setArticleFiltersOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Filtros de Artículos</DialogTitle>
+        <DialogContent sx={{ pt: 3.5 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 2, mt: 1 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel id="kdx-art-filter-producto-label">Producto</InputLabel>
+              <Select
+                labelId="kdx-art-filter-producto-label"
+                label="Producto"
+                value={articleFilters.productoId}
+                onChange={(e) => setArticleFilters((prev) => ({ ...prev, productoId: e.target.value }))}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {articleProductoOptions.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArticleFilters(DEFAULT_ARTICLE_FILTERS)}>Limpiar</Button>
+          <Button variant="contained" onClick={() => setArticleFiltersOpen(false)}>
+            Aplicar
+          </Button>
         </DialogActions>
       </Dialog>
 
