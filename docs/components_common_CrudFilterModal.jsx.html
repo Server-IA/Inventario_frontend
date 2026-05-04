@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>components/common/CrudFilterModal.jsx - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AppDataGrid.html">AppDataGrid</a><ul class='methods'><li data-type='method'><a href="module-AppDataGrid.html#~loadStoredVisibilityModel">loadStoredVisibilityModel</a></li></ul></li><li><a href="module-Chart.html">Chart</a><ul class='methods'><li data-type='method'><a href="module-Chart.html#~createData">createData</a></li></ul></li><li><a href="module-Chart1.html">Chart1</a></li><li><a href="module-ComboBox.html">ComboBox</a><ul class='methods'><li data-type='method'><a href="module-ComboBox.html#~ComboBox">ComboBox</a></li></ul></li><li></li><li><a href="module-Departamento.html">Departamento</a></li><li><a href="module-Deposits.html">Deposits</a><ul class='methods'><li data-type='method'><a href="module-Deposits.html#~preventDefault">preventDefault</a></li></ul></li><li><a href="module-Drawer.html">Drawer</a></li><li><a href="module-Empresa.html">Empresa</a></li><li><a href="module-FormEmpresa.html">FormEmpresa</a></li><li><a href="module-Grid1.html">Grid1</a></li><li><a href="module-GridActionBar.html">GridActionBar</a></li><li><a href="module-GridEmpresa.html">GridEmpresa</a></li><li><a href="module-Grupo.html">Grupo</a></li><li><a href="module-Home.html">Home</a><ul class='methods'><li data-type='method'><a href="module-Home.html#~Home">Home</a></li></ul></li><li><a href="module-Logout.html">Logout</a><ul class='methods'><li data-type='method'><a href="module-Logout.html#.logout">logout</a></li></ul></li><li><a href="module-MessageSnackBar.html">MessageSnackBar</a></li><li><a href="module-Municipio.html">Municipio</a></li><li><a href="module-Pais.html">Pais</a></li><li><a href="module-PerfilCard.html">PerfilCard</a><ul class='methods'><li data-type='method'><a href="module-PerfilCard.html#.module.exports">module.exports</a></li></ul></li><li><a href="module-PerfilGroup.html">PerfilGroup</a><ul class='methods'><li data-type='method'><a href="module-PerfilGroup.html#.PerfilGroup">PerfilGroup</a></li></ul></li><li><a href="module-SectionHeader.html">SectionHeader</a></li><li><a href="module-SiteProps.html">SiteProps</a></li><li><a href="module-StackButtons.html">StackButtons</a><ul class='methods'><li data-type='method'><a href="module-StackButtons.html#.StackButtons">StackButtons</a></li></ul></li><li><a href="module-TipoEvaluacionReport.html">TipoEvaluacionReport</a></li><li><a href="module-Title.html">Title</a><ul class='methods'><li data-type='method'><a href="module-Title.html#~Title">Title</a></li></ul></li><li><a href="module-main.html">main</a><ul class='methods'><li data-type='method'><a href="module-main.html#~Main">Main</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#ProfileMenu">ProfileMenu</a></li><li><a href="global.html#buildFacturaCondicionEmpresa">buildFacturaCondicionEmpresa</a></li><li><a href="global.html#buildKardexCondicionEmpresa">buildKardexCondicionEmpresa</a></li><li><a href="global.html#buildOrdenCompraCondicionEmpresa">buildOrdenCompraCondicionEmpresa</a></li><li><a href="global.html#buildPedidoCondicionEmpresa">buildPedidoCondicionEmpresa</a></li><li><a href="global.html#buildPedidoReporteEspecifico">buildPedidoReporteEspecifico</a></li><li><a href="global.html#buildProductoVencidoCondicionEmpresa">buildProductoVencidoCondicionEmpresa</a></li><li><a href="global.html#makeLoaders">makeLoaders</a></li><li><a href="global.html#uniqById">uniqById</a></li><li><a href="global.html#unwrap">unwrap</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">components/common/CrudFilterModal.jsx</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useState, useEffect } from "react";
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  FormControl, InputLabel, Select, MenuItem,
+  Button, Box
+} from "@mui/material";
+import { useTranslation } from "react-i18next";
+
+/**
+ * Modal genérico de filtros con limpieza automática de campos dependientes.
+ * @param {Array} fields -> { name, label, getOptions, dependsOn, disabled, clearChildren }
+ * - clearChildren: Array de nombres de campos que se limpiarán cuando este campo cambie
+ * - dependsOn: Array de nombres de campos de los que depende este campo
+ * - disabled: Función que determina si el campo está deshabilitado basado en values
+ */
+export default function CrudFilterModal({
+  open, onClose, title, titleKey,
+  fields, values, onChange,
+  onApply, onClear
+}) {
+  const { t } = useTranslation();
+  const [options, setOptions] = useState({});
+  const resolvedTitle = titleKey ? t(titleKey) : title;
+
+  // Función para manejar cambios con limpieza automática de hijos
+  const handleFieldChange = (fieldName, value) => {
+    const field = fields.find(f => f.name === fieldName);
+    
+    // Primero, actualizar el campo actual
+    onChange({ name: fieldName, value });
+    
+    // Luego, limpiar los campos hijos si existen
+    if (field?.clearChildren &amp;&amp; field.clearChildren.length > 0) {
+      field.clearChildren.forEach(childName => {
+        onChange({ name: childName, value: "" });
+      });
+    }
+  };
+
+  useEffect(() => {
+    fields.forEach(async (f) => {
+      if (f.getOptions) {
+        const opts = await f.getOptions(values);
+        setOptions((prev) => ({ ...prev, [f.name]: opts }));
+        
+        // Auto-seleccionar si solo hay una opción y el campo está vacío
+        if (opts.length === 1 &amp;&amp; !values[f.name]) {
+          const field = fields.find(field => field.name === f.name);
+          // Solo auto-completar si el campo no está deshabilitado
+          if (!field?.disabled?.(values)) {
+            handleFieldChange(f.name, opts[0].value);
+          }
+        }
+      }
+    });
+  }, [fields, values]);
+
+  return (
+    &lt;Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      &lt;DialogTitle>{resolvedTitle}&lt;/DialogTitle>
+      &lt;DialogContent>
+        &lt;Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          {fields.map((f) => (
+            &lt;FormControl key={f.name} fullWidth disabled={f.disabled?.(values)}>
+              &lt;InputLabel>{f.labelKey ? t(f.labelKey) : f.label}&lt;/InputLabel>
+              &lt;Select
+                value={values[f.name] || ""}
+                onChange={(e) =>
+                  handleFieldChange(f.name, e.target.value)
+                }
+              >
+                &lt;MenuItem value="">{t("common.labels.all")}&lt;/MenuItem>
+                {(options[f.name] || []).map((o) => (
+                  &lt;MenuItem key={o.value} value={o.value}>
+                    {o.label}
+                  &lt;/MenuItem>
+                ))}
+              &lt;/Select>
+            &lt;/FormControl>
+          ))}
+        &lt;/Box>
+      &lt;/DialogContent>
+      &lt;DialogActions>
+        &lt;Button onClick={onClear}>{t("common.actions.clear")}&lt;/Button>
+        &lt;Button variant="contained" onClick={onApply}>{t("common.actions.apply")}&lt;/Button>
+      &lt;/DialogActions>
+    &lt;/Dialog>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Mon May 04 2026 09:11:43 GMT-0500 (hora estándar de Colombia) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

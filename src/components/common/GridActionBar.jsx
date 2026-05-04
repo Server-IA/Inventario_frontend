@@ -1,3 +1,7 @@
+/**
+ * Componente reusable de barra de acciones para grillas CRUD.
+ * @module GridActionBar
+ */
 import React from "react";
 import PropTypes from "prop-types";
 import { Stack, Button, Box, Tooltip } from "@mui/material";
@@ -8,6 +12,26 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 
+/**
+ * Barra de acciones reusable para módulos CRUD.
+ *
+ * Centraliza las acciones principales de agregar, actualizar, eliminar y filtros,
+ * manteniendo estilos consistentes, modo compacto responsive e integración con i18n.
+ *
+ * @param {Object} props Propiedades del componente.
+ * @param {function} [props.onAdd] Acción principal de creación.
+ * @param {function} [props.onUpdate] Acción de edición de la fila seleccionada.
+ * @param {function} [props.onDelete] Acción de eliminación de la fila seleccionada.
+ * @param {boolean} [props.canUpdate=false] Habilita o deshabilita el botón actualizar.
+ * @param {boolean} [props.canDelete=false] Habilita o deshabilita el botón eliminar.
+ * @param {*} [props.extraActions] Acciones extra que se muestran antes de agregar.
+ * @param {function} [props.onFilters] Abre o activa el flujo de filtros.
+ * @param {function} [props.onClearFilters] Limpia filtros activos.
+ * @param {boolean} [props.hasActiveFilters=false] Indica si hay filtros activos para mostrar el botón limpiar.
+ * @param {*} [props.rightActions] Acciones adicionales en el bloque secundario.
+ * @param {Object} [props.labels] Sobrescritura puntual de etiquetas visibles.
+ * @returns {JSX.Element}
+ */
 export default function GridActionBar({
   onAdd,
   onUpdate,
@@ -263,4 +287,15 @@ GridActionBar.propTypes = {
   canUpdate: PropTypes.bool,
   canDelete: PropTypes.bool,
   extraActions: PropTypes.node,
+  onFilters: PropTypes.func,
+  onClearFilters: PropTypes.func,
+  hasActiveFilters: PropTypes.bool,
+  rightActions: PropTypes.node,
+  labels: PropTypes.shape({
+    add: PropTypes.string,
+    update: PropTypes.string,
+    delete: PropTypes.string,
+    filters: PropTypes.string,
+    clear: PropTypes.string,
+  }),
 };
