@@ -36,6 +36,7 @@ function ArticuloToolbar({ onResetColumns }) {
 export default function GridArticuloKardex({
   items = [],
   presentaciones = [],
+  productos = [],
   kardexId,
   selectedRow = null,
   setSelectedRow = () => {},
@@ -47,22 +48,46 @@ export default function GridArticuloKardex({
   paginationModel,
   onPaginationModelChange,
 }) {
-  const presById = useMemo(() => {
+  const productNameById = useMemo(() => {
     const m = {};
-    for (const pr of presentaciones ?? []) {
-      const producto = pr?.producto?.nombre ?? pr?.producto?.name ?? pr?.productoNombre ?? "";
-      const presentacion =
-        pr?.presentacion?.nombre ??
-        pr?.presentacion?.name ??
-        pr?.presentacionNombre ??
-        pr?.nombre ??
-        pr?.name ??
-        "";
-      const label = [producto, presentacion].filter(Boolean).join(" - ");
-      if (pr?.id != null) m[String(pr.id)] = label;
+    for (const p of productos ?? []) {
+      if (p?.id == null) continue;
+      m[String(p.id)] = p?.nombre ?? p?.name ?? p?.descripcion ?? "";
     }
     return m;
-  }, [presentaciones]);
+  }, [productos]);
+
+  const pickRow = (arg1, arg2) => {
+    if (arg2 && typeof arg2 === "object" && !Array.isArray(arg2)) return arg2;
+    if (arg1?.row && typeof arg1.row === "object") return arg1.row;
+    if (arg1 && typeof arg1 === "object" && !Array.isArray(arg1) && arg1.id !== undefined) return arg1;
+    return {};
+  };
+
+  const getProductoIdFromPresentacion = (pr) =>
+    pr?.producto?.id ??
+    pr?.productoId ??
+    pr?.idProducto ??
+    pr?.productoID ??
+    pr?.prpProductoId ??
+    pr?.producto_id ??
+    pr?.proId ??
+    null;
+
+  const productByPresentacionId = useMemo(() => {
+    const m = {};
+    for (const pr of presentaciones ?? []) {
+      const pid = getProductoIdFromPresentacion(pr);
+      const producto =
+        pr?.producto?.nombre ??
+        pr?.producto?.name ??
+        pr?.productoNombre ??
+        pr?.nombreProducto ??
+        (pid != null ? productNameById[String(pid)] : "");
+      if (pr?.id != null) m[String(pr.id)] = producto;
+    }
+    return m;
+  }, [presentaciones, productNameById]);
 
   const filteredRows = useMemo(() => {
     if (!kardexId) return Array.isArray(items) ? items : [];
@@ -79,12 +104,29 @@ export default function GridArticuloKardex({
       headerName: "Producto",
       flex: 1,
       minWidth: 220,
-      valueGetter: (params) =>
-        params?.row?.productoNombre ??
-        params?.row?.nombreProducto ??
-        params?.row?.identificadorProducto ??
-        presById[String(params?.row?.presentacionProductoId)] ??
-        `Presentacion #${params?.row?.presentacionProductoId ?? resolveArticuloKardexId(params?.row) ?? ""}`,
+      valueGetter: (arg1, arg2) => {
+        const row = pickRow(arg1, arg2);
+        return (
+        productByPresentacionId[
+          String(
+            row?.presentacionProductoId ??
+              row?.presentacion_producto_id ??
+              row?.idPresentacionProducto ??
+              ""
+          )
+        ] ??
+        row?.productoNombre ??
+        row?.nombreProducto ??
+        row?.identificadorProducto ??
+        `Producto #${
+          row?.presentacionProductoId ??
+          row?.presentacion_producto_id ??
+          row?.idPresentacionProducto ??
+          resolveArticuloKardexId(row) ??
+          ""
+        }`
+        );
+      },
     },
     { field: "cantidad", headerName: "Cantidad", width: 120 },
     { field: "precio", headerName: "Precio", width: 120 },
@@ -93,17 +135,24 @@ export default function GridArticuloKardex({
       field: "fechaVencimiento",
       headerName: "Fecha Vencimiento",
       width: 170,
-      valueGetter: (params) => (params?.row?.fechaVencimiento || "").toString().substring(0, 10),
+      valueGetter: (arg1, arg2) => {
+        const row = pickRow(arg1, arg2);
+        return (row?.fechaVencimiento || "").toString().substring(0, 10);
+      },
     },
     {
       field: "estado",
       headerName: "Estado",
       width: 140,
-      valueGetter: (params) =>
-        params?.row?.estadoNombre ??
-        params?.row?.estado?.name ??
-        params?.row?.estado?.nombre ??
-        (String(params?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+      valueGetter: (arg1, arg2) => {
+        const row = pickRow(arg1, arg2);
+        return (
+        row?.estadoNombre ??
+        row?.estado?.name ??
+        row?.estado?.nombre ??
+        (String(row?.estadoId) === "1" ? "Activo" : "Inactivo")
+        );
+      },
     },
   ];
 
@@ -141,6 +190,7 @@ export default function GridArticuloKardex({
 
   const rowId = (r) =>
     resolveArticuloKardexId(r) ??
+    r?.kardexItemId ??
     `${r?.kardexId ?? kardexId ?? ""}-${r?.presentacionProductoId ?? ""}-${r?.lote ?? ""}`;
 
   const handleLocalSelection = (ids) => {
@@ -194,6 +244,7 @@ export default function GridArticuloKardex({
 GridArticuloKardex.propTypes = {
   items: PropTypes.array,
   presentaciones: PropTypes.array,
+  productos: PropTypes.array,
   kardexId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func,

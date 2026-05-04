@@ -58,8 +58,21 @@ const normalize = (v) =>
 
 const renderName = (it) => it?.name ?? it?.nombre ?? it?.descripcion ?? `#${it?.id}`;
 
+const getPresentacionId = (p) =>
+  p?.id ??
+  p?.presentacionProductoId ??
+  p?.presentacion_producto_id ??
+  p?.idPresentacionProducto ??
+  p?.prpId ??
+  null;
+
 const renderPresentacion = (it) => {
-  const p = it?.producto?.nombre ?? it?.producto?.name ?? it?.productoNombre ?? "";
+  const p =
+    it?.producto?.nombre ??
+    it?.producto?.name ??
+    it?.productoNombre ??
+    it?.nombreProducto ??
+    "";
   const pr =
     it?.presentacion?.nombre ??
     it?.presentacion?.name ??
@@ -155,15 +168,25 @@ export default function FormKardex({
   const [articleFormOpen, setArticleFormOpen] = useState(false);
   const [articleFormMode, setArticleFormMode] = useState("create");
   const [articleFormData, setArticleFormData] = useState(newArticleDraft());
+  const [savingKardex, setSavingKardex] = useState(false);
   const [lookupOpen, setLookupOpen] = useState(false);
   const [lookupType, setLookupType] = useState("");
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupSelectedRow, setLookupSelectedRow] = useState(null);
+  const [fetchedPresentacionIds, setFetchedPresentacionIds] = useState({});
 
   const token = localStorage.getItem("token");
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
   const openLookup = (type) => {
+    if (type === "presentacion" && !articleFormData?.productoId) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Primero debes seleccionar un producto para buscar presentaciones.",
+      });
+      return;
+    }
     setLookupType(type);
     setLookupQuery("");
     setLookupSelectedRow(null);
@@ -180,16 +203,68 @@ export default function FormKardex({
   const getProductoIdFromPresentacionObj = (p) =>
     p?.producto?.id ??
     p?.productoId ??
+    p?.productoIdentificadorId ??
+    p?.idProducto ??
+    p?.productoID ??
+    p?.prpProductoId ??
+    p?.producto_id_fk ??
     p?.producto_id ??
     p?.proId ??
-    p?.idProducto ??
     p?.producto?.productoId ??
     p?.producto_presentacion?.productoId ??
     "";
 
+  const fetchPresentacionesPaged = async () => {
+    try {
+      const size = 500;
+      const first = await axios.get("/v1/producto_presentacion", { ...headers, params: { page: 0, size } });
+      const firstData = first?.data ?? {};
+      const contentFirst = Array.isArray(firstData?.content) ? firstData.content : [];
+      const totalPages =
+        Number(firstData?.page?.totalPages ?? firstData?.totalPages ?? 1) || 1;
+      if (totalPages <= 1) return contentFirst;
+
+      const calls = [];
+      for (let p = 1; p < totalPages; p += 1) {
+        calls.push(axios.get("/v1/producto_presentacion", { ...headers, params: { page: p, size } }));
+      }
+      const rest = await Promise.allSettled(calls);
+      const merged = [...contentFirst];
+      rest.forEach((r) => {
+        if (r.status !== "fulfilled") return;
+        const d = r.value?.data ?? {};
+        const c = Array.isArray(d?.content) ? d.content : [];
+        merged.push(...c);
+      });
+      return merged;
+    } catch {
+      return [];
+    }
+  };
+
   const getProductoIdFromPresentacion = (presentacionProductoId) => {
-    const found = (presentaciones || []).find((p) => String(p?.id) === String(presentacionProductoId));
+    const found = (presentaciones || []).find(
+      (p) => String(getPresentacionId(p)) === String(presentacionProductoId)
+    );
     return getProductoIdFromPresentacionObj(found);
+  };
+
+  const getProductoNombreByPresentacionId = (presentacionProductoId) => {
+    const found = (presentaciones || []).find(
+      (p) => String(getPresentacionId(p)) === String(presentacionProductoId)
+    );
+    if (!found) return "";
+    const pid = getProductoIdFromPresentacionObj(found);
+    const product = (productos || []).find((p) => String(p?.id) === String(pid));
+    return (
+      found?.producto?.nombre ??
+      found?.producto?.name ??
+      found?.productoNombre ??
+      found?.nombreProducto ??
+      product?.nombre ??
+      product?.name ??
+      ""
+    );
   };
 
   const fetchProductoIdByPresentacion = async (presentacionProductoId) => {
@@ -222,24 +297,32 @@ export default function FormKardex({
   };
 
   const getDevolutivoByPresentacionId = (presentacionProductoId, fallback = false) => {
-    const pres = (presentaciones || []).find((p) => String(p?.id) === String(presentacionProductoId));
+    const pres = (presentaciones || []).find(
+      (p) => String(getPresentacionId(p)) === String(presentacionProductoId)
+    );
     if (!pres) return Boolean(fallback);
     return isPresentacionDevolutiva(pres);
   };
 
   const presentacionesByProducto = useMemo(() => {
     const pid = articleFormData?.productoId;
-    if (!pid) return presentaciones;
+    if (!pid) return [];
     const filtered = (presentaciones || []).filter(
       (p) => String(getProductoIdFromPresentacionObj(p)) === String(pid)
     );
-    return filtered.length ? filtered : presentaciones;
-  }, [presentaciones, articleFormData?.productoId]);
+    if (filtered.length) return filtered;
+
+    const selectedProd = productos.find((p) => String(p?.id) === String(pid));
+    const selectedProdName = normalize(renderName(selectedProd));
+    if (!selectedProdName) return filtered;
+
+    return (presentaciones || []).filter((p) => normalize(renderPresentacion(p)).includes(selectedProdName));
+  }, [presentaciones, articleFormData?.productoId, productos]);
 
   const presentacionSeleccionada = useMemo(
     () =>
       (presentaciones || []).find(
-        (p) => String(p?.id) === String(articleFormData?.presentacionProductoId)
+        (p) => String(getPresentacionId(p)) === String(articleFormData?.presentacionProductoId)
       ) ?? null,
     [presentaciones, articleFormData?.presentacionProductoId]
   );
@@ -272,20 +355,24 @@ export default function FormKardex({
 
   const selectedProductoLabel = useMemo(() => {
     const it = productos.find((p) => String(p?.id) === String(articleFormData?.productoId));
-    return it ? renderName(it) : "";
-  }, [productos, articleFormData?.productoId]);
+    if (it) return renderName(it);
+    return articleFormData?.productoNombre ?? "";
+  }, [productos, articleFormData?.productoId, articleFormData?.productoNombre]);
 
   const selectedPresentacionLabel = useMemo(() => {
-    const it = presentaciones.find((p) => String(p?.id) === String(articleFormData?.presentacionProductoId));
-    return it ? renderPresentacion(it) : "";
-  }, [presentaciones, articleFormData?.presentacionProductoId]);
+    const it = presentaciones.find(
+      (p) => String(getPresentacionId(p)) === String(articleFormData?.presentacionProductoId)
+    );
+    if (it) return renderPresentacion(it);
+    return articleFormData?.presentacionNombre ?? "";
+  }, [presentaciones, articleFormData?.presentacionProductoId, articleFormData?.presentacionNombre]);
 
   const lookupBaseRows = useMemo(() => {
     if (lookupType === "produccion") return producciones;
     if (lookupType === "pedido") return pedidos;
     if (lookupType === "producto") return productos;
     if (lookupType === "presentacion") {
-      return articleFormData?.productoId ? presentacionesByProducto : presentaciones;
+      return presentacionesByProducto;
     }
     return [];
   }, [lookupType, producciones, pedidos, productos, presentacionesByProducto, presentaciones, articleFormData?.productoId]);
@@ -332,7 +419,8 @@ export default function FormKardex({
     if (!open && !articleModalOpen) return;
 
     const loadLists = async () => {
-      const reqs = await Promise.allSettled([
+      const [reqs, presentacionesPaged] = await Promise.all([
+        Promise.allSettled([
         axios.get("/v1/items/tipo_movimiento/0", headers),
         axios.get("/v1/items/produccion/0", headers),
         axios.get("/v1/items/almacen/0", headers),
@@ -343,6 +431,8 @@ export default function FormKardex({
         axios.get("/v1/items/proveedor/0", headers),
         axios.get("/v1/items/producto_presentacion/0", headers),
         axios.get("/v1/items/usuario_empresa/0", headers),
+        ]),
+        fetchPresentacionesPaged(),
       ]);
 
       const pick = (idx) => (reqs[idx]?.status === "fulfilled" ? pickList(reqs[idx].value) : []);
@@ -365,7 +455,18 @@ export default function FormKardex({
         seen.add(String(id));
       }
       setEmpresas(merged);
-      setPresentaciones(pick(8));
+      const presentacionesItems = pick(8);
+      const mergedPresentaciones = [...presentacionesPaged];
+      const seenPresentaciones = new Set(
+        mergedPresentaciones.map((p) => String(getPresentacionId(p))).filter((id) => id !== "null")
+      );
+      for (const it of presentacionesItems) {
+        const id = getPresentacionId(it);
+        if (id == null || seenPresentaciones.has(String(id))) continue;
+        mergedPresentaciones.push(it);
+        seenPresentaciones.add(String(id));
+      }
+      setPresentaciones(mergedPresentaciones);
       setResponsables(pick(9));
     };
 
@@ -380,6 +481,136 @@ export default function FormKardex({
       setArticleFormData((prev) => ({ ...prev, productoId: Number(pid) }));
     }
   }, [articleFormOpen, articleFormData?.productoId, articleFormData?.presentacionProductoId, presentaciones]);
+
+  useEffect(() => {
+    const ids = Array.from(
+      new Set(
+        (draftItems || [])
+          .map((it) => toNumericIdOrNull(it?.presentacionProductoId))
+          .filter((id) => id != null)
+      )
+    );
+    if (!ids.length) return;
+
+    const missingIds = ids.filter((id) => {
+      const inCache = (presentaciones || []).some((p) => String(getPresentacionId(p)) === String(id));
+      return !inCache && !fetchedPresentacionIds[String(id)];
+    });
+    if (!missingIds.length) return;
+
+    let alive = true;
+    Promise.allSettled(missingIds.map((id) => fetchPresentacionDetalle(id))).then((results) => {
+      if (!alive) return;
+
+      const fetched = [];
+      const marks = {};
+      results.forEach((res, idx) => {
+        const id = String(missingIds[idx]);
+        marks[id] = true;
+        if (res.status !== "fulfilled") return;
+        const row = res.value;
+        if (row) fetched.push(row);
+      });
+
+      if (Object.keys(marks).length) {
+        setFetchedPresentacionIds((prev) => ({ ...prev, ...marks }));
+      }
+
+      if (!fetched.length) return;
+      setPresentaciones((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const seen = new Set(next.map((p) => String(getPresentacionId(p))));
+        fetched.forEach((row) => {
+          const pid = getPresentacionId(row);
+          if (pid == null) return;
+          if (seen.has(String(pid))) return;
+          next.push(row);
+          seen.add(String(pid));
+        });
+        return next;
+      });
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [draftItems, presentaciones, fetchedPresentacionIds]);
+
+  useEffect(() => {
+    if (!articleFormOpen || !articleFormData?.productoId) return;
+    const unresolvedIds = Array.from(
+      new Set(
+        (presentaciones || [])
+          .map((p) => {
+            const id = toNumericIdOrNull(getPresentacionId(p));
+            const productId = toNumericIdOrNull(getProductoIdFromPresentacionObj(p));
+            if (!id || productId) return null;
+            if (fetchedPresentacionIds[String(id)]) return null;
+            return id;
+          })
+          .filter((id) => id != null)
+      )
+    );
+    if (!unresolvedIds.length) return;
+
+    let alive = true;
+    const batch = unresolvedIds.slice(0, 100);
+    Promise.allSettled(batch.map((id) => fetchPresentacionDetalle(id))).then((results) => {
+      if (!alive) return;
+
+      const detailById = {};
+      const marks = {};
+      results.forEach((res, idx) => {
+        const id = String(batch[idx]);
+        marks[id] = true;
+        if (res.status !== "fulfilled") return;
+        const row = res.value;
+        if (!row) return;
+        const pid = getPresentacionId(row);
+        if (pid != null) detailById[String(pid)] = row;
+      });
+
+      if (Object.keys(marks).length) {
+        setFetchedPresentacionIds((prev) => ({ ...prev, ...marks }));
+      }
+
+      if (!Object.keys(detailById).length) return;
+      setPresentaciones((prev) =>
+        (prev || []).map((p) => {
+          const id = getPresentacionId(p);
+          return id != null && detailById[String(id)] ? detailById[String(id)] : p;
+        })
+      );
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [articleFormOpen, articleFormData?.productoId, presentaciones, fetchedPresentacionIds]);
+
+  useEffect(() => {
+    if (!draftItems.length) return;
+    setDraftItems((prev) =>
+      (prev || []).map((it) => {
+        const productoId = toNumericIdOrNull(it?.productoId) ?? toNumericIdOrNull(getProductoIdFromPresentacion(it?.presentacionProductoId));
+        const productoNombre = getProductoNombreByPresentacionId(it?.presentacionProductoId) || it?.productoNombre || "";
+        const presentacionObj = (presentaciones || []).find(
+          (p) => String(getPresentacionId(p)) === String(it?.presentacionProductoId)
+        );
+        const presentacionNombre = it?.presentacionNombre || (presentacionObj ? renderPresentacion(presentacionObj) : "");
+        const devolutivo = getDevolutivoByPresentacionId(it?.presentacionProductoId, it?.devolutivo);
+
+        return {
+          ...it,
+          productoId: productoId ?? "",
+          productoNombre,
+          presentacionNombre,
+          devolutivo,
+          responsableId: devolutivo ? toNumericIdOrNull(it?.responsableId) : null,
+        };
+      })
+    );
+  }, [presentaciones]);
 
   useEffect(() => {
     if (!open) return;
@@ -424,8 +655,12 @@ export default function FormKardex({
         const mapped = (data.items || []).map((it, idx) => ({
           id: it?.id ?? null,
           kardexItemId: it?.id ?? `tmp-edit-${idx}-${Date.now()}`,
-          presentacionProductoId: Number(it?.presentacionProductoId ?? 0),
+          presentacionProductoId: Number(
+            it?.presentacionProductoId ?? it?.presentacion_producto_id ?? it?.idPresentacionProducto ?? 0
+          ),
           productoId: "",
+          productoNombre: it?.productoNombre ?? it?.nombreProducto ?? it?.identificadorProducto ?? "",
+          presentacionNombre: it?.presentacionNombre ?? "",
           cantidad: Number(it?.cantidad ?? 0),
           precio: Number(it?.precio ?? 0),
           lote: it?.lote || "",
@@ -459,8 +694,12 @@ export default function FormKardex({
           const mapped = content.map((it, idx) => ({
             id: it?.id ?? null,
             kardexItemId: it?.id ?? `tmp-fallback-${idx}-${Date.now()}`,
-            presentacionProductoId: Number(it?.presentacionProductoId ?? 0),
+            presentacionProductoId: Number(
+              it?.presentacionProductoId ?? it?.presentacion_producto_id ?? it?.idPresentacionProducto ?? 0
+            ),
             productoId: "",
+            productoNombre: it?.productoNombre ?? it?.nombreProducto ?? it?.identificadorProducto ?? "",
+            presentacionNombre: it?.presentacionNombre ?? "",
             cantidad: Number(it?.cantidad ?? 0),
             precio: Number(it?.precio ?? 0),
             lote: it?.lote || "",
@@ -552,17 +791,28 @@ export default function FormKardex({
       setArticleFormData((prev) => ({
         ...prev,
         productoId: Number(lookupSelectedRow.id),
+        productoNombre: renderName(lookupSelectedRow),
         presentacionProductoId: "",
+        presentacionNombre: "",
         devolutivo: false,
         responsableId: null,
       }));
     } else if (lookupType === "presentacion") {
-      const productoId = getProductoIdFromPresentacionObj(lookupSelectedRow) || articleFormData?.productoId || "";
+      const productoId = getProductoIdFromPresentacionObj(lookupSelectedRow);
+      if (productoId && String(productoId) !== String(articleFormData?.productoId ?? "")) {
+        setMessage({
+          open: true,
+          severity: "warning",
+          text: "La presentación seleccionada no pertenece al producto elegido.",
+        });
+        return;
+      }
       const devolutivo = isPresentacionDevolutiva(lookupSelectedRow);
       setArticleFormData((prev) => ({
         ...prev,
-        productoId: productoId ? Number(productoId) : prev.productoId,
+        productoId: prev.productoId,
         presentacionProductoId: Number(lookupSelectedRow.id),
+        presentacionNombre: renderPresentacion(lookupSelectedRow),
         devolutivo,
         responsableId: devolutivo ? prev?.responsableId : null,
       }));
@@ -571,14 +821,38 @@ export default function FormKardex({
     setLookupOpen(false);
   };
 
-  const mapDraftItemsToPayload = () =>
-    (draftItems || []).map((it) => {
+  const mapDraftItemsToPayload = (resolveDevolutivoByPresentacionId) => {
+    const rows = draftItems || [];
+    const unique = new Map();
+    rows.forEach((it, idx) => {
+      const key =
+        toNumericIdOrNull(it?.id) != null
+          ? `id:${toNumericIdOrNull(it?.id)}`
+          : `new:${String(it?.presentacionProductoId ?? "")}|${String(it?.cantidad ?? "")}|${String(
+              it?.precio ?? ""
+            )}|${String(it?.lote ?? "")}|${String(it?.fechaVencimiento ?? "")}|${String(
+              toNumericIdOrNull(it?.responsableId) ?? ""
+            )}|${String(Boolean(it?.devolutivo))}`;
+      unique.set(key, it);
+    });
+
+    return Array.from(unique.values()).map((it) => {
+      const presentacionProductoId = Number(it?.presentacionProductoId ?? 0);
+      const resolvedDevolutivo =
+        typeof resolveDevolutivoByPresentacionId === "function"
+          ? Boolean(
+              resolveDevolutivoByPresentacionId(
+                presentacionProductoId,
+                Boolean(it?.devolutivo ?? false)
+              )
+            )
+          : Boolean(it?.devolutivo ?? false);
       const mapped = {
-        presentacionProductoId: Number(it?.presentacionProductoId ?? 0),
+        presentacionProductoId,
         cantidad: Number(it?.cantidad ?? 0),
         precio: Number(it?.precio ?? 0),
-        devolutivo: Boolean(it?.devolutivo ?? false),
-        responsableId: toNumericIdOrNull(it?.responsableId),
+        devolutivo: resolvedDevolutivo,
+        responsableId: resolvedDevolutivo ? toNumericIdOrNull(it?.responsableId) : null,
         lote: it?.lote || null,
         fechaVencimiento: it?.fechaVencimiento ? String(it.fechaVencimiento).substring(0, 10) : null,
       };
@@ -588,6 +862,7 @@ export default function FormKardex({
       }
       return mapped;
     });
+  };
 
   const buildHeaderPayload = () => ({
     tipoMovimientoId: formData.tipoMovimientoId ? Number(formData.tipoMovimientoId) : null,
@@ -679,7 +954,9 @@ export default function FormKardex({
       } else if (["presentacionProductoId", "cantidad", "precio"].includes(name)) {
         next[name] = value === "" ? "" : Number(value);
         if (name === "presentacionProductoId") {
-          const pres = (presentaciones || []).find((p) => String(p?.id) === String(next.presentacionProductoId));
+          const pres = (presentaciones || []).find(
+            (p) => String(getPresentacionId(p)) === String(next.presentacionProductoId)
+          );
           next.devolutivo = isPresentacionDevolutiva(pres);
           next.responsableId = null;
         }
@@ -693,7 +970,7 @@ export default function FormKardex({
     });
   };
 
-  const handleSaveArticleDraft = () => {
+  const handleSaveArticleDraft = async () => {
     const presentacionProductoId = Number(articleFormData.presentacionProductoId || 0);
     const cantidad = Number(articleFormData.cantidad || 0);
     const precio = Number(articleFormData.precio || 0);
@@ -707,9 +984,18 @@ export default function FormKardex({
       return;
     }
 
-    const devolutivo = Boolean(
+    let devolutivo = Boolean(
       articleFormData?.devolutivo ?? isPresentacionDevolutiva(presentacionSeleccionada)
     );
+    const detallePresentacion = await fetchPresentacionDetalle(presentacionProductoId);
+    if (detallePresentacion) {
+      devolutivo = isPresentacionDevolutiva(detallePresentacion);
+      setArticleFormData((prev) => ({
+        ...prev,
+        devolutivo,
+        responsableId: devolutivo ? prev?.responsableId : null,
+      }));
+    }
     if (devolutivo && !toNumericIdOrNull(articleFormData?.responsableId)) {
       setMessage({
         open: true,
@@ -721,6 +1007,8 @@ export default function FormKardex({
 
     const payload = {
       ...articleFormData,
+      productoNombre: selectedProductoLabel || articleFormData?.productoNombre || "",
+      presentacionNombre: selectedPresentacionLabel || articleFormData?.presentacionNombre || "",
       presentacionProductoId,
       cantidad,
       precio,
@@ -764,19 +1052,15 @@ export default function FormKardex({
     const ppId = articleFormData?.presentacionProductoId;
     if (!ppId) return;
 
-    const localPres = (presentaciones || []).find((p) => String(p?.id) === String(ppId));
-    if (
-      localPres &&
-      (localPres?.desgregar !== undefined ||
-        localPres?.desagregar !== undefined ||
-        localPres?.devolutivo !== undefined)
-    )
-      return;
-
     let active = true;
     fetchPresentacionDetalle(ppId).then((detalle) => {
-      if (!active || !detalle) return;
-      const devolutivo = isPresentacionDevolutiva(detalle);
+      if (!active) return;
+      const localPres = (presentaciones || []).find(
+        (p) => String(getPresentacionId(p)) === String(ppId)
+      );
+      const devolutivo = detalle
+        ? isPresentacionDevolutiva(detalle)
+        : isPresentacionDevolutiva(localPres);
       setArticleFormData((prev) => ({
         ...prev,
         devolutivo,
@@ -788,22 +1072,53 @@ export default function FormKardex({
     };
   }, [articleFormOpen, articleFormData?.presentacionProductoId, presentaciones]);
 
-  useEffect(() => {
-    if (!presentaciones.length) return;
-    setDraftItems((prev) =>
-      (prev || []).map((it) => {
-        const devolutivo = getDevolutivoByPresentacionId(it?.presentacionProductoId, it?.devolutivo);
-        return {
-          ...it,
-          devolutivo,
-          responsableId: devolutivo ? toNumericIdOrNull(it?.responsableId) : null,
-        };
-      })
-    );
-  }, [presentaciones]);
-
   const handleSaveKardex = async () => {
-    const items = mapDraftItemsToPayload();
+    if (savingKardex) return;
+    const ppIds = Array.from(
+      new Set(
+        (draftItems || [])
+          .map((it) => toNumericIdOrNull(it?.presentacionProductoId))
+          .filter((id) => id != null && id > 0)
+      )
+    );
+    const devolutivoByPresentacionId = {};
+
+    const pendingFetchIds = [];
+    ppIds.forEach((id) => {
+      const local = (presentaciones || []).find(
+        (p) => String(getPresentacionId(p)) === String(id)
+      );
+      if (
+        local &&
+        (local?.desgregar !== undefined ||
+          local?.desagregar !== undefined ||
+          local?.devolutivo !== undefined)
+      ) {
+        devolutivoByPresentacionId[String(id)] = isPresentacionDevolutiva(local);
+      } else {
+        pendingFetchIds.push(id);
+      }
+    });
+
+    if (pendingFetchIds.length) {
+      const details = await Promise.allSettled(
+        pendingFetchIds.map((id) => fetchPresentacionDetalle(id))
+      );
+      details.forEach((res, idx) => {
+        if (res.status !== "fulfilled" || !res.value) return;
+        const id = pendingFetchIds[idx];
+        devolutivoByPresentacionId[String(id)] = isPresentacionDevolutiva(res.value);
+      });
+    }
+
+    const items = mapDraftItemsToPayload((presentacionProductoId, fallback) =>
+      Object.prototype.hasOwnProperty.call(
+        devolutivoByPresentacionId,
+        String(presentacionProductoId)
+      )
+        ? devolutivoByPresentacionId[String(presentacionProductoId)]
+        : fallback
+    );
     if (!items.length) {
       setMessage({
         open: true,
@@ -829,10 +1144,12 @@ export default function FormKardex({
     };
 
     try {
+      setSavingKardex(true);
+      const requestConfig = { ...headers, timeout: 45000 };
       if (formMode === "edit") {
-        await axios.put(`/v1/kardex/${formData.id}`, payload, headers);
+        await axios.put(`/v1/kardex/${formData.id}`, payload, requestConfig);
       } else {
-        await axios.post("/v1/kardex/movimientos", payload, headers);
+        await axios.post("/v1/kardex/movimientos", payload, requestConfig);
       }
 
       reloadData?.();
@@ -847,11 +1164,18 @@ export default function FormKardex({
       setOpen(false);
       setSelectedRow(null);
     } catch (err) {
+      const isTimeout =
+        err?.code === "ECONNABORTED" ||
+        String(err?.message ?? "").toLowerCase().includes("timeout");
       setMessage({
         open: true,
         severity: "error",
-        text: extractApiMessage(err, "Error al guardar Kardex."),
+        text: isTimeout
+          ? "El servidor tardó demasiado en responder al guardar. Intenta nuevamente."
+          : extractApiMessage(err, "Error al guardar Kardex."),
       });
+    } finally {
+      setSavingKardex(false);
     }
   };
 
@@ -860,8 +1184,8 @@ export default function FormKardex({
       <Dialog open={open && !startInArticles} onClose={() => setOpen(false)} fullWidth maxWidth="md">
         <DialogTitle>{formMode === "edit" ? "Editar Kardex" : "Crear Kardex"}</DialogTitle>
 
-        <DialogContent sx={{ pt: 2 }}>
-          <Grid container spacing={2}>
+        <DialogContent sx={{ pt: 3 }}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Fecha/Hora"
@@ -872,14 +1196,15 @@ export default function FormKardex({
                 error={!!errors.fechaHora}
                 helperText={errors.fechaHora}
                 fullWidth
+                sx={{ mt: 0.5 }}
                 InputLabelProps={{
                   shrink: true,
-                  sx: { transform: "translate(14px, -9px) scale(0.75)" },
+                  sx: { transform: "translate(14px, -6px) scale(0.75)" },
                 }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.tipoMovimientoId}>
+              <FormControl fullWidth error={!!errors.tipoMovimientoId} sx={{ mt: 0.5 }}>
                 <InputLabel>Tipo Movimiento</InputLabel>
                 <Select
                   name="tipoMovimientoId"
@@ -1061,6 +1386,7 @@ export default function FormKardex({
           <GridArticuloKardex
             items={draftItems}
             presentaciones={presentaciones}
+            productos={productos}
             selectedRow={articleSelectedRow}
             setSelectedRow={setArticleSelectedRow}
           />
@@ -1085,8 +1411,8 @@ export default function FormKardex({
           >
             Cancelar
           </Button>
-          <Button variant="contained" onClick={handleSaveKardex}>
-            Guardar Kardex
+          <Button variant="contained" onClick={handleSaveKardex} disabled={savingKardex}>
+            {savingKardex ? "Guardando..." : "Guardar Kardex"}
           </Button>
         </DialogActions>
       </Dialog>
