@@ -1,5 +1,6 @@
 package com.coagronet.user.controllers;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,8 +30,11 @@ import com.coagronet.user.services.UserRegistrationService;
 import com.coagronet.user.services.UsuarioListadoService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -113,17 +118,33 @@ public class UserController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(userId);
 	}
 
-	@Operation(summary = "Listar usuarios paginados", description = "Lista los usuarios aplicando filtros. Los administradores del sistema ven todos, los usuarios de empresa ven solo los de su empresa.")
-	@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente.")
-	@ApiResponse(responseCode = "403", description = "Acceso denegado.")
+	@Operation(summary = "Listar usuarios paginados", description = """
+			Obtiene un listado paginado de usuarios aplicando filtros opcionales y reglas de visibilidad asociadas al rol del usuario autenticado.
+
+			**Parámetros de paginación**
+			Se aceptan los parámetros estándar de Spring:
+			- `page` (número de página, base 0)
+			- `size` (cantidad de elementos por página, valor por defecto 20)
+			- `sort` (campo y dirección, p.ej. `nombre,asc`)
+
+			**Lógica de visibilidad (Multi-Tenant)**
+			- `ADMINISTRADOR_SISTEMA`: visualiza todos los usuarios de la plataforma, incluyendo todas sus asignaciones.
+			- `ADMINISTRADOR_EMPRESA` o usuarios con el permiso `USUARIO_ROL_READ`: ven únicamente los usuarios que pertenecen a su empresa/tenant. En la respuesta solo se incluyen las asignaciones vinculadas a dicha empresa.
+			""", tags = {
+			"Usuarios" }, security = { @SecurityRequirement(name = "bearerAuth") })
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente. El cuerpo de la respuesta sigue la estructura de Page<UsuarioListResponse>.", content = @Content(schema = @Schema(implementation = Page.class))),
+			@ApiResponse(responseCode = "400", description = "Parámetros de filtrado o paginación inválidos (ej. valor de filtro incorrecto, índice de página negativo).", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+			@ApiResponse(responseCode = "401", description = "No autenticado. El token de acceso es faltante, expirado o inválido.", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no posee los roles necesarios para acceder a este recurso.", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+	})
 	@GetMapping("/api/v1/usuarios")
 	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Page<UsuarioListResponse>> listarUsuarios(
-			UsuarioFiltroRequest filtro,
-			Pageable pageable) {
+			@ParameterObject UsuarioFiltroRequest filtro,
+			@ParameterObject Pageable pageable) {
 
 		Page<UsuarioListResponse> response = usuarioListadoService.listarUsuarios(filtro, pageable);
 		return ResponseEntity.ok(response);
 	}
-
 }
