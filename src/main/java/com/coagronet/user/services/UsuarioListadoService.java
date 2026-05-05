@@ -1,0 +1,73 @@
+package com.coagronet.user.services;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.coagronet.infrastructure.configuration.EmpresaTenantIdentifierResolver;
+import com.coagronet.user.User;
+import com.coagronet.user.dtos.AsignacionResumenDTO;
+import com.coagronet.user.dtos.UsuarioFiltroRequest;
+import com.coagronet.user.dtos.UsuarioListResponse;
+import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.user.repositories.UserSpecifications;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class UsuarioListadoService {
+
+        private final UserRepository userRepository;
+        private final EmpresaTenantIdentifierResolver tenantResolver;
+
+        @Transactional(readOnly = true)
+        public Page<UsuarioListResponse> listarUsuarios(UsuarioFiltroRequest filtro, Pageable pageable) {
+
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+                Long forcedEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+                Specification<User> spec = UserSpecifications.conFiltros(filtro, forcedEmpresaId);
+
+                Page<User> usersPage = userRepository.findAll(spec, pageable);
+
+                return usersPage.map(this::mapToResponse);
+        }
+
+        private UsuarioListResponse mapToResponse(User user) {
+                var asignaciones = user.getRolesAsignados().stream()
+                                .map(ur -> {
+                                        // Validaciones seguras contra nulos usando operadores ternarios
+                                        Long empresaId = (ur.getEmpresa() != null) ? ur.getEmpresa().getId() : null;
+                                        String empresaNombre = (ur.getEmpresa() != null) ? ur.getEmpresa().getNombre()
+                                                        : "Sin empresa";
+
+                                        String rolNombre = (ur.getRol() != null) ? ur.getRol().getNombre()
+                                                        : "Desconocido";
+                                        String estadoNombre = (ur.getEstado() != null) ? ur.getEstado().getNombre()
+                                                        : "Desconocido";
+
+                                        return new AsignacionResumenDTO(
+                                                        empresaId,
+                                                        empresaNombre,
+                                                        rolNombre,
+                                                        estadoNombre);
+                                })
+                                .toList();
+
+                return new UsuarioListResponse(
+                                user.getId(),
+                                user.getUsername(),
+                                user.getPersona().getIdentificacion(),
+                                user.getPersona().getNombre(),
+                                user.getPersona().getApellido(),
+                                asignaciones);
+        }
+}

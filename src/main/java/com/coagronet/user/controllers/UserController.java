@@ -20,9 +20,12 @@ import com.coagronet.user.User;
 import com.coagronet.user.dtos.UserDTO;
 import com.coagronet.user.dtos.UserMinimalDTO;
 import com.coagronet.user.dtos.UserRegistrationRequest;
+import com.coagronet.user.dtos.UsuarioFiltroRequest;
+import com.coagronet.user.dtos.UsuarioListResponse;
 import com.coagronet.user.mappers.UserMapper;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
+import com.coagronet.user.services.UsuarioListadoService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,6 +47,8 @@ public class UserController {
 	private final PasswordEncoder passwordEncoder;
 
 	private final UserRegistrationService userRegistrationService;
+
+	private final UsuarioListadoService usuarioListadoService;
 
 	@GetMapping("/api/v1/user/{requestedId}")
 	private ResponseEntity<UserDTO> findById(@PathVariable Long requestedId) {
@@ -106,6 +111,19 @@ public class UserController {
 
 		Long userId = userRegistrationService.registerOrUpdateUser(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(userId);
+	}
+
+	@Operation(summary = "Listar usuarios paginados", description = "Lista los usuarios aplicando filtros. Los administradores del sistema ven todos, los usuarios de empresa ven solo los de su empresa.")
+	@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente.")
+	@ApiResponse(responseCode = "403", description = "Acceso denegado.")
+	@GetMapping("/api/v1/usuarios")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Page<UsuarioListResponse>> listarUsuarios(
+			UsuarioFiltroRequest filtro,
+			Pageable pageable) {
+
+		Page<UsuarioListResponse> response = usuarioListadoService.listarUsuarios(filtro, pageable);
+		return ResponseEntity.ok(response);
 	}
 
 }
