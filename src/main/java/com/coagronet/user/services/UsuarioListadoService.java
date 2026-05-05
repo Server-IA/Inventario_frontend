@@ -35,20 +35,21 @@ public class UsuarioListadoService {
                 Long forcedEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
 
                 Specification<User> spec = UserSpecifications.conFiltros(filtro, forcedEmpresaId);
-
                 Page<User> usersPage = userRepository.findAll(spec, pageable);
 
-                return usersPage.map(this::mapToResponse);
+                // Capturamos las variables en el closure del mapeo
+                return usersPage.map(user -> mapToResponse(user, isSystemAdmin, forcedEmpresaId));
         }
 
-        private UsuarioListResponse mapToResponse(User user) {
+        private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
                 var asignaciones = user.getRolesAsignados().stream()
+                                .filter(ur -> isSystemAdmin ||
+                                                (ur.getEmpresa() != null
+                                                                && ur.getEmpresa().getId().equals(currentEmpresaId)))
                                 .map(ur -> {
-                                        // Validaciones seguras contra nulos usando operadores ternarios
                                         Long empresaId = (ur.getEmpresa() != null) ? ur.getEmpresa().getId() : null;
                                         String empresaNombre = (ur.getEmpresa() != null) ? ur.getEmpresa().getNombre()
                                                         : "Sin empresa";
-
                                         String rolNombre = (ur.getRol() != null) ? ur.getRol().getNombre()
                                                         : "Desconocido";
                                         String estadoNombre = (ur.getEstado() != null) ? ur.getEstado().getNombre()
