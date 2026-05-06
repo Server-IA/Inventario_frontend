@@ -1,3 +1,14 @@
+/*=============================================================================
+Nombre del archivo : GridActionBar.jsx
+Descripción        : Componente reutilizable para los botones de acción de CRUD
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
  * Componente reusable de barra de acciones para grillas CRUD.
  * @module GridActionBar

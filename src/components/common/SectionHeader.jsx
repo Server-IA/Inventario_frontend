@@ -1,3 +1,14 @@
+/*=============================================================================
+Nombre del archivo : SectionHeader.jsx
+Descripción        : Componente reutilizable para el encabezado de módulos.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
  * Componente reusable de encabezado para módulos de gestión.
  * @module SectionHeader
