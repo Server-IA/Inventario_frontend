@@ -28,29 +28,16 @@ public class RecursoDuplicadoException extends ErrorResponseException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Construye una nueva excepción configurada con los detalles del conflicto de
-     * recursos.
-     * <p>
-     * Inicializa la respuesta con el estado <strong>409 Conflict</strong> y
-     * establece el <code>ProblemDetail</code>
-     * con un título descriptivo y un tipo de error específico (URI). Utiliza la
-     * clave de mensaje <code>modulo.duplicado</code>
-     * para la internacionalización, pasando el nombre del recurso conflictivo como
-     * argumento.
-     * </p>
-     *
-     * @param nombre valor del atributo o identificador que generó la duplicidad
-     *               (ej. nombre de usuario, código de subsistema).
-     *               Este valor se inyecta en el mensaje de error para dar contexto
-     *               al cliente.
+     * Construye una nueva excepción usando un mensaje de detalle directo.
+     * * @param mensajeDetalle El mensaje exacto que se le mostrará al cliente
+     * (ej. "El username ya se encuentra registrado.")
      */
-    public RecursoDuplicadoException(String nombre) {
+    public RecursoDuplicadoException(String mensajeDetalle) {
+        // Usamos forStatusAndDetail para inyectar el mensaje directamente
         super(
                 HttpStatus.CONFLICT,
-                ProblemDetail.forStatus(HttpStatus.CONFLICT),
-                null,
-                "modulo.duplicado",
-                new Object[] { nombre });
+                ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, mensajeDetalle),
+                null);
 
         getBody().setTitle("Conflicto de Recursos");
         getBody().setType(URI.create("https://coagronet.com/errors/duplicate"));

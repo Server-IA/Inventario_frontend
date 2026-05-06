@@ -1,6 +1,7 @@
 package com.coagronet.exceptionHandler;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 import org.postgresql.util.PSQLException;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -306,6 +307,32 @@ public class Advice extends ResponseEntityExceptionHandler {
             cause = cause.getCause();
         }
         return cause;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+
+        // Mensaje por defecto en caso de que sea otro tipo de restricción
+        String mensajeDetalle = "No se pudo guardar el registro debido a un conflicto de datos.";
+
+        // Inspeccionamos el mensaje o la causa raíz para ser específicos
+        String causa = ex.getMostSpecificCause().getMessage();
+
+        if (causa != null) {
+            if (causa.contains("unique_per_email_personal")) {
+                mensajeDetalle = "El correo electrónico personal ya se encuentra registrado.";
+            } else if (causa.contains("otra_restriccion_ejemplo")) {
+                mensajeDetalle = "Otro dato ya existe.";
+            }
+        }
+
+        // Construimos el Problem Detail (Estándar RFC 9457)
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, mensajeDetalle);
+        problemDetail.setTitle("Conflicto de Integridad de Datos");
+        problemDetail.setType(URI.create("https://coagronet.com/errors/data-integrity"));
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
     }
 
 }
