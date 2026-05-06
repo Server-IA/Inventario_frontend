@@ -81,6 +81,7 @@ public class PersonaService {
 				persona.getFechaNacimiento(),
 				persona.getDireccion(),
 				persona.getCelular(),
+				persona.getEstrato(),
 				usuarioOpt.isPresent(),
 				usuarioOpt.map(User::getUsername).orElse(null));
 	}

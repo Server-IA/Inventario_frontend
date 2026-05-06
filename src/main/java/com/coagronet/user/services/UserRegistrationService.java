@@ -1,8 +1,9 @@
 package com.coagronet.user.services;
 
+import java.util.Optional;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,6 @@ import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
 import com.coagronet.infrastructure.configuration.EmpresaTenantIdentifierResolver;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.repositories.PersonaRepository;
-import com.coagronet.rol.Rol;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.user.User;
 import com.coagronet.user.dtos.AsignacionRequest;
@@ -89,8 +89,28 @@ public class UserRegistrationService {
 	public Long registerOrUpdateUser(UserRegistrationRequest request) {
 		validarFechasContrato(request);
 
-		final Persona persona = personaRepository.findByIdentificacion(request.identificacion())
-				.orElseGet(() -> personaRepository.save(crearNuevaPersona(request)));
+		final Persona persona;
+
+		Optional<Persona> personaExistente = personaRepository.findByIdentificacion(request.identificacion());
+
+		if (personaExistente.isPresent()) {
+			persona = personaExistente.get();
+
+			persona.setTipoIdentificacion(
+					entityManager.getReference(TipoIdentificacion.class, request.tipoIdentificacionId()));
+			persona.setNombre(request.nombre());
+			persona.setApellido(request.apellido());
+			persona.setEmailPersonal(request.emailPersonal());
+			persona.setGenero(request.genero());
+			persona.setFechaNacimiento(request.fechaNacimiento());
+			persona.setDireccion(request.direccion());
+			persona.setCelular(request.celular());
+			persona.setEstrato(request.estrato());
+			persona.setEstado(entityManager.getReference(Estado.class, ESTADO_ACTIVO_ID));
+			personaRepository.save(persona);
+		} else {
+			persona = personaRepository.save(crearNuevaPersona(request));
+		}
 
 		User user = userRepository.findByPersonaId(persona.getId())
 				.orElseGet(() -> crearNuevoUsuario(request, persona));
@@ -166,6 +186,7 @@ public class UserRegistrationService {
 				.fechaNacimiento(request.fechaNacimiento())
 				.direccion(request.direccion())
 				.celular(request.celular())
+				.estrato(request.estrato())
 				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO_ID))
 				.build();
 	}
