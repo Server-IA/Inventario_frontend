@@ -17,7 +17,8 @@ import com.coagronet.usuariorol.UsuarioRol;
 public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 
 	/**
-	 * Excelente uso de 'join fetch' para mitigar el problema N+1 al hidratar las relaciones 
+	 * Excelente uso de 'join fetch' para mitigar el problema N+1 al hidratar las
+	 * relaciones
 	 * de primera línea requeridas por el contexto transaccional.
 	 */
 	@Query("""
@@ -85,7 +86,7 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 			order by ur.id asc
 			""")
 	List<UsuarioRol> findActivasByUserId(
-			@Param("estadoActivo") Long estadoActivo, 
+			@Param("estadoActivo") Long estadoActivo,
 			@Param("userId") Long userId);
 
 	// ========================================================================
@@ -93,8 +94,8 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 	// ========================================================================
 
 	/**
-	 * Proyección optimizada. Retornar Set<Long> en lugar de la entidad completa 
-	 * evita la sobrecarga del contexto de persistencia (Hibernate Session) cuando 
+	 * Proyección optimizada. Retornar Set<Long> en lugar de la entidad completa
+	 * evita la sobrecarga del contexto de persistencia (Hibernate Session) cuando
 	 * solo se requiere evaluar pertenencia de IDs.
 	 */
 	@Query("""
@@ -105,8 +106,11 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, Long> {
 			  AND ur.finalizaContratoEn IS NULL
 			""")
 	Set<Long> findResponsablesValidos(
-			@Param("userIds") Set<Long> userIds, 
+			@Param("userIds") Set<Long> userIds,
 			@Param("empresaId") Long empresaId,
 			@Param("estadoId") Long estadoId);
+
+	@Query(value = "SELECT * FROM usuario_rol WHERE usuario_id = :userId AND deleted_at IS NULL ORDER BY usuario_id", nativeQuery = true)
+	List<UsuarioRol> findByUsuarioIdForLogin(@Param("userId") Long userId);
 
 }

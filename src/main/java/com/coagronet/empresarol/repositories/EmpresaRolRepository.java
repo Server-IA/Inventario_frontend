@@ -13,19 +13,28 @@ import com.coagronet.rol.Rol;
 @Repository
 public interface EmpresaRolRepository extends JpaRepository<EmpresaRol, Long> {
 
-    List<EmpresaRol> findByEmpresaId(Long empresaId);
+  List<EmpresaRol> findByEmpresaId(Long empresaId);
 
-    Optional<EmpresaRol> findByIdAndEmpresaId(Long id, Long empresaId);
+  Optional<EmpresaRol> findByIdAndEmpresaId(Long id, Long empresaId);
 
-    @Query("""
-            select er.rol
-            from EmpresaRol er
-            where er.empresa.id = :empresaId
-              and er.rol.id = :rolId
-            """)
-    Optional<Rol> findRolByEmpresaIdAndRolId(Long empresaId, Long rolId);
+  @Query("""
+      select er.rol
+      from EmpresaRol er
+      where er.empresa.id = :empresaId
+        and er.rol.id = :rolId
+      """)
+  Optional<Rol> findRolByEmpresaIdAndRolId(Long empresaId, Long rolId);
 
-    Optional<EmpresaRol> findByEmpresaIdAndRolIdAndEstadoId(Long empresaId, Long rolId, Long estadoId);
+  @Query("""
+      select er.rol
+      from EmpresaRol er
+      where er.empresa.id = :empresaId
+        and er.rol.id = :rolId
+        and er.estado.id = :estadoId
+      """)
+  Optional<Rol> findRolByEmpresaIdAndRolIdAndEstadoId(Long empresaId, Long rolId, Long estadoId);
 
-    boolean existsByEmpresaIdAndRolId(Long empresaId, Long rolId);
+  Optional<EmpresaRol> findByEmpresaIdAndRolIdAndEstadoId(Long empresaId, Long rolId, Long estadoId);
+
+  boolean existsByEmpresaIdAndRolId(Long empresaId, Long rolId);
 }

@@ -19,6 +19,10 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
 	Boolean existsByTipoIdentificacion_IdAndIdentificacionAndEstado_Id(Long tipoIdentificacionId, String identificacion,
 			Long estadoId);
 
-	Boolean existsByEmailAndEstado_Id(String email, Long estadoId);
+	Boolean existsByEmailPersonalAndEstado_Id(String email, Long estadoId);
+
+	boolean existsByIdentificacion(String identificacion);
+
+	Optional<Persona> findByIdentificacion(String identificacion);
 
 }

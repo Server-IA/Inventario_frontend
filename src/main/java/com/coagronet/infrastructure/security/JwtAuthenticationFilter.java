@@ -55,6 +55,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				String rolName = claims.get("rolName", String.class);
 				Integer tokenVersion = claims.get("tver", Integer.class);
 
+				Number userIdNum = claims.get("userId", Number.class);
+				Long userId = (userIdNum != null) ? userIdNum.longValue() : null;
+
 				Number empresaNum = claims.get("empresaId", Number.class);
 				Long empresaId = (empresaNum != null) ? empresaNum.longValue() : null;
 
@@ -81,7 +84,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				// 4. Construcción y asignación del Security Context
 				var authorities = List.of(new SimpleGrantedAuthority(rolName));
 
-				CustomUserDetails userDetails = new CustomUserDetails(null, username, null, empresaId, rolId,
+				// <-- PASA EL USER ID AL CONSTRUCTOR -->
+				CustomUserDetails userDetails = new CustomUserDetails(userId, username, null, empresaId, rolId,
 						tokenVersion, authorities);
 
 				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null,
@@ -90,8 +94,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 				SecurityContextHolder.getContext().setAuthentication(auth);
 			}
-		}
-		catch (JwtException | IllegalArgumentException e) {
+		} catch (JwtException | IllegalArgumentException e) {
 			SecurityContextHolder.clearContext();
 		}
 

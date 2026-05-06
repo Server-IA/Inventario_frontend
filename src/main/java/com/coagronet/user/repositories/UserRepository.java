@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	Optional<User> findById(Long id);
 
-	Boolean existsByUsername(String username);
+	boolean existsByUsername(String username);
 
 	@Query("""
 			    SELECT u FROM User u
@@ -35,7 +35,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	boolean existsByUsernameAndUsuarioEstado(String email, UsuarioEstado estado);
 
-@Query("SELECT u.tokenVersion FROM User u WHERE u.username = :username")
-Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
+	@Query("SELECT u.tokenVersion FROM User u WHERE u.username = :username")
+	Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
+
+	Optional<User> findByPersonaId(Long personaId);
 
 }

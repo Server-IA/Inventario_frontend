@@ -45,7 +45,7 @@ public class RecursoNoEncontradoException extends ErrorResponseException {
      * @param id            identificador único (llave primaria) utilizado en la
      *                      búsqueda fallida.
      */
-    public RecursoNoEncontradoException(String nombreEntidad, Long id) {
+    public RecursoNoEncontradoException(String nombreEntidad, Object id) {
         super(
                 HttpStatus.NOT_FOUND,
                 ProblemDetail.forStatus(HttpStatus.NOT_FOUND),
