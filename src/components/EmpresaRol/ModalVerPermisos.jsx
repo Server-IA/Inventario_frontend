@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 export default function ModalVerPermisos({
   open,
@@ -22,12 +23,13 @@ export default function ModalVerPermisos({
   permisos = [],
   rolNombre = "",
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
   // Agrupar por módulo usando autoridad
   const permisosPorModulo = permisos.reduce((acc, permiso) => {
-    let moduloNombre = "General";
+    let moduloNombre = t("common.labels.general");
 
     if (permiso.autoridad) {
       moduloNombre = permiso.autoridad.split("_")[0];
@@ -52,7 +54,7 @@ export default function ModalVerPermisos({
           backgroundColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
         }}
       >
-        Permisos del Rol: {rolNombre}
+        {t("empresaRol.permissions.rolePermissionsTitle", { role: rolNombre })}
       </DialogTitle>
 
       <DialogContent
@@ -65,7 +67,7 @@ export default function ModalVerPermisos({
       >
         {permisos.length === 0 ? (
           <Typography color="text.secondary">
-            Este rol no tiene permisos asignados.
+            {t("empresaRol.permissions.roleHasNoPermissions")}
           </Typography>
         ) : (
           Object.entries(permisosPorModulo).map(
@@ -105,7 +107,7 @@ export default function ModalVerPermisos({
 
                     <Chip
                       size="small"
-                      label={`${listaPermisos.length} permisos`}
+                      label={t("common.labels.permissionsCount", { count: listaPermisos.length })}
                       sx={{
                         backgroundColor: alpha(
                           theme.palette.primary.main,
@@ -137,7 +139,7 @@ export default function ModalVerPermisos({
 
       <DialogActions>
         <Button onClick={onClose} variant="contained">
-          Cerrar
+          {t("common.actions.close")}
         </Button>
       </DialogActions>
     </Dialog>

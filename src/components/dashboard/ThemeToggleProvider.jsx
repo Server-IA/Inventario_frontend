@@ -26,7 +26,7 @@ export const ThemeToggleProvider = ({ children }) => {
           mode: darkMode ? 'dark' : 'light',
           primary: { main: BRAND_GREEN },
           background: {
-            default: darkMode ? BRAND_GREEN : '#E7F6F7',
+            default: darkMode ? BRAND_GREEN : '#FFFFFF',
             paper: darkMode ? '#1B1F22' : '#FFFFFF',
           },
           text: {

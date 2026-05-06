@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Menu, MenuItem, Divider } from "@mui/material";
+import { Button, Menu, MenuItem, Divider, Box, Typography } from "@mui/material";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import ChangePasswordDialog from "./ChangePasswordDialog";
 import MessageSnackBar from "./MessageSnackBar";
@@ -16,6 +16,7 @@ const ProfileMenu = ({
   setCurrentModule,
   setIsAuthenticated,
   onlyLogout = false,
+  compact = false,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -102,8 +103,16 @@ const ProfileMenu = ({
         onClick={handleClick}
         color="inherit"
         startIcon={<AccountCircle />}
+        sx={{
+          minWidth: 44,
+          px: compact ? 1 : 1.25,
+          "& .MuiButton-startIcon": {
+            mr: compact ? 0 : 0.75,
+            ml: 0,
+          },
+        }}
       >
-        {nombreUsuario /* <- ahora muestra nombrePersona */}
+        {!compact ? nombreUsuario : null}
       </Button>
 
       <Menu
@@ -113,6 +122,15 @@ const ProfileMenu = ({
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
+        <Box sx={{ px: 2, py: 1.25, minWidth: 220 }}>
+          <Typography variant="caption" color="text.secondary">
+            Usuario
+          </Typography>
+          <Typography variant="body2" fontWeight={700}>
+            {nombreUsuario}
+          </Typography>
+        </Box>
+        <Divider />
         {showOnlyLogout ? (
           <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
         ) : (

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import axios from "../axiosConfig";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, FormControl, InputLabel, Select, MenuItem, Grid, FormHelperText
+  TextField, Button, FormControl, InputLabel, Select, MenuItem, Grid, FormHelperText, FormControlLabel, Switch
 } from "@mui/material";
 import StackButtons from "../StackButtons";
 import { validateCamposBase } from "../utils/validations";
@@ -28,6 +28,7 @@ export default function FormPresentacionproducto({
     marcaId: "",
     presentacionId: "",      // Tipo de Presentación
     estadoId: "",            // 1/2
+    desagregar: false,       // UI: Devolutivo (backend usa "desgregar")
   };
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
@@ -74,20 +75,30 @@ export default function FormPresentacionproducto({
     setDialogOpen(true);
   };
 
-  const update = () => {
+  const update = async () => {
     if (!selectedRow?.id) {
       setMessage({ open: true, severity: "error", text: "Selecciona una presentación para editar." });
       return;
     }
+
+    let row = selectedRow;
+    try {
+      const res = await axios.get(`/v1/producto_presentacion/${selectedRow.id}`);
+      row = res?.data ?? selectedRow;
+    } catch {
+      row = selectedRow;
+    }
+
     setFormData({
-      productoId: selectedRow.productoId ?? "",
-      nombre: selectedRow.nombre ?? "",
-      unidadId: selectedRow.unidadId ?? "",
-      descripcion: selectedRow.descripcion ?? "",
-      cantidad: selectedRow.cantidad ?? "",
-      marcaId: selectedRow.marcaId ?? "",
-      presentacionId: selectedRow.presentacionId ?? "",
-      estadoId: (selectedRow.estadoId ?? "").toString(),
+      productoId: row.productoId ?? "",
+      nombre: row.nombre ?? "",
+      unidadId: row.unidadId ?? "",
+      descripcion: row.descripcion ?? "",
+      cantidad: row.cantidad ?? "",
+      marcaId: row.marcaId ?? "",
+      presentacionId: row.presentacionId ?? "",
+      estadoId: (row.estadoId ?? "").toString(),
+      desagregar: Boolean(row.desgregar ?? row.desagregar ?? row.devolutivo ?? false),
     });
     setErrors({});
     setMethodName("Actualizar");
@@ -112,8 +123,8 @@ export default function FormPresentacionproducto({
 
   // Handlers de formulario
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
@@ -162,6 +173,8 @@ export default function FormPresentacionproducto({
       marcaId: toInt(formData.marcaId),
       presentacionId: toInt(formData.presentacionId),
       estadoId: toInt(formData.estadoId),
+      desgregar: Boolean(formData.desagregar),
+      desagregar: Boolean(formData.desagregar),
       empresaId,
     };
 
@@ -265,6 +278,21 @@ export default function FormPresentacionproducto({
                     <MenuItem value="2">Inactivo</MenuItem>
                   </Select>
                   {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        name="desagregar"
+                        checked={Boolean(formData.desagregar)}
+                        onChange={handleChange}
+                      />
+                    }
+                    label="Devolutivo"
+                  />
                 </FormControl>
               </Grid>
             </Grid>

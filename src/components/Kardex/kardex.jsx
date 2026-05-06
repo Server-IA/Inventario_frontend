@@ -1,384 +1,137 @@
-import React, { useEffect, useState } from "react";
-import axios from "../axiosConfig";
+import React, { useState } from "react";
 import MessageSnackBar from "../MessageSnackBar";
-import FormKardex from "./FromKardex";
 import GridKardex from "./GridKardex";
-import GridArticuloKardex from "./GridArticuloKardex";
-import FormArticuloKardex from "./FormArticuloKardex";
 import ReKardex from "../RKardex/Rkardex";
-import { Box, Typography, Button, Dialog, useTheme } from "@mui/material";
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Button,
+} from "@mui/material";
+import { useKardexAuth } from "./hooks/useKardexAuth";
+import { useKardexData } from "./hooks/useKardexData";
+import { useKardexFilters } from "./hooks/useKardexFilters";
+import { KardexFormsContainer } from "./KardexFormsContainer";
+import SectionHeader from "../common/SectionHeader";
+import { DEFAULT_FILTERS } from "./constants/kardexConstants";
 
 export default function Kardex() {
-  const [kardexes, setKardexes] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const { isAdmin } = useKardexAuth();
+  const { kardexesRaw, catalogs, reloadData, loading } = useKardexData();
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [formMode, setFormMode] = useState("create");
-
-  const [message, setMessage] = useState({
-    open: false,
-    severity: "success",
-    text: "",
-  });
-  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-
-  // Artículos
-  const [articuloItems, setArticuloItems] = useState([]);
-  const [selectedArticulo, setSelectedArticulo] = useState({});
-  const [reloadArticulos, setReloadArticulos] = useState(false);
-
-  // Catálogos
-  const [almacenes, setAlmacenes] = useState([]);
-  const [producciones, setProducciones] = useState([]);
-  const [tiposMovimiento, setTiposMovimiento] = useState([]);
-  const [presentaciones, setPresentaciones] = useState([]);
-
-  // 🔹 NUEVOS catálogos para mostrar nombres en GridKardex
-  const [pedidos, setPedidos] = useState([]);
-  const [ordenesCompra, setOrdenesCompra] = useState([]);
-  const [empresas, setEmpresas] = useState([]);
-
-  const theme = useTheme();
-
-  // Paginación Kardex
   const [kardexPage, setKardexPage] = useState({ page: 0, size: 10 });
-  const [totalKardex, setTotalKardex] = useState(0);
-  const [loadingKardex, setLoadingKardex] = useState(false);
+  const { filters, setFilters, paginatedRows, totalFiltered } = useKardexFilters(
+    kardexesRaw,
+    kardexPage,
+    catalogs.tiposMovimiento
+  );
 
-  // Paginación Artículos (mismo patrón que en Pedido)
-  const [articuloPaginationModel, setArticuloPaginationModel] = useState({
-    page: 0,
-    size: 10,
-  });
-  const [articuloRowCount, setArticuloRowCount] = useState(0);
-  const [articuloLoading, setArticuloLoading] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
 
-  // Normalizador base
-  const toArray = (d) =>
-    Array.isArray(d)
-      ? d
-      : d?.content ??
-        d?.items ??
-        d?.data ??
-        d?.results ??
-        [];
+  const hasActiveFilters = Boolean(
+    filters.fechaDesde || filters.fechaHasta || filters.tipoMovimientoId || filters.estadoId
+  );
 
-  // Normalizador de página (igual que en Pedido)
-  const normalizePageResponse = (res) => {
-    const data = res?.data ?? {};
-    const rows = toArray(data);
-    const total =
-      data?.totalElements ??
-      data?.page?.totalElements ??
-      data?.total ??
-      rows.length;
-    return { rows, total };
-  };
-
-  // ------- Cargar catálogos una vez -------
-  useEffect(() => {
-    const loadCatalogs = async () => {
-      try {
-        const [
-          rAlm,
-          rProd,
-          rTmov,
-          rPres,
-          rPed,
-          rOc,
-          rEmp,
-        ] = await Promise.all([
-          axios.get("/v1/items/almacen/0"),
-          axios.get("/v1/items/produccion/0"),
-          axios.get("/v1/items/tipo_movimiento/0"),
-          axios.get("/v1/items/producto_presentacion/0"),
-          axios.get("/v1/items/pedido/0"),
-          axios.get("/v1/items/orden_compra/0"),
-          axios.get("/v1/items/empresa/0"),
-        ]);
-
-        setAlmacenes(toArray(rAlm.data));
-        setProducciones(toArray(rProd.data));
-        setTiposMovimiento(toArray(rTmov.data));
-        setPresentaciones(toArray(rPres.data));
-
-        setPedidos(toArray(rPed.data));
-        setOrdenesCompra(toArray(rOc.data));
-        setEmpresas(toArray(rEmp.data));
-      } catch (e) {
-        setAlmacenes([]);
-        setProducciones([]);
-        setTiposMovimiento([]);
-        setPresentaciones([]);
-        setPedidos([]);
-        setOrdenesCompra([]);
-        setEmpresas([]);
-      }
-    };
-    loadCatalogs();
-  }, []);
-
-  // ------- Cargar lista de kardex con paginación (rowCount efectivo) -------
-  const reloadData = () => {
-    setLoadingKardex(true);
-    const { page, size } = kardexPage; // 0-based; si tu API es 1-based: page+1
-    axios
-      .get("/v1/kardex", { params: { page, size } })
-      .then((res) => {
-        const rows = toArray(res.data);
-        const rawTotal = Number(
-          res.data?.totalElements ?? res.data?.page?.totalElements
-        );
-        // rowCount robusto: usa total si viene; si no, estima para habilitar flechas
-        const effectiveTotal =
-          Number.isFinite(rawTotal) && rawTotal > 0
-            ? rawTotal
-            : rows.length < size
-            ? page * size + rows.length
-            : (page + 2) * size;
-
-        setKardexes(rows);
-        setTotalKardex(effectiveTotal);
-
-        if (rows.length > 0 && !selectedRow) setSelectedRow(rows[0]);
-        if (rows.length === 0 && page > 0) {
-          setKardexPage((p) => ({ ...p, page: p.page - 1 }));
-        }
-      })
-      .catch(() => {
-        setMessage({
-          open: true,
-          severity: "error",
-          text: "Error al cargar kardexes",
-        });
-        setKardexes([]);
-        setTotalKardex(0);
-      })
-      .finally(() => setLoadingKardex(false));
-  };
-
-  // ------- Cargar artículos del kardex -------
-  const loadArticulos = async (kardexId) => {
-    if (!kardexId) {
-      setArticuloItems([]);
-      setArticuloRowCount(0);
-      return;
-    }
-    try {
-      setArticuloLoading(true);
-      const size = articuloPaginationModel.size;
-      const page = articuloPaginationModel.page;
-      const params = { page, size, sort: "id,desc" };
-
-      // Endpoint adaptado para kardex
-      const res = await axios.get(
-        `/v1/articulo-kardex/${kardexId}/articulos`,
-        { params }
-      );
-
-      const { rows, total } = normalizePageResponse(res);
-
-      setArticuloItems(rows);
-
-      const totalNum = Number(total);
-      let effectiveTotal;
-      if (Number.isFinite(totalNum) && totalNum > 0) {
-        effectiveTotal = totalNum;
-      } else {
-        effectiveTotal =
-          rows.length < size
-            ? page * size + rows.length
-            : (page + 2) * size;
-      }
-      setArticuloRowCount(effectiveTotal);
-
-      if (rows.length === 0 && page > 0) {
-        setArticuloPaginationModel((p) => ({ ...p, page: p.page - 1 }));
-      }
-    } catch (e) {
-      setArticuloItems([]);
-      setArticuloRowCount(0);
-    } finally {
-      setArticuloLoading(false);
-    }
-  };
-
-  // Effects
-  useEffect(() => {
-    reloadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kardexPage.page, kardexPage.size]);
-
-  useEffect(() => {
-    if (selectedRow) {
-      loadArticulos(selectedRow.id);
-    } else {
-      setArticuloItems([]);
-      setArticuloRowCount(0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    selectedRow,
-    reloadArticulos,
-    articuloPaginationModel.page,
-    articuloPaginationModel.size,
-  ]);
-
-  // Estilos
-  const containerKardex = {
-    backgroundColor: theme.palette.mode === "dark" ? "#1e2a2c" : "#c9e6fe",
-    padding: 3,
-    borderRadius: 2,
-  };
-  const containerArticulos = {
-    backgroundColor: theme.palette.mode === "dark" ? "#2c383b" : "#caddf3",
-    padding: 2,
-    borderRadius: 2,
+  const handleClearFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+    setKardexPage((prev) => ({ ...prev, page: 0 }));
   };
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* KARDEX */}
-      <Box sx={{ ...containerKardex, mb: 4 }}>
-        <Box
-          mb={2}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="h5">Gestión de Kardex</Typography>
-          <Button
-            variant="contained"
-            onClick={() => setSearchDialogOpen(true)}
-          >
-            Buscar reporte
-          </Button>
-        </Box>
+      <SectionHeader title="Gestión de Kardex" />
 
-        <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              setFormMode("create");
-              setFormOpen(true);
-            }}
-          >
-            + Agregar
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              setFormMode("edit");
-              setFormOpen(true);
-            }}
-            disabled={!selectedRow}
-          >
-            Actualizar
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            disabled={!selectedRow}
-            onClick={async () => {
-              if (!selectedRow) return;
-              if (!window.confirm("¿Eliminar el Kardex seleccionado?")) return;
-              try {
-                await axios.delete(`/v1/kardex/${selectedRow.id}`);
-                setMessage({
-                  open: true,
-                  severity: "success",
-                  text: "Kardex eliminado correctamente.",
-                });
-                setSelectedRow(null);
-                reloadData();
-              } catch {
-                setMessage({
-                  open: true,
-                  severity: "error",
-                  text: "Error al eliminar el Kardex.",
-                });
-              }
-            }}
-          >
-            Eliminar
-          </Button>
-        </Box>
+      <KardexFormsContainer
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        reloadData={reloadData}
+        setMessage={setMessage}
+        onOpenReportes={() => setSearchDialogOpen(true)}
+        onOpenFilters={() => setFiltersOpen(true)}
+        onClearFilters={handleClearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
 
-        <FormKardex
-          open={formOpen}
-          setOpen={setFormOpen}
-          formMode={formMode}
-          selectedRow={selectedRow}
-          setSelectedRow={setSelectedRow}
-          reloadData={reloadData}
-          setMessage={setMessage}
-        />
+      <GridKardex
+        kardexes={paginatedRows}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        loading={loading}
+        rowCount={totalFiltered}
+        paginationModel={kardexPage}
+        setPaginationModel={setKardexPage}
+        isAdmin={isAdmin}
+      />
 
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Lista de Kardex
-          </Typography>
-          <GridKardex
-            kardexes={kardexes}
-            almacenes={almacenes}
-            producciones={producciones}
-            tiposMovimiento={tiposMovimiento}
-            pedidos={pedidos}
-            ordenesCompra={ordenesCompra}
-            empresas={empresas}
-            selectedRow={selectedRow}
-            setSelectedRow={setSelectedRow}
-            loading={loadingKardex}
-            rowCount={totalKardex}
-            paginationModel={kardexPage}
-            setPaginationModel={setKardexPage}
-          />
-        </Box>
-      </Box>
-
-      {/* ARTÍCULOS */}
-      {selectedRow && (
-        <Box sx={{ ...containerArticulos, mt: 4 }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
-          >
-            <Typography variant="h6">
-              Artículos del Kardex seleccionado
-            </Typography>
-            <Box display="flex" gap={2}>
-              <FormArticuloKardex
-                selectedRow={selectedArticulo}
-                kardexId={selectedRow?.id || ""}
-                setSelectedRow={setSelectedArticulo}
-                setMessage={setMessage}
-                reloadData={() => setReloadArticulos((prev) => !prev)}
-              />
-            </Box>
+      <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Filtros de Kardex</DialogTitle>
+        <DialogContent sx={{ pt: 3.5 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 1 }}>
+            <TextField
+              size="small"
+              label="Fecha desde"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={filters.fechaDesde}
+              onChange={(e) => setFilters((prev) => ({ ...prev, fechaDesde: e.target.value }))}
+            />
+            <TextField
+              size="small"
+              label="Fecha hasta"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={filters.fechaHasta}
+              onChange={(e) => setFilters((prev) => ({ ...prev, fechaHasta: e.target.value }))}
+            />
+            <TextField
+              size="small"
+              select
+              label="Tipo movimiento"
+              value={filters.tipoMovimientoId}
+              onChange={(e) => setFilters((prev) => ({ ...prev, tipoMovimientoId: e.target.value }))}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {(catalogs.tiposMovimiento || []).map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.name || t.nombre}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              size="small"
+              select
+              label="Estado"
+              value={filters.estadoId}
+              onChange={(e) => setFilters((prev) => ({ ...prev, estadoId: e.target.value }))}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              <MenuItem value="1">Activo</MenuItem>
+              <MenuItem value="0">Inactivo</MenuItem>
+            </TextField>
           </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearFilters}>Limpiar</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setKardexPage((prev) => ({ ...prev, page: 0 }));
+              setFiltersOpen(false);
+            }}
+          >
+            Aplicar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          <GridArticuloKardex
-            items={articuloItems}
-            setSelectedRow={setSelectedArticulo}
-            loading={articuloLoading}
-            paginationModel={articuloPaginationModel}
-            setPaginationModel={setArticuloPaginationModel}
-            rowCount={articuloRowCount}
-            presentaciones={presentaciones}
-            kardexId={selectedRow?.id}
-          />
-        </Box>
-      )}
-
-      <Dialog
-        open={searchDialogOpen}
-        onClose={() => setSearchDialogOpen(false)}
-        fullWidth
-        maxWidth="lg"
-      >
+      <Dialog open={searchDialogOpen} onClose={() => setSearchDialogOpen(false)} fullWidth maxWidth="lg">
         <ReKardex setOpen={setSearchDialogOpen} />
       </Dialog>
 

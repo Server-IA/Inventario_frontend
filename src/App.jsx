@@ -115,6 +115,7 @@ const moduleMap = {
 };
 
 const APPBAR_GREEN = '#0F2327';
+const APPBAR_HEIGHT = 72;
 
 const App = () => {
   useTranslation();
@@ -133,6 +134,12 @@ const [isAuthenticated, setIsAuthenticated] = useState(hasValidToken());
     const saved = localStorage.getItem('sidebarOpen');
     return saved ? JSON.parse(saved) : true;
   });
+useEffect(() => {
+  const timers = [50, 180, 320].map((ms) =>
+    setTimeout(() => window.dispatchEvent(new Event("resize")), ms)
+  );
+  return () => timers.forEach(clearTimeout);
+}, [menuOpen]);
 useEffect(() => {
   const hasValidToken = () => {
     const token = localStorage.getItem("token");
@@ -221,16 +228,24 @@ const isPublic = !isAuthenticated || isOnboarding;
         component="main"
         sx={{
           flexGrow: 1,
+          width: isAuthenticated
+            ? {
+                xs: '100%',
+                sm: menuOpen ? 'calc(100% - 220px)' : 'calc(100% - 70px)',
+                md: menuOpen ? 'calc(100% - 250px)' : 'calc(100% - 70px)',
+              }
+            : '100%',
+          minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
           ml: isAuthenticated
             ? {
-                xs: menuOpen ? '200px' : '60px',
+                xs: 0,
                 sm: menuOpen ? '220px' : '70px',
                 md: menuOpen ? '250px' : '70px',
               }
             : 0,
-          transition: 'margin-left 0.3s ease',
+          transition: 'margin-left 0.42s cubic-bezier(0.22, 1, 0.36, 1), width 0.42s cubic-bezier(0.22, 1, 0.36, 1)',
           bgcolor: 'transparent',
         }}
       >
@@ -244,6 +259,7 @@ const isPublic = !isAuthenticated || isOnboarding;
         <Toolbar
           disableGutters
           sx={{
+            minHeight: `${APPBAR_HEIGHT}px`,
             bgcolor: APPBAR_GREEN,
             boxShadow: 'none',
             border: 0,
@@ -259,12 +275,15 @@ const isPublic = !isAuthenticated || isOnboarding;
           </Box>
         ) : (
           <Container
-            maxWidth="lg"
+            maxWidth={false}
             disableGutters
             sx={{
               flex: 1,
-              py: 1,
-              px: { xs: 1, sm: 2 },
+              width: '100%',
+              maxWidth: '100% !important',
+              pt: { xs: 2, sm: 2.25, md: 1.5 },
+              pb: { xs: 9.5, sm: 3, md: 2 },
+              px: { xs: 1, sm: 2, md: 3 },
               display: 'flex',
               flexDirection: 'column',
               bgcolor: 'transparent',
@@ -272,16 +291,17 @@ const isPublic = !isAuthenticated || isOnboarding;
           >
             <Box
               sx={{
-                flex: 1,
+                flex: { xs: '0 0 auto', sm: 1 },
                 width: '100%',
-                minHeight: 'calc(100vh - 160px)',
-                overflow: 'auto',
+                minWidth: 0,
+                minHeight: { xs: 'auto', sm: 'calc(100vh - 185px)', md: 'calc(100vh - 170px)' },
+                overflow: { xs: 'visible', sm: 'auto' },
                 bgcolor: 'transparent',
               }}
             >
               {currentModule}
             </Box>
-            <Box sx={{ pt: 2 }}>
+            <Box sx={{ pt: { xs: 1.5, sm: 2.25, md: 2 }, pb: { xs: 1.25, sm: 0 } }}>
               <Copyright />
             </Box>
           </Container>

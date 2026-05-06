@@ -1,19 +1,34 @@
-// src/components/FormArticuloKardex.jsx
-import React, { useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Box,
   Button,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Grid,
 } from "@mui/material";
 import axios from "../axiosConfig";
-import StackButtons from "../StackButtons";
+import { resolveArticuloKardexId } from "./utils/kardexFormatters";
+
+const toArray = (d) =>
+  Array.isArray(d) ? d : d?.content ?? d?.items ?? d?.data ?? d?.results ?? [];
+
+const mapHeaderAndItemsToKardexPayload = (data, items) => ({
+  almacenId: data?.almacenId ?? null,
+  almacenDestinoId: data?.almacenDestinoId ?? null,
+  ordenCompraId: data?.ordenCompraId ?? null,
+  pedidoId: data?.pedidoId ?? null,
+  produccionId: data?.produccionId ?? null,
+  clienteProveedorId: data?.clienteProveedorId ?? null,
+  descripcion: data?.descripcion ?? "",
+  items,
+});
 
 export default function FormArticuloKardex({
   selectedRow,
@@ -25,291 +40,420 @@ export default function FormArticuloKardex({
   const [open, setOpen] = useState(false);
   const [methodName, setMethodName] = useState("");
   const [presentaciones, setPresentaciones] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [tiposPresentacion, setTiposPresentacion] = useState([]);
 
   const initialData = {
-    cantidad: "",
-    precio: "",
-    fechaVencimiento: "",
-    identificadorProducto: "",
-    kardexId: kardexId || "",
+    productoId: "",
     presentacionProductoId: "",
-    estadoId: "1",
+    cantidad: "",
+    precioUnitario: "",
+    precioTotal: "",
+    lote: "",
+    fechaVencimiento: "",
   };
 
   const [formData, setFormData] = useState(initialData);
 
-  /* -------- Helpers catálogo -------- */
-  const toArray = (d) =>
-    Array.isArray(d)
-      ? d
-      : d?.content ?? d?.items ?? d?.data ?? d?.results ?? [];
+  const getProductoId = (p) =>
+    p?.producto?.id ?? p?.productoId ?? p?.producto_id ?? p?.proId ?? p?.idProducto ?? null;
 
-  const ppLabel = (p) => {
-    const base =
-      p.name ??
-      p.nombre ??
-      [
-        p.producto?.nombre ?? p.productoNombre,
-        p.presentacion?.nombre ?? p.presentacionNombre,
-        p.cantidad
-          ? `${p.cantidad} ${
-              p.unidad?.nombre ?? p.unidadNombre ?? ""
-            }`.trim()
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-    return base || `Presentación ${p.id}`;
-  };
+  const getPresentacionTipoId = (p) =>
+    p?.presentacion?.id ?? p?.presentacionId ?? p?.presentacion_id ?? null;
+
+  const getProductoLabel = (p) =>
+    p?.producto?.nombre ?? p?.producto?.name ?? p?.productoNombre ?? `Producto ${getProductoId(p) ?? ""}`;
+
+  const getPresentacionLabel = (p) =>
+    p?.presentacionProducto?.nombre ??
+    p?.presentacionProducto?.name ??
+    p?.presentacion?.nombre ??
+    p?.presentacion?.name ??
+    p?.presentacionNombre ??
+    p?.name ??
+    p?.nombre ??
+    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))?.nombre ??
+    tiposPresentacion.find((t) => String(t.id) === String(getPresentacionTipoId(p)))?.name ??
+    `Presentacion ${p?.id ?? ""}`;
+
+  const presentacionesFiltradas = useMemo(() => {
+    if (!formData.productoId) return [];
+    const filtered = presentaciones.filter((p) => String(getProductoId(p)) === String(formData.productoId));
+    return filtered.length ? filtered : presentaciones;
+  }, [presentaciones, formData.productoId]);
+
+  useEffect(() => {
+    if (formData.productoId || !formData.presentacionProductoId || !presentaciones.length) return;
+    const selectedPresentacion = presentaciones.find(
+      (p) => String(p?.id) === String(formData.presentacionProductoId)
+    );
+    const productoId = getProductoId(selectedPresentacion);
+    if (productoId != null) {
+      setFormData((prev) => ({ ...prev, productoId: Number(productoId) }));
+    }
+  }, [formData.productoId, formData.presentacionProductoId, presentaciones]);
 
   const loadData = async () => {
+    const uniqueById = (arr) => {
+      const seen = new Set();
+      return arr.filter((x) => {
+        const id = x?.id;
+        if (id == null || seen.has(String(id))) return false;
+        seen.add(String(id));
+        return true;
+      });
+    };
+
     try {
-      const res = await axios.get("/v1/items/producto_presentacion/0");
-      setPresentaciones(toArray(res.data));
+      const [prodRes, tipoPresRes, prpItemsRes] = await Promise.allSettled([
+        axios.get("/v1/items/producto/0"),
+        axios.get("/v1/items/presentacion/0"),
+        axios.get("/v1/items/producto_presentacion/0"),
+      ]);
+
+      const productosItems = prodRes.status === "fulfilled" ? toArray(prodRes.value.data) : [];
+      const tiposPresItems = tipoPresRes.status === "fulfilled" ? toArray(tipoPresRes.value.data) : [];
+      const prpItems = prpItemsRes.status === "fulfilled" ? toArray(prpItemsRes.value.data) : [];
+
+      const mergedPrp = uniqueById([...prpItems]);
+      setPresentaciones(mergedPrp);
+      setTiposPresentacion(tiposPresItems);
+
+      if (productosItems.length) {
+        setProductos(
+          productosItems.map((p) => ({
+            id: Number(p.id),
+            label: p?.nombre ?? p?.name ?? `Producto ${p?.id ?? ""}`,
+          }))
+        );
+      } else {
+        const derived = uniqueById(
+          mergedPrp
+            .map((p) => {
+              const id = getProductoId(p);
+              if (id == null) return null;
+              return { id: Number(id), label: getProductoLabel(p) };
+            })
+            .filter(Boolean)
+        );
+        setProductos(derived);
+      }
     } catch (err) {
-      console.error("Error al cargar presentaciones:", err);
+      console.error("Error al cargar catalogos de articulo kardex:", err);
       setPresentaciones([]);
+      setProductos([]);
+      setTiposPresentacion([]);
     }
   };
 
-  /* -------- CRUD local -------- */
   const create = () => {
     if (!kardexId) {
       setMessage({
         open: true,
         severity: "error",
-        text: "Debes seleccionar un Kardex antes de crear un artículo.",
+        text: "Debes seleccionar un Kardex antes de crear un articulo.",
       });
       return;
     }
-    setFormData({ ...initialData, kardexId });
+    setFormData({ ...initialData });
     setMethodName("Agregar");
     loadData();
     setOpen(true);
   };
 
-  const update = () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona un artículo para editar.",
-      });
+  const update = async () => {
+    const articuloId = resolveArticuloKardexId(selectedRow);
+    if (!articuloId) {
+      setMessage({ open: true, severity: "error", text: "Selecciona un articulo para editar." });
       return;
     }
 
-    setFormData({
-      ...initialData,
-      ...selectedRow,
-      presentacionProductoId:
-        selectedRow.presentacionProducto?.id ??
-        selectedRow.presentacionProductoId ??
-        "",
-      identificadorProducto: selectedRow.identificadorProducto ?? "",
-      estadoId: String(selectedRow.estadoId ?? 1),
-    });
+    try {
+      const res = await axios.get(`/v1/kardex/${kardexId}/update-form`);
+      const data = res?.data ?? {};
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const found = items.find((it) => String(it?.id ?? "") === String(articuloId));
 
-    setMethodName("Actualizar");
-    loadData();
-    setOpen(true);
-  };
+      const cantidad = Number(found?.cantidad ?? selectedRow?.cantidad ?? 0);
+      const precioUnitario = Number(found?.precio ?? selectedRow?.precio ?? 0);
 
-  const deleteRow = () => {
-    if (!selectedRow?.id) return;
-
-    axios
-      .delete(`/v1/articulo-kardex/${selectedRow.id}`)
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Eliminado correctamente.",
-        });
-        reloadData();
-        setSelectedRow({});
-      })
-      .catch((err) => {
-        console.error("Error al eliminar:", err?.response || err);
-        setMessage({
-          open: true,
-          severity: "error",
-          text: "Error al eliminar",
-        });
+      setFormData({
+        ...initialData,
+        ...selectedRow,
+        id: articuloId,
+        productoId: "",
+        presentacionProductoId: found?.presentacionProductoId ?? selectedRow?.presentacionProductoId ?? "",
+        cantidad,
+        precioUnitario,
+        precioTotal: cantidad * precioUnitario,
+        lote: found?.lote ?? selectedRow?.lote ?? "",
+        fechaVencimiento: found?.fechaVencimiento ?? selectedRow?.fechaVencimiento ?? "",
       });
+    } catch (err) {
+      console.error("Error al precargar articulo para editar:", err);
+      const cantidad = Number(selectedRow?.cantidad ?? 0);
+      const precioUnitario = Number(selectedRow?.precioUnitario ?? selectedRow?.precio ?? 0);
+      setFormData({
+        ...initialData,
+        ...selectedRow,
+        id: articuloId,
+        productoId: "",
+        presentacionProductoId: selectedRow?.presentacionProductoId ?? "",
+        cantidad,
+        precioUnitario,
+        precioTotal: cantidad * precioUnitario,
+      });
+    } finally {
+      setMethodName("Actualizar");
+      loadData();
+      setOpen(true);
+    }
   };
 
-  /* -------- Manejo de formulario -------- */
+  const inactivateRow = async () => {
+    const articuloId = resolveArticuloKardexId(selectedRow);
+    if (!articuloId) return;
+
+    try {
+      const formRes = await axios.get(`/v1/kardex/${kardexId}/update-form`);
+      const data = formRes?.data ?? {};
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const nextItems = items.filter((it) => String(it?.id ?? "") !== String(articuloId));
+
+      const payload = mapHeaderAndItemsToKardexPayload(data, nextItems);
+      await axios.put(`/v1/kardex/${kardexId}`, payload);
+
+      setMessage({ open: true, severity: "success", text: "Anulado correctamente." });
+      reloadData();
+      setSelectedRow(null);
+    } catch (err) {
+      const d = err?.response?.data;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: (typeof d === "string" && d) || d?.message || d?.detail || d?.title || "Error al anular",
+      });
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numeric = new Set([
-      "kardexId",
-      "presentacionProductoId",
-      "estadoId",
-      "cantidad",
-      "precio",
-    ]);
-    const cast = numeric.has(name) && value !== "" ? Number(value) : value;
-    setFormData((prev) => ({ ...prev, [name]: cast }));
+    setFormData((prev) => {
+      const next = { ...prev };
+
+      if (name === "productoId") {
+        next.productoId = value === "" ? "" : Number(value);
+        next.presentacionProductoId = "";
+      } else if (["presentacionProductoId", "cantidad", "precioUnitario"].includes(name)) {
+        next[name] = value === "" ? "" : Number(value);
+      } else {
+        next[name] = value;
+      }
+
+      const qty = Number(next.cantidad || 0);
+      const unit = Number(next.precioUnitario || 0);
+      next.precioTotal = qty * unit;
+      return next;
+    });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      ...formData,
-      id: selectedRow.id,
-      cantidad: Number(formData.cantidad),
-      precio: Number(formData.precio),
-      kardexId: Number(formData.kardexId),
-      presentacionProductoId: Number(formData.presentacionProductoId),
-      estadoId: Number(formData.estadoId),
-      identificadorProducto: formData.identificadorProducto || null,
-      fechaVencimiento: String(formData.fechaVencimiento).includes("T")
-        ? formData.fechaVencimiento
-        : `${formData.fechaVencimiento}T00:00:00`,
-    };
+    if (!formData.productoId || !formData.presentacionProductoId) {
+      setMessage({ open: true, severity: "warning", text: "Debes seleccionar Producto y Presentacion." });
+      return;
+    }
 
-    const method = methodName === "Agregar" ? axios.post : axios.put;
-    const url =
-      methodName === "Agregar"
-        ? "/v1/articulo-kardex"
-        : `/v1/articulo-kardex/${selectedRow.id}`;
+    if (!Number(formData.cantidad) || Number(formData.cantidad) <= 0) {
+      setMessage({ open: true, severity: "warning", text: "La cantidad debe ser mayor que cero." });
+      return;
+    }
 
-    method(url, payload)
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Guardado correctamente.",
-        });
-        reloadData();
-        setOpen(false);
-      })
-      .catch((err) => {
-        const data = err?.response?.data;
-        console.error("Error al guardar:", data || err);
+    if (Number.isNaN(Number(formData.precioUnitario)) || Number(formData.precioUnitario) < 0) {
+      setMessage({ open: true, severity: "warning", text: "El precio unitario es invalido." });
+      return;
+    }
 
-        let errorMsg = "Error al guardar";
+    const isUpdate = methodName !== "Agregar";
+    const articuloId = resolveArticuloKardexId(selectedRow);
 
-        if (data) {
-          if (typeof data === "string") {
-            errorMsg = data;
-          } else if (data.message) {
-            errorMsg = data.message;
-          } else if (data.error) {
-            errorMsg = data.error;
-          } else if (data.detail) {
-            errorMsg = data.detail;
-          }
-        }
+    if (isUpdate && !articuloId) {
+      setMessage({ open: true, severity: "error", text: "No se encontro el ID del articulo a editar." });
+      return;
+    }
 
-        setMessage({ open: true, severity: "error", text: errorMsg });
-      });
+    try {
+      const formRes = await axios.get(`/v1/kardex/${kardexId}/update-form`);
+      const data = formRes?.data ?? {};
+      const items = Array.isArray(data?.items) ? data.items : [];
+
+      const nextItemPatch = {
+        presentacionProductoId: Number(formData.presentacionProductoId),
+        cantidad: Number(formData.cantidad),
+        precio: Number(formData.precioUnitario),
+        lote: formData.lote || null,
+        fechaVencimiento: formData.fechaVencimiento
+          ? String(formData.fechaVencimiento).substring(0, 10)
+          : null,
+      };
+
+      let nextItems;
+      if (isUpdate) {
+        nextItems = items.map((it) =>
+          String(it?.id ?? "") === String(articuloId)
+            ? {
+                ...it,
+                ...nextItemPatch,
+                id: Number(articuloId),
+              }
+            : it
+        );
+      } else {
+        nextItems = [
+          ...items,
+          {
+            ...nextItemPatch,
+            devolutivo: false,
+            responsableId: null,
+          },
+        ];
+      }
+
+      const payload = mapHeaderAndItemsToKardexPayload(data, nextItems);
+      await axios.put(`/v1/kardex/${kardexId}`, payload);
+
+      setMessage({ open: true, severity: "success", text: "Guardado correctamente." });
+      reloadData();
+      setOpen(false);
+    } catch (err) {
+      const data = err?.response?.data;
+      console.error("Error al guardar:", data || err);
+
+      let errorMsg = "Error al guardar";
+      if (data) {
+        if (typeof data === "string") errorMsg = data;
+        else errorMsg = data?.message || data?.error || data?.detail || data?.title || errorMsg;
+      }
+
+      setMessage({ open: true, severity: "error", text: errorMsg });
+    }
   };
 
   return (
     <>
-      <StackButtons methods={{ create, update, deleteRow }} />
+      <Box display="flex" gap={2} justifyContent="flex-start" mb={2}>
+        <Button variant="outlined" sx={{ textTransform: "none" }} onClick={create}>
+          + Agregar
+        </Button>
+        <Button variant="outlined" sx={{ textTransform: "none" }} onClick={update}>
+          Actualizar
+        </Button>
+        <Button variant="outlined" color="warning" sx={{ textTransform: "none" }} onClick={inactivateRow}>
+          Anular
+        </Button>
+      </Box>
 
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <form onSubmit={handleSubmit}>
-          <DialogTitle>{methodName} Artículo Kardex</DialogTitle>
+          <DialogTitle>Crear/Actualizar Articulo</DialogTitle>
 
           <DialogContent>
-            <TextField
-              fullWidth
-              name="kardexId"
-              label="Kardex ID"
-              value={formData.kardexId}
-              margin="dense"
-              required
-              disabled
-            />
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel id="producto-label">Producto</InputLabel>
+                  <Select
+                    labelId="producto-label"
+                    label="Producto"
+                    name="productoId"
+                    value={formData.productoId ?? ""}
+                    onChange={handleChange}
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione...</em>
+                    </MenuItem>
+                    {productos.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            {/* Producto Presentación */}
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel id="pp-label">Producto Presentación</InputLabel>
-              <Select
-                labelId="pp-label"
-                label="Producto Presentación"
-                name="presentacionProductoId"
-                value={formData.presentacionProductoId ?? ""}
-                onChange={handleChange}
-                displayEmpty
-              >
-                <MenuItem value="">
-                  <em>Seleccione...</em>
-                </MenuItem>
-                {presentaciones.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {ppLabel(p)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel id="pp-label" shrink>
+                    Presentacion
+                  </InputLabel>
+                  <Select
+                    labelId="pp-label"
+                    label="Presentacion"
+                    name="presentacionProductoId"
+                    value={formData.presentacionProductoId ?? ""}
+                    onChange={handleChange}
+                    displayEmpty
+                    disabled={!formData.productoId}
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione...</em>
+                    </MenuItem>
+                    {presentacionesFiltradas.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {getPresentacionLabel(p)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <TextField
-              fullWidth
-              name="cantidad"
-              label="Cantidad"
-              value={formData.cantidad}
-              onChange={handleChange}
-              margin="dense"
-              required
-            />
+              <Grid item xs={12} sm={4}>
+                <TextField fullWidth name="cantidad" label="Cantidad" value={formData.cantidad} onChange={handleChange} required />
+              </Grid>
 
-            <TextField
-              fullWidth
-              name="precio"
-              label="Precio"
-              value={formData.precio}
-              onChange={handleChange}
-              margin="dense"
-              required
-            />
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  name="precioUnitario"
+                  label="Precio Unitario"
+                  value={formData.precioUnitario}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
 
-            {/* Identificador de producto */}
-            <TextField
-              fullWidth
-              name="identificadorProducto"
-              label="Identificador producto"
-              value={formData.identificadorProducto}
-              onChange={handleChange}
-              margin="dense"
-            />
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  name="precioTotal"
+                  label="Precio Total"
+                  value={formData.precioTotal || 0}
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
 
-            <TextField
-              fullWidth
-              type="date"
-              name="fechaVencimiento"
-              label="Fecha Vencimiento"
-              value={(
-                formData.fechaVencimiento || ""
-              ).toString().substring(0, 10)}
-              onChange={handleChange}
-              margin="dense"
-              InputLabelProps={{ shrink: true }}
-              required
-            />
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  name="fechaVencimiento"
+                  label="Fecha de Vencimiento"
+                  value={formData.fechaVencimiento || ""}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
 
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel id="estado-label">Estado</InputLabel>
-              <Select
-                labelId="estado-label"
-                label="Estado"
-                name="estadoId"
-                value={formData.estadoId}
-                onChange={handleChange}
-              >
-                <MenuItem value={1}>Activo</MenuItem>
-                <MenuItem value={2}>Inactivo</MenuItem>
-              </Select>
-            </FormControl>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth name="lote" label="Lote" value={formData.lote || ""} onChange={handleChange} />
+              </Grid>
+            </Grid>
           </DialogContent>
 
           <DialogActions>
             <Button onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit">{methodName}</Button>
+            <Button type="submit">Guardar</Button>
           </DialogActions>
         </form>
       </Dialog>

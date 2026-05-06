@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useTranslation } from "react-i18next";
 
 export default function FormEmpresaRol({
   open,
@@ -34,9 +35,10 @@ export default function FormEmpresaRol({
   empresaId,
   isSystemAdmin = false,
 }) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { t } = useTranslation();
   const isEdit = Boolean(selectedRow?.id);
+  const permisosLegacyParams = (targetEmpresaId) =>
+    isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
 
   const [rolId, setRolId] = useState("");
   const [modulos, setModulos] = useState([]);
@@ -113,7 +115,7 @@ const cargarSubsistemas = async () => {
     setMessage({
       open: true,
       severity: "error",
-      text: "Error al cargar subsistemas",
+      text: t("empresaRol.messages.subsystemsLoadError"),
     });
   }
 };
@@ -144,7 +146,7 @@ const cargarModulos = async () => {
     setMessage({
       open: true,
       severity: "error",
-      text: "Error al cargar módulos",
+      text: t("empresaRol.messages.modulesLoadError"),
     });
   } finally {
     setLoadingModulos(false);
@@ -178,7 +180,7 @@ const agruparPorSubsistema = (modulosArray) => {
     try {
       const res = await axios.get(
         `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
-        getLegacyParams()
+        permisosLegacyParams(selectedRow?.empresaId ?? empresaId)
       );
 
       const ids = res.data.map((p) => p.id);
@@ -266,8 +268,30 @@ const agruparPorSubsistema = (modulosArray) => {
   /* ===============================
      Quitar permiso (solo estado local)
   =============================== */
-  const quitarPermiso = (permisoId) => {
-    setPermisosSeleccionados((prev) => prev.filter((id) => id !== permisoId));
+  const quitarPermiso = async (permisoId) => {
+    try {
+      await axios.delete(
+        `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
+        { data: { permisosId: [permisoId] } }
+      );
+
+      setPermisosSeleccionados((prev) =>
+        prev.filter((id) => id !== permisoId)
+      );
+
+      setMessage({
+        open: true,
+        severity: "success",
+        text: t("empresaRol.messages.permissionRemoved"),
+      });
+    } catch (error) {
+      console.error(error.response?.data);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: t("empresaRol.messages.permissionRemoveError"),
+      });
+    }
   };
 
   /* ===============================
@@ -278,7 +302,7 @@ const handleSave = async () => {
     setMessage({
       open: true,
       severity: "warning",
-      text: "Debe seleccionar un rol",
+      text: t("empresaRol.messages.roleRequired"),
     });
     return;
   }
@@ -296,15 +320,17 @@ const handleSave = async () => {
     setLoading(true);
 
     if (!isEdit) {
-      const payload = {
-        rolId: Number(rolId),
-        ...(isSystemAdmin ? { empresaId: getTargetEmpresaId() } : {}),
-      };
-
-      await axios.post(
-        isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
-        payload
-      );
+        await axios.post(
+          isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
+          isSystemAdmin
+            ? {
+                empresaId: Number(selectedRow?.empresaId ?? empresaId),
+                rolId: Number(rolId),
+              }
+            : {
+                rolId: Number(rolId),
+              }
+        );
     }
 
     let modulosALL = [];
@@ -387,7 +413,7 @@ if (permisosNuevos.length > 0) {
     setMessage({
       open: true,
       severity: "success",
-      text: "Permisos actualizados correctamente",
+      text: t("empresaRol.messages.saveSuccess"),
     });
 
     reloadData();
@@ -398,7 +424,7 @@ if (permisosNuevos.length > 0) {
     setMessage({
       open: true,
       severity: "error",
-      text: "Error al guardar permisos",
+      text: t("empresaRol.messages.saveError"),
     });
   } finally {
     setLoading(false);
@@ -448,7 +474,7 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
             }
           />
           <Typography sx={{ fontWeight: 600 }}>
-            Todos los permisos
+            {t("common.labels.allPermissions")}
           </Typography>
         </Box>
 
@@ -511,7 +537,7 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
                       quitarPermiso(permiso.id)
                     }
                   >
-                    Quitar
+                    {t("common.actions.remove")}
                   </Button>
                 )}
               </Box>
@@ -547,13 +573,13 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
         {isEdit
-          ? "Editar Rol y Permisos"
-          : "Crear Rol y Asignar Permisos"}
+          ? t("empresaRol.form.editTitle")
+          : t("empresaRol.form.createTitle")}
       </DialogTitle>
 
       <DialogContent>
         <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>Rol</InputLabel>
+          <InputLabel>{t("empresaRol.form.roleLabel")}</InputLabel>
           <Select
             value={rolId}
             onChange={(e) => setRolId(e.target.value)}
@@ -595,7 +621,7 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
           {subsConPermiso.length > 0 && (
             <>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                Este rol tiene permisos en los siguientes módulos
+                {t("empresaRol.permissions.withPermissionsModules")}
               </Typography>
               {subsConPermiso.map(renderSubsistema)}
             </>
@@ -604,10 +630,10 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
           {subsSinPermiso.length > 0 && (
             <>
               <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
-                Módulos sin permisos asignados
+                {t("empresaRol.permissions.withoutAssignedPermissions")}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2, opacity: 0.7 }}>
-                Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.
+                {t("empresaRol.permissions.withoutAssignedPermissionsHelp")}
               </Typography>
               {subsSinPermiso.map(renderSubsistema)}
             </>
@@ -621,27 +647,15 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose}>Cerrar</Button>
+        <Button onClick={handleClose}>{t("common.actions.close")}</Button>
         <Button
           variant="contained"
           onClick={handleSave}
           disabled={loading}
         >
-          {loading ? "Guardando..." : "Guardar"}
+          {loading ? t("common.labels.loading") : t("common.actions.save")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
-
-FormEmpresaRol.propTypes = {
-  open: PropTypes.bool.isRequired,
-  setOpen: PropTypes.func.isRequired,
-  selectedRow: PropTypes.object,
-  setSelectedRow: PropTypes.func.isRequired,
-  setMessage: PropTypes.func.isRequired,
-  reloadData: PropTypes.func.isRequired,
-  roles: PropTypes.array,
-  empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  isSystemAdmin: PropTypes.bool,
-};
