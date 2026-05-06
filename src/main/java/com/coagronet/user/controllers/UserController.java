@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
 import com.coagronet.user.User;
 import com.coagronet.user.dtos.UserDTO;
 import com.coagronet.user.dtos.UserMinimalDTO;
@@ -133,10 +134,10 @@ public class UserController {
 			""", tags = {
 			"Usuarios" }, security = { @SecurityRequirement(name = "bearerAuth") })
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente. El cuerpo de la respuesta sigue la estructura de Page<UsuarioListResponse>.", content = @Content(schema = @Schema(implementation = Page.class))),
-			@ApiResponse(responseCode = "400", description = "Parámetros de filtrado o paginación inválidos (ej. valor de filtro incorrecto, índice de página negativo).", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-			@ApiResponse(responseCode = "401", description = "No autenticado. El token de acceso es faltante, expirado o inválido.", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-			@ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no posee los roles necesarios para acceder a este recurso.", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+			@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente. El cuerpo de la respuesta sigue la estructura de Page<UsuarioListResponse>."),
+			@ApiResponse(responseCode = "400", description = "Parámetros de filtrado o paginación inválidos (ej. valor de filtro incorrecto, índice de página negativo).", content = @Content),
+			@ApiResponse(responseCode = "401", description = "No autenticado. El token de acceso es faltante, expirado o inválido.", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no posee los roles necesarios para acceder a este recurso.", content = @Content)
 	})
 	@GetMapping("/api/v1/usuarios")
 	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
