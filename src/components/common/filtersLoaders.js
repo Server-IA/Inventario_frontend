@@ -9,9 +9,10 @@ export const uniqById = (arr) =>
 
 /**
  * Crea loaders para el modal de filtros o cascadas
- * @param {{ headers: { Authorization: string }}} headers - cabeceras auth
- * @param {{ empresaId?: string|number|null }} opts
- * @returns Record<string, (values)=>Promise<Array<{value,label}>>>
+ * @param {Object} headers Cabeceras auth.
+ * @param {Object} [opts] Opciones adicionales.
+ * @param {(string|number|null)} [opts.empresaId] Empresa usada para filtrar sedes.
+ * @returns {Object}
  */
 export const makeLoaders = (headers, opts = {}) => {
   const empresaIdNum =

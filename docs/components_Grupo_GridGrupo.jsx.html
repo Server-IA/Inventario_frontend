@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>components/Grupo/GridGrupo.jsx - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AppDataGrid.html">AppDataGrid</a><ul class='methods'><li data-type='method'><a href="module-AppDataGrid.html#~loadStoredVisibilityModel">loadStoredVisibilityModel</a></li></ul></li><li><a href="module-Chart.html">Chart</a><ul class='methods'><li data-type='method'><a href="module-Chart.html#~createData">createData</a></li></ul></li><li><a href="module-Chart1.html">Chart1</a></li><li><a href="module-ComboBox.html">ComboBox</a><ul class='methods'><li data-type='method'><a href="module-ComboBox.html#~ComboBox">ComboBox</a></li></ul></li><li></li><li><a href="module-Departamento.html">Departamento</a></li><li><a href="module-Deposits.html">Deposits</a><ul class='methods'><li data-type='method'><a href="module-Deposits.html#~preventDefault">preventDefault</a></li></ul></li><li><a href="module-Drawer.html">Drawer</a></li><li><a href="module-Empresa.html">Empresa</a></li><li><a href="module-FormEmpresa.html">FormEmpresa</a></li><li><a href="module-Grid1.html">Grid1</a></li><li><a href="module-GridActionBar.html">GridActionBar</a></li><li><a href="module-GridEmpresa.html">GridEmpresa</a></li><li><a href="module-Grupo.html">Grupo</a></li><li><a href="module-Home.html">Home</a><ul class='methods'><li data-type='method'><a href="module-Home.html#~Home">Home</a></li></ul></li><li><a href="module-Logout.html">Logout</a><ul class='methods'><li data-type='method'><a href="module-Logout.html#.logout">logout</a></li></ul></li><li><a href="module-MessageSnackBar.html">MessageSnackBar</a></li><li><a href="module-Municipio.html">Municipio</a></li><li><a href="module-Pais.html">Pais</a></li><li><a href="module-PerfilCard.html">PerfilCard</a><ul class='methods'><li data-type='method'><a href="module-PerfilCard.html#.module.exports">module.exports</a></li></ul></li><li><a href="module-PerfilGroup.html">PerfilGroup</a><ul class='methods'><li data-type='method'><a href="module-PerfilGroup.html#.PerfilGroup">PerfilGroup</a></li></ul></li><li><a href="module-SectionHeader.html">SectionHeader</a></li><li><a href="module-SiteProps.html">SiteProps</a></li><li><a href="module-StackButtons.html">StackButtons</a><ul class='methods'><li data-type='method'><a href="module-StackButtons.html#.StackButtons">StackButtons</a></li></ul></li><li><a href="module-TipoEvaluacionReport.html">TipoEvaluacionReport</a></li><li><a href="module-Title.html">Title</a><ul class='methods'><li data-type='method'><a href="module-Title.html#~Title">Title</a></li></ul></li><li><a href="module-main.html">main</a><ul class='methods'><li data-type='method'><a href="module-main.html#~Main">Main</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#ProfileMenu">ProfileMenu</a></li><li><a href="global.html#buildFacturaCondicionEmpresa">buildFacturaCondicionEmpresa</a></li><li><a href="global.html#buildKardexCondicionEmpresa">buildKardexCondicionEmpresa</a></li><li><a href="global.html#buildOrdenCompraCondicionEmpresa">buildOrdenCompraCondicionEmpresa</a></li><li><a href="global.html#buildPedidoCondicionEmpresa">buildPedidoCondicionEmpresa</a></li><li><a href="global.html#buildPedidoReporteEspecifico">buildPedidoReporteEspecifico</a></li><li><a href="global.html#buildProductoVencidoCondicionEmpresa">buildProductoVencidoCondicionEmpresa</a></li><li><a href="global.html#makeLoaders">makeLoaders</a></li><li><a href="global.html#uniqById">uniqById</a></li><li><a href="global.html#unwrap">unwrap</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">components/Grupo/GridGrupo.jsx</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// src/components/Grupo/GridGrupo.jsx
+import React, { useMemo } from "react";
+import PropTypes from "prop-types";
+import { DataGrid } from "@mui/x-data-grid";
+import { Box } from "@mui/material";
+
+/**
+ * GridGrupo
+ * - Si pasas { paginationModel, setPaginationModel, rowCount } => usa paginación "server"
+ * - Si no, usa paginación en cliente (fallback) con pageSize=10
+ */
+export default function GridGrupo({
+  // Datos
+  grupos = [],
+
+  // Selección
+  selectedRow = null,
+  setSelectedRow,
+
+  // Paginación (opcional: server-side)
+  paginationModel,        // { page, pageSize } o { page, size }
+  setPaginationModel,     // (model) => void
+  rowCount,               // total en servidor
+  loading = false,        // spinner
+}) {
+  const columns = useMemo(() => ([
+    { field: "id", headerName: "ID", width: 90 },
+    { field: "nombre", headerName: "Nombre del Grupo", width: 220 },
+    { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 260 },
+    {
+      field: "estadoId",
+      headerName: "Estado",
+      width: 140,
+      valueGetter: (p) => {
+        const val =
+          p?.row?.estado?.nombre ??
+          p?.row?.estado?.name ??
+          p?.row?.estadoId;
+        if (val === 1 || val === "1") return "Activo";
+        if (val === 2 || val === "2" || val === 0 || val === "0") return "Inactivo";
+        return String(val ?? "Desconocido");
+      },
+    },
+  ]), []);
+
+  const serverPagination = Boolean(
+    paginationModel &amp;&amp; setPaginationModel &amp;&amp; typeof rowCount === "number"
+  );
+
+  return (
+    &lt;Box sx={{ width: "100%" }}>
+      &lt;DataGrid
+        rows={Array.isArray(grupos) ? grupos : []}
+        columns={columns}
+        getRowId={(row) => row.id}
+
+        // Selección
+        onRowClick={(params) => setSelectedRow?.(params.row)}
+        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
+        disableRowSelectionOnClick
+
+        // Paginación
+        paginationMode={serverPagination ? "server" : "client"}
+        loading={loading}
+        {...(serverPagination
+          ? {
+              // ----- Server controlled -----
+              paginationModel: {
+                page: paginationModel.page ?? 0,
+                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
+              },
+              onPaginationModelChange: (model) => {
+                const next = {
+                  page: model.page ?? 0,
+                  size: model.pageSize ?? model.size ?? 10,
+                };
+                setPaginationModel?.(next);
+              },
+              rowCount,
+            }
+          : {
+              // ----- Client fallback -----
+              pageSizeOptions: [5, 10, 15, 20, 50],
+              initialState: {
+                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+              },
+            })}
+        autoHeight
+      />
+    &lt;/Box>
+  );
+}
+
+GridGrupo.propTypes = {
+  grupos: PropTypes.array,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
+  paginationModel: PropTypes.shape({
+    page: PropTypes.number,
+    pageSize: PropTypes.number,
+    size: PropTypes.number,
+  }),
+  setPaginationModel: PropTypes.func,
+  rowCount: PropTypes.number,
+  loading: PropTypes.bool,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Mon May 04 2026 09:11:43 GMT-0500 (hora estándar de Colombia) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

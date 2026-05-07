@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>components/Grupo/Grupo.jsx - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AppDataGrid.html">AppDataGrid</a><ul class='methods'><li data-type='method'><a href="module-AppDataGrid.html#~loadStoredVisibilityModel">loadStoredVisibilityModel</a></li></ul></li><li><a href="module-Chart.html">Chart</a><ul class='methods'><li data-type='method'><a href="module-Chart.html#~createData">createData</a></li></ul></li><li><a href="module-Chart1.html">Chart1</a></li><li><a href="module-ComboBox.html">ComboBox</a><ul class='methods'><li data-type='method'><a href="module-ComboBox.html#~ComboBox">ComboBox</a></li></ul></li><li></li><li><a href="module-Departamento.html">Departamento</a></li><li><a href="module-Deposits.html">Deposits</a><ul class='methods'><li data-type='method'><a href="module-Deposits.html#~preventDefault">preventDefault</a></li></ul></li><li><a href="module-Drawer.html">Drawer</a></li><li><a href="module-Empresa.html">Empresa</a></li><li><a href="module-FormEmpresa.html">FormEmpresa</a></li><li><a href="module-Grid1.html">Grid1</a></li><li><a href="module-GridActionBar.html">GridActionBar</a></li><li><a href="module-GridEmpresa.html">GridEmpresa</a></li><li><a href="module-Grupo.html">Grupo</a></li><li><a href="module-Home.html">Home</a><ul class='methods'><li data-type='method'><a href="module-Home.html#~Home">Home</a></li></ul></li><li><a href="module-Logout.html">Logout</a><ul class='methods'><li data-type='method'><a href="module-Logout.html#.logout">logout</a></li></ul></li><li><a href="module-MessageSnackBar.html">MessageSnackBar</a></li><li><a href="module-Municipio.html">Municipio</a></li><li><a href="module-Pais.html">Pais</a></li><li><a href="module-PerfilCard.html">PerfilCard</a><ul class='methods'><li data-type='method'><a href="module-PerfilCard.html#.module.exports">module.exports</a></li></ul></li><li><a href="module-PerfilGroup.html">PerfilGroup</a><ul class='methods'><li data-type='method'><a href="module-PerfilGroup.html#.PerfilGroup">PerfilGroup</a></li></ul></li><li><a href="module-SectionHeader.html">SectionHeader</a></li><li><a href="module-SiteProps.html">SiteProps</a></li><li><a href="module-StackButtons.html">StackButtons</a><ul class='methods'><li data-type='method'><a href="module-StackButtons.html#.StackButtons">StackButtons</a></li></ul></li><li><a href="module-TipoEvaluacionReport.html">TipoEvaluacionReport</a></li><li><a href="module-Title.html">Title</a><ul class='methods'><li data-type='method'><a href="module-Title.html#~Title">Title</a></li></ul></li><li><a href="module-main.html">main</a><ul class='methods'><li data-type='method'><a href="module-main.html#~Main">Main</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#ProfileMenu">ProfileMenu</a></li><li><a href="global.html#buildFacturaCondicionEmpresa">buildFacturaCondicionEmpresa</a></li><li><a href="global.html#buildKardexCondicionEmpresa">buildKardexCondicionEmpresa</a></li><li><a href="global.html#buildOrdenCompraCondicionEmpresa">buildOrdenCompraCondicionEmpresa</a></li><li><a href="global.html#buildPedidoCondicionEmpresa">buildPedidoCondicionEmpresa</a></li><li><a href="global.html#buildPedidoReporteEspecifico">buildPedidoReporteEspecifico</a></li><li><a href="global.html#buildProductoVencidoCondicionEmpresa">buildProductoVencidoCondicionEmpresa</a></li><li><a href="global.html#makeLoaders">makeLoaders</a></li><li><a href="global.html#uniqById">uniqById</a></li><li><a href="global.html#unwrap">unwrap</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">components/Grupo/Grupo.jsx</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Grupo.jsx
+ * @module Grupo
+ * @description Componente principal para la gestión de grupos.
+ *
+ * Este componente maneja la carga de datos de grupos desde la API,
+ * el manejo de mensajes, y la integración del formulario y la tabla.
+ */
+
+import React, { useState, useEffect } from "react";
+import axios from "../axiosConfig";
+import MessageSnackBar from "../MessageSnackBar";
+import FormGrupo from "./FormGrupo";
+import GridGrupo from "./GridGrupo";
+
+/**
+ * @typedef {Object} GrupoRow
+ * @property {number} id - ID del grupo
+ * @property {string} nombre - Nombre del grupo
+ * @property {string} descripcion - Descripción del grupo
+ * @property {number} estadoId - Estado del grupo (1: Activo, 2: Inactivo)
+ */
+
+/**
+ * Componente principal para la gestión de grupos.
+ *
+ * @returns {JSX.Element} El módulo de gestión de grupos
+ */
+export default function Grupo() {
+  const [selectedRow, setSelectedRow] = useState({ id: 0 });
+  const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
+  const [grupos, setGrupos] = useState([]);
+
+  /**
+   * Carga los grupos desde la API y actualiza el estado.
+   */
+  const reloadData = () => {
+    axios.get("/v1/grupo")
+      .then((res) => {
+        const datosConId = res.data.map((g) => ({
+          ...g,
+          id: g.id,
+          estadoId: g.estadoId
+        }));
+        setGrupos(datosConId);
+      })
+      .catch((err) => {
+        console.error("❌ Error al cargar grupos:", err);
+        setMessage({
+          open: true,
+          severity: "error",
+          text: "Error al cargar grupos",
+        });
+      });
+  };
+
+  /**
+   * Ejecuta la carga inicial de datos cuando se monta el componente.
+   */
+  useEffect(() => {
+    reloadData();
+  }, []);
+
+  return (
+    &lt;div>
+      &lt;h1>Gestión de Grupos&lt;/h1>
+
+      {/* Notificación Snackbar */}
+      &lt;MessageSnackBar message={message} setMessage={setMessage} />
+
+      {/* Formulario de creación/edición */}
+      &lt;FormGrupo
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        setMessage={setMessage}
+        reloadData={reloadData}
+      />
+
+      {/* Tabla de visualización */}
+      &lt;GridGrupo
+        grupos={grupos}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+      />
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Mon May 04 2026 09:11:43 GMT-0500 (hora estándar de Colombia) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

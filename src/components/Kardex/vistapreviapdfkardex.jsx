@@ -5,7 +5,9 @@ import {
 
 /**
  * Muestra el resumen del Kardex o el visor PDF, dependiendo de la prop recibida
- * @param {{ kardex?: Array, url?: string }} props
+ * @param {Object} props
+ * @param {Array} [props.kardex]
+ * @param {string} [props.url]
  */
 export default function VistaPreviaPDFKardex({ kardex, url }) {
   if (url) {

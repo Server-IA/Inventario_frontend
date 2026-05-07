@@ -1,8 +1,41 @@
+/*=============================================================================
+Nombre del archivo : SectionHeader.jsx
+Descripción        : Componente reutilizable para el encabezado de módulos.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+/**
+ * Componente reusable de encabezado para módulos de gestión.
+ * @module SectionHeader
+ */
 import React from "react";
+import PropTypes from "prop-types";
 import { Stack, Typography, Box } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
+/**
+ * Encabezado reusable para módulos de gestión.
+ *
+ * Permite mostrar títulos y subtítulos centrados, con soporte para traducción
+ * por clave y una zona opcional de acciones alineadas al extremo derecho.
+ *
+ * @param {Object} props Propiedades del componente.
+ * @param {string} [props.title] Título literal a mostrar cuando no se usa `titleKey`.
+ * @param {string} [props.titleKey] Clave i18n del título principal.
+ * @param {string} [props.subtitle] Subtítulo literal cuando no se usa `subtitleKey`.
+ * @param {string} [props.subtitleKey] Clave i18n del subtítulo.
+ * @param {React.ReactNode} [props.icon] Icono decorativo opcional.
+ * @param {React.ReactNode} [props.rightNode] Nodo opcional para acciones auxiliares.
+ * @param {Object} [props.titleOptions] Parámetros de interpolación para `titleKey`.
+ * @param {Object} [props.subtitleOptions] Parámetros de interpolación para `subtitleKey`.
+ * @returns {JSX.Element}
+ */
 export default function SectionHeader({ title, titleKey, subtitle, subtitleKey, icon, rightNode, titleOptions, subtitleOptions }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -81,3 +114,14 @@ export default function SectionHeader({ title, titleKey, subtitle, subtitleKey, 
     </Stack>
   );
 }
+
+SectionHeader.propTypes = {
+  title: PropTypes.string,
+  titleKey: PropTypes.string,
+  subtitle: PropTypes.string,
+  subtitleKey: PropTypes.string,
+  icon: PropTypes.node,
+  rightNode: PropTypes.node,
+  titleOptions: PropTypes.object,
+  subtitleOptions: PropTypes.object,
+};
