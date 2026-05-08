@@ -512,12 +512,11 @@ public class AuthService {
 		User user = getCurrentUser();
 
 		if (!encoder.matches(dto.getOldPassword(), user.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.old.password.incorrect"));
 		}
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La nueva contraseña no puede ser igual a la contraseña anterior.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.new.password.same.as.old"));
 		}
 
 		// 🔐 Validación NIST/OWASP de la nueva contraseña
@@ -527,7 +526,7 @@ public class AuthService {
 		user.incrementTokenVersion(); // revoca todos los JWT previos
 		userRepo.save(user);
 
-		return new ApiResponse(true, "Password changed successfully");
+		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
 	// RESET PASSWORD
@@ -535,15 +534,15 @@ public class AuthService {
 		String username = emailService.consumeResetPasswordToken(dto.getToken());
 
 		if (username == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired reset link");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.reset.link.invalid"));
 		}
 
 		User user = userRepo.findByUsername(username)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg("auth.user.not.found")));
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La nueva contraseña no puede ser igual a la contraseña anterior.");
+					msg("auth.new.password.same.as.old"));
 		}
 
 		// 🔐 Validación NIST/OWASP de la nueva contraseña
@@ -553,7 +552,7 @@ public class AuthService {
 		user.incrementTokenVersion(); // revoca todos los JWT previos
 		userRepo.save(user);
 
-		return new ApiResponse(true, "Password reset successfully");
+		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
 	public ApiResponse changePasswordInitial(@Valid InitialPasswordChangeRequestDTO dto) {
@@ -562,17 +561,17 @@ public class AuthService {
 		if (user.getUsuarioEstado() == usuarioEstadoRepository
 				.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Este usuario no requiere cambio de contraseña obligatorio.");
+					msg("auth.initial.password.change.no.required"));
 		}
 
 		if (!dto.nuevaClave().equals(dto.confirmacionClave())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña y su confirmación no coinciden.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.new.password.confirmation.mismatch"));
 		}
 
 		// ⛔ Nueva contraseña igual a la actual
 		if (encoder.matches(dto.nuevaClave(), user.getPassword())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La nueva contraseña no puede ser igual a la contraseña anterior.");
+					msg("auth.new.password.same.as.old"));
 		}
 
 		// 🔐 Validación NIST/OWASP de la nueva contraseña inicial
@@ -583,7 +582,7 @@ public class AuthService {
 		user.incrementTokenVersion(); // revoca JWT previos
 		userRepo.save(user);
 
-		return new ApiResponse(true, "Contraseña actualizada correctamente.");
+		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
 	public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto) {
@@ -591,15 +590,15 @@ public class AuthService {
 			var token = emailService.createResetPasswordToken(u.getUsername());
 			emailService.sendResetPasswordEmail(u.getUsername(), token);
 		});
-		return new ApiResponse(true, "If the email exists, you will receive a message shortly.");
+		return new ApiResponse(true, msg("auth.forgot.password.email.sent"));
 	}
 
 	/* ================= ACCOUNT VERIFICATION ================= */
 	public ApiResponse verifyUser(String token) {
 		// Dejamos que RegistrationService active y consuma el token VERIFY
 		boolean ok = registrationService.activateUser(token);
-		return ok ? new ApiResponse(true, "User activated successfully")
-				: new ApiResponse(false, "Invalid verification link");
+		return ok ? new ApiResponse(true, msg("auth.user.activated.successfully"))
+				: new ApiResponse(false, msg("auth.invalid.verification.link"));
 	}
 
 	/* ================= LOGOUT (stateless) ================= */
@@ -627,21 +626,21 @@ public class AuthService {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || auth
 				.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, msg("auth.user.not.authenticated"));
 		}
 
 		return userRepo.findByUsername(auth.getName())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg("auth.user.not.found")));
 	}
 
 	private void validatePasswordPolicy(String rawPassword) {
 		if (rawPassword == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña no puede ser nula.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.password.null"));
 		}
 
 		if (!rawPassword.equals(rawPassword.trim())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña no puede iniciar ni terminar con espacios en blanco.");
+					msg("auth.password.trimmed"));
 		}
 
 		String password = rawPassword;
@@ -649,28 +648,28 @@ public class AuthService {
 
 		if (length < MIN_PASSWORD_LENGTH) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres.");
+					msg("auth.password.min.length", MIN_PASSWORD_LENGTH));
 		}
 
 		if (length > MAX_PASSWORD_LENGTH) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña no puede superar los " + MAX_PASSWORD_LENGTH + " caracteres.");
+					msg("auth.password.max.length", MAX_PASSWORD_LENGTH));
 		}
 
 		if (isCommonPassword(password)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña es demasiado común. Por favor, usa una contraseña más única.");
+					msg("auth.password.common"));
 		}
 
 		if (allCharactersAreTheSame(password)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña no puede estar formada por el mismo carácter repetido.");
+					msg("auth.password.repeated.character"));
 		}
 
 		long distinctChars = password.codePoints().distinct().count();
 		if (distinctChars < 4) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña debe contener más variedad de caracteres.");
+					msg("auth.password.low.variety"));
 		}
 
 	}

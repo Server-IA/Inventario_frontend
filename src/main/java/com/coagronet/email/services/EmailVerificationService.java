@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,9 +33,17 @@ public class EmailVerificationService {
 	private String resetPasswordUrl; // Debe apuntar al FRONT
 
 	public EmailVerificationService(VerificationTokenRepository verificationTokenRepository,
-			JavaMailSender mailSender) {
+			JavaMailSender mailSender, MessageSource messageSource) {
 		this.verificationTokenRepository = verificationTokenRepository;
 		this.mailSender = mailSender;
+		this.messageSource = messageSource;
+	}
+	/* ================= MENSAJES I18N ================= */
+
+	private final MessageSource messageSource;
+
+	private String msg(String key, Object... args) {
+		return messageSource.getMessage(key, args, key, LocaleContextHolder.getLocale());
 	}
 
 	/* ================= TOKENS ================= */
@@ -88,67 +98,46 @@ public class EmailVerificationService {
 	/* ================= EMAILS ================= */
 
 	public void sendVerificationEmail(String email, String token) {
-		String subject = "Verify your account";
-		String text = "Click to verify your account: " + verificationUrl + "?token=" + token;
+		String subject = msg("email.verify.account");
+		String verificationLink = verificationUrl + "?token=" + token;
+		String text = msg("email.verification.text", verificationLink);
 		sendEmail(email, subject, text);
 	}
 
 	public void sendResetPasswordEmail(String email, String token) {
-		String subject = "Reset your password";
-		String text = "Click to reset your password: " + resetPasswordUrl + "?token=" + token;
+		String subject = msg("email.reset.password");
+		String text = msg("email.reset.password.text", resetPasswordUrl + "?token=" + token);
 		sendEmail(email, subject, text);
 	}
 
 	public void sendRoleActivatedEmail(String email, String rolNombre, String personaNombre, String personaApellido,
 			String empresaNombre) {
-		final String subject = "Rol activado en la empresa";
+		final String subject = msg("email.role.activated");
 
 		final String fullName = String.join(" ", personaNombre != null ? personaNombre.trim() : "",
 				personaApellido != null ? personaApellido.trim() : "").trim();
 
-		final String safeName = fullName.isBlank() ? "Usuario" : fullName;
+		final String safeName = fullName.isBlank() ? msg("email.user.fallback") : fullName;
 		final String safeRol = (rolNombre == null || rolNombre.isBlank()) ? "N/A" : rolNombre.trim();
 		final String safeEmpresa = (empresaNombre == null || empresaNombre.isBlank()) ? "N/A" : empresaNombre.trim();
 
-		final String text = String.format("""
-				Estimado(a) %s,
-
-				Se ha activado el rol "%s" en la empresa "%s".
-
-				Ya puede ingresar al sistema.
-
-				Cordialmente,
-				Equipo de la plataforma
-				""", safeName, safeRol, safeEmpresa);
+		final String text = msg("email.role.activated.body", safeName, safeRol, safeEmpresa);
 
 		sendEmail(email, subject, text);
 	}
 
 	public void sendNewUserCredentialsEmail(String email, String personaNombre, String personaApellido,
 			String empresaNombre, String rolNombre, String tempPassword) {
-		final String subject = "Acceso creado - Credenciales temporales";
+		final String subject = msg("email.new.user.credentials.subject");
 
 		final String fullName = String.join(" ", personaNombre != null ? personaNombre.trim() : "",
 				personaApellido != null ? personaApellido.trim() : "").trim();
 
-		final String safeName = fullName.isBlank() ? "Usuario" : fullName;
+		final String safeName = fullName.isBlank() ? msg("email.user.fallback") : fullName;
 		final String safeRol = (rolNombre == null || rolNombre.isBlank()) ? "N/A" : rolNombre.trim();
 		final String safeEmpresa = (empresaNombre == null || empresaNombre.isBlank()) ? "N/A" : empresaNombre.trim();
 
-		final String text = String.format("""
-				Estimado(a) %s,
-
-				Se ha creado tu acceso a la empresa "%s" con el rol "%s".
-
-				Credenciales temporales:
-				- Usuario: %s
-				- Contraseña temporal: %s
-
-				Por seguridad, al iniciar sesión se te solicitará cambiar la contraseña inmediatamente.
-
-				Cordialmente,
-				Equipo de la plataforma
-				""", safeName, safeEmpresa, safeRol, email, tempPassword);
+		final String text = msg("email.new.user.credentials.body", safeName, safeEmpresa, safeRol, email, tempPassword);
 
 		sendEmail(email, subject, text);
 	}
@@ -161,9 +150,9 @@ public class EmailVerificationService {
 
 		try {
 			mailSender.send(message);
-			logger.info("Email sent to {} with subject: {}", to, subject);
+			logger.info(msg("email.sent"), to, subject);
 		} catch (MailException e) {
-			logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+			logger.error(msg("email.send.failed"), to, e.getMessage(), e);
 		}
 	}
 
