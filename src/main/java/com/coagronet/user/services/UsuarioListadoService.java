@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.infrastructure.configuration.EmpresaTenantIdentifierResolver;
+import com.coagronet.rol.Rol;
+import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.dtos.AsignacionResumenDTO;
 import com.coagronet.user.dtos.UsuarioFiltroRequest;
@@ -23,25 +25,31 @@ import lombok.RequiredArgsConstructor;
 public class UsuarioListadoService {
 
         private final UserRepository userRepository;
+        private final RolRepository rolRepository;
         private final EmpresaTenantIdentifierResolver tenantResolver;
 
         @Transactional(readOnly = true)
         public Page<UsuarioListResponse> listarUsuarios(UsuarioFiltroRequest filtro, Pageable pageable) {
 
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
                 boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
                                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
 
                 Long forcedEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
 
                 Specification<User> spec = UserSpecifications.conFiltros(filtro, forcedEmpresaId);
+
                 Page<User> usersPage = userRepository.findAll(spec, pageable);
 
-                // Capturamos las variables en el closure del mapeo
                 return usersPage.map(user -> mapToResponse(user, isSystemAdmin, forcedEmpresaId));
         }
 
         private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
+
+                String nombreRol = (user.getPreferredRolId() != null) ? rolRepository.findById(user.getPreferredRolId())
+                                .map(Rol::getNombre).orElse("Sin rol preferido") : "Sin rol preferido";
+
                 var asignaciones = user.getRolesAsignados().stream()
                                 .filter(ur -> isSystemAdmin ||
                                                 (ur.getEmpresa() != null
@@ -69,6 +77,8 @@ public class UsuarioListadoService {
                                 user.getPersona().getIdentificacion(),
                                 user.getPersona().getNombre(),
                                 user.getPersona().getApellido(),
+                                user.getPersona().getCelular(),
+                                nombreRol,
                                 asignaciones);
         }
 }
