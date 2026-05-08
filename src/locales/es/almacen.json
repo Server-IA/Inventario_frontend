@@ -1,0 +1,58 @@
+{
+  "title": "Gestión de Almacenes",
+  "filters": {
+    "title": "Filtros de Almacén",
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio",
+    "headquarters": "Sede",
+    "block": "Bloque",
+    "space": "Espacio"
+  },
+  "columns": {
+    "id": "ID",
+    "name": "Nombre",
+    "space": "Espacio",
+    "description": "Descripción",
+    "address": "Dirección",
+    "geolocation": "Geolocalización",
+    "coordinates": "Coordenadas",
+    "status": "Estado"
+  },
+  "messages": {
+    "loadError": "Error al cargar almacenes.",
+    "confirmDelete": "¿Eliminar el almacén \"{{name}}\"?",
+    "deleteSuccess": "Almacén eliminado correctamente.",
+    "deleteError": "Error al eliminar almacén.",
+    "createSuccess": "Almacén creado correctamente.",
+    "updateSuccess": "Almacén actualizado correctamente.",
+    "saveError": "Error al guardar almacén."
+  },
+  "form": {
+    "createTitle": "Nuevo Almacén",
+    "editTitle": "Editar Almacén",
+    "fields": {
+      "space": "Espacio",
+      "name": "Nombre",
+      "description": "Descripción",
+      "address": "Dirección",
+      "geolocation": "Geolocalización",
+      "coordinates": "Coordenadas",
+      "status": "Estado"
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio.",
+      "nameInvalid": "El nombre contiene caracteres no permitidos.",
+      "descriptionRequired": "La descripción es obligatoria.",
+      "descriptionInvalid": "La descripción contiene caracteres no permitidos.",
+      "addressRequired": "La dirección es obligatoria.",
+      "addressInvalid": "La dirección contiene caracteres no permitidos.",
+      "geolocationRequired": "La geolocalización es obligatoria.",
+      "geolocationInvalid": "La geolocalización contiene caracteres no permitidos.",
+      "coordinatesRequired": "Las coordenadas son obligatorias.",
+      "coordinatesInvalid": "Las coordenadas contienen caracteres no permitidos.",
+      "statusInvalid": "Debe seleccionar un estado válido.",
+      "spaceRequired": "Debe seleccionar un espacio."
+    }
+  }
+}

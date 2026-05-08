@@ -1,0 +1,58 @@
+{
+  "title": "Warehouse Management",
+  "filters": {
+    "title": "Warehouse Filters",
+    "country": "Country",
+    "department": "Department",
+    "municipality": "Municipality",
+    "headquarters": "Headquarters",
+    "block": "Block",
+    "space": "Space"
+  },
+  "columns": {
+    "id": "ID",
+    "name": "Name",
+    "space": "Space",
+    "description": "Description",
+    "address": "Address",
+    "geolocation": "Geolocation",
+    "coordinates": "Coordinates",
+    "status": "Status"
+  },
+  "messages": {
+    "loadError": "Error loading warehouses.",
+    "confirmDelete": "Delete warehouse \"{{name}}\"?",
+    "deleteSuccess": "Warehouse deleted successfully.",
+    "deleteError": "Error deleting warehouse.",
+    "createSuccess": "Warehouse created successfully.",
+    "updateSuccess": "Warehouse updated successfully.",
+    "saveError": "Error saving warehouse."
+  },
+  "form": {
+    "createTitle": "New Warehouse",
+    "editTitle": "Edit Warehouse",
+    "fields": {
+      "space": "Space",
+      "name": "Name",
+      "description": "Description",
+      "address": "Address",
+      "geolocation": "Geolocation",
+      "coordinates": "Coordinates",
+      "status": "Status"
+    },
+    "validation": {
+      "nameRequired": "Name is required.",
+      "nameInvalid": "Name contains invalid characters.",
+      "descriptionRequired": "Description is required.",
+      "descriptionInvalid": "Description contains invalid characters.",
+      "addressRequired": "Address is required.",
+      "addressInvalid": "Address contains invalid characters.",
+      "geolocationRequired": "Geolocation is required.",
+      "geolocationInvalid": "Geolocation contains invalid characters.",
+      "coordinatesRequired": "Coordinates are required.",
+      "coordinatesInvalid": "Coordinates contain invalid characters.",
+      "statusInvalid": "You must select a valid status.",
+      "spaceRequired": "You must select a space."
+    }
+  }
+}

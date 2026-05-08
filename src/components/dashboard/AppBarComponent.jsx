@@ -1,3 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : AppBarComponent.jsx
+ Descripcion        : Barra superior principal con tema, idioma y acceso al perfil.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+/**
+ * @module AppBarComponent
+ * @description Renderiza la barra superior principal de la aplicación e integra
+ * navegación pública, selector de idioma, cambio de tema y menú de perfil.
+ */
 import React, { useEffect, useState } from "react";
 import {
   AppBar,
@@ -9,11 +25,17 @@ import {
   Tooltip,
   FormControlLabel,
   useMediaQuery,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { useTheme, alpha } from "@mui/material/styles";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
+import TranslateIcon from "@mui/icons-material/Translate";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import CheckIcon from "@mui/icons-material/Check";
+import { useTranslation } from "react-i18next";
 
 import Login from "../Login";
 import Register from "../Register";
@@ -56,10 +78,17 @@ export default function AppBarComponent({
   isAuthenticated,
   setIsAuthenticated,
 }) {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const { toggleTheme, darkMode } = useThemeToggle();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("md"));
+  const [languageAnchorEl, setLanguageAnchorEl] = useState(null);
+  const currentLanguage = String(i18n.resolvedLanguage || i18n.language || "es")
+    .toLowerCase()
+    .startsWith("en")
+    ? "en"
+    : "es";
 
   const BASE_PATH =
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.BASE_URL) ||
@@ -85,6 +114,20 @@ export default function AppBarComponent({
     if (typeof setCurrentModule === "function") {
       setCurrentModule(<Register setCurrentModule={setCurrentModule} />);
     }
+  };
+
+  const openLanguageMenu = (event) => {
+    setLanguageAnchorEl(event.currentTarget);
+  };
+
+  const closeLanguageMenu = () => {
+    setLanguageAnchorEl(null);
+  };
+
+  const handleLanguageChange = (language) => {
+    localStorage.setItem("preferredLanguage", language);
+    i18n.changeLanguage(language);
+    closeLanguageMenu();
   };
 
   useEffect(() => {
@@ -259,7 +302,7 @@ export default function AppBarComponent({
         )}
 
         {isCompact ? (
-          <Tooltip title={darkMode ? "Modo oscuro" : "Modo claro"}>
+          <Tooltip title={darkMode ? t("common.theme.dark") : t("common.theme.light")}>
             <Switch
               checked={darkMode}
               onChange={toggleTheme}
@@ -339,7 +382,7 @@ export default function AppBarComponent({
                 checkedIcon={<DarkModeIcon sx={{ fontSize: 20 }} />}
               />
             }
-            label={darkMode ? "Modo oscuro" : "Modo claro"}
+            label={darkMode ? t("common.theme.dark") : t("common.theme.light")}
             labelPlacement="start"
             sx={{
               ml: 2,
@@ -353,10 +396,92 @@ export default function AppBarComponent({
           />
         )}
 
+        <Button
+          color="inherit"
+          onClick={openLanguageMenu}
+          startIcon={isCompact ? null : <TranslateIcon />}
+          endIcon={isCompact ? null : <KeyboardArrowDownIcon />}
+          aria-controls={languageAnchorEl ? "language-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={languageAnchorEl ? "true" : undefined}
+          sx={{
+            mr: showProfileUI ? 1 : 0,
+            minWidth: { xs: 34, md: 68 },
+            px: { xs: 0.6, md: 1.25 },
+            py: 0.45,
+            textTransform: "none",
+            fontWeight: 600,
+            letterSpacing: 0.2,
+            borderRadius: 999,
+            border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
+            backgroundColor: alpha(theme.palette.common.white, 0.035),
+            color: alpha(theme.palette.common.white, 0.92),
+            boxShadow: "none",
+            transition: theme.transitions.create(
+              ["background-color", "border-color", "color"],
+              {
+                duration: theme.transitions.duration.shorter,
+              }
+            ),
+            "&:hover": {
+              backgroundColor: alpha(theme.palette.common.white, 0.08),
+              borderColor: alpha(theme.palette.common.white, 0.18),
+              boxShadow: "none",
+            },
+            "& .MuiButton-startIcon": {
+              mr: isCompact ? 0 : 0.55,
+              "& svg": {
+                fontSize: isCompact ? 18 : 17,
+                opacity: 0.82,
+              },
+            },
+            "& .MuiButton-endIcon": {
+              ml: 0.2,
+              "& svg": {
+                fontSize: 18,
+                opacity: 0.72,
+              },
+            },
+          }}
+        >
+          {currentLanguage.toUpperCase()}
+        </Button>
+        <Menu
+          id="language-menu"
+          anchorEl={languageAnchorEl}
+          open={Boolean(languageAnchorEl)}
+          onClose={closeLanguageMenu}
+        >
+          <MenuItem
+            selected={currentLanguage === "es"}
+            onClick={() => handleLanguageChange("es")}
+            sx={{ minWidth: 180, display: "flex", justifyContent: "space-between", gap: 2 }}
+          >
+            <span>{`${t("common.language.spanish")} (ES)`}</span>
+            {currentLanguage === "es" ? <CheckIcon fontSize="small" /> : null}
+          </MenuItem>
+          <MenuItem
+            selected={currentLanguage === "en"}
+            onClick={() => handleLanguageChange("en")}
+            sx={{ minWidth: 180, display: "flex", justifyContent: "space-between", gap: 2 }}
+          >
+            <span>{`${t("common.language.english")} (EN)`}</span>
+            {currentLanguage === "en" ? <CheckIcon fontSize="small" /> : null}
+          </MenuItem>
+        </Menu>
+
         {!showProfileUI ? (
           <>
-            {!isCompact && <Button color="inherit" onClick={handleLogin}>Login</Button>}
-            {!isCompact && <Button color="inherit" onClick={handleRegister}>Register</Button>}
+            {!isCompact && (
+              <Button color="inherit" onClick={handleLogin}>
+                {t("auth.actions.login")}
+              </Button>
+            )}
+            {!isCompact && (
+              <Button color="inherit" onClick={handleRegister}>
+                {t("auth.actions.register")}
+              </Button>
+            )}
           </>
         ) : (
           <ProfileMenu

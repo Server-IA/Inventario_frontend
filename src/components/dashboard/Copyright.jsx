@@ -1,6 +1,8 @@
 import React from "react";
 import { Box, Typography, Link } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
+import packageInfo from "../../../package.json";
 import { SiteProps } from "./SiteProps";
 
 export default function Copyright({
@@ -8,8 +10,10 @@ export default function Copyright({
   seamlessAbove = true,
   ...props
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const appVersion = packageInfo.version || "0.4.0";
 
   const softBg = isDark ? alpha(theme.palette.primary.light, 0.08) : "#ffffff";
 
@@ -36,7 +40,8 @@ export default function Copyright({
       }}
     >
       <Typography variant="body2" color="text.secondary" align="center" {...props}>
-        {"Copyright © "}
+        {t("common.footer.copyrightPrefix")}
+        {" "}
         <Link
           color="inherit"
           href="https://inmero.co/"
@@ -54,9 +59,8 @@ export default function Copyright({
         {"."}
       </Typography>
 
-      {/* Textos de versión centrados */}
       <Typography variant="body2" color="text.secondary" align="center" gutterBottom>
-        Construcción de versionamiento 0.0.1
+        {t("common.footer.buildVersion", { version: appVersion })}
       </Typography>
     </Box>
   );

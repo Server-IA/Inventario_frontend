@@ -1,0 +1,86 @@
+{
+  "actions": {
+    "add": "Agregar",
+    "update": "Actualizar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "apply": "Aplicar",
+    "clear": "Limpiar",
+    "filters": "Filtros",
+    "viewDetail": "Ver detalle",
+    "viewPermissions": "Ver permisos",
+    "remove": "Quitar",
+    "addAssignment": "Agregar asignación"
+  },
+  "labels": {
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "yes": "Sí",
+    "no": "No",
+    "all": "Todos",
+    "select": "Seleccione",
+    "withoutDate": "Sin fecha",
+    "withoutAssignments": "Sin asignaciones",
+    "withoutPermissions": "Sin permisos",
+    "general": "General",
+    "permissions": "Permisos",
+    "role": "Rol",
+    "company": "Empresa",
+    "start": "Inicio",
+    "end": "Fin",
+    "personalInformation": "Información personal",
+    "assignments": "Asignaciones",
+    "allPermissions": "Todos los permisos",
+    "loading": "Cargando...",
+    "moreCount": "+{{count}} más",
+    "permissionsCount": "{{count}} permisos"
+  },
+  "messages": {
+    "operationSuccess": "Operación exitosa",
+    "operationError": "Error en la operación",
+    "filtersComingSoon": "Filtros disponibles próximamente",
+    "selectRow": "Selecciona una fila"
+  },
+  "grid": {
+    "toolbar": {
+      "columns": "Columnas",
+      "filters": "Filtros",
+      "density": "Densidad",
+      "export": "Exportar"
+    },
+    "columnsPanelTextFieldLabel": "Buscar columna",
+    "columnsPanelTextFieldPlaceholder": "Nombre de columna",
+    "columnsManagementShowHideAllText": "Mostrar/Ocultar todo",
+    "columnsManagementReset": "Restablecer",
+    "noRowsLabel": "Sin filas",
+    "noResultsOverlayLabel": "Sin resultados",
+    "toolbarQuickFilterPlaceholder": "Buscar...",
+    "MuiTablePagination": {
+      "labelRowsPerPage": "Filas por página"
+    }
+  },
+  "theme": {
+    "dark": "Modo oscuro",
+    "light": "Modo claro"
+  },
+  "language": {
+    "label": "Idioma",
+    "spanish": "Español",
+    "english": "Inglés"
+  },
+  "footer": {
+    "copyrightPrefix": "Derechos de autor ©",
+    "buildVersion": "Construcción de versionamiento {{version}}"
+  },
+  "profile": {
+    "defaultName": "Mi perfil",
+    "userLabel": "Usuario",
+    "changePassword": "Cambiar contraseña",
+    "switchCompanyRole": "Cambiar empresa/rol",
+    "changeLogo": "Cambiar logo",
+    "logout": "Cerrar sesión"
+  }
+}

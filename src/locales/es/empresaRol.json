@@ -1,0 +1,41 @@
+{
+  "title": "Roles de Empresa",
+  "systemTitle": "Roles de Empresas en el Sistema",
+  "companyTitle": "Roles de la Empresa",
+  "columns": {
+    "id": "ID",
+    "role": "Rol",
+    "permissions": "Permisos",
+    "status": "Estado"
+  },
+  "messages": {
+    "selectRole": "Selecciona un rol primero",
+    "baseRoleNotFound": "Rol base no encontrado",
+    "deleteSuccess": "Rol y permisos eliminados correctamente",
+    "deleteError": "Error al eliminar. Revisa dependencias o permisos.",
+    "subsystemsLoadError": "Error al cargar subsistemas",
+    "modulesLoadError": "Error al cargar módulos",
+    "permissionRemoved": "Permiso eliminado correctamente",
+    "permissionRemoveError": "Error eliminando permiso",
+    "roleRequired": "Debe seleccionar un rol",
+    "saveSuccess": "Permisos actualizados correctamente",
+    "saveError": "Error al guardar permisos"
+  },
+  "permissions": {
+    "withoutPermissions": "Sin permisos",
+    "withPermissionsModules": "Este rol tiene permisos en los siguientes módulos",
+    "withoutAssignedPermissions": "Módulos sin permisos asignados",
+    "withoutAssignedPermissionsHelp": "Estos módulos no tienen permisos. Puedes asignarlos si lo necesitas.",
+    "rolePermissionsTitle": "Permisos del Rol: {{role}}",
+    "roleHasNoPermissions": "Este rol no tiene permisos asignados."
+  },
+  "confirmDelete": {
+    "title": "Confirmar eliminación",
+    "description": "¿Está seguro que desea eliminar este rol y todos sus permisos?"
+  },
+  "form": {
+    "createTitle": "Crear Rol y Asignar Permisos",
+    "editTitle": "Editar Rol y Permisos",
+    "roleLabel": "Rol"
+  }
+}
