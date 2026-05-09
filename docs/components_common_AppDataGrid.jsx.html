@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>components/common/AppDataGrid.jsx - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AppDataGrid.html">AppDataGrid</a><ul class='methods'><li data-type='method'><a href="module-AppDataGrid.html#~loadStoredVisibilityModel">loadStoredVisibilityModel</a></li></ul></li><li><a href="module-Chart.html">Chart</a><ul class='methods'><li data-type='method'><a href="module-Chart.html#~createData">createData</a></li></ul></li><li><a href="module-Chart1.html">Chart1</a></li><li><a href="module-ComboBox.html">ComboBox</a><ul class='methods'><li data-type='method'><a href="module-ComboBox.html#~ComboBox">ComboBox</a></li></ul></li><li></li><li><a href="module-Departamento.html">Departamento</a></li><li><a href="module-Deposits.html">Deposits</a><ul class='methods'><li data-type='method'><a href="module-Deposits.html#~preventDefault">preventDefault</a></li></ul></li><li><a href="module-Drawer.html">Drawer</a></li><li><a href="module-Empresa.html">Empresa</a></li><li><a href="module-FormEmpresa.html">FormEmpresa</a></li><li><a href="module-Grid1.html">Grid1</a></li><li><a href="module-GridActionBar.html">GridActionBar</a></li><li><a href="module-GridEmpresa.html">GridEmpresa</a></li><li><a href="module-Grupo.html">Grupo</a></li><li><a href="module-Home.html">Home</a><ul class='methods'><li data-type='method'><a href="module-Home.html#~Home">Home</a></li></ul></li><li><a href="module-Logout.html">Logout</a><ul class='methods'><li data-type='method'><a href="module-Logout.html#.logout">logout</a></li></ul></li><li><a href="module-MessageSnackBar.html">MessageSnackBar</a></li><li><a href="module-Municipio.html">Municipio</a></li><li><a href="module-Pais.html">Pais</a></li><li><a href="module-PerfilCard.html">PerfilCard</a><ul class='methods'><li data-type='method'><a href="module-PerfilCard.html#.module.exports">module.exports</a></li></ul></li><li><a href="module-PerfilGroup.html">PerfilGroup</a><ul class='methods'><li data-type='method'><a href="module-PerfilGroup.html#.PerfilGroup">PerfilGroup</a></li></ul></li><li><a href="module-SectionHeader.html">SectionHeader</a></li><li><a href="module-SiteProps.html">SiteProps</a></li><li><a href="module-StackButtons.html">StackButtons</a><ul class='methods'><li data-type='method'><a href="module-StackButtons.html#.StackButtons">StackButtons</a></li></ul></li><li><a href="module-TipoEvaluacionReport.html">TipoEvaluacionReport</a></li><li><a href="module-Title.html">Title</a><ul class='methods'><li data-type='method'><a href="module-Title.html#~Title">Title</a></li></ul></li><li><a href="module-main.html">main</a><ul class='methods'><li data-type='method'><a href="module-main.html#~Main">Main</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#ProfileMenu">ProfileMenu</a></li><li><a href="global.html#buildFacturaCondicionEmpresa">buildFacturaCondicionEmpresa</a></li><li><a href="global.html#buildKardexCondicionEmpresa">buildKardexCondicionEmpresa</a></li><li><a href="global.html#buildOrdenCompraCondicionEmpresa">buildOrdenCompraCondicionEmpresa</a></li><li><a href="global.html#buildPedidoCondicionEmpresa">buildPedidoCondicionEmpresa</a></li><li><a href="global.html#buildPedidoReporteEspecifico">buildPedidoReporteEspecifico</a></li><li><a href="global.html#buildProductoVencidoCondicionEmpresa">buildProductoVencidoCondicionEmpresa</a></li><li><a href="global.html#makeLoaders">makeLoaders</a></li><li><a href="global.html#uniqById">uniqById</a></li><li><a href="global.html#unwrap">unwrap</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">components/common/AppDataGrid.jsx</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Componente reusable de grilla para módulos de gestión.
+ * @module AppDataGrid
+ */
+import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
+import { Box, Paper, Stack, Chip } from "@mui/material";
+import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
+import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
+
+/**
+ * Carga desde localStorage el modelo de visibilidad de columnas.
+ * @param {string} storageKey Clave usada para persistir la preferencia.
+ * @returns {Object|undefined} Modelo serializado o `undefined` cuando no existe.
+ */
+const loadStoredVisibilityModel = (storageKey) => {
+  if (!storageKey) return undefined;
+
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Grilla reusable basada en MUI DataGrid con soporte para i18n, tipado explícito
+ * de columnas y persistencia opcional de visibilidad.
+ *
+ * El componente permite que cada módulo describa sus columnas usando `type` y
+ * `headerKey`, mientras la grilla resuelve formato, alineación y render visual
+ * consistente para tipos como `number`, `date`, `boolean`, `status` y `actions`.
+ *
+ * @param {Object} props Propiedades del componente.
+ * @param {Array&lt;Object>} [props.rows=[]] Filas a renderizar.
+ * @param {Array&lt;Object>} props.columns Definición declarativa de columnas.
+ * @param {function} [props.getRowId] Función para resolver el id de una fila.
+ * @param {boolean} [props.loading=false] Indica estado de carga.
+ * @param {boolean} [props.autoHeight=true] Ajusta automáticamente la altura a las filas visibles.
+ * @param {boolean} [props.highlightOnHover=true] Activa resaltado visual al pasar el cursor.
+ * @param {boolean} [props.selectOnClick=true] Permite selección de filas al hacer clic.
+ * @param {Object|null} [props.selectedRow=null] Fila seleccionada externamente.
+ * @param {function} [props.setSelectedRow] Setter para selección externa.
+ * @param {Object} [props.paginationModel] Modelo de paginación server-side.
+ * @param {number} [props.paginationModel.page] Página actual.
+ * @param {number} [props.paginationModel.pageSize] Tamaño actual de página.
+ * @param {number} [props.paginationModel.size] Alias de tamaño usado por algunos módulos.
+ * @param {function} [props.setPaginationModel] Setter del modelo server-side.
+ * @param {number} [props.rowCount] Total de filas cuando se pagina contra backend.
+ * @param {number[]} [props.pageSizeOptions=[5,10,20,50]] Tamaños permitidos por página.
+ * @param {boolean} [props.quickFilter=false] Muestra toolbar compacta con herramientas de grid.
+ * @param {string} [props.columnVisibilityKey] Clave de localStorage para persistir visibilidad de columnas.
+ * @param {Object} [props.columnVisibilityModel] Modelo controlado de visibilidad de columnas.
+ * @param {function} [props.onColumnVisibilityModelChange] Callback cuando cambia la visibilidad.
+ * @param {Object} [props.localeText] Sobrescritura parcial de textos internos de DataGrid.
+ * @param {Object} [props.sx] Estilos extra para el DataGrid.
+ * @param {React.ReactNode} [props.leftActions] Acciones renderizadas encima de la grilla, alineadas a la izquierda.
+ * @param {React.ReactNode} [props.rightActions] Acciones renderizadas encima de la grilla, alineadas a la derecha.
+ * @param {Object} [props.containerSx] Estilos extra para el contenedor `Paper`.
+ * @param {function} [props.onEscape] Callback ejecutado al presionar Escape.
+ * @returns {JSX.Element}
+ */
+export default function AppDataGrid({
+  rows = [],
+  columns = [],
+  getRowId = (row) => row.id,
+  loading = false,
+  autoHeight = true,
+  highlightOnHover = true,
+  selectOnClick = true,
+  selectedRow = null,
+  setSelectedRow,
+  paginationModel,
+  setPaginationModel,
+  rowCount,
+  pageSizeOptions = [5, 10, 20, 50],
+  quickFilter = false,
+  columnVisibilityKey,
+  columnVisibilityModel,
+  onColumnVisibilityModelChange,
+  localeText,
+  sx,
+  leftActions,
+  rightActions,
+  containerSx,
+  onEscape,
+}) {
+  const theme = useTheme();
+  const { t, i18n } = useTranslation();
+  const isDark = theme.palette.mode === "dark";
+  const [internalVisibilityModel, setInternalVisibilityModel] = useState(() =>
+    loadStoredVisibilityModel(columnVisibilityKey)
+  );
+  const headerBg = isDark ? "#1a2a28" : "#dfeae6";
+  const footerBg = isDark ? "#152422" : "#ecf3f0";
+  const bodyBg = isDark ? "#0f1b1a" : "#f6fbf9";
+  const paperShadow = isDark
+    ? "0 8px 22px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25)"
+    : "0 6px 18px rgba(23,63,57,0.08), 0 2px 6px rgba(0,0,0,0.06)";
+  const serverPagination = Boolean(paginationModel &amp;&amp; setPaginationModel &amp;&amp; typeof rowCount === "number");
+  const effectiveColumnVisibilityModel =
+    columnVisibilityModel ?? internalVisibilityModel;
+
+  useEffect(() => {
+    if (!columnVisibilityKey || columnVisibilityModel) return;
+    setInternalVisibilityModel(loadStoredVisibilityModel(columnVisibilityKey));
+  }, [columnVisibilityKey, columnVisibilityModel]);
+
+  const gridLocaleText = useMemo(
+    () => ({
+      toolbarColumns: t("common.grid.toolbar.columns"),
+      toolbarFilters: t("common.grid.toolbar.filters"),
+      toolbarDensity: t("common.grid.toolbar.density"),
+      toolbarExport: t("common.grid.toolbar.export"),
+      noRowsLabel: t("common.grid.noRowsLabel"),
+      noResultsOverlayLabel: t("common.grid.noResultsOverlayLabel"),
+      columnsPanelTextFieldLabel: t("common.grid.columnsPanelTextFieldLabel"),
+      columnsPanelTextFieldPlaceholder: t("common.grid.columnsPanelTextFieldPlaceholder"),
+      columnsManagementShowHideAllText: t("common.grid.columnsManagementShowHideAllText"),
+      columnsManagementReset: t("common.grid.columnsManagementReset"),
+      toolbarQuickFilterPlaceholder: t("common.grid.toolbarQuickFilterPlaceholder"),
+      MuiTablePagination: {
+        labelRowsPerPage: t("common.grid.MuiTablePagination.labelRowsPerPage"),
+      },
+      ...localeText,
+    }),
+    [localeText, t, i18n.language]
+  );
+
+  const formatNumber = (value, column) => {
+    if (value === null || value === undefined || value === "") return "";
+    return new Intl.NumberFormat(i18n.language, column?.numberFormatOptions).format(Number(value));
+  };
+
+  const formatDate = (value, column) => {
+    if (!value) return "";
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat(i18n.language, column?.dateFormatOptions ?? (column?.type === "datetime"
+      ? { dateStyle: "medium", timeStyle: "short" }
+      : { dateStyle: "medium" })).format(date);
+  };
+
+  const resolveStatusMeta = (params, column) => {
+    const raw =
+      params?.value ??
+      params?.row?.[column.field] ??
+      params?.row?.estadoNombre ??
+      params?.row?.estadoId;
+
+    const normalized = String(raw ?? "").trim().toLowerCase();
+    const statusMap = column?.statusMap ?? {};
+    const mapped = statusMap[raw] ?? statusMap[String(raw)] ?? statusMap[normalized];
+    if (mapped) {
+      return {
+        label: mapped.labelKey ? t(mapped.labelKey, mapped.labelOptions) : mapped.label,
+        color: mapped.color ?? "default",
+      };
+    }
+    const isActive =
+      raw === 1 ||
+      raw === "1" ||
+      normalized === "activo" ||
+      normalized === "active" ||
+      normalized === "activa";
+
+    return {
+      label: isActive ? t("common.labels.active") : t("common.labels.inactive"),
+      color: isActive ? "success" : "error",
+    };
+  };
+
+  const resolveBooleanMeta = (params, column) => {
+    const raw = params?.value ?? params?.row?.[column.field];
+    const normalized = String(raw ?? "").trim().toLowerCase();
+    const value = typeof raw === "boolean"
+      ? raw
+      : raw === 1 ||
+        raw === "1" ||
+        normalized === "true" ||
+        normalized === "si" ||
+        normalized === "sí" ||
+        normalized === "yes";
+
+    return {
+      label: value ? t("common.labels.yes") : t("common.labels.no"),
+      color: value ? "success" : "default",
+    };
+  };
+
+  const columnsMemo = useMemo(
+    () =>
+      (Array.isArray(columns) ? columns : []).map((column) => {
+        const columnType = column?.statusChip ? "status" : column?.type ?? "text";
+        const baseColumn = {
+          ...column,
+          type: columnType === "custom" ? undefined : column.type,
+          headerName: column.headerKey ? t(column.headerKey, column.headerOptions) : column.headerName,
+        };
+
+        if (columnType === "status") {
+          return {
+            ...baseColumn,
+            headerClassName: [column.headerClassName, "col-estado"].filter(Boolean).join(" "),
+            cellClassName: [column.cellClassName, "col-estado"].filter(Boolean).join(" "),
+            sortable: column.sortable ?? true,
+            align: column.align ?? "left",
+            headerAlign: column.headerAlign ?? "left",
+            renderCell: column.renderCell ?? ((params) => {
+              const meta = resolveStatusMeta(params, column);
+              return (
+                &lt;Box sx={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
+                  &lt;Chip label={meta.label} color={meta.color} size="small" />
+                &lt;/Box>
+              );
+            }),
+          };
+        }
+
+        if (columnType === "boolean") {
+          return {
+            ...baseColumn,
+            align: column.align ?? "center",
+            headerAlign: column.headerAlign ?? "center",
+            renderCell: column.renderCell ?? ((params) => {
+              const meta = resolveBooleanMeta(params, column);
+              return &lt;Chip label={meta.label} color={meta.color} size="small" variant="outlined" />;
+            }),
+          };
+        }
+
+        if (columnType === "number") {
+          return {
+            ...baseColumn,
+            align: column.align ?? "right",
+            headerAlign: column.headerAlign ?? "right",
+            valueFormatter: column.valueFormatter ?? ((params) => formatNumber(params?.value, column)),
+          };
+        }
+
+        if (columnType === "date" || columnType === "datetime") {
+          return {
+            ...baseColumn,
+            valueFormatter: column.valueFormatter ?? ((params) => formatDate(params?.value, column)),
+          };
+        }
+
+        if (columnType === "actions") {
+          return {
+            ...baseColumn,
+            sortable: column.sortable ?? false,
+            filterable: column.filterable ?? false,
+            disableColumnMenu: column.disableColumnMenu ?? true,
+            align: column.align ?? "center",
+            headerAlign: column.headerAlign ?? "center",
+            renderCell:
+              column.renderCell ??
+              ((params) => (
+                &lt;Stack direction="row" spacing={1} alignItems="center">
+                  {typeof column.getActions === "function" ? column.getActions(params) : null}
+                &lt;/Stack>
+              )),
+          };
+        }
+
+        return baseColumn;
+      }),
+    [columns, i18n.language, t]
+  );
+
+  const Toolbar = quickFilter
+    ? function Toolbar() {
+        return (
+          &lt;GridToolbarContainer>
+            &lt;GridToolbarColumnsButton />
+            &lt;GridToolbarDensitySelector />
+            &lt;GridToolbarExport />
+          &lt;/GridToolbarContainer>
+        );
+      }
+    : undefined;
+
+  const mergedSx = {
+    border: 0,
+    bgcolor: "#fff",
+    borderRadius: 4,
+    overflow: "hidden",
+    "&amp; .MuiDataGrid-columnSeparator": { display: "none" },
+    "&amp; .MuiDataGrid-columnHeaders": {
+      bgcolor: headerBg,
+      borderTopLeftRadius: 4,
+      borderTopRightRadius: 4,
+      px: 0,
+      boxShadow: isDark
+        ? "inset 0 -1px 0 rgba(255,255,255,0.08)"
+        : "inset 0 -1px 0 rgba(23,63,57,0.12)",
+    },
+    "&amp; .MuiDataGrid-columnHeader": {
+      pl: "12px !important",
+      pr: "12px !important",
+    },
+    "&amp; .MuiDataGrid-columnHeaderTitleContainer": {
+      pl: "12px !important",
+      pr: "12px !important",
+      justifyContent: "flex-start",
+    },
+    "&amp; .MuiDataGrid-columnHeaderTitle": {
+      fontWeight: 700,
+      textAlign: "left",
+      color: isDark ? "#dfeae6" : undefined,
+    },
+    "&amp; .MuiDataGrid-footerContainer": {
+      borderTop: "none",
+      px: 2,
+      bgcolor: footerBg,
+      borderBottomLeftRadius: 4,
+      borderBottomRightRadius: 4,
+    },
+    "&amp; .MuiDataGrid-cell": {
+      py: 1.25,
+      pl: "12px !important",
+      pr: "12px !important",
+      borderBottom: "none",
+    },
+    "&amp; .MuiDataGrid-cellContent": {
+      pl: "12px !important",
+      pr: "12px !important",
+    },
+    "&amp; .MuiDataGrid-row": {
+      borderBottom: "none",
+      position: "relative",
+    },
+    "&amp; .MuiDataGrid-cell:focus, &amp; .MuiDataGrid-cell:focus-within": {
+      outline: "none",
+    },
+    ...(isDark
+      ? {}
+      : {
+          "&amp; .MuiDataGrid-row.Mui-selected": {
+            outline: "none",
+            boxShadow: "none",
+            bgcolor: "rgba(23,63,57,0.08) !important",
+          },
+        }),
+    "&amp; .MuiDataGrid-row.Mui-selected::before": {
+      content: '""',
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: "4px",
+      bgcolor: "#173f39",
+      borderTopLeftRadius: "4px",
+      borderBottomLeftRadius: "4px",
+    },
+    "&amp; .MuiDataGrid-virtualScroller": {
+      bgcolor: bodyBg,
+    },
+    ...(highlightOnHover
+      ? {
+          "&amp; .MuiDataGrid-row:hover": {
+            bgcolor: isDark ? "rgba(255,255,255,0.04)" : "action.hover",
+          },
+        }
+      : {}),
+    ...sx,
+  };
+
+
+  const handleVisibilityChange = (model) => {
+    if (!columnVisibilityModel) {
+      setInternalVisibilityModel(model);
+    }
+    onColumnVisibilityModelChange?.(model);
+    if (columnVisibilityKey) {
+      try {
+        localStorage.setItem(columnVisibilityKey, JSON.stringify(model));
+      } catch {
+        // ignore localStorage errors (quota/private mode)
+      }
+    }
+  };
+
+  return (
+    &lt;Paper sx={{ p: 0, width: "100%", maxWidth: "100%", overflowX: "auto", borderRadius: 6, boxShadow: paperShadow, bgcolor: "transparent", ...containerSx }}>
+      {(leftActions || rightActions) &amp;&amp; (
+        &lt;Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          &lt;Box sx={{ display: "flex", gap: 1 }}>{leftActions}&lt;/Box>
+          &lt;Box sx={{ display: "flex", gap: 2 }}>{rightActions}&lt;/Box>
+        &lt;/Stack>
+      )}
+      &lt;DataGrid
+        onCellKeyDown={(params, e) => {
+          if (e?.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedRow?.(null);
+            onEscape?.();
+            try {
+              const active = document.activeElement;
+              if (active &amp;&amp; typeof active.blur === "function") active.blur();
+            } catch {
+              // ignore focus handling errors
+            }
+          }
+        }}
+        rows={Array.isArray(rows) ? rows : []}
+        columns={columnsMemo}
+        getRowId={getRowId}
+        loading={loading}
+        autoHeight={autoHeight}
+        hideFooterSelectedRowCount
+        paginationMode={serverPagination ? "server" : "client"}
+        {...(serverPagination
+          ? {
+              paginationModel: {
+                page: paginationModel.page ?? 0,
+                pageSize: paginationModel.pageSize ?? paginationModel.size ?? pageSizeOptions[0] ?? 10,
+              },
+              onPaginationModelChange: (model) => {
+                const next = {
+                  page: model.page ?? 0,
+                  size: model.pageSize ?? model.size ?? pageSizeOptions[0] ?? 10,
+                };
+                setPaginationModel?.(next);
+              },
+              rowCount,
+            }
+          : {
+              pageSizeOptions,
+              initialState: {
+                pagination: { paginationModel: { page: 0, pageSize: pageSizeOptions[0] ?? 5 } },
+              },
+            })}
+        onRowClick={selectOnClick ? (params) => setSelectedRow?.(params.row) : undefined}
+        rowSelectionModel={
+          selectOnClick &amp;&amp; (selectedRow &amp;&amp; getRowId ? [getRowId(selectedRow)] : selectedRow?.id ? [selectedRow.id] : [])
+        }
+        onRowSelectionModelChange={(selection) => {
+          if (!selectOnClick) return;
+          const id = Array.isArray(selection) &amp;&amp; selection.length ? selection[0] : null;
+          if (id == null) {
+            setSelectedRow?.(null);
+            return;
+          }
+          const row = (Array.isArray(rows) ? rows : []).find((r) => getRowId ? getRowId(r) === id : r?.id === id) || null;
+          setSelectedRow?.(row);
+        }}
+        disableRowSelectionOnClick={!selectOnClick}
+        slots={quickFilter ? { toolbar: Toolbar } : undefined}
+        columnVisibilityModel={effectiveColumnVisibilityModel}
+        onColumnVisibilityModelChange={handleVisibilityChange}
+        localeText={gridLocaleText}
+        autosizeOnMount={false}
+        sx={mergedSx}
+      />
+    &lt;/Paper>
+  );
+}
+
+AppDataGrid.propTypes = {
+  rows: PropTypes.array,
+  columns: PropTypes.array.isRequired,
+  getRowId: PropTypes.func,
+  loading: PropTypes.bool,
+  autoHeight: PropTypes.bool,
+  highlightOnHover: PropTypes.bool,
+  selectOnClick: PropTypes.bool,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
+  paginationModel: PropTypes.shape({
+    page: PropTypes.number,
+    pageSize: PropTypes.number,
+    size: PropTypes.number,
+  }),
+  setPaginationModel: PropTypes.func,
+  rowCount: PropTypes.number,
+  pageSizeOptions: PropTypes.array,
+  quickFilter: PropTypes.bool,
+  columnVisibilityKey: PropTypes.string,
+  columnVisibilityModel: PropTypes.object,
+  onColumnVisibilityModelChange: PropTypes.func,
+  localeText: PropTypes.object,
+  sx: PropTypes.object,
+  leftActions: PropTypes.node,
+  rightActions: PropTypes.node,
+  containerSx: PropTypes.object,
+  onEscape: PropTypes.func,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Mon May 04 2026 09:11:43 GMT-0500 (hora estándar de Colombia) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

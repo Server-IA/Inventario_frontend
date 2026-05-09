@@ -1,10 +1,78 @@
-import React, { useMemo } from "react";
+/*=============================================================================
+Nombre del archivo : AppDataGrid.jsx
+Descripción        : Componente reutilizable para la grilla de datos.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+/**
+ * Componente reusable de grilla para módulos de gestión.
+ * @module AppDataGrid
+ */
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Paper, Stack, Chip } from "@mui/material";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
 import { useTheme, alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
+/**
+ * Carga desde localStorage el modelo de visibilidad de columnas.
+ * @param {string} storageKey Clave usada para persistir la preferencia.
+ * @returns {Object|undefined} Modelo serializado o `undefined` cuando no existe.
+ */
+const loadStoredVisibilityModel = (storageKey) => {
+  if (!storageKey) return undefined;
+
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Grilla reusable basada en MUI DataGrid con soporte para i18n, tipado explícito
+ * de columnas y persistencia opcional de visibilidad.
+ *
+ * El componente permite que cada módulo describa sus columnas usando `type` y
+ * `headerKey`, mientras la grilla resuelve formato, alineación y render visual
+ * consistente para tipos como `number`, `date`, `boolean`, `status` y `actions`.
+ *
+ * @param {Object} props Propiedades del componente.
+ * @param {Array<Object>} [props.rows=[]] Filas a renderizar.
+ * @param {Array<Object>} props.columns Definición declarativa de columnas.
+ * @param {function} [props.getRowId] Función para resolver el id de una fila.
+ * @param {boolean} [props.loading=false] Indica estado de carga.
+ * @param {boolean} [props.autoHeight=true] Ajusta automáticamente la altura a las filas visibles.
+ * @param {boolean} [props.highlightOnHover=true] Activa resaltado visual al pasar el cursor.
+ * @param {boolean} [props.selectOnClick=true] Permite selección de filas al hacer clic.
+ * @param {Object|null} [props.selectedRow=null] Fila seleccionada externamente.
+ * @param {function} [props.setSelectedRow] Setter para selección externa.
+ * @param {Object} [props.paginationModel] Modelo de paginación server-side.
+ * @param {number} [props.paginationModel.page] Página actual.
+ * @param {number} [props.paginationModel.pageSize] Tamaño actual de página.
+ * @param {number} [props.paginationModel.size] Alias de tamaño usado por algunos módulos.
+ * @param {function} [props.setPaginationModel] Setter del modelo server-side.
+ * @param {number} [props.rowCount] Total de filas cuando se pagina contra backend.
+ * @param {number[]} [props.pageSizeOptions=[5,10,20,50]] Tamaños permitidos por página.
+ * @param {boolean} [props.quickFilter=false] Muestra toolbar compacta con herramientas de grid.
+ * @param {string} [props.columnVisibilityKey] Clave de localStorage para persistir visibilidad de columnas.
+ * @param {Object} [props.columnVisibilityModel] Modelo controlado de visibilidad de columnas.
+ * @param {function} [props.onColumnVisibilityModelChange] Callback cuando cambia la visibilidad.
+ * @param {Object} [props.localeText] Sobrescritura parcial de textos internos de DataGrid.
+ * @param {Object} [props.sx] Estilos extra para el DataGrid.
+ * @param {React.ReactNode} [props.leftActions] Acciones renderizadas encima de la grilla, alineadas a la izquierda.
+ * @param {React.ReactNode} [props.rightActions] Acciones renderizadas encima de la grilla, alineadas a la derecha.
+ * @param {Object} [props.containerSx] Estilos extra para el contenedor `Paper`.
+ * @param {function} [props.onEscape] Callback ejecutado al presionar Escape.
+ * @returns {JSX.Element}
+ */
 export default function AppDataGrid({
   rows = [],
   columns = [],
@@ -40,6 +108,9 @@ export default function AppDataGrid({
   const theme = useTheme();
   const { t, i18n } = useTranslation();
   const isDark = theme.palette.mode === "dark";
+  const [internalVisibilityModel, setInternalVisibilityModel] = useState(() =>
+    loadStoredVisibilityModel(columnVisibilityKey)
+  );
   const headerBg = isDark ? "#1a2a28" : "#dfeae6";
   const footerBg = isDark ? "#152422" : "#ecf3f0";
   const bodyBg = isDark ? "#0f1b1a" : "#f6fbf9";
@@ -47,6 +118,13 @@ export default function AppDataGrid({
     ? "0 8px 22px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25)"
     : "0 6px 18px rgba(23,63,57,0.08), 0 2px 6px rgba(0,0,0,0.06)";
   const serverPagination = Boolean(paginationModel && setPaginationModel && typeof rowCount === "number");
+  const effectiveColumnVisibilityModel =
+    columnVisibilityModel ?? internalVisibilityModel;
+
+  useEffect(() => {
+    if (!columnVisibilityKey || columnVisibilityModel) return;
+    setInternalVisibilityModel(loadStoredVisibilityModel(columnVisibilityKey));
+  }, [columnVisibilityKey, columnVisibilityModel]);
 
   const gridLocaleText = useMemo(
     () => ({
@@ -310,6 +388,9 @@ export default function AppDataGrid({
 
 
   const handleVisibilityChange = (model) => {
+    if (!columnVisibilityModel) {
+      setInternalVisibilityModel(model);
+    }
     onColumnVisibilityModelChange?.(model);
     if (columnVisibilityKey) {
       try {
@@ -394,10 +475,9 @@ export default function AppDataGrid({
           const row = (Array.isArray(rows) ? rows : []).find((r) => (getRowId ? getRowId(r) === id : r?.id === id)) || null;
           setSelectedRow?.(row);
         }}
-        disableRowSelectionOnClick={resolvedDisableRowSelectionOnClick}
-        slots={resolvedSlots}
-        slotProps={slotProps}
-        columnVisibilityModel={columnVisibilityModel}
+        disableRowSelectionOnClick={!selectOnClick}
+        slots={quickFilter ? { toolbar: Toolbar } : undefined}
+        columnVisibilityModel={effectiveColumnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         localeText={gridLocaleText}
         autosizeOnMount={false}
