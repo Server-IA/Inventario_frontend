@@ -1,3 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : Register.jsx
+ Descripcion        : Formulario de registro de usuario con soporte i18n.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+/**
+ * @module Register
+ * @description Renderiza el formulario de registro, valida credenciales y
+ * envía el idioma activo al backend para mensajes y notificaciones.
+ */
 import React, { useState } from "react";
 import {
   Box,
@@ -14,6 +30,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import { resolveAppLanguage } from "../i18n.js";
 
 export default function Register() {
   const { t } = useTranslation();
@@ -62,27 +79,26 @@ export default function Register() {
     setSuccessMessage("");
 
     if (!validateEmail(username)) {
-      setError(t("invalid_email"));
+      setError(t("auth.messages.invalidEmail"));
       return;
     }
     if (!validatePassword(password)) {
-      setError(t("invalid_password"));
+      setError(t("auth.messages.invalidPassword"));
       return;
     }
 
     try {
       await axios.post(
         import.meta.env.VITE_BACKEND_URI + "/auth/register",
-        { username, password }
+        { username, password },
+        { headers: { "Accept-Language": resolveAppLanguage() } }
       );
-      setSuccessMessage("Se ha enviado un email, por favor revisar su correo.");
+      setSuccessMessage(t("auth.register.success"));
     } catch (err) {
       if (err.response?.status === 403) {
-        setError(t("email ya existe"));
+        setError(err.response?.data?.message || t("auth.register.duplicateEmail"));
       } else {
-        setError(
-          t("Ya se ha enviado un email de verificación, por favor revisar su correo.")
-        );
+        setError(err.response?.data?.message || t("auth.register.alreadySent"));
       }
     }
   };
@@ -137,7 +153,7 @@ export default function Register() {
           align="center"
           sx={{ fontWeight: 800, lineHeight: 1.05, mb: 1 }}
         >
-          {t("register")}
+          {t("auth.register.title")}
         </Typography>
 
         {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
@@ -148,7 +164,7 @@ export default function Register() {
         )}
 
         <TextField
-          label={t("email")}
+          label={t("auth.fields.email")}
           variant="outlined"
           type="email"
           value={username}
@@ -174,7 +190,7 @@ export default function Register() {
         />
 
         <TextField
-          label={t("password")}
+          label={t("auth.fields.password")}
           variant="outlined"
           type={showPassword ? "text" : "password"}
           value={password}
@@ -224,11 +240,11 @@ export default function Register() {
             fontWeight: 700,
           }}
         >
-          {t("register")}
+          {t("auth.register.submit")}
         </Button>
 
         <Typography variant="body2" align="center" sx={{ mt: 1, color: textSecondary }}>
-          {t("already_have_account")}{" "}
+          {t("auth.register.alreadyHaveAccount")}{" "}
           <Link
             component={RouterLink}
             to="/login"
@@ -238,7 +254,7 @@ export default function Register() {
               textDecoration: "none",
             }}
           >
-            {t("login_here")}
+            {t("auth.register.loginHere")}
           </Link>
         </Typography>
       </Box>

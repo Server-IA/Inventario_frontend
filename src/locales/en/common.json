@@ -1,0 +1,86 @@
+{
+  "actions": {
+    "add": "Add",
+    "update": "Update",
+    "delete": "Delete",
+    "save": "Save",
+    "close": "Close",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "clear": "Clear",
+    "filters": "Filters",
+    "viewDetail": "View detail",
+    "viewPermissions": "View permissions",
+    "remove": "Remove",
+    "addAssignment": "Add assignment"
+  },
+  "labels": {
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "select": "Select",
+    "withoutDate": "No date",
+    "withoutAssignments": "No assignments",
+    "withoutPermissions": "No permissions",
+    "general": "General",
+    "permissions": "Permissions",
+    "role": "Role",
+    "company": "Company",
+    "start": "Start",
+    "end": "End",
+    "personalInformation": "Personal information",
+    "assignments": "Assignments",
+    "allPermissions": "All permissions",
+    "loading": "Loading...",
+    "moreCount": "+{{count}} more",
+    "permissionsCount": "{{count}} permissions"
+  },
+  "messages": {
+    "operationSuccess": "Operation completed successfully",
+    "operationError": "Operation failed",
+    "filtersComingSoon": "Filters will be available soon",
+    "selectRow": "Select a row"
+  },
+  "grid": {
+    "toolbar": {
+      "columns": "Columns",
+      "filters": "Filters",
+      "density": "Density",
+      "export": "Export"
+    },
+    "columnsPanelTextFieldLabel": "Search column",
+    "columnsPanelTextFieldPlaceholder": "Column name",
+    "columnsManagementShowHideAllText": "Show/Hide all",
+    "columnsManagementReset": "Reset",
+    "noRowsLabel": "No rows",
+    "noResultsOverlayLabel": "No results",
+    "toolbarQuickFilterPlaceholder": "Search...",
+    "MuiTablePagination": {
+      "labelRowsPerPage": "Rows per page"
+    }
+  },
+  "theme": {
+    "dark": "Dark mode",
+    "light": "Light mode"
+  },
+  "language": {
+    "label": "Language",
+    "spanish": "Spanish",
+    "english": "English"
+  },
+  "footer": {
+    "copyrightPrefix": "Copyright ©",
+    "buildVersion": "Version build {{version}}"
+  },
+  "profile": {
+    "defaultName": "My profile",
+    "userLabel": "User",
+    "changePassword": "Change password",
+    "switchCompanyRole": "Switch company/role",
+    "changeLogo": "Change logo",
+    "logout": "Log out"
+  }
+}

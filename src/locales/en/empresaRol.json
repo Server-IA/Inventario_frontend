@@ -1,0 +1,41 @@
+{
+  "title": "Company Roles",
+  "systemTitle": "Roles Across System Companies",
+  "companyTitle": "Company Roles",
+  "columns": {
+    "id": "ID",
+    "role": "Role",
+    "permissions": "Permissions",
+    "status": "Status"
+  },
+  "messages": {
+    "selectRole": "Select a role first",
+    "baseRoleNotFound": "Base role not found",
+    "deleteSuccess": "Role and permissions deleted successfully",
+    "deleteError": "Error deleting. Check dependencies or permissions.",
+    "subsystemsLoadError": "Error loading subsystems",
+    "modulesLoadError": "Error loading modules",
+    "permissionRemoved": "Permission removed successfully",
+    "permissionRemoveError": "Error removing permission",
+    "roleRequired": "You must select a role",
+    "saveSuccess": "Permissions updated successfully",
+    "saveError": "Error saving permissions"
+  },
+  "permissions": {
+    "withoutPermissions": "No permissions",
+    "withPermissionsModules": "This role has permissions in the following modules",
+    "withoutAssignedPermissions": "Modules without assigned permissions",
+    "withoutAssignedPermissionsHelp": "These modules have no permissions. You can assign them if needed.",
+    "rolePermissionsTitle": "Role Permissions: {{role}}",
+    "roleHasNoPermissions": "This role has no assigned permissions."
+  },
+  "confirmDelete": {
+    "title": "Confirm deletion",
+    "description": "Are you sure you want to delete this role and all its permissions?"
+  },
+  "form": {
+    "createTitle": "Create Role and Assign Permissions",
+    "editTitle": "Edit Role and Permissions",
+    "roleLabel": "Role"
+  }
+}

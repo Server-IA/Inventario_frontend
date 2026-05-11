@@ -1,0 +1,50 @@
+{
+  "title": "Gestión de Usuarios",
+  "columns": {
+    "name": "Nombre",
+    "email": "Correo",
+    "role": "Rol",
+    "status": "Estado",
+    "company": "Empresa"
+  },
+  "messages": {
+    "confirmInactivate": "¿Seguro que deseas inactivar este usuario? Debe permanecer visible.",
+    "cannotInactivate": "No se pudo inactivar",
+    "loadError": "Error cargando usuarios",
+    "createSuccess": "Usuario registrado correctamente.",
+    "updateSuccess": "Usuario actualizado correctamente."
+  },
+  "detail": {
+    "title": "Detalle de usuario",
+    "personalInformation": "Información personal",
+    "assignments": "Asignaciones",
+    "gender": "Género",
+    "document": "Documento",
+    "birthDate": "Fecha nacimiento",
+    "address": "Dirección",
+    "phone": "Celular"
+  },
+  "form": {
+    "createTitle": "Registrar usuario",
+    "editTitle": "Actualizar usuario",
+    "fields": {
+      "username": "Username (correo)",
+      "name": "Nombre",
+      "lastName": "Apellido",
+      "gender": "Género",
+      "stratum": "Estrato",
+      "documentType": "Tipo de documento",
+      "documentNumber": "Código de identificación",
+      "birthDate": "Fecha de nacimiento",
+      "phone": "Celular",
+      "address": "Dirección",
+      "status": "Estado",
+      "role": "Rol",
+      "company": "Empresa",
+      "contractStart": "Fecha inicio contrato",
+      "contractEnd": "Fecha fin contrato",
+      "preferredRole": "Rol preferido",
+      "preferred": "Preferido"
+    }
+  }
+}

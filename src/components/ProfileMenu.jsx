@@ -1,3 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : ProfileMenu.jsx
+ Descripcion        : Menú desplegable del perfil con acciones del usuario autenticado.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+/**
+ * @module ProfileMenu
+ * @description Muestra las opciones del perfil autenticado como cambio de
+ * contraseña, cambio de empresa/rol, cambio de logo y cierre de sesión.
+ */
 import React, { useState, useEffect } from "react";
 import { Button, Menu, MenuItem, Divider, Box, Typography } from "@mui/material";
 import AccountCircle from "@mui/icons-material/AccountCircle";
@@ -7,6 +23,7 @@ import Login from "./Login";
 import RoleSwitcherModal from "./RoleSwitcherModal";
 import ChangeLogoDialog from "./ChangeLogoDialog.jsx";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 /**
  * Extra: si algún día quieres forzar que sólo salga "Cerrar Sesión"
@@ -18,6 +35,7 @@ const ProfileMenu = ({
   onlyLogout = false,
   compact = false,
 }) => {
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -31,7 +49,7 @@ const ProfileMenu = ({
   });
 
   // 🔹 Ahora este label muestra el nombre de la persona (no la empresa)
-  const [nombreUsuario, setNombreUsuario] = useState("Mi Perfil");
+  const [nombreUsuario, setNombreUsuario] = useState(t("common.profile.defaultName"));
   const [isSingleCompanyAndRole, setIsSingleCompanyAndRole] = useState(false);
 
   const location = useLocation();
@@ -49,14 +67,14 @@ const ProfileMenu = ({
     if (nombrePersona && nombrePersona.trim()) {
       setNombreUsuario(nombrePersona);
     } else {
-      setNombreUsuario("Mi Perfil");
+      setNombreUsuario(t("common.profile.defaultName"));
     }
 
     const empresas = [...new Set(rolesByCompany.map((r) => r.empresaId))];
     if (empresas.length === 1 && rolesByCompany.length === 1) {
       setIsSingleCompanyAndRole(true);
     }
-  }, []);
+  }, [t]);
 
   const handleClick = (e) => setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
@@ -124,7 +142,7 @@ const ProfileMenu = ({
       >
         <Box sx={{ px: 2, py: 1.25, minWidth: 220 }}>
           <Typography variant="caption" color="text.secondary">
-            Usuario
+            {t("common.profile.userLabel")}
           </Typography>
           <Typography variant="body2" fontWeight={700}>
             {nombreUsuario}
@@ -132,7 +150,7 @@ const ProfileMenu = ({
         </Box>
         <Divider />
         {showOnlyLogout ? (
-          <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
+          <MenuItem onClick={handleLogout}>{t("common.profile.logout")}</MenuItem>
         ) : (
           <>
             {/* Cambiar contraseña */}
@@ -142,7 +160,7 @@ const ProfileMenu = ({
                 handleClose();
               }}
             >
-              Cambiar Contraseña
+              {t("common.profile.changePassword")}
             </MenuItem>
 
             {/* Cambiar empresa/rol (solo si hay más de una combinación posible) */}
@@ -153,7 +171,7 @@ const ProfileMenu = ({
                   handleClose();
                 }}
               >
-                Cambiar empresa/rol
+                {t("common.profile.switchCompanyRole")}
               </MenuItem>
             )}
 
@@ -167,7 +185,7 @@ const ProfileMenu = ({
                     handleClose();
                   }}
                 >
-                  Cambiar logo
+                  {t("common.profile.changeLogo")}
                 </MenuItem>
               </>
             )}
@@ -175,7 +193,7 @@ const ProfileMenu = ({
             <Divider />
 
             {/* Cerrar sesión */}
-            <MenuItem onClick={handleLogout}>Cerrar Sesión</MenuItem>
+            <MenuItem onClick={handleLogout}>{t("common.profile.logout")}</MenuItem>
           </>
         )}
       </Menu>
