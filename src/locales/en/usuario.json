@@ -1,0 +1,50 @@
+{
+  "title": "User Management",
+  "columns": {
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "company": "Company"
+  },
+  "messages": {
+    "confirmInactivate": "Are you sure you want to inactivate this user? It must remain visible.",
+    "cannotInactivate": "User could not be inactivated",
+    "loadError": "Error loading users",
+    "createSuccess": "User created successfully.",
+    "updateSuccess": "User updated successfully."
+  },
+  "detail": {
+    "title": "User detail",
+    "personalInformation": "Personal information",
+    "assignments": "Assignments",
+    "gender": "Gender",
+    "document": "Document",
+    "birthDate": "Birth date",
+    "address": "Address",
+    "phone": "Phone"
+  },
+  "form": {
+    "createTitle": "Register user",
+    "editTitle": "Update user",
+    "fields": {
+      "username": "Username (email)",
+      "name": "Name",
+      "lastName": "Last name",
+      "gender": "Gender",
+      "stratum": "Stratum",
+      "documentType": "Document type",
+      "documentNumber": "Identification code",
+      "birthDate": "Birth date",
+      "phone": "Phone",
+      "address": "Address",
+      "status": "Status",
+      "role": "Role",
+      "company": "Company",
+      "contractStart": "Contract start date",
+      "contractEnd": "Contract end date",
+      "preferredRole": "Preferred role",
+      "preferred": "Preferred"
+    }
+  }
+}

@@ -1,3 +1,20 @@
+/*=============================================================================
+ Nombre del archivo : Login.jsx
+ Descripcion        : Componente de autenticación para inicio de sesión.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+/**
+ * @module Login
+ * @description Renderiza el formulario de inicio de sesión, resuelve mensajes
+ * visibles con i18n y envía el idioma activo al backend.
+ */
+
 import React, { useState } from "react";
 import {
   Box, TextField, Button, Typography, IconButton,
@@ -10,6 +27,7 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import axios from "axios";
+import { resolveAppLanguage } from "../i18n.js";
 
 import ForgotPassword from "../ForgotPassword";
 
@@ -111,11 +129,11 @@ export default function Login(props) {
     setError("");
 
     if (!validateEmail(username)) {
-      setError(t("invalid_email") || "Correo inválido");
+      setError(t("auth.messages.invalidEmail"));
       return;
     }
     if (!password) {
-      setError(t?.("required_password") || "La contraseña es obligatoria");
+      setError(t("auth.messages.passwordRequired"));
       return;
     }
 
@@ -124,7 +142,8 @@ export default function Login(props) {
 
       const { data } = await axios.post(
         import.meta.env.VITE_BACKEND_URI + "/auth/v2/login",
-        { username, password }
+        { username, password },
+        { headers: { "Accept-Language": resolveAppLanguage() } }
       );
 
       const {
@@ -145,7 +164,7 @@ export default function Login(props) {
       if (estado === null) {
         clearAuth();
         props.setIsAuthenticated?.(false);
-        setError("No se recibió el estado del usuario desde el backend.");
+        setError(t("auth.messages.missingUserStatus"));
         return;
       }
 
@@ -170,19 +189,19 @@ switch (estado) {
     case 0: {
         clearAuth();
         props.setIsAuthenticated?.(false);
-        setError("Tu usuario está desactivado. Contacta al administrador.");
+        setError(t("auth.messages.userDisabled"));
         break;
     }
     case 1: {
         clearAuth();
         props.setIsAuthenticated?.(false);
-        setError("Debes activar tu cuenta desde el email de verificación.");
+        setError(t("auth.messages.emailVerificationRequired"));
         break;
     }
     case 2: {
         if (!token) {
             clearAuth();
-            setError("No se recibió token válido.");
+            setError(t("auth.messages.missingToken"));
             break;
         }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
@@ -196,7 +215,7 @@ switch (estado) {
     case 3: {
         if (!token) {
             clearAuth();
-            setError("No se recibió token válido.");
+            setError(t("auth.messages.missingToken"));
             break;
         }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
@@ -212,7 +231,7 @@ switch (estado) {
     case 5: { 
         if (!token) {
             clearAuth();
-            setError("No se recibió token válido.");
+            setError(t("auth.messages.missingToken"));
             break;
         }
         // 1. Persistimos la sesión para que pueda llamar al API de cambio de contraseña
@@ -240,7 +259,7 @@ switch (estado) {
 
     case 4:
     default: { // Completo
-        if (!token) { clearAuth(); setError("No se recibió token válido."); break; }
+        if (!token) { clearAuth(); setError(t("auth.messages.missingToken")); break; }
         const { empresaIdE, rolIdE, empresaNombreE } = ensureEmpresaRol();
         persistAuth(token, { empresaId: empresaIdE, rolId: rolIdE, empresaNombre: empresaNombreE, rolesByCompany, decodeJwt });
       props.setIsAuthenticated?.(true);
@@ -251,8 +270,8 @@ switch (estado) {
     } catch (err) {
       console.error("Login error:", err);
       const msg = err?.response?.status === 401
-        ? (t("invalid_credentials") || "Usuario o contraseña inválidos")
-        : (err?.response?.data?.message || t("login_error") || "Ocurrió un error iniciando sesión");
+        ? t("auth.messages.invalidCredentials")
+        : (err?.response?.data?.message || t("auth.messages.loginError"));
       setError(msg);
       clearAuth();
       props.setIsAuthenticated?.(false);
@@ -306,16 +325,16 @@ switch (estado) {
           align="center"
           sx={{ fontWeight: 800, color: titleColor, mb: 0.5, lineHeight: 1.05 }}
         >
-          Inicia sesión
+          {t("auth.login.title")}
         </Typography>
         <Typography align="center" sx={{ color: textSecondary, mb: 3 }}>
-          Bienvenido de vuelta a Inventario Usco
+          {t("auth.login.subtitle")}
         </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         <TextField
-          label={t("email")}
+          label={t("auth.fields.email")}
           type="email"
           variant="outlined"
           value={username}
@@ -346,7 +365,7 @@ switch (estado) {
         />
 
         <TextField
-          label={t("password")}
+          label={t("auth.fields.password")}
           variant="outlined"
           type={showPassword ? "text" : "password"}
           value={password}
@@ -402,7 +421,7 @@ switch (estado) {
             mb: 1.5,
           }}
         >
-          {submitting ? t("loading") : t("login")}
+          {submitting ? t("common.labels.loading") : t("auth.login.submit")}
         </Button>
 
         <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
@@ -415,18 +434,18 @@ switch (estado) {
             }
             sx={{ color: theme.palette.primary.main, textTransform: "none" }}
           >
-            ¿Olvidaste tu contraseña?
+            {t("auth.login.forgotPassword")}
           </Button>
         </Box>
 
        <Typography variant="body2" align="center" sx={{ mt: 2, color: textSecondary }}>
-          {t("no_account")}{" "}
+          {t("auth.links.noAccount")}{" "}
           <Link
             component={RouterLink}
             to="/register"
             sx={{ color: theme.palette.primary.main, textDecoration: "none", fontWeight: 700 }}
           >
-            {t("register_here")}
+            {t("auth.links.registerHere")}
           </Link>
         </Typography>
       </Box>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>components/common/filtersLoaders.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AppDataGrid.html">AppDataGrid</a><ul class='methods'><li data-type='method'><a href="module-AppDataGrid.html#~loadStoredVisibilityModel">loadStoredVisibilityModel</a></li></ul></li><li><a href="module-Chart.html">Chart</a><ul class='methods'><li data-type='method'><a href="module-Chart.html#~createData">createData</a></li></ul></li><li><a href="module-Chart1.html">Chart1</a></li><li><a href="module-ComboBox.html">ComboBox</a><ul class='methods'><li data-type='method'><a href="module-ComboBox.html#~ComboBox">ComboBox</a></li></ul></li><li></li><li><a href="module-Departamento.html">Departamento</a></li><li><a href="module-Deposits.html">Deposits</a><ul class='methods'><li data-type='method'><a href="module-Deposits.html#~preventDefault">preventDefault</a></li></ul></li><li><a href="module-Drawer.html">Drawer</a></li><li><a href="module-Empresa.html">Empresa</a></li><li><a href="module-FormEmpresa.html">FormEmpresa</a></li><li><a href="module-Grid1.html">Grid1</a></li><li><a href="module-GridActionBar.html">GridActionBar</a></li><li><a href="module-GridEmpresa.html">GridEmpresa</a></li><li><a href="module-Grupo.html">Grupo</a></li><li><a href="module-Home.html">Home</a><ul class='methods'><li data-type='method'><a href="module-Home.html#~Home">Home</a></li></ul></li><li><a href="module-Logout.html">Logout</a><ul class='methods'><li data-type='method'><a href="module-Logout.html#.logout">logout</a></li></ul></li><li><a href="module-MessageSnackBar.html">MessageSnackBar</a></li><li><a href="module-Municipio.html">Municipio</a></li><li><a href="module-Pais.html">Pais</a></li><li><a href="module-PerfilCard.html">PerfilCard</a><ul class='methods'><li data-type='method'><a href="module-PerfilCard.html#.module.exports">module.exports</a></li></ul></li><li><a href="module-PerfilGroup.html">PerfilGroup</a><ul class='methods'><li data-type='method'><a href="module-PerfilGroup.html#.PerfilGroup">PerfilGroup</a></li></ul></li><li><a href="module-SectionHeader.html">SectionHeader</a></li><li><a href="module-SiteProps.html">SiteProps</a></li><li><a href="module-StackButtons.html">StackButtons</a><ul class='methods'><li data-type='method'><a href="module-StackButtons.html#.StackButtons">StackButtons</a></li></ul></li><li><a href="module-TipoEvaluacionReport.html">TipoEvaluacionReport</a></li><li><a href="module-Title.html">Title</a><ul class='methods'><li data-type='method'><a href="module-Title.html#~Title">Title</a></li></ul></li><li><a href="module-main.html">main</a><ul class='methods'><li data-type='method'><a href="module-main.html#~Main">Main</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#ProfileMenu">ProfileMenu</a></li><li><a href="global.html#buildFacturaCondicionEmpresa">buildFacturaCondicionEmpresa</a></li><li><a href="global.html#buildKardexCondicionEmpresa">buildKardexCondicionEmpresa</a></li><li><a href="global.html#buildOrdenCompraCondicionEmpresa">buildOrdenCompraCondicionEmpresa</a></li><li><a href="global.html#buildPedidoCondicionEmpresa">buildPedidoCondicionEmpresa</a></li><li><a href="global.html#buildPedidoReporteEspecifico">buildPedidoReporteEspecifico</a></li><li><a href="global.html#buildProductoVencidoCondicionEmpresa">buildProductoVencidoCondicionEmpresa</a></li><li><a href="global.html#makeLoaders">makeLoaders</a></li><li><a href="global.html#uniqById">uniqById</a></li><li><a href="global.html#unwrap">unwrap</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">components/common/filtersLoaders.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import axios from "../axiosConfig";
+
+/** Normaliza: [] ó { content: [] } */
+export const unwrap = (d) => (Array.isArray(d) ? d : d?.content ?? []);
+
+/** Dedup por id */
+export const uniqById = (arr) =>
+  Array.from(new Map(arr.map((o) => [o.id, o])).values());
+
+/**
+ * Crea loaders para el modal de filtros o cascadas
+ * @param {Object} headers Cabeceras auth.
+ * @param {Object} [opts] Opciones adicionales.
+ * @param {(string|number|null)} [opts.empresaId] Empresa usada para filtrar sedes.
+ * @returns {Object}
+ */
+export const makeLoaders = (headers, opts = {}) => {
+  const empresaIdNum =
+    opts.empresaId != null &amp;&amp; opts.empresaId !== ""
+      ? Number(opts.empresaId)
+      : null;
+
+  /** País */
+  const getPaises = async () => {
+    const { data } = await axios.get("/v1/pais", {
+      ...headers,
+      params: { page: 0, size: 1000 },
+    });
+    return unwrap(data).map((p) => ({ value: p.id, label: p.nombre }));
+  };
+
+  /** Departamento (depende de paisId) */
+  const getDepartamentos = async (values) => {
+    if (!values.paisId) return [];
+    const { data } = await axios.get("/v1/departamento", {
+      ...headers,
+      params: { page: 0, size: 1000 },
+    });
+    const list = unwrap(data).filter(
+      (d) => Number(d.paisId) === Number(values.paisId)
+    );
+    return list.map((d) => ({ value: d.id, label: d.nombre }));
+  };
+
+  /** Municipio (depende de deptoId) */
+  const getMunicipios = async (values) => {
+    if (!values.deptoId) return [];
+    const { data } = await axios.get("/v1/municipio", {
+      ...headers,
+      params: { departamentoId: values.deptoId, page: 0, size: 1000 },
+    });
+    const list = unwrap(data);
+    return list.map((m) => ({ value: m.id, label: m.nombre }));
+  };
+
+  /** Sede (depende de municipioId; opcional empresaId) */
+  const getSedes = async (values) => {
+    if (!values.municipioId) return [];
+    const { data } = await axios.get("/v1/sede", {
+      ...headers,
+      params: { /* municipioId: values.municipioId, */ page: 0, size: 2000 },
+    });
+
+    // Si el backend ya filtra por municipioId, descomenta la línea de arriba y elimina estos filtros.
+    const raw = unwrap(data);
+    const municipioIdNum = Number(values.municipioId);
+    const itemsTienenEmpresa = raw.some(
+      (s) => s.empresaId != null &amp;&amp; !Number.isNaN(Number(s.empresaId))
+    );
+
+    const filtered = raw.filter((s) => {
+      const sameMunicipio = Number(s.municipioId) === municipioIdNum;
+      if (!sameMunicipio) return false;
+      if (itemsTienenEmpresa &amp;&amp; empresaIdNum != null) {
+        return Number(s.empresaId) === empresaIdNum;
+      }
+      return true;
+    });
+
+    return uniqById(filtered).map((s) => ({ value: s.id, label: s.nombre }));
+  };
+
+  /** Bloque (depende de sedeId) */
+  const getBloques = async (values) => {
+    if (!values.sedeId) return [];
+    const { data } = await axios.get("/v1/bloque", {
+      ...headers,
+      params: { sedeId: values.sedeId, page: 0, size: 2000 },
+    });
+    let list = unwrap(data);
+    // Filtrar localmente por sedeId por si el backend no filtra correctamente
+    list = list.filter((b) => String(b.sedeId) === String(values.sedeId));
+    list = uniqById(list);
+    return list.map((b) => ({ value: b.id, label: b.nombre }));
+  };
+
+  /** Espacio (depende de bloqueId) */
+  const getEspacios = async (values) => {
+    if (!values.bloqueId) return [];
+    const { data } = await axios.get("/v1/espacio", {
+      ...headers,
+      params: { bloqueId: values.bloqueId, page: 0, size: 2000 },
+    });
+    let list = unwrap(data);
+    // Filtrar localmente por bloqueId por si el backend no filtra correctamente
+    list = list.filter((e) => String(e.bloqueId) === String(values.bloqueId));
+    list = uniqById(list);
+    return list.map((e) => ({ value: e.id, label: e.nombre }));
+  };
+
+  /** Sección (depende de espacioId) */
+  const getSecciones = async (values) => {
+    if (!values.espacioId) return [];
+    const { data } = await axios.get("/v1/seccion", {
+      ...headers,
+      params: { espacioId: values.espacioId, page: 0, size: 2000 },
+    });
+    let list = unwrap(data);
+    // Filtrar localmente por espacioId por si el backend no filtra correctamente
+    list = list.filter((s) => String(s.espacioId) === String(values.espacioId));
+    list = uniqById(list);
+    return list.map((s) => ({ value: s.id, label: s.nombre }));
+  };
+
+  /** Subsección (depende de seccionId) */
+  const getSubsecciones = async (values) => {
+    if (!values.seccionId) return [];
+    const { data } = await axios.get("/v1/subseccion", {
+      ...headers,
+      params: { seccionId: values.seccionId, page: 0, size: 2000 },
+    });
+    let list = unwrap(data);
+    // Filtrar localmente por seccionId por si el backend no filtra correctamente
+    list = list.filter((ss) => String(ss.seccionId) === String(values.seccionId));
+    list = uniqById(list);
+    return list.map((ss) => ({ value: ss.id, label: ss.nombre }));
+  };
+
+  return {
+    getPaises,
+    getDepartamentos,
+    getMunicipios,
+    getSedes,
+    getBloques,
+    getEspacios,
+    getSecciones,
+    getSubsecciones,
+  };
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Mon May 04 2026 09:11:43 GMT-0500 (hora estándar de Colombia) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

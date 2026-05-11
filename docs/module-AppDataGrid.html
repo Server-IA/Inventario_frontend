@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>AppDataGrid - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AppDataGrid.html">AppDataGrid</a><ul class='methods'><li data-type='method'><a href="module-AppDataGrid.html#~loadStoredVisibilityModel">loadStoredVisibilityModel</a></li></ul></li><li><a href="module-Chart.html">Chart</a><ul class='methods'><li data-type='method'><a href="module-Chart.html#~createData">createData</a></li></ul></li><li><a href="module-Chart1.html">Chart1</a></li><li><a href="module-ComboBox.html">ComboBox</a><ul class='methods'><li data-type='method'><a href="module-ComboBox.html#~ComboBox">ComboBox</a></li></ul></li><li></li><li><a href="module-Departamento.html">Departamento</a></li><li><a href="module-Deposits.html">Deposits</a><ul class='methods'><li data-type='method'><a href="module-Deposits.html#~preventDefault">preventDefault</a></li></ul></li><li><a href="module-Drawer.html">Drawer</a></li><li><a href="module-Empresa.html">Empresa</a></li><li><a href="module-FormEmpresa.html">FormEmpresa</a></li><li><a href="module-Grid1.html">Grid1</a></li><li><a href="module-GridActionBar.html">GridActionBar</a></li><li><a href="module-GridEmpresa.html">GridEmpresa</a></li><li><a href="module-Grupo.html">Grupo</a></li><li><a href="module-Home.html">Home</a><ul class='methods'><li data-type='method'><a href="module-Home.html#~Home">Home</a></li></ul></li><li><a href="module-Logout.html">Logout</a><ul class='methods'><li data-type='method'><a href="module-Logout.html#.logout">logout</a></li></ul></li><li><a href="module-MessageSnackBar.html">MessageSnackBar</a></li><li><a href="module-Municipio.html">Municipio</a></li><li><a href="module-Pais.html">Pais</a></li><li><a href="module-PerfilCard.html">PerfilCard</a><ul class='methods'><li data-type='method'><a href="module-PerfilCard.html#.module.exports">module.exports</a></li></ul></li><li><a href="module-PerfilGroup.html">PerfilGroup</a><ul class='methods'><li data-type='method'><a href="module-PerfilGroup.html#.PerfilGroup">PerfilGroup</a></li></ul></li><li><a href="module-SectionHeader.html">SectionHeader</a></li><li><a href="module-SiteProps.html">SiteProps</a></li><li><a href="module-StackButtons.html">StackButtons</a><ul class='methods'><li data-type='method'><a href="module-StackButtons.html#.StackButtons">StackButtons</a></li></ul></li><li><a href="module-TipoEvaluacionReport.html">TipoEvaluacionReport</a></li><li><a href="module-Title.html">Title</a><ul class='methods'><li data-type='method'><a href="module-Title.html#~Title">Title</a></li></ul></li><li><a href="module-main.html">main</a><ul class='methods'><li data-type='method'><a href="module-main.html#~Main">Main</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#ProfileMenu">ProfileMenu</a></li><li><a href="global.html#buildFacturaCondicionEmpresa">buildFacturaCondicionEmpresa</a></li><li><a href="global.html#buildKardexCondicionEmpresa">buildKardexCondicionEmpresa</a></li><li><a href="global.html#buildOrdenCompraCondicionEmpresa">buildOrdenCompraCondicionEmpresa</a></li><li><a href="global.html#buildPedidoCondicionEmpresa">buildPedidoCondicionEmpresa</a></li><li><a href="global.html#buildPedidoReporteEspecifico">buildPedidoReporteEspecifico</a></li><li><a href="global.html#buildProductoVencidoCondicionEmpresa">buildProductoVencidoCondicionEmpresa</a></li><li><a href="global.html#makeLoaders">makeLoaders</a></li><li><a href="global.html#uniqById">uniqById</a></li><li><a href="global.html#unwrap">unwrap</a></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">AppDataGrid</h1>
+    
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+            
+        
+    
+</header>
+
+<article>
+    
+        <div class="container-overview">
+        
+            
+                <div class="description usertext"><p>Componente reusable de grilla para módulos de gestión.</p></div>
+            
+
+            
+                
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Componente reusable de grilla para módulos de gestión.</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_common_AppDataGrid.jsx.html">components/common/AppDataGrid.jsx</a>, <a href="components_common_AppDataGrid.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+                
+
+    
+
+    <h4 class="name" id="module:AppDataGrid"><span class="type-signature"></span>(require("AppDataGrid"))<span class="signature">(props)</span><span class="type-signature"> &rarr; {JSX.Element}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Grilla reusable basada en MUI DataGrid con soporte para i18n, tipado explícito
+de columnas y persistencia opcional de visibilidad.</p>
+<p>El componente permite que cada módulo describa sus columnas usando <code>type</code> y
+<code>headerKey</code>, mientras la grilla resuelve formato, alineación y render visual
+consistente para tipos como <code>number</code>, <code>date</code>, <code>boolean</code>, <code>status</code> y <code>actions</code>.</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_common_AppDataGrid.jsx.html">components/common/AppDataGrid.jsx</a>, <a href="components_common_AppDataGrid.jsx.html#line65">line 65</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5 class="h5-parameters">Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>props</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Propiedades del componente.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>rows</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Object></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>[]</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Filas a renderizar.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>columns</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Object></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Definición declarativa de columnas.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>getRowId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Función para resolver el id de una fila.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>loading</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>false</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Indica estado de carga.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>autoHeight</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>true</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Ajusta automáticamente la altura a las filas visibles.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>highlightOnHover</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>true</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Activa resaltado visual al pasar el cursor.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>selectOnClick</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>true</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Permite selección de filas al hacer clic.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>selectedRow</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">null</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>null</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Fila seleccionada externamente.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>setSelectedRow</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Setter para selección externa.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>paginationModel</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Modelo de paginación server-side.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>page</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Página actual.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pageSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Tamaño actual de página.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>size</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Alias de tamaño usado por algunos módulos.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>setPaginationModel</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Setter del modelo server-side.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rowCount</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Total de filas cuando se pagina contra backend.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pageSizeOptions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>[5,10,20,50]</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Tamaños permitidos por página.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>quickFilter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    <code>false</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>Muestra toolbar compacta con herramientas de grid.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>columnVisibilityKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Clave de localStorage para persistir visibilidad de columnas.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>columnVisibilityModel</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Modelo controlado de visibilidad de columnas.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>onColumnVisibilityModelChange</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Callback cuando cambia la visibilidad.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>localeText</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Sobrescritura parcial de textos internos de DataGrid.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sx</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Estilos extra para el DataGrid.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>leftActions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">React.ReactNode</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Acciones renderizadas encima de la grilla, alineadas a la izquierda.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>rightActions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">React.ReactNode</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Acciones renderizadas encima de la grilla, alineadas a la derecha.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>containerSx</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Estilos extra para el contenedor <code>Paper</code>.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>onEscape</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>Callback ejecutado al presionar Escape.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="h5-returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">JSX.Element</span>
+
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            
+        
+        </div>
+    
+
+    
+
+    
+
+    
+    
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="~loadStoredVisibilityModel"><span class="type-signature type-signature-inner">(inner) </span>loadStoredVisibilityModel<span class="signature">(storageKey)</span><span class="type-signature"> &rarr; {Object|undefined}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li><p>Carga desde localStorage el modelo de visibilidad de columnas.</p></li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_common_AppDataGrid.jsx.html">components/common/AppDataGrid.jsx</a>, <a href="components_common_AppDataGrid.jsx.html#line17">line 17</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5 class="h5-parameters">Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>storageKey</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Clave usada para persistir la preferencia.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="h5-returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>Modelo serializado o <code>undefined</code> cuando no existe.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Mon May 04 2026 09:11:43 GMT-0500 (hora estándar de Colombia) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>
