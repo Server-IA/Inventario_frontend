@@ -16,6 +16,7 @@ import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
 import com.coagronet.infrastructure.configuration.EmpresaTenantIdentifierResolver;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.repositories.PersonaRepository;
+import com.coagronet.rol.Rol;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.user.User;
 import com.coagronet.user.dtos.AsignacionRequest;
@@ -144,17 +145,17 @@ public class UserRegistrationService {
 			user.addUsuarioRol(usuarioRol);
 
 			if (Boolean.TRUE.equals(asignacion.esPreferida())) {
-				user.setPreferredEmpresaId(empresaAsignarId);
-				user.setPreferredRolId(asignacion.rolId());
+				user.setPreferredEmpresa(entityManager.getReference(Empresa.class, empresaAsignarId));
+				user.setPreferredRol(entityManager.getReference(Rol.class, asignacion.rolId()));
 				seAsignoPreferida = true;
 			}
 		}
 
-		if (!seAsignoPreferida && user.getPreferredEmpresaId() == null && !request.asignaciones().isEmpty()) {
+		if (!seAsignoPreferida && user.getPreferredEmpresa() == null && !request.asignaciones().isEmpty()) {
 			AsignacionRequest primera = request.asignaciones().get(0);
 			Long empresaId = isSystemAdmin ? primera.empresaId() : sessionEmpresaId;
-			user.setPreferredEmpresaId(empresaId);
-			user.setPreferredRolId(primera.rolId());
+			user.setPreferredEmpresa(entityManager.getReference(Empresa.class, empresaId));
+			user.setPreferredRol(entityManager.getReference(Rol.class, primera.rolId()));
 		}
 
 		userRepository.save(user);

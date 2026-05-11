@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.infrastructure.configuration.EmpresaTenantIdentifierResolver;
-import com.coagronet.rol.Rol;
-import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.user.User;
 import com.coagronet.user.dtos.AsignacionResumenDTO;
 import com.coagronet.user.dtos.UsuarioFiltroRequest;
@@ -25,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 public class UsuarioListadoService {
 
         private final UserRepository userRepository;
-        private final RolRepository rolRepository;
         private final EmpresaTenantIdentifierResolver tenantResolver;
 
         @Transactional(readOnly = true)
@@ -47,8 +44,8 @@ public class UsuarioListadoService {
 
         private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
 
-                String nombreRol = (user.getPreferredRolId() != null) ? rolRepository.findById(user.getPreferredRolId())
-                                .map(Rol::getNombre).orElse("Sin rol preferido") : "Sin rol preferido";
+                String nombreRol = (user.getPreferredRol() != null) ? user.getPreferredRol().getNombre()
+                                : "Sin rol preferido";
 
                 var asignaciones = user.getRolesAsignados().stream()
                                 .filter(ur -> isSystemAdmin ||

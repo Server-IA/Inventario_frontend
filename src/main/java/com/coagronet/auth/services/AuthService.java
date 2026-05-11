@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.coagronet.auditoria.RequestUtils;
@@ -68,6 +69,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
+@Validated
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -80,8 +82,6 @@ public class AuthService {
 	private final PasswordEncoder encoder;
 
 	private final RolRepository rolRepository;
-
-	private final JwtUtil jwt;
 
 	private final UserRegistrationService registrationService;
 
@@ -352,7 +352,7 @@ public class AuthService {
 		user.setUsuarioEstado(
 				usuarioEstadoRepository.getReferenceById(UsuarioEstado.ID_ACTIVADO_DEBE_CAMBIAR_CONTRASENA));
 		user.setPersona(savedPersona);
-		user.setPreferredEmpresaId(empresaId);
+		user.setPreferredEmpresa(empresa);
 		User savedUser = userRepo.save(user);
 
 		UsuarioRol usuarioRol = new UsuarioRol();
@@ -463,8 +463,8 @@ public class AuthService {
 				user.getUsuarioEstado().getId());
 
 		if (Boolean.TRUE.equals(dto.rememberAsDefault())) {
-			user.setPreferredEmpresaId(dto.empresaId());
-			user.setPreferredRolId(dto.rolId());
+			user.setPreferredEmpresa(usuarioRol.getEmpresa());
+			user.setPreferredRol(usuarioRol.getRol());
 			userRepo.save(user);
 		}
 
@@ -477,10 +477,10 @@ public class AuthService {
 	/* ================= Estrategia para el contexto inicial ================= */
 	private UsuarioRol resolveInitialContext(User user, List<UsuarioRol> usuarioRols) {
 		// 1) Si hay preferido en User, ?salo si existe a?n
-		if (user.getPreferredEmpresaId() != null && user.getPreferredRolId() != null) {
+		if (user.getPreferredEmpresa() != null && user.getPreferredRol() != null) {
 			Optional<UsuarioRol> preferred = usuarioRols.stream()
-					.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresaId())
-							&& ur.getRol().getId().equals(user.getPreferredRolId()))
+					.filter(ur -> ur.getEmpresa().getId().equals(user.getPreferredEmpresa().getId())
+							&& ur.getRol().getId().equals(user.getPreferredRol().getId()))
 					.findFirst();
 			if (preferred.isPresent()) {
 				return preferred.get();
