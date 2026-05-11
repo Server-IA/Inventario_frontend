@@ -59,12 +59,9 @@ public class UsuarioListadoService {
                                                         : "Desconocido";
                                         String estadoNombre = (ur.getEstado() != null) ? ur.getEstado().getNombre()
                                                         : "Desconocido";
-
-                                        return new AsignacionResumenDTO(
-                                                        empresaId,
-                                                        empresaNombre,
-                                                        rolNombre,
-                                                        estadoNombre);
+                                        return new AsignacionResumenDTO(empresaId, empresaNombre, rolNombre,
+                                                        estadoNombre, ur.getIniciaContratoEn(),
+                                                        ur.getFinalizaContratoEn());
                                 })
                                 .toList();
 
@@ -74,6 +71,9 @@ public class UsuarioListadoService {
                                 user.getPersona().getIdentificacion(),
                                 user.getPersona().getNombre(),
                                 user.getPersona().getApellido(),
+                                user.getPersona().getGenero(),
+                                user.getPersona().getFechaNacimiento(),
+                                user.getPersona().getDireccion(),
                                 user.getPersona().getCelular(),
                                 nombreRol,
                                 asignaciones);

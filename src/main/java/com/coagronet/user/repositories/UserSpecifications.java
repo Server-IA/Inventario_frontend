@@ -19,9 +19,11 @@ public class UserSpecifications {
 
     public static Specification<User> conFiltros(UsuarioFiltroRequest filtro, Long forcedEmpresaId) {
         return (root, query, cb) -> {
-            query.distinct(true);
-
             List<Predicate> predicates = new ArrayList<>();
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("persona", JoinType.LEFT);
+                root.fetch("preferredRol", JoinType.LEFT);
+            }
 
             Join<User, Persona> personaJoin = root.join("persona", JoinType.INNER);
 
@@ -44,6 +46,8 @@ public class UserSpecifications {
                 if (filtro.estadoId() != null) {
                     predicates.add(cb.equal(rolesAsignadosJoin.get("estado").get("id"), filtro.estadoId()));
                 }
+
+                query.distinct(true);
             }
 
             if (StringUtils.hasText(filtro.username())) {

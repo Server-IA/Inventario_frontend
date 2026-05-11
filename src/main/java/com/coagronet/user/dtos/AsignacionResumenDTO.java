@@ -10,5 +10,9 @@ public record AsignacionResumenDTO(
 
                 @Schema(description = "Nombre del rol asignado", example = "Cajero") String rolNombre,
 
-                @Schema(description = "Estado actual de la asignación", example = "Activo") String estadoNombre) {
+                @Schema(description = "Estado actual de la asignación", example = "Activo") String estadoNombre,
+
+                @Schema(description = "Fecha de inicio del contrato", example = "2023-01-01T00:00:00Z") java.time.OffsetDateTime fechaInicioContrato,
+
+                @Schema(description = "Fecha de fin del contrato", example = "2024-01-01T00:00:00Z", nullable = true) java.time.OffsetDateTime fechaFinContrato) {
 }
