@@ -1,5 +1,6 @@
 package com.coagronet.user.controllers;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -20,13 +21,18 @@ import com.coagronet.user.User;
 import com.coagronet.user.dtos.UserDTO;
 import com.coagronet.user.dtos.UserMinimalDTO;
 import com.coagronet.user.dtos.UserRegistrationRequest;
+import com.coagronet.user.dtos.UsuarioFiltroRequest;
+import com.coagronet.user.dtos.UsuarioListResponse;
 import com.coagronet.user.mappers.UserMapper;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
+import com.coagronet.user.services.UsuarioListadoService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +50,8 @@ public class UserController {
 	private final PasswordEncoder passwordEncoder;
 
 	private final UserRegistrationService userRegistrationService;
+
+	private final UsuarioListadoService usuarioListadoService;
 
 	@GetMapping("/api/v1/user/{requestedId}")
 	private ResponseEntity<UserDTO> findById(@PathVariable Long requestedId) {
@@ -108,4 +116,33 @@ public class UserController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(userId);
 	}
 
+	@Operation(summary = "Listar usuarios paginados", description = """
+			Obtiene un listado paginado de usuarios aplicando filtros opcionales y reglas de visibilidad asociadas al rol del usuario autenticado.
+
+			**Parámetros de paginación**
+			Se aceptan los parámetros estándar de Spring:
+			- `page` (número de página, base 0)
+			- `size` (cantidad de elementos por página, valor por defecto 20)
+			- `sort` (campo y dirección, p.ej. `nombre,asc`)
+
+			**Lógica de visibilidad (Multi-Tenant)**
+			- `ADMINISTRADOR_SISTEMA`: visualiza todos los usuarios de la plataforma, incluyendo todas sus asignaciones.
+			- `ADMINISTRADOR_EMPRESA` o usuarios con el permiso `USUARIO_ROL_READ`: ven únicamente los usuarios que pertenecen a su empresa/tenant. En la respuesta solo se incluyen las asignaciones vinculadas a dicha empresa.
+			""", tags = {
+			"Usuarios" }, security = { @SecurityRequirement(name = "bearerAuth") })
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente. El cuerpo de la respuesta sigue la estructura de Page<UsuarioListResponse>."),
+			@ApiResponse(responseCode = "400", description = "Parámetros de filtrado o paginación inválidos (ej. valor de filtro incorrecto, índice de página negativo).", content = @Content),
+			@ApiResponse(responseCode = "401", description = "No autenticado. El token de acceso es faltante, expirado o inválido.", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no posee los roles necesarios para acceder a este recurso.", content = @Content)
+	})
+	@GetMapping("/api/v1/usuarios")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Page<UsuarioListResponse>> listarUsuarios(
+			@ParameterObject UsuarioFiltroRequest filtro,
+			@ParameterObject Pageable pageable) {
+
+		Page<UsuarioListResponse> response = usuarioListadoService.listarUsuarios(filtro, pageable);
+		return ResponseEntity.ok(response);
+	}
 }
