@@ -159,9 +159,6 @@ public class UserController {
 	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<UsuarioDetalleResponse> obtenerUsuarioDetalle(@PathVariable Long requestedId) {
 		UsuarioDetalleResponse response = usuarioListadoService.obtenerUsuarioDetalle(requestedId);
-		if (response == null) {
-			return ResponseEntity.notFound().build();
-		}
 		return ResponseEntity.ok(response);
 	}
 }
