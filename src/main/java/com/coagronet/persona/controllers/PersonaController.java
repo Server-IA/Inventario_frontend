@@ -72,7 +72,7 @@ public class PersonaController {
 			@ApiResponse(responseCode = "403", description = "Acceso denegado. Se requieren permisos de gestión de usuarios.")
 	})
 	@GetMapping("/api/v1/personas/{identificacion}")
-	@PreAuthorize("hasAuthority('USUARIO_ROL_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('PERSONA_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<PersonaPreloadResponse> obtenerPersonaPorIdentificacion(
 			@PathVariable String identificacion) {
 
