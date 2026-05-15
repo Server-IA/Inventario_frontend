@@ -21,6 +21,7 @@ import com.coagronet.user.User;
 import com.coagronet.user.dtos.UserDTO;
 import com.coagronet.user.dtos.UserMinimalDTO;
 import com.coagronet.user.dtos.UserRegistrationRequest;
+import com.coagronet.user.dtos.UsuarioDetalleResponse;
 import com.coagronet.user.dtos.UsuarioFiltroRequest;
 import com.coagronet.user.dtos.UsuarioListResponse;
 import com.coagronet.user.mappers.UserMapper;
@@ -143,6 +144,24 @@ public class UserController {
 			@ParameterObject Pageable pageable) {
 
 		Page<UsuarioListResponse> response = usuarioListadoService.listarUsuarios(filtro, pageable);
+		return ResponseEntity.ok(response);
+	}
+
+	@Operation(summary = "Obtener detalle de un usuario", description = "Retorna el detalle completo de un usuario por su ID, aplicando las reglas de visibilidad del tenant actual.", tags = {
+			"Usuarios" }, security = { @SecurityRequirement(name = "bearerAuth") })
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Detalle del usuario retornado exitosamente."),
+			@ApiResponse(responseCode = "404", description = "Usuario no encontrado o no tiene permisos para verlo.", content = @Content),
+			@ApiResponse(responseCode = "401", description = "No autenticado.", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado.", content = @Content)
+	})
+	@GetMapping("/api/v1/usuarios/{requestedId}")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<UsuarioDetalleResponse> obtenerUsuarioDetalle(@PathVariable Long requestedId) {
+		UsuarioDetalleResponse response = usuarioListadoService.obtenerUsuarioDetalle(requestedId);
+		if (response == null) {
+			return ResponseEntity.notFound().build();
+		}
 		return ResponseEntity.ok(response);
 	}
 }
