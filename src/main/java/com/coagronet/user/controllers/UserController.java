@@ -24,9 +24,11 @@ import com.coagronet.user.dtos.UserRegistrationRequest;
 import com.coagronet.user.dtos.UsuarioDetalleResponse;
 import com.coagronet.user.dtos.UsuarioFiltroRequest;
 import com.coagronet.user.dtos.UsuarioListResponse;
+import com.coagronet.user.dtos.UsuarioUpdateRequest;
 import com.coagronet.user.mappers.UserMapper;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
+import com.coagronet.user.services.UserUpdateService;
 import com.coagronet.user.services.UsuarioListadoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,6 +55,8 @@ public class UserController {
 	private final UserRegistrationService userRegistrationService;
 
 	private final UsuarioListadoService usuarioListadoService;
+
+	private final UserUpdateService userUpdateService;
 
 	@GetMapping("/api/v1/user/{requestedId}")
 	private ResponseEntity<UserDTO> findById(@PathVariable Long requestedId) {
@@ -163,5 +167,21 @@ public class UserController {
 			return ResponseEntity.notFound().build();
 		}
 		return ResponseEntity.ok(response);
+	}
+
+	@Operation(summary = "Actualizar un usuario", description = "Actualiza los detalles, información personal (Persona) y asignaciones de roles de un usuario.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Usuario actualizado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Error de validación o unicidad"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado"),
+			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+	})
+	@PutMapping("/api/v1/usuarios/{requestedId}")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_UPDATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Void> actualizarUsuario(
+			@PathVariable Long requestedId,
+			@Valid @RequestBody UsuarioUpdateRequest request) {
+		userUpdateService.updateUserDetails(requestedId, request);
+		return ResponseEntity.noContent().build();
 	}
 }
