@@ -1,7 +1,7 @@
 {
   "name": "factory",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.3.2",
   "proxy": "http://172.16.79.156:8080",
   "type": "module",
   "homepage": "/coagronet",
