@@ -1,5 +1,5 @@
 package com.coagronet.auth.listeners;
 
-public record RoleActivatedEvent(Long usuarioRolId) {
+public record RoleActivatedEvent(Long usuarioRolId, String fallbackLanguageTag) {
 
 }

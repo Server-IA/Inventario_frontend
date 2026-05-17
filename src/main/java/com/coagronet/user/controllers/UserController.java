@@ -38,9 +38,9 @@ public class UserController {
 	@GetMapping("/{requestedId}")
 	private ResponseEntity<UserDTO> findById(@PathVariable Long requestedId) {
 		return userRepository.findById(requestedId)
-			.map(userMapper::toDto)
-			.map(ResponseEntity::ok)
-			.orElse(ResponseEntity.notFound().build());
+				.map(userMapper::toDto)
+				.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@GetMapping
@@ -52,7 +52,7 @@ public class UserController {
 	@GetMapping("/minimal")
 	private ResponseEntity<Page<UserMinimalDTO>> findAllMinimal(@PageableDefault Pageable pageable) {
 		Page<UserMinimalDTO> page = userRepository.findByUsuarioEstadoIdGreaterThanEqual(0, pageable)
-			.map(userMapper::toMinimalDTO);
+				.map(userMapper::toMinimalDTO);
 		return page.hasContent() ? ResponseEntity.ok(page) : ResponseEntity.noContent().build();
 	}
 
@@ -62,7 +62,11 @@ public class UserController {
 		if (null != user) {
 			String encodedPassword = passwordEncoder.encode(userDTOUpdate.getPassword());
 			UserDTO updatedUserDTO = new UserDTO(requestedId, encodedPassword, userDTOUpdate.getUsername(),
-					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId());
+					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId(),
+					userDTOUpdate.getPreferredLanguage() != null
+							? userDTOUpdate.getPreferredLanguage()
+							: user.getPreferredLanguage());
+
 			User updatedUser = userMapper.toEntity(updatedUserDTO);
 			userRepository.save(updatedUser);
 			return ResponseEntity.noContent().build();
@@ -78,8 +82,7 @@ public class UserController {
 				return ResponseEntity.noContent().build();
 			}
 			return ResponseEntity.notFound().build();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			return ResponseEntity.internalServerError().build();
 		}
 	}

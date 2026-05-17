@@ -2,6 +2,7 @@ package com.coagronet.auth.services;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +42,7 @@ import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
+import com.coagronet.infrastructure.i18n.LocaleResolutionService;
 import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.persona.Persona;
@@ -49,6 +51,7 @@ import com.coagronet.rol.Rol;
 import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
+import com.coagronet.user.LanguagePreference;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
@@ -117,6 +120,8 @@ public class AuthService {
 
 	private final ApplicationEventPublisher applicationEventPublisher;
 
+	private final LocaleResolutionService localeResolutionService;
+
 	private final UsuarioEstadoRepository usuarioEstadoRepository;
 
 	private final EstadoRepository estadoRolRepository;
@@ -132,7 +137,13 @@ public class AuthService {
 
 	/* ================= REGISTRATION ================= */
 	@Transactional
-	public ApiResponse register(@Valid RegisterRequestDTO dto) {
+	public ApiResponse register(@Valid RegisterRequestDTO dto, String acceptLanguage) {
+		String effectiveAcceptLanguage = acceptLanguage;
+		if (effectiveAcceptLanguage == null || effectiveAcceptLanguage.isBlank()) {
+			effectiveAcceptLanguage = LocaleContextHolder.getLocale().toLanguageTag();
+		}
+		Locale requestLocale = localeResolutionService.resolveForHttpRequest(effectiveAcceptLanguage, dto.getUsername());
+		String requestLanguageTag = requestLocale.toLanguageTag();
 
 		// 1. Verificación de existencia previa
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
@@ -141,7 +152,7 @@ public class AuthService {
 			// Evaluamos el ID de la entidad estado (Ej. 1L = PENDIENTE_VERIFICACION)
 			if (existing.getUsuarioEstado().getId() == 1L) {
 				String token = emailService.createVerificationToken(existing.getUsername());
-				emailService.sendVerificationEmail(existing.getUsername(), token);
+				emailService.sendVerificationEmail(existing.getUsername(), token, requestLocale);
 
 				throw new ResponseStatusException(HttpStatus.CONFLICT,
 						msg("auth.register.email.already.registered.unverified.resent"));
@@ -152,6 +163,7 @@ public class AuthService {
 		// 2. Creación del nuevo usuario (Aggregate Root)
 		User user = new User();
 		user.setUsername(dto.getUsername());
+		user.setPreferredLanguage(LanguagePreference.from(requestLocale.getLanguage()));
 
 		// Validación NIST/OWASP
 		validatePasswordPolicy(dto.getPassword());
@@ -191,7 +203,7 @@ public class AuthService {
 		 * tabla 'usuario' 1x INSERT en la tabla 'usuario_rol' (gracias a cascade =
 		 * CascadeType.ALL)
 		 */
-		registrationService.registerUser(user);
+		registrationService.registerUser(user, requestLanguageTag);
 
 		return new ApiResponse(true, msg("auth.register.verification.email.sent", user.getUsername()));
 	}
@@ -299,7 +311,8 @@ public class AuthService {
 
 			UsuarioRol saved = usuarioRolRepository.save(usuarioRol);
 
-			applicationEventPublisher.publishEvent(new RoleActivatedEvent(saved.getId()));
+			applicationEventPublisher
+					.publishEvent(new RoleActivatedEvent(saved.getId(), httpRequest.getHeader("Accept-Language")));
 
 			String message = msg(
 					"auth.role.activated.email.notified",
@@ -392,7 +405,8 @@ public class AuthService {
 
 		UsuarioRol saved = usuarioRolRepository.save(usuarioRol);
 
-		applicationEventPublisher.publishEvent(new NewUserCredentialsEvent(saved.getId(), tempPassword));
+		applicationEventPublisher.publishEvent(
+				new NewUserCredentialsEvent(saved.getId(), tempPassword, httpRequest.getHeader("Accept-Language")));
 
 		String message = msg(
 				"auth.role.activated.email.notified",
@@ -585,10 +599,10 @@ public class AuthService {
 		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
-	public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto) {
+	public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto, String acceptLanguage) {
 		userRepo.findByUsername(dto.getEmail()).ifPresent(u -> {
 			var token = emailService.createResetPasswordToken(u.getUsername());
-			emailService.sendResetPasswordEmail(u.getUsername(), token);
+			emailService.sendResetPasswordEmail(u.getUsername(), token, acceptLanguage);
 		});
 		return new ApiResponse(true, msg("auth.forgot.password.email.sent"));
 	}

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import com.coagronet.user.LanguagePreference;
 
 import com.coagronet.user.User;
 import com.coagronet.usuarioEstado.UsuarioEstado;
@@ -35,7 +36,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	boolean existsByUsernameAndUsuarioEstado(String email, UsuarioEstado estado);
 
-@Query("SELECT u.tokenVersion FROM User u WHERE u.username = :username")
-Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
+	@Query("SELECT u.tokenVersion FROM User u WHERE u.username = :username")
+	Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
+
+	@Query("SELECT u.preferredLanguage FROM User u WHERE u.username = :username")
+	Optional<LanguagePreference> findPreferredLanguageByUsername(@Param("username") String username);
 
 }

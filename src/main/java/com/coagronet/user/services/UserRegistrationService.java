@@ -27,9 +27,9 @@ public class UserRegistrationService {
 	private final UsuarioEstadoRepository usuarioEstadoRepository;
 
 	@Transactional
-	public void registerUser(User user) {
+	public void registerUser(User user, String acceptLanguage) {
 		userRepository.save(user);
-		publisher.publishEvent(new OnRegistrationCompleteEvent(user));
+		publisher.publishEvent(new OnRegistrationCompleteEvent(user, acceptLanguage));
 	}
 
 	@Transactional

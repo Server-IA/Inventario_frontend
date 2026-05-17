@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,8 +39,17 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO dto) {
-	return ResponseEntity.ok(authService.register(dto));
+    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequestDTO dto,
+	    @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage,
+	    HttpServletRequest httpRequest) {
+	String languageHeader = acceptLanguage;
+	if (languageHeader == null || languageHeader.isBlank()) {
+	    languageHeader = httpRequest.getHeader("Accept-Language");
+	}
+	if ((languageHeader == null || languageHeader.isBlank()) && httpRequest.getLocale() != null) {
+	    languageHeader = httpRequest.getLocale().toLanguageTag();
+	}
+	return ResponseEntity.ok(authService.register(dto, languageHeader));
     }
 
     @PostMapping("/empresa/usuario-roles")
@@ -71,8 +81,9 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO dto) {
-	return ResponseEntity.ok(authService.forgotPassword(dto));
+    public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO dto,
+	    @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
+	return ResponseEntity.ok(authService.forgotPassword(dto, acceptLanguage));
     }
 
     @PostMapping("/reset-password")
