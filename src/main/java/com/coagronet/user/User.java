@@ -11,7 +11,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.persona.Persona;
+import com.coagronet.rol.Rol;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 import com.coagronet.usuariorol.UsuarioRol; // Importar la clase asociativa correcta
 
@@ -71,11 +73,13 @@ public class User implements UserDetails {
 	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id", nullable = false)
 	private UsuarioEstado usuarioEstado;
 
-	@Column(name = "usu_preferred_empresa_id")
-	private Long preferredEmpresaId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_preferred_empresa_id")
+	private Empresa preferredEmpresa;
 
-	@Column(name = "usu_preferred_rol_id")
-	private Long preferredRolId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_preferred_rol_id")
+	private Rol preferredRol;
 
 	@Builder.Default
 	@Enumerated(EnumType.STRING)

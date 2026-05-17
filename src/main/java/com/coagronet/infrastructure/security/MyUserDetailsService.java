@@ -32,7 +32,7 @@ public class MyUserDetailsService implements UserDetailsService {
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user = userRepository.findByUsernameWithRolesAndEstado(username)
-			.orElseThrow(() -> new UsernameNotFoundException("User not found"));
+				.orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
 		switch (user.getUsuarioEstado().getId().intValue()) {
 			case 0 -> throw new DisabledException("User account is deactivated.");
@@ -45,28 +45,29 @@ public class MyUserDetailsService implements UserDetailsService {
 		Set<GrantedAuthority> authorities = new HashSet<>();
 
 		Set<String> nombresRoles = user.getRolesAsignados()
-			.stream()
-			.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
-			.map(ur -> ur.getRol().getNombre())
-			.collect(Collectors.toSet());
+				.stream()
+				.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
+				.map(ur -> ur.getRol().getNombre())
+				.collect(Collectors.toSet());
 
 		authorities.addAll(nombresRoles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()));
 
 		boolean isSystemAdmin = nombresRoles.contains("ROLE_ADMINISTRADOR_SISTEMA");
-		if (!isSystemAdmin && user.getPreferredEmpresaId() != null) {
+		if (!isSystemAdmin && user.getPreferredEmpresa() != null) {
 			List<String> permisos = permisoRepository.findPermisosByUsuarioAndEmpresa(user.getId(),
-					user.getPreferredEmpresaId());
+					user.getPreferredEmpresa().getId());
 			authorities.addAll(permisos.stream().map(SimpleGrantedAuthority::new).toList());
 		}
 
 		Long primaryRolId = user.getRolesAsignados()
-			.stream()
-			.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
-			.findFirst()
-			.map(ur -> ur.getRol().getId())
-			.orElse(null);
+				.stream()
+				.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
+				.findFirst()
+				.map(ur -> ur.getRol().getId())
+				.orElse(null);
 
-		return new CustomUserDetails(user.getId(), user.getUsername(), user.getPassword(), user.getPreferredEmpresaId(),
+		return new CustomUserDetails(user.getId(), user.getUsername(), user.getPassword(),
+				user.getPreferredEmpresa() != null ? user.getPreferredEmpresa().getId() : null,
 				primaryRolId, user.getTokenVersion(), authorities);
 	}
 
