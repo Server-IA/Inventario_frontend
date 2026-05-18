@@ -113,7 +113,7 @@ public class UserController {
 			@ApiResponse(responseCode = "403", description = "Acceso denegado. Se requieren privilegios de administrador o permisos de creación.")
 	})
 	@PostMapping("/api/v1/usuarios/registro")
-	@PreAuthorize("hasAuthority('USUARIO_ROL_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_CREATE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Long> registrarUsuario(
 			@Valid @RequestBody UserRegistrationRequest request) {
 
@@ -142,7 +142,7 @@ public class UserController {
 			@ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no posee los roles necesarios para acceder a este recurso.", content = @Content)
 	})
 	@GetMapping("/api/v1/usuarios")
-	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Page<UsuarioListResponse>> listarUsuarios(
 			@ParameterObject UsuarioFiltroRequest filtro,
 			@ParameterObject Pageable pageable) {
@@ -160,7 +160,7 @@ public class UserController {
 			@ApiResponse(responseCode = "403", description = "Acceso denegado.", content = @Content)
 	})
 	@GetMapping("/api/v1/usuarios/{requestedId}")
-	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<UsuarioDetalleResponse> obtenerUsuarioDetalle(@PathVariable Long requestedId) {
 		UsuarioDetalleResponse response = usuarioListadoService.obtenerUsuarioDetalle(requestedId);
 		return ResponseEntity.ok(response);
@@ -174,7 +174,7 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
 	})
 	@PutMapping("/api/v1/usuarios/{requestedId}")
-	@PreAuthorize("hasAuthority('USUARIO_ROL_UPDATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_UPDATE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> actualizarUsuario(
 			@PathVariable Long requestedId,
 			@Valid @RequestBody UsuarioUpdateRequest request) {

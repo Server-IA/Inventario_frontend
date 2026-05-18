@@ -71,6 +71,7 @@ public class KardexController {
 			@ApiResponse(responseCode = "401", description = "No autorizado. El usuario no ha iniciado sesión o no tiene un token válido.")
 	})
 	@DeleteMapping("/{requestedId}")
+	@PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> eliminarKardex(
 			@Parameter(description = "ID único del movimiento de Kardex que se desea inactivar", required = true, example = "158") @PathVariable Long requestedId) {
 
@@ -85,7 +86,7 @@ public class KardexController {
 			@ApiResponse(responseCode = "403", description = "Acceso denegado. Rol insuficiente."),
 			@ApiResponse(responseCode = "422", description = "Error de validaci?n (ej. falta de responsable para producto devolutivo o el JSON es inv?lido).", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class))) })
 	@PostMapping("/movimientos")
-	@PreAuthorize("hasAuthority('KARDEX_CREATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('KARDEX_CREATE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> registrarMovimiento(@Valid @RequestBody KardexRequestDTO request,
 			HttpServletRequest httpRequest, Authentication authentication) {
 
@@ -117,7 +118,7 @@ public class KardexController {
 			@ApiResponse(responseCode = "403", description = "Usuario no autorizado para acceder a este recurso", content = @Content)
 	})
 	@GetMapping
-	@PreAuthorize("hasAuthority('KARDEX_READ_ALL') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('KARDEX_READ_ALL') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Page<?>> listarMovimientos(
 			@Parameter(description = "Fecha de inicio para el filtro (formato ISO 8601 con offset)", example = "2026-04-13T00:00:00-05:00") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
 
@@ -142,7 +143,7 @@ public class KardexController {
 			@ApiResponse(responseCode = "403", description = "Prohibido - No tiene los permisos requeridos (KARDEX_READ o roles superiores)", content = @Content)
 	})
 	@GetMapping("/{kardexId}/items")
-	@PreAuthorize("hasAuthority('KARDEX_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('KARDEX_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Page<KardexItemResponseDto>> listItems(
 			@Parameter(description = "ID del Kardex del cual se desean listar los ítems", example = "1", required = true) @PathVariable Long kardexId,
 
@@ -170,7 +171,7 @@ public class KardexController {
 			@ApiResponse(responseCode = "404", description = "Kardex no encontrado", content = @Content)
 	})
 	@GetMapping("/{id}/update-form")
-	@PreAuthorize("hasAuthority('KARDEX_READ') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('KARDEX_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<KardexUpdateResponseDTO> getForUpdate(
 			@Parameter(description = "ID único del movimiento de Kardex a consultar", required = true, example = "1024") @PathVariable Long id) {
 
@@ -189,7 +190,7 @@ public class KardexController {
 			@ApiResponse(responseCode = "404", description = "Kardex no encontrada o inactiva"),
 			@ApiResponse(responseCode = "422", description = "Producto devolutivo sin responsable o relaciones invalidas") })
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAuthority('KARDEX_UPDATE') or hasRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasAuthority('KARDEX_UPDATE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> actualizarMovimiento(@PathVariable Long id,
 			@Valid @RequestBody KardexUpdateRequestDTO request, HttpServletRequest httpRequest,
 			Authentication authentication) {
