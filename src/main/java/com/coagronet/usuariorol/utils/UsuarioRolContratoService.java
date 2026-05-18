@@ -78,14 +78,14 @@ public class UsuarioRolContratoService {
 			usuarioRolRepository.save(ur);
 
 			User user = ur.getUser();
-			boolean eraPreferida = user.getPreferredEmpresaId() != null
-					&& user.getPreferredRolId() != null
-					&& user.getPreferredEmpresaId().equals(ur.getEmpresa().getId())
-					&& user.getPreferredRolId().equals(ur.getRol().getId());
+			boolean eraPreferida = user.getPreferredEmpresa() != null
+					&& user.getPreferredRol() != null
+					&& user.getPreferredEmpresa().getId().equals(ur.getEmpresa().getId())
+					&& user.getPreferredRol().getId().equals(ur.getRol().getId());
 
 			if (eraPreferida) {
-				user.setPreferredEmpresaId(null);
-				user.setPreferredRolId(null);
+				user.setPreferredEmpresa(null);
+				user.setPreferredRol(null);
 
 				List<UsuarioRol> otrasActivas = usuarioRolRepository
 						.findActivasByUserId(ESTADO_ACTIVO_ID, user.getId());
@@ -95,14 +95,15 @@ public class UsuarioRolContratoService {
 						.orElse(null);
 
 				if (nuevaPreferida != null) {
-					user.setPreferredEmpresaId(nuevaPreferida.getEmpresa().getId());
-					user.setPreferredRolId(nuevaPreferida.getRol().getId());
+					user.setPreferredEmpresa(nuevaPreferida.getEmpresa());
+					user.setPreferredRol(nuevaPreferida.getRol());
 					logger.debug("Usuario id={}: preferencia cambiada a empresaId={}, rolId={}",
 							user.getId(), nuevaPreferida.getEmpresa().getId(), nuevaPreferida.getRol().getId());
 				}
 
 				userRepository.save(user);
-				logger.debug("UsuarioRol id={} inactivado - preferencia removida del usuario id={}", ur.getId(), user.getId());
+				logger.debug("UsuarioRol id={} inactivado - preferencia removida del usuario id={}", ur.getId(),
+						user.getId());
 			}
 
 			logger.debug("UsuarioRol id={} inactivado por fecha de fin contrato", ur.getId());

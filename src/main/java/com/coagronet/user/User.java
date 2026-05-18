@@ -5,11 +5,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.coagronet.empresa.Empresa;
 import com.coagronet.persona.Persona;
+import com.coagronet.rol.Rol;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 import com.coagronet.usuariorol.UsuarioRol; // Importar la clase asociativa correcta
 
@@ -26,6 +30,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -67,11 +73,19 @@ public class User implements UserDetails {
 	@JoinColumn(name = "usu_estado_id", referencedColumnName = "use_id", nullable = false)
 	private UsuarioEstado usuarioEstado;
 
-	@Column(name = "usu_preferred_empresa_id")
-	private Long preferredEmpresaId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_preferred_empresa_id")
+	private Empresa preferredEmpresa;
 
-	@Column(name = "usu_preferred_rol_id")
-	private Long preferredRolId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "usu_preferred_rol_id")
+	private Rol preferredRol;
+
+	@Builder.Default
+	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
+	@Column(name = "usu_preferred_language", nullable = false, length = 5)
+	private LanguagePreference preferredLanguage = LanguagePreference.ES;
 
 	@Builder.Default
 	@Column(name = "usu_token_version", nullable = false)
@@ -93,9 +107,9 @@ public class User implements UserDetails {
 		}
 
 		return rolesAsignados.stream()
-			.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
-			.map(ur -> new SimpleGrantedAuthority("ROLE_" + ur.getRol().getNombre()))
-			.collect(Collectors.toSet());
+				.filter(ur -> ur.getEstado() != null && ur.getEstado().getId() == 1L)
+				.map(ur -> new SimpleGrantedAuthority("ROLE_" + ur.getRol().getNombre()))
+				.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -119,13 +133,15 @@ public class User implements UserDetails {
 	}
 
 	/*
-	 * ==================================================================== HELPER METHODS
+	 * ==================================================================== HELPER
+	 * METHODS
 	 * PARA RELACIONES BIDIRECCIONALES (JPA Best Practices)
 	 * ====================================================================
 	 */
 
 	/**
-	 * Sincroniza ambos lados de la relación al agregar un nuevo rol/contrato. Obligatorio
+	 * Sincroniza ambos lados de la relación al agregar un nuevo rol/contrato.
+	 * Obligatorio
 	 * para evitar FKs nulas y mantener el Contexto de Persistencia coherente.
 	 */
 	public void addUsuarioRol(UsuarioRol usuarioRol) {

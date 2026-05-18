@@ -5,15 +5,17 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import com.coagronet.user.LanguagePreference;
 
 import com.coagronet.user.User;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
 	Optional<User> findByUsername(String username);
 
@@ -39,5 +41,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
 
 	Optional<User> findByPersonaId(Long personaId);
+
+	@Query("SELECT u.preferredLanguage FROM User u WHERE u.username = :username")
+	Optional<LanguagePreference> findPreferredLanguageByUsername(@Param("username") String username);
 
 }
