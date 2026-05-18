@@ -40,6 +40,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 	@Query("SELECT u.tokenVersion FROM User u WHERE u.username = :username")
 	Optional<Integer> findTokenVersionByUsername(@Param("username") String username);
 
+	Optional<User> findByPersonaId(Long personaId);
+
 	@Query("SELECT u.preferredLanguage FROM User u WHERE u.username = :username")
 	Optional<LanguagePreference> findPreferredLanguageByUsername(@Param("username") String username);
 
