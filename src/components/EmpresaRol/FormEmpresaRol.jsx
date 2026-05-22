@@ -36,6 +36,8 @@ export default function FormEmpresaRol({
   isSystemAdmin = false,
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const isEdit = Boolean(selectedRow?.id);
   const permisosLegacyParams = (targetEmpresaId) =>
     isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
@@ -81,7 +83,7 @@ export default function FormEmpresaRol({
       setMessage({
         open: true,
         severity: "error",
-        text: "Error al cargar empresas",
+        text: t("empresaRol.messages.companiesLoadError"),
       });
     }
   };
@@ -311,7 +313,7 @@ const handleSave = async () => {
     setMessage({
       open: true,
       severity: "warning",
-      text: "Debe seleccionar una empresa",
+      text: t("empresaRol.messages.companyRequired"),
     });
     return;
   }
@@ -595,10 +597,10 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
 
         {isSystemAdmin && (
           <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel>Empresa</InputLabel>
+            <InputLabel>{t("empresaRol.form.companyLabel")}</InputLabel>
             <Select
               value={selectedEmpresaId}
-              label="Empresa"
+              label={t("empresaRol.form.companyLabel")}
               onChange={(e) => setSelectedEmpresaId(e.target.value)}
               disabled={isEdit}
             >
