@@ -2,7 +2,7 @@ package com.coagronet.validator.inventario.entidades;
 
 import com.coagronet.cierreinventario.CierreInventario;
 import com.coagronet.cierreinventario.repositories.CierreInventarioRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.validator.common.BaseValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,9 +15,9 @@ public class CierreInventarioValidator implements BaseValidator {
 
     private final CierreInventarioRepository cierreInventarioRepository;
 
-    public CierreInventario validarCierreInventario(Long cierreInventarioId, Long empresaId){
+    public CierreInventario validarCierreInventario(Long cierreInventarioId, Long empresaId) {
         return cierreInventarioRepository.findByIdAndEmpresaId(cierreInventarioId, empresaId)
-                .orElseThrow(()-> new BadRequestException("cierre-inventario.not-found", cierreInventarioId));
+                .orElseThrow(() -> new BadRequestException("cierre-inventario.not-found" + cierreInventarioId));
     }
 
     public void validarDuplicado(Long empresaId, Long almacenId, LocalDate fechaInicio, LocalDate fechaCorte) {
@@ -26,14 +26,12 @@ public class CierreInventarioValidator implements BaseValidator {
                 empresaId,
                 almacenId,
                 fechaInicio,
-                fechaCorte
-        );
+                fechaCorte);
 
         if (existe) {
             throw new IllegalStateException(
                     "Ya existe un cierre de inventario para el almacén " + almacenId +
-                            " en el rango " + fechaInicio + " - " + fechaCorte
-            );
+                            " en el rango " + fechaInicio + " - " + fechaCorte);
         }
     }
 

@@ -55,15 +55,6 @@ public class GlobalExceptionHandler {
         return (desc != null && desc.startsWith("uri=")) ? desc.substring(4) : desc;
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorDetails> handleBadRequest(BadRequestException ex, WebRequest request) {
-        Locale locale = LocaleContextHolder.getLocale();
-        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
-                msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", ex.getArgs(), locale),
-                requestPath(request), null);
-        return ResponseEntity.badRequest().body(body);
-    }
-
     @ExceptionHandler(DomainValidationException.class)
     public ResponseEntity<ErrorDetails> handleDomainValidation(DomainValidationException ex, WebRequest request) {
         var locale = LocaleContextHolder.getLocale();

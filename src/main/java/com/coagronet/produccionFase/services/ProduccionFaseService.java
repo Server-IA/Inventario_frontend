@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.produccionFase.dtos.ProduccionFaseDTO;
 import com.coagronet.produccionFase.mappers.ProduccionFaseMapper;
 import com.coagronet.produccionFase.repositories.ProduccionFaseRepository;
@@ -26,7 +26,7 @@ public class ProduccionFaseService {
     private final EstadoRepository estadoRepository;
     private final UserEmpresaService userEmpresaService;
 
-    public List <ProduccionFaseDTO> findAll() {
+    public List<ProduccionFaseDTO> findAll() {
         return produccionFaseRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .stream()
                 .map(produccionFaseMapper::toDto)
@@ -38,23 +38,24 @@ public class ProduccionFaseService {
                 .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .map(produccionFaseMapper::toDto);
     }
+
     @Transactional
-    public ProduccionFaseDTO create (ProduccionFaseDTO produccionFaseDTO) {
+    public ProduccionFaseDTO create(ProduccionFaseDTO produccionFaseDTO) {
         estadoRepository.findById(produccionFaseDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
-        
+
         produccionFaseDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        return produccionFaseMapper.toDto(produccionFaseRepository.save(produccionFaseMapper.toEntity(produccionFaseDTO)));
+        return produccionFaseMapper
+                .toDto(produccionFaseRepository.save(produccionFaseMapper.toEntity(produccionFaseDTO)));
 
     }
-
 
     @Transactional
     public void update(Long requestedId, ProduccionFaseDTO produccionFaseDTO) {
         produccionFaseRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .orElseThrow(() -> new NotFoundException("La fase de producción no se ha encontrado o no es válida."));
-            
+
         estadoRepository.findById(produccionFaseDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
@@ -67,10 +68,9 @@ public class ProduccionFaseService {
     @Transactional
     public void delete(Long requestId) {
         produccionFaseRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-            .orElseThrow(() -> new BadRequestException("La fase de producción no se ha encontrado o no es válida."));
+                .orElseThrow(
+                        () -> new BadRequestException("La fase de producción no se ha encontrado o no es válida."));
         produccionFaseRepository.deleteById(requestId);
     }
 
-    
-    
 }
