@@ -59,7 +59,7 @@ public class ArticuloKardexFactory {
 
 		// Validar si tiene parte decimal usando BigDecimal (Ej: 1.5 % 1 != 0)
 		if (cantidad.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) != 0) {
-			throw new BadRequestException("Para presentaciones desgregadas, la cantidad debe ser un número entero.");
+			throw new BadRequestException("Para presentaciones desagregadas, la cantidad debe ser un número entero.");
 		}
 
 		int unidades = cantidad.intValue();

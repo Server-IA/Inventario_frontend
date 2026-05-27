@@ -153,9 +153,8 @@ public class PedidoService {
 
 		var res = inventarioGateway.validarRequisitosParaCompletar(pedidoId);
 		if (!res.isOk()) {
-			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos " + res.getMotivoFallo() != null
-					? res.getMotivoFallo()
-					: "Aun hay ?tems pendientes por recibir/verificar/registrar en inventario.");
+			String motivo = res.getMotivoFallo() != null ? res.getMotivoFallo() : "Aún hay ítems pendientes por recibir/verificar/registrar en inventario.";
+			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos: " + motivo);
 		}
 
 		ensureTransition(p, COMPLETADO, CON_ORDEN_COMPRA);

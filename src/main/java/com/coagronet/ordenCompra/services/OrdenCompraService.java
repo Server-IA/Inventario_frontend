@@ -123,7 +123,7 @@ public class OrdenCompraService {
 		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade
 				.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR);
 		if (!ordenCompra.getEstado().getId().equals(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_INICIAL_ACTIVO)) {
-			throw new BadRequestException("Solo las ordenes de compra con estado activo pueden enviarse al proveedor");
+			throw new BadRequestException("Solo las órdenes de compra con estado activo pueden enviarse al proveedor");
 		}
 
 		ordenCompra.setEstado(nuevoEstadoOrdenCompra);
