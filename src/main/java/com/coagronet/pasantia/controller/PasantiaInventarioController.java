@@ -44,4 +44,10 @@ public class PasantiaInventarioController {
             @RequestBody InventarioProgresoRequestDTO request) {
         return ResponseEntity.ok(inventarioService.guardarProgreso(inventarioId, request));
     }
+    @PostMapping("/{inventarioId}/finalizar")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MensajeResponseDTO> finalizarInventario(@PathVariable Long inventarioId,
+            @RequestBody InventarioProgresoRequestDTO request) {
+        return ResponseEntity.ok(inventarioService.finalizarInventario(inventarioId, request));
+    }
 }

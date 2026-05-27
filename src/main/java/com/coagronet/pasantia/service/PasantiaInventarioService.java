@@ -100,4 +100,19 @@ public class PasantiaInventarioService {
                                 .mensaje("Progreso guardado correctamente")
                                 .build();
         }
+        @Transactional
+        public MensajeResponseDTO finalizarInventario(Long inventarioId, InventarioProgresoRequestDTO request) {
+                guardarProgreso(inventarioId, request);
+
+                com.coagronet.pasantia.entity.Inventario inventario = inventarioRepository.findById(inventarioId)
+                                .orElseThrow(() -> new RecursoNoEncontradoException("Inventario no encontrado",
+                                                inventarioId));
+
+                inventario.setEstado(com.coagronet.pasantia.entity.EstadoInventario.builder().id((short) 3).build());
+                inventarioRepository.save(inventario);
+
+                return MensajeResponseDTO.builder()
+                                .mensaje("Inventario finalizado correctamente")
+                                .build();
+        }
 }
