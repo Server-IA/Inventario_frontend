@@ -6,11 +6,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.coagronet.pasantia.dto.InventarioAsignadoDTO;
+import com.coagronet.pasantia.dto.InventarioProgresoRequestDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoResponseDTO;
+import com.coagronet.pasantia.dto.MensajeResponseDTO;
 import com.coagronet.pasantia.service.PasantiaInventarioService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,5 +36,12 @@ public class PasantiaInventarioController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<InventarioProgresoResponseDTO> getProgresoInventario(@PathVariable Long inventarioId) {
         return ResponseEntity.ok(inventarioService.getProgresoByInventarioId(inventarioId));
+    }
+
+    @PostMapping("/{inventarioId}/progreso")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MensajeResponseDTO> guardarProgreso(@PathVariable Long inventarioId,
+            @RequestBody InventarioProgresoRequestDTO request) {
+        return ResponseEntity.ok(inventarioService.guardarProgreso(inventarioId, request));
     }
 }

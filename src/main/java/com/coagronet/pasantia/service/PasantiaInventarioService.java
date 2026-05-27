@@ -6,10 +6,15 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.pasantia.dto.InventarioAsignadoDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoItemDTO;
+import com.coagronet.pasantia.dto.InventarioProgresoRequestDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoResponseDTO;
+import com.coagronet.pasantia.dto.MensajeResponseDTO;
+import com.coagronet.pasantia.entity.CondicionItem;
 import com.coagronet.pasantia.entity.InventarioProgreso;
+import com.coagronet.pasantia.entity.InventarioProgresoId;
 import com.coagronet.pasantia.repository.PasantiaInventarioProgresoRepository;
 import com.coagronet.pasantia.repository.PasantiaInventarioRepository;
 import com.coagronet.utils.AuthenticatedUser;
@@ -67,6 +72,32 @@ public class PasantiaInventarioService {
                 return InventarioProgresoResponseDTO.builder()
                                 .inventarioId(inventarioId)
                                 .items(items)
+                                .build();
+        }
+
+        @Transactional
+        public MensajeResponseDTO guardarProgreso(Long inventarioId, InventarioProgresoRequestDTO request) {
+                com.coagronet.pasantia.entity.Inventario inventario = inventarioRepository.findById(inventarioId)
+                                .orElseThrow(() -> new RecursoNoEncontradoException("Inventario no encontrado",
+                                                inventarioId));
+
+                List<InventarioProgreso> progresos = request.getItems().stream().map(item -> {
+                        InventarioProgresoId id = new InventarioProgresoId(inventarioId,
+                                        item.getProductoIdentificador());
+                        return InventarioProgreso.builder()
+                                        .id(id)
+                                        .inventario(inventario)
+                                        .empId(inventario.getEmpId())
+                                        .encontrado(item.getEncontrado())
+                                        .estado(CondicionItem.valueOf(item.getEstado()))
+                                        .observacion(item.getObservacion())
+                                        .build();
+                }).collect(Collectors.toList());
+
+                inventarioProgresoRepository.saveAll(progresos);
+
+                return MensajeResponseDTO.builder()
+                                .mensaje("Progreso guardado correctamente")
                                 .build();
         }
 }
