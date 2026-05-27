@@ -1,3 +1,14 @@
+/*=============================================================================
+Nombre del archivo : FormEmpresaRol.jsx
+Descripción        : Formulario modal para crear y editar asignaciones de Empresa Rol.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio                        |
++------------+---------+----------------------+-----------------------------------------------+
+| 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
++------------+---------+----------------------+-----------------------------------------------+
+=============================================================================*/
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
@@ -36,6 +47,7 @@ export default function FormEmpresaRol({
   isSystemAdmin = false,
 }) {
   const { t } = useTranslation();
+  // Cambio 2026-05-22: se define el tema para evitar errores de referencia en accordions y permisos.
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const isEdit = Boolean(selectedRow?.id);
