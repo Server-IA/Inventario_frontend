@@ -63,8 +63,9 @@ public class SecurityConfig {
 						.hasRole("ADMINISTRADOR_SISTEMA")
 						.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**")
 						.hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**",
-								"/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**",
+						.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**")
+						.hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers("/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**",
 								"/api/v1/tipo_sede/**",
 								"/api/v1/grupo/**", "/api/v1/sede/**", "/api/v1/bloque/**", "/api/v1/espacio/**",
 								"/api/v1/almacen/**", "/api/v1/producto_categoria/**", "/api/v1/tipo_produccion/**",

@@ -40,11 +40,18 @@ public class GlobalExceptionHandler {
         return messageSource.getMessage(codeOrRaw, args, codeOrRaw, locale);
     }
 
-    private static final Map<String, String> CONSTRAINT_MAP = Map.of(
-            "unique_emp_correo", "empresa.correo.existente",
-            "unique_emp_identificacion", "empresa.identificacion.existente"
-    // Puedes agregar más aquí: "nombre_constraint", "codigo.mensaje"
-    );
+    private static final Map<String, String> CONSTRAINT_MAP = Map.ofEntries(
+            Map.entry("unique_emp_correo", "empresa.correo.existente"),
+            Map.entry("unique_emp_identificacion", "empresa.identificacion.existente"),
+            Map.entry("uq_pais_nombre", "country.name.duplicate"),
+            Map.entry("uq_pais_codigo", "country.code.duplicate"),
+            Map.entry("uq_pais_acronimo", "country.acronym.duplicate"),
+            Map.entry("uq_departamento_pais_nombre", "department.name.duplicate"),
+            Map.entry("uq_departamento_pais_codigo", "department.code.duplicate"),
+            Map.entry("uq_departamento_pais_acronimo", "department.acronym.duplicate"),
+            Map.entry("uq_municipio_departamento_nombre", "municipality.name.duplicate"),
+            Map.entry("uq_municipio_departamento_codigo", "municipality.code.duplicate"),
+            Map.entry("uq_municipio_departamento_acronimo", "municipality.acronym.duplicate"));
 
     private String requestPath(WebRequest request) {
         if (request instanceof ServletWebRequest swr) {

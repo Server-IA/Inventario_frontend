@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,20 +19,20 @@ public class PaisDTO {
 
 	private Long id;
 
-	@NotBlank(message = "El nombre es obligatorio.")
-	@Size(max = 70, message = "El nombre no debe superar los 70 caracteres.")
+	@NotBlank(message = "{country.name.required}")
+	@Size(max = 100, message = "{country.name.max-size}")
 	private String nombre;
 
-	@NotNull(message = "El código no puede ser nulo")
+	@NotNull(message = "{country.code.required}")
+	@Positive(message = "{country.code.positive}")
 	private Long codigo;
 
-	@NotBlank(message = "El acronimo es obligatorio.")
-	@Size(max = 3, message = "El acronimo no debe superar los 3 caracteres.")
+	@NotBlank(message = "{country.acronym.required}")
+	@Size(max = 3, message = "{country.acronym.size}")
+	@Pattern(regexp = "^[A-Za-z]{1,3}$", message = "{country.acronym.only-letters}")
 	private String acronimo;
 
-	private Long empresaId;
-
-	@NotNull(message = "El estado es obligatorio.")
+	@NotNull(message = "{country.status.required}")
 	private Long estadoId;
 
 }

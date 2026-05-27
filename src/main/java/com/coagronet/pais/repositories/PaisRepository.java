@@ -1,8 +1,6 @@
 package com.coagronet.pais.repositories;
 
 import java.util.List;
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,12 +9,20 @@ import com.coagronet.pais.Pais;
 @Repository
 public interface PaisRepository extends JpaRepository<Pais, Long> {
 
-	Optional<Pais> findByIdAndEmpresaId(Long id, Long empresaId);
+	List<Pais> findAllByOrderByIdAsc();
 
-	List<Pais> findByEmpresaIdOrderByIdAsc(Long empresaId);
+	List<Pais> findByEstadoIdNotOrderByIdAsc(Long estadoId);
 
-	List<Pais> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
+	boolean existsByNombreIgnoreCase(String nombre);
 
-	boolean existsByIdAndEmpresaId(Long id, Long empresaId);
+	boolean existsByNombreIgnoreCaseAndIdNot(String nombre, Long id);
+
+	boolean existsByCodigo(Long codigo);
+
+	boolean existsByCodigoAndIdNot(Long codigo, Long id);
+
+	boolean existsByAcronimoIgnoreCase(String acronimo);
+
+	boolean existsByAcronimoIgnoreCaseAndIdNot(String acronimo, Long id);
 
 }

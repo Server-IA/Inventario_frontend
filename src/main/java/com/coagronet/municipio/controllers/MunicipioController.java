@@ -32,8 +32,12 @@ public class MunicipioController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<MunicipioDTO>> findAll(@RequestParam Long departamentoId) {
-		return ResponseEntity.ok(municipioService.findAll(departamentoId));
+	public ResponseEntity<List<MunicipioDTO>> findAll(@RequestParam Long departamentoId,
+			@RequestParam(required = false) String nombre,
+			@RequestParam(required = false) Integer codigo,
+			@RequestParam(required = false) String acronimo,
+			@RequestParam(required = false) Long estadoId) {
+		return ResponseEntity.ok(municipioService.findAll(departamentoId, nombre, codigo, acronimo, estadoId));
 	}
 
 	@GetMapping("/{requestedId}")

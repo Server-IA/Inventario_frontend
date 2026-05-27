@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,23 +19,23 @@ public class DepartamentoDTO {
 
 	private Long id;
 
-	@NotBlank(message = "El nombre es obligatorio.")
-	@Size(max = 70, message = "El nombre no debe superar los 70 caracteres.")
+	@NotBlank(message = "{department.name.required}")
+	@Size(max = 70, message = "{department.name.max-size}")
 	private String nombre;
 
-	@NotNull(message = "El pais es obligatorio.")
+	@NotNull(message = "{department.country.required}")
 	private Long paisId;
 
-	@NotNull(message = "El c�digo no puede ser nulo")
+	@NotNull(message = "{department.code.required}")
+	@Positive(message = "{department.code.positive}")
 	private Integer codigo;
 
-	@NotBlank(message = "El acronimo es obligatorio.")
-	@Size(max = 3, message = "El acronimo no debe superar los 3 caracteres.")
+	@NotBlank(message = "{department.acronym.required}")
+	@Size(max = 3, message = "{department.acronym.size}")
+	@Pattern(regexp = "^[A-Za-z]{1,3}$", message = "{department.acronym.only-letters}")
 	private String acronimo;
 
-	private Long empresaId;
-
-	@NotNull(message = "El estado es obligatorio.")
+	@NotNull(message = "{department.status.required}")
 	private Long estadoId;
 
 }

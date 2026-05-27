@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -31,8 +32,12 @@ public class DepartamentoController {
 	private final UriBuilderUtil uriBuilderUtil;
 
 	@GetMapping
-	public ResponseEntity<List<DepartamentoDTO>> findAll() {
-		List<DepartamentoDTO> page = departamentoService.findAll();
+	public ResponseEntity<List<DepartamentoDTO>> findAll(@RequestParam(required = false) Long paisId,
+			@RequestParam(required = false) String nombre,
+			@RequestParam(required = false) Integer codigo,
+			@RequestParam(required = false) String acronimo,
+			@RequestParam(required = false) Long estadoId) {
+		List<DepartamentoDTO> page = departamentoService.findAll(paisId, nombre, codigo, acronimo, estadoId);
 
 		if (page.isEmpty()) {
 			return ResponseEntity.noContent().build();
