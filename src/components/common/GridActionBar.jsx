@@ -7,6 +7,8 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio      |
 +------------+---------+----------------------+-----------------------------+
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+| 2026-05-22 | 0.4.0   | Cesar Medina         | Se ajusta Tooltip en botones|
+|            |         |                      | deshabilitados.             |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -257,34 +259,41 @@ export default function GridActionBar({
         }}
       >
         {extraActions ? <Box sx={extraActionsSx}>{extraActions}</Box> : null}
+        {/* Cambio 2026-05-22: se envuelven botones en span para evitar warnings de Tooltip con disabled. */}
         <Tooltip title={resolvedLabels.add}>
-          <Button
-            onClick={onAdd}
-            startIcon={<AddIcon />}
-            sx={addButtonSx}
-          >
-            {resolvedLabels.add}
-          </Button>
+          <span>
+            <Button
+              onClick={onAdd}
+              startIcon={<AddIcon />}
+              sx={addButtonSx}
+            >
+              {resolvedLabels.add}
+            </Button>
+          </span>
         </Tooltip>
         <Tooltip title={resolvedLabels.update}>
-          <Button
-            onClick={onUpdate}
-            startIcon={<ModeEditOutlineIcon />}
-            disabled={!canUpdate}
-            sx={editButtonSx}
-          >
-            {resolvedLabels.update}
-          </Button>
+          <span>
+            <Button
+              onClick={onUpdate}
+              startIcon={<ModeEditOutlineIcon />}
+              disabled={!canUpdate}
+              sx={editButtonSx}
+            >
+              {resolvedLabels.update}
+            </Button>
+          </span>
         </Tooltip>
         <Tooltip title={resolvedLabels.delete}>
-          <Button
-            onClick={onDelete}
-            startIcon={<DeleteOutlineIcon />}
-            disabled={!canDelete}
-            sx={deleteButtonSx}
-          >
-            {resolvedLabels.delete}
-          </Button>
+          <span>
+            <Button
+              onClick={onDelete}
+              startIcon={<DeleteOutlineIcon />}
+              disabled={!canDelete}
+              sx={deleteButtonSx}
+            >
+              {resolvedLabels.delete}
+            </Button>
+          </span>
         </Tooltip>
       </Stack>
     </Stack>
