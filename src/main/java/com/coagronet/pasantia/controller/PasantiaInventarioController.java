@@ -2,6 +2,10 @@ package com.coagronet.pasantia.controller;
 
 import java.util.List;
 
+import java.net.URI;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,8 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.coagronet.pasantia.dto.InventarioAsignadoDTO;
+import com.coagronet.pasantia.dto.InventarioCreateRequestDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoRequestDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoResponseDTO;
 import com.coagronet.pasantia.dto.MensajeResponseDTO;
@@ -25,6 +31,17 @@ import lombok.RequiredArgsConstructor;
 public class PasantiaInventarioController {
 
     private final PasantiaInventarioService inventarioService;
+
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> crearInventario(@Valid @RequestBody InventarioCreateRequestDTO request) {
+        Long idNuevoInventario = inventarioService.crearInventario(request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(idNuevoInventario)
+                .toUri();
+        return ResponseEntity.created(location).build();
+    }
 
     @GetMapping("/asignados")
     @PreAuthorize("isAuthenticated()")
