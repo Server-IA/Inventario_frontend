@@ -13,4 +13,6 @@ public class UserMinimalDTO {
 
 	private String username;
 
+	private String nombre;
+
 }

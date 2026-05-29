@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.coagronet.pasantia.dto.ProductoItemDTO;
+import com.coagronet.pasantia.dto.SubseccionDTO;
 import com.coagronet.pasantia.service.PasantiaSubseccionService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,14 @@ public class PasantiaSubseccionController {
 
     @GetMapping("/{subSeccionId}/items")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<ProductoItemDTO>> getItemsBySubseccionId(@PathVariable("subSeccionId") Long subSeccionId) {
+    public ResponseEntity<List<ProductoItemDTO>> getItemsBySubseccionId(
+            @PathVariable("subSeccionId") Long subSeccionId) {
         return ResponseEntity.ok(subseccionService.getItemsBySubseccionId(subSeccionId));
+    }
+
+    @GetMapping(params = "fields=id,nombre")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<SubseccionDTO>> getAllSubsecciones() {
+        return ResponseEntity.ok(subseccionService.getAllSubsecciones());
     }
 }
