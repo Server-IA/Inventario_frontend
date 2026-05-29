@@ -2,9 +2,9 @@ package com.coagronet.municipio.services;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.departamento.Departamento;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
@@ -31,23 +31,22 @@ public class MunicipioService {
 
 	private final EstadoRepository estadoRepository;
 
+	@Transactional(readOnly = true)
 	public List<MunicipioDTO> findAll(Long departamentoId, String nombre, Integer codigo, String acronimo, Long estadoId) {
 		return municipioRepository
-			.findByDepartamentoIdOrderByIdAsc(departamentoId)
+			.findByDepartamentoIdWithFilters(departamentoId, normalizeText(nombre), codigo, normalizeText(acronimo),
+					estadoId)
 			.stream()
-			.filter(municipio -> matchesText(municipio.getNombre(), nombre))
-			.filter(municipio -> codigo == null || codigo.equals(municipio.getCodigo()))
-			.filter(municipio -> matchesText(municipio.getAcronimo(), acronimo))
-			.filter(municipio -> estadoId == null
-					|| (municipio.getEstado() != null && estadoId.equals(municipio.getEstado().getId())))
 			.map(municipioMapper::toListDto)
-			.collect(Collectors.toList());
+			.toList();
 	}
 
+	@Transactional(readOnly = true)
 	public Optional<MunicipioDTO> findById(Long requestedId) {
 		return municipioRepository.findById(requestedId).map(municipioMapper::toListDto);
 	}
 
+	@Transactional
 	public MunicipioDTO create(MunicipioDTO municipioDTO) {
 		validateActiveDepartment(municipioDTO.getDepartamentoId());
 		validateGeneralStatus(municipioDTO.getEstadoId(), "municipality.status.not.valid");
@@ -58,6 +57,7 @@ public class MunicipioService {
 		return municipioMapper.toDTO(municipioRepository.save(municipioMapper.toEntity(municipioDTO)));
 	}
 
+	@Transactional
 	public void update(Long requestedId, MunicipioDTO municipioDTO) {
 		municipioRepository.findById(requestedId)
 			.orElseThrow(() -> new NotFoundException("municipality.not-found.with-id", requestedId));
@@ -73,6 +73,7 @@ public class MunicipioService {
 		municipioRepository.save(municipioMapper.toEntity(municipioDTO));
 	}
 
+	@Transactional
 	public void delete(Long id) {
 		var municipio = municipioRepository.findById(id)
 			.orElseThrow(() -> new NotFoundException("municipality.not-found.with-id", id));
@@ -164,9 +165,8 @@ public class MunicipioService {
 		}
 	}
 
-	private boolean matchesText(String value, String filter) {
-		return filter == null || filter.isBlank()
-				|| (value != null && value.toLowerCase().contains(filter.trim().toLowerCase()));
+	private String normalizeText(String filter) {
+		return filter == null ? null : filter.trim();
 	}
 
 }

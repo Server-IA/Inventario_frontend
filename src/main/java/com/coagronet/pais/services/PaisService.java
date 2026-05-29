@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.departamento.Departamento;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
@@ -36,6 +37,7 @@ public class PaisService {
 
 	private final MunicipioRepository municipioRepository;
 
+	@Transactional(readOnly = true)
 	public List<PaisDTO> findAll() {
 		return paisRepository.findAllByOrderByIdAsc()
 				.stream()
@@ -43,10 +45,12 @@ public class PaisService {
 				.collect(Collectors.toList());
 	}
 
+	@Transactional(readOnly = true)
 	public Optional<PaisDTO> findById(Long requestedId) {
 		return paisRepository.findById(requestedId).map(paisMapper::toListDto);
 	}
 
+	@Transactional
 	public PaisDTO create(PaisDTO paisDTO) {
 		validateGeneralStatus(paisDTO.getEstadoId());
 		validateUniqueFields(paisDTO, null);
@@ -56,6 +60,7 @@ public class PaisService {
 		return paisMapper.toDTO(paisRepository.save(paisMapper.toEntity(paisDTO)));
 	}
 
+	@Transactional
 	public void update(Long requestedId, PaisDTO paisDTO) {
 		paisRepository.findById(requestedId)
 				.orElseThrow(() -> new NotFoundException("country.not-found.with-id", requestedId));
@@ -72,6 +77,7 @@ public class PaisService {
 		}
 	}
 
+	@Transactional
 	public void delete(Long id) {
 		Pais pais = paisRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException("country.not-found.with-id", id));

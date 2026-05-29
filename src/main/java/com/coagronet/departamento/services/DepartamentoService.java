@@ -2,10 +2,9 @@ package com.coagronet.departamento.services;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.departamento.Departamento;
 import com.coagronet.departamento.dtos.DepartamentoDTO;
@@ -37,29 +36,26 @@ public class DepartamentoService {
 
 	private final MunicipioRepository municipioRepository;
 
+	@Transactional(readOnly = true)
 	public List<DepartamentoDTO> findAll() {
 		return findAll(null, null, null, null, null);
 	}
 
+	@Transactional(readOnly = true)
 	public List<DepartamentoDTO> findAll(Long paisId, String nombre, Integer codigo, String acronimo, Long estadoId) {
-		List<Departamento> departamentos = paisId == null
-				? departamentoRepository.findAllByOrderByIdAsc()
-				: departamentoRepository.findByPaisIdOrderByIdAsc(paisId);
-
-		return departamentos.stream()
-				.filter(departamento -> matchesText(departamento.getNombre(), nombre))
-				.filter(departamento -> codigo == null || codigo.equals(departamento.getCodigo()))
-				.filter(departamento -> matchesText(departamento.getAcronimo(), acronimo))
-				.filter(departamento -> estadoId == null
-						|| (departamento.getEstado() != null && estadoId.equals(departamento.getEstado().getId())))
-			.map(departamentoMapper::toListDto)
-				.collect(Collectors.toList());
+		return departamentoRepository.findAllWithFilters(paisId, normalizeText(nombre), codigo, normalizeText(acronimo),
+				estadoId)
+				.stream()
+				.map(departamentoMapper::toListDto)
+				.toList();
 	}
 
+	@Transactional(readOnly = true)
 	public Optional<DepartamentoDTO> findById(Long requestedId) {
 		return departamentoRepository.findById(requestedId).map(departamentoMapper::toListDto);
 	}
 
+	@Transactional
 	public DepartamentoDTO create(DepartamentoDTO departamentoDTO) {
 		validateActiveCountry(departamentoDTO.getPaisId());
 		validateGeneralStatus(departamentoDTO.getEstadoId(), "department.status.not.valid");
@@ -70,6 +66,7 @@ public class DepartamentoService {
 		return departamentoMapper.toDTO(departamentoRepository.save(departamentoMapper.toEntity(departamentoDTO)));
 	}
 
+	@Transactional
 	public void update(Long requestedId, DepartamentoDTO departamentoDTO) {
 		Departamento existing = departamentoRepository.findById(requestedId)
 			.orElseThrow(() -> new NotFoundException("department.not-found.with-id", requestedId));
@@ -89,6 +86,7 @@ public class DepartamentoService {
 		}
 	}
 
+	@Transactional
 	public void delete(Long id) {
 		Departamento departamento = departamentoRepository.findById(id)
 			.orElseThrow(() -> new NotFoundException("department.not-found.with-id", id));
@@ -166,9 +164,8 @@ public class DepartamentoService {
 		}
 	}
 
-	private boolean matchesText(String value, String filter) {
-		return filter == null || filter.isBlank()
-				|| (value != null && value.toLowerCase().contains(filter.trim().toLowerCase()));
+	private String normalizeText(String filter) {
+		return filter == null ? null : filter.trim();
 	}
 
 }

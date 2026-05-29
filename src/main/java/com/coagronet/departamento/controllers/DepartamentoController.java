@@ -19,18 +19,29 @@ import com.coagronet.departamento.dtos.DepartamentoDTO;
 import com.coagronet.departamento.services.DepartamentoService;
 import com.coagronet.utils.UriBuilderUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/departamento")
 @RequiredArgsConstructor
+@Tag(name = "Departamentos", description = "API para la administracion global de departamentos")
 public class DepartamentoController {
 
 	private final DepartamentoService departamentoService;
 
 	private final UriBuilderUtil uriBuilderUtil;
 
+	@Operation(summary = "Listar departamentos", description = "Obtiene departamentos globales aplicando filtros opcionales a nivel de base de datos.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Departamentos obtenidos exitosamente"),
+			@ApiResponse(responseCode = "204", description = "No hay departamentos para los filtros enviados"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado")
+	})
 	@GetMapping
 	public ResponseEntity<List<DepartamentoDTO>> findAll(@RequestParam(required = false) Long paisId,
 			@RequestParam(required = false) String nombre,
@@ -46,6 +57,12 @@ public class DepartamentoController {
 		return ResponseEntity.ok(page);
 	}
 
+	@Operation(summary = "Obtener departamento por ID", description = "Consulta un departamento por su identificador.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Departamento encontrado"),
+			@ApiResponse(responseCode = "404", description = "Departamento no encontrado"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado")
+	})
 	@GetMapping("/{requestedId}")
 	public ResponseEntity<DepartamentoDTO> findById(@PathVariable Long requestedId) {
 		return departamentoService.findById(requestedId)
@@ -53,6 +70,12 @@ public class DepartamentoController {
 			.orElse(ResponseEntity.notFound().build());
 	}
 
+	@Operation(summary = "Crear departamento", description = "Crea un departamento dentro de un pais activo, validando unicidad por pais.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "Departamento creado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Datos invalidos, duplicados o pais inactivo"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado")
+	})
 	@PostMapping
 	public ResponseEntity<Void> createDepartamento(@Valid @RequestBody DepartamentoDTO departamentoDTO,
 			UriComponentsBuilder ucb) {
@@ -61,6 +84,13 @@ public class DepartamentoController {
 		return ResponseEntity.created(locationOfNewDepartamento).build();
 	}
 
+	@Operation(summary = "Actualizar departamento", description = "Actualiza un departamento. Si se inactiva, tambien inactiva sus municipios.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Departamento actualizado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Datos invalidos, duplicados o jerarquia inactiva"),
+			@ApiResponse(responseCode = "404", description = "Departamento no encontrado"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado")
+	})
 	@PutMapping("/{requestedId}")
 	public ResponseEntity<Void> updateDepartamento(@PathVariable Long requestedId,
 			@Valid @RequestBody DepartamentoDTO departamentoDTO) {
@@ -68,6 +98,12 @@ public class DepartamentoController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@Operation(summary = "Inactivar departamento", description = "Inactiva logicamente un departamento y en cascada sus municipios.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Departamento inactivado exitosamente"),
+			@ApiResponse(responseCode = "404", description = "Departamento no encontrado"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado")
+	})
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteDepartamento(@PathVariable Long id) {
 		departamentoService.delete(id);
