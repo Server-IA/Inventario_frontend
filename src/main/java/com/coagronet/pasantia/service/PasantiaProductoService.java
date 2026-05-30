@@ -10,6 +10,7 @@ import com.coagronet.pasantia.entity.ProductoId;
 import com.coagronet.pasantia.entity.Subseccion;
 import com.coagronet.pasantia.repository.PasantiaProductoRepository;
 import com.coagronet.pasantia.repository.PasantiaSubseccionRepository;
+import com.coagronet.pasantia.repository.PasantiaInventarioProgresoRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +21,7 @@ public class PasantiaProductoService {
     private final PasantiaProductoRepository productoRepository;
     private final PasantiaSubseccionRepository subseccionRepository;
     private final EmpresaTenantIdentifierResolver tenantResolver;
+    private final PasantiaInventarioProgresoRepository inventarioProgresoRepository;
 
     @Transactional
     public MensajeResponseDTO crearProducto(ProductoRequestDTO request) {
@@ -61,6 +63,14 @@ public class PasantiaProductoService {
         com.coagronet.pasantia.entity.Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
 
+        boolean changeId = request.getNuevoIdentificador() != null && !request.getNuevoIdentificador().equals(request.getIdentificador());
+        if (changeId) {
+            ProductoId nuevoId = new ProductoId(empId, request.getNuevoIdentificador());
+            if (productoRepository.existsById(nuevoId)) {
+                throw new IllegalArgumentException("El producto ya existe con el nuevo identificador");
+            }
+        }
+
         if (request.getSubseccionId() != null && !producto.getSubseccion().getId().equals(request.getSubseccionId())) {
             Subseccion subseccion = subseccionRepository.findById(request.getSubseccionId())
                     .orElseThrow(() -> new IllegalArgumentException("Subsección no encontrada"));
@@ -75,7 +85,20 @@ public class PasantiaProductoService {
             producto.setCantidadEsperada(request.getCantidadEsperada());
         }
 
-        productoRepository.save(producto);
+        if (changeId) {
+            ProductoId nuevoId = new ProductoId(empId, request.getNuevoIdentificador());
+            com.coagronet.pasantia.entity.Producto nuevoProducto = com.coagronet.pasantia.entity.Producto.builder()
+                    .id(nuevoId)
+                    .nombre(producto.getNombre())
+                    .subseccion(producto.getSubseccion())
+                    .cantidadEsperada(producto.getCantidadEsperada())
+                    .build();
+            productoRepository.save(nuevoProducto);
+            inventarioProgresoRepository.updateProductoIdentificador(empId, request.getIdentificador(), request.getNuevoIdentificador());
+            productoRepository.delete(producto);
+        } else {
+            productoRepository.save(producto);
+        }
 
         return new MensajeResponseDTO("Producto actualizado exitosamente");
     }

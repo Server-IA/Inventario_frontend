@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProductoRequestDTO {
     private String identificador;
+    private String nuevoIdentificador;
     private String nombre;
     private Long subseccionId;
     private Integer cantidadEsperada;
