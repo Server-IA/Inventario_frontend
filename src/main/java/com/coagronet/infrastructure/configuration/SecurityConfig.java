@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : SecurityConfig.java
+ Descripcion        : Configuracion de seguridad y reglas de autorizacion de la API.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.infrastructure.configuration;
 
 import org.springframework.context.annotation.Bean;
@@ -111,3 +123,12 @@ public class SecurityConfig {
 	}
 
 }
+
+
+
+
+
+
+
+
+

@@ -3,12 +3,13 @@
  Descripcion        : Servicio de negocio para operaciones de paises.
 ===============================================================================
  CONTROL DE CAMBIOS
- +------------+---------+----------------------+-----------------------------+
- |   Fecha    | Version |      Autor           | Descripcion del cambio      |
- +------------+---------+----------------------+-----------------------------+
- | 2025-03-31 | 1.0.0   | jujcgu               | Creacion del archivo.       |
- | 2026-05-29 | 1.1.0   | JUAN DIAZ            | Ajustes aplicados por PR.   |
- +------------+---------+----------------------+-----------------------------+
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2025-03-31 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ | 2026-05-29 | 1.2.0   | JUAN DIAZ            | Correcciones de cierre de PR: mejoras en filtros y consultas, ajustes en controladores y servicios, y migracion SQL de localizacion global. |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.pais.services;
 
@@ -154,3 +155,12 @@ public class PaisService {
 	}
 
 }
+
+
+
+
+
+
+
+
+

@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : MunicipioMapper.java
+ Descripcion        : Mapper para conversion entre entidad y DTO de municipios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2025-03-31 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.municipio.mappers;
 
 import org.mapstruct.Mapper;
@@ -25,3 +37,12 @@ public interface MunicipioMapper {
 	MunicipioDTO toListDto(Municipio municipio);
 
 }
+
+
+
+
+
+
+
+
+

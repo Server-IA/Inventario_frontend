@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : DepartamentoDTO.java
+ Descripcion        : DTO para intercambio de datos de departamentos.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2025-03-31 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.departamento.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,3 +51,9 @@ public class DepartamentoDTO {
 	private Long estadoId;
 
 }
+
+
+
+
+
+

@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : Advice.java
+ Descripcion        : Manejador centralizado de excepciones para la API REST.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2026-02-08 | 1.0.0   | Juan Jose Castro     | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.exceptionHandler;
 
 import java.net.URI;
@@ -356,3 +368,12 @@ public class Advice extends ResponseEntityExceptionHandler {
     }
 
 }
+
+
+
+
+
+
+
+
+

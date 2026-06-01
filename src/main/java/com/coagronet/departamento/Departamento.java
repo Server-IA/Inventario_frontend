@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : Departamento.java
+ Descripcion        : Entidad JPA para el catalogo global de departamentos.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-10-21 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.departamento;
 
 import java.time.OffsetDateTime;
@@ -55,8 +67,7 @@ public class Departamento {
 	private String nombre;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "dep_pais_id", referencedColumnName = "pai_id", nullable = false,
-			foreignKey = @ForeignKey(name = "departamento_dep_pais_id_fkey"))
+	@JoinColumn(name = "dep_pais_id", referencedColumnName = "pai_id", nullable = false, foreignKey = @ForeignKey(name = "departamento_dep_pais_id_fkey"))
 	private Pais pais;
 
 	@Column(name = "dep_codigo", nullable = false)
@@ -66,8 +77,7 @@ public class Departamento {
 	private String acronimo;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "dep_estado_id", referencedColumnName = "est_id", nullable = false,
-			foreignKey = @ForeignKey(name = "departamento_dep_estado_id_fkey"))
+	@JoinColumn(name = "dep_estado_id", referencedColumnName = "est_id", nullable = false, foreignKey = @ForeignKey(name = "departamento_dep_estado_id_fkey"))
 	private Estado estado;
 
 	@CreatedDate
@@ -80,14 +90,18 @@ public class Departamento {
 
 	@CreatedBy
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "created_by", referencedColumnName = "usu_id", updatable = false,
-			foreignKey = @ForeignKey(name = "fk_departamento_created_by"))
+	@JoinColumn(name = "created_by", referencedColumnName = "usu_id", updatable = false, foreignKey = @ForeignKey(name = "fk_departamento_created_by"))
 	private User createdBy;
 
 	@LastModifiedBy
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "updated_by", referencedColumnName = "usu_id",
-			foreignKey = @ForeignKey(name = "fk_departamento_updated_by"))
+	@JoinColumn(name = "updated_by", referencedColumnName = "usu_id", foreignKey = @ForeignKey(name = "fk_departamento_updated_by"))
 	private User updatedBy;
 
 }
+
+
+
+
+
+
