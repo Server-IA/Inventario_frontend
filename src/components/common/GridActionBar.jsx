@@ -47,6 +47,7 @@ export default function GridActionBar({
   onAdd,
   onUpdate,
   onDelete,
+  canAdd = true,
   canUpdate = false,
   canDelete = false,
   extraActions,
@@ -261,7 +262,14 @@ export default function GridActionBar({
           <Button
             onClick={onAdd}
             startIcon={<AddIcon />}
-            sx={addButtonSx}
+            disabled={!canAdd}
+            sx={{
+              ...addButtonSx,
+              "&.Mui-disabled": {
+                color: isDark ? alpha("#e7f6f7", 0.38) : "#7f9790",
+                bgcolor: isDark ? alpha("#173f39", 0.12) : "#edf3f0",
+              }
+            }}
           >
             {resolvedLabels.add}
           </Button>
@@ -295,6 +303,7 @@ GridActionBar.propTypes = {
   onAdd: PropTypes.func,
   onUpdate: PropTypes.func,
   onDelete: PropTypes.func,
+  canAdd: PropTypes.bool,
   canUpdate: PropTypes.bool,
   canDelete: PropTypes.bool,
   extraActions: PropTypes.node,

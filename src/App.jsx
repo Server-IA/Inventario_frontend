@@ -15,9 +15,7 @@ import Navigator2 from './components/dashboard/Navigator2.jsx';
 
 // Módulos
 import Persona from "./components/personas/Persona.jsx";
-import Pais from './components/pais/Pais';
-import Departamento from './components/departamento/Departamento';
-import Municipio from './components/municipio/Municipio';
+import LocalizacionGeografica from './components/localizacion_geografica/LocalizacionGeografica';
 import Presentacionproducto from './components/Presentacionproducto/Presentacionproducto.jsx';
 import Produccion from './components/produccion/Produccion';
 import Empresa from './components/empresas/Empresa.jsx';
@@ -67,9 +65,7 @@ import Modulo from './components/modulo/modulos.jsx';
 
 const moduleMap = {
   persona: Persona,
-  pais: Pais,
-  departamento: Departamento,
-  municipio: Municipio,
+  localizacion_geografica: LocalizacionGeografica,
   presentacion_producto: Presentacionproducto,
   produccion: Produccion,
   empresa: Empresa,

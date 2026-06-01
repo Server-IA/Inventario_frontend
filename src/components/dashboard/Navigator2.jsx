@@ -171,9 +171,7 @@ import axios from "../axiosConfig.js";
 import { useTranslation } from "react-i18next";
 import CategoriaEstado from "../categoriaestado/categoria_estado.jsx";
 import Persona from "../personas/Persona.jsx";
-import Pais from "../pais/Pais";
-import Departamento from "../departamento/Departamento";
-import Municipio from "../municipio/Municipio";
+import LocalizacionGeografica from "../localizacion_geografica/LocalizacionGeografica";
 import Presentacionproducto from "../Presentacionproducto/Presentacionproducto.jsx";
 import Produccion from "../produccion/Produccion";
 import Empresa from "../empresas/Empresa.jsx";
@@ -418,9 +416,7 @@ const components = {
   tipoidentificacion: TipoIdentificacion,
   roll: Rol,
   proveedor: Proveedor,
-  pais: Pais,
-  departamento: Departamento,
-  municipio: Municipio,
+  localizacion_geografica: LocalizacionGeografica,
   almacen: Almacen,
   espacio: Espacio,
   tipo_espacio: TipoEspacio,
@@ -477,9 +473,7 @@ const moduleImages = {
   tipoidentificacion: tipo_identificacion,
   tipo_evaluacion,
   empresa,
-  pais,
-  departamento,
-  municipio,
+  localizacion_geografica: pais,
   grupo,
   tipo_sede,
   sede,
@@ -801,6 +795,29 @@ export default function Navigator2({
             adapted[segIndex] = { ...adapted[segIndex], children };
           }
         }
+
+        // --- MANUALLY INJECT LOCALIZACION GEOGRAFICA AND REMOVE OLD MODULES ---
+        adapted.forEach((cat) => {
+          if (cat.children) {
+            cat.children = cat.children.filter(
+              (c) => !["pais", "departamento", "municipio"].includes(toKey(c.id).toLowerCase())
+            );
+          }
+        });
+
+        const paramIndex = adapted.findIndex((m) => toKey(m.id).toLowerCase().includes("parametrizaci"));
+        if (paramIndex !== -1) {
+          const hasLocalizacion = adapted[paramIndex].children.some((c) => toKey(c.id) === "localizacion_geografica");
+          if (!hasLocalizacion) {
+            adapted[paramIndex].children.push({
+              id: "localizacion_geografica",
+              text: "Localización Geográfica",
+              icon: "Public",
+              url: "/api/v1/localizacion_geografica",
+            });
+          }
+        }
+        // ----------------------------------------------------------------------
 
         setMenuItems(adapted);
 
