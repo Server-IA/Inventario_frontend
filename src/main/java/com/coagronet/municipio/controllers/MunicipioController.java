@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : MunicipioController.java
+ Descripcion        : Controlador REST para la administracion de municipios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2025-03-31 | 1.0.0   | jujcgu               | Creacion del archivo.       |
+ | 2026-05-29 | 1.1.0   | JUAN DIAZ            | Ajustes aplicados por PR.   |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 package com.coagronet.municipio.controllers;
 
 import java.net.URI;

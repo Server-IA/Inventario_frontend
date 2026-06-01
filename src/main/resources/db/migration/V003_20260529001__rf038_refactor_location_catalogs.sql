@@ -1,3 +1,14 @@
+/*=============================================================================
+ Nombre del archivo : V003_20260529001__rf038_refactor_location_catalogs.sql
+ Descripcion        : Migracion para refactorizar catalogos globales de ubicacion.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-29 | 1.0.0   | JUAN DIAZ            | Creacion del archivo.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 -- RF-038: Refactorizar pais, departamento y municipio como catalogos globales.
 -- Debe ejecutarse despues de la limpieza/fusion de registros duplicados de localizacion.
 
