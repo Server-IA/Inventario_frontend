@@ -14,7 +14,7 @@ public class TipoUnidadValidator {
 
     public TipoUnidad validarTipoUnidad(Long tipoUnidad) {
         return tipoUnidadRepository.findById(tipoUnidad)
-                .orElseThrow(() -> new BadRequestException("Tipo de producción no válido"));
+                .orElseThrow(() -> new BadRequestException("tipo-unidad.not-found: " + tipoUnidad));
 
     }
 

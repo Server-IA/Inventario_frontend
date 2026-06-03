@@ -14,6 +14,6 @@ public class TipoMovimientoValidator {
 
     public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
         return tipoMovimientoRepository.findByIdAndEmpresaId(tipoMovimientoId, empresaId)
-                .orElseThrow(() -> new BadRequestException("tipo-movimiento.not-found" + tipoMovimientoId));
+                .orElseThrow(() -> new BadRequestException("tipo-movimiento.not-found: " + tipoMovimientoId));
     }
 }

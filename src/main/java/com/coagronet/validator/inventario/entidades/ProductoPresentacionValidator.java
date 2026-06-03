@@ -15,6 +15,6 @@ public class ProductoPresentacionValidator {
         return presentacionProductoRepository
                 .findByIdAndEmpresaId(productoPresentacionId, empresaId)
                 .orElseThrow(() -> new BadRequestException(
-                        "producto-presentacion.not-found" + productoPresentacionId));
+                        "producto-presentacion.not-found: " + productoPresentacionId));
     }
 }

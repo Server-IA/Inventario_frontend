@@ -16,7 +16,7 @@ public class CierreInventarioDetalleValidator implements BaseValidator {
     public CierreInventarioDetalle validarCierreDetalle(Long cierreInventarioDetalleId, Long empresaId) {
         return cierreInventarioDetalleRepository.findByIdAndEmpresaId(cierreInventarioDetalleId, empresaId)
                 .orElseThrow(() -> new BadRequestException(
-                        "cierre-inventario-detalle.not-found" + cierreInventarioDetalleId));
+                        "cierre-inventario-detalle.not-found: " + cierreInventarioDetalleId));
     }
 
 }
