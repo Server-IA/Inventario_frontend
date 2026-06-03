@@ -12,17 +12,25 @@
     "cannotInactivate": "No se pudo inactivar",
     "loadError": "Error cargando usuarios",
     "createSuccess": "Usuario registrado correctamente.",
-    "updateSuccess": "Usuario actualizado correctamente."
+    "updateSuccess": "Usuario actualizado correctamente.",
+    "detailLoadError": "No fue posible cargar el detalle del usuario.",
+    "detailAccessDenied": "No tienes permisos para consultar el detalle de este usuario."
   },
   "detail": {
     "title": "Detalle de usuario",
+    "loading": "Cargando detalle del usuario...",
     "personalInformation": "Información personal",
     "assignments": "Asignaciones",
+    "username": "Username",
+    "firstName": "Nombres",
+    "lastName": "Apellidos",
     "gender": "Género",
     "document": "Documento",
     "birthDate": "Fecha nacimiento",
     "address": "Dirección",
-    "phone": "Celular"
+    "phone": "Celular",
+    "contractStart": "Fecha inicio contrato",
+    "contractEnd": "Fecha fin contrato"
   },
   "form": {
     "createTitle": "Registrar usuario",
