@@ -210,6 +210,10 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
   const lightGreen = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.24) : "#E7F6F7";
   const lighterGreen = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.18) : "#dfeae6";
+  const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
+  const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
+  const summarySurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.28) : lighterGreen;
+  const assignmentSurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.22) : "#F6FBF8";
   const subtleBorder = alpha(green, 0.14);
   const subtleDivider = alpha(darkGreen, 0.14);
   const softShadow = `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`;
@@ -226,6 +230,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
           borderRadius: 3,
           overflow: "hidden",
           boxShadow: softShadow,
+          backgroundColor: dialogSurface,
         },
       }}
     >
@@ -233,7 +238,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
         sx={{
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
-          backgroundColor: theme.palette.common.white,
+          backgroundColor: dialogSurface,
           borderTop: `3px solid ${darkGreen}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
@@ -286,7 +291,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
           px: { xs: 2.25, sm: 3 },
           pt: 6,
           pb: 2.5,
-          backgroundColor: theme.palette.common.white,
+          backgroundColor: dialogSurface,
         }}
       >
         {loading ? (
@@ -306,7 +311,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
                 borderRadius: 2,
                 border: `1px solid ${subtleBorder}`,
                 boxShadow: sectionShadow,
-                backgroundColor: lighterGreen,
+                backgroundColor: summarySurface,
               }}
             >
               <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -375,7 +380,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
                 borderRadius: 2,
                 border: `1px solid ${subtleBorder}`,
                 boxShadow: sectionShadow,
-                backgroundColor: theme.palette.common.white,
+                backgroundColor: sectionSurface,
               }}
             >
               <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -443,7 +448,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
                 borderRadius: 2,
                 border: `1px solid ${subtleBorder}`,
                 boxShadow: sectionShadow,
-                backgroundColor: theme.palette.common.white,
+                backgroundColor: sectionSurface,
               }}
             >
               <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -462,7 +467,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
                           borderRadius: 1.75,
                           border: `1px solid ${alpha(green, 0.1)}`,
                           boxShadow: `0 2px 8px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.12 : 0.035)}`,
-                          backgroundColor: theme.palette.mode === "dark" ? alpha("#2b6b60", 0.18) : "#F6FBF8",
+                          backgroundColor: assignmentSurface,
                         }}
                       >
                         <CardContent sx={{ py: 1.75 }}>
@@ -555,7 +560,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
         sx={{
           px: { xs: 2.25, sm: 3 },
           py: 2,
-          backgroundColor: theme.palette.common.white,
+          backgroundColor: dialogSurface,
           borderTop: `1px solid ${subtleBorder}`,
         }}
       >
