@@ -13,11 +13,13 @@
     "baseRoleNotFound": "Base role not found",
     "deleteSuccess": "Role and permissions deleted successfully",
     "deleteError": "Error deleting. Check dependencies or permissions.",
+    "companiesLoadError": "Error loading companies",
     "subsystemsLoadError": "Error loading subsystems",
     "modulesLoadError": "Error loading modules",
     "permissionRemoved": "Permission removed successfully",
     "permissionRemoveError": "Error removing permission",
     "roleRequired": "You must select a role",
+    "companyRequired": "You must select a company",
     "saveSuccess": "Permissions updated successfully",
     "saveError": "Error saving permissions"
   },
@@ -36,6 +38,7 @@
   "form": {
     "createTitle": "Create Role and Assign Permissions",
     "editTitle": "Edit Role and Permissions",
-    "roleLabel": "Role"
+    "roleLabel": "Role",
+    "companyLabel": "Company"
   }
 }
