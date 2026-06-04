@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : Advice.java
+ Descripcion        : Manejador centralizado de excepciones para la API REST.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2026-02-08 | 1.0.0   | Juan Jose Castro     | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.exceptionHandler;
 
 import java.net.URI;
@@ -54,6 +66,19 @@ import io.jsonwebtoken.ExpiredJwtException;
  */
 @RestControllerAdvice
 public class Advice extends ResponseEntityExceptionHandler {
+
+    private static final Map<String, String> CONSTRAINT_MESSAGE_CODES = Map.ofEntries(
+            Map.entry("unique_emp_correo", "empresa.correo.existente"),
+            Map.entry("unique_emp_identificacion", "empresa.identificacion.existente"),
+            Map.entry("uq_pais_nombre", "country.name.duplicate"),
+            Map.entry("uq_pais_codigo", "country.code.duplicate"),
+            Map.entry("uq_pais_acronimo", "country.acronym.duplicate"),
+            Map.entry("uq_departamento_pais_nombre", "department.name.duplicate"),
+            Map.entry("uq_departamento_pais_codigo", "department.code.duplicate"),
+            Map.entry("uq_departamento_pais_acronimo", "department.acronym.duplicate"),
+            Map.entry("uq_municipio_departamento_nombre", "municipality.name.duplicate"),
+            Map.entry("uq_municipio_departamento_codigo", "municipality.code.duplicate"),
+            Map.entry("uq_municipio_departamento_acronimo", "municipality.acronym.duplicate"));
 
     /**
      * Personaliza la respuesta cuando falla la validación de un argumento anotado
@@ -310,19 +335,26 @@ public class Advice extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex, Locale locale) {
 
         // Mensaje por defecto en caso de que sea otro tipo de restricción
-        String mensajeDetalle = "No se pudo guardar el registro debido a un conflicto de datos.";
+        String mensajeDetalle = getMessageSource() != null
+                ? getMessageSource().getMessage("db.integrity", null,
+                        "No se pudo guardar el registro debido a un conflicto de datos.", locale)
+                : "No se pudo guardar el registro debido a un conflicto de datos.";
 
         // Inspeccionamos el mensaje o la causa raíz para ser específicos
         String causa = ex.getMostSpecificCause().getMessage();
 
         if (causa != null) {
-            if (causa.contains("unique_per_email_personal")) {
-                mensajeDetalle = "El correo electrónico personal ya se encuentra registrado.";
-            } else if (causa.contains("otra_restriccion_ejemplo")) {
-                mensajeDetalle = "Otro dato ya existe.";
+            String messageCode = CONSTRAINT_MESSAGE_CODES.entrySet().stream()
+                    .filter(entry -> causa.contains(entry.getKey()))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse(null);
+
+            if (messageCode != null && getMessageSource() != null) {
+                mensajeDetalle = getMessageSource().getMessage(messageCode, null, messageCode, locale);
             }
         }
 
@@ -336,3 +368,12 @@ public class Advice extends ResponseEntityExceptionHandler {
     }
 
 }
+
+
+
+
+
+
+
+
+
