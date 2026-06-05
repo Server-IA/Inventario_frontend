@@ -12,17 +12,25 @@
     "cannotInactivate": "User could not be inactivated",
     "loadError": "Error loading users",
     "createSuccess": "User created successfully.",
-    "updateSuccess": "User updated successfully."
+    "updateSuccess": "User updated successfully.",
+    "detailLoadError": "The user detail could not be loaded.",
+    "detailAccessDenied": "You do not have permission to view this user's detail."
   },
   "detail": {
     "title": "User detail",
+    "loading": "Loading user detail...",
     "personalInformation": "Personal information",
     "assignments": "Assignments",
+    "username": "Username",
+    "firstName": "First name",
+    "lastName": "Last name",
     "gender": "Gender",
     "document": "Document",
     "birthDate": "Birth date",
     "address": "Address",
-    "phone": "Phone"
+    "phone": "Phone",
+    "contractStart": "Contract start date",
+    "contractEnd": "Contract end date"
   },
   "form": {
     "createTitle": "Register user",
