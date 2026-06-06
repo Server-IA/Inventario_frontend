@@ -8,18 +8,14 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 import React from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Box,
-} from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 export default function ConfirmInactivateModal({
   open,
@@ -30,75 +26,52 @@ export default function ConfirmInactivateModal({
   isActivating = false,
   impactMessage = [],
 }) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const actionLabel = isActivating
+    ? t("localizacionGeografica.actions.activate").toLowerCase()
+    : t("localizacionGeografica.actions.inactivate").toLowerCase();
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          backgroundColor: "#1e1e1e",
-          color: "#fff",
-          minWidth: 400,
-          border: isActivating ? "1px solid #4caf50" : "1px solid #f44336",
-          borderRadius: 2,
-        },
-      }}
-    >
-      <DialogTitle sx={{ textAlign: "center", pb: 1 }}>
-        {title || `Activar/Inactivar ${itemName}`}
-      </DialogTitle>
-      <DialogContent>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{title || itemName}</DialogTitle>
+      <DialogContent dividers>
         <Typography variant="body1" align="center" sx={{ mb: 2 }}>
-          ¿Está seguro que desea {isActivating ? "activar" : "inactivar"} este registro?
+          {t("localizacionGeografica.confirm.message", { action: actionLabel })}
         </Typography>
-        {!isActivating && impactMessage && impactMessage.length > 0 && (
+        {!isActivating && impactMessage?.length > 0 && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" sx={{ mb: 1 }}>
-              Esta acción afectará los siguientes registros asociados:
+              {t("localizacionGeografica.confirm.impactIntro")}
             </Typography>
             <Box
               sx={{
-                border: "1px solid #555",
+                border: `1px solid ${alpha(theme.palette.error.main, 0.25)}`,
                 borderRadius: 1,
                 p: 2,
-                backgroundColor: "#2a2a2a",
+                bgcolor: alpha(theme.palette.error.main, theme.palette.mode === "dark" ? 0.12 : 0.06),
               }}
             >
               <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {impactMessage.map((msg, idx) => (
-                  <li key={idx}>
-                    <Typography variant="body2">{msg}</Typography>
+                {impactMessage.map((message) => (
+                  <li key={message}>
+                    <Typography variant="body2">{message}</Typography>
                   </li>
                 ))}
               </ul>
               <Typography variant="body2" sx={{ mt: 1 }}>
-                No aparecerán en los selectores del sistema.
+                {t("localizacionGeografica.confirm.notShown")}
               </Typography>
             </Box>
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", pb: 3 }}>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          sx={{
-            color: "#fff",
-            borderColor: "#fff",
-            "&:hover": { borderColor: "#ccc", backgroundColor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          sx={{
-            backgroundColor: isActivating ? "#2e7d32" : "#d32f2f",
-            "&:hover": { backgroundColor: isActivating ? "#1b5e20" : "#b71c1c" },
-          }}
-        >
-          {isActivating ? "Activar" : "Inactivar"}
+      <DialogActions>
+        <Button onClick={onClose}>{t("common.actions.cancel")}</Button>
+        <Button onClick={onConfirm} variant="contained" color={isActivating ? "primary" : "error"}>
+          {isActivating
+            ? t("localizacionGeografica.actions.activate")
+            : t("localizacionGeografica.actions.inactivate")}
         </Button>
       </DialogActions>
     </Dialog>

@@ -8,21 +8,16 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function MunicipioModal({ open, onClose, onSave, municipioToEdit, paisContext, deptoContext }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     nombre: "",
     codigo: "",
@@ -30,21 +25,20 @@ export default function MunicipioModal({ open, onClose, onSave, municipioToEdit,
   });
 
   useEffect(() => {
-    if (open) {
-      if (municipioToEdit) {
-        setFormData({
-          nombre: municipioToEdit.nombre || "",
-          codigo: municipioToEdit.codigo || "",
-          acronimo: municipioToEdit.acronimo || "",
-        });
-      } else {
-        setFormData({ nombre: "", codigo: "", acronimo: "" });
-      }
-    }
+    if (!open) return;
+    setFormData(
+      municipioToEdit
+        ? {
+            nombre: municipioToEdit.nombre || "",
+            codigo: municipioToEdit.codigo || "",
+            acronimo: municipioToEdit.acronimo || "",
+          }
+        : { nombre: "", codigo: "", acronimo: "" },
+    );
   }, [open, municipioToEdit]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setFormData((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
   const handleSave = () => {
@@ -53,108 +47,52 @@ export default function MunicipioModal({ open, onClose, onSave, municipioToEdit,
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          backgroundColor: "#1e1e1e",
-          color: "#fff",
-          minWidth: 400,
-          border: "1px solid #fff",
-          borderRadius: 2,
-        },
-      }}
-    >
-      <DialogTitle sx={{ textAlign: "center", pb: 1, borderBottom: "1px solid #555" }}>
-        {municipioToEdit ? "Actualizar Municipio" : "Crear Municipio"}
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        {municipioToEdit
+          ? t("localizacionGeografica.forms.municipalityUpdate")
+          : t("localizacionGeografica.forms.municipalityCreate")}
       </DialogTitle>
-      <DialogContent sx={{ pt: 3 }}>
+      <DialogContent dividers>
         {paisContext && deptoContext && (
-          <Typography variant="body2" align="center" sx={{ color: "#aaa", mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
             {paisContext.nombre} &gt; {deptoContext.nombre}
           </Typography>
         )}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
-            label="Nombre"
+            label={t("localizacionGeografica.forms.fields.name")}
             name="nombre"
             value={formData.nombre}
             onChange={handleChange}
             fullWidth
             size="small"
-            InputLabelProps={{ style: { color: "#aaa" } }}
-            InputProps={{ style: { color: "#fff" } }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#555" },
-                "&:hover fieldset": { borderColor: "#888" },
-                "&.Mui-focused fieldset": { borderColor: "#fff" },
-              },
-            }}
           />
           <Box sx={{ display: "flex", gap: 2 }}>
             <TextField
-              label="Código"
+              label={t("localizacionGeografica.forms.fields.code")}
               name="codigo"
               value={formData.codigo}
               onChange={handleChange}
               fullWidth
               size="small"
-              InputLabelProps={{ style: { color: "#aaa" } }}
-              InputProps={{ style: { color: "#fff" } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#888" },
-                  "&.Mui-focused fieldset": { borderColor: "#fff" },
-                },
-              }}
             />
             <TextField
-              label="Acrónimo"
+              label={t("localizacionGeografica.forms.fields.acronym")}
               name="acronimo"
               value={formData.acronimo}
               onChange={handleChange}
               fullWidth
               size="small"
               inputProps={{ maxLength: 3 }}
-              InputLabelProps={{ style: { color: "#aaa" } }}
-              InputProps={{ style: { color: "#fff" } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#888" },
-                  "&.Mui-focused fieldset": { borderColor: "#fff" },
-                },
-              }}
             />
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", pb: 3, pt: 2 }}>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          sx={{
-            color: "#fff",
-            borderColor: "#fff",
-            "&:hover": { borderColor: "#ccc", backgroundColor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          disabled={!formData.nombre}
-          sx={{
-            backgroundColor: "#2e7d32",
-            "&:hover": { backgroundColor: "#1b5e20" },
-            "&.Mui-disabled": { backgroundColor: "#555", color: "#888" }
-          }}
-        >
-          Guardar
+      <DialogActions>
+        <Button onClick={onClose}>{t("common.actions.cancel")}</Button>
+        <Button onClick={handleSave} variant="contained" disabled={!formData.nombre}>
+          {t("common.actions.save")}
         </Button>
       </DialogActions>
     </Dialog>

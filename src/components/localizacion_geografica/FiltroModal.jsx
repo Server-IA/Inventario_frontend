@@ -8,41 +8,39 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  MenuItem,
-  Box,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
+import { useTranslation } from "react-i18next";
+
+const ALL_STATUS = "Todos";
+const ACTIVE_STATUS = "Activo";
+const INACTIVE_STATUS = "Inactivo";
 
 export default function FiltroModal({ open, onClose, onFilter, currentFilters }) {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState({
     nombre: "",
     codigo: "",
     acronimo: "",
-    estado: "Todos",
+    estado: ALL_STATUS,
   });
 
   useEffect(() => {
-    if (open) {
-      setFilters(currentFilters || {
-        nombre: "",
-        codigo: "",
-        acronimo: "",
-        estado: "Todos",
-      });
-    }
+    if (!open) return;
+    setFilters(currentFilters || {
+      nombre: "",
+      codigo: "",
+      acronimo: "",
+      estado: ALL_STATUS,
+    });
   }, [open, currentFilters]);
 
-  const handleChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setFilters((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
   const handleFilter = () => {
@@ -51,141 +49,63 @@ export default function FiltroModal({ open, onClose, onFilter, currentFilters })
   };
 
   const handleClear = () => {
-    const cleared = { nombre: "", codigo: "", acronimo: "", estado: "Todos" };
+    const cleared = { nombre: "", codigo: "", acronimo: "", estado: ALL_STATUS };
     setFilters(cleared);
     onFilter(cleared);
     onClose();
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          backgroundColor: "#1e1e1e",
-          color: "#fff",
-          minWidth: 400,
-          border: "1px solid #fff",
-          borderRadius: 2,
-        },
-      }}
-    >
-      <DialogTitle sx={{ textAlign: "center", pb: 1, borderBottom: "1px solid #555" }}>
-        Filtrar
-      </DialogTitle>
-      <DialogContent sx={{ pt: 3 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{t("localizacionGeografica.forms.filterTitle")}</DialogTitle>
+      <DialogContent dividers>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           <TextField
-            label="Nombre"
+            label={t("localizacionGeografica.forms.fields.name")}
             name="nombre"
             value={filters.nombre}
             onChange={handleChange}
             fullWidth
             size="small"
-            InputLabelProps={{ style: { color: "#aaa" } }}
-            InputProps={{ style: { color: "#fff", borderColor: "#555" } }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#555" },
-                "&:hover fieldset": { borderColor: "#888" },
-                "&.Mui-focused fieldset": { borderColor: "#fff" },
-              },
-            }}
           />
           <Box sx={{ display: "flex", gap: 2 }}>
             <TextField
-              label="Código"
+              label={t("localizacionGeografica.forms.fields.code")}
               name="codigo"
               value={filters.codigo}
               onChange={handleChange}
               fullWidth
               size="small"
-              InputLabelProps={{ style: { color: "#aaa" } }}
-              InputProps={{ style: { color: "#fff" } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#888" },
-                  "&.Mui-focused fieldset": { borderColor: "#fff" },
-                },
-              }}
             />
             <TextField
-              label="Acrónimo"
+              label={t("localizacionGeografica.forms.fields.acronym")}
               name="acronimo"
               value={filters.acronimo}
               onChange={handleChange}
               fullWidth
               size="small"
-              InputLabelProps={{ style: { color: "#aaa" } }}
-              InputProps={{ style: { color: "#fff" } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#888" },
-                  "&.Mui-focused fieldset": { borderColor: "#fff" },
-                },
-              }}
             />
             <TextField
               select
-              label="Estado"
+              label={t("localizacionGeografica.forms.fields.status")}
               name="estado"
               value={filters.estado}
               onChange={handleChange}
               fullWidth
               size="small"
-              InputLabelProps={{ style: { color: "#aaa" } }}
-              InputProps={{ style: { color: "#fff" } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#888" },
-                  "&.Mui-focused fieldset": { borderColor: "#fff" },
-                },
-                "& .MuiSelect-icon": { color: "#aaa" },
-              }}
             >
-              <MenuItem value="Todos">Todos</MenuItem>
-              <MenuItem value="Activo">Activo</MenuItem>
-              <MenuItem value="Inactivo">Inactivo</MenuItem>
+              <MenuItem value={ALL_STATUS}>{t("common.labels.all")}</MenuItem>
+              <MenuItem value={ACTIVE_STATUS}>{t("common.labels.active")}</MenuItem>
+              <MenuItem value={INACTIVE_STATUS}>{t("common.labels.inactive")}</MenuItem>
             </TextField>
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", pb: 3, pt: 2 }}>
-        <Button
-          onClick={handleClear}
-          variant="outlined"
-          sx={{
-            color: "#fff",
-            borderColor: "#fff",
-            "&:hover": { borderColor: "#ccc", backgroundColor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          Limpiar
-        </Button>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          sx={{
-            color: "#fff",
-            borderColor: "#fff",
-            "&:hover": { borderColor: "#ccc", backgroundColor: "rgba(255,255,255,0.1)" },
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleFilter}
-          variant="contained"
-          sx={{
-            backgroundColor: "#2e7d32",
-            "&:hover": { backgroundColor: "#1b5e20" },
-          }}
-        >
-          Filtrar
+      <DialogActions>
+        <Button onClick={handleClear}>{t("common.actions.clear")}</Button>
+        <Button onClick={onClose}>{t("common.actions.cancel")}</Button>
+        <Button onClick={handleFilter} variant="contained">
+          {t("localizacionGeografica.actions.filter")}
         </Button>
       </DialogActions>
     </Dialog>

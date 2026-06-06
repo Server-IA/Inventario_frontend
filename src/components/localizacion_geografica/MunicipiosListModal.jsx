@@ -8,29 +8,18 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-23 | 1.0.0   | Jeisson Sanchez      | Creación del archivo.       |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n y estilos.      |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-} from "@mui/material";
-import { Add, Edit, Block, FilterList, Close } from "@mui/icons-material";
-import GridActionBar from "../common/GridActionBar.jsx";
+import React, { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { useTranslation } from "react-i18next";
 import AppDataGrid from "../common/AppDataGrid.jsx";
+import GridActionBar from "../common/GridActionBar.jsx";
+
+const INACTIVE_STATUS = "Inactivo";
 
 export default function MunicipiosListModal({
   open,
@@ -43,55 +32,44 @@ export default function MunicipiosListModal({
   onInactivate,
   onOpenFilter,
 }) {
+  const { t } = useTranslation();
   const [selectedMunicipio, setSelectedMunicipio] = useState(null);
 
-  const munColumns = React.useMemo(() => [
-    { field: "codigo", headerName: "Código", flex: 1, minWidth: 100 },
-    { field: "nombre", headerName: "Nombre", flex: 2, minWidth: 200 },
-    { field: "acronimo", headerName: "Acrónimo", flex: 1, minWidth: 100 },
-    { field: "estado", headerName: "Estado", type: "status", flex: 1, minWidth: 100 },
+  const munColumns = useMemo(() => [
+    { field: "codigo", headerKey: "localizacionGeografica.columns.code", flex: 1, minWidth: 100 },
+    { field: "nombre", headerKey: "localizacionGeografica.columns.name", flex: 2, minWidth: 200 },
+    { field: "acronimo", headerKey: "localizacionGeografica.columns.acronym", flex: 1, minWidth: 100 },
+    { field: "estado", headerKey: "localizacionGeografica.columns.status", type: "status", flex: 1, minWidth: 100 },
   ], []);
 
-  const handleRowClick = (mun) => {
-    if (selectedMunicipio?.id === mun.id) {
-      setSelectedMunicipio(null);
-    } else {
-      setSelectedMunicipio(mun);
-    }
-  };
-
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          backgroundColor: "#1e1e1e",
-          color: "#fff",
-          border: "1px solid #555",
-          borderRadius: 2,
-        },
-      }}
-    >
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1, borderBottom: "1px solid #333" }}>
-        <Typography variant="h6">
-          Municipios - {paisContext?.nombre} &gt; {deptoContext?.nombre}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: "#aaa" }}>
-          <Close />
-        </IconButton>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Typography variant="h6">
+            {t("localizacionGeografica.forms.municipalitiesTitle", {
+              country: paisContext?.nombre ?? "",
+              department: deptoContext?.nombre ?? "",
+            })}
+          </Typography>
+          <IconButton onClick={onClose} aria-label={t("common.actions.close")}>
+            <CloseIcon />
+          </IconButton>
+        </Stack>
       </DialogTitle>
-      <DialogContent sx={{ pt: 2, pb: 2 }}>
+      <DialogContent dividers>
         <GridActionBar
           onAdd={onAdd}
           onUpdate={() => onEdit(selectedMunicipio)}
           onDelete={() => onInactivate(selectedMunicipio)}
-          canUpdate={!!selectedMunicipio}
-          canDelete={!!selectedMunicipio}
+          canUpdate={Boolean(selectedMunicipio)}
+          canDelete={Boolean(selectedMunicipio)}
           onFilters={onOpenFilter}
-          labels={{ delete: selectedMunicipio?.estado === "Inactivo" ? "Activar" : "Inactivar" }}
+          labels={{
+            delete: selectedMunicipio?.estado === INACTIVE_STATUS
+              ? t("localizacionGeografica.actions.activate")
+              : t("localizacionGeografica.actions.inactivate"),
+          }}
         />
 
         <AppDataGrid
@@ -99,7 +77,7 @@ export default function MunicipiosListModal({
           columns={munColumns}
           selectedRow={selectedMunicipio}
           setSelectedRow={(row) => setSelectedMunicipio(row || null)}
-          containerSx={{ maxHeight: 400 }}
+          containerSx={{ maxHeight: 400, borderRadius: 4 }}
         />
       </DialogContent>
     </Dialog>

@@ -1,13 +1,17 @@
 /*=============================================================================
-Nombre del archivo : GridActionBar.jsx
-Descripcion        : Reestructuracion de paises
+ Nombre del archivo : Navigator2.jsx
+ Descripcion        : Componente de navegación principal del dashboard.
 ===============================================================================
-CONTROL DE CAMBIOS
-+------------+---------+----------------------+-----------------------------+
-|   Fecha    | Version |      Autor           | Descripcion del cambio      |
-+------------+---------+----------------------+-----------------------------+
-| 2026-06-03 | 0.4.0   | Jeisson Sanchez      |  Reestructuracion de paises.       |
-+------------+---------+----------------------+-----------------------------+
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-03 | 0.4.0   | Jeisson Sanchez      | Reestructuración de países. |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n del módulo.     |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Corrección texto menú.      |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import * as React from "react";
 import {
@@ -810,10 +814,17 @@ export default function Navigator2({
           if (!hasLocalizacion) {
             adapted[paramIndex].children.push({
               id: "localizacion_geografica",
-              text: "LocalizaciÃ³n GeogrÃ¡fica",
+              text: "localizacionGeografica.menuTitle",
               icon: "Public",
               url: "/api/v1/localizacion_geografica",
             });
+          } else {
+            adapted[paramIndex].children = adapted[paramIndex].children.map(
+              (child) =>
+                toKey(child.id) === "localizacion_geografica"
+                  ? { ...child, text: "localizacionGeografica.menuTitle" }
+                  : child,
+            );
           }
         }
         // ----------------------------------------------------------------------
@@ -890,7 +901,7 @@ export default function Navigator2({
         <MenuIcon />
         {open && (
           <Typography variant="h6" fontWeight={800}>
-            {t("MenÃº")}
+            Menú
           </Typography>
         )}
       </Box>
