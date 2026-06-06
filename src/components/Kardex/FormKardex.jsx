@@ -1,4 +1,15 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿/*=============================================================================
+Nombre del archivo : FormKardex.jsx
+Descripcion        : Formulario maestro y detalle para gestion de Kardex.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Version |      Autor           | Descripcion del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-08 | 0.4.0   | Jeisson Sanchez      | Encabezado estandar agregado.|
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -146,6 +157,7 @@ export default function FormKardex({
     id: undefined,
     fechaHora: "",
     almacenId: "",
+    almacenDestinoId: "",
     produccionId: "",
     tipoMovimientoId: "",
     pedidoId: "",
@@ -339,7 +351,10 @@ export default function FormKardex({
     [tiposMovimiento, formData.tipoMovimientoId]
   );
 
-  const isEntradaUi = normalize(renderName(tipoMovimientoSeleccionado)).includes("entrada");
+  const tipoMovimientoTexto = normalize(renderName(tipoMovimientoSeleccionado));
+  const isEntradaUi = tipoMovimientoTexto.includes("entrada");
+  const isTrasladoUi =
+    tipoMovimientoTexto.includes("traslado") || tipoMovimientoTexto.includes("transfer");
 
   const getPedidoIdFromOc = (oc) =>
     oc?.pedidoId ?? oc?.pedido_id ?? oc?.ped_id ?? oc?.orc_pedido_id ?? oc?.pedido?.id ?? null;
@@ -667,6 +682,7 @@ export default function FormKardex({
           id: undefined,
           fechaHora: "",
           almacenId: "",
+          almacenDestinoId: "",
           produccionId: "",
           tipoMovimientoId: "",
           pedidoId: "",
@@ -690,6 +706,7 @@ export default function FormKardex({
           id: data.id ?? kardexId,
           fechaHora: toDateTimeLocal(selectedRow?.fechaHora),
           almacenId: data.almacenId ?? "",
+          almacenDestinoId: data.almacenDestinoId ?? "",
           produccionId: data.produccionId ?? "",
           tipoMovimientoId: data.tipoMovimientoId ?? findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
           pedidoId: data.pedidoId ?? "",
@@ -723,6 +740,7 @@ export default function FormKardex({
           id: kardexIdFallback,
           fechaHora: toDateTimeLocal(selectedRow?.fechaHora),
           almacenId: findIdByName(almacenes, selectedRow?.nombreAlmacen),
+          almacenDestinoId: findIdByName(almacenes, selectedRow?.nombreAlmacenDestino),
           produccionId: findIdByName(producciones, selectedRow?.nombreProduccion),
           tipoMovimientoId: findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
           pedidoId: "",
@@ -797,6 +815,7 @@ export default function FormKardex({
     const { name, value } = e.target;
     const numeric = [
       "almacenId",
+      "almacenDestinoId",
       "produccionId",
       "tipoMovimientoId",
       "pedidoId",
@@ -807,19 +826,32 @@ export default function FormKardex({
 
     setFormData((prev) => {
       const next = { ...prev, [name]: castValue };
+      if (name === "almacenId" && String(next.almacenDestinoId) === String(castValue)) {
+        next.almacenDestinoId = "";
+      }
       if (name === "pedidoId") next.ordenCompraId = "";
       if (name === "tipoMovimientoId") {
         const tipoSel = tiposMovimiento.find((t) => String(t.id) === String(castValue));
         const esEntrada = normalize(renderName(tipoSel)).includes("entrada");
+        const esTraslado =
+          normalize(renderName(tipoSel)).includes("traslado") ||
+          normalize(renderName(tipoSel)).includes("transfer");
         if (!esEntrada) {
           next.pedidoId = "";
           next.ordenCompraId = "";
+        }
+        if (!esTraslado) {
+          next.almacenDestinoId = "";
         }
       }
       return next;
     });
 
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+      ...(name === "tipoMovimientoId" ? { almacenDestinoId: undefined } : {}),
+    }));
   };
 
   const applyLookupSelection = () => {
@@ -913,7 +945,8 @@ export default function FormKardex({
   const buildHeaderPayload = () => ({
     tipoMovimientoId: formData.tipoMovimientoId ? Number(formData.tipoMovimientoId) : null,
     almacenId: formData.almacenId ? Number(formData.almacenId) : null,
-    almacenDestinoId: null,
+    almacenDestinoId:
+      isTrasladoUi && formData.almacenDestinoId ? Number(formData.almacenDestinoId) : null,
     pedidoId: formData.pedidoId ? Number(formData.pedidoId) : null,
     ordenCompraId: formData.ordenCompraId ? Number(formData.ordenCompraId) : null,
     produccionId: formData.produccionId ? Number(formData.produccionId) : null,
@@ -924,6 +957,10 @@ export default function FormKardex({
   const handleNext = async () => {
     try {
       await kardexSchema.validate(formData, { abortEarly: false });
+      if (isTrasladoUi && !formData.almacenDestinoId) {
+        setErrors((prev) => ({ ...prev, almacenDestinoId: "Almacen destino obligatorio para traslados." }));
+        return;
+      }
       setErrors({});
       setOpen(false);
       setArticleModalOpen(true);
@@ -1129,6 +1166,14 @@ export default function FormKardex({
 
   const handleSaveKardex = async () => {
     if (savingKardex) return;
+    if (isTrasladoUi && !formData.almacenDestinoId) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: "Para movimientos de traslado debes seleccionar un almacen destino.",
+      });
+      return;
+    }
     const ppIds = Array.from(
       new Set(
         (draftItems || [])
@@ -1317,6 +1362,32 @@ export default function FormKardex({
                 }}
               />
             </Grid>
+
+            {isTrasladoUi && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!errors.almacenDestinoId}>
+                  <InputLabel>Almacen Destino</InputLabel>
+                  <Select
+                    name="almacenDestinoId"
+                    label="Almacen Destino"
+                    value={formData.almacenDestinoId}
+                    onChange={handleHeaderChange}
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione...</em>
+                    </MenuItem>
+                    {almacenes
+                      .filter((a) => String(a?.id) !== String(formData.almacenId))
+                      .map((a) => (
+                        <MenuItem key={a.id} value={a.id}>
+                          {renderName(a)}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                  <FormHelperText>{errors.almacenDestinoId}</FormHelperText>
+                </FormControl>
+              </Grid>
+            )}
 
             {isEntradaUi && (
               <>
@@ -1650,3 +1721,5 @@ export default function FormKardex({
     </Box>
   );
 }
+
+
