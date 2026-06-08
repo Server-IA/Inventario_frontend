@@ -2,6 +2,7 @@ package com.coagronet.auth.services;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.auth.dto.ApiResponse;
@@ -40,6 +43,7 @@ import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
+import com.coagronet.infrastructure.i18n.LocaleResolutionService;
 import com.coagronet.infrastructure.security.CustomUserDetails;
 import com.coagronet.infrastructure.security.JwtUtil;
 import com.coagronet.persona.Persona;
@@ -48,6 +52,7 @@ import com.coagronet.rol.Rol;
 import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
+import com.coagronet.user.LanguagePreference;
 import com.coagronet.user.User;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.services.UserRegistrationService;
@@ -115,6 +120,8 @@ public class AuthService {
 
 	private final ApplicationEventPublisher applicationEventPublisher;
 
+	private final LocaleResolutionService localeResolutionService;
+
 	private final UsuarioEstadoRepository usuarioEstadoRepository;
 
 	private final EstadoRepository estadoRolRepository;
@@ -122,9 +129,21 @@ public class AuthService {
 	private static final Set<String> COMMON_PASSWORDS = Set.of("123456", "123456789", "12345678", "password", "qwerty",
 			"11111111", "123123", "000000", "password1", "abc123", "admin", "admin123");
 
+	private final MessageSource messageSource;
+
+	private String msg(String key, Object... args) {
+		return messageSource.getMessage(key, args, key, LocaleContextHolder.getLocale());
+	}
+
 	/* ================= REGISTRATION ================= */
 	@Transactional
-	public ApiResponse register(@Valid RegisterRequestDTO dto) {
+	public ApiResponse register(@Valid RegisterRequestDTO dto, String acceptLanguage) {
+		String effectiveAcceptLanguage = acceptLanguage;
+		if (effectiveAcceptLanguage == null || effectiveAcceptLanguage.isBlank()) {
+			effectiveAcceptLanguage = LocaleContextHolder.getLocale().toLanguageTag();
+		}
+		Locale requestLocale = localeResolutionService.resolveForHttpRequest(effectiveAcceptLanguage, dto.getUsername());
+		String requestLanguageTag = requestLocale.toLanguageTag();
 
 		// 1. Verificación de existencia previa
 		User existing = userRepo.findByUsername(dto.getUsername()).orElse(null);
@@ -133,17 +152,18 @@ public class AuthService {
 			// Evaluamos el ID de la entidad estado (Ej. 1L = PENDIENTE_VERIFICACION)
 			if (existing.getUsuarioEstado().getId() == 1L) {
 				String token = emailService.createVerificationToken(existing.getUsername());
-				emailService.sendVerificationEmail(existing.getUsername(), token);
+				emailService.sendVerificationEmail(existing.getUsername(), token, requestLocale);
 
 				throw new ResponseStatusException(HttpStatus.CONFLICT,
-						"El correo ya está registrado, pero no verificado. Se reenvió el enlace.");
+						msg("auth.register.email.already.registered.unverified.resent"));
 			}
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.register.email.already.in.use"));
 		}
 
 		// 2. Creación del nuevo usuario (Aggregate Root)
 		User user = new User();
 		user.setUsername(dto.getUsername());
+		user.setPreferredLanguage(LanguagePreference.from(requestLocale.getLanguage()));
 
 		// Validación NIST/OWASP
 		validatePasswordPolicy(dto.getPassword());
@@ -157,7 +177,8 @@ public class AuthService {
 
 		// 3. Obtener el Rol por defecto
 		Rol role = rolRepository.findByNombre(props.getDefaultRole())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+						msg("auth.register.default.role.not.found")));
 
 		// Obtener el estado activo para el contrato/rol (Ej: 1 = ACTIVO)
 		Estado estadoRolActivo = estadoRolRepository.getReferenceById(1L);
@@ -182,9 +203,9 @@ public class AuthService {
 		 * tabla 'usuario' 1x INSERT en la tabla 'usuario_rol' (gracias a cascade =
 		 * CascadeType.ALL)
 		 */
-		registrationService.registerUser(user);
+		registrationService.registerUser(user, requestLanguageTag);
 
-		return new ApiResponse(true, "Correo electrónico de verificación enviado a " + user.getUsername());
+		return new ApiResponse(true, msg("auth.register.verification.email.sent", user.getUsername()));
 	}
 
 	/**
@@ -239,18 +260,20 @@ public class AuthService {
 
 			if (existing.getUsuarioEstado() == null || !existing.getUsuarioEstado().esActivadoConEmpresa()) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-						"El usuario no está activo; no se puede activar el rol.");
+						msg("auth.register.user.not.active"));
 			}
 
 			Rol rol = rolRepository.findById(dto.getRolId())
-					.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+					.orElseThrow(
+							() -> new EntityNotFoundException(msg("auth.register.role.not.found", dto.getRolId())));
 
 			Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
 					.orElseThrow(() -> new EntityNotFoundException(
-							"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+							msg("auth.register.state.not.found", EstadoConstantes.ESTADO_GENERAL_ACTIVO)));
 
 			Empresa empresa = empresaRepository.findById(empresaId)
-					.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+					.orElseThrow(
+							() -> new EntityNotFoundException(msg("auth.register.company.not.found", empresaId)));
 
 			boolean existsActivo = usuarioRolRepository
 					.existsByUser_IdAndEmpresa_IdAndRol_IdAndEstado_IdAndFinalizaContratoEnIsNull(existing.getId(),
@@ -259,7 +282,7 @@ public class AuthService {
 			if (existsActivo == true) {
 
 				throw new ResponseStatusException(HttpStatus.CONFLICT,
-						"El usuario ya tiene este rol activo para la empresa seleccionada");
+						msg("auth.register.user.already.has.role"));
 
 			}
 
@@ -288,31 +311,33 @@ public class AuthService {
 
 			UsuarioRol saved = usuarioRolRepository.save(usuarioRol);
 
-			applicationEventPublisher.publishEvent(new RoleActivatedEvent(saved.getId()));
+			applicationEventPublisher
+					.publishEvent(new RoleActivatedEvent(saved.getId(), httpRequest.getHeader("Accept-Language")));
 
-			String message = String.format(
-					"Se ha notificado por correo electrónico a %s %s que su rol \"%s\" "
-							+ "en la empresa \"%s\" ya se encuentra activo.",
-					saved.getUser().getPersona().getNombre(), saved.getUser().getPersona().getApellido(),
-					saved.getRol().getNombre(), saved.getEmpresa().getNombre());
+			String message = msg(
+					"auth.role.activated.email.notified",
+					saved.getUser().getPersona().getNombre(),
+					saved.getUser().getPersona().getApellido(),
+					saved.getRol().getNombre(),
+					saved.getEmpresa().getNombre());
 
 			return new ApiResponse(true, message);
 		}
 
 		Rol rol = rolRepository.findById(dto.getRolId())
-				.orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + dto.getRolId()));
+				.orElseThrow(() -> new EntityNotFoundException(msg("auth.register.role.not.found", dto.getRolId())));
 
 		Estado estado = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
 				.orElseThrow(() -> new EntityNotFoundException(
-						"Estado no encontrado con id " + EstadoConstantes.ESTADO_GENERAL_ACTIVO));
+						msg("auth.register.state.not.found", EstadoConstantes.ESTADO_GENERAL_ACTIVO)));
 
 		Empresa empresa = empresaRepository.findById(empresaId)
-				.orElseThrow(() -> new EntityNotFoundException("Empresa no encontrada con id " + empresaId));
+				.orElseThrow(() -> new EntityNotFoundException(msg("auth.register.company.not.found", empresaId)));
 
 		TipoIdentificacion tipoDocumentoIdentidad = tipoIdentificacionRepository
 				.findById(dto.getTipoDocumentoIdentidadId())
 				.orElseThrow(() -> new EntityNotFoundException(
-						"Tipo de documento de identidad no encontrado con id: " + dto.getTipoDocumentoIdentidadId()));
+						msg("auth.register.idType.not.found", dto.getTipoDocumentoIdentidadId())));
 
 		boolean personaExiste = personaRepository.existsByTipoIdentificacion_IdAndIdentificacionAndEstado_Id(
 				dto.getTipoDocumentoIdentidadId(), dto.getCodigoIdentificacion(),
@@ -320,12 +345,12 @@ public class AuthService {
 
 		if (personaExiste) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT,
-					"Ya existe una persona con ese tipo y código de identificación.");
+					msg("auth.register.persona.already.exists"));
 		}
 
 		if (personaRepository.existsByEmailPersonalAndEstado_Id(dto.getUsername(),
 				EstadoConstantes.ESTADO_GENERAL_ACTIVO)) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una persona con ese correo.");
+			throw new ResponseStatusException(HttpStatus.CONFLICT, msg("auth.register.persona.email.already.exists"));
 		}
 
 		String tempPassword = PasswordGenerator.generateStrongPassword();
@@ -380,13 +405,15 @@ public class AuthService {
 
 		UsuarioRol saved = usuarioRolRepository.save(usuarioRol);
 
-		applicationEventPublisher.publishEvent(new NewUserCredentialsEvent(saved.getId(), tempPassword));
+		applicationEventPublisher.publishEvent(
+				new NewUserCredentialsEvent(saved.getId(), tempPassword, httpRequest.getHeader("Accept-Language")));
 
-		String message = String.format(
-				"Se ha notificado por correo electrónico a %s %s que su rol \"%s\" "
-						+ "en la empresa \"%s\" ya se encuentra activo.",
-				saved.getUser().getPersona().getNombre(), saved.getUser().getPersona().getApellido(),
-				saved.getRol().getNombre(), saved.getEmpresa().getNombre());
+		String message = msg(
+				"auth.role.activated.email.notified",
+				saved.getUser().getPersona().getNombre(),
+				saved.getUser().getPersona().getApellido(),
+				saved.getRol().getNombre(),
+				saved.getEmpresa().getNombre());
 
 		return new ApiResponse(true, message);
 	}
@@ -399,27 +426,28 @@ public class AuthService {
 		CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 
 		User user = userRepo.findById(userDetails.id())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado en BD"));
+				.orElseThrow(
+						() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg("auth.user.not.found")));
 
 		UsuarioEstado estado = user.getUsuarioEstado();
 
 		if (estado == null) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales o estado de usuario inválido");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, msg("auth.invalid.credentials"));
 		}
 
 		if (estado.getId() == 1L) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tu cuenta está pendiente de activación.");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, msg("auth.account.pending.activation"));
 		}
 
 		if (estado.getId() == 0L) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-					"Tu cuenta no está disponible. Contacta al administrador.");
+					msg("auth.account.not.available"));
 		}
 
 		List<UsuarioRol> usuarioRols = userRoleRepo.findByUsuarioIdForLogin(user.getId());
 
 		if (usuarioRols.isEmpty()) {
-			throw new UserRoleForbiddenException("El usuario no tiene asignado ningún rol dentro de una empresa.");
+			throw new UserRoleForbiddenException(msg("auth.user.no.roles"));
 		}
 
 		UsuarioRol current = resolveInitialContext(user, usuarioRols);
@@ -449,12 +477,11 @@ public class AuthService {
 	public Map<String, Object> switchContext(@Valid SwitchContextRequestDTO dto, String username) {
 
 		User user = userRepo.findByUsername(username)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
-
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg("auth.user.not.found")));
 		UsuarioRol usuarioRol = userRoleRepo
 				.findByUserAndEmpresaIdAndRolIdAndDeletedAtIsNullAndEstadoIdNot(user, dto.empresaId(), dto.rolId(),
 						ESTADO_INACTVIO_ID)
-				.orElseThrow(() -> new UserRoleForbiddenException("Role/company not assigned to user"));
+				.orElseThrow(() -> new UserRoleForbiddenException(msg("auth.user.no.roles")));
 
 		String rolName = usuarioRol.getRol().getNombre();
 
@@ -499,12 +526,11 @@ public class AuthService {
 		User user = getCurrentUser();
 
 		if (!encoder.matches(dto.getOldPassword(), user.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.old.password.incorrect"));
 		}
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La nueva contraseña no puede ser igual a la contraseña anterior.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.new.password.same.as.old"));
 		}
 
 		// 🔐 Validación NIST/OWASP de la nueva contraseña
@@ -514,7 +540,7 @@ public class AuthService {
 		user.incrementTokenVersion(); // revoca todos los JWT previos
 		userRepo.save(user);
 
-		return new ApiResponse(true, "Password changed successfully");
+		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
 	// RESET PASSWORD
@@ -522,15 +548,15 @@ public class AuthService {
 		String username = emailService.consumeResetPasswordToken(dto.getToken());
 
 		if (username == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired reset link");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.reset.link.invalid"));
 		}
 
 		User user = userRepo.findByUsername(username)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg("auth.user.not.found")));
 
 		if (encoder.matches(dto.getNewPassword(), user.getPassword())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La nueva contraseña no puede ser igual a la contraseña anterior.");
+					msg("auth.new.password.same.as.old"));
 		}
 
 		// 🔐 Validación NIST/OWASP de la nueva contraseña
@@ -540,7 +566,7 @@ public class AuthService {
 		user.incrementTokenVersion(); // revoca todos los JWT previos
 		userRepo.save(user);
 
-		return new ApiResponse(true, "Password reset successfully");
+		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
 	public ApiResponse changePasswordInitial(@Valid InitialPasswordChangeRequestDTO dto) {
@@ -549,17 +575,17 @@ public class AuthService {
 		if (user.getUsuarioEstado() == usuarioEstadoRepository
 				.getReferenceById(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Este usuario no requiere cambio de contraseña obligatorio.");
+					msg("auth.initial.password.change.no.required"));
 		}
 
 		if (!dto.nuevaClave().equals(dto.confirmacionClave())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña y su confirmación no coinciden.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.new.password.confirmation.mismatch"));
 		}
 
 		// ⛔ Nueva contraseña igual a la actual
 		if (encoder.matches(dto.nuevaClave(), user.getPassword())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La nueva contraseña no puede ser igual a la contraseña anterior.");
+					msg("auth.new.password.same.as.old"));
 		}
 
 		// 🔐 Validación NIST/OWASP de la nueva contraseña inicial
@@ -570,23 +596,23 @@ public class AuthService {
 		user.incrementTokenVersion(); // revoca JWT previos
 		userRepo.save(user);
 
-		return new ApiResponse(true, "Contraseña actualizada correctamente.");
+		return new ApiResponse(true, msg("auth.password.changed.successfully"));
 	}
 
-	public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto) {
+	public ApiResponse forgotPassword(@Valid ForgotPasswordRequestDTO dto, String acceptLanguage) {
 		userRepo.findByUsername(dto.getEmail()).ifPresent(u -> {
 			var token = emailService.createResetPasswordToken(u.getUsername());
-			emailService.sendResetPasswordEmail(u.getUsername(), token);
+			emailService.sendResetPasswordEmail(u.getUsername(), token, acceptLanguage);
 		});
-		return new ApiResponse(true, "If the email exists, you will receive a message shortly.");
+		return new ApiResponse(true, msg("auth.forgot.password.email.sent"));
 	}
 
 	/* ================= ACCOUNT VERIFICATION ================= */
 	public ApiResponse verifyUser(String token) {
 		// Dejamos que RegistrationService active y consuma el token VERIFY
 		boolean ok = registrationService.activateUser(token);
-		return ok ? new ApiResponse(true, "User activated successfully")
-				: new ApiResponse(false, "Invalid verification link");
+		return ok ? new ApiResponse(true, msg("auth.user.activated.successfully"))
+				: new ApiResponse(false, msg("auth.invalid.verification.link"));
 	}
 
 	/* ================= LOGOUT (stateless) ================= */
@@ -614,21 +640,21 @@ public class AuthService {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || auth
 				.getPrincipal() instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, msg("auth.user.not.authenticated"));
 		}
 
 		return userRepo.findByUsername(auth.getName())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, msg("auth.user.not.found")));
 	}
 
 	private void validatePasswordPolicy(String rawPassword) {
 		if (rawPassword == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña no puede ser nula.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg("auth.password.null"));
 		}
 
 		if (!rawPassword.equals(rawPassword.trim())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña no puede iniciar ni terminar con espacios en blanco.");
+					msg("auth.password.trimmed"));
 		}
 
 		String password = rawPassword;
@@ -636,28 +662,28 @@ public class AuthService {
 
 		if (length < MIN_PASSWORD_LENGTH) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres.");
+					msg("auth.password.min.length", MIN_PASSWORD_LENGTH));
 		}
 
 		if (length > MAX_PASSWORD_LENGTH) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña no puede superar los " + MAX_PASSWORD_LENGTH + " caracteres.");
+					msg("auth.password.max.length", MAX_PASSWORD_LENGTH));
 		}
 
 		if (isCommonPassword(password)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña es demasiado común. Por favor, usa una contraseña más única.");
+					msg("auth.password.common"));
 		}
 
 		if (allCharactersAreTheSame(password)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña no puede estar formada por el mismo carácter repetido.");
+					msg("auth.password.repeated.character"));
 		}
 
 		long distinctChars = password.codePoints().distinct().count();
 		if (distinctChars < 4) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"La contraseña debe contener más variedad de caracteres.");
+					msg("auth.password.low.variety"));
 		}
 
 	}

@@ -85,7 +85,11 @@ public class UserController {
 		if (null != user) {
 			String encodedPassword = passwordEncoder.encode(userDTOUpdate.getPassword());
 			UserDTO updatedUserDTO = new UserDTO(requestedId, encodedPassword, userDTOUpdate.getUsername(),
-					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId());
+					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId(),
+					userDTOUpdate.getPreferredLanguage() != null
+							? userDTOUpdate.getPreferredLanguage()
+							: user.getPreferredLanguage());
+
 			User updatedUser = userMapper.toEntity(updatedUserDTO);
 			userRepository.save(updatedUser);
 			return ResponseEntity.noContent().build();

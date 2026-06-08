@@ -19,7 +19,7 @@ public class RegistrationListener {
 	public void handleRegistrationComplete(OnRegistrationCompleteEvent event) {
 		String email = event.getUser().getUsername();
 		String token = emailService.createVerificationToken(email);
-		emailService.sendVerificationEmail(email, token);
+		emailService.sendVerificationEmail(email, token, event.getFallbackLanguageTag());
 	}
 
 }

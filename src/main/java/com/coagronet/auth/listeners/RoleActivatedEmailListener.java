@@ -30,6 +30,6 @@ public class RoleActivatedEmailListener {
 		User user = ur.getUser();
 
 		emailService.sendRoleActivatedEmail(user.getUsername(), ur.getRol().getNombre(), user.getPersona().getNombre(),
-				user.getPersona().getApellido(), ur.getEmpresa().getNombre());
+				user.getPersona().getApellido(), ur.getEmpresa().getNombre(), event.fallbackLanguageTag());
 	}
 }
