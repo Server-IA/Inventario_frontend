@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : GlobalExceptionHandler.java
+ Descripcion        : Manejador global de excepciones en proceso de migracion.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-10-21 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.exceptionHandler;
 
 import java.sql.SQLException;
@@ -40,11 +52,18 @@ public class GlobalExceptionHandler {
         return messageSource.getMessage(codeOrRaw, args, codeOrRaw, locale);
     }
 
-    private static final Map<String, String> CONSTRAINT_MAP = Map.of(
-            "unique_emp_correo", "empresa.correo.existente",
-            "unique_emp_identificacion", "empresa.identificacion.existente"
-    // Puedes agregar más aquí: "nombre_constraint", "codigo.mensaje"
-    );
+    private static final Map<String, String> CONSTRAINT_MAP = Map.ofEntries(
+            Map.entry("unique_emp_correo", "empresa.correo.existente"),
+            Map.entry("unique_emp_identificacion", "empresa.identificacion.existente"),
+            Map.entry("uq_pais_nombre", "country.name.duplicate"),
+            Map.entry("uq_pais_codigo", "country.code.duplicate"),
+            Map.entry("uq_pais_acronimo", "country.acronym.duplicate"),
+            Map.entry("uq_departamento_pais_nombre", "department.name.duplicate"),
+            Map.entry("uq_departamento_pais_codigo", "department.code.duplicate"),
+            Map.entry("uq_departamento_pais_acronimo", "department.acronym.duplicate"),
+            Map.entry("uq_municipio_departamento_nombre", "municipality.name.duplicate"),
+            Map.entry("uq_municipio_departamento_codigo", "municipality.code.duplicate"),
+            Map.entry("uq_municipio_departamento_acronimo", "municipality.acronym.duplicate"));
 
     private String requestPath(WebRequest request) {
         if (request instanceof ServletWebRequest swr) {
@@ -53,15 +72,6 @@ public class GlobalExceptionHandler {
         // WebRequest.getDescription(false) -> "uri=/path"
         String desc = request.getDescription(false);
         return (desc != null && desc.startsWith("uri=")) ? desc.substring(4) : desc;
-    }
-
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorDetails> handleBadRequest(BadRequestException ex, WebRequest request) {
-        Locale locale = LocaleContextHolder.getLocale();
-        ErrorDetails body = new ErrorDetails(LocalDateTime.now(), "Bad Request",
-                msg(ex.getMessage() != null ? ex.getMessage() : "error.bad-request", ex.getArgs(), locale),
-                requestPath(request), null);
-        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(DomainValidationException.class)
@@ -235,3 +245,12 @@ public class GlobalExceptionHandler {
     }
 
 }
+
+
+
+
+
+
+
+
+

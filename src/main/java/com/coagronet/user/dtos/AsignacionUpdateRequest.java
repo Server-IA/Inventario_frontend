@@ -2,6 +2,8 @@ package com.coagronet.user.dtos;
 
 import java.time.OffsetDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +18,7 @@ public record AsignacionUpdateRequest(
                 @Schema(description = "Fecha de fin del contrato.", example = "2024-01-01T00:00:00Z", nullable = true) OffsetDateTime fechaFinContrato) {
 
         @AssertTrue(message = "La fecha de finalización debe ser estrictamente posterior a la fecha de inicio")
+        @JsonIgnore
         public boolean isFechaFinalizacionValida() {
                 if (fechaInicioContrato == null || fechaFinContrato == null) {
                         return true;

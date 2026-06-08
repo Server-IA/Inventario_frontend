@@ -1,8 +1,8 @@
 package com.coagronet.tipoSede.services;
 
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.tipoSede.dtos.TipoSedeDTO;
 import com.coagronet.tipoSede.mappers.TipoSedeMapper;
 import com.coagronet.tipoSede.repositories.TipoSedeRepository;
@@ -29,20 +29,20 @@ public class TipoSedeService {
 
 	public List<TipoSedeDTO> findAll() {
 		return tipoSedeRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(tipoSedeMapper::toListDTO)
-			.collect(Collectors.toList());
+				.stream()
+				.map(tipoSedeMapper::toListDTO)
+				.collect(Collectors.toList());
 	}
 
 	public Optional<TipoSedeDTO> findById(Long id) {
 		return tipoSedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(tipoSedeMapper::toListDTO);
+				.map(tipoSedeMapper::toListDTO);
 	}
 
 	@Transactional
 	public TipoSedeDTO create(TipoSedeDTO tipoSedeDTO) {
 		estadoRepository.findById(tipoSedeDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		tipoSedeDTO.setId(null);
 		tipoSedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -53,7 +53,7 @@ public class TipoSedeService {
 	@Transactional
 	public void update(Long requestedId, TipoSedeDTO tipoSedeDTO) {
 		tipoSedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
+				.orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
 
 		tipoSedeDTO.setId(requestedId);
 		tipoSedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -63,7 +63,7 @@ public class TipoSedeService {
 
 	public void delete(Long id) {
 		tipoSedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
+				.orElseThrow(() -> new NotFoundException("Tipo de sede no encontrada"));
 
 		tipoSedeRepository.deleteById(id);
 	}
