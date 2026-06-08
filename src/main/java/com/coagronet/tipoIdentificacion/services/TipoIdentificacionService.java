@@ -10,8 +10,8 @@ import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoIdentificacion.dtos.TipoIdentificacionDTO;
 import com.coagronet.tipoIdentificacion.mappers.TipoIdentificacionMapper;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,16 +27,16 @@ public class TipoIdentificacionService {
 
 	public List<TipoIdentificacionDTO> findAll() {
 		return tipoIdentificacionRepository.findAll()
-			.stream()
-			.map(tipoIdentificacionMapper::toDTO)
-			.collect(Collectors.toList());
+				.stream()
+				.map(tipoIdentificacionMapper::toDTO)
+				.collect(Collectors.toList());
 	}
 
 	public List<TipoIdentificacionDTO> findAllAvailable() {
 		return tipoIdentificacionRepository.findByEstadoIdNotOrderByIdAsc(2L)
-			.stream()
-			.map(tipoIdentificacionMapper::toDTO)
-			.collect(Collectors.toList());
+				.stream()
+				.map(tipoIdentificacionMapper::toDTO)
+				.collect(Collectors.toList());
 	}
 
 	public Optional<TipoIdentificacionDTO> findById(Long requestedId) {
@@ -45,20 +45,20 @@ public class TipoIdentificacionService {
 
 	public TipoIdentificacionDTO create(TipoIdentificacionDTO tipoIdentificacionDTO) {
 		estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		tipoIdentificacionDTO.setId(null);
 
 		return tipoIdentificacionMapper
-			.toDTO(tipoIdentificacionRepository.save(tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO)));
+				.toDTO(tipoIdentificacionRepository.save(tipoIdentificacionMapper.toEntity(tipoIdentificacionDTO)));
 	}
 
 	public void update(Long requestedId, TipoIdentificacionDTO tipoIdentificacionDTO) {
 		tipoIdentificacionRepository.findById(requestedId)
-			.orElseThrow(() -> new BadRequestException("El tipo de identificaci�n no existe"));
+				.orElseThrow(() -> new BadRequestException("El tipo de identificaci�n no existe"));
 
 		estadoRepository.findById(tipoIdentificacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		tipoIdentificacionDTO.setId(requestedId);
 
@@ -67,7 +67,7 @@ public class TipoIdentificacionService {
 
 	public void delete(Long id) {
 		tipoIdentificacionRepository.findById(id)
-			.orElseThrow(() -> new NotFoundException("El tipo de identificaci�n no existe"));
+				.orElseThrow(() -> new NotFoundException("El tipo de identificaci�n no existe"));
 
 		tipoIdentificacionRepository.deleteById(id);
 	}

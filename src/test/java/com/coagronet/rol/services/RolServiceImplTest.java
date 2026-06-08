@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +25,6 @@ import com.coagronet.rol.dtos.RolResponseDTO;
 import com.coagronet.rol.mappers.RolMapper;
 import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.rol.services.impl.RolServiceImpl;
-import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticatedUser;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -64,7 +63,7 @@ class RolServiceImplTest {
                 .nombre("Operario")
                 .descripcion("Rol operativo")
                 .estado(buildEstado(1L))
-                .createdAt(OffsetDateTime.now())
+                .createdAt(Instant.now())
                 .build();
 
         RolResponseDTO expected = new RolResponseDTO(10L, "Operario", "Rol operativo", 1L, "Activo", "admin",
@@ -100,7 +99,7 @@ class RolServiceImplTest {
 
     @Test
     void update_throwsIllegalStateException_whenRolWasSoftDeleted() {
-        Rol existing = Rol.builder().id(11L).nombre("Operario").deletedAt(OffsetDateTime.now()).build();
+        Rol existing = Rol.builder().id(11L).nombre("Operario").deletedAt(Instant.now()).build();
         when(rolRepository.findById(11L)).thenReturn(Optional.of(existing));
 
         assertThrows(IllegalStateException.class, () -> rolService.update(11L, buildRequest("Operario")));
@@ -128,7 +127,7 @@ class RolServiceImplTest {
     @Test
     void getAll_excludesSoftDeletedRoles() {
         Rol active = Rol.builder().id(1L).nombre("Operario").estado(buildEstado(1L)).deletedAt(null).build();
-        Rol deleted = Rol.builder().id(2L).nombre("Temporal").estado(buildEstado(1L)).deletedAt(OffsetDateTime.now())
+        Rol deleted = Rol.builder().id(2L).nombre("Temporal").estado(buildEstado(1L)).deletedAt(Instant.now())
                 .build();
 
         when(rolRepository.findAll()).thenReturn(List.of(active, deleted));

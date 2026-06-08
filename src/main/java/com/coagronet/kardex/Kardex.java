@@ -1,6 +1,6 @@
 package com.coagronet.kardex;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.TenantId;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -24,6 +25,7 @@ import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
+import com.coagronet.user.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -114,9 +116,11 @@ public class Kardex {
 
 	// --- Metadatos de Auditor?a y Seguridad ---
 
+	@CreatedBy
 	@LastModifiedBy
-	@Column(name = "kar_seg_username", length = 150)
-	private String username;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_seg_username", referencedColumnName = "usu_id")
+	private User username;
 
 	@Column(name = "kar_seg_rol", length = 100)
 	private String rol;
@@ -131,7 +135,7 @@ public class Kardex {
 	@LastModifiedDate
 	@CreatedDate
 	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private LocalDateTime segFechaHora;
+	private Instant segFechaHora;
 
 	@Builder.Default
 	@OneToMany(mappedBy = "kardex", cascade = CascadeType.ALL, orphanRemoval = true)

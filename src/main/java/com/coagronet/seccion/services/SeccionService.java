@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.coagronet.espacio.repositories.EspacioRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.seccion.dtos.SeccionDTO;
 import com.coagronet.seccion.mapper.SeccionMapper;
 import com.coagronet.seccion.repositories.SeccionRepository;
@@ -39,16 +39,16 @@ public class SeccionService {
 
 	public Optional<SeccionDTO> findById(Long requestedId) {
 		return seccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(seccionMapper::toListDTO);
+				.map(seccionMapper::toListDTO);
 	}
 
 	public SeccionDTO create(SeccionDTO seccionDTO) {
 		espacioRepository
-			.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
+				.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
 
 		estadoRepository.findById(seccionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		seccionDTO.setId(null);
 		seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -58,14 +58,14 @@ public class SeccionService {
 
 	public void update(Long requestedId, SeccionDTO seccionDTO) {
 		seccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada."));
+				.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada."));
 
 		espacioRepository
-			.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
+				.findByIdAndEmpresaId(seccionDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
 
 		estadoRepository.findById(seccionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		seccionDTO.setId(requestedId);
 		seccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -75,7 +75,7 @@ public class SeccionService {
 
 	public void delete(Long id) {
 		seccionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada."));
+				.orElseThrow(() -> new NotFoundException("La secci�n no fue encontrada."));
 
 		seccionRepository.deleteById(id);
 	}

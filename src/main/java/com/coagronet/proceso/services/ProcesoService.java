@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.proceso.dtos.ProcesoDTO;
 import com.coagronet.proceso.mappers.ProcesoMapper;
 import com.coagronet.proceso.repositories.ProcesoRepository;
@@ -33,22 +33,22 @@ public class ProcesoService {
 
 	public List<ProcesoDTO> findAll() {
 		return procesoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.stream()
-			.map(procesoMapper::toListDTO)
-			.collect(Collectors.toList());
+				.stream()
+				.map(procesoMapper::toListDTO)
+				.collect(Collectors.toList());
 	}
 
 	public Optional<ProcesoDTO> findById(Long requestedId) {
 		return procesoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(procesoMapper::toListDTO);
+				.map(procesoMapper::toListDTO);
 	}
 
 	public ProcesoDTO create(ProcesoDTO procesoDTO) {
 		tipoProduccionRepository.findById(procesoDTO.getTipoProduccionId())
-			.orElseThrow(() -> new BadRequestException("El tipo de producción no es válido"));
+				.orElseThrow(() -> new BadRequestException("El tipo de producción no es válido"));
 
 		estadoRepository.findById(procesoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		procesoDTO.setId(null);
 		procesoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -58,13 +58,13 @@ public class ProcesoService {
 
 	public void update(Long requestedId, ProcesoDTO procesoDTO) {
 		procesoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("El proceso no fue encontrado."));
+				.orElseThrow(() -> new NotFoundException("El proceso no fue encontrado."));
 
 		tipoProduccionRepository.findById(procesoDTO.getTipoProduccionId())
-			.orElseThrow(() -> new BadRequestException("El tipo de producción no es válido"));
+				.orElseThrow(() -> new BadRequestException("El tipo de producción no es válido"));
 
 		estadoRepository.findById(procesoDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		procesoDTO.setId(requestedId);
 		procesoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -74,7 +74,7 @@ public class ProcesoService {
 
 	public void delete(Long id) {
 		procesoRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("El proceso no fue encontrado."));
+				.orElseThrow(() -> new NotFoundException("El proceso no fue encontrado."));
 
 		procesoRepository.deleteById(id);
 	}
