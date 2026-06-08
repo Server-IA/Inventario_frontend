@@ -1,6 +1,6 @@
 package com.coagronet.empresarol;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.hibernate.annotations.TenantId;
 import org.springframework.data.annotation.CreatedBy;
@@ -12,6 +12,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.rol.Rol;
+import com.coagronet.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -67,18 +68,20 @@ public class EmpresaRol {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @CreatedBy
-    @Column(name = "created_by", length = 150)
-    private String createdBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", updatable = false)
+    private User createdBy;
 
     @LastModifiedBy
-    @Column(name = "updated_by", length = 150)
-    private String updatedBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by")
+    private User updatedBy;
 
 }
