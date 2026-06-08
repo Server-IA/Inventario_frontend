@@ -4,17 +4,18 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
-import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.presentacionProducto.PresentacionProducto;
 import com.coagronet.presentacionProducto.repositories.PresentacionProductoRepository;
+import com.coagronet.user.User;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class ArticuloKardexFactory {
 
 	private final RequestUtils requestUtils;
 
-	private final AuthenticationService authenticationService;
+	private final AuditorAware<User> auditorAware;
 
 	public List<ArticuloKardex> crearArticulos(ArticuloKardexDTO dto, Long empresaId, HttpServletRequest request) {
 		if (esDesgregado(dto, empresaId)) {
@@ -81,7 +82,7 @@ public class ArticuloKardexFactory {
 		entidad.setIp(requestUtils.getClientIp(request));
 		entidad.setHost(requestUtils.getClientHost(request));
 
-		entidad.setUsername(authenticationService.getAuthenticatedUser().getUsername());
+		auditorAware.getCurrentAuditor().ifPresent(entidad::setUsername);
 
 		entidad.setRol(requestUtils.getAuthenticatedRole());
 	}

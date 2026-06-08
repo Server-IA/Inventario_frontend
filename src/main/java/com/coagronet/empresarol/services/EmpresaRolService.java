@@ -12,6 +12,7 @@ import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.rol.Rol;
+import com.coagronet.user.User;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
@@ -20,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -60,12 +61,12 @@ public class EmpresaRolService {
         Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
         Estado estado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 
-        String username = authenticationService.getAuthenticatedUser().getUsername();
+        User currentUser = authenticationService.getAuthenticatedUser();
 
         EmpresaRol empresaRol = EmpresaRol.builder()
                 .empresa(empresa)
                 .rol(rol)
-                .createdBy(username)
+                .createdBy(currentUser)
                 .estado(estado)
                 .build();
 
@@ -78,7 +79,7 @@ public class EmpresaRolService {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
         EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
-        String username = authenticationService.getAuthenticatedUser().getUsername();
+        User currentUser = authenticationService.getAuthenticatedUser();
 
         if (dto.getRolId() != null) {
             Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
@@ -95,8 +96,8 @@ public class EmpresaRolService {
         }
 
         empresaRolMapper.updateEntityFromDto(dto, empresaRol);
-        empresaRol.setUpdatedBy(username);
-        empresaRol.setUpdatedAt(OffsetDateTime.now());
+        empresaRol.setUpdatedBy(currentUser);
+        empresaRol.setUpdatedAt(Instant.now());
     }
 
     @Transactional
@@ -104,11 +105,11 @@ public class EmpresaRolService {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
         EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
         Estado estado = entidadValidatorFacade.validarEstadoGeneral(estadoId);
-        String username = authenticationService.getAuthenticatedUser().getUsername();
+        User currentUser = authenticationService.getAuthenticatedUser();
 
         empresaRol.setEstado(estado);
-        empresaRol.setUpdatedBy(username);
-        empresaRol.setUpdatedAt(OffsetDateTime.now());
+        empresaRol.setUpdatedBy(currentUser);
+        empresaRol.setUpdatedAt(Instant.now());
     }
 
     @Transactional
