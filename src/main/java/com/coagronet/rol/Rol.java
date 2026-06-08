@@ -1,7 +1,7 @@
 package com.coagronet.rol;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -91,12 +91,12 @@ public class Rol implements Serializable {
 
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private Instant createdAt;
+	private OffsetDateTime createdAt;
 
 	@LastModifiedDate
 	@Column(name = "updated_at")
-	private Instant updatedAt;
+	private OffsetDateTime updatedAt;
 
 	@Column(name = "deleted_at")
-	private Instant deletedAt;
+	private OffsetDateTime deletedAt;
 }

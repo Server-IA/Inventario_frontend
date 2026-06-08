@@ -23,8 +23,8 @@ import com.coagronet.departamento.Departamento;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.municipio.dtos.MunicipioDTO;
 import com.coagronet.municipio.mappers.MunicipioMapper;
 import com.coagronet.municipio.repositories.MunicipioRepository;
@@ -45,14 +45,13 @@ public class MunicipioService {
 	private final EstadoRepository estadoRepository;
 
 	@Transactional(readOnly = true)
-	public List<MunicipioDTO> findAll(Long departamentoId, String nombre, Integer codigo, String acronimo,
-			Long estadoId) {
+	public List<MunicipioDTO> findAll(Long departamentoId, String nombre, Integer codigo, String acronimo, Long estadoId) {
 		return municipioRepository
-				.findByDepartamentoIdWithFilters(departamentoId, normalizeText(nombre), codigo, normalizeText(acronimo),
-						estadoId)
-				.stream()
-				.map(municipioMapper::toListDto)
-				.toList();
+			.findByDepartamentoIdWithFilters(departamentoId, normalizeText(nombre), codigo, normalizeText(acronimo),
+					estadoId)
+			.stream()
+			.map(municipioMapper::toListDto)
+			.toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -74,10 +73,10 @@ public class MunicipioService {
 	@Transactional
 	public void update(Long requestedId, MunicipioDTO municipioDTO) {
 		municipioRepository.findById(requestedId)
-				.orElseThrow(() -> new NotFoundException("municipality.not-found.with-id", requestedId));
+			.orElseThrow(() -> new NotFoundException("municipality.not-found.with-id", requestedId));
 
 		Departamento departamento = departamentoRepository.findById(municipioDTO.getDepartamentoId())
-				.orElseThrow(() -> new BadRequestException("municipality.department.not.valid"));
+			.orElseThrow(() -> new BadRequestException("municipality.department.not.valid"));
 		validateGeneralStatus(municipioDTO.getEstadoId(), "municipality.status.not.valid");
 		validateCanBeActive(municipioDTO.getEstadoId(), departamento);
 		validateUniqueFields(municipioDTO, requestedId);
@@ -90,7 +89,7 @@ public class MunicipioService {
 	@Transactional
 	public void delete(Long id) {
 		var municipio = municipioRepository.findById(id)
-				.orElseThrow(() -> new NotFoundException("municipality.not-found.with-id", id));
+			.orElseThrow(() -> new NotFoundException("municipality.not-found.with-id", id));
 		Estado inactiveStatus = getInactiveStatus();
 
 		municipio.setEstado(inactiveStatus);
@@ -99,7 +98,7 @@ public class MunicipioService {
 
 	private Departamento validateActiveDepartment(Long departamentoId) {
 		Departamento departamento = departamentoRepository.findById(departamentoId)
-				.orElseThrow(() -> new BadRequestException("municipality.department.not.valid"));
+			.orElseThrow(() -> new BadRequestException("municipality.department.not.valid"));
 
 		if (departamento.getEstado() == null
 				|| !EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(departamento.getEstado().getId())) {
@@ -116,7 +115,7 @@ public class MunicipioService {
 
 	private Estado validateGeneralStatus(Long estadoId, String errorCode) {
 		Estado estado = estadoRepository.findById(estadoId)
-				.orElseThrow(() -> new BadRequestException(errorCode));
+			.orElseThrow(() -> new BadRequestException(errorCode));
 
 		if (!EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(estado.getId())
 				&& !EstadoConstantes.ESTADO_GENERAL_INACTIVO.equals(estado.getId())) {
@@ -128,7 +127,7 @@ public class MunicipioService {
 
 	private Estado getInactiveStatus() {
 		return estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_INACTIVO)
-				.orElseThrow(() -> new BadRequestException("municipality.status.not.valid"));
+			.orElseThrow(() -> new BadRequestException("municipality.status.not.valid"));
 	}
 
 	private void validateCanBeActive(Long estadoId, Departamento departamento) {
@@ -150,8 +149,7 @@ public class MunicipioService {
 	private void validateUniqueFields(MunicipioDTO municipioDTO, Long currentId) {
 		Long departamentoId = municipioDTO.getDepartamentoId();
 		if (currentId == null) {
-			if (municipioRepository.existsByDepartamentoIdAndNombreIgnoreCase(departamentoId,
-					municipioDTO.getNombre())) {
+			if (municipioRepository.existsByDepartamentoIdAndNombreIgnoreCase(departamentoId, municipioDTO.getNombre())) {
 				throw new BadRequestException("municipality.name.duplicate");
 			}
 			if (municipioDTO.getCodigo() != null
@@ -174,9 +172,8 @@ public class MunicipioService {
 				departamentoId, municipioDTO.getCodigo(), currentId)) {
 			throw new BadRequestException("municipality.code.duplicate");
 		}
-		if (municipioDTO.getAcronimo() != null
-				&& municipioRepository.existsByDepartamentoIdAndAcronimoIgnoreCaseAndIdNot(
-						departamentoId, municipioDTO.getAcronimo(), currentId)) {
+		if (municipioDTO.getAcronimo() != null && municipioRepository.existsByDepartamentoIdAndAcronimoIgnoreCaseAndIdNot(
+				departamentoId, municipioDTO.getAcronimo(), currentId)) {
 			throw new BadRequestException("municipality.acronym.duplicate");
 		}
 	}
@@ -186,3 +183,12 @@ public class MunicipioService {
 	}
 
 }
+
+
+
+
+
+
+
+
+

@@ -1,8 +1,8 @@
 package com.coagronet.productoLocalizacion.services;
 
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.productoLocalizacion.mappers.ProductoLocalizacionMapper;
 import com.coagronet.productoLocalizacion.repositories.ProductoLocalizacionRepository;
 import com.coagronet.productoLocalizacion.dtos.ProductoLocalizacionDTO;
@@ -32,16 +32,16 @@ public class ProductoLocalizacionService {
 
 	public List<ProductoLocalizacionDTO> findAll() {
 		return productoLocalizacionRepository
-				.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream()
-				.map(productoLocalizacionMapper::toDto)
-				.collect(Collectors.toList());
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.stream()
+			.map(productoLocalizacionMapper::toDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<ProductoLocalizacionDTO> findById(Long requestedId) {
 		return productoLocalizacionRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(productoLocalizacionMapper::toDto);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(productoLocalizacionMapper::toDto);
 	}
 
 	@Transactional
@@ -49,27 +49,26 @@ public class ProductoLocalizacionService {
 
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		estadoRepository.findById(productoLocalizacionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		subseccionRepository.findByIdAndEmpresaId(productoLocalizacionDTO.getSubseccionId(), empresaId)
-				.orElseThrow(() -> new BadRequestException("La subseccion no es válida para esta empresa"));
+			.orElseThrow(() -> new BadRequestException("La subseccion no es válida para esta empresa"));
 
 		productoLocalizacionDTO.setEmpresaId(empresaId);
 
 		return productoLocalizacionMapper
-				.toDto(productoLocalizacionRepository
-						.save(productoLocalizacionMapper.toEntity(productoLocalizacionDTO)));
+			.toDto(productoLocalizacionRepository.save(productoLocalizacionMapper.toEntity(productoLocalizacionDTO)));
 	}
 
 	@Transactional
 	public void update(Long requestedId, ProductoLocalizacionDTO productoLocalizacionDTO) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		productoLocalizacionRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("ProductoLocalizacion no encontrada o no válida"));
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new NotFoundException("ProductoLocalizacion no encontrada o no válida"));
 
 		estadoRepository.findById(productoLocalizacionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		productoLocalizacionDTO.setId(requestedId);
 		productoLocalizacionDTO.setEmpresaId(empresaId);
@@ -82,7 +81,7 @@ public class ProductoLocalizacionService {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
 		productoLocalizacionRepository.findByIdAndEmpresaId(requestId, empresaId)
-				.orElseThrow(() -> new NotFoundException("ProductoLocalizacion no encontrado o no válido"));
+			.orElseThrow(() -> new NotFoundException("ProductoLocalizacion no encontrado o no válido"));
 
 		productoLocalizacionRepository.deleteById(requestId);
 	}

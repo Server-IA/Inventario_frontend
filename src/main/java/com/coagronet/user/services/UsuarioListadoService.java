@@ -18,6 +18,8 @@ import com.coagronet.user.dtos.UsuarioFiltroRequest;
 import com.coagronet.user.dtos.UsuarioListResponse;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.repositories.UserSpecifications;
+import com.coagronet.user.dtos.UserMinimalDTO;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +45,27 @@ public class UsuarioListadoService {
                 Page<User> usersPage = userRepository.findAll(spec, pageable);
 
                 return usersPage.map(user -> mapToResponse(user, isSystemAdmin, forcedEmpresaId));
+        }
+
+        @Transactional(readOnly = true)
+        public List<UserMinimalDTO> listarUsuariosMinimal(UsuarioFiltroRequest filtro) {
+
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+                Long forcedEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+                Specification<User> spec = UserSpecifications.conFiltros(filtro, forcedEmpresaId);
+
+                List<User> users = userRepository.findAll(spec);
+
+                return users.stream().map(user -> new UserMinimalDTO(
+                                user.getId(),
+                                user.getUsername(),
+                                user.getPersona() != null ? user.getPersona().getNombre() : null
+                )).toList();
         }
 
         private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
@@ -141,16 +164,13 @@ public class UsuarioListadoService {
                 return new UsuarioDetalleResponse(
                                 user.getUsername(),
                                 personaId,
-                                (user.getPersona() != null && user.getPersona().getTipoIdentificacion() != null) ? user.getPersona().getTipoIdentificacion().getId() : null,
                                 (user.getPersona() != null) ? user.getPersona().getIdentificacion() : null,
                                 (user.getPersona() != null) ? user.getPersona().getNombre() : null,
                                 (user.getPersona() != null) ? user.getPersona().getApellido() : null,
-                                (user.getPersona() != null) ? user.getPersona().getEmailPersonal() : null,
                                 (user.getPersona() != null) ? user.getPersona().getGenero() : null,
                                 (user.getPersona() != null) ? user.getPersona().getFechaNacimiento() : null,
                                 (user.getPersona() != null) ? user.getPersona().getDireccion() : null,
                                 (user.getPersona() != null) ? user.getPersona().getCelular() : null,
-                                (user.getPersona() != null) ? user.getPersona().getEstrato() : null,
                                 rolPreferidoId,
                                 empresaPreferidaId,
                                 asignaciones);

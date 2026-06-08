@@ -1,5 +1,7 @@
 package com.coagronet.user.controllers;
 
+import java.util.List;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -152,6 +154,22 @@ public class UserController {
 			@ParameterObject Pageable pageable) {
 
 		Page<UsuarioListResponse> response = usuarioListadoService.listarUsuarios(filtro, pageable);
+		return ResponseEntity.ok(response);
+	}
+
+	@Operation(summary = "Listar usuarios mínimos", description = "Obtiene un listado de usuarios con campos id y nombre, filtrados por la empresa del usuario actual sin paginación.", tags = {
+			"Usuarios" }, security = { @SecurityRequirement(name = "bearerAuth") })
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente."),
+			@ApiResponse(responseCode = "401", description = "No autenticado.", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado.", content = @Content)
+	})
+	@GetMapping(value = "/api/v1/usuarios", params = "fields=id,nombre")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<List<UserMinimalDTO>> listarUsuariosMinimal(
+			@ParameterObject UsuarioFiltroRequest filtro) {
+
+		List<UserMinimalDTO> response = usuarioListadoService.listarUsuariosMinimal(filtro);
 		return ResponseEntity.ok(response);
 	}
 

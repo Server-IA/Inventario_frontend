@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.almacen.repositories.AlmacenRepository;
 import com.coagronet.estado.support.EstadoResolver;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.inventario.gateway.InventarioGateway;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.pedido.dtos.PedidoDTO;
@@ -55,19 +55,19 @@ public class PedidoService {
 	private Pedido getByIdAndEmpresaOrThrow(Long id) {
 		Long empId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return pedidoRepository.findByIdAndEmpresaId(id, empId)
-				.orElseThrow(() -> new NotFoundException("pedido.not-found", id));
+			.orElseThrow(() -> new NotFoundException("pedido.not-found", id));
 	}
 
 	private void ensureTransition(Pedido p, String targetAcr, String... allowedFromAcrs) {
 		Long currentId = p.getEstado().getId();
 		Long targetId = estadoId(targetAcr);
 		Set<Long> allowed = Arrays.stream(allowedFromAcrs)
-				.map(this::estadoId)
-				.collect(java.util.stream.Collectors.toSet());
+			.map(this::estadoId)
+			.collect(java.util.stream.Collectors.toSet());
 		if (!allowed.contains(currentId)) {
-			throw new BadRequestException("pedido.estado.transition.not-allowed " + currentId + " a " + targetId
-					+ " (target=" + targetAcr
-					+ ", allowedFrom=" + Arrays.toString(allowedFromAcrs) + ")");
+			throw new BadRequestException("pedido.estado.transition.not-allowed",
+					"Transici?n inv?lida de estadoId=" + currentId + " a estadoId=" + targetId + " (target=" + targetAcr
+							+ ", allowedFrom=" + Arrays.toString(allowedFromAcrs) + ")");
 		}
 	}
 
@@ -82,25 +82,25 @@ public class PedidoService {
 
 	public Page<PedidoDTO> findAll(Pageable pageable) {
 		return pedidoRepository
-				.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
-				.map(pedidoMapper::toDto);
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
+			.map(pedidoMapper::toDto);
 	}
 
 	public PedidoDTO findById(Long requestedId) {
 		return pedidoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(pedidoMapper::toDto)
-				.orElseThrow(() -> new NotFoundException("pedido.not-found", requestedId));
+			.map(pedidoMapper::toDto)
+			.orElseThrow(() -> new NotFoundException("pedido.not-found", requestedId));
 	}
 
 	@Transactional
 	public Long create(PedidoDTO dto) {
 		if (dto.getAlmacenId() != null) {
 			almacenRepository.findById(dto.getAlmacenId())
-					.orElseThrow(() -> new NotFoundException("almacen.not-found", dto.getAlmacenId()));
+				.orElseThrow(() -> new NotFoundException("almacen.not-found", dto.getAlmacenId()));
 		}
 		if (dto.getProduccionId() != null) {
 			produccionRepository.findById(dto.getProduccionId())
-					.orElseThrow(() -> new NotFoundException("produccion.not-found", dto.getProduccionId()));
+				.orElseThrow(() -> new NotFoundException("produccion.not-found", dto.getProduccionId()));
 		}
 
 		dto.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -153,8 +153,8 @@ public class PedidoService {
 
 		var res = inventarioGateway.validarRequisitosParaCompletar(pedidoId);
 		if (!res.isOk()) {
-			String motivo = res.getMotivoFallo() != null ? res.getMotivoFallo() : "Aún hay ítems pendientes por recibir/verificar/registrar en inventario.";
-			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos: " + motivo);
+			throw new BadRequestException("pedido.completar.requisitos-no-cumplidos", res.getMotivoFallo() != null
+					? res.getMotivoFallo() : "A?n hay ?tems pendientes por recibir/verificar/registrar en inventario.");
 		}
 
 		ensureTransition(p, COMPLETADO, CON_ORDEN_COMPRA);

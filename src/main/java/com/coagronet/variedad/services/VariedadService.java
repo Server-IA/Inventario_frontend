@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.variedad.mappers.VariedadMapper;
 import com.coagronet.variedad.repositories.VariedadRepository;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VariedadService {
 
+    
     private final VariedadRepository variedadRepository;
     private final VariedadMapper variedadMapper;
     private final EstadoRepository estadoRepository;
@@ -54,21 +56,23 @@ public class VariedadService {
     public void update(Long requestedId, VariedadDTO variedadDTO) {
         variedadRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .orElseThrow(() -> new NotFoundException("Variedad no encontrada o no válida."));
-
+        
         estadoRepository.findById(variedadDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
-
+        
         variedadDTO.setId(requestedId);
         variedadDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
-
+        
         variedadRepository.save(variedadMapper.toEntity(variedadDTO));
     }
 
     @Transactional
     public void delete(Long requestId) {
         variedadRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("Variedad no encontrada o no válida."));
+            .orElseThrow(() -> new NotFoundException("Variedad no encontrada o no válida."));
         variedadRepository.deleteById((requestId));
     }
+    
 
+    
 }

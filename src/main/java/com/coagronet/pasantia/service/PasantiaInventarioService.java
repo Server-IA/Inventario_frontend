@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
+import com.coagronet.infrastructure.configuration.EmpresaTenantIdentifierResolver;
 import com.coagronet.pasantia.dto.InventarioAsignadoDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoItemDTO;
 import com.coagronet.pasantia.dto.InventarioProgresoRequestDTO;
@@ -28,6 +29,38 @@ public class PasantiaInventarioService {
         private final PasantiaInventarioRepository inventarioRepository;
         private final PasantiaInventarioProgresoRepository inventarioProgresoRepository;
         private final AuthenticatedUser authenticatedUser;
+        private final EmpresaTenantIdentifierResolver empresaTenantIdentifierResolver;
+        private final com.coagronet.usuariorol.repositories.UsuarioRolRepository usuarioRolRepository;
+
+        @Transactional
+        public Long crearInventario(com.coagronet.pasantia.dto.InventarioCreateRequestDTO request) {
+                Long empId = empresaTenantIdentifierResolver.resolveCurrentTenantIdentifier();
+                if (empId == null) {
+                        throw new IllegalStateException("No se pudo determinar la empresa del usuario actual");
+                }
+
+                boolean perteneceEmpresa = usuarioRolRepository.existsByUser_IdAndEmpresa_IdAndDeletedAtIsNull(
+                                request.getUsuarioAsignadoId(), empId);
+
+                if (!perteneceEmpresa) {
+                        throw new IllegalArgumentException("El usuario asignado no pertenece a su empresa");
+                }
+
+                com.coagronet.pasantia.entity.Inventario nuevoInventario = com.coagronet.pasantia.entity.Inventario
+                                .builder()
+                                .empId(empId)
+                                .nombre(request.getNombre())
+                                .descripcion(request.getDescripcion())
+                                .fechaHora(request.getFechaHora())
+                                .subseccion(com.coagronet.pasantia.entity.Subseccion.builder()
+                                                .id(request.getSubseccionId()).build())
+                                .estado(com.coagronet.pasantia.entity.EstadoInventario.builder().id((short) 1).build())
+                                .usuarioAsignadoId(request.getUsuarioAsignadoId())
+                                .build();
+
+                nuevoInventario = inventarioRepository.save(nuevoInventario);
+                return nuevoInventario.getId();
+        }
 
         @Transactional(readOnly = true)
         public List<InventarioAsignadoDTO> getInventariosAsignados() {
@@ -100,6 +133,7 @@ public class PasantiaInventarioService {
                                 .mensaje("Progreso guardado correctamente")
                                 .build();
         }
+
         @Transactional
         public MensajeResponseDTO finalizarInventario(Long inventarioId, InventarioProgresoRequestDTO request) {
                 guardarProgreso(inventarioId, request);

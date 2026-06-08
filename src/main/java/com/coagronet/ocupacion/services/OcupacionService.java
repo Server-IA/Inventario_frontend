@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.evaluacion.repositories.EvaluacionRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.ocupacion.dtos.OcupacionDTO;
 import com.coagronet.ocupacion.mappers.OcupacionMapper;
 import com.coagronet.ocupacion.repositories.OcupacionRepository;
@@ -41,23 +41,22 @@ public class OcupacionService {
 
 	public Optional<OcupacionDTO> findById(Long requestedId) {
 		return ocupacionRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(ocupacionMapper::toListDTO);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(ocupacionMapper::toListDTO);
 	}
 
 	public OcupacionDTO create(OcupacionDTO ocupacionDTO) {
 		tipoActividadRepository
-				.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de actividad no es v�lido."));
+			.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es v�lido."));
 
 		evaluacionRepository
-				.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(),
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("La evaluaci�n no es v�lida."));
+			.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La evaluaci�n no es v�lida."));
 
 		estadoRepository.findById(ocupacionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
 
 		ocupacionDTO.setId(null);
 		ocupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -67,20 +66,19 @@ public class OcupacionService {
 
 	public void update(Long requestedId, OcupacionDTO ocupacionDTO) {
 		ocupacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("La ocupaci�n no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La ocupaci�n no fue encontrada."));
 
 		tipoActividadRepository
-				.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de actividad no es v�lido."));
+			.findByIdAndEmpresaId(ocupacionDTO.getTipoActividadId(),
+					userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de actividad no es v�lido."));
 
 		evaluacionRepository
-				.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(),
-						userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("La evaluaci�n no es v�lida."));
+			.findByIdAndEmpresaId(ocupacionDTO.getEvaluacionId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("La evaluaci�n no es v�lida."));
 
 		estadoRepository.findById(ocupacionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
 
 		ocupacionDTO.setId(requestedId);
 		ocupacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -90,7 +88,7 @@ public class OcupacionService {
 
 	public void delete(Long id) {
 		ocupacionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("La ocupaci�n no fue encontrada."));
+			.orElseThrow(() -> new NotFoundException("La ocupaci�n no fue encontrada."));
 
 		ocupacionRepository.deleteById(id);
 	}
