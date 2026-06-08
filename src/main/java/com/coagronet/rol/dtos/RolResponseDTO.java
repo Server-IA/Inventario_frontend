@@ -1,8 +1,8 @@
 package com.coagronet.rol.dtos;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 
 public record RolResponseDTO(Long id, String nombre, String descripcion, Long estadoId, String estadoNombre,
-        String createdBy, Instant createdAt, String updatedBy, Instant updatedAt) {
+        String createdBy, OffsetDateTime createdAt, String updatedBy, OffsetDateTime updatedAt) {
 
 }

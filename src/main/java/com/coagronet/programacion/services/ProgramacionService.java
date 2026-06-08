@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 import org.springframework.stereotype.Service;
 
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.programacion.dtos.ProgramacionDTO;
 import com.coagronet.programacion.mappers.ProgramacionMapper;
@@ -34,28 +35,29 @@ public class ProgramacionService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<ProgramacionDTO> findById(Long requestedId) {
+    public Optional<ProgramacionDTO> findById(Long requestedId){
         return programacionRepository
-                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .map(programacionMapper::toDto);
+            .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+            .map(programacionMapper::toDto);
     }
 
     @Transactional
-    public ProgramacionDTO create(ProgramacionDTO programacionDTO) {
+    public ProgramacionDTO create (ProgramacionDTO programacionDTO) {
         estadoRepository.findById(programacionDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
         programacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
         return programacionMapper.toDto(programacionRepository.save(programacionMapper.toEntity(programacionDTO)));
     }
 
+
     @Transactional
     public void update(Long requestedId, ProgramacionDTO programacionDTO) {
         programacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .orElseThrow(() -> new NotFoundException("El tipo de medición no se ha encontrado o no es válido."));
-
+            
         estadoRepository.findById(programacionDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
-
+        
         programacionDTO.setId(requestedId);
         programacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
         programacionRepository.save(programacionMapper.toEntity(programacionDTO));
@@ -67,5 +69,5 @@ public class ProgramacionService {
                 .orElseThrow(() -> new NotFoundException("El tipo de medición no se ha encontrado o no es válido."));
         programacionRepository.deleteById(requestId);
     }
-
+    
 }

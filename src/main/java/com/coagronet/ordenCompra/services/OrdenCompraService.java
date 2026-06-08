@@ -13,8 +13,8 @@ import com.coagronet.articuloOrdenCompra.ArticuloOrdenCompra;
 import com.coagronet.articuloOrdenCompra.repositories.ArticuloOrdenCompraRepository;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.ordenCompra.constantes.OrdenCompraConstantes;
 import com.coagronet.ordenCompra.constantes.PedidoConstantes;
@@ -55,15 +55,15 @@ public class OrdenCompraService {
 
 	public Page<OrdenCompraDTO> findAll(Pageable pageable) {
 		return ordenCompraRepository
-				.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
-				.map(ordenCompraMapper::toDTO);
+			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
+			.map(ordenCompraMapper::toDTO);
 	}
 
 	public OrdenCompraDTO findById(Long requestedId) {
 		return ordenCompraRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(ordenCompraMapper::toDTO)
-				.orElseThrow(() -> new NotFoundException("orden-compra.not-found", requestedId));
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(ordenCompraMapper::toDTO)
+			.orElseThrow(() -> new NotFoundException("orden-compra.not-found", requestedId));
 	}
 
 	@Transactional
@@ -75,7 +75,7 @@ public class OrdenCompraService {
 		Pedido pedido = entidadValidatorFacade.validarPedido(ordenCompraDTO.getPedidoId(), empresaId);
 		Proveedor proveedor = entidadValidatorFacade.validarProveedor(ordenCompraDTO.getProveedorId(), empresaId);
 		Estado estadoInicial = entidadValidatorFacade
-				.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_INICIAL_ACTIVO);
+			.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_INICIAL_ACTIVO);
 
 		OrdenCompra ordenCompra = ordenCompraMapper.toEntity(ordenCompraDTO);
 
@@ -121,15 +121,15 @@ public class OrdenCompraService {
 
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
 		Estado nuevoEstadoOrdenCompra = entidadValidatorFacade
-				.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR);
+			.validarEstadoParaOrdenCompra(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_ENTREGADO_AL_PROVEEDOR);
 		if (!ordenCompra.getEstado().getId().equals(OrdenCompraConstantes.ESTADO_ORDEN_COMPRA_INICIAL_ACTIVO)) {
-			throw new BadRequestException("Solo las órdenes de compra con estado activo pueden enviarse al proveedor");
+			throw new BadRequestException("Solo las ordenes de compra con estado activo pueden enviarse al proveedor");
 		}
 
 		ordenCompra.setEstado(nuevoEstadoOrdenCompra);
 		Pedido pedido = ordenCompra.getPedido();
 		Estado nuevoEstadoPedido = entidadValidatorFacade
-				.validarEstadoParaPedido(PedidoConstantes.ESTADO_CON_ORDEN_COMPRA);
+			.validarEstadoParaPedido(PedidoConstantes.ESTADO_CON_ORDEN_COMPRA);
 		pedido.setEstado(nuevoEstadoPedido);
 		pedidoRepository.save(pedido);
 
@@ -145,10 +145,10 @@ public class OrdenCompraService {
 		OrdenCompra ordenCompra = entidadValidatorFacade.validarOrdenCompra(ordenCompraId, empresaId);
 
 		List<ArticuloOrdenCompra> articulosOC = articuloOrdenCompraRepository
-				.findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(empresaId, ordenCompraId);
+			.findByEmpresaIdAndOrdenCompraIdOrderByIdAsc(empresaId, ordenCompraId);
 
 		List<ArticuloKardex> articulosKardex = articuloKardexRepository
-				.findByEmpresaIdAndKardex_OrdenCompra_IdOrderByIdAsc(empresaId, ordenCompraId);
+			.findByEmpresaIdAndKardex_OrdenCompra_IdOrderByIdAsc(empresaId, ordenCompraId);
 
 		Estado nuevoEstado = ordenCompraEstadoCalculator.calcularNuevoEstado(articulosOC, articulosKardex);
 

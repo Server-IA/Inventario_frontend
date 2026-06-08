@@ -1,8 +1,8 @@
 package com.coagronet.articuloKardex.dtos;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -52,6 +52,6 @@ public class ArticuloKardexDTO {
 
 	private String host;
 
-	private Instant fechaHora;
+	private LocalDateTime fechaHora;
 
 }
