@@ -47,6 +47,7 @@ import com.coagronet.kardex.repositories.KardexAdminViewRepository;
 import com.coagronet.kardex.repositories.KardexRepository;
 import com.coagronet.kardex.repositories.KardexSpecifications;
 import com.coagronet.ordenCompra.OrdenCompra;
+import org.springframework.data.domain.AuditorAware;
 import com.coagronet.ordenCompra.repositories.OrdenCompraRepository;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.pedido.repositories.PedidoRepository;
@@ -91,6 +92,8 @@ public class KardexService {
 	private final EntityManager entityManager;
 
 	private final UserEmpresaService userEmpresaService;
+
+	private final AuditorAware<User> auditorAware;
 
 	private static final Long ESTADO_ACTIVO = 1L;
 
@@ -214,7 +217,7 @@ public class KardexService {
 				.clienteProveedor(clienteProveedor)
 				.descripcion(request.descripcion())
 				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-				.username(metadata.username())
+				.username(auditorAware.getCurrentAuditor().orElse(null))
 				.rol(metadata.rol())
 				.ip(metadata.ip())
 				.host(metadata.host())
@@ -258,7 +261,7 @@ public class KardexService {
 				.precio(dto.precio())
 				.lote(dto.lote())
 				.fechaVencimiento(dto.fechaVencimiento())
-				.username(metadata.username())
+				.username(auditorAware.getCurrentAuditor().orElse(null))
 				.rol(metadata.rol())
 				.ip(metadata.ip())
 				.host(metadata.host())
@@ -503,7 +506,7 @@ public class KardexService {
 						.precio(dto.precio())
 						.lote(dto.lote())
 						.fechaVencimiento(dto.fechaVencimiento())
-						.username(metadata.username())
+						.username(auditorAware.getCurrentAuditor().orElse(null))
 						.rol(metadata.rol())
 						.ip(metadata.ip())
 						.host(metadata.host())
@@ -521,7 +524,7 @@ public class KardexService {
 					.precio(dto.precio())
 					.lote(dto.lote())
 					.fechaVencimiento(dto.fechaVencimiento())
-					.username(metadata.username())
+					.username(auditorAware.getCurrentAuditor().orElse(null))
 					.rol(metadata.rol())
 					.ip(metadata.ip())
 					.host(metadata.host())
@@ -532,7 +535,7 @@ public class KardexService {
 	}
 
 	private void actualizarAuditoriaItem(ArticuloKardex item, MetadatosSeguridad metadata) {
-		item.setUsername(metadata.username());
+		auditorAware.getCurrentAuditor().ifPresent(item::setUsername);
 		item.setRol(metadata.rol());
 		item.setIp(metadata.ip());
 		item.setHost(metadata.host());
