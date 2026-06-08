@@ -10,8 +10,8 @@ import com.coagronet.bloque.dtos.BloqueDTO;
 import com.coagronet.bloque.mappers.BloqueMapper;
 import com.coagronet.bloque.repositories.BloqueRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.sede.repositories.SedeRepository;
 import com.coagronet.tipoBloque.repositories.TipoBloqueRepository;
 import com.coagronet.utils.UserEmpresaService;
@@ -41,19 +41,19 @@ public class BloqueService {
 
 	public Optional<BloqueDTO> findById(Long requestedId) {
 		return bloqueRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(bloqueMapper::toListDto);
+				.map(bloqueMapper::toListDto);
 	}
 
 	public BloqueDTO create(BloqueDTO bloqueDTO) {
 		sedeRepository.findByIdAndEmpresaId(bloqueDTO.getSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La sede no es v�lida"));
+				.orElseThrow(() -> new BadRequestException("La sede no es v�lida"));
 
 		tipoBloqueRepository
-			.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es v�lido"));
+				.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new BadRequestException("El tipo de bloque no es v�lido"));
 
 		estadoRepository.findById(bloqueDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		bloqueDTO.setId(null);
 		bloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -63,17 +63,17 @@ public class BloqueService {
 
 	public void update(Long requestedId, BloqueDTO bloqueDTO) {
 		bloqueRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
+				.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
 
 		sedeRepository.findByIdAndEmpresaId(bloqueDTO.getSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("La sede no es v�lida"));
+				.orElseThrow(() -> new BadRequestException("La sede no es v�lida"));
 
 		tipoBloqueRepository
-			.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El tipo de bloque no es v�lido"));
+				.findByIdAndEmpresaId(bloqueDTO.getTipoBloqueId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new BadRequestException("El tipo de bloque no es v�lido"));
 
 		estadoRepository.findById(bloqueDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		bloqueDTO.setId(requestedId);
 		bloqueDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -83,7 +83,7 @@ public class BloqueService {
 
 	public void delete(Long id) {
 		bloqueRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
+				.orElseThrow(() -> new NotFoundException("Bloque no encontrado"));
 
 		bloqueRepository.deleteById(id);
 	}

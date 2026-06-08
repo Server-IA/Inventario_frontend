@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.tipoModelo.dtos.TipoModeloDTO;
 import com.coagronet.tipoModelo.mappers.TipoModeloMapper;
 import com.coagronet.tipoModelo.repositories.TipoModeloRepository;
@@ -27,19 +27,19 @@ public class TipoModeloService {
 
     public List<TipoModeloDTO> findAll() {
         return tipoModeloRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-            .stream()
-            .map(tipoModeloMapper::toDto)
-            .collect(Collectors.toList());
+                .stream()
+                .map(tipoModeloMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     public Optional<TipoModeloDTO> findById(Long requestedId) {
         return tipoModeloRepository
-            .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-            .map(tipoModeloMapper::toDto);
+                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .map(tipoModeloMapper::toDto);
     }
 
     @Transactional
-    public TipoModeloDTO create (TipoModeloDTO tipoModeloDTO) {
+    public TipoModeloDTO create(TipoModeloDTO tipoModeloDTO) {
         estadoRepository.findById(tipoModeloDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
         tipoModeloDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -66,5 +66,5 @@ public class TipoModeloService {
 
         tipoModeloRepository.deleteById(requestId);
     }
-    
+
 }

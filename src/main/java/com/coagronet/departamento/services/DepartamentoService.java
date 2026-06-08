@@ -25,8 +25,8 @@ import com.coagronet.departamento.mappers.DepartamentoMapper;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.municipio.Municipio;
 import com.coagronet.municipio.repositories.MunicipioRepository;
 import com.coagronet.pais.Pais;
@@ -82,10 +82,10 @@ public class DepartamentoService {
 	@Transactional
 	public void update(Long requestedId, DepartamentoDTO departamentoDTO) {
 		Departamento existing = departamentoRepository.findById(requestedId)
-			.orElseThrow(() -> new NotFoundException("department.not-found.with-id", requestedId));
+				.orElseThrow(() -> new NotFoundException("department.not-found.with-id", requestedId));
 
 		Pais pais = paisRepository.findById(departamentoDTO.getPaisId())
-			.orElseThrow(() -> new BadRequestException("department.country.not.valid"));
+				.orElseThrow(() -> new BadRequestException("department.country.not.valid"));
 		Estado estado = validateGeneralStatus(departamentoDTO.getEstadoId(), "department.status.not.valid");
 		validateCanBeActive(departamentoDTO.getEstadoId(), pais);
 		validateUniqueFields(departamentoDTO, existing.getId());
@@ -102,7 +102,7 @@ public class DepartamentoService {
 	@Transactional
 	public void delete(Long id) {
 		Departamento departamento = departamentoRepository.findById(id)
-			.orElseThrow(() -> new NotFoundException("department.not-found.with-id", id));
+				.orElseThrow(() -> new NotFoundException("department.not-found.with-id", id));
 		Estado inactiveStatus = getInactiveStatus();
 
 		departamento.setEstado(inactiveStatus);
@@ -112,7 +112,7 @@ public class DepartamentoService {
 
 	private Pais validateActiveCountry(Long paisId) {
 		Pais pais = paisRepository.findById(paisId)
-			.orElseThrow(() -> new BadRequestException("department.country.not.valid"));
+				.orElseThrow(() -> new BadRequestException("department.country.not.valid"));
 
 		if (pais.getEstado() == null || !EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(pais.getEstado().getId())) {
 			throw new BadRequestException("department.country.must-be-active");
@@ -123,7 +123,7 @@ public class DepartamentoService {
 
 	private Estado validateGeneralStatus(Long estadoId, String errorCode) {
 		Estado estado = estadoRepository.findById(estadoId)
-			.orElseThrow(() -> new BadRequestException(errorCode));
+				.orElseThrow(() -> new BadRequestException(errorCode));
 
 		if (!EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(estado.getId())
 				&& !EstadoConstantes.ESTADO_GENERAL_INACTIVO.equals(estado.getId())) {
@@ -135,7 +135,7 @@ public class DepartamentoService {
 
 	private Estado getInactiveStatus() {
 		return estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_INACTIVO)
-			.orElseThrow(() -> new BadRequestException("department.status.not.valid"));
+				.orElseThrow(() -> new BadRequestException("department.status.not.valid"));
 	}
 
 	private void inactivateMunicipalities(Long departamentoId, Estado inactiveStatus) {
@@ -146,7 +146,8 @@ public class DepartamentoService {
 
 	private void validateCanBeActive(Long estadoId, Pais pais) {
 		if (EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(estadoId)
-				&& (pais.getEstado() == null || !EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(pais.getEstado().getId()))) {
+				&& (pais.getEstado() == null
+						|| !EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(pais.getEstado().getId()))) {
 			throw new BadRequestException("department.country.must-be-active");
 		}
 	}
@@ -166,13 +167,15 @@ public class DepartamentoService {
 			return;
 		}
 
-		if (departamentoRepository.existsByPaisIdAndNombreIgnoreCaseAndIdNot(paisId, departamentoDTO.getNombre(), currentId)) {
+		if (departamentoRepository.existsByPaisIdAndNombreIgnoreCaseAndIdNot(paisId, departamentoDTO.getNombre(),
+				currentId)) {
 			throw new BadRequestException("department.name.duplicate");
 		}
 		if (departamentoRepository.existsByPaisIdAndCodigoAndIdNot(paisId, departamentoDTO.getCodigo(), currentId)) {
 			throw new BadRequestException("department.code.duplicate");
 		}
-		if (departamentoRepository.existsByPaisIdAndAcronimoIgnoreCaseAndIdNot(paisId, departamentoDTO.getAcronimo(), currentId)) {
+		if (departamentoRepository.existsByPaisIdAndAcronimoIgnoreCaseAndIdNot(paisId, departamentoDTO.getAcronimo(),
+				currentId)) {
 			throw new BadRequestException("department.acronym.duplicate");
 		}
 	}
@@ -182,12 +185,3 @@ public class DepartamentoService {
 	}
 
 }
-
-
-
-
-
-
-
-
-

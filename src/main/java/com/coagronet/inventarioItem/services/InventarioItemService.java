@@ -3,8 +3,8 @@ package com.coagronet.inventarioItem.services;
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.inventarioItem.mappers.InventarioItemMapper;
 import com.coagronet.inventarioItem.repositories.InventarioItemRepository;
 import com.coagronet.inventarioItem.InventarioItem;
@@ -35,25 +35,25 @@ public class InventarioItemService {
 	public Page<InventarioItemDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return inventarioItemRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-			.map(inventarioItemMapper::toDTO);
+				.map(inventarioItemMapper::toDTO);
 	}
 
 	public Optional<InventarioItemDTO> findById(Long requestedId) {
 
 		return inventarioItemRepository
-			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(inventarioItemMapper::toDTO);
+				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.map(inventarioItemMapper::toDTO);
 	}
 
 	@Transactional
 	public InventarioItemDTO create(InventarioItemDTO inventarioItemDTO) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		estadoRepository.findById(inventarioItemDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+				.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
 
 		ArticuloKardex articuloKardex = articuloKardexRepository
-			.findByidentificadorProductoAndEmpresaId(inventarioItemDTO.getProductoIdentificadorId(), empresaId)
-			.orElseThrow(() -> new BadRequestException("ArticuloKardex no encontrado para ese identificador"));
+				.findByidentificadorProductoAndEmpresaId(inventarioItemDTO.getProductoIdentificadorId(), empresaId)
+				.orElseThrow(() -> new BadRequestException("ArticuloKardex no encontrado para ese identificador"));
 
 		inventarioItemDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
@@ -68,10 +68,10 @@ public class InventarioItemService {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
 		inventarioItemRepository.findByIdAndEmpresaId(requestedId, empresaId)
-			.orElseThrow(() -> new NotFoundException("InventarioItem no encontrada en su empresa"));
+				.orElseThrow(() -> new NotFoundException("InventarioItem no encontrada en su empresa"));
 
 		estadoRepository.findById(inventarioItemDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		inventarioItemDTO.setId(requestedId);
 		inventarioItemDTO.setEmpresaId(empresaId);
@@ -83,7 +83,7 @@ public class InventarioItemService {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
 		inventarioItemRepository.findByIdAndEmpresaId(requestedId, empresaId)
-			.orElseThrow(() -> new NotFoundException("InventarioItem no encontrada en su empresa"));
+				.orElseThrow(() -> new NotFoundException("InventarioItem no encontrada en su empresa"));
 
 		inventarioItemRepository.deleteById(requestedId);
 	}
