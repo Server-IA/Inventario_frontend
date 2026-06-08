@@ -1,6 +1,6 @@
 package com.coagronet.rol.services.impl;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -41,7 +41,7 @@ public class RolServiceImpl implements RolService {
         Rol rol = rolMapper.toEntity(request);
 
         // Auditoría
-        rol.setCreatedAt(OffsetDateTime.now());
+        rol.setCreatedAt(Instant.now());
 
         Long userId = authenticatedUser.getCurrentUserId();
         if (userId != null) {
@@ -88,7 +88,7 @@ public class RolServiceImpl implements RolService {
         }
 
         // Auditoría
-        existing.setUpdatedAt(OffsetDateTime.now());
+        existing.setUpdatedAt(Instant.now());
 
         Long userId = authenticatedUser.getCurrentUserId();
         if (userId != null) {
@@ -137,7 +137,7 @@ public class RolServiceImpl implements RolService {
             return; // ya estaba eliminado
         }
 
-        existing.setDeletedAt(OffsetDateTime.now());
+        existing.setDeletedAt(Instant.now());
 
         Long userId = authenticatedUser.getCurrentUserId();
         if (userId != null) {
