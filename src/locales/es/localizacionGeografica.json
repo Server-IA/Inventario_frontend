@@ -1,0 +1,44 @@
+{
+  "menuTitle": "Localizaci\u00f3n Geogr\u00e1fica",
+  "title": "Gesti\u00f3n de Localizaci\u00f3n Geogr\u00e1fica",
+  "columns": {
+    "code": "C\u00f3digo",
+    "name": "Nombre",
+    "acronym": "Acr\u00f3nimo",
+    "status": "Estado"
+  },
+  "actions": {
+    "activate": "Activar",
+    "inactivate": "Inactivar",
+    "viewMunicipalities": "Ver municipios",
+    "filter": "Filtrar"
+  },
+  "labels": {
+    "country": "Pa\u00eds",
+    "inactiveSuffix": "[Inactivo]"
+  },
+  "forms": {
+    "countryCreate": "Crear Pa\u00eds",
+    "countryUpdate": "Actualizar Pa\u00eds",
+    "departmentCreate": "Crear Departamento",
+    "departmentUpdate": "Actualizar Departamento",
+    "municipalityCreate": "Crear Municipio",
+    "municipalityUpdate": "Actualizar Municipio",
+    "municipalitiesTitle": "Municipios - {{country}} > {{department}}",
+    "filterTitle": "Filtrar",
+    "fields": {
+      "name": "Nombre",
+      "code": "C\u00f3digo",
+      "acronym": "Acr\u00f3nimo",
+      "status": "Estado"
+    }
+  },
+  "confirm": {
+    "title": "Activar/Inactivar {{type}}",
+    "message": "\u00bfEst\u00e1 seguro que desea {{action}} este registro?",
+    "impactIntro": "Esta acci\u00f3n afectar\u00e1 los siguientes registros asociados:",
+    "notShown": "No aparecer\u00e1n en los selectores del sistema.",
+    "departmentsAffected": "{{count}} Departamentos pasar\u00e1n a estado Inactivo",
+    "municipalitiesAffected": "{{count}} Municipios pasar\u00e1n a estado Inactivo"
+  }
+}

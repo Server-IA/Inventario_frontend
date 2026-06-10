@@ -1,3 +1,20 @@
+/*=============================================================================
+Nombre del archivo : Usuario.jsx
+Descripción        : Módulo de gestión de usuarios con listado, edición e integración de detalle.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio                        |
++------------+---------+----------------------+-----------------------------------------------+
+| 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.                         |
+| 2026-06-02 | 0.4.0   | Cesar Medina         | Se documenta e integra consulta de detalle.   |
++------------+---------+----------------------+-----------------------------------------------+
+=============================================================================*/
+/**
+ * @module Usuario
+ * @description Administra el listado de usuarios, sus acciones CRUD visibles
+ * en la interfaz y la consulta del detalle individual desde el endpoint del backend.
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Button } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -29,8 +46,19 @@ const emptyRow = {
   asignaciones: [],
 };
 
+/**
+ * Normaliza respuestas del backend que pueden venir paginadas o como arreglo.
+ *
+ * @param {object} resp Respuesta HTTP.
+ * @returns {Array}
+ */
 const extractItems = (resp) => resp.data?.content ?? resp.data ?? [];
 
+/**
+ * Componente principal del módulo Usuarios.
+ *
+ * @returns {JSX.Element}
+ */
 export default function Usuario() {
   const { t } = useTranslation();
   const [rows, setRows] = useState([]);
@@ -44,6 +72,8 @@ export default function Usuario() {
   const [formData, setFormData] = useState(emptyRow);
   const [openDetail, setOpenDetail] = useState(false);
   const [detail, setDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [inactivatedCache, setInactivatedCache] = useState([]);
 
   const isAdmin = String(localStorage.getItem("rolId")) === "1";
@@ -163,8 +193,55 @@ export default function Usuario() {
   };
   const handleView = () => {
     if (!selectedRow) return;
-    setDetail(selectedRow);
+    const requestId = selectedRow?.raw?.usuarioId ?? selectedRow?.id;
+    const roleById = new Map((rolesList || []).map((item) => [Number(item.id), item.nombre ?? item.name]));
+    const companyById = new Map((empresasList || []).map((item) => [Number(item.id), item.nombre ?? item.name]));
+
+    // Consulta el detalle real del usuario para mostrar la información completa en el modal.
     setOpenDetail(true);
+    setDetail(null);
+    setDetailError("");
+    setDetailLoading(true);
+
+    axios
+      .get(`/v1/usuarios/${requestId}`)
+      .then((resp) => {
+        const payload = resp?.data ?? {};
+        const asignaciones = Array.isArray(payload.asignaciones) ? payload.asignaciones : [];
+        const normalized = {
+          ...payload,
+          estadoId: payload.estadoId ?? selectedRow?.estadoId ?? 1,
+          rolPreferido:
+            roleById.get(Number(payload.rolPreferidoId)) ??
+            payload.rolPreferido ??
+            "",
+          empresaPreferida:
+            companyById.get(Number(payload.empresaPreferidaId)) ??
+            payload.empresaPreferida ??
+            "",
+          asignaciones: asignaciones.map((item) => ({
+            ...item,
+            rolNombre: roleById.get(Number(item.rolId)) ?? item.rolNombre ?? "",
+            empresaNombre: companyById.get(Number(item.empresaId)) ?? item.empresaNombre ?? "",
+          })),
+        };
+        setDetail(normalized);
+      })
+      .catch((err) => {
+        const status = err?.response?.status;
+        const resolvedMessage =
+          err?.response?.data?.message ??
+          (status === 401 || status === 403
+            ? t("usuario.messages.detailAccessDenied")
+            : t("usuario.messages.detailLoadError"));
+        setDetailError(resolvedMessage);
+        if (status === 401 || status === 403) {
+          setMessage({ open: true, severity: "error", text: resolvedMessage });
+        }
+      })
+      .finally(() => {
+        setDetailLoading(false);
+      });
   };
   const handleDelete = async () => {
     if (!selectedRow) return;
@@ -324,8 +401,14 @@ export default function Usuario() {
 
       <UserDetailDialog
         open={openDetail}
-        data={detail ?? selectedRow}
-        onClose={() => setOpenDetail(false)}
+        data={detail}
+        loading={detailLoading}
+        error={detailError}
+        onClose={() => {
+          setOpenDetail(false);
+          setDetail(null);
+          setDetailError("");
+        }}
       />
 
       <MessageSnackBar message={message} setMessage={setMessage} />

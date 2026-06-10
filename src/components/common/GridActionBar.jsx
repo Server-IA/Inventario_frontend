@@ -1,12 +1,17 @@
 /*=============================================================================
 Nombre del archivo : GridActionBar.jsx
-Descripción        : Componente reutilizable para los botones de acción de CRUD
+Descripcion        : Reestructuracion de paises
 ===============================================================================
 CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------+
-|   Fecha    | Versión |      Autor           | Descripción del cambio      |
+|   Fecha    | Version |      Autor           | Descripcion del cambio      |
 +------------+---------+----------------------+-----------------------------+
+| 2026-05-06 | 0.4.0   | Cesar Medina         | Creacion del archivo.       |
++------------+---------+----------------------+-----------------------------+
+| 2026-06-03 | 0.4.0   | Jeisson Sanchez      |  Reestructuracion de paises.       |
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+| 2026-05-22 | 0.4.0   | Cesar Medina         | Se ajusta Tooltip en botones|
+|            |         |                      | deshabilitados.             |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -24,21 +29,21 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 
 /**
- * Barra de acciones reusable para módulos CRUD.
+ * Barra de acciones reusable para mÃ³dulos CRUD.
  *
  * Centraliza las acciones principales de agregar, actualizar, eliminar y filtros,
- * manteniendo estilos consistentes, modo compacto responsive e integración con i18n.
+ * manteniendo estilos consistentes, modo compacto responsive e integraciÃ³n con i18n.
  *
  * @param {Object} props Propiedades del componente.
- * @param {function} [props.onAdd] Acción principal de creación.
- * @param {function} [props.onUpdate] Acción de edición de la fila seleccionada.
- * @param {function} [props.onDelete] Acción de eliminación de la fila seleccionada.
- * @param {boolean} [props.canUpdate=false] Habilita o deshabilita el botón actualizar.
- * @param {boolean} [props.canDelete=false] Habilita o deshabilita el botón eliminar.
+ * @param {function} [props.onAdd] AcciÃ³n principal de creaciÃ³n.
+ * @param {function} [props.onUpdate] AcciÃ³n de ediciÃ³n de la fila seleccionada.
+ * @param {function} [props.onDelete] AcciÃ³n de eliminaciÃ³n de la fila seleccionada.
+ * @param {boolean} [props.canUpdate=false] Habilita o deshabilita el botÃ³n actualizar.
+ * @param {boolean} [props.canDelete=false] Habilita o deshabilita el botÃ³n eliminar.
  * @param {*} [props.extraActions] Acciones extra que se muestran antes de agregar.
  * @param {function} [props.onFilters] Abre o activa el flujo de filtros.
  * @param {function} [props.onClearFilters] Limpia filtros activos.
- * @param {boolean} [props.hasActiveFilters=false] Indica si hay filtros activos para mostrar el botón limpiar.
+ * @param {boolean} [props.hasActiveFilters=false] Indica si hay filtros activos para mostrar el botÃ³n limpiar.
  * @param {*} [props.rightActions] Acciones adicionales en el bloque secundario.
  * @param {Object} [props.labels] Sobrescritura puntual de etiquetas visibles.
  * @returns {JSX.Element}
@@ -47,6 +52,7 @@ export default function GridActionBar({
   onAdd,
   onUpdate,
   onDelete,
+  canAdd = true,
   canUpdate = false,
   canDelete = false,
   extraActions,
@@ -216,9 +222,7 @@ export default function GridActionBar({
       ) : null}
       {hasActiveFilters && onClearFilters ? (
         <Tooltip title={resolvedLabels.clear}>
-          <Button onClick={onClearFilters}>
-            {resolvedLabels.clear}
-          </Button>
+          <Button onClick={onClearFilters}>{resolvedLabels.clear}</Button>
         </Tooltip>
       ) : null}
       {rightActions}
@@ -243,7 +247,7 @@ export default function GridActionBar({
         minWidth: 0,
       }}
     >
-      {(onFilters || (hasActiveFilters && onClearFilters) || rightActions) ? (
+      {onFilters || (hasActiveFilters && onClearFilters) || rightActions ? (
         <Box sx={rightActionsSx}>{rightContent}</Box>
       ) : null}
       <Box sx={{ flex: 1, minWidth: { xs: 12, md: 24 } }} />
@@ -257,34 +261,46 @@ export default function GridActionBar({
         }}
       >
         {extraActions ? <Box sx={extraActionsSx}>{extraActions}</Box> : null}
+        {/* Cambio 2026-05-22: se envuelven botones en span para evitar warnings de Tooltip con disabled. */}
         <Tooltip title={resolvedLabels.add}>
           <Button
             onClick={onAdd}
             startIcon={<AddIcon />}
-            sx={addButtonSx}
+            disabled={!canAdd}
+            sx={{
+              ...addButtonSx,
+              "&.Mui-disabled": {
+                color: isDark ? alpha("#e7f6f7", 0.38) : "#7f9790",
+                bgcolor: isDark ? alpha("#173f39", 0.12) : "#edf3f0",
+              },
+            }}
           >
             {resolvedLabels.add}
           </Button>
         </Tooltip>
         <Tooltip title={resolvedLabels.update}>
-          <Button
-            onClick={onUpdate}
-            startIcon={<ModeEditOutlineIcon />}
-            disabled={!canUpdate}
-            sx={editButtonSx}
-          >
-            {resolvedLabels.update}
-          </Button>
+          <span>
+            <Button
+              onClick={onUpdate}
+              startIcon={<ModeEditOutlineIcon />}
+              disabled={!canUpdate}
+              sx={editButtonSx}
+            >
+              {resolvedLabels.update}
+            </Button>
+          </span>
         </Tooltip>
         <Tooltip title={resolvedLabels.delete}>
-          <Button
-            onClick={onDelete}
-            startIcon={<DeleteOutlineIcon />}
-            disabled={!canDelete}
-            sx={deleteButtonSx}
-          >
-            {resolvedLabels.delete}
-          </Button>
+          <span>
+            <Button
+              onClick={onDelete}
+              startIcon={<DeleteOutlineIcon />}
+              disabled={!canDelete}
+              sx={deleteButtonSx}
+            >
+              {resolvedLabels.delete}
+            </Button>
+          </span>
         </Tooltip>
       </Stack>
     </Stack>
@@ -295,6 +311,7 @@ GridActionBar.propTypes = {
   onAdd: PropTypes.func,
   onUpdate: PropTypes.func,
   onDelete: PropTypes.func,
+  canAdd: PropTypes.bool,
   canUpdate: PropTypes.bool,
   canDelete: PropTypes.bool,
   extraActions: PropTypes.node,

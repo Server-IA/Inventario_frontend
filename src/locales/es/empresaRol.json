@@ -13,11 +13,13 @@
     "baseRoleNotFound": "Rol base no encontrado",
     "deleteSuccess": "Rol y permisos eliminados correctamente",
     "deleteError": "Error al eliminar. Revisa dependencias o permisos.",
+    "companiesLoadError": "Error al cargar empresas",
     "subsystemsLoadError": "Error al cargar subsistemas",
     "modulesLoadError": "Error al cargar módulos",
     "permissionRemoved": "Permiso eliminado correctamente",
     "permissionRemoveError": "Error eliminando permiso",
     "roleRequired": "Debe seleccionar un rol",
+    "companyRequired": "Debe seleccionar una empresa",
     "saveSuccess": "Permisos actualizados correctamente",
     "saveError": "Error al guardar permisos"
   },
@@ -36,6 +38,7 @@
   "form": {
     "createTitle": "Crear Rol y Asignar Permisos",
     "editTitle": "Editar Rol y Permisos",
-    "roleLabel": "Rol"
+    "roleLabel": "Rol",
+    "companyLabel": "Empresa"
   }
 }
