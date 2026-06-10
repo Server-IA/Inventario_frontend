@@ -1,3 +1,18 @@
+/*=============================================================================
+ Nombre del archivo : Navigator2.jsx
+ Descripcion        : Componente de navegación principal del dashboard.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-03 | 0.4.0   | Jeisson Sanchez      | Reestructuración de países. |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n del módulo.     |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Corrección texto menú.      |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 import * as React from "react";
 import {
   Divider,
@@ -13,124 +28,122 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-
 import { alpha, useTheme } from "@mui/material/styles";
 import { keyframes } from "@mui/system";
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import SecurityIcon from '@mui/icons-material/Security';
+import AccountBoxIcon from "@mui/icons-material/AccountBox";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import SecurityIcon from "@mui/icons-material/Security";
 import MenuIcon from "@mui/icons-material/Menu";
-import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
-import CategoryIcon from '@mui/icons-material/Category';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import VerifiedIcon from '@mui/icons-material/Verified';
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
-import FunctionsIcon from '@mui/icons-material/Functions';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import TuneIcon from '@mui/icons-material/Tune';
-import DonutSmallIcon from '@mui/icons-material/DonutSmall';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import AppsIcon from '@mui/icons-material/Apps';
-import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
-import FactCheckIcon from '@mui/icons-material/FactCheck';
-import BadgeIcon from '@mui/icons-material/Badge';
-import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import StraightenIcon from '@mui/icons-material/Straighten';
-import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle';
-import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
-import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
-import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
-import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import GroupWorkIcon from '@mui/icons-material/GroupWork';
-import SetMealIcon from '@mui/icons-material/SetMeal';
-import BrandingWatermarkIcon from '@mui/icons-material/BrandingWatermark';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import PublicIcon from '@mui/icons-material/Public';
-import LanguageIcon from '@mui/icons-material/Language';
-import PersonIcon from '@mui/icons-material/Person';
-import SlideshowIcon from '@mui/icons-material/Slideshow';
-import CategoryTwoToneIcon from '@mui/icons-material/CategoryTwoTone';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize';
-import ViewQuiltIcon from '@mui/icons-material/ViewQuilt';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
-import ViewComfyIcon from '@mui/icons-material/ViewComfy';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
-import PrecisionManufacturingOutlinedIcon from '@mui/icons-material/PrecisionManufacturingOutlined';
-import DomainAddIcon from '@mui/icons-material/DomainAdd';
-import StraightenOutlinedIcon from '@mui/icons-material/StraightenOutlined';
-import DevicesFoldIcon from '@mui/icons-material/DevicesFold';
-import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
-import EventRepeatIcon from '@mui/icons-material/EventRepeat';
-import AutoAwesomeMosaicIcon from '@mui/icons-material/AutoAwesomeMosaic';
-import ConstructionIcon from '@mui/icons-material/Construction';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import WarehouseIcon from '@mui/icons-material/Warehouse';
-import AppSettingsAltIcon from '@mui/icons-material/AppSettingsAlt';
-import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
-import ChecklistIcon from '@mui/icons-material/Checklist';
-import VillaIcon from '@mui/icons-material/Villa';
-import BusinessIcon from '@mui/icons-material/Business';
-import TaskAltIcon from '@mui/icons-material/TaskAlt';
-import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
-import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
-import LocationCityIcon from '@mui/icons-material/LocationCity';
-import RequestPageIcon from '@mui/icons-material/RequestPage';
-import KeyIcon from '@mui/icons-material/Key';
-import AutoModeIcon from '@mui/icons-material/AutoMode';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
-import ViewStreamIcon from '@mui/icons-material/ViewStream';
-import SwipeIcon from '@mui/icons-material/Swipe';
-import SchemaIcon from '@mui/icons-material/Schema';
-import ThermostatIcon from '@mui/icons-material/Thermostat';
-import HistoryIcon from '@mui/icons-material/History';
-import SensorsIcon from '@mui/icons-material/Sensors';
-import MapIcon from '@mui/icons-material/Map';
-import SplitscreenIcon from '@mui/icons-material/Splitscreen';
-import SpeedIcon from '@mui/icons-material/Speed';
-import WorkHistoryIcon from '@mui/icons-material/WorkHistory';
-import ViewWeekIcon from '@mui/icons-material/ViewWeek';
-import LockClockIcon from '@mui/icons-material/LockClock';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import PriceChangeIcon from '@mui/icons-material/PriceChange';
-import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
-import EventSeatIcon from '@mui/icons-material/EventSeat';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import ListIcon from '@mui/icons-material/List';
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-import WidgetsIcon from '@mui/icons-material/Widgets';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
-import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import ReorderIcon from '@mui/icons-material/Reorder';
-import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
-import MyLocationIcon from '@mui/icons-material/MyLocation';
-import ColorizeIcon from '@mui/icons-material/Colorize';
-import EventNoteIcon from '@mui/icons-material/EventNote';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import AutoGraphIcon from '@mui/icons-material/AutoGraph';
-import StackedLineChartIcon from '@mui/icons-material/StackedLineChart';
-import ChangeHistoryIcon from '@mui/icons-material/ChangeHistory';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
-import FactoryIcon from '@mui/icons-material/Factory';
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
+import HistoryToggleOffIcon from "@mui/icons-material/HistoryToggleOff";
+import CategoryIcon from "@mui/icons-material/Category";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import FunctionsIcon from "@mui/icons-material/Functions";
+import SyncAltIcon from "@mui/icons-material/SyncAlt";
+import TuneIcon from "@mui/icons-material/Tune";
+import DonutSmallIcon from "@mui/icons-material/DonutSmall";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AppsIcon from "@mui/icons-material/Apps";
+import CurrencyExchangeIcon from "@mui/icons-material/CurrencyExchange";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import BadgeIcon from "@mui/icons-material/Badge";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import StraightenIcon from "@mui/icons-material/Straighten";
+import PersonPinCircleIcon from "@mui/icons-material/PersonPinCircle";
+import DevicesOtherIcon from "@mui/icons-material/DevicesOther";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import GroupWorkIcon from "@mui/icons-material/GroupWork";
+import SetMealIcon from "@mui/icons-material/SetMeal";
+import BrandingWatermarkIcon from "@mui/icons-material/BrandingWatermark";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import PublicIcon from "@mui/icons-material/Public";
+import LanguageIcon from "@mui/icons-material/Language";
+import PersonIcon from "@mui/icons-material/Person";
+import SlideshowIcon from "@mui/icons-material/Slideshow";
+import CategoryTwoToneIcon from "@mui/icons-material/CategoryTwoTone";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
+import ViewQuiltIcon from "@mui/icons-material/ViewQuilt";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import ViewComfyIcon from "@mui/icons-material/ViewComfy";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import PrecisionManufacturingOutlinedIcon from "@mui/icons-material/PrecisionManufacturingOutlined";
+import DomainAddIcon from "@mui/icons-material/DomainAdd";
+import StraightenOutlinedIcon from "@mui/icons-material/StraightenOutlined";
+import DevicesFoldIcon from "@mui/icons-material/DevicesFold";
+import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import AutoAwesomeMosaicIcon from "@mui/icons-material/AutoAwesomeMosaic";
+import ConstructionIcon from "@mui/icons-material/Construction";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
+import AppSettingsAltIcon from "@mui/icons-material/AppSettingsAlt";
+import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
+import ChecklistIcon from "@mui/icons-material/Checklist";
+import VillaIcon from "@mui/icons-material/Villa";
+import BusinessIcon from "@mui/icons-material/Business";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
+import ConnectWithoutContactIcon from "@mui/icons-material/ConnectWithoutContact";
+import LocationCityIcon from "@mui/icons-material/LocationCity";
+import RequestPageIcon from "@mui/icons-material/RequestPage";
+import KeyIcon from "@mui/icons-material/Key";
+import AutoModeIcon from "@mui/icons-material/AutoMode";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
+import ViewStreamIcon from "@mui/icons-material/ViewStream";
+import SwipeIcon from "@mui/icons-material/Swipe";
+import SchemaIcon from "@mui/icons-material/Schema";
+import ThermostatIcon from "@mui/icons-material/Thermostat";
+import HistoryIcon from "@mui/icons-material/History";
+import SensorsIcon from "@mui/icons-material/Sensors";
+import MapIcon from "@mui/icons-material/Map";
+import SplitscreenIcon from "@mui/icons-material/Splitscreen";
+import SpeedIcon from "@mui/icons-material/Speed";
+import WorkHistoryIcon from "@mui/icons-material/WorkHistory";
+import ViewWeekIcon from "@mui/icons-material/ViewWeek";
+import LockClockIcon from "@mui/icons-material/LockClock";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import PriceChangeIcon from "@mui/icons-material/PriceChange";
+import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
+import EventSeatIcon from "@mui/icons-material/EventSeat";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import ListIcon from "@mui/icons-material/List";
+import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import WidgetsIcon from "@mui/icons-material/Widgets";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
+import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import ReorderIcon from "@mui/icons-material/Reorder";
+import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import ColorizeIcon from "@mui/icons-material/Colorize";
+import EventNoteIcon from "@mui/icons-material/EventNote";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import AutoGraphIcon from "@mui/icons-material/AutoGraph";
+import StackedLineChartIcon from "@mui/icons-material/StackedLineChart";
+import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import ViewCarouselIcon from "@mui/icons-material/ViewCarousel";
+import FactoryIcon from "@mui/icons-material/Factory";
+import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
 import modulo from "../modulo/modulos.jsx";
 
-
-import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+import ListAltOutlinedIcon from "@mui/icons-material/ListAltOutlined";
 
 const APPBAR_HEIGHT = 72;
 
@@ -164,16 +177,13 @@ const bottomToSidebar = keyframes`
   }
 `;
 
-
-// no tocar el orden de importación de los componentes
+// no tocar el orden de importaciÃ³n de los componentes
 
 import axios from "../axiosConfig.js";
 import { useTranslation } from "react-i18next";
 import CategoriaEstado from "../categoriaestado/categoria_estado.jsx";
 import Persona from "../personas/Persona.jsx";
-import Pais from "../pais/Pais";
-import Departamento from "../departamento/Departamento";
-import Municipio from "../municipio/Municipio";
+import LocalizacionGeografica from "../localizacion_geografica/LocalizacionGeografica";
 import Presentacionproducto from "../Presentacionproducto/Presentacionproducto.jsx";
 import Produccion from "../produccion/Produccion";
 import Empresa from "../empresas/Empresa.jsx";
@@ -223,7 +233,7 @@ import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import Usuario from "../Usuario/Usuario.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
-// Imágenes
+// ImÃ¡genes
 import img1 from "/images/cards/1.jpg";
 import img2 from "/images/cards/2.jpg";
 import img3 from "/images/cards/3.jpg";
@@ -241,7 +251,7 @@ import rol from "/images/cards/rol.webp";
 import tipo_identificacion from "/images/cards/tipo_identificacion.webp";
 import empresa from "/images/cards/empresa.webp";
 import tipo_evaluacion from "/images/cards/tipo_evaluacion.webp";
-// parametrización
+// parametrizaciÃ³n
 import pais from "/images/cards/pais.webp";
 import departamento from "/images/cards/departamento.webp";
 import municipio from "/images/cards/municipio.webp";
@@ -402,7 +412,7 @@ const icons = {
   Factory: <FactoryIcon />,
   InventoryOutlined: <InventoryOutlinedIcon />,
   ListAltOutlined: <ListAltOutlinedIcon />,
-  Security: <SecurityIcon />,   
+  Security: <SecurityIcon />,
   Description: <DescriptionOutlinedIcon />,
 };
 
@@ -418,9 +428,7 @@ const components = {
   tipoidentificacion: TipoIdentificacion,
   roll: Rol,
   proveedor: Proveedor,
-  pais: Pais,
-  departamento: Departamento,
-  municipio: Municipio,
+  localizacion_geografica: LocalizacionGeografica,
   almacen: Almacen,
   espacio: Espacio,
   tipo_espacio: TipoEspacio,
@@ -460,10 +468,9 @@ const components = {
   RE_pv: RE_productoVencimiento,
   RE_oc: RE_ordenCompra,
   RE_fc: RE_fc,
- tipo_unidad: TipoUnida,
- CategoriaEstado: CategoriaEstado,
- rol: Rol,
-
+  tipo_unidad: TipoUnida,
+  CategoriaEstado: CategoriaEstado,
+  rol: Rol,
 };
 
 const moduleImages = {
@@ -471,15 +478,13 @@ const moduleImages = {
   Usuario: persona,
   UsuarioRoles: usai_rol_sistema,
   UsuarioRol: usariorol,
-  PedidoCotizacion:pedido_coti,
+  PedidoCotizacion: pedido_coti,
   persona,
   rol,
   tipoidentificacion: tipo_identificacion,
   tipo_evaluacion,
   empresa,
-  pais,
-  departamento,
-  municipio,
+  localizacion_geografica: pais,
   grupo,
   tipo_sede,
   sede,
@@ -523,7 +528,6 @@ const moduleImages = {
   Estado: estado,
 };
 
-
 export default function Navigator2({
   setCurrentModuleItem,
   setMenuOpen,
@@ -540,12 +544,9 @@ export default function Navigator2({
   // ===== TOKENS VISUALES =====
   const sidebarBg = isDark
     ? alpha(theme.palette.background.paper, 0.98)
-    : '#E7F6F7';
+    : "#E7F6F7";
 
-  const dividerColor = alpha(
-    isDark ? "#fff" : "#000",
-    0.08
-  );
+  const dividerColor = alpha(isDark ? "#fff" : "#000", 0.08);
 
   const hoverBg = isDark
     ? alpha("#FFFFFF", 0.06)
@@ -555,15 +556,13 @@ export default function Navigator2({
     ? alpha("#FFFFFF", 0.15)
     : alpha(theme.palette.primary.main, 0.12);
 
-  const selectedColor = isDark
-    ? "#FFFFFF"
-    : theme.palette.primary.dark;
+  const selectedColor = isDark ? "#FFFFFF" : theme.palette.primary.dark;
 
   const selectedBar = theme.palette.primary.main;
 
   const tileBorder = alpha(
     isDark ? "#FFFFFF" : theme.palette.primary.main,
-    isDark ? 0.12 : 0.28
+    isDark ? 0.12 : 0.28,
   );
 
   const tileOverlayFrom = alpha("#000", isDark ? 0.05 : 0);
@@ -581,9 +580,7 @@ export default function Navigator2({
     ? alpha(theme.palette.primary.light, 0.22)
     : alpha("#fff", 0.75);
 
-  const tileIconFg = isDark
-    ? "#fff"
-    : theme.palette.primary.dark;
+  const tileIconFg = isDark ? "#fff" : theme.palette.primary.dark;
 
   // ===== HELPERS =====
   const toKey = (x) => String(x ?? "").trim();
@@ -595,8 +592,7 @@ export default function Navigator2({
 
   const renderSubmenu = (children, parentMenuId) => {
     const uniqueChildren = children.filter(
-      (item, index, self) =>
-        index === self.findIndex((t) => t.id === item.id)
+      (item, index, self) => index === self.findIndex((t) => t.id === item.id),
     );
 
     return (
@@ -702,10 +698,10 @@ export default function Navigator2({
   const [menuItems, setMenuItems] = React.useState([]);
   const [selectedMenu, setSelectedMenu] = React.useState(null);
   const [tipoAplicacion, setTipoAplicacion] = React.useState(() =>
-    normalizeTipo(localStorage.getItem("tipoAplicacion") || "web")
+    normalizeTipo(localStorage.getItem("tipoAplicacion") || "web"),
   );
   const [open, setOpen] = React.useState(() =>
-    JSON.parse(localStorage.getItem("sidebarOpen") ?? "true")
+    JSON.parse(localStorage.getItem("sidebarOpen") ?? "true"),
   );
 
   // ===== HANDLERS =====
@@ -718,14 +714,10 @@ export default function Navigator2({
     setSelectedMenu(key);
     navigate(`/${key}`);
 
-    const menu = menuItems.find(
-      (item) => toKey(item.id) === key
-    );
+    const menu = menuItems.find((item) => toKey(item.id) === key);
 
     if (menu?.children?.length) {
-      setCurrentModuleItem(
-        renderSubmenu(menu.children, key)
-      );
+      setCurrentModuleItem(renderSubmenu(menu.children, key));
     } else {
       localStorage.setItem("activeModule", key);
       renderComponent(key);
@@ -759,7 +751,7 @@ export default function Navigator2({
     setNavAnimation(
       isMobileView
         ? `${sidebarToBottom} 520ms cubic-bezier(0.22, 1, 0.36, 1)`
-        : `${bottomToSidebar} 520ms cubic-bezier(0.22, 1, 0.36, 1)`
+        : `${bottomToSidebar} 520ms cubic-bezier(0.22, 1, 0.36, 1)`,
     );
     prevIsMobileRef.current = isMobileView;
   }, [isMobileView]);
@@ -773,19 +765,17 @@ export default function Navigator2({
     axios
       .get("/v2/menu", { params: { tipoAplicacion: tipo } })
       .then(({ data }) => {
-        const adapted = (Array.isArray(data) ? data : []).map(
-          (ss) => ({
-            id: ss.nombre,
-            text: ss.nombre,
-            icon: ss.icono,
-            children: (ss.modulos ?? []).map((m) => ({
-              id: m.id,
-              text: m.nombre,
-              icon: m.icono,
-              url: m.url,
-            })),
-          })
-        );
+        const adapted = (Array.isArray(data) ? data : []).map((ss) => ({
+          id: ss.nombre,
+          text: ss.nombre,
+          icon: ss.icono,
+          children: (ss.modulos ?? []).map((m) => ({
+            id: m.id,
+            text: m.nombre,
+            icon: m.icono,
+            url: m.url,
+          })),
+        }));
 
         const segIndex = adapted.findIndex((m) => toKey(m.id) === "Seguridad");
         if (segIndex !== -1) {
@@ -802,6 +792,43 @@ export default function Navigator2({
           }
         }
 
+        // --- MANUALLY INJECT LOCALIZACION GEOGRAFICA AND REMOVE OLD MODULES ---
+        adapted.forEach((cat) => {
+          if (cat.children) {
+            cat.children = cat.children.filter(
+              (c) =>
+                !["pais", "departamento", "municipio"].includes(
+                  toKey(c.id).toLowerCase(),
+                ),
+            );
+          }
+        });
+
+        const paramIndex = adapted.findIndex((m) =>
+          toKey(m.id).toLowerCase().includes("parametrizaci"),
+        );
+        if (paramIndex !== -1) {
+          const hasLocalizacion = adapted[paramIndex].children.some(
+            (c) => toKey(c.id) === "localizacion_geografica",
+          );
+          if (!hasLocalizacion) {
+            adapted[paramIndex].children.push({
+              id: "localizacion_geografica",
+              text: "localizacionGeografica.menuTitle",
+              icon: "Public",
+              url: "/api/v1/localizacion_geografica",
+            });
+          } else {
+            adapted[paramIndex].children = adapted[paramIndex].children.map(
+              (child) =>
+                toKey(child.id) === "localizacion_geografica"
+                  ? { ...child, text: "localizacionGeografica.menuTitle" }
+                  : child,
+            );
+          }
+        }
+        // ----------------------------------------------------------------------
+
         setMenuItems(adapted);
 
         const savedModule = localStorage.getItem("activeModule");
@@ -813,9 +840,7 @@ export default function Navigator2({
         }
 
         const menuToOpen =
-          adapted.find(
-            (m) => toKey(m.id) === toKey(savedMenu)
-          ) || adapted[0];
+          adapted.find((m) => toKey(m.id) === toKey(savedMenu)) || adapted[0];
 
         if (!menuToOpen) return;
 
@@ -823,7 +848,7 @@ export default function Navigator2({
 
         if (menuToOpen.children?.length) {
           setCurrentModuleItem(
-            renderSubmenu(menuToOpen.children, menuToOpen.id)
+            renderSubmenu(menuToOpen.children, menuToOpen.id),
           );
         } else {
           renderComponent(toKey(menuToOpen.id));
@@ -876,7 +901,7 @@ export default function Navigator2({
         <MenuIcon />
         {open && (
           <Typography variant="h6" fontWeight={800}>
-            {t("Menú")}
+            Menú
           </Typography>
         )}
       </Box>
@@ -901,7 +926,10 @@ export default function Navigator2({
               key={key}
               disablePadding
               sx={{
-                width: { xs: `${100 / Math.max(menuItems.length || 1, 1)}%`, sm: "100%" },
+                width: {
+                  xs: `${100 / Math.max(menuItems.length || 1, 1)}%`,
+                  sm: "100%",
+                },
                 minWidth: { xs: 64, sm: "auto" },
                 flex: { xs: 1, sm: "unset" },
               }}
@@ -914,7 +942,10 @@ export default function Navigator2({
                   mx: { xs: 0.25, sm: 1 },
                   my: { xs: 0, sm: 0.5 },
                   minHeight: { xs: 56, sm: "auto" },
-                  justifyContent: { xs: "center", sm: open ? "flex-start" : "center" },
+                  justifyContent: {
+                    xs: "center",
+                    sm: open ? "flex-start" : "center",
+                  },
                   flexDirection: { xs: "column", sm: "row" },
                   "&:hover": { bgcolor: hoverBg },
                   "&.Mui-selected": {
@@ -969,4 +1000,3 @@ export default function Navigator2({
     </Box>
   );
 }
-
