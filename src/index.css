@@ -1,11 +1,34 @@
+/*=============================================================================
+ Nombre del archivo : index.css
+ Descripcion        : Estilos globales de la aplicación, corrector de scroll y layout.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-10 | 0.4.0   | Jeisson Sanchez      | Solución al desplazamiento  |
+ |            |         |                      | horizontal al abrir modales |
+ |            |         |                      | y menús desplegables.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Evita barra de desplazamiento horizontal en toda la app */
 html, body, #root {
   max-width: 100%;
   overflow-x: hidden;
 }
-html, body, #root {
-  max-width: 100%;
-  overflow-x: hidden;
+
+/* Evita saltos y desplazamientos cuando MUI bloquea el scroll al abrir modales y selectores */
+body {
+  padding-right: 0px !important;
+}
+
+.mui-fixed {
+  padding-right: 0px !important;
 }
 .empresas-container {
   display: flex;
