@@ -49,6 +49,9 @@ public class UsuarioEstado implements Serializable {
 	@Column(name = "use_id")
 	private Long id;
 
+	@Column(name = "use_nombre", nullable = false, unique = false)
+	private String nombre;
+
 	@Column(name = "use_descripcion", nullable = false, unique = true, length = 2048)
 	private String descripcion;
 

@@ -8,6 +8,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.i18n.LocaleContextHolder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
@@ -23,6 +27,9 @@ import com.coagronet.user.dtos.AsignacionRequest;
 import com.coagronet.user.dtos.UserRegistrationRequest;
 import com.coagronet.user.events.OnRegistrationCompleteEvent;
 import com.coagronet.user.repositories.UserRepository;
+import com.coagronet.auth.events.NewUserCredentialsEvent;
+import com.coagronet.auth.listeners.RoleActivatedEvent;
+import com.coagronet.utils.PasswordGenerator;
 import com.coagronet.usuarioEstado.UsuarioEstado;
 import com.coagronet.usuarioEstado.repositories.UsuarioEstadoRepository;
 import com.coagronet.usuariorol.UsuarioRol;
@@ -54,7 +61,6 @@ public class UserRegistrationService {
 	private final EntityManager entityManager;
 
 	private static final Long ESTADO_ACTIVO_ID = 1L;
-	private static final Long USUARIO_ESTADO_ACTIVO_ID = 4L;
 
 	@Transactional
 	public void registerUser(User user, String acceptLanguage) {
@@ -113,8 +119,16 @@ public class UserRegistrationService {
 			persona = personaRepository.save(crearNuevaPersona(request));
 		}
 
-		User user = userRepository.findByPersonaId(persona.getId())
-				.orElseGet(() -> crearNuevoUsuario(request, persona));
+		boolean isNewUser = false;
+		String tempPassword = null;
+
+		User user = userRepository.findByPersonaId(persona.getId()).orElse(null);
+
+		if (user == null) {
+			isNewUser = true;
+			tempPassword = PasswordGenerator.generateStrongPassword();
+			user = crearNuevoUsuario(request, persona, tempPassword);
+		}
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
@@ -122,6 +136,8 @@ public class UserRegistrationService {
 		Long sessionEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
 
 		boolean seAsignoPreferida = false;
+		String acceptLanguage = LocaleContextHolder.getLocale().toLanguageTag();
+		List<UsuarioRol> newlyAddedRoles = new ArrayList<>();
 
 		for (AsignacionRequest asignacion : request.asignaciones()) {
 			Long empresaAsignarId = isSystemAdmin ? asignacion.empresaId() : sessionEmpresaId;
@@ -143,6 +159,7 @@ public class UserRegistrationService {
 					.build();
 
 			user.addUsuarioRol(usuarioRol);
+			newlyAddedRoles.add(usuarioRol);
 
 			if (Boolean.TRUE.equals(asignacion.esPreferida())) {
 				user.setPreferredEmpresa(entityManager.getReference(Empresa.class, empresaAsignarId));
@@ -159,6 +176,17 @@ public class UserRegistrationService {
 		}
 
 		userRepository.save(user);
+
+		boolean firstAssignment = true;
+		for (UsuarioRol ur : newlyAddedRoles) {
+			if (isNewUser && firstAssignment) {
+				publisher.publishEvent(new NewUserCredentialsEvent(ur.getId(), tempPassword, acceptLanguage));
+				firstAssignment = false;
+			} else {
+				publisher.publishEvent(new RoleActivatedEvent(ur.getId(), acceptLanguage));
+			}
+		}
+
 		return user.getId();
 	}
 
@@ -192,15 +220,15 @@ public class UserRegistrationService {
 				.build();
 	}
 
-	private User crearNuevoUsuario(UserRegistrationRequest request, Persona persona) {
+	private User crearNuevoUsuario(UserRegistrationRequest request, Persona persona, String password) {
 		if (userRepository.existsByUsername(request.username())) {
 			throw new RecursoDuplicadoException("El username ya se encuentra registrado.");
 		}
 		return User.builder()
 				.username(request.username())
-				.password(passwordEncoder.encode(request.password()))
+				.password(passwordEncoder.encode(password))
 				.persona(persona)
-				.usuarioEstado(entityManager.getReference(UsuarioEstado.class, USUARIO_ESTADO_ACTIVO_ID))
+				.usuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_ACTIVADO_CON_EMPRESA))
 				.build();
 	}
 

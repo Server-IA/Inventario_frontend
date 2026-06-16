@@ -18,5 +18,7 @@ public record UsuarioDetalleResponse(
         @Schema(description = "Número de celular de la persona", example = "3001234567") String celular,
         @Schema(description = "ID del rol preferido del usuario", example = "1", nullable = true) Long rolPreferidoId,
         @Schema(description = "ID de la empresa preferida del usuario", example = "1", nullable = true) Long empresaPreferidaId,
+        @Schema(description = "ID del estado del usuario", example = "1") Long estadoId,
+        @Schema(description = "Nombre del estado del usuario", example = "Activado") String estadoNombre,
         @ArraySchema(schema = @Schema(description = "Lista de asignaciones")) List<AsignacionResumenAllDTO> asignaciones) {
 }

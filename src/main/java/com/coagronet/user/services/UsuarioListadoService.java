@@ -64,8 +64,7 @@ public class UsuarioListadoService {
                 return users.stream().map(user -> new UserMinimalDTO(
                                 user.getId(),
                                 user.getUsername(),
-                                user.getPersona() != null ? user.getPersona().getNombre() : null
-                )).toList();
+                                user.getPersona() != null ? user.getPersona().getNombre() : null)).toList();
         }
 
         private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
@@ -96,17 +95,22 @@ public class UsuarioListadoService {
                                 })
                                 .toList();
 
+                Long estadoId = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getId() : null;
+                String estadoNombre = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getNombre() : null;
+
                 return new UsuarioListResponse(
                                 user.getId(),
                                 user.getUsername(),
-                                user.getPersona().getIdentificacion(),
-                                user.getPersona().getNombre(),
-                                user.getPersona().getApellido(),
-                                user.getPersona().getGenero(),
-                                user.getPersona().getFechaNacimiento(),
-                                user.getPersona().getDireccion(),
-                                user.getPersona().getCelular(),
+                                (user.getPersona() != null) ? user.getPersona().getIdentificacion() : null,
+                                (user.getPersona() != null) ? user.getPersona().getNombre() : null,
+                                (user.getPersona() != null) ? user.getPersona().getApellido() : null,
+                                (user.getPersona() != null) ? user.getPersona().getGenero() : null,
+                                (user.getPersona() != null) ? user.getPersona().getFechaNacimiento() : null,
+                                (user.getPersona() != null) ? user.getPersona().getDireccion() : null,
+                                (user.getPersona() != null) ? user.getPersona().getCelular() : null,
                                 nombreRol,
+                                estadoId,
+                                estadoNombre,
                                 asignaciones);
         }
 
@@ -161,6 +165,9 @@ public class UsuarioListadoService {
                                 })
                                 .toList();
 
+                Long estadoId = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getId() : null;
+                String estadoNombre = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getNombre() : null;
+
                 return new UsuarioDetalleResponse(
                                 user.getUsername(),
                                 personaId,
@@ -173,6 +180,8 @@ public class UsuarioListadoService {
                                 (user.getPersona() != null) ? user.getPersona().getCelular() : null,
                                 rolPreferidoId,
                                 empresaPreferidaId,
+                                estadoId,
+                                estadoNombre,
                                 asignaciones);
         }
 }

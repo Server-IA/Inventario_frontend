@@ -27,5 +27,9 @@ public record UsuarioListResponse(
 
                 @Schema(description = "Rol preferido del usuario", example = "ROLE_USUARIO") String rolPreferido,
 
+                @Schema(description = "ID del estado del usuario", example = "1") Long estadoId,
+
+                @Schema(description = "Nombre descriptivo del estado del usuario", example = "Pendiente verificación") String estadoNombre,
+
                 @ArraySchema(schema = @Schema(description = "Lista de asignaciones (rol y empresa) visibles para el solicitante. Un administrador de sistema ve todas las asignaciones; otros roles solo ven las de su empresa.")) List<AsignacionResumenDTO> asignaciones) {
 }
