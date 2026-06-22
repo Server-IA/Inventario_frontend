@@ -1,6 +1,24 @@
+/*=============================================================================
+ Nombre del archivo : RolServiceImpl.java
+ Descripcion        : Implementación del servicio para la gestión de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo de OffsetDateTime |
+ |            |         |                      | por Instant en la auditoría.|
+ |            |         |                      | Eliminación de validaciones |
+ |            |         |                      | y filtros manuales sobre el |
+ |            |         |                      | campo deletedAt en los      |
+ |            |         |                      | métodos de consulta,        |
+ |            |         |                      | actualización y borrado.    |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.rol.services.impl;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -41,7 +59,7 @@ public class RolServiceImpl implements RolService {
         Rol rol = rolMapper.toEntity(request);
 
         // Auditoría
-        rol.setCreatedAt(OffsetDateTime.now());
+        rol.setCreatedAt(Instant.now());
 
         Long userId = authenticatedUser.getCurrentUserId();
         if (userId != null) {
@@ -62,10 +80,6 @@ public class RolServiceImpl implements RolService {
 
         Rol existing = rolRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
-
-        if (existing.getDeletedAt() != null) {
-            throw new IllegalStateException("No se puede actualizar un rol eliminado.");
-        }
 
         // Validar nombre único si cambió
         if (!existing.getNombre().equalsIgnoreCase(request.nombre())
@@ -88,7 +102,7 @@ public class RolServiceImpl implements RolService {
         }
 
         // Auditoría
-        existing.setUpdatedAt(OffsetDateTime.now());
+        existing.setUpdatedAt(Instant.now());
 
         Long userId = authenticatedUser.getCurrentUserId();
         if (userId != null) {
@@ -108,7 +122,6 @@ public class RolServiceImpl implements RolService {
     @Transactional(readOnly = true)
     public RolResponseDTO getById(Long id) {
         Rol rol = rolRepository.findById(id)
-                .filter(r -> r.getDeletedAt() == null)
                 .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
 
         return rolMapper.toDTO(rol);
@@ -121,7 +134,6 @@ public class RolServiceImpl implements RolService {
     public List<RolResponseDTO> getAll() {
         return rolRepository.findAll()
                 .stream()
-                .filter(r -> r.getDeletedAt() == null)
                 .map(rolMapper::toDTO)
                 .toList();
     }
@@ -133,11 +145,7 @@ public class RolServiceImpl implements RolService {
         Rol existing = rolRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rol no encontrado con id: " + id));
 
-        if (existing.getDeletedAt() != null) {
-            return; // ya estaba eliminado
-        }
-
-        existing.setDeletedAt(OffsetDateTime.now());
+        existing.setDeletedAt(Instant.now());
 
         Long userId = authenticatedUser.getCurrentUserId();
         if (userId != null) {
@@ -158,7 +166,5 @@ public class RolServiceImpl implements RolService {
 
         rolRepository.delete(existing);
     }
-
-
 
 }

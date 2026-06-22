@@ -1,7 +1,23 @@
+/*=============================================================================
+ Nombre del archivo : Rol.java
+ Descripcion        : Entidad de persistencia para la definición de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del tipo de dato  |
+ |            |         |                      | OffsetDateTime por Instant  |
+ |            |         |                      | en los atributos de         |
+ |            |         |                      | auditoría (createdAt,       |
+ |            |         |                      | updatedAt y deletedAt).     |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.rol;
 
 import java.io.Serializable;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -91,12 +107,12 @@ public class Rol implements Serializable {
 
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private OffsetDateTime createdAt;
+	private Instant createdAt;
 
 	@LastModifiedDate
 	@Column(name = "updated_at")
-	private OffsetDateTime updatedAt;
+	private Instant updatedAt;
 
 	@Column(name = "deleted_at")
-	private OffsetDateTime deletedAt;
+	private Instant deletedAt;
 }
