@@ -1,8 +1,8 @@
 package com.coagronet.subseccion.services;
 
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.subseccion.mappers.SubseccionMapper;
 import com.coagronet.subseccion.repositories.SubseccionRepository;
 import com.coagronet.subseccion.dtos.SubseccionDTO;
@@ -30,19 +30,19 @@ public class SubseccionService {
 	public Page<SubseccionDTO> findAll(Pageable pageable) {
 		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 		return subseccionRepository.findByEmpresaIdOrderByIdAsc(empresaId, pageable)
-				.map(subseccionMapper::toDTO);
+			.map(subseccionMapper::toDTO);
 	}
 
 	public Optional<SubseccionDTO> findById(Long requestedId) {
 		return subseccionRepository
-				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(subseccionMapper::toDTO);
+			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.map(subseccionMapper::toDTO);
 	}
 
 	@Transactional
 	public SubseccionDTO create(SubseccionDTO subseccionDTO) {
 		estadoRepository.findById(subseccionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
+			.orElseThrow(() -> new BadRequestException("Estado no encontrado o no válido"));
 
 		subseccionDTO.setId(null);
 		subseccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -53,10 +53,10 @@ public class SubseccionService {
 	@Transactional
 	public void update(Long requestedId, SubseccionDTO subseccionDTO) {
 		subseccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
+			.orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
 
 		estadoRepository.findById(subseccionDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		subseccionDTO.setId(requestedId);
 		subseccionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -67,7 +67,7 @@ public class SubseccionService {
 	@Transactional
 	public void delete(Long requestedId) {
 		subseccionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
+			.orElseThrow(() -> new NotFoundException("Subseccion no encontrada en su empresa"));
 
 		subseccionRepository.deleteById(requestedId);
 	}

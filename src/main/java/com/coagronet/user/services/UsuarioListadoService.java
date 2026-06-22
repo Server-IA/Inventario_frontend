@@ -1,3 +1,21 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioListadoService.java
+ Descripcion        : Servicio de aplicación para la consulta y listado de
+                      usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-16 | 0.4.0   | JUAN JOSE CASTRO     | Adición de los atributos    |
+ |            |         |                      | estadoId y estadoNombre en  |
+ |            |         |                      | las respuestas de listado   |
+ |            |         |                      | y detalle. Inclusión de     |
+ |            |         |                      | validaciones de nulidad     |
+ |            |         |                      | para los datos de Persona.  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.user.services;
 
 import org.springframework.data.domain.Page;
@@ -18,6 +36,8 @@ import com.coagronet.user.dtos.UsuarioFiltroRequest;
 import com.coagronet.user.dtos.UsuarioListResponse;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.user.repositories.UserSpecifications;
+import com.coagronet.user.dtos.UserMinimalDTO;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +63,26 @@ public class UsuarioListadoService {
                 Page<User> usersPage = userRepository.findAll(spec, pageable);
 
                 return usersPage.map(user -> mapToResponse(user, isSystemAdmin, forcedEmpresaId));
+        }
+
+        @Transactional(readOnly = true)
+        public List<UserMinimalDTO> listarUsuariosMinimal(UsuarioFiltroRequest filtro) {
+
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+                Long forcedEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+                Specification<User> spec = UserSpecifications.conFiltros(filtro, forcedEmpresaId);
+
+                List<User> users = userRepository.findAll(spec);
+
+                return users.stream().map(user -> new UserMinimalDTO(
+                                user.getId(),
+                                user.getUsername(),
+                                user.getPersona() != null ? user.getPersona().getNombre() : null)).toList();
         }
 
         private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
@@ -73,17 +113,22 @@ public class UsuarioListadoService {
                                 })
                                 .toList();
 
+                Long estadoId = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getId() : null;
+                String estadoNombre = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getNombre() : null;
+
                 return new UsuarioListResponse(
                                 user.getId(),
                                 user.getUsername(),
-                                user.getPersona().getIdentificacion(),
-                                user.getPersona().getNombre(),
-                                user.getPersona().getApellido(),
-                                user.getPersona().getGenero(),
-                                user.getPersona().getFechaNacimiento(),
-                                user.getPersona().getDireccion(),
-                                user.getPersona().getCelular(),
+                                (user.getPersona() != null) ? user.getPersona().getIdentificacion() : null,
+                                (user.getPersona() != null) ? user.getPersona().getNombre() : null,
+                                (user.getPersona() != null) ? user.getPersona().getApellido() : null,
+                                (user.getPersona() != null) ? user.getPersona().getGenero() : null,
+                                (user.getPersona() != null) ? user.getPersona().getFechaNacimiento() : null,
+                                (user.getPersona() != null) ? user.getPersona().getDireccion() : null,
+                                (user.getPersona() != null) ? user.getPersona().getCelular() : null,
                                 nombreRol,
+                                estadoId,
+                                estadoNombre,
                                 asignaciones);
         }
 
@@ -138,21 +183,23 @@ public class UsuarioListadoService {
                                 })
                                 .toList();
 
+                Long estadoId = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getId() : null;
+                String estadoNombre = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getNombre() : null;
+
                 return new UsuarioDetalleResponse(
                                 user.getUsername(),
                                 personaId,
-                                (user.getPersona() != null && user.getPersona().getTipoIdentificacion() != null) ? user.getPersona().getTipoIdentificacion().getId() : null,
                                 (user.getPersona() != null) ? user.getPersona().getIdentificacion() : null,
                                 (user.getPersona() != null) ? user.getPersona().getNombre() : null,
                                 (user.getPersona() != null) ? user.getPersona().getApellido() : null,
-                                (user.getPersona() != null) ? user.getPersona().getEmailPersonal() : null,
                                 (user.getPersona() != null) ? user.getPersona().getGenero() : null,
                                 (user.getPersona() != null) ? user.getPersona().getFechaNacimiento() : null,
                                 (user.getPersona() != null) ? user.getPersona().getDireccion() : null,
                                 (user.getPersona() != null) ? user.getPersona().getCelular() : null,
-                                (user.getPersona() != null) ? user.getPersona().getEstrato() : null,
                                 rolPreferidoId,
                                 empresaPreferidaId,
+                                estadoId,
+                                estadoNombre,
                                 asignaciones);
         }
 }

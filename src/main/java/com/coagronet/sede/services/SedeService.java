@@ -7,8 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.grupo.repositories.GrupoRepository;
 import com.coagronet.municipio.repositories.MunicipioRepository;
 import com.coagronet.sede.dtos.SedeDTO;
@@ -44,23 +44,23 @@ public class SedeService {
 
 	public Optional<SedeDTO> findById(Long requestedId) {
 		return sedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(sedeMapper::toListDto);
+			.map(sedeMapper::toListDto);
 	}
 
 	public SedeDTO create(SedeDTO sedeDTO) {
 		grupoRepository.findByIdAndEmpresaId(sedeDTO.getGrupoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El grupo no es v�lido"));
+			.orElseThrow(() -> new BadRequestException("El grupo no es v�lido"));
 
 		tipoSedeRepository
-				.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de sede no es v�lido"));
+			.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de sede no es v�lido"));
 
 		municipioRepository
-				.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El municipio no es v�lido"));
+			.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El municipio no es v�lido"));
 
 		estadoRepository.findById(sedeDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		sedeDTO.setId(null);
 		sedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -70,21 +70,21 @@ public class SedeService {
 
 	public void update(Long requestedId, SedeDTO sedeDTO) {
 		sedeRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
 
 		grupoRepository.findByIdAndEmpresaId(sedeDTO.getGrupoId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El grupo no es v�lido"));
+			.orElseThrow(() -> new BadRequestException("El grupo no es v�lido"));
 
 		tipoSedeRepository
-				.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El tipo de sede no es v�lido"));
+			.findByIdAndEmpresaId(sedeDTO.getTipoSedeId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El tipo de sede no es v�lido"));
 
 		municipioRepository
-				.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new BadRequestException("El municipio no es v�lido"));
+			.findByIdAndEmpresaId(sedeDTO.getMunicipioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+			.orElseThrow(() -> new BadRequestException("El municipio no es v�lido"));
 
 		estadoRepository.findById(sedeDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		sedeDTO.setId(requestedId);
 		sedeDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -94,7 +94,7 @@ public class SedeService {
 
 	public void delete(Long id) {
 		sedeRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Sede no encontrado"));
 
 		sedeRepository.deleteById(id);
 	}

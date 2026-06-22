@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.grupo.mappers.GrupoMapper;
 import com.coagronet.grupo.repositories.GrupoRepository;
 import com.coagronet.grupo.dtos.GrupoDTO;
@@ -30,19 +30,19 @@ public class GrupoService {
 
 	public List<GrupoDTO> findAll() {
 		return grupoRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.stream()
-				.map(grupoMapper::toListDto)
-				.collect(Collectors.toList());
+			.stream()
+			.map(grupoMapper::toListDto)
+			.collect(Collectors.toList());
 	}
 
 	public Optional<GrupoDTO> findById(Long requestedId) {
 		return grupoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.map(grupoMapper::toListDto);
+			.map(grupoMapper::toListDto);
 	}
 
 	public GrupoDTO create(GrupoDTO grupoDTO) {
 		estadoRepository.findById(grupoDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		grupoDTO.setId(null);
 		grupoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -52,10 +52,10 @@ public class GrupoService {
 
 	public void update(Long requestedId, GrupoDTO grupoDTO) {
 		grupoRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Grupo no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Grupo no encontrado"));
 
 		estadoRepository.findById(grupoDTO.getEstadoId())
-				.orElseThrow(() -> new BadRequestException("El estado no es válido"));
+			.orElseThrow(() -> new BadRequestException("El estado no es válido"));
 
 		grupoDTO.setId(requestedId);
 		grupoDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -65,7 +65,7 @@ public class GrupoService {
 
 	public void delete(Long id) {
 		grupoRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-				.orElseThrow(() -> new NotFoundException("Grupo no encontrado"));
+			.orElseThrow(() -> new NotFoundException("Grupo no encontrado"));
 
 		grupoRepository.deleteById(id);
 	}
