@@ -1,3 +1,18 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioEstado.java
+ Descripcion        : Entidad de persistencia para el estado del usuario.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-16 | 0.4.0   | JUAN JOSE CASTRO     | Adición del atributo nombre |
+ |            |         |                      | con su respectiva anotación |
+ |            |         |                      | @Column mapeado a la base   |
+ |            |         |                      | de datos como use_nombre.   |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.usuarioEstado;
 
 import java.io.Serializable;

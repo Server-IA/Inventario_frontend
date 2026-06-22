@@ -1,3 +1,21 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioListadoService.java
+ Descripcion        : Servicio de aplicación para la consulta y listado de
+                      usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-16 | 0.4.0   | JUAN JOSE CASTRO     | Adición de los atributos    |
+ |            |         |                      | estadoId y estadoNombre en  |
+ |            |         |                      | las respuestas de listado   |
+ |            |         |                      | y detalle. Inclusión de     |
+ |            |         |                      | validaciones de nulidad     |
+ |            |         |                      | para los datos de Persona.  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.user.services;
 
 import org.springframework.data.domain.Page;

@@ -1,3 +1,24 @@
+/*=============================================================================
+ Nombre del archivo : UserRegistrationService.java
+ Descripcion        : Servicio de aplicación para el registro de usuarios y
+                      asignación de roles empresariales.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-16 | 0.4.0   | JUAN JOSE CASTRO     | Implementación de generación|
+ |            |         |                      | automática de contraseñas   |
+ |            |         |                      | seguras para usuarios nuevos|
+ |            |         |                      | en lugar de recibirla en la |
+ |            |         |                      | petición. Publicación de    |
+ |            |         |                      | eventos para envío de       |
+ |            |         |                      | credenciales y roles.       |
+ |            |         |                      | Asignación de estado usando |
+ |            |         |                      | ID_ACTIVADO_CON_EMPRESA.    |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.user.services;
 
 import java.util.Optional;
