@@ -1,3 +1,18 @@
+/*=============================================================================
+ Nombre del archivo : ArticuloKardexMapper.java
+ Descripcion        : Mapper para la conversión entre ArticuloKardex y DTOs.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-21 | 0.4.0   | JUAN JOSE CASTRO     | Eliminación de la anotación |
+ |            |         |                      | @Mapping que ignoraba el    |
+ |            |         |                      | campo fechaHora en el       |
+ |            |         |                      | método updateEntityFromDto. |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.articuloKardex.mappers;
 
 import org.mapstruct.Mapper;
@@ -33,7 +48,6 @@ public interface ArticuloKardexMapper {
 	@Mapping(target = "presentacionProducto", ignore = true)
 	@Mapping(target = "estado", ignore = true)
 	@Mapping(target = "empresa", ignore = true)
-	@Mapping(target = "fechaHora", ignore = true)
 	void updateEntityFromDto(ArticuloKardexDTO dto, @MappingTarget ArticuloKardex entity);
 
 }
