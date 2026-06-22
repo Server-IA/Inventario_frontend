@@ -1,6 +1,26 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioRolContratoService.java
+ Descripcion        : Servicio de utilidad para la gestión automática de
+                      activación y expiración de contratos de UsuarioRol.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del uso de        |
+ |            |         |                      | OffsetDateTime.now() por    |
+ |            |         |                      | Instant.now() para la       |
+ |            |         |                      | actualización del campo     |
+ |            |         |                      | updatedAt al procesar la    |
+ |            |         |                      | activación y expiración de  |
+ |            |         |                      | contratos de roles.         |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.usuariorol.utils;
 
 import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -53,7 +73,7 @@ public class UsuarioRolContratoService {
 
 		for (UsuarioRol ur : pendientes) {
 			ur.setEstado(estadoActivo);
-			ur.setUpdatedAt(OffsetDateTime.now());
+			ur.setUpdatedAt(Instant.now());
 			usuarioRolRepository.save(ur);
 			logger.debug("UsuarioRol id={} activado por fecha de inicio contrato", ur.getId());
 		}
@@ -74,7 +94,7 @@ public class UsuarioRolContratoService {
 
 		for (UsuarioRol ur : expirados) {
 			ur.setEstado(estadoInactivo);
-			ur.setUpdatedAt(OffsetDateTime.now());
+			ur.setUpdatedAt(Instant.now());
 			usuarioRolRepository.save(ur);
 
 			User user = ur.getUser();

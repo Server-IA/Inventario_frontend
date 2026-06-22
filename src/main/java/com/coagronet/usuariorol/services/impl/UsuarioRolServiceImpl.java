@@ -1,6 +1,26 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioRolServiceImpl.java
+ Descripcion        : Implementación del servicio para la gestión de 
+                      asignaciones de roles a usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del uso de        |
+ |            |         |                      | OffsetDateTime.now() por    |
+ |            |         |                      | Instant.now() y el método   |
+ |            |         |                      | toInstant() para setear los |
+ |            |         |                      | campos de auditoría         |
+ |            |         |                      | (createdAt, updatedAt y     |
+ |            |         |                      | deletedAt).                 |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.usuariorol.services.impl;
 
 import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -134,7 +154,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 entity.setIniciaContratoEn(
                                 request.iniciaContratoEn() != null ? request.iniciaContratoEn() : now);
 
-                entity.setCreatedAt(now);
+                entity.setCreatedAt(now.toInstant());
                 entity.setCreatedBy(currentUser);
                 entity.setUpdatedAt(null);
                 entity.setUpdatedBy(null);
@@ -193,7 +213,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 entity.setIniciaContratoEn(
                                 request.iniciaContratoEn() != null ? request.iniciaContratoEn() : now);
 
-                entity.setCreatedAt(now);
+                entity.setCreatedAt(now.toInstant());
                 entity.setCreatedBy(currentUser);
                 entity.setUpdatedAt(null);
                 entity.setUpdatedBy(null);
@@ -309,7 +329,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 // =========================
                 // 5. Auditoría
                 // =========================
-                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedAt(Instant.now());
                 entity.setUpdatedBy(currentUser);
 
                 // =========================
@@ -430,7 +450,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 // =========================
                 // 5. Auditoría
                 // =========================
-                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedAt(Instant.now());
                 entity.setUpdatedBy(currentUser);
 
                 // =========================
@@ -457,7 +477,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "Estado no encontrado con id " + estadoId));
 
-                entity.setDeletedAt(OffsetDateTime.now());
+                entity.setDeletedAt(Instant.now());
                 entity.setDeletedBy(currentUser);
                 entity.setEstado(estado);
 
@@ -479,7 +499,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "Estado no encontrado con id " + estadoId));
 
-                entity.setDeletedAt(OffsetDateTime.now());
+                entity.setDeletedAt(Instant.now());
                 entity.setDeletedBy(currentUser);
                 entity.setEstado(estado);
 
@@ -493,7 +513,8 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                 UsuarioRol entity = usuarioRolRepository
                                 .findByIdAndEmpresaIdAndDeletedAtIsNull(id, empresaId)
                                 .orElseThrow(() -> new EntityNotFoundException(
-                                                "UsuarioRol no encontrado con id " + id + " para la empresa " + empresaId));
+                                                "UsuarioRol no encontrado con id " + id + " para la empresa "
+                                                                + empresaId));
 
                 boolean isActivo = ESTADO_ACTIVO_ID.equals(entity.getEstado().getId());
                 Long nuevoEstadoId = isActivo ? ESTADO_INACTIVO_ID : ESTADO_ACTIVO_ID;
@@ -503,7 +524,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                                                 "Estado no encontrado con id " + nuevoEstadoId));
 
                 entity.setEstado(nuevoEstado);
-                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedAt(Instant.now());
                 entity.setUpdatedBy(currentUser);
 
                 usuarioRolRepository.save(entity);
@@ -527,7 +548,7 @@ public class UsuarioRolServiceImpl implements UsuarioRolService {
                                                 "Estado no encontrado con id " + nuevoEstadoId));
 
                 entity.setEstado(nuevoEstado);
-                entity.setUpdatedAt(OffsetDateTime.now());
+                entity.setUpdatedAt(Instant.now());
                 entity.setUpdatedBy(currentUser);
 
                 usuarioRolRepository.save(entity);
