@@ -1,3 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : UserRegistrationRequest.java
+ Descripcion        : Objeto de petición para el registro de un nuevo usuario,
+                      información personal y asignación de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-16 | 0.4.0   | JUAN JOSE CASTRO     | Eliminación del campo       |
+ |            |         |                      | password de la petición y   |
+ |            |         |                      | ajuste de indentación en    |
+ |            |         |                      | los demás atributos.        |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.user.dtos;
 
 import java.time.LocalDate;
@@ -14,8 +30,6 @@ import jakarta.validation.constraints.NotNull;
 public record UserRegistrationRequest(
 
         @Schema(description = "Correo electrónico que servirá como nombre de usuario para el inicio de sesión.", example = "juan.perez@empresa.com") @NotBlank @Email String username,
-
-        @Schema(description = "Contraseña en texto plano (será encriptada por el sistema).", example = "Password123!") @NotBlank String password,
 
         @Schema(description = "ID del tipo de identificación (ej. Cédula, Pasaporte).", example = "1") @NotNull Long tipoIdentificacionId,
 
