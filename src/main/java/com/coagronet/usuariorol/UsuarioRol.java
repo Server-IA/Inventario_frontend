@@ -1,6 +1,24 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioRol.java
+ Descripcion        : Entidad de persistencia para la asignación de roles a
+                      usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del tipo de dato  |
+ |            |         |                      | OffsetDateTime por Instant  |
+ |            |         |                      | en los atributos base de    |
+ |            |         |                      | auditoría (createdAt,       |
+ |            |         |                      | updatedAt y deletedAt).     |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.usuariorol;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.DynamicInsert;
@@ -87,14 +105,14 @@ public class UsuarioRol implements Serializable {
 
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private OffsetDateTime createdAt;
+	private Instant createdAt;
 
 	@LastModifiedDate
 	@Column(name = "updated_at")
-	private OffsetDateTime updatedAt;
+	private Instant updatedAt;
 
 	@Column(name = "deleted_at")
-	private OffsetDateTime deletedAt;
+	private Instant deletedAt;
 
 	@CreatedBy
 	@ManyToOne(fetch = FetchType.LAZY)

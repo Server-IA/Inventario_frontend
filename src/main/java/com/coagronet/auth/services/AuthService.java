@@ -1,3 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : AuthService.java
+ Descripcion        : Servicio para la gestión de autenticación y autorización.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Conversión de la variable   |
+ |            |         |                      | now a Instant usando el     |
+ |            |         |                      | método toInstant() al setear|
+ |            |         |                      | el campo createdAt en la    |
+ |            |         |                      | entidad UsuarioRol.         |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.auth.services;
 
 import java.time.OffsetDateTime;
@@ -142,7 +158,8 @@ public class AuthService {
 		if (effectiveAcceptLanguage == null || effectiveAcceptLanguage.isBlank()) {
 			effectiveAcceptLanguage = LocaleContextHolder.getLocale().toLanguageTag();
 		}
-		Locale requestLocale = localeResolutionService.resolveForHttpRequest(effectiveAcceptLanguage, dto.getUsername());
+		Locale requestLocale = localeResolutionService.resolveForHttpRequest(effectiveAcceptLanguage,
+				dto.getUsername());
 		String requestLanguageTag = requestLocale.toLanguageTag();
 
 		// 1. Verificación de existencia previa
@@ -297,7 +314,7 @@ public class AuthService {
 
 			usuarioRol.setIniciaContratoEn(now);
 
-			usuarioRol.setCreatedAt(now);
+			usuarioRol.setCreatedAt(now.toInstant());
 			usuarioRol.setCreatedBy(currentUser);
 			usuarioRol.setUpdatedAt(null);
 			usuarioRol.setUpdatedBy(null);
@@ -391,7 +408,7 @@ public class AuthService {
 
 		usuarioRol.setIniciaContratoEn(now);
 
-		usuarioRol.setCreatedAt(now);
+		usuarioRol.setCreatedAt(now.toInstant());
 		usuarioRol.setCreatedBy(currentUser);
 		usuarioRol.setUpdatedAt(null);
 		usuarioRol.setUpdatedBy(null);
