@@ -1,3 +1,18 @@
+/*=============================================================================
+ Nombre del archivo : ArticuloKardexFactory.java
+ Descripcion        : Fábrica para la creación de entidades ArticuloKardex.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-21 | 0.4.0   | JUAN JOSE CASTRO     | Eliminación de la inyección |
+ |            |         |                      | de AuthenticationService y  |
+ |            |         |                      | del seteo manual del campo  |
+ |            |         |                      | username en la entidad.     |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.articuloKardex.services.factory;
 
 import java.math.BigDecimal;
@@ -10,7 +25,6 @@ import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.mappers.ArticuloKardexMapper;
 import com.coagronet.articuloKardex.repositories.ArticuloKardexRepository;
-import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.auditoria.RequestUtils;
 import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.presentacionProducto.PresentacionProducto;
@@ -30,8 +44,6 @@ public class ArticuloKardexFactory {
 	private final PresentacionProductoRepository presentacionProductoRepository;
 
 	private final RequestUtils requestUtils;
-
-	private final AuthenticationService authenticationService;
 
 	public List<ArticuloKardex> crearArticulos(ArticuloKardexDTO dto, Long empresaId, HttpServletRequest request) {
 		if (esDesgregado(dto, empresaId)) {
@@ -80,9 +92,6 @@ public class ArticuloKardexFactory {
 
 		entidad.setIp(requestUtils.getClientIp(request));
 		entidad.setHost(requestUtils.getClientHost(request));
-
-		entidad.setUsername(authenticationService.getAuthenticatedUser().getUsername());
-
 		entidad.setRol(requestUtils.getAuthenticatedRole());
 	}
 
