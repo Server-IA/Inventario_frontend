@@ -1,9 +1,27 @@
+/*=============================================================================
+ Nombre del archivo : RolControllerSecurityTest.java
+ Descripcion        : Pruebas unitarias y de seguridad para el controlador
+                      de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del uso de        |
+ |            |         |                      | OffsetDateTime por Instant  |
+ |            |         |                      | en la inicialización de los |
+ |            |         |                      | mocks de RolResponseDTO.    |
+ |            |         |                      | Reorganización de imports y |
+ |            |         |                      | ajustes menores de formato. |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.rol.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,10 +44,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-
 import com.coagronet.exceptionHandler.Advice;
 import com.coagronet.exceptionHandler.custom.CustomAccessDeniedHandler;
 import com.coagronet.exceptionHandler.custom.CustomAuthenticationEntryPoint;
@@ -41,6 +55,10 @@ import com.coagronet.rol.dtos.RolResponseDTO;
 import com.coagronet.rol.services.impl.RolServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 @WebMvcTest(controllers = RolController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
         JwtAuthenticationFilter.class }))
@@ -77,7 +95,8 @@ class RolControllerSecurityTest {
                 throw new RuntimeException(e);
             }
             return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class),
+                any(FilterChain.class));
     }
 
     @Test
@@ -101,7 +120,7 @@ class RolControllerSecurityTest {
     @WithMockUser(roles = "ADMINISTRADOR_EMPRESA")
     void getAll_returns403_whenUserIsAdministradorEmpresa_currentSecurityRule() throws Exception {
         when(rolService.getAll()).thenReturn(List.of(
-                new RolResponseDTO(1L, "Operario", "Rol operativo", 1L, "Activo", "admin", OffsetDateTime.now(),
+                new RolResponseDTO(1L, "Operario", "Rol operativo", 1L, "Activo", "admin", Instant.now(),
                         null, null)));
 
         mockMvc.perform(get("/api/v1/roles"))
@@ -112,7 +131,7 @@ class RolControllerSecurityTest {
     @WithMockUser(roles = "ADMINISTRADOR_SISTEMA")
     void create_returns201AndLocation_whenRequestIsValid() throws Exception {
         when(rolService.create(any())).thenReturn(
-                new RolResponseDTO(10L, "Operario", "Rol operativo", 1L, "Activo", "admin", OffsetDateTime.now(),
+                new RolResponseDTO(10L, "Operario", "Rol operativo", 1L, "Activo", "admin", Instant.now(),
                         null, null));
 
         mockMvc.perform(post("/api/v1/roles")
