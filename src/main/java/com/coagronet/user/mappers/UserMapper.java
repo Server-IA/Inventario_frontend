@@ -15,6 +15,7 @@ public interface UserMapper {
 	@Mapping(source = "usuarioEstado.id", target = "usuarioEstadoId")
 	UserDTO toDto(User user);
 
+	@Mapping(source = "persona.nombre", target = "nombre")
 	UserMinimalDTO toMinimalDTO(User user);
 
 	@Mapping(source = "personaId", target = "persona.id")

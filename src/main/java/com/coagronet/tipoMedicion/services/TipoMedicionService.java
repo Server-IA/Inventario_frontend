@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 import org.springframework.stereotype.Service;
 
+import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.tipoMedicion.dtos.TipoMedicionDTO;
 import com.coagronet.tipoMedicion.mappers.TipoMedicionMapper;
@@ -39,7 +40,7 @@ public class TipoMedicionService {
     }
 
     @Transactional
-    public TipoMedicionDTO create(TipoMedicionDTO tipoMedicionDTO) {
+    public TipoMedicionDTO create (TipoMedicionDTO tipoMedicionDTO) {
         estadoRepository.findById(tipoMedicionDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
@@ -51,10 +52,10 @@ public class TipoMedicionService {
     public void update(Long requestedId, TipoMedicionDTO tipoMedicionDTO) {
         tipoMedicionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .orElseThrow(() -> new NotFoundException("El tipo de medición no se ha encontrado o no es válido."));
-
+            
         estadoRepository.findById(tipoMedicionDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
-
+        
         tipoMedicionDTO.setId(requestedId);
         tipoMedicionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
         tipoMedicionRepository.save(tipoMedicionMapper.toEntity(tipoMedicionDTO));
@@ -66,5 +67,5 @@ public class TipoMedicionService {
                 .orElseThrow(() -> new NotFoundException("El tipo de medición no se ha encontrado o no es válido."));
         tipoMedicionRepository.deleteById(requestId);
     }
-
+    
 }
