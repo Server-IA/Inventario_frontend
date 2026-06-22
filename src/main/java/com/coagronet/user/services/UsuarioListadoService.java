@@ -1,3 +1,21 @@
+/*=============================================================================
+ Nombre del archivo : UsuarioListadoService.java
+ Descripcion        : Servicio de aplicación para la consulta y listado de
+                      usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-16 | 0.4.0   | JUAN JOSE CASTRO     | Adición de los atributos    |
+ |            |         |                      | estadoId y estadoNombre en  |
+ |            |         |                      | las respuestas de listado   |
+ |            |         |                      | y detalle. Inclusión de     |
+ |            |         |                      | validaciones de nulidad     |
+ |            |         |                      | para los datos de Persona.  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.user.services;
 
 import org.springframework.data.domain.Page;
@@ -64,8 +82,7 @@ public class UsuarioListadoService {
                 return users.stream().map(user -> new UserMinimalDTO(
                                 user.getId(),
                                 user.getUsername(),
-                                user.getPersona() != null ? user.getPersona().getNombre() : null
-                )).toList();
+                                user.getPersona() != null ? user.getPersona().getNombre() : null)).toList();
         }
 
         private UsuarioListResponse mapToResponse(User user, boolean isSystemAdmin, Long currentEmpresaId) {
@@ -96,17 +113,22 @@ public class UsuarioListadoService {
                                 })
                                 .toList();
 
+                Long estadoId = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getId() : null;
+                String estadoNombre = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getNombre() : null;
+
                 return new UsuarioListResponse(
                                 user.getId(),
                                 user.getUsername(),
-                                user.getPersona().getIdentificacion(),
-                                user.getPersona().getNombre(),
-                                user.getPersona().getApellido(),
-                                user.getPersona().getGenero(),
-                                user.getPersona().getFechaNacimiento(),
-                                user.getPersona().getDireccion(),
-                                user.getPersona().getCelular(),
+                                (user.getPersona() != null) ? user.getPersona().getIdentificacion() : null,
+                                (user.getPersona() != null) ? user.getPersona().getNombre() : null,
+                                (user.getPersona() != null) ? user.getPersona().getApellido() : null,
+                                (user.getPersona() != null) ? user.getPersona().getGenero() : null,
+                                (user.getPersona() != null) ? user.getPersona().getFechaNacimiento() : null,
+                                (user.getPersona() != null) ? user.getPersona().getDireccion() : null,
+                                (user.getPersona() != null) ? user.getPersona().getCelular() : null,
                                 nombreRol,
+                                estadoId,
+                                estadoNombre,
                                 asignaciones);
         }
 
@@ -161,6 +183,9 @@ public class UsuarioListadoService {
                                 })
                                 .toList();
 
+                Long estadoId = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getId() : null;
+                String estadoNombre = (user.getUsuarioEstado() != null) ? user.getUsuarioEstado().getNombre() : null;
+
                 return new UsuarioDetalleResponse(
                                 user.getUsername(),
                                 personaId,
@@ -173,6 +198,8 @@ public class UsuarioListadoService {
                                 (user.getPersona() != null) ? user.getPersona().getCelular() : null,
                                 rolPreferidoId,
                                 empresaPreferidaId,
+                                estadoId,
+                                estadoNombre,
                                 asignaciones);
         }
 }
