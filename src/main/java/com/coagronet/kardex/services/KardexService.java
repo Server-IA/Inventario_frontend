@@ -13,6 +13,14 @@
  |            |         |                      | la creación y actualización |
  |            |         |                      | de los ítems del Kardex.    |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Eliminación del seteo       |
+ |            |         |                      | manual de username en el    |
+ |            |         |                      | builder principal. Inclusión|
+ |            |         |                      | de los campos username y    |
+ |            |         |                      | segFechaHora en el mapeo de |
+ |            |         |                      | los DTOs de listado admin y |
+ |            |         |                      | listado general.            |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 package com.coagronet.kardex.services;
@@ -231,7 +239,6 @@ public class KardexService {
 				.clienteProveedor(clienteProveedor)
 				.descripcion(request.descripcion())
 				.estado(entityManager.getReference(Estado.class, ESTADO_ACTIVO))
-				.username(metadata.username())
 				.rol(metadata.rol())
 				.ip(metadata.ip())
 				.host(metadata.host())
@@ -304,7 +311,9 @@ public class KardexService {
 							view.getNombreEstado(),
 							view.getNombreEmpresa(),
 							view.getNombreClienteProveedor(),
-							view.getNombreAlmacenDestino()));
+							view.getNombreAlmacenDestino(),
+							view.getUsername(),
+							view.getSegFechaHora()));
 		}
 
 		var spec = KardexSpecifications.conFiltros(fechaInicio, fechaFin, tipoMovimientoId, estadoId);
@@ -318,7 +327,9 @@ public class KardexService {
 						kardex.getProduccion() != null ? kardex.getProduccion().getNombre() : null,
 						kardex.getEstado().getNombre(),
 						kardex.getClienteProveedor() != null ? kardex.getClienteProveedor().getNombre() : null,
-						kardex.getAlmacenDestino() != null ? kardex.getAlmacenDestino().getNombre() : null));
+						kardex.getAlmacenDestino() != null ? kardex.getAlmacenDestino().getNombre() : null,
+						kardex.getUsername() != null ? kardex.getUsername().getUsername() : null,
+						kardex.getSegFechaHora()));
 	}
 
 	@Transactional(readOnly = true)

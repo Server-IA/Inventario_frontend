@@ -1,6 +1,24 @@
+/*=============================================================================
+ Nombre del archivo : Kardex.java
+ Descripcion        : Entidad de persistencia principal para el Kardex.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo de LocalDateTime  |
+ |            |         |                      | por Instant. Adición de     |
+ |            |         |                      | índice BRIN para la fecha.  |
+ |            |         |                      | Cambio del campo username   |
+ |            |         |                      | de String a entidad User    |
+ |            |         |                      | con @ManyToOne y agregada   |
+ |            |         |                      | la anotación @CreatedBy.    |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.kardex;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +29,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.TenantId;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -24,6 +43,7 @@ import com.coagronet.ordenCompra.OrdenCompra;
 import com.coagronet.pedido.Pedido;
 import com.coagronet.produccion.Produccion;
 import com.coagronet.tipoMovimiento.TipoMovimiento;
+import com.coagronet.user.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -51,12 +71,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @DynamicInsert
-@Table(name = "kardex", indexes = { @Index(name = "idx_kardex_almacen_id", columnList = "kar_almacen_id"),
+@Table(name = "kardex", indexes = {
+		@Index(name = "idx_kardex_almacen_id", columnList = "kar_almacen_id"),
 		@Index(name = "idx_kardex_almacen_destino", columnList = "kar_almacen_destino_id"),
 		@Index(name = "idx_kardex_empresa_id", columnList = "kar_empresa_id"),
 		@Index(name = "idx_kardex_orden_compra_id", columnList = "kar_orden_compra_id"),
 		@Index(name = "idx_kardex_pedido_id", columnList = "kar_pedido_id"),
-		@Index(name = "idx_kardex_produccion_id", columnList = "kar_produccion_id") })
+		@Index(name = "idx_kardex_produccion_id", columnList = "kar_produccion_id"),
+		@Index(name = "idx_kardex_fecha_hora_brin", columnList = "kar_fecha_hora") // Índice agregado
+})
 @EntityListeners(AuditingEntityListener.class)
 public class Kardex {
 
@@ -112,11 +135,13 @@ public class Kardex {
 	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
 	private OrdenCompra ordenCompra;
 
-	// --- Metadatos de Auditor?a y Seguridad ---
+	// --- Metadatos de Auditoría y Seguridad ---
 
+	@CreatedBy
 	@LastModifiedBy
-	@Column(name = "kar_seg_username", length = 150)
-	private String username;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_seg_username", referencedColumnName = "usu_id")
+	private User username;
 
 	@Column(name = "kar_seg_rol", length = 100)
 	private String rol;
@@ -131,7 +156,7 @@ public class Kardex {
 	@LastModifiedDate
 	@CreatedDate
 	@Column(name = "kar_seg_fecha_hora", columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private LocalDateTime segFechaHora;
+	private Instant segFechaHora;
 
 	@Builder.Default
 	@OneToMany(mappedBy = "kardex", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -161,5 +186,4 @@ public class Kardex {
 				? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
 				: getClass().hashCode();
 	}
-
 }
