@@ -1,3 +1,20 @@
+/*=============================================================================
+ Nombre del archivo : KardexService.java
+ Descripcion        : Servicio para la gestión y lógica de negocio del Kardex.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-21 | 0.4.0   | JUAN JOSE CASTRO     | Eliminación del seteo       |
+ |            |         |                      | manual del atributo         |
+ |            |         |                      | username a partir de los    |
+ |            |         |                      | metadatos de seguridad en   |
+ |            |         |                      | la creación y actualización |
+ |            |         |                      | de los ítems del Kardex.    |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.kardex.services;
 
 import java.math.BigDecimal;
@@ -258,7 +275,6 @@ public class KardexService {
 				.precio(dto.precio())
 				.lote(dto.lote())
 				.fechaVencimiento(dto.fechaVencimiento())
-				.username(metadata.username())
 				.rol(metadata.rol())
 				.ip(metadata.ip())
 				.host(metadata.host())
@@ -503,7 +519,6 @@ public class KardexService {
 						.precio(dto.precio())
 						.lote(dto.lote())
 						.fechaVencimiento(dto.fechaVencimiento())
-						.username(metadata.username())
 						.rol(metadata.rol())
 						.ip(metadata.ip())
 						.host(metadata.host())
@@ -521,7 +536,6 @@ public class KardexService {
 					.precio(dto.precio())
 					.lote(dto.lote())
 					.fechaVencimiento(dto.fechaVencimiento())
-					.username(metadata.username())
 					.rol(metadata.rol())
 					.ip(metadata.ip())
 					.host(metadata.host())
@@ -532,7 +546,6 @@ public class KardexService {
 	}
 
 	private void actualizarAuditoriaItem(ArticuloKardex item, MetadatosSeguridad metadata) {
-		item.setUsername(metadata.username());
 		item.setRol(metadata.rol());
 		item.setIp(metadata.ip());
 		item.setHost(metadata.host());

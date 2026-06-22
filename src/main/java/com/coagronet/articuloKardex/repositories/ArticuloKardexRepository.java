@@ -1,3 +1,23 @@
+/*=============================================================================
+ Nombre del archivo : ArticuloKardexRepository.java
+ Descripcion        : Repositorio JPA para el manejo de datos de ArticuloKardex.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-21 | 0.4.0   | JUAN JOSE CASTRO     | Eliminación de la anotación |
+ |            |         |                      | @Repository. Actualización  |
+ |            |         |                      | de consultas JPQL para      |
+ |            |         |                      | incluir nuevos campos:      |
+ |            |         |                      | precioTotal, responsable,   |
+ |            |         |                      | identificadorProducto y     |
+ |            |         |                      | createdBy. Reemplazo de     |
+ |            |         |                      | fechaHora por createdDate   |
+ |            |         |                      | en filtros y DTOs.          |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.articuloKardex.repositories;
 
 import java.math.BigDecimal;
@@ -13,13 +33,11 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import com.coagronet.articuloKardex.ArticuloKardex;
 import com.coagronet.articuloKardex.dtos.ArticuloKardexDTO;
 import com.coagronet.articuloKardex.dtos.KardexItemResponseDto;
 
-@Repository
 public interface ArticuloKardexRepository
 		extends JpaRepository<ArticuloKardex, Long>, JpaSpecificationExecutor<ArticuloKardex> {
 
@@ -73,45 +91,66 @@ public interface ArticuloKardexRepository
 
 	@Query("""
 			    SELECT new com.coagronet.articuloKardex.dtos.ArticuloKardexDTO(
-			        a.id, a.cantidad, a.precio, a.fechaVencimiento, a.identificadorProducto,
-			        k.id, pp.id, e.id, emp.id, a.lote,
-			        a.username, a.rol, a.ip, a.host, a.fechaHora
+			        a.id,
+			        a.cantidad,
+			        a.precio,
+			        a.precioTotal,
+			        a.fechaVencimiento,
+			        a.identificadorProducto,
+			        k.id,
+			        pp.id,
+			        e.id,
+			        emp.id,
+			        r.id,
+			        a.lote,
+			        c.username,
+			        a.rol,
+			        a.ip,
+			        a.host,
+			        a.createdDate
 			    )
 			    FROM ArticuloKardex a
 			    JOIN a.kardex k
 			    JOIN a.presentacionProducto pp
 			    JOIN a.estado e
 			    JOIN a.empresa emp
+			    LEFT JOIN a.responsable r
+			    LEFT JOIN a.createdBy c
 			    WHERE emp.id = :empresaId
+			    ORDER BY a.id ASC
 			""")
 	Page<ArticuloKardexDTO> findDtoByEmpresaIdOrderByIdAsc(@Param("empresaId") Long empresaId, Pageable pageable);
 
 	@Query("""
 			    SELECT new com.coagronet.articuloKardex.dtos.ArticuloKardexDTO(
-			        a.id, a.cantidad, a.precio, a.fechaVencimiento, a.identificadorProducto,
-			        k.id, pp.id, est.id, emp.id, a.lote,
-			        a.username, a.rol, a.ip, a.host, a.fechaHora
+			        a.id, a.cantidad, a.precio, a.precioTotal, a.fechaVencimiento, a.identificadorProducto,
+			        k.id, pp.id, est.id, emp.id, r.id, a.lote,
+			        c.username, a.rol, a.ip, a.host, a.createdDate
 			    )
 			    FROM ArticuloKardex a
 			    JOIN a.kardex k
 			    JOIN a.presentacionProducto pp
 			    JOIN a.estado est
 			    JOIN a.empresa emp
+			    LEFT JOIN a.responsable r
+			    LEFT JOIN a.createdBy c
 			    WHERE a.id = :id AND emp.id = :empresaId
 			""")
 	Optional<ArticuloKardexDTO> findDtoByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
 	@Query("""
 			    SELECT new com.coagronet.articuloKardex.dtos.ArticuloKardexDTO(
-			        a.id, a.cantidad, a.precio, a.fechaVencimiento, a.identificadorProducto,
-			        k.id, pp.id, est.id, emp.id, a.lote,
-			        a.username, a.rol, a.ip, a.host, a.fechaHora
+			        a.id, a.cantidad, a.precio, a.precioTotal, a.fechaVencimiento, a.identificadorProducto,
+			        k.id, pp.id, est.id, emp.id, r.id, a.lote,
+			        c.username, a.rol, a.ip, a.host, a.createdDate
 			    )
 			    FROM ArticuloKardex a
 			    JOIN a.kardex k
 			    JOIN a.presentacionProducto pp
 			    JOIN a.estado est
 			    JOIN a.empresa emp
+			    LEFT JOIN a.responsable r
+			    LEFT JOIN a.createdBy c
 			    WHERE emp.id = :empresaId AND k.id = :kardexId
 			    ORDER BY a.id ASC
 			""")
@@ -123,31 +162,33 @@ public interface ArticuloKardexRepository
 	int softDeleteByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
 	@Query("""
-        SELECT new com.coagronet.articuloKardex.dtos.KardexItemResponseDto(
-            k.id, 
-            p.nombre, 
-            k.cantidad, 
-            k.precio, 
-            k.lote, 
-            k.fechaVencimiento, 
-            e.nombre
-        )
-        FROM ArticuloKardex k
-        JOIN k.presentacionProducto p
-        JOIN k.estado e
-        WHERE k.kardex.id = :kardexId
-          AND (:productoId IS NULL OR p.id = :productoId)
-          AND (:estadoId IS NULL OR e.id = :estadoId)
-          AND (cast(:fechaInicio as timestamp) IS NULL OR k.fechaHora >= :fechaInicio)
-          AND (cast(:fechaFin as timestamp) IS NULL OR k.fechaHora <= :fechaFin)
-    """)
-    Page<KardexItemResponseDto> findItemsByKardexIdWithFilters(
-            @Param("kardexId") Long kardexId,
-            @Param("productoId") Long productoId,
-            @Param("estadoId") Long estadoId,
-            @Param("fechaInicio") LocalDateTime fechaInicio,
-            @Param("fechaFin") LocalDateTime fechaFin,
-            Pageable pageable
-    );
+			    SELECT new com.coagronet.articuloKardex.dtos.KardexItemResponseDto(
+			        k.id,
+			        p.nombre,
+			        k.identificadorProducto,
+			        k.cantidad,
+			        k.precio,
+			        k.precioTotal,
+			        k.lote,
+			        k.fechaVencimiento,
+			        e.nombre,
+			        k.createdDate
+			    )
+			    FROM ArticuloKardex k
+			    JOIN k.presentacionProducto p
+			    JOIN k.estado e
+			    WHERE k.kardex.id = :kardexId
+			      AND (:productoId IS NULL OR p.id = :productoId)
+			      AND (:estadoId IS NULL OR e.id = :estadoId)
+			      AND (cast(:fechaInicio as timestamp) IS NULL OR k.createdDate >= :fechaInicio)
+			      AND (cast(:fechaFin as timestamp) IS NULL OR k.createdDate <= :fechaFin)
+			""")
+	Page<KardexItemResponseDto> findItemsByKardexIdWithFilters(
+			@Param("kardexId") Long kardexId,
+			@Param("productoId") Long productoId,
+			@Param("estadoId") Long estadoId,
+			@Param("fechaInicio") LocalDateTime fechaInicio,
+			@Param("fechaFin") LocalDateTime fechaFin,
+			Pageable pageable);
 
 }
