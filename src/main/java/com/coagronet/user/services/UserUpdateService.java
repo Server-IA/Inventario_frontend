@@ -1,3 +1,23 @@
+/*=============================================================================
+ Nombre del archivo : UserUpdateService.java
+ Descripcion        : Servicio para la actualización de detalles de usuario, 
+                      información personal y asignación de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Refactorización de las      |
+ |            |         |                      | validaciones para acumular  |
+ |            |         |                      | errores y lanzar un único   |
+ |            |         |                      | BadRequestException.        |
+ |            |         |                      | Adición de inactivación de  |
+ |            |         |                      | roles no incluidos en el    |
+ |            |         |                      | payload y soporte para la   |
+ |            |         |                      | creación de nueva Persona.  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.user.services;
 
 import java.util.Collections;
