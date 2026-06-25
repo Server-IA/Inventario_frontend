@@ -1,3 +1,22 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRolService.java
+ Descripcion        : Servicio para la gestión de roles a nivel de empresa.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del uso de        |
+ |            |         |                      | OffsetDateTime por Instant  |
+ |            |         |                      | para establecer la fecha    |
+ |            |         |                      | de actualización. Cambio    |
+ |            |         |                      | en la asignación de         |
+ |            |         |                      | createdBy y updatedBy para  |
+ |            |         |                      | pasar la entidad User en    |
+ |            |         |                      | lugar del String username.  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.empresarol.services;
 
 import com.coagronet.auditoria.AuthenticationService;
@@ -20,8 +39,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
+
+import com.coagronet.user.User;
 
 @Service
 @RequiredArgsConstructor
@@ -61,12 +82,12 @@ public class EmpresaRolService {
         Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
         Estado estado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
 
-        String username = authenticationService.getAuthenticatedUser().getUsername();
+        User user = authenticationService.getAuthenticatedUser();
 
         EmpresaRol empresaRol = EmpresaRol.builder()
                 .empresa(empresa)
                 .rol(rol)
-                .createdBy(username)
+                .createdBy(user)
                 .estado(estado)
                 .build();
 
@@ -78,7 +99,7 @@ public class EmpresaRolService {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
 
         EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
-        String username = authenticationService.getAuthenticatedUser().getUsername();
+        User user = authenticationService.getAuthenticatedUser();
 
 
 
@@ -97,8 +118,8 @@ public class EmpresaRolService {
         }
 
         empresaRolMapper.updateEntityFromDto(dto, empresaRol);
-        empresaRol.setUpdatedBy(username);
-        empresaRol.setUpdatedAt(OffsetDateTime.now());
+        empresaRol.setUpdatedBy(user);
+        empresaRol.setUpdatedAt(Instant.now());
     }
 
     @Transactional
@@ -106,12 +127,12 @@ public class EmpresaRolService {
         Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
         EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
         Estado estado = entidadValidatorFacade.validarEstadoGeneral(estadoId);
-        String username = authenticationService.getAuthenticatedUser().getUsername();
+        User user = authenticationService.getAuthenticatedUser();
 
 
         empresaRol.setEstado(estado);
-        empresaRol.setUpdatedBy(username);
-        empresaRol.setUpdatedAt(OffsetDateTime.now());
+        empresaRol.setUpdatedBy(user);
+        empresaRol.setUpdatedAt(Instant.now());
     }
 
     @Transactional

@@ -1,3 +1,21 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaUsuarioController.java
+ Descripcion        : Controlador REST para la gestión de empresas y usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Asignación de los atributos |
+ |            |         |                      | de auditoría createdAt      |
+ |            |         |                      | (usando Instant.now()) y    |
+ |            |         |                      | createdBy (pasando la       |
+ |            |         |                      | entidad User) durante la    |
+ |            |         |                      | creación del registro       |
+ |            |         |                      | inicial en EmpresaRol.      |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.empresa.controllers;
 
 import java.time.Instant;
@@ -80,7 +98,7 @@ public class EmpresaUsuarioController {
 		String username = jwtUtil.extractUsername(token);
 
 		User user = userRepository.findByUsername(username)
-			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
 		Empresa empresa = EmpresaMapper.INSTANCE.toEmpresa(empresaDTO);
 		empresa.setPersona(user.getPersona());
@@ -106,12 +124,14 @@ public class EmpresaUsuarioController {
 		moduloEmpresaRepository.saveAll(modulosEmpresa);
 
 		Rol rolAdmin = rolRepository.findById(2L)
-			.orElseThrow(() -> new RuntimeException("Rol Administrador no encontrado"));
+				.orElseThrow(() -> new RuntimeException("Rol Administrador no encontrado"));
 
 		EmpresaRol empresaRol = new EmpresaRol();
 		empresaRol.setEmpresa(savedEmpresa);
 		empresaRol.setRol(rolAdmin);
 		empresaRol.setEstado(estadoActivo);
+		empresaRol.setCreatedAt(Instant.now());
+		empresaRol.setCreatedBy(user);
 		EmpresaRol savedEmpresaRol = empresaRolRepository.save(empresaRol);
 
 		List<Long> modulosIds = modulosBase.stream().map(Modulo::getId).toList();

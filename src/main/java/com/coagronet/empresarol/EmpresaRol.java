@@ -1,6 +1,25 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRol.java
+ Descripcion        : Entidad de persistencia para la asignación de roles a
+                      empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del tipo de dato  |
+ |            |         |                      | OffsetDateTime por Instant  |
+ |            |         |                      | en los atributos de         |
+ |            |         |                      | auditoría createdAt y       |
+ |            |         |                      | updatedAt. Cambio de tipo   |
+ |            |         |                      | de String a entidad User    |
+ |            |         |                      | para createdBy y updatedBy. |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.empresarol;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.hibernate.annotations.TenantId;
 import org.springframework.data.annotation.CreatedBy;
@@ -12,6 +31,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.estado.Estado;
 import com.coagronet.rol.Rol;
+import com.coagronet.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -67,18 +87,18 @@ public class EmpresaRol {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @CreatedBy
     @Column(name = "created_by", length = 150)
-    private String createdBy;
+    private User createdBy;
 
     @LastModifiedBy
     @Column(name = "updated_by", length = 150)
-    private String updatedBy;
+    private User updatedBy;
 
 }
