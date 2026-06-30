@@ -8,15 +8,18 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.                         |
 | 2026-06-02 | 0.4.0   | Cesar Medina         | Se documenta e integra consulta de detalle.   |
+| 2026-06-10 | 0.4.0   | Cesar Medina         | Se adapta el listado a GET /v1/usuarios.      |
+| 2026-06-29 | 0.4.0   | Cesar Medina         | Se mejora el estilo visual del estado.        |
+| 2026-06-29 | 0.4.0   | Cesar Medina         | Se corrige la paginación del listado.         |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
  * @module Usuario
  * @description Administra el listado de usuarios, sus acciones CRUD visibles
- * en la interfaz y la consulta del detalle individual desde el endpoint del backend.
+ * en la interfaz y la consulta del detalle individual desde los endpoints del backend.
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Chip } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTranslation } from "react-i18next";
 import GridActionBar from "../common/GridActionBar.jsx";
@@ -55,6 +58,146 @@ const emptyRow = {
 const extractItems = (resp) => resp.data?.content ?? resp.data ?? [];
 
 /**
+ * Obtiene las asignaciones de un usuario como arreglo seguro.
+ *
+ * @param {object} user Usuario del backend.
+ * @returns {Array}
+ */
+const getAssignments = (user) => (Array.isArray(user?.asignaciones) ? user.asignaciones : []);
+
+/**
+ * Resuelve la asignación más representativa del usuario para la tabla.
+ *
+ * @param {object} user Usuario del backend.
+ * @returns {object|null}
+ */
+const getPreferredAssignment = (user) => {
+  const assignments = getAssignments(user);
+  const preferredRole = String(user?.rolPreferido ?? "").trim().toLowerCase();
+
+  return (
+    assignments.find(
+      (item) => String(item?.rolNombre ?? "").trim().toLowerCase() === preferredRole
+    ) ??
+    assignments[0] ??
+    null
+  );
+};
+
+/**
+ * Resuelve la etiqueta visible del rol preferido.
+ *
+ * @param {object} user Usuario del backend.
+ * @returns {string}
+ */
+const getPreferredRoleLabel = (user) => {
+  const preferredRole = String(user?.rolPreferido ?? "").trim();
+
+  if (preferredRole && !preferredRole.toUpperCase().startsWith("ROLE_")) {
+    return preferredRole;
+  }
+
+  return getPreferredAssignment(user)?.rolNombre ?? preferredRole;
+};
+
+/**
+ * Obtiene una etiqueta de empresas sin duplicados para la tabla.
+ *
+ * @param {object} user Usuario del backend.
+ * @returns {string}
+ */
+const getCompanyLabel = (user) => {
+  const companyNames = getAssignments(user)
+    .map((item) => item?.empresaNombre)
+    .filter(Boolean);
+
+  return Array.from(new Set(companyNames)).join(", ");
+};
+
+/**
+ * Normaliza estado activo/inactivo a un id compatible con la UI actual.
+ *
+ * @param {number|string} value Estado recibido desde el backend.
+ * @returns {number}
+ */
+const normalizeStatusId = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  if (
+    value === 1 ||
+    value === "1" ||
+    normalized === "activo" ||
+    normalized === "active" ||
+    normalized === "activa"
+  ) {
+    return 1;
+  }
+
+  if (
+    value === 2 ||
+    value === "2" ||
+    normalized === "inactivo" ||
+    normalized === "inactive" ||
+    normalized === "inactiva"
+  ) {
+    return 2;
+  }
+
+  return 1;
+};
+
+/**
+ * Resuelve los estilos visuales del estado del usuario en la tabla.
+ *
+ * Registro 2026-06-10: acompana el ajuste visual documentado en la cabecera
+ * para presentar el estado con una apariencia mas clara dentro del grid.
+ *
+ * @param {string} statusName Nombre del estado.
+ * @returns {{ text: string, background: string, border: string }}
+ */
+const getUserStatusMeta = (statusName) => {
+  const normalized = String(statusName ?? "").trim().toLowerCase();
+
+  if (!normalized) {
+    return {
+      text: "#4E6660",
+      background: "#EEF3F1",
+      border: "rgba(78,102,96,0.16)",
+    };
+  }
+
+  if (normalized.includes("activo") || normalized.includes("active")) {
+    return {
+      text: "#1B5E20",
+      background: "rgba(46,125,50,0.10)",
+      border: "rgba(46,125,50,0.18)",
+    };
+  }
+
+  if (normalized.includes("inactivo") || normalized.includes("inactive")) {
+    return {
+      text: "#B3261E",
+      background: "rgba(211,47,47,0.10)",
+      border: "rgba(211,47,47,0.18)",
+    };
+  }
+
+  if (normalized.includes("pendiente") || normalized.includes("pending")) {
+    return {
+      text: "#B54708",
+      background: "rgba(237,108,2,0.10)",
+      border: "rgba(237,108,2,0.18)",
+    };
+  }
+
+  return {
+    text: "#0B5CAD",
+    background: "rgba(2,136,209,0.10)",
+    border: "rgba(2,136,209,0.18)",
+  };
+};
+
+/**
  * Componente principal del módulo Usuarios.
  *
  * @returns {JSX.Element}
@@ -67,6 +210,7 @@ export default function Usuario() {
   const [message, setMessage] = useState({ open: false, severity: "", text: "" });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
   const [openForm, setOpenForm] = useState(false);
   const [formMode, setFormMode] = useState("create");
   const [formData, setFormData] = useState(emptyRow);
@@ -82,23 +226,50 @@ export default function Usuario() {
   const [empresasList, setEmpresasList] = useState([]);
   const [rolesList, setRolesList] = useState([]);
 
-  const baseRows = useMemo(() => rows, [rows]);
-
   const columns = useMemo(() => {
     const cols = [
-      { field: "nombreCompleto", headerKey: "usuario.columns.name", type: "text", flex: 1.15, minWidth: 220 },
-      { field: "username", headerKey: "usuario.columns.email", type: "text", flex: 1.3, minWidth: 250 },
-      { field: "rolNombre", headerKey: "usuario.columns.role", type: "text", flex: 1.1, minWidth: 220 },
+      { field: "nombre", headerKey: "usuario.columns.firstName", type: "text", flex: 1, minWidth: 180 },
+      { field: "apellido", headerKey: "usuario.columns.lastName", type: "text", flex: 1, minWidth: 180 },
+      { field: "username", headerKey: "usuario.columns.username", type: "text", flex: 1.35, minWidth: 260 },
+      { field: "celular", headerKey: "usuario.columns.phone", type: "text", flex: 0.95, minWidth: 170 },
+      { field: "rolPreferido", headerKey: "usuario.columns.preferredRole", type: "text", flex: 1.05, minWidth: 190 },
       {
-        field: "estadoId",
+        field: "estadoNombre",
         headerKey: "usuario.columns.status",
         type: "status",
-        flex: 0.7,
-        minWidth: 140,
+        flex: 1,
+        minWidth: 190,
         align: "left",
         headerAlign: "left",
+        renderCell: (params) => {
+          const meta = getUserStatusMeta(params?.value);
+
+          return (
+            <Box sx={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
+              <Chip
+                label={params?.value || "-"}
+                size="small"
+                sx={{
+                  height: 28,
+                  borderRadius: "999px",
+                  fontWeight: 700,
+                  fontSize: "0.74rem",
+                  letterSpacing: 0.1,
+                  color: meta.text,
+                  backgroundColor: meta.background,
+                  border: `1px solid ${meta.border}`,
+                  "& .MuiChip-label": {
+                    px: 1.5,
+                  },
+                }}
+              />
+            </Box>
+          );
+        },
       },
-      ...(isAdmin ? [{ field: "empresaNombre", headerKey: "usuario.columns.company", type: "text", flex: 1.2, minWidth: 220 }] : []),
+      ...(isAdmin
+        ? [{ field: "empresaNombre", headerKey: "usuario.columns.company", type: "text", flex: 1.25, minWidth: 220 }]
+        : []),
     ];
     return cols;
   }, [isAdmin]);
@@ -106,35 +277,45 @@ export default function Usuario() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const url = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
-      const resp = await axios.get(url, { params: { page: 0, size: 200 } });
+      // Registro 2026-06-10: la consulta respeta page/size del backend para que
+      // el grid avance pagina por pagina sin cargar todo el listado a la vez.
+      const resp = await axios.get("/v1/usuarios", { params: { page, size: pageSize } });
       const list = extractItems(resp);
-      let mapped = (Array.isArray(list) ? list : []).map((a) => ({
-        id: a.usuarioId ?? a.id,
-        username: a.usuarioEmail ?? "",
-        nombreCompleto: a.personaNombreCompleto ?? "",
-        empresaNombre: a.empresaNombre ?? "",
-        rolNombre: a.rolNombre ?? "",
-        estadoId: a.estadoId ?? 1,
-        raw: a,
-      }));
-      // fusiona inactivados locales para garantizar visibilidad
-      if (Array.isArray(inactivatedCache) && inactivatedCache.length) {
-        const byId = new Map(mapped.map((r) => [r.id, r]));
-        inactivatedCache.forEach((g) => {
-          const existing = byId.get(g.id);
-          if (existing) {
-            byId.set(g.id, { ...existing, estadoId: 2 });
-          } else {
-            byId.set(g.id, g);
-          }
-        });
-        mapped = Array.from(byId.values());
-      }
+      const totalElements = Number(resp?.data?.page?.totalElements ?? 0);
+      // Registro 2026-06-10: el listado se unifica con GET /v1/usuarios y se mapea
+      // y ahora respeta la paginación server-side del nuevo contrato.
+      let mapped = (Array.isArray(list) ? list : []).map((a) => {
+        const preferredAssignment = getPreferredAssignment(a);
+
+        return {
+          id: a.id,
+          username: a.username ?? "",
+          nombre: a.nombre ?? "",
+          apellido: a.apellido ?? "",
+          celular: a.celular ?? "",
+          rolPreferido: getPreferredRoleLabel(a),
+          estadoNombre: a.estadoNombre ?? "",
+          empresaNombre: getCompanyLabel(a),
+          estadoId: normalizeStatusId(a.estadoId),
+          preferredAssignment,
+          raw: a,
+        };
+      });
       setRows(mapped);
+      setTotalRows(totalElements || mapped.length);
+      setSelectedRow(null);
     } catch (e) {
-      console.error(t("usuario.messages.loadError"), e);
+      const status = e?.response?.status;
+      const resolvedMessage =
+        e?.response?.data?.message ??
+        (status === 401 || status === 403
+          ? t("usuario.messages.listAccessDenied")
+          : t("usuario.messages.loadError"));
+      console.error(resolvedMessage, e);
       setRows([]);
+      setTotalRows(0);
+      setSelectedRow(null);
+      setMessage({ open: true, severity: "error", text: resolvedMessage });
     } finally {
       setLoading(false);
     }
@@ -142,6 +323,9 @@ export default function Usuario() {
 
   useEffect(() => {
     loadData();
+  }, [page, pageSize]);
+
+  useEffect(() => {
     // combos
     Promise.all([
       axios.get("/v1/items/empresa/0"),
@@ -173,19 +357,33 @@ export default function Usuario() {
   };
   const handleEdit = () => {
     if (!selectedRow) return;
+    const assignmentRef = selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
+
+    if (!assignmentRef) {
+      setMessage({
+        open: true,
+        severity: "info",
+        text: t("usuario.messages.assignmentActionUnavailable"),
+      });
+      return;
+    }
+
     setFormMode("edit");
     setFormData({
       username: selectedRow.username,
-      rolId: selectedRow.raw?.rolId ?? "",
-      nombre: selectedRow.nombreCompleto?.split(" ")[0] ?? "",
-      apellido: selectedRow.nombreCompleto?.split(" ").slice(1).join(" ") ?? "",
-      genero: "",
-      tipoDocumentoIdentidadId: "",
-      codigoIdentificacion: "",
-      fechaNacimiento: "",
-      estrato: "",
-      direccion: "",
-      celular: "",
+      rolId: assignmentRef?.rolId ?? "",
+      nombre: selectedRow.nombre ?? "",
+      apellido: selectedRow.apellido ?? "",
+      genero: selectedRow.raw?.genero ?? "",
+      tipoDocumentoIdentidadId: selectedRow.raw?.tipoDocumentoIdentidadId ?? "",
+      codigoIdentificacion:
+        selectedRow.raw?.identificacion ?? selectedRow.raw?.codigoIdentificacion ?? "",
+      fechaNacimiento: selectedRow.raw?.fechaNacimiento ?? "",
+      estrato: selectedRow.raw?.estrato ?? "",
+      direccion: selectedRow.raw?.direccion ?? "",
+      celular: selectedRow.celular ?? selectedRow.raw?.celular ?? "",
+      empresaId: assignmentRef?.empresaId ?? "",
+      empresaNombre: assignmentRef?.empresaNombre ?? "",
       estadoId: selectedRow.estadoId ?? 1,
       asignaciones: [],
     });
@@ -193,7 +391,7 @@ export default function Usuario() {
   };
   const handleView = () => {
     if (!selectedRow) return;
-    const requestId = selectedRow?.raw?.usuarioId ?? selectedRow?.id;
+    const requestId = selectedRow?.raw?.id ?? selectedRow?.id;
     const roleById = new Map((rolesList || []).map((item) => [Number(item.id), item.nombre ?? item.name]));
     const companyById = new Map((empresasList || []).map((item) => [Number(item.id), item.nombre ?? item.name]));
 
@@ -245,9 +443,20 @@ export default function Usuario() {
   };
   const handleDelete = async () => {
     if (!selectedRow) return;
+    const assignmentRef = selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
+    const assignId = assignmentRef?.usuarioRolId ?? selectedRow?.raw?.usuarioRolId;
+
+    if (!assignId) {
+      setMessage({
+        open: true,
+        severity: "info",
+        text: t("usuario.messages.assignmentActionUnavailable"),
+      });
+      return;
+    }
+
     const ok = window.confirm(t("usuario.messages.confirmInactivate"));
     if (!ok) return;
-    const assignId = selectedRow?.raw?.id;
     const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
     try {
       // intento toggle (si existe)
@@ -270,8 +479,8 @@ export default function Usuario() {
       try {
         await axios.put(`${base}/${assignId}`, {
           id: assignId,
-          usuarioId: selectedRow.raw.usuarioId,
-          rolId: selectedRow.raw.rolId,
+          usuarioId: selectedRow.raw.id ?? selectedRow.raw.usuarioId,
+          rolId: assignmentRef?.rolId,
           estadoId: 2,
         });
         const ghost = { ...selectedRow, estadoId: 2 };
@@ -322,16 +531,29 @@ export default function Usuario() {
         const ABS_AUTH_URL = `${import.meta.env.VITE_BACKEND_URI}/auth/empresa/usuario-roles`;
         await axios.post(ABS_AUTH_URL, body);
       } else {
-        const assignId = selectedRow?.raw?.id;
+        const assignmentRef =
+          selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
+        const assignId = assignmentRef?.usuarioRolId ?? selectedRow?.raw?.usuarioRolId;
+
+        if (!assignId) {
+          throw new Error("assignment-action-unavailable");
+        }
+
         if (assignId) {
           const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
           // Orden exacto del payload de asignación (mismo que POST)
           const body = {};
-          body.usuarioId = selectedRow.raw.usuarioId;
-          body.rolId = Number(payload.rolId ?? selectedRow.raw.rolId);
-          body.estadoId = payload.estadoId ?? selectedRow.raw.estadoId;
-          body.iniciaContratoEn = payload.iniciaContratoEn ?? selectedRow.raw.iniciaContratoEn;
-          body.finalizaContratoEn = payload.finalizaContratoEn ?? selectedRow.raw.finalizaContratoEn;
+          body.usuarioId = selectedRow.raw.id ?? selectedRow.raw.usuarioId;
+          body.rolId = Number(payload.rolId ?? assignmentRef?.rolId);
+          body.estadoId = payload.estadoId ?? assignmentRef?.estadoId ?? selectedRow.raw.estadoId;
+          body.iniciaContratoEn =
+            payload.iniciaContratoEn ??
+            assignmentRef?.iniciaContratoEn ??
+            assignmentRef?.fechaInicioContrato;
+          body.finalizaContratoEn =
+            payload.finalizaContratoEn ??
+            assignmentRef?.finalizaContratoEn ??
+            assignmentRef?.fechaFinContrato;
           await axios.put(`${base}/${assignId}`, body);
         }
       }
@@ -343,7 +565,15 @@ export default function Usuario() {
         text: formMode === "create" ? t("usuario.messages.createSuccess") : t("usuario.messages.updateSuccess"),
       });
     } catch (err) {
-      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? t("common.messages.operationError") });
+      const fallbackMessage =
+        err?.message === "assignment-action-unavailable"
+          ? t("usuario.messages.assignmentActionUnavailable")
+          : t("common.messages.operationError");
+      setMessage({
+        open: true,
+        severity: "error",
+        text: err.response?.data?.message ?? fallbackMessage,
+      });
     }
   };
 
@@ -357,13 +587,6 @@ export default function Usuario() {
         onDelete={handleDelete}
         canUpdate={Boolean(selectedRow)}
         canDelete={Boolean(selectedRow)}
-        onFilters={() =>
-          setMessage({
-            open: true,
-            severity: "info",
-            text: t("common.messages.filtersComingSoon"),
-          })
-        }
         extraActions={
           <Button
             onClick={handleView}
@@ -383,7 +606,7 @@ export default function Usuario() {
         setSelectedRow={setSelectedRow}
         paginationModel={{ page, pageSize }}
         setPaginationModel={handlePaginationModelChange}
-        rowCount={rows.length}
+        rowCount={totalRows}
         containerSx={{ borderRadius: 4 }}
         onEscape={() => setOpenForm(false)}
       />

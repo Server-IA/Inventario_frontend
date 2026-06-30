@@ -1,9 +1,11 @@
 {
   "title": "User Management",
   "columns": {
-    "name": "Name",
-    "email": "Email",
-    "role": "Role",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "username": "Email",
+    "phone": "Phone",
+    "preferredRole": "Preferred role",
     "status": "Status",
     "company": "Company"
   },
@@ -11,6 +13,8 @@
     "confirmInactivate": "Are you sure you want to inactivate this user? It must remain visible.",
     "cannotInactivate": "User could not be inactivated",
     "loadError": "Error loading users",
+    "listAccessDenied": "You do not have permission to view the user list.",
+    "assignmentActionUnavailable": "This action requires assignment data not available in the current list response.",
     "createSuccess": "User created successfully.",
     "updateSuccess": "User updated successfully.",
     "detailLoadError": "The user detail could not be loaded.",

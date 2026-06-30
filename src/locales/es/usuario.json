@@ -1,9 +1,11 @@
 {
   "title": "Gestión de Usuarios",
   "columns": {
-    "name": "Nombre",
-    "email": "Correo",
-    "role": "Rol",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "username": "Correo",
+    "phone": "Celular",
+    "preferredRole": "Rol preferido",
     "status": "Estado",
     "company": "Empresa"
   },
@@ -11,6 +13,8 @@
     "confirmInactivate": "¿Seguro que deseas inactivar este usuario? Debe permanecer visible.",
     "cannotInactivate": "No se pudo inactivar",
     "loadError": "Error cargando usuarios",
+    "listAccessDenied": "No tienes permisos para consultar el listado de usuarios.",
+    "assignmentActionUnavailable": "La acción requiere datos de asignación que no vienen en el listado actual.",
     "createSuccess": "Usuario registrado correctamente.",
     "updateSuccess": "Usuario actualizado correctamente.",
     "detailLoadError": "No fue posible cargar el detalle del usuario.",
