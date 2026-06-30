@@ -39,8 +39,48 @@
   "form": {
     "createTitle": "Register user",
     "editTitle": "Update user",
+    "summaryTitle": "User registration",
+    "summaryDescription": "Complete the personal data and add one or more assignments to define the user's access in the system.",
+    "sections": {
+      "personalInformation": "Personal information",
+      "personalInformationDescription": "Register the user's base information for creation in the system.",
+      "assignmentConfiguration": "Assignment setup",
+      "assignmentConfigurationDescription": "Add roles, companies and contract ranges for the user.",
+      "assignmentList": "Added assignments",
+      "assignmentListDescription": "Review the assignments before confirming the registration."
+    },
+    "messages": {
+      "autoCompanyAssigned": "The company will be assigned automatically from the current session: {{company}}.",
+      "currentCompany": "Current company",
+      "assignmentRequired": "You must add at least one assignment before saving.",
+      "existingPersonLoaded": "The person already exists in the system. Personal data was preloaded and the username was locked to avoid duplication.",
+      "personLoaded": "Existing data was found for the entered identification and preloaded into the form.",
+      "personNotFound": "No previous data was found for this identification. You can continue with manual registration."
+    },
+    "helpers": {
+      "optional": "Optional",
+      "autoAssignedCompany": "Company assigned automatically: {{company}}.",
+      "existingUsernameLocked": "The username cannot be modified because the person already has a registered user.",
+      "lookupLoading": "Searching data by identification..."
+    },
+    "actions": {
+      "register": "Register"
+    },
+    "options": {
+      "genderMale": "Male",
+      "genderFemale": "Female"
+    },
+    "validation": {
+      "required": "This field is required.",
+      "invalidEmail": "Enter a valid email address.",
+      "assignmentRequired": "You must add at least one assignment.",
+      "roleRequired": "You must select a role.",
+      "companyRequired": "You must select a company.",
+      "contractDateOrder": "End date cannot be earlier than start date."
+    },
     "fields": {
       "username": "Username (email)",
+      "personalEmail": "Personal email",
       "name": "Name",
       "lastName": "Last name",
       "gender": "Gender",

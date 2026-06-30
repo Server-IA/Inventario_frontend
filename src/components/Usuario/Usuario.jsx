@@ -11,6 +11,8 @@ CONTROL DE CAMBIOS
 | 2026-06-10 | 0.4.0   | Cesar Medina         | Se adapta el listado a GET /v1/usuarios.      |
 | 2026-06-29 | 0.4.0   | Cesar Medina         | Se mejora el estilo visual del estado.        |
 | 2026-06-29 | 0.4.0   | Cesar Medina         | Se corrige la paginación del listado.         |
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se integra registro con HU-037.1 y nuevo modal|
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se ajusta formato del payload de registro.    |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -37,11 +39,14 @@ const emptyRow = {
   apellido: "",
   genero: "",
   tipoDocumentoIdentidadId: "",
+  tipoIdentificacionId: "",
   codigoIdentificacion: "",
+  identificacion: "",
   fechaNacimiento: "",
   estrato: "",
   direccion: "",
   celular: "",
+  emailPersonal: "",
   rolPreferido: "",
   empresaId: "",
   empresaNombre: "",
@@ -147,6 +152,20 @@ const normalizeStatusId = (value) => {
 };
 
 /**
+ * Convierte una fecha simple a formato ISO con zona horaria para el endpoint
+ * de registro de usuarios.
+ *
+ * @param {string} value Fecha en formato YYYY-MM-DD o datetime existente.
+ * @returns {string|null}
+ */
+const toOffsetDateTime = (value) => {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return null;
+  if (normalized.includes("T")) return normalized;
+  return `${normalized}T00:00:00-05:00`;
+};
+
+/**
  * Resuelve los estilos visuales del estado del usuario en la tabla.
  *
  * Registro 2026-06-10: acompana el ajuste visual documentado en la cabecera
@@ -225,6 +244,7 @@ export default function Usuario() {
 
   const [empresasList, setEmpresasList] = useState([]);
   const [rolesList, setRolesList] = useState([]);
+  const [tiposIdentificacionList, setTiposIdentificacionList] = useState([]);
 
   const columns = useMemo(() => {
     const cols = [
@@ -330,14 +350,17 @@ export default function Usuario() {
     Promise.all([
       axios.get("/v1/items/empresa/0"),
       axios.get("/v1/items/rol/0"),
+      axios.get("/v1/items/tipo_identificacion/0"),
     ])
-      .then(([eRes, rRes]) => {
+      .then(([eRes, rRes, tRes]) => {
         setEmpresasList(extractItems(eRes));
         setRolesList(extractItems(rRes) || []);
+        setTiposIdentificacionList(extractItems(tRes) || []);
       })
       .catch(() => {
         setEmpresasList([]);
         setRolesList([]);
+        setTiposIdentificacionList([]);
       });
   }, []);
 
@@ -375,13 +398,17 @@ export default function Usuario() {
       nombre: selectedRow.nombre ?? "",
       apellido: selectedRow.apellido ?? "",
       genero: selectedRow.raw?.genero ?? "",
-      tipoDocumentoIdentidadId: selectedRow.raw?.tipoDocumentoIdentidadId ?? "",
-      codigoIdentificacion:
+      tipoIdentificacionId:
+        selectedRow.raw?.tipoIdentificacionId ??
+        selectedRow.raw?.tipoDocumentoIdentidadId ??
+        "",
+      identificacion:
         selectedRow.raw?.identificacion ?? selectedRow.raw?.codigoIdentificacion ?? "",
       fechaNacimiento: selectedRow.raw?.fechaNacimiento ?? "",
       estrato: selectedRow.raw?.estrato ?? "",
       direccion: selectedRow.raw?.direccion ?? "",
       celular: selectedRow.celular ?? selectedRow.raw?.celular ?? "",
+      emailPersonal: selectedRow.raw?.emailPersonal ?? "",
       empresaId: assignmentRef?.empresaId ?? "",
       empresaNombre: assignmentRef?.empresaNombre ?? "",
       estadoId: selectedRow.estadoId ?? 1,
@@ -514,22 +541,47 @@ export default function Usuario() {
     const payload = { ...(dataFromForm || formData) };
     try {
       if (formMode === "create") {
-        // Orden exacto del payload de registro (con tipos numéricos donde aplica)
+        // Registro 2026-06-10: el alta usa el contrato unificado de /v1/usuarios/registro
+        // con datos personales y múltiples asignaciones alineadas a HU-037.1.
         const body = {};
-        body.username = payload.username;
-        const resolvedRolId = payload.rolId ?? (Array.isArray(payload.asignaciones) ? payload.asignaciones[0]?.rolId : undefined);
-        body.rolId = resolvedRolId != null ? Number(resolvedRolId) : resolvedRolId;
+        body.username = payload.username?.trim();
+        body.tipoIdentificacionId = payload.tipoIdentificacionId
+          ? Number(payload.tipoIdentificacionId)
+          : null;
+        body.identificacion = payload.identificacion?.trim() ?? "";
         body.nombre = payload.nombre;
         body.apellido = payload.apellido;
+        body.emailPersonal = payload.emailPersonal?.trim() ?? "";
         body.genero = payload.genero;
-        body.tipoDocumentoIdentidadId = payload.tipoDocumentoIdentidadId ? Number(payload.tipoDocumentoIdentidadId) : payload.tipoDocumentoIdentidadId;
-        body.codigoIdentificacion = payload.codigoIdentificacion;
         body.fechaNacimiento = payload.fechaNacimiento;
-        body.estrato = Number(payload.estrato || 0);
-        body.direccion = payload.direccion;
-        body.celular = payload.celular;
-        const ABS_AUTH_URL = `${import.meta.env.VITE_BACKEND_URI}/auth/empresa/usuario-roles`;
-        await axios.post(ABS_AUTH_URL, body);
+        body.direccion = payload.direccion?.trim() ?? "";
+        body.celular = payload.celular?.trim() ?? "";
+        body.estrato =
+          payload.estrato === "" || payload.estrato == null
+            ? null
+            : Number(payload.estrato);
+        body.asignaciones = (Array.isArray(payload.asignaciones) ? payload.asignaciones : []).map(
+          (item) => ({
+            empresaId: Number(
+              isAdmin
+                ? item.empresaId
+                : empresaIdOwn
+            ),
+            rolId: Number(item.rolId),
+            // Registro 2026-06-10: el backend espera OffsetDateTime en las
+            // fechas contractuales, no solo la fecha plana del input HTML.
+            iniciaContratoEn: toOffsetDateTime(item.iniciaContratoEn),
+            finalizaContratoEn: toOffsetDateTime(item.finalizaContratoEn),
+            esPreferida: Boolean(item.preferido),
+          })
+        );
+        if (!isAdmin) {
+          body.asignaciones = body.asignaciones.map((item) => ({
+            ...item,
+            empresaId: Number(empresaIdOwn),
+          }));
+        }
+        await axios.post("/v1/usuarios/registro", body);
       } else {
         const assignmentRef =
           selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
@@ -619,7 +671,10 @@ export default function Usuario() {
         onSubmit={handleSubmit}
         roles={rolesList}
         empresas={empresasList}
+        tiposIdentificacion={tiposIdentificacionList}
         isAdmin={isAdmin}
+        sessionCompanyId={empresaIdOwn}
+        sessionCompanyName={localStorage.getItem("empresaNombre") || ""}
       />
 
       <UserDetailDialog

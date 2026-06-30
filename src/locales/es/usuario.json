@@ -39,8 +39,48 @@
   "form": {
     "createTitle": "Registrar usuario",
     "editTitle": "Actualizar usuario",
+    "summaryTitle": "Registro de usuario",
+    "summaryDescription": "Completa los datos personales y agrega una o varias asignaciones para definir el acceso del usuario en el sistema.",
+    "sections": {
+      "personalInformation": "Información personal",
+      "personalInformationDescription": "Registra los datos base del usuario para su creación en el sistema.",
+      "assignmentConfiguration": "Configuración de asignación",
+      "assignmentConfigurationDescription": "Agrega roles, empresas y vigencias contractuales para el usuario.",
+      "assignmentList": "Asignaciones agregadas",
+      "assignmentListDescription": "Verifica las asignaciones antes de confirmar el registro."
+    },
+    "messages": {
+      "autoCompanyAssigned": "La empresa se asignará automáticamente con la sesión actual: {{company}}.",
+      "currentCompany": "Empresa actual",
+      "assignmentRequired": "Debes agregar al menos una asignación antes de guardar.",
+      "existingPersonLoaded": "La persona ya existe en el sistema. Se precargaron los datos personales y el username quedó bloqueado para evitar duplicidad.",
+      "personLoaded": "Se encontraron datos previos para la identificación ingresada y fueron precargados en el formulario.",
+      "personNotFound": "No se encontraron datos previos para esta identificación. Puedes continuar con el registro manual."
+    },
+    "helpers": {
+      "optional": "Opcional",
+      "autoAssignedCompany": "Empresa asignada automáticamente: {{company}}.",
+      "existingUsernameLocked": "El username no puede modificarse porque la persona ya tiene usuario registrado.",
+      "lookupLoading": "Consultando datos por identificación..."
+    },
+    "actions": {
+      "register": "Registrar"
+    },
+    "options": {
+      "genderMale": "Masculino",
+      "genderFemale": "Femenino"
+    },
+    "validation": {
+      "required": "Este campo es obligatorio.",
+      "invalidEmail": "Ingresa un correo electrónico válido.",
+      "assignmentRequired": "Debes agregar al menos una asignación.",
+      "roleRequired": "Debes seleccionar un rol.",
+      "companyRequired": "Debes seleccionar una empresa.",
+      "contractDateOrder": "La fecha fin no puede ser menor que la fecha inicio."
+    },
     "fields": {
       "username": "Username (correo)",
+      "personalEmail": "Correo personal",
       "name": "Nombre",
       "lastName": "Apellido",
       "gender": "Género",
