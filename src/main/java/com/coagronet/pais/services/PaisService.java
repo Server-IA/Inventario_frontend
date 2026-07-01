@@ -30,8 +30,8 @@ import com.coagronet.pais.Pais;
 import com.coagronet.pais.dtos.PaisDTO;
 import com.coagronet.pais.mappers.PaisMapper;
 import com.coagronet.pais.repositories.PaisRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 
 import lombok.RequiredArgsConstructor;

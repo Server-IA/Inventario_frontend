@@ -4,11 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 import org.springframework.stereotype.Service;
 
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.produccionDesarrollo.dtos.ProduccionDesarrolloDTO;
 import com.coagronet.produccionDesarrollo.mappers.ProduccionDesarrolloMapper;
@@ -26,34 +25,37 @@ public class ProduccionDesarrolloService {
     private final EstadoRepository estadoRepository;
     private final UserEmpresaService userEmpresaService;
 
-    public List <ProduccionDesarrolloDTO> findAll() {
-        return produccionDesarrolloRepository.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
+    public List<ProduccionDesarrolloDTO> findAll() {
+        return produccionDesarrolloRepository
+                .findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest())
                 .stream()
                 .map(produccionDesarrolloMapper::toDto)
                 .collect(Collectors.toList());
     }
 
-    public Optional <ProduccionDesarrolloDTO> findById(Long requestedId) {
+    public Optional<ProduccionDesarrolloDTO> findById(Long requestedId) {
         return produccionDesarrolloRepository
-            .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-            .map(produccionDesarrolloMapper::toDto);
+                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .map(produccionDesarrolloMapper::toDto);
     }
 
     @Transactional
-    public ProduccionDesarrolloDTO create (ProduccionDesarrolloDTO produccionDesarrolloDTO) {
+    public ProduccionDesarrolloDTO create(ProduccionDesarrolloDTO produccionDesarrolloDTO) {
         estadoRepository.findById(produccionDesarrolloDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
 
         produccionDesarrolloDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
 
-        return produccionDesarrolloMapper.toDto(produccionDesarrolloRepository.save(produccionDesarrolloMapper.toEntity(produccionDesarrolloDTO)));
+        return produccionDesarrolloMapper.toDto(
+                produccionDesarrolloRepository.save(produccionDesarrolloMapper.toEntity(produccionDesarrolloDTO)));
     }
-
 
     @Transactional
     public void update(Long requestedId, ProduccionDesarrolloDTO produccionDesarrolloDTO) {
-        produccionDesarrolloRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-                .orElseThrow(() -> new NotFoundException("El desarrollo de produccion no se ha encontrado o no es válido."));
+        produccionDesarrolloRepository
+                .findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(
+                        () -> new NotFoundException("El desarrollo de produccion no se ha encontrado o no es válido."));
 
         estadoRepository.findById(produccionDesarrolloDTO.getEstadoId())
                 .orElseThrow(() -> new BadRequestException("El estado no es válido."));
@@ -64,13 +66,14 @@ public class ProduccionDesarrolloService {
         produccionDesarrolloRepository.save(produccionDesarrolloMapper.toEntity(produccionDesarrolloDTO));
     }
 
-
     @Transactional
     public void delete(Long requestId) {
-        produccionDesarrolloRepository.findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-            .orElseThrow(() -> new BadRequestException("EL desarrollo de produccion no se ha encontrado o no es válido."));
+        produccionDesarrolloRepository
+                .findByIdAndEmpresaId(requestId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+                .orElseThrow(() -> new BadRequestException(
+                        "EL desarrollo de produccion no se ha encontrado o no es válido."));
 
         produccionDesarrolloRepository.deleteById(requestId);
     }
-    
+
 }

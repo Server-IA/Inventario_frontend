@@ -12,8 +12,8 @@ import com.coagronet.evaluacion.dtos.EvaluacionDTO;
 import com.coagronet.evaluacion.mappers.EvaluacionMapper;
 import com.coagronet.evaluacion.repositories.EvaluacionRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.tipoEvaluacion.repositories.TipoEvaluacionRepository;
 import com.coagronet.utils.UserEmpresaService;
 
@@ -35,31 +35,31 @@ public class EvaluacionService {
 
 	public Page<EvaluacionDTO> findAll(Pageable pageable) {
 		return evaluacionRepository
-			.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
-			.map(evaluacionMapper::toListDTO);
+				.findByEmpresaIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(), pageable)
+				.map(evaluacionMapper::toListDTO);
 	}
 
 	public List<EvaluacionDTO> findAllByTipoEvaluacionId(Long tipoEvaluacionId) {
 		return evaluacionRepository
-			.findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(),
-					tipoEvaluacionId)
-			.stream()
-			.map(evaluacionMapper::toListDTO)
-			.collect(Collectors.toList());
+				.findByEmpresaIdAndTipoEvaluacionIdOrderByIdAsc(userEmpresaService.getEmpresaIdFromCurrentRequest(),
+						tipoEvaluacionId)
+				.stream()
+				.map(evaluacionMapper::toListDTO)
+				.collect(Collectors.toList());
 	}
 
 	public Optional<EvaluacionDTO> findById(Long requestedId) {
 		return evaluacionRepository
-			.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(evaluacionMapper::toListDTO);
+				.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.map(evaluacionMapper::toListDTO);
 	}
 
 	public EvaluacionDTO create(EvaluacionDTO evaluacionDTO) {
 		tipoEvaluacionRepository.findById(evaluacionDTO.getTipoEvaluacionId())
-			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es v�lido."));
+				.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es v�lido."));
 
 		estadoRepository.findById(evaluacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido."));
 
 		evaluacionDTO.setId(null);
 		evaluacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -69,14 +69,14 @@ public class EvaluacionService {
 
 	public void update(Long requestedId, EvaluacionDTO evaluacionDTO) {
 		evaluacionRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(
-					() -> new NotFoundException("La evaluaci�n con el ID: " + requestedId + " no fue encontrada."));
+				.orElseThrow(
+						() -> new NotFoundException("La evaluaci�n con el ID: " + requestedId + " no fue encontrada."));
 
 		tipoEvaluacionRepository.findById(evaluacionDTO.getTipoEvaluacionId())
-			.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es v�lido."));
+				.orElseThrow(() -> new BadRequestException("El campo 'tipoEvaluacionId' no es v�lido."));
 
 		estadoRepository.findById(evaluacionDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El campo 'EstadoId' no es v�lido."));
+				.orElseThrow(() -> new BadRequestException("El campo 'EstadoId' no es v�lido."));
 
 		evaluacionDTO.setId(requestedId);
 		evaluacionDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -86,7 +86,7 @@ public class EvaluacionService {
 
 	public void delete(Long id) {
 		evaluacionRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("La evaluaci�n con el ID: " + id + " no fue encontrada."));
+				.orElseThrow(() -> new NotFoundException("La evaluaci�n con el ID: " + id + " no fue encontrada."));
 
 		evaluacionRepository.deleteById(id);
 	}

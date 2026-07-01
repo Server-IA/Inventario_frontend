@@ -23,7 +23,7 @@ import com.coagronet.departamento.Departamento;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.municipio.dtos.MunicipioDTO;
 import com.coagronet.municipio.mappers.MunicipioMapper;
