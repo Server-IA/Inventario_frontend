@@ -11,8 +11,8 @@ import com.coagronet.almacen.mappers.AlmacenMapper;
 import com.coagronet.almacen.repositories.AlmacenRepository;
 import com.coagronet.espacio.repositories.EspacioRepository;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
@@ -40,16 +40,16 @@ public class AlmacenService {
 	public Optional<AlmacenDTO> findById(Long requestedId) {
 
 		return almacenRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.map(almacenMapper::toListDto);
+				.map(almacenMapper::toListDto);
 	}
 
 	public AlmacenDTO create(AlmacenDTO almacenDTO) {
 		espacioRepository
-			.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
+				.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new BadRequestException("El espacio no es v�lido"));
 
 		estadoRepository.findById(almacenDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		almacenDTO.setId(null);
 		almacenDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -59,14 +59,14 @@ public class AlmacenService {
 
 	public void update(Long requestedId, AlmacenDTO almacenDTO) {
 		almacenRepository.findByIdAndEmpresaId(requestedId, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
+				.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
 
 		espacioRepository
-			.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new BadRequestException("El espacio no es v�lida"));
+				.findByIdAndEmpresaId(almacenDTO.getEspacioId(), userEmpresaService.getEmpresaIdFromCurrentRequest())
+				.orElseThrow(() -> new BadRequestException("El espacio no es v�lida"));
 
 		estadoRepository.findById(almacenDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		almacenDTO.setId(requestedId);
 		almacenDTO.setEmpresaId(userEmpresaService.getEmpresaIdFromCurrentRequest());
@@ -76,7 +76,7 @@ public class AlmacenService {
 
 	public void delete(Long id) {
 		almacenRepository.findByIdAndEmpresaId(id, userEmpresaService.getEmpresaIdFromCurrentRequest())
-			.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
+				.orElseThrow(() -> new NotFoundException("Almacen no encontrado"));
 
 		almacenRepository.deleteById(id);
 	}

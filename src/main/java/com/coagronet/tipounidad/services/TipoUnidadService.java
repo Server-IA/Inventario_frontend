@@ -1,8 +1,8 @@
 package com.coagronet.tipounidad.services;
 
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.tipounidad.dtos.TipoUnidadDTO;
 import com.coagronet.tipounidad.mappers.TipoUnidadMapper;
 import com.coagronet.tipounidad.repositories.TipoUnidadRepository;
@@ -32,13 +32,13 @@ public class TipoUnidadService {
 
 	public Optional<TipoUnidadDTO> findById(Long requestId) {
 		return tipoUnidadRepository.findById(requestId)
-			.map(tipoUnidadMapper::toDTO);
+				.map(tipoUnidadMapper::toDTO);
 	}
 
 	@Transactional
 	public TipoUnidadDTO create(TipoUnidadDTO tipoUnidadDTO) {
 		estadoRepository.findById(tipoUnidadDTO.getEstadoId())
-			.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
+				.orElseThrow(() -> new BadRequestException("El estado no es v�lido"));
 
 		tipoUnidadDTO.setId(null);
 
@@ -48,10 +48,10 @@ public class TipoUnidadService {
 	@Transactional
 	public void update(Long requestId, TipoUnidadDTO unidadDTO) {
 		tipoUnidadRepository.findById(requestId)
-			.orElseThrow(() -> new NotFoundException("TipoUnidad no encontrada"));
+				.orElseThrow(() -> new NotFoundException("TipoUnidad no encontrada"));
 
 		estadoRepository.findById(unidadDTO.getEstadoId())
-			.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
+				.orElseThrow(() -> new NotFoundException("Estado no encontrado"));
 
 		unidadDTO.setId(requestId);
 		tipoUnidadRepository.save(tipoUnidadMapper.toEntity(unidadDTO));
@@ -60,7 +60,7 @@ public class TipoUnidadService {
 	@Transactional
 	public void delete(Long requestId) {
 		tipoUnidadRepository.findById(requestId)
-			.orElseThrow(() -> new NotFoundException("TipoUnidad no encontrada"));
+				.orElseThrow(() -> new NotFoundException("TipoUnidad no encontrada"));
 
 		tipoUnidadRepository.deleteById(requestId);
 	}

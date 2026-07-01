@@ -16,6 +16,7 @@ package com.coagronet.departamento.services;
 import java.util.List;
 import java.util.Optional;
 
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +26,11 @@ import com.coagronet.departamento.mappers.DepartamentoMapper;
 import com.coagronet.departamento.repositories.DepartamentoRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
-import com.coagronet.exceptionHandler.BadRequestException;
 import com.coagronet.exceptionHandler.NotFoundException;
 import com.coagronet.municipio.Municipio;
 import com.coagronet.municipio.repositories.MunicipioRepository;
 import com.coagronet.pais.Pais;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.pais.repositories.PaisRepository;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 
