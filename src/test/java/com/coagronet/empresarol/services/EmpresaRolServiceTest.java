@@ -112,7 +112,7 @@ class EmpresaRolServiceTest {
         assertThat(persisted.getEmpresa().getId()).isEqualTo(empresaId);
         assertThat(persisted.getRol().getId()).isEqualTo(rolId);
         assertThat(persisted.getEstado().getId()).isEqualTo(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
-        assertThat(persisted.getCreatedBy()).isEqualTo("admin.empresa@coagronet.com");
+        assertThat(persisted.getCreatedBy()).isEqualTo(user);
     }
 
     @Test
