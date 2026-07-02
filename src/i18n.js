@@ -10,6 +10,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Traducciones geográficas.   |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-26 | 0.4.0   | Jeisson Sanchez      | Traducciones Kardex.        |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
  * @module i18n
@@ -25,12 +27,14 @@ import esUsuario from "./locales/es/usuario.json";
 import esAlmacen from "./locales/es/almacen.json";
 import esEmpresaRol from "./locales/es/empresaRol.json";
 import esLocalizacionGeografica from "./locales/es/localizacionGeografica.json";
+import esKardex from "./locales/es/kardex.json";
 import enCommon from "./locales/en/common.json";
 import enAuth from "./locales/en/auth.json";
 import enUsuario from "./locales/en/usuario.json";
 import enAlmacen from "./locales/en/almacen.json";
 import enEmpresaRol from "./locales/en/empresaRol.json";
 import enLocalizacionGeografica from "./locales/en/localizacionGeografica.json";
+import enKardex from "./locales/en/kardex.json";
 
 const normalizeLanguage = (language) =>
   String(language || "")
@@ -60,6 +64,7 @@ i18n
           almacen: esAlmacen,
           empresaRol: esEmpresaRol,
           localizacionGeografica: esLocalizacionGeografica,
+          kardex: esKardex,
         },
       },
       en: {
@@ -70,6 +75,7 @@ i18n
           almacen: enAlmacen,
           empresaRol: enEmpresaRol,
           localizacionGeografica: enLocalizacionGeografica,
+          kardex: enKardex,
         },
       },
     },
