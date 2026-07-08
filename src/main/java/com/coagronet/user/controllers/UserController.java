@@ -14,6 +14,9 @@
  |            |         |                      | adición de seguridad con    |
  |            |         |                      | @PreAuthorize y metadatos   |
  |            |         |                      | de documentación en Swagger.|
+ |            |         |                      | Adición del endpoint        |
+ |            |         |                      | /api/v1/usuarios/{id}/activar|
+ |            |         |                      | para activar usuarios.      |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 package com.coagronet.user.controllers;
@@ -127,6 +130,19 @@ public class UserController {
 	@PreAuthorize("hasAuthority('USUARIO_ROL_DELETE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
 		userUpdateService.deactivateUser(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "Activar un usuario", description = "Activa a un usuario previamente desactivado en el sistema, aplicando las reglas de visibilidad del tenant actual.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Usuario activado exitosamente"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado"),
+			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+	})
+	@PostMapping("/api/v1/usuarios/{id}/activar")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_UPDATE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Void> activateUser(@PathVariable Long id) {
+		userUpdateService.activateUser(id);
 		return ResponseEntity.noContent().build();
 	}
 

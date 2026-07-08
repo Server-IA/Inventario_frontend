@@ -23,6 +23,9 @@
  |            |         |                      | de acceso por tenant y      |
  |            |         |                      | actualizando el estado de   |
  |            |         |                      | la entidad a desactivado.   |
+ |            |         |                      | Adición de método           |
+ |            |         |                      | activateUser para activar   |
+ |            |         |                      | usuarios con control tenant.|
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
@@ -282,6 +285,32 @@ public class UserUpdateService {
         }
 
         user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para activar este usuario.");
+        }
+
+        Long nuevoEstadoId = user.getRolesAsignados().isEmpty()
+                ? UsuarioEstado.ID_ACTIVADO_SIN_EMPRESA
+                : UsuarioEstado.ID_ACTIVADO_CON_EMPRESA;
+
+        user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, nuevoEstadoId));
         userRepository.save(user);
     }
 }
