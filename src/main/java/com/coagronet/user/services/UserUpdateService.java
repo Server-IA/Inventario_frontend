@@ -15,6 +15,14 @@
  |            |         |                      | roles no incluidos en el    |
  |            |         |                      | payload y soporte para la   |
  |            |         |                      | creación de nueva Persona.  |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-07 | 0.4.0   | JUAN JOSE CASTRO     | Implementación del método   |
+ |            |         |                      | deactivateUser para el      |
+ |            |         |                      | borrado lógico de usuarios, |
+ |            |         |                      | incorporando validaciones   |
+ |            |         |                      | de acceso por tenant y      |
+ |            |         |                      | actualizando el estado de   |
+ |            |         |                      | la entidad a desactivado.   |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
@@ -47,6 +55,7 @@ import com.coagronet.user.dtos.AsignacionUpdateRequest;
 import com.coagronet.user.dtos.UsuarioUpdateRequest;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuariorol.UsuarioRol;
+import com.coagronet.usuarioEstado.UsuarioEstado;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -251,6 +260,28 @@ public class UserUpdateService {
             }
         }
 
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para desactivar este usuario.");
+        }
+
+        user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
         userRepository.save(user);
     }
 }

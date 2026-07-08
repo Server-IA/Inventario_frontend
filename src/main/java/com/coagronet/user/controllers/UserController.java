@@ -1,3 +1,21 @@
+/*=============================================================================
+ Nombre del archivo : UserController.java
+ Descripcion        : Controlador REST para la gestión de usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-07 | 0.4.0   | JUAN JOSE CASTRO     | Refactorización del método  |
+ |            |         |                      | deleteUser: cambio de ruta  |
+ |            |         |                      | a /api/v1/usuarios/{id},    |
+ |            |         |                      | implementación de borrado   |
+ |            |         |                      | lógico (desactivación),     |
+ |            |         |                      | adición de seguridad con    |
+ |            |         |                      | @PreAuthorize y metadatos   |
+ |            |         |                      | de documentación en Swagger.|
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 package com.coagronet.user.controllers;
 
 import java.util.List;
@@ -99,17 +117,17 @@ public class UserController {
 		return ResponseEntity.notFound().build();
 	}
 
-	@DeleteMapping("/api/v1/user/{id}")
-	private ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-		try {
-			if (userRepository.existsById(id)) {
-				userRepository.deleteById(id);
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.internalServerError().build();
-		}
+	@Operation(summary = "Desactivar un usuario", description = "Desactiva a un usuario del sistema (cambia su estado a desactivado) en lugar de eliminarlo físicamente, aplicando las reglas de visibilidad del tenant actual.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Usuario desactivado exitosamente"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado"),
+			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+	})
+	@DeleteMapping("/api/v1/usuarios/{id}")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_DELETE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+		userUpdateService.deactivateUser(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@Operation(summary = "Registrar un nuevo usuario", description = "Crea un nuevo usuario junto con su registro de Persona si no existe. Además, asigna los roles correspondientes en las empresas especificadas. Valida que el nombre de usuario no exista y que las fechas de los contratos sean congruentes.")
