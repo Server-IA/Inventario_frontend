@@ -17,6 +17,18 @@
  |            |         |                      | Adición del endpoint        |
  |            |         |                      | /api/v1/usuarios/{id}/activar|
  |            |         |                      | para activar usuarios.      |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-09 | 0.4.0   | JUAN JOSE CASTRO     | Actualización de seguridad  |
+ |            |         |                      | en @PreAuthorize para       |
+ |            |         |                      | restringir el endpoint de   |
+ |            |         |                      | inactivación de usuarios    |
+ |            |         |                      | exclusivamente al rol       |
+ |            |         |                      | ADMINISTRADOR_SISTEMA.      |
+ |            |         |                      | Modificación de metadatos   |
+ |            |         |                      | de Swagger (@Operation y    |
+ |            |         |                      | @ApiResponses) reflejando   |
+ |            |         |                      | las nuevas reglas de        |
+ |            |         |                      | negocio.                    |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 package com.coagronet.user.controllers;
@@ -120,14 +132,15 @@ public class UserController {
 		return ResponseEntity.notFound().build();
 	}
 
-	@Operation(summary = "Desactivar un usuario", description = "Desactiva a un usuario del sistema (cambia su estado a desactivado) en lugar de eliminarlo físicamente, aplicando las reglas de visibilidad del tenant actual.")
+	@Operation(summary = "Desactivar un usuario", description = "Desactiva a un usuario del sistema (cambia su estado a desactivado) en lugar de eliminarlo físicamente, requiriendo rol de Administrador del Sistema y que el usuario se encuentre en estado ACTIVADO CON EMPRESA. Adicionalmente, inactiva todas sus asignaciones de rol.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "204", description = "Usuario desactivado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "El usuario no se encuentra en estado ACTIVADO CON EMPRESA"),
 			@ApiResponse(responseCode = "403", description = "Acceso denegado"),
 			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
 	})
 	@DeleteMapping("/api/v1/usuarios/{id}")
-	@PreAuthorize("hasAuthority('USUARIO_ROL_DELETE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	@PreAuthorize("hasRole('ADMINISTRADOR_SISTEMA')")
 	public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
 		userUpdateService.deactivateUser(id);
 		return ResponseEntity.noContent().build();

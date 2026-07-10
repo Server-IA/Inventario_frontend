@@ -26,6 +26,18 @@
  |            |         |                      | Adición de método           |
  |            |         |                      | activateUser para activar   |
  |            |         |                      | usuarios con control tenant.|
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-09 | 0.4.0   | JUAN JOSE CASTRO     | Restricción de la           |
+ |            |         |                      | inactivación de usuarios    |
+ |            |         |                      | exclusivamente al           |
+ |            |         |                      | administrador del sistema.  |
+ |            |         |                      | Adición de validación de    |
+ |            |         |                      | estado previo requerido     |
+ |            |         |                      | (ACTIVADO CON EMPRESA) e    |
+ |            |         |                      | implementación de           |
+ |            |         |                      | inactivación en cascada     |
+ |            |         |                      | para todos los roles        |
+ |            |         |                      | asociados al usuario.       |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
@@ -275,16 +287,22 @@ public class UserUpdateService {
         boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
 
-        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+        if (!isSystemAdmin) {
+            throw new AccessDeniedException("Solo el administrador del sistema puede inactivar usuarios.");
+        }
 
-        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
-                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
-
-        if (!hasAccess) {
-            throw new AccessDeniedException("No tiene permisos para desactivar este usuario.");
+        if (user.getUsuarioEstado() == null
+                || !user.getUsuarioEstado().getId().equals(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
+            throw new BadRequestException(
+                    "El usuario debe estar en estado ACTIVADO CON EMPRESA para poder ser inactivado.");
         }
 
         user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
+
+        for (UsuarioRol ur : user.getRolesAsignados()) {
+            ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+        }
+
         userRepository.save(user);
     }
 
