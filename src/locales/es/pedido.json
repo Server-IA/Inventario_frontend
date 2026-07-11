@@ -1,0 +1,58 @@
+{
+  "title": "Reporte de Pedido",
+  "sections": {
+    "location": "Ubicación",
+    "orderData": "Datos del Pedido",
+    "time": "Tiempo (Fechas)"
+  },
+  "filters": {
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio",
+    "headquarters": "Sede",
+    "block": "Bloque",
+    "space": "Espacio",
+    "warehouse": "Almacén",
+    "orderId": "Pedido",
+    "orderStatus": "Estado del Pedido",
+    "quickSelect": "Selección rápida",
+    "customRange": "Rango personalizado",
+    "selectDates": "Seleccionar fechas",
+    "startDate": "Fecha Inicio",
+    "endDate": "Fecha Fin",
+    "quick": {
+      "hoy": "Hoy",
+      "semana": "Última Semana",
+      "quincena": "Últimos 15 días",
+      "mes": "Último Mes"
+    }
+  },
+  "columns": {
+    "id": "ID",
+    "date": "Fecha/Hora",
+    "headquarters": "Sede",
+    "warehouse": "Almacén",
+    "totalUnits": "Total Unidades"
+  },
+  "actions": {
+    "generate": "Generar Reporte"
+  },
+  "messages": {
+    "noOrders": "No se encontraron pedidos con los criterios.",
+    "loaded": "Mostrando {{count}} pedido(s).",
+    "errorFetching": "No se encontraron los pedidos.",
+    "invalidDates": "La fecha de inicio no puede ser mayor que la fin.",
+    "pdfSuccess": "PDF generado correctamente.",
+    "excelSuccess": "Excel descargado correctamente.",
+    "exportError": "No fue posible generar el reporte."
+  },
+  "modal": {
+    "exportTitle": "Generar Reporte de Pedido",
+    "exporting": "Generando documento, por favor espere...",
+    "exportSub": "Seleccione el formato en el que desea descargar su reporte.",
+    "previewTitle": "Vista previa del Reporte"
+  },
+  "grid": {
+    "title": "Pedidos encontrados"
+  }
+}

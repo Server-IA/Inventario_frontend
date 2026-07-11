@@ -8,6 +8,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-06-17 | 0.4.0   | Jeisson Sanchez      | Refactor UI/UX filtros, HU  |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-11 | 0.4.1   | Jeisson Sanchez      | Rediseño alineación filtros |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -416,8 +418,7 @@ export default function Rkardex() {
     p: 3, 
     borderRadius: 4, 
     bgcolor: isDark ? "rgba(255,255,255,0.02)" : "#fff",
-    boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.2)" : "0 4px 12px rgba(23,63,57,0.06)",
-    height: "100%"
+    boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.2)" : "0 4px 12px rgba(23,63,57,0.06)"
   };
 
   const titleStyles = {
@@ -431,38 +432,16 @@ export default function Rkardex() {
 
   return (
     <Box sx={{ width: "100%", p: { xs: 2, md: 4 }, color: "text.primary" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, color: isDark ? "#fff" : "#173f39" }}>
           {t("kardex.title", "Reportes de Kardex")}
         </Typography>
-        <Stack direction="row" spacing={2}>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            startIcon={<SearchIcon />} 
-            onClick={buscar}
-            disabled={loadingSearch}
-            sx={{ borderRadius: 2, px: 4, py: 1, bgcolor: "#173f39", "&:hover": { bgcolor: "#21534b" } }}
-          >
-            {t("common.actions.search", "Buscar")}
-          </Button>
-          <Button 
-            variant="contained" 
-            color="success" 
-            startIcon={<DownloadIcon />} 
-            onClick={() => setModalExportOpen(true)}
-            sx={{ borderRadius: 2, px: 3 }}
-          >
-            {t("kardex.actions.generate", "Generar Reporte")}
-          </Button>
-        </Stack>
       </Box>
-
-      {/* FILTROS GROUPED LAYOUT */}
-      <Grid container spacing={3} mb={4}>
+           {/* FILTROS GROUPED LAYOUT */}
+      <Grid container spacing={3} mb={3} alignItems="flex-start">
         
-        {/* Ubicacion */}
-        <Grid item xs={12} md={4}>
+        {/* Ubicacion (Izquierda) */}
+        <Grid item xs={12} md={7}>
           <Paper sx={boxStyles}>
             <Typography variant="h6" sx={titleStyles}>
               {t("kardex.sections.location", "Ubicación")}
@@ -473,62 +452,77 @@ export default function Rkardex() {
                 </IconButton>
               )}
             </Typography>
-            <Stack spacing={2.5}>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
-                <InputLabel>{t("kardex.filters.country", "País")}</InputLabel>
-                <Select label={t("kardex.filters.country", "País")} value={ubi.pais_id || ""} onChange={handleUbiChange("pais_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {ubiData?.paises?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.pais_id}>
-                <InputLabel>{t("kardex.filters.department", "Departamento")}</InputLabel>
-                <Select label={t("kardex.filters.department", "Departamento")} value={ubi.departamento_id || ""} onChange={handleUbiChange("departamento_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {ubiData?.departamentos?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.departamento_id}>
-                <InputLabel>{t("kardex.filters.municipality", "Municipio")}</InputLabel>
-                <Select label={t("kardex.filters.municipality", "Municipio")} value={ubi.municipio_id || ""} onChange={handleUbiChange("municipio_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {ubiData?.municipios?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
-                <InputLabel>{t("kardex.filters.headquarters", "Sede")}</InputLabel>
-                <Select label={t("kardex.filters.headquarters", "Sede")} value={ubi.sede_id || ""} onChange={handleUbiChange("sede_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
-                  {ubiData?.sedes?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.sede_id}>
-                <InputLabel>{t("kardex.filters.block", "Bloque")}</InputLabel>
-                <Select label={t("kardex.filters.block", "Bloque")} value={ubi.bloque_id || ""} onChange={handleUbiChange("bloque_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {ubiData?.bloques?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.bloque_id}>
-                <InputLabel>{t("kardex.filters.space", "Espacio")}</InputLabel>
-                <Select label={t("kardex.filters.space", "Espacio")} value={ubi.espacio_id || ""} onChange={handleUbiChange("espacio_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {ubiData?.espacios?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.espacio_id}>
-                <InputLabel>{t("kardex.filters.warehouse", "Almacén")}</InputLabel>
-                <Select label={t("kardex.filters.warehouse", "Almacén")} value={ubi.almacen_id || ""} onChange={handleUbiChange("almacen_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {ubiData?.almacenes?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Stack>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
+                  <InputLabel>{t("kardex.filters.country", "País")}</InputLabel>
+                  <Select label={t("kardex.filters.country", "País")} value={ubi.pais_id || ""} onChange={handleUbiChange("pais_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.paises?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.pais_id}>
+                  <InputLabel>{t("kardex.filters.department", "Departamento")}</InputLabel>
+                  <Select label={t("kardex.filters.department", "Departamento")} value={ubi.departamento_id || ""} onChange={handleUbiChange("departamento_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.departamentos?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.departamento_id}>
+                  <InputLabel>{t("kardex.filters.municipality", "Municipio")}</InputLabel>
+                  <Select label={t("kardex.filters.municipality", "Municipio")} value={ubi.municipio_id || ""} onChange={handleUbiChange("municipio_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.municipios?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
+                  <InputLabel>{t("kardex.filters.headquarters", "Sede")}</InputLabel>
+                  <Select label={t("kardex.filters.headquarters", "Sede")} value={ubi.sede_id || ""} onChange={handleUbiChange("sede_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {ubiData?.sedes?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.sede_id}>
+                  <InputLabel>{t("kardex.filters.block", "Bloque")}</InputLabel>
+                  <Select label={t("kardex.filters.block", "Bloque")} value={ubi.bloque_id || ""} onChange={handleUbiChange("bloque_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.bloques?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.bloque_id}>
+                  <InputLabel>{t("kardex.filters.space", "Espacio")}</InputLabel>
+                  <Select label={t("kardex.filters.space", "Espacio")} value={ubi.espacio_id || ""} onChange={handleUbiChange("espacio_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.espacios?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.espacio_id}>
+                  <InputLabel>{t("kardex.filters.warehouse", "Almacén")}</InputLabel>
+                  <Select label={t("kardex.filters.warehouse", "Almacén")} value={ubi.almacen_id || ""} onChange={handleUbiChange("almacen_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.almacenes?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
           </Paper>
         </Grid>
 
-        {/* Producto */}
-        <Grid item xs={12} md={4}>
+        {/* Derecha: Producto + Tiempo */}
+        <Grid item xs={12} md={5}>
+          {/* Producto */}
           <Paper sx={boxStyles}>
             <Typography variant="h6" sx={titleStyles}>
               {t("kardex.sections.product", "Producto")}
@@ -539,66 +533,71 @@ export default function Rkardex() {
                 </IconButton>
               )}
             </Typography>
-            <Stack spacing={2.5}>
-              <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
-                <InputLabel>{t("kardex.filters.category", "Categoría")}</InputLabel>
-                <Select label={t("kardex.filters.category", "Categoría")} value={kdxFiltro.producto_categoria_id || ""} onChange={handleFiltroChange("producto_categoria_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
-                  {categorias.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
-                <InputLabel>{t("kardex.filters.product", "Producto")}</InputLabel>
-                <Select label={t("kardex.filters.product", "Producto")} value={kdxFiltro.producto_id || ""} onChange={handleFiltroChange("producto_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                  {productos.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
-                <InputLabel>{t("kardex.filters.presentation", "Presentación")}</InputLabel>
-                <Select label={t("kardex.filters.presentation", "Presentación")} value={kdxFiltro.producto_presentacion_id || ""} onChange={handleFiltroChange("producto_presentacion_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
-                  {presentaciones.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
-                <InputLabel>{t("kardex.filters.production", "Producción")}</InputLabel>
-                <Select label={t("kardex.filters.production", "Producción")} value={kdxFiltro.produccion_id || ""} onChange={handleFiltroChange("produccion_id")}>
-                  <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
-                  {producciones.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Stack>
-          </Paper>
-        </Grid>
-
-        {/* Tiempo */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={boxStyles}>
-            <Typography variant="h6" sx={titleStyles}>
-              {t("kardex.sections.time", "Tiempo")}
-            </Typography>
-            <Box sx={{ mt: 2 }}>
-              <Button 
-                variant="outlined" 
-                fullWidth 
-                onClick={handleOpenDate}
-                endIcon={<CalendarIcon />}
-                sx={{ 
-                  justifyContent: "space-between", 
-                  py: 1.5, 
-                  color: isDark ? "#e7f6f7" : "#173f39",
-                  borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
-                  textTransform: "none",
-                  fontWeight: 500
-                }}
-              >
-                {kdxFiltro.fecha_inicio && kdxFiltro.fecha_fin 
-                  ? `${toDateStr(kdxFiltro.fecha_inicio)} - ${toDateStr(kdxFiltro.fecha_fin, true)}`
-                  : t("kardex.filters.selectDates", "Seleccionar fechas")}
-              </Button>
-            </Box>
-            
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.category", "Categoría")}</InputLabel>
+                  <Select label={t("kardex.filters.category", "Categoría")} value={kdxFiltro.producto_categoria_id || ""} onChange={handleFiltroChange("producto_categoria_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {categorias.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.product", "Producto")}</InputLabel>
+                  <Select label={t("kardex.filters.product", "Producto")} value={kdxFiltro.producto_id || ""} onChange={handleFiltroChange("producto_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {productos.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.presentation", "Presentación")}</InputLabel>
+                  <Select label={t("kardex.filters.presentation", "Presentación")} value={kdxFiltro.producto_presentacion_id || ""} onChange={handleFiltroChange("producto_presentacion_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {presentaciones.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.production", "Producción")}</InputLabel>
+                  <Select label={t("kardex.filters.production", "Producción")} value={kdxFiltro.produccion_id || ""} onChange={handleFiltroChange("produccion_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {producciones.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              {/* Tiempo — tercera fila, alineada con Bloque/Espacio/Almacén */}
+              <Grid item xs={12}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? "#e7f6f7" : "#173f39", whiteSpace: "nowrap" }}>
+                    {t("kardex.sections.time", "Tiempo")}
+                  </Typography>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    onClick={handleOpenDate}
+                    endIcon={<CalendarIcon />}
+                    sx={{ 
+                      justifyContent: "space-between", 
+                      py: 1, 
+                      color: isDark ? "#e7f6f7" : "#173f39",
+                      borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.23)",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      borderRadius: 2
+                    }}
+                  >
+                    {kdxFiltro.fecha_inicio && kdxFiltro.fecha_fin 
+                      ? `${toDateStr(kdxFiltro.fecha_inicio)} - ${toDateStr(kdxFiltro.fecha_fin, true)}`
+                      : t("kardex.filters.selectDates", "Seleccionar fechas")}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
             <Popover
               open={openDate}
               anchorEl={anchorElDate}
@@ -658,13 +657,38 @@ export default function Rkardex() {
         </Grid>
       </Grid>
 
+      {/* Botones de accion */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 4 }}>
+        <Stack direction="row" spacing={2}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<SearchIcon />} 
+            onClick={buscar}
+            disabled={loadingSearch}
+            sx={{ borderRadius: 2, px: 4, py: 1, bgcolor: "#173f39", "&:hover": { bgcolor: "#21534b" } }}
+          >
+            {t("common.actions.search", "Buscar")}
+          </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            startIcon={<DownloadIcon />} 
+            onClick={() => setModalExportOpen(true)}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("kardex.actions.generate", "Generar Reporte")}
+          </Button>
+        </Stack>
+      </Box>
+
       {/* Resultados Grilla */}
-      <Box mt={4}>
+      <Box>
         <AppDataGrid
           rows={resultados}
           columns={columns}
           loading={loadingSearch}
-          containerSx={{ minHeight: 400 }}
+          containerSx={{ minHeight: 200 }}
           autoHeight={true}
         />
       </Box>

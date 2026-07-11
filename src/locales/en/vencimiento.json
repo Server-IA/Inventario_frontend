@@ -1,0 +1,68 @@
+{
+  "title": "Product Expiration Report",
+  "sections": {
+    "location": "Location",
+    "productData": "Product / Status",
+    "time": "Expiration Dates"
+  },
+  "filters": {
+    "country": "Country",
+    "department": "Department",
+    "municipality": "Municipality",
+    "headquarters": "Headquarters",
+    "block": "Block",
+    "space": "Space",
+    "warehouse": "Warehouse",
+    "category": "Category",
+    "product": "Product",
+    "presentation": "Presentation",
+    "status": "Status",
+    "quickSelect": "Quick Select",
+    "customRange": "Custom Range",
+    "selectDates": "Select Dates",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "quick": {
+      "hoy": "Today",
+      "dias7": "Next 7 days",
+      "dias15": "Next 15 days",
+      "mes": "Next month"
+    }
+  },
+  "statusOptions": {
+    "vencido": "Expired",
+    "proximo": "Expiring soon",
+    "todos": "All"
+  },
+  "columns": {
+    "productName": "Product Name",
+    "status": "Status",
+    "expirationDate": "Expiration Date"
+  },
+  "actions": {
+    "generate": "Generate Report"
+  },
+  "messages": {
+    "catalogsError": "Could not load catalogs.",
+    "loaded": "Product data loaded.",
+    "endpointError": "Endpoint not found (404).",
+    "searchError": "Could not load products.",
+    "emptyDates": "Date range is mandatory.",
+    "invalidDateRange": "Start date cannot be greater than end date.",
+    "noResults": "Showing {{count}} product(s).",
+    "noResultsEmpty": "No products match the selected criteria.",
+    "noLocation": "You must select at least one location level (Headquarters or Warehouse).",
+    "excelSuccess": "Excel downloaded successfully.",
+    "pdfSuccess": "PDF generated successfully.",
+    "exportError": "Could not generate the report."
+  },
+  "modal": {
+    "exportTitle": "Generate Expiration Report",
+    "exporting": "Generating document, please wait...",
+    "exportSub": "Select the format to download your report.",
+    "previewTitle": "Report Preview"
+  },
+  "grid": {
+    "title": "Products found"
+  }
+}
