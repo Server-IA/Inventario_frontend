@@ -100,6 +100,8 @@ public class SecurityConfig {
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
 						.requestMatchers("/api/v2/report/vencimiento-producto/**")
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE", "ALMACENISTA")
+						.requestMatchers("/api/v2/report/pedido/**")
+						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE", "ALMACENISTA")
 						.requestMatchers("/api/v2/report/**")
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
 						.anyRequest()

@@ -1,441 +1,138 @@
-<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
-<jasperReport name="Reporte_pedido" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="agrotest-0.3.1"/>
-	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="233"/>
-	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="761"/>
+<!-- RF-042 / HU-042.1 / HU-042.2 - JasperReports 7.0.3 -->
+<jasperReport name="Reporte_pedido" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoPages" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
+	<style name="DetailCell" fontName="Arial" fontSize="9.0" vTextAlign="Middle">
+		<conditionalStyle mode="Opaque" backcolor="#E7F6F7">
+			<conditionExpression><![CDATA[$F{itemIndice} != null && $F{itemIndice} % 2 == 0]]></conditionExpression>
+		</conditionalStyle>
+	</style>
+
 	<parameter name="logo_empresa" class="java.lang.String"/>
-	<parameter name="condicion" class="java.lang.String"/>
-	<query language="sql"><![CDATA[SELECT 
-    p.ped_id AS header_pedido_id, 
-    p.ped_fecha_hora AS header_fecha_hora, 
-    pp.prp_nombre AS item_producto, 
-    pi.pei_cantidad AS item_cantidad, 
-    es.esp_nombre AS header_espacio,
-    b.blo_nombre AS header_bloque,
-    u.uni_nombre AS item_unidad, 
-    mun.mun_nombre AS header_municipio,
-    a.alm_nombre AS header_almacen_nombre, 
-    s.sed_nombre AS header_sede, 
-    e.emp_nombre AS header_empresa,
-    e.emp_correo AS header_correo,
-    e.emp_contacto AS header_contacto,
-    CONCAT(per.per_nombre, ' ', per.per_apellido) AS header_responsable,
-    est.est_nombre AS header_estado_pedido  
+	<parameter name="fecha_generacion" class="java.time.LocalDateTime"/>
+	<parameter name="report_title" class="java.lang.String"/>
+	<parameter name="label_fecha_generacion" class="java.lang.String"/>
+	<parameter name="label_empresa" class="java.lang.String"/>
+	<parameter name="label_estado" class="java.lang.String"/>
+	<parameter name="label_sede" class="java.lang.String"/>
+	<parameter name="label_bloque" class="java.lang.String"/>
+	<parameter name="label_espacio" class="java.lang.String"/>
+	<parameter name="label_almacen" class="java.lang.String"/>
+	<parameter name="label_municipio" class="java.lang.String"/>
+	<parameter name="label_responsable" class="java.lang.String"/>
+	<parameter name="label_contacto" class="java.lang.String"/>
+	<parameter name="label_correo" class="java.lang.String"/>
+	<parameter name="label_pedido_id" class="java.lang.String"/>
+	<parameter name="label_fecha_pedido" class="java.lang.String"/>
+	<parameter name="label_indice" class="java.lang.String"/>
+	<parameter name="label_presentacion_id" class="java.lang.String"/>
+	<parameter name="label_producto" class="java.lang.String"/>
+	<parameter name="label_cantidad" class="java.lang.String"/>
+	<parameter name="label_unidad" class="java.lang.String"/>
+	<parameter name="label_total" class="java.lang.String"/>
+	<parameter name="label_pagina" class="java.lang.String"/>
 
-FROM 
-    pedido AS p
-    JOIN pedido_item AS pi ON p.ped_id = pi.pei_pedido_id
-    JOIN producto_presentacion AS pp ON pi.pei_producto_presentacion_id = pp.prp_id
-    JOIN producto AS pr ON pp.prp_producto_id = pr.pro_id
-    JOIN unidad AS u ON pp.prp_unidad_id = u.uni_id
-    JOIN almacen AS a ON p.ped_almacen_id = a.alm_id
-    JOIN espacio AS es ON a.alm_espacio_id = es.esp_id
-    JOIN bloque AS b ON es.esp_bloque_id = b.blo_id
-    JOIN sede AS s ON b.blo_sede_id = s.sed_id
-    JOIN municipio AS mun ON s.sed_municipio_id = mun.mun_id
-    JOIN empresa AS e ON s.sed_empresa_id = e.emp_id
-    JOIN persona AS per ON e.emp_persona_id = per.per_id
-    JOIN estado AS est ON p.ped_estado_id = est.est_id
+	<field name="pedidoId" class="java.lang.Long"/>
+	<field name="fechaPedido" class="java.time.LocalDateTime"/>
+	<field name="estado" class="java.lang.String"/>
+	<field name="empresa" class="java.lang.String"/>
+	<field name="sede" class="java.lang.String"/>
+	<field name="bloque" class="java.lang.String"/>
+	<field name="espacio" class="java.lang.String"/>
+	<field name="almacen" class="java.lang.String"/>
+	<field name="municipio" class="java.lang.String"/>
+	<field name="responsable" class="java.lang.String"/>
+	<field name="contacto" class="java.lang.String"/>
+	<field name="correo" class="java.lang.String"/>
+	<field name="itemIndice" class="java.lang.Integer"/>
+	<field name="presentacionId" class="java.lang.Long"/>
+	<field name="producto" class="java.lang.String"/>
+	<field name="cantidad" class="java.math.BigDecimal"/>
+	<field name="unidad" class="java.lang.String"/>
+	<field name="tieneProducto" class="java.lang.Boolean"/>
+	<field name="totalPedido" class="java.math.BigDecimal"/>
+	<field name="advertencia" class="java.lang.String"/>
 
-WHERE 
-   		$P!{condicion} 
-]]></query>
-	<field name="header_pedido_id" class="java.lang.Long">
-		<property name="com.jaspersoft.studio.field.name" value="header_pedido_id"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_pedido_id"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="pedido"/>
-	</field>
-	<field name="header_fecha_hora" class="java.sql.Timestamp">
-		<property name="com.jaspersoft.studio.field.name" value="header_fecha_hora"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_fecha_hora"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="pedido"/>
-	</field>
-	<field name="item_producto" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="item_producto"/>
-		<property name="com.jaspersoft.studio.field.label" value="item_producto"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="producto_presentacion"/>
-	</field>
-	<field name="item_cantidad" class="java.lang.Double">
-		<property name="com.jaspersoft.studio.field.name" value="item_cantidad"/>
-		<property name="com.jaspersoft.studio.field.label" value="item_cantidad"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="pedido_item"/>
-	</field>
-	<field name="header_espacio" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_espacio"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_espacio"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="espacio"/>
-	</field>
-	<field name="header_bloque" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_bloque"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_bloque"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="bloque"/>
-	</field>
-	<field name="item_unidad" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="item_unidad"/>
-		<property name="com.jaspersoft.studio.field.label" value="item_unidad"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="unidad"/>
-	</field>
-	<field name="header_municipio" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_municipio"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_municipio"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="municipio"/>
-	</field>
-	<field name="header_almacen_nombre" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_almacen_nombre"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_almacen_nombre"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="almacen"/>
-	</field>
-	<field name="header_sede" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_sede"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_sede"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="sede"/>
-	</field>
-	<field name="header_empresa" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_empresa"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_empresa"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
-	</field>
-	<field name="header_correo" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_correo"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_correo"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
-	</field>
-	<field name="header_contacto" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_contacto"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_contacto"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
-	</field>
-	<field name="header_responsable" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_responsable"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_responsable"/>
-	</field>
-	<field name="header_estado_pedido" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="header_estado_pedido"/>
-		<property name="com.jaspersoft.studio.field.label" value="header_estado_pedido"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="estado"/>
-	</field>
-	<variable name="total_cantidad" calculation="Sum" class="java.lang.Double">
-		<expression><![CDATA[$F{item_cantidad}]]></expression>
-	</variable>
-	<group name="PedidoGroup" startNewPage="true">
-		<expression><![CDATA[$F{header_pedido_id}]]></expression>
+	<group name="PedidoGroup" startNewPage="true" reprintHeaderOnEachPage="true">
+		<expression><![CDATA[$F{pedidoId}]]></expression>
+		<groupHeader>
+			<band height="270" splitType="Prevent">
+				<element kind="rectangle" uuid="01bd4da1-37fb-463a-a0d8-b90ca4639071" mode="Opaque" x="0" y="0" width="555" height="70" backcolor="#E7F6F7">
+					<pen lineWidth="1.0" lineColor="#114232"/>
+				</element>
+				<element kind="image" uuid="12fbcc52-c94e-44e8-b3aa-61f77fa34106" x="10" y="5" width="65" height="55" scaleImage="RetainShape">
+					<expression><![CDATA[$P{logo_empresa} != null && !$P{logo_empresa}.isBlank() && new java.io.File($P{logo_empresa}).isFile() ? $P{logo_empresa} : null]]></expression>
+				</element>
+				<element kind="textField" uuid="2332773a-9b33-46be-8191-c39377930dd6" x="180" y="7" width="355" height="30" fontName="Arial" fontSize="24.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+					<expression><![CDATA[$P{report_title}]]></expression>
+				</element>
+				<element kind="textField" uuid="31ff6723-6e18-45ad-b035-9e93311a06a0" x="290" y="40" width="145" height="20" fontName="Arial" fontSize="9.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+					<expression><![CDATA[$P{label_fecha_generacion}]]></expression>
+				</element>
+				<element kind="textField" uuid="4fac6de7-c78f-4d32-a065-4382d0ba460a" x="440" y="40" width="95" height="20" fontName="Arial" fontSize="9.0" hTextAlign="Right" vTextAlign="Middle">
+					<expression><![CDATA[$P{fecha_generacion}.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))]]></expression>
+				</element>
+
+				<element kind="textField" uuid="5063c50a-e615-4875-8f60-bb25215751bc" mode="Opaque" x="0" y="78" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_empresa}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="57aa80dc-4d82-4126-8ab9-e3cccd20b8fd" x="90" y="78" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{empresa}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="68d0da8f-b208-45a2-afb2-642fe82d96b6" mode="Opaque" x="285" y="78" width="95" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_estado}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="76ffbb68-da70-4a45-a1b7-2aa0ec544bad" x="380" y="78" width="175" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{estado}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="81d62f16-960e-427e-8277-d3a46c000b64" mode="Opaque" x="0" y="100" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_estado}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="9acbeb13-3862-43b1-aa1b-ddb04be38f66" x="90" y="100" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{estado}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="a2813f28-04f8-44a8-920a-ef66dcfb55b0" mode="Opaque" x="285" y="100" width="95" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_responsable}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="b3e940da-90e0-462a-a219-31f10196c523" x="380" y="100" width="175" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{responsable}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="c1a69634-1ef2-4b18-8b3e-746e8ba16db6" mode="Opaque" x="0" y="122" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_sede}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="d7108c29-9b8d-40bc-9574-18b0ac410c2d" x="90" y="122" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{sede}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="e854eae0-c462-4df8-b307-98ccb2db47fc" mode="Opaque" x="285" y="122" width="95" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_contacto}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="f7df8c68-d0b7-442f-9e6a-caf9081b0d48" x="380" y="122" width="175" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{contacto}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="09e002e1-1d43-4115-ab31-401b1aa6a058" mode="Opaque" x="0" y="144" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_bloque}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="1b81c7ae-f3ca-46b3-904b-90ae317c1318" x="90" y="144" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{bloque}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="2b3c2312-6ca9-4e23-8f11-85e1b364f31e" mode="Opaque" x="285" y="144" width="95" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_correo}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="3ae596d4-554e-4935-bde1-6801f21e2241" x="380" y="144" width="175" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{correo}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="4ee9f0e6-092a-483c-b9c4-1d44b7a5b5ce" mode="Opaque" x="0" y="166" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_espacio}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="5fb7addc-99ed-44b5-91d9-56e69f2f7bcc" x="90" y="166" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{espacio}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="6bf2846f-aaf3-45e4-bdb5-3dd6a784133f" mode="Opaque" x="285" y="166" width="95" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_pedido_id}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="7e561a80-e7e7-4a1a-bea0-1d5b58aac487" x="380" y="166" width="175" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{pedidoId}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="81583279-f9e8-4fa8-950a-70dc112ec92b" mode="Opaque" x="0" y="188" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_almacen}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="94d6225f-7ce5-4327-9c57-26835f78cb13" x="90" y="188" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{almacen}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="a61cd840-2da1-4826-a05b-f113e1e3b40d" mode="Opaque" x="285" y="188" width="95" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_fecha_pedido}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="b4402979-9b0f-4205-b002-273a45c77d4c" x="380" y="188" width="175" height="22" vTextAlign="Middle"><expression><![CDATA[" " + ($F{fechaPedido} == null ? "" : $F{fechaPedido}.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="c57ee7e1-8b59-4d46-8c95-81c38fd84399" mode="Opaque" x="0" y="210" width="90" height="22" backcolor="#E7F6F7" bold="true" vTextAlign="Middle"><expression><![CDATA[" " + $P{label_municipio}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="d4d1a6fc-0d8d-4691-b338-e68144a7784c" x="90" y="210" width="180" height="22" vTextAlign="Middle"><expression><![CDATA[" " + $F{municipio}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+
+				<element kind="textField" uuid="e786b4b2-d164-488b-9481-7145b58e8ee0" mode="Opaque" x="0" y="242" width="35" height="25" forecolor="#FFFFFF" backcolor="#114232" bold="true" hTextAlign="Center" vTextAlign="Middle"><expression><![CDATA[$P{label_indice}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="f418ce83-c868-420e-af39-e500e4755e93" mode="Opaque" x="35" y="242" width="85" height="25" forecolor="#FFFFFF" backcolor="#114232" bold="true" hTextAlign="Center" vTextAlign="Middle"><expression><![CDATA[$P{label_presentacion_id}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="0acfd6c9-17be-4821-917c-47477312d58c" mode="Opaque" x="120" y="242" width="220" height="25" forecolor="#FFFFFF" backcolor="#114232" bold="true" hTextAlign="Center" vTextAlign="Middle"><expression><![CDATA[$P{label_producto}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="195ba951-a096-4e77-b6d4-02dc77945b3c" mode="Opaque" x="340" y="242" width="100" height="25" forecolor="#FFFFFF" backcolor="#114232" bold="true" hTextAlign="Center" vTextAlign="Middle"><expression><![CDATA[$P{label_cantidad}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="25588a41-2623-4306-a2c2-d0b279ad3eb8" mode="Opaque" x="440" y="242" width="115" height="25" forecolor="#FFFFFF" backcolor="#114232" bold="true" hTextAlign="Center" vTextAlign="Middle"><expression><![CDATA[$P{label_unidad}]]></expression><box><pen lineWidth="0.7" lineColor="#114232"/></box></element>
+			</band>
+		</groupHeader>
 		<groupFooter>
-			<band height="50">
-				<element kind="staticText" uuid="6c4e3be8-b7a1-445e-b889-e751d319e9e9" mode="Opaque" x="46" y="0" width="190" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-					<text><![CDATA[Total:]]></text>
-					<box>
-						<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-					</box>
-				</element>
-				<element kind="textField" uuid="215d2f37-600c-4eb8-a3f2-3fd0c83d8d15" x="236" y="0" width="144" height="20" hTextAlign="Left" vTextAlign="Middle">
-					<expression><![CDATA[" "+$V{total_cantidad}]]></expression>
-					<box>
-						<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-					</box>
-				</element>
+			<band height="55" splitType="Prevent">
+				<element kind="textField" uuid="36c00eaa-42ea-4506-8db2-20281bc0f7a6" mode="Opaque" x="0" y="0" width="340" height="24" backcolor="#E7F6F7" bold="true" hTextAlign="Right" vTextAlign="Middle"><expression><![CDATA[$P{label_total} + " "]]></expression><box><pen lineWidth="0.8" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="4a7892b9-76dc-4ed9-a101-cc852903405e" x="340" y="0" width="215" height="24" pattern="#0.######" bold="true" hTextAlign="Right" vTextAlign="Middle"><expression><![CDATA[$F{totalPedido}]]></expression><box rightPadding="6"><pen lineWidth="0.8" lineColor="#114232"/></box></element>
+				<element kind="textField" uuid="5f7ff83c-2a66-4a51-8b32-b0ad2718b46d" x="0" y="28" width="555" height="22" forecolor="#9C2A2A" italic="true" vTextAlign="Middle"><expression><![CDATA[$F{advertencia}]]></expression></element>
 			</band>
 		</groupFooter>
 	</group>
-	<pageHeader height="333">
-		<element kind="rectangle" uuid="63c93e39-a795-40e1-b01a-866367573700" x="-20" y="90" width="595" height="243" backcolor="#FFFFFF">
-			<pen lineColor="#3747A1"/>
-		</element>
-		<element kind="textField" uuid="35cd4cc5-c7c0-41cb-971e-998690fbfbb6" mode="Opaque" x="110" y="160" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+ $F{header_sede}]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="5a40f5f2-8755-46d8-a53d-2e4eccf06379" x="110" y="190" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+$F{header_bloque}]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="bd9491f8-648b-4b89-a4ea-be9080a7e175" x="110" y="220" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+ $F{header_espacio}]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="e4d143c0-c1d1-48bb-ad57-b780641eb6db" x="365" y="250" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+$F{header_fecha_hora}]]></expression>
-			<property name="com.jaspersoft.studio.unit.height" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="dcfb9b03-5ea5-459e-bbaa-5f0a962b34af" mode="Opaque" x="40" y="160" width="70" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Sede:]]></text>
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="c5fc7b7e-88a4-4333-aaef-df240c9c4976" mode="Opaque" x="40" y="190" width="70" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Bloque:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="376395f5-16ee-4e94-98a1-3fa2e18770e2" mode="Opaque" x="40" y="220" width="70" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Espacio:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="3ead9f29-b639-49e8-a092-7d485af2d69b" mode="Opaque" x="290" y="250" width="75" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Fecha:]]></text>
-			<property name="com.jaspersoft.studio.unit.height" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="e2dc893f-d792-4323-b40e-d4fc93b0d710" mode="Opaque" x="41" y="250" width="70" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Almacen:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="b339f31e-62a6-4432-a0b3-f4588397f20a" mode="Opaque" x="290" y="190" width="75" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Contacto:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="8394c303-4910-415a-8ecb-81e538631d07" x="111" y="250" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+ $F{header_almacen_nombre}]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="8aecad0a-da82-4294-b842-a33b5678dc36" x="365" y="190" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+ $F{header_contacto}]]></expression>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="f1f93f60-9688-4083-8238-1babe4fd3fdb" mode="Opaque" x="290" y="160" width="75" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Responsable:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="afb62d0f-847d-4899-88e5-d431c5a6b636" x="365" y="160" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+$F{header_responsable}]]></expression>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="5d537c9c-6899-4775-bf35-e9efabd78e13" x="111" y="280" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+$F{header_municipio}]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="c93419f6-40df-43ea-9243-becbcbb7b95b" x="365" y="220" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+ $F{header_correo}]]></expression>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="63d4d8d7-e428-48a4-9769-bb8294ab8bc9" mode="Opaque" x="41" y="280" width="70" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Municipio:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="15a65321-7cda-410b-bc73-6250b292fa99" mode="Opaque" x="290" y="220" width="75" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Correo:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="2ea1e8ac-9f9d-4b1d-9020-17ff577993b8" mode="Opaque" x="290" y="130" width="75" height="20" forecolor="#050505" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Estado:]]></text>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="4b685c69-775f-4fa7-8b2c-bef2cb0979e8" x="365" y="130" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+ $F{header_estado_pedido}]]></expression>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="cf6019de-aaed-459a-b670-070be7ae2561" mode="Opaque" x="41" y="130" width="70" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Empresa:]]></text>
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="e97fe851-34cf-4f63-8376-a6ceaced63e6" mode="Opaque" x="111" y="130" width="140" height="20" vTextAlign="Middle">
-			<expression><![CDATA[" "+$F{header_empresa}]]></expression>
-			<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0"/>
-				<leftPen lineWidth="0.0"/>
-				<rightPen lineWidth="0.0"/>
-			</box>
-		</element>
-		<element kind="rectangle" uuid="d158f42f-af68-4bf4-a945-a0c2fefcb19c" x="-20" y="-20" width="595" height="110" backcolor="#D6E4F0">
-			<pen lineColor="#3747A1"/>
-		</element>
-		<element kind="image" uuid="5b890f69-ae74-4ef5-b8cd-ab7e2efb3ae7" x="50" y="0" width="70" height="75">
-			<expression><![CDATA[new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
-		</element>
-		<element kind="staticText" uuid="f41fe755-20d4-4b8a-81b5-0f889392d915" x="170" y="0" width="340" height="40" fontName="Arial" fontSize="26.0" bold="true" hTextAlign="Right">
-			<text><![CDATA[PEDIDO]]></text>
-		</element>
-		<element kind="staticText" uuid="4fa5cc7c-fe19-4681-8063-a4ccbbe79fc5" mode="Transparent" x="310" y="40" width="110" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Fecha de generacion:]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-			</box>
-		</element>
-		<element kind="textField" uuid="d3f4b335-c315-4cef-aa6c-dc0833265a96" x="420" y="40" width="90" height="20" hTextAlign="Right" vTextAlign="Middle">
-			<expression><![CDATA[new java.util.Date()]]></expression>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
-			</box>
-		</element>
-	</pageHeader>
-	<columnHeader height="44">
-		<element kind="staticText" uuid="55e02b2d-1568-44d2-be35-e1f4fa3d1ede" mode="Opaque" x="46" y="24" width="190" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[Producto]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="f997915a-68c7-46a4-88e7-ed36d5a28851" mode="Opaque" x="236" y="24" width="144" height="20" forecolor="#030303" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[Cantidad]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-		<element kind="staticText" uuid="4bd7d739-63b4-4331-b6ab-ef6ee8bca467" mode="Opaque" x="380" y="24" width="130" height="20" forecolor="#000000" backcolor="#D6E4F0" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[Unidad]]></text>
-			<box>
-				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-			</box>
-		</element>
-	</columnHeader>
+
 	<detail>
-		<band height="20">
-			<element kind="textField" uuid="15598076-e4bd-481d-b192-834d68ff72d9" x="46" y="0" width="190" height="20" vTextAlign="Middle">
-				<expression><![CDATA[" "+$F{item_producto}]]></expression>
-				<box>
-					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				</box>
-			</element>
-			<element kind="textField" uuid="c7e4de4d-b456-4f68-ae15-7a61b68224d1" x="236" y="0" width="144" height="20" vTextAlign="Middle">
-				<expression><![CDATA[" "+$F{item_cantidad}]]></expression>
-				<box>
-					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				</box>
-			</element>
-			<element kind="textField" uuid="f0c01d84-fada-4605-ba3e-200a42623f65" x="380" y="0" width="130" height="20" vTextAlign="Middle">
-				<expression><![CDATA[" "+$F{item_unidad}]]></expression>
-				<box>
-					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#3747A1"/>
-				</box>
-			</element>
+		<band height="22" splitType="Prevent">
+			<element kind="textField" uuid="62ca4852-f091-490e-b760-e3d66c4f81a1" style="DetailCell" x="0" y="0" width="35" height="22" hTextAlign="Center"><expression><![CDATA[$F{itemIndice}]]></expression><box><pen lineWidth="0.6" lineColor="#114232"/></box></element>
+			<element kind="textField" uuid="7c37e675-a4cd-4ee0-a191-aee1f82cadc8" style="DetailCell" x="35" y="0" width="85" height="22" hTextAlign="Center"><expression><![CDATA[$F{presentacionId}]]></expression><box><pen lineWidth="0.6" lineColor="#114232"/></box></element>
+			<element kind="textField" uuid="8ba713b4-c82a-4820-9db0-7ea87aecc4e8" style="DetailCell" x="120" y="0" width="220" height="22"><expression><![CDATA[" " + $F{producto}]]></expression><box><pen lineWidth="0.6" lineColor="#114232"/></box></element>
+			<element kind="textField" uuid="94393019-4223-4747-8164-2d9ddff57f3e" style="DetailCell" x="340" y="0" width="100" height="22" pattern="#0.######" hTextAlign="Right"><expression><![CDATA[$F{tieneProducto} ? $F{cantidad} : null]]></expression><box rightPadding="6"><pen lineWidth="0.6" lineColor="#114232"/></box></element>
+			<element kind="textField" uuid="ac6f14d2-9d97-414d-8985-7f521a97d4b1" style="DetailCell" x="440" y="0" width="115" height="22"><expression><![CDATA[" " + $F{unidad}]]></expression><box><pen lineWidth="0.6" lineColor="#114232"/></box></element>
 		</band>
 	</detail>
-	<pageFooter height="32">
-		<element kind="textField" uuid="8a49c570-6ca6-44a4-a219-1dc571120521" x="400" y="0" width="100" height="30" bold="true" hTextAlign="Right" vTextAlign="Middle">
-			<expression><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></expression>
+
+	<pageFooter height="22">
+		<element kind="textField" uuid="b37551e9-2bdb-4053-b7f2-e969745c3a5b" x="420" y="0" width="135" height="22" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA[$P{label_pagina} + " " + $V{PAGE_NUMBER}]]></expression>
 		</element>
 	</pageFooter>
 </jasperReport>
