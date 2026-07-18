@@ -7,5 +7,8 @@ public record ReporteKardexSeleccionInicialDTO(
 		Long paisId,
 		Long departamentoId,
 		Long municipioId,
-		Long sedeId) {
+		Long sedeId,
+		Long bloqueId,
+		Long espacioId,
+		Long almacenId) {
 }

@@ -1,11 +1,15 @@
 package com.coagronet.reports.controllers;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coagronet.reports.dtos.ReporteKardexFiltroOpcionDTO;
 import com.coagronet.reports.dtos.ReporteKardexPreloadDTO;
 import com.coagronet.reports.services.ReporteKardexPreloadService;
 
@@ -21,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Reporte Kardex", description = "API para inicializar los filtros del reporte Kardex")
 public class ReporteKardexPreloadController {
 
+	private static final String REPORT_AUTH = "hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'GERENTE')";
+
 	private final ReporteKardexPreloadService preloadService;
 
 	@Operation(
@@ -35,8 +41,28 @@ public class ReporteKardexPreloadController {
 			@ApiResponse(responseCode = "500", description = "No fue posible precargar los filtros")
 	})
 	@GetMapping("/filtros")
-	@PreAuthorize("hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'GERENTE')")
+	@PreAuthorize(REPORT_AUTH)
 	public ResponseEntity<ReporteKardexPreloadDTO> preload() {
 		return ResponseEntity.ok(preloadService.preload());
+	}
+
+	@Operation(
+			summary = "Cargar productos por categoria",
+			description = "Carga la cascada Producto a partir de Categoria de Producto.")
+	@GetMapping("/productos")
+	@PreAuthorize(REPORT_AUTH)
+	public ResponseEntity<List<ReporteKardexFiltroOpcionDTO>> productos(
+			@RequestParam(required = false) Long categoriaId) {
+		return ResponseEntity.ok(preloadService.productosPorCategoria(categoriaId));
+	}
+
+	@Operation(
+			summary = "Cargar presentaciones por producto",
+			description = "Carga la cascada Presentacion a partir de Producto.")
+	@GetMapping("/presentaciones")
+	@PreAuthorize(REPORT_AUTH)
+	public ResponseEntity<List<ReporteKardexFiltroOpcionDTO>> presentaciones(
+			@RequestParam(required = false) Long productoId) {
+		return ResponseEntity.ok(preloadService.presentacionesPorProducto(productoId));
 	}
 }

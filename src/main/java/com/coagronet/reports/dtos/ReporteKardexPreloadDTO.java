@@ -14,8 +14,12 @@ public record ReporteKardexPreloadDTO(
 		List<ReporteKardexFiltroOpcionDTO> departamentos,
 		List<ReporteKardexFiltroOpcionDTO> municipios,
 		List<ReporteKardexFiltroOpcionDTO> sedes,
+		List<ReporteKardexFiltroOpcionDTO> bloques,
+		List<ReporteKardexFiltroOpcionDTO> espacios,
+		List<ReporteKardexFiltroOpcionDTO> almacenes,
 		List<ReporteKardexFiltroOpcionDTO> categorias,
 		List<ReporteKardexFiltroOpcionDTO> productos,
 		List<ReporteKardexFiltroOpcionDTO> presentaciones,
+		List<ReporteKardexFiltroOpcionDTO> producciones,
 		ReporteKardexSeleccionInicialDTO seleccionInicial) {
 }

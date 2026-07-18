@@ -55,9 +55,18 @@ public class ReporteKardexPreloadService {
 		List<ReporteKardexFiltroOpcionDTO> sedes = distinctOptions(
 				ubicaciones, UbicacionReporteRow::sedeId, UbicacionReporteRow::sede,
 				UbicacionReporteRow::municipioId);
+		List<ReporteKardexFiltroOpcionDTO> bloques = distinctOptions(
+				ubicaciones, UbicacionReporteRow::bloqueId, UbicacionReporteRow::bloque,
+				UbicacionReporteRow::sedeId);
+		List<ReporteKardexFiltroOpcionDTO> espacios = distinctOptions(
+				ubicaciones, UbicacionReporteRow::espacioId, UbicacionReporteRow::espacio,
+				UbicacionReporteRow::bloqueId);
+		List<ReporteKardexFiltroOpcionDTO> almacenes = distinctOptions(
+				ubicaciones, UbicacionReporteRow::almacenId, UbicacionReporteRow::almacen,
+				UbicacionReporteRow::espacioId);
 
 		ReporteKardexSeleccionInicialDTO seleccionInicial = createInitialSelection(
-				paises, departamentos, municipios, sedes);
+				paises, departamentos, municipios, sedes, bloques, espacios, almacenes);
 
 		LocalDate today = LocalDate.now(Clock.systemDefaultZone());
 		LocalDate startDate = today.minusMonths(1).withDayOfMonth(1);
@@ -70,23 +79,46 @@ public class ReporteKardexPreloadService {
 				departamentos,
 				municipios,
 				sedes,
+				bloques,
+				espacios,
+				almacenes,
 				repository.findCategoriasActivas(empresaId),
 				List.of(),
 				List.of(),
+				repository.findProduccionesActivas(empresaId),
 				seleccionInicial);
+	}
+
+	@Transactional(readOnly = true)
+	public List<ReporteKardexFiltroOpcionDTO> productosPorCategoria(Long categoriaId) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return repository.findProductosActivos(empresaId, positiveOrNull(categoriaId));
+	}
+
+	@Transactional(readOnly = true)
+	public List<ReporteKardexFiltroOpcionDTO> presentacionesPorProducto(Long productoId) {
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		return repository.findPresentacionesActivas(empresaId, positiveOrNull(productoId));
 	}
 
 	private ReporteKardexSeleccionInicialDTO createInitialSelection(
 			List<ReporteKardexFiltroOpcionDTO> paises,
 			List<ReporteKardexFiltroOpcionDTO> departamentos,
 			List<ReporteKardexFiltroOpcionDTO> municipios,
-			List<ReporteKardexFiltroOpcionDTO> sedes) {
+			List<ReporteKardexFiltroOpcionDTO> sedes,
+			List<ReporteKardexFiltroOpcionDTO> bloques,
+			List<ReporteKardexFiltroOpcionDTO> espacios,
+			List<ReporteKardexFiltroOpcionDTO> almacenes) {
 		Long paisId = onlyOptionId(paises);
 		Long departamentoId = onlyChildOptionId(departamentos, paisId);
 		Long municipioId = onlyChildOptionId(municipios, departamentoId);
 		Long sedeId = onlyChildOptionId(sedes, municipioId);
+		Long bloqueId = onlyChildOptionId(bloques, sedeId);
+		Long espacioId = onlyChildOptionId(espacios, bloqueId);
+		Long almacenId = onlyChildOptionId(almacenes, espacioId);
 
-		return new ReporteKardexSeleccionInicialDTO(paisId, departamentoId, municipioId, sedeId);
+		return new ReporteKardexSeleccionInicialDTO(paisId, departamentoId, municipioId, sedeId, bloqueId, espacioId,
+				almacenId);
 	}
 
 	private Long onlyOptionId(List<ReporteKardexFiltroOpcionDTO> options) {
@@ -111,11 +143,17 @@ public class ReporteKardexPreloadService {
 			Function<UbicacionReporteRow, String> nameExtractor,
 			Function<UbicacionReporteRow, Long> parentExtractor) {
 		return rows.stream()
+			.filter(row -> idExtractor.apply(row) != null)
+			.filter(row -> nameExtractor.apply(row) != null)
 			.map(row -> new ReporteKardexFiltroOpcionDTO(
 					idExtractor.apply(row),
 					nameExtractor.apply(row),
 					parentExtractor.apply(row)))
 			.distinct()
 			.toList();
+	}
+
+	private Long positiveOrNull(Long value) {
+		return value != null && value > 0 ? value : null;
 	}
 }

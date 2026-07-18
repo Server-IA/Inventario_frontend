@@ -36,12 +36,13 @@ class ReporteKardexPreloadServiceTest {
 	private ReporteKardexPreloadService service;
 
 	@Test
-	void shouldPreselectCompleteLocationWhenEveryLevelHasOneOption() {
+	void shouldPreselectCompleteLocationAndLeaveDependentProductFiltersEmpty() {
 		when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(EMPRESA_ID);
-		when(repository.findUbicacionesActivas(EMPRESA_ID)).thenReturn(List.of(
-				new UbicacionReporteRow(1L, "Colombia", 16L, "Huila", 36L, "Neiva", 8L, "Sede principal")));
+		when(repository.findUbicacionesActivas(EMPRESA_ID)).thenReturn(List.of(locationRow()));
 		when(repository.findCategoriasActivas(EMPRESA_ID))
 			.thenReturn(List.of(new ReporteKardexFiltroOpcionDTO(5L, "Insumos", null)));
+		when(repository.findProduccionesActivas(EMPRESA_ID))
+			.thenReturn(List.of(new ReporteKardexFiltroOpcionDTO(11L, "Produccion cafe", 10L)));
 
 		ReporteKardexPreloadDTO response = service.preload();
 
@@ -50,18 +51,47 @@ class ReporteKardexPreloadServiceTest {
 		assertThat(response.seleccionInicial().departamentoId()).isEqualTo(16L);
 		assertThat(response.seleccionInicial().municipioId()).isEqualTo(36L);
 		assertThat(response.seleccionInicial().sedeId()).isEqualTo(8L);
+		assertThat(response.seleccionInicial().bloqueId()).isEqualTo(9L);
+		assertThat(response.seleccionInicial().espacioId()).isEqualTo(10L);
+		assertThat(response.seleccionInicial().almacenId()).isEqualTo(11L);
+		assertThat(response.bloques()).containsExactly(new ReporteKardexFiltroOpcionDTO(9L, "Bloque A", 8L));
+		assertThat(response.espacios()).containsExactly(new ReporteKardexFiltroOpcionDTO(10L, "Espacio A", 9L));
+		assertThat(response.almacenes()).containsExactly(new ReporteKardexFiltroOpcionDTO(11L, "Almacen A", 10L));
 		assertThat(response.productos()).isEmpty();
 		assertThat(response.presentaciones()).isEmpty();
+		assertThat(response.producciones()).containsExactly(new ReporteKardexFiltroOpcionDTO(11L, "Produccion cafe", 10L));
 		assertDefaultDateRange(response);
+	}
+
+	@Test
+	void shouldLoadProductsBySelectedCategory() {
+		when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(EMPRESA_ID);
+		when(repository.findProductosActivos(EMPRESA_ID, 5L))
+			.thenReturn(List.of(new ReporteKardexFiltroOpcionDTO(6L, "Fertilizante", 5L)));
+
+		List<ReporteKardexFiltroOpcionDTO> response = service.productosPorCategoria(5L);
+
+		assertThat(response).containsExactly(new ReporteKardexFiltroOpcionDTO(6L, "Fertilizante", 5L));
+	}
+
+	@Test
+	void shouldLoadPresentationsBySelectedProduct() {
+		when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(EMPRESA_ID);
+		when(repository.findPresentacionesActivas(EMPRESA_ID, 6L))
+			.thenReturn(List.of(new ReporteKardexFiltroOpcionDTO(7L, "Bolsa 50 kg", 6L)));
+
+		List<ReporteKardexFiltroOpcionDTO> response = service.presentacionesPorProducto(6L);
+
+		assertThat(response).containsExactly(new ReporteKardexFiltroOpcionDTO(7L, "Bolsa 50 kg", 6L));
 	}
 
 	@Test
 	void shouldStopAutomaticSelectionWhenAParentHasMultipleChildren() {
 		when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(EMPRESA_ID);
 		when(repository.findUbicacionesActivas(EMPRESA_ID)).thenReturn(List.of(
-				new UbicacionReporteRow(1L, "Colombia", 16L, "Huila", 36L, "Neiva", 8L, "Sede Neiva"),
-				new UbicacionReporteRow(1L, "Colombia", 18L, "Cundinamarca", 38L, "Bogota", 9L, "Sede Bogota")));
-		when(repository.findCategoriasActivas(EMPRESA_ID)).thenReturn(List.of());
+				locationRow(1L, "Colombia", 16L, "Huila", 36L, "Neiva", 8L, "Sede Neiva"),
+				locationRow(1L, "Colombia", 18L, "Cundinamarca", 38L, "Bogota", 9L, "Sede Bogota")));
+		stubEmptyProductFilters();
 
 		ReporteKardexPreloadDTO response = service.preload();
 
@@ -69,13 +99,16 @@ class ReporteKardexPreloadServiceTest {
 		assertThat(response.seleccionInicial().departamentoId()).isNull();
 		assertThat(response.seleccionInicial().municipioId()).isNull();
 		assertThat(response.seleccionInicial().sedeId()).isNull();
+		assertThat(response.seleccionInicial().bloqueId()).isNull();
+		assertThat(response.seleccionInicial().espacioId()).isNull();
+		assertThat(response.seleccionInicial().almacenId()).isNull();
 	}
 
 	@Test
 	void shouldReturnLocationUnavailableWhenCompanyHasNoActiveSites() {
 		when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(EMPRESA_ID);
 		when(repository.findUbicacionesActivas(EMPRESA_ID)).thenReturn(List.of());
-		when(repository.findCategoriasActivas(EMPRESA_ID)).thenReturn(List.of());
+		stubEmptyProductFilters();
 
 		ReporteKardexPreloadDTO response = service.preload();
 
@@ -84,10 +117,16 @@ class ReporteKardexPreloadServiceTest {
 		assertThat(response.departamentos()).isEmpty();
 		assertThat(response.municipios()).isEmpty();
 		assertThat(response.sedes()).isEmpty();
+		assertThat(response.bloques()).isEmpty();
+		assertThat(response.espacios()).isEmpty();
+		assertThat(response.almacenes()).isEmpty();
 		assertThat(response.seleccionInicial().paisId()).isNull();
 		assertThat(response.seleccionInicial().departamentoId()).isNull();
 		assertThat(response.seleccionInicial().municipioId()).isNull();
 		assertThat(response.seleccionInicial().sedeId()).isNull();
+		assertThat(response.seleccionInicial().bloqueId()).isNull();
+		assertThat(response.seleccionInicial().espacioId()).isNull();
+		assertThat(response.seleccionInicial().almacenId()).isNull();
 	}
 
 	@Test
@@ -105,5 +144,20 @@ class ReporteKardexPreloadServiceTest {
 		LocalDate today = LocalDate.now();
 		assertThat(response.fechaFin()).isEqualTo(today);
 		assertThat(response.fechaInicio()).isEqualTo(today.minusMonths(1).withDayOfMonth(1));
+	}
+
+	private void stubEmptyProductFilters() {
+		when(repository.findCategoriasActivas(EMPRESA_ID)).thenReturn(List.of());
+		when(repository.findProduccionesActivas(EMPRESA_ID)).thenReturn(List.of());
+	}
+
+	private UbicacionReporteRow locationRow() {
+		return locationRow(1L, "Colombia", 16L, "Huila", 36L, "Neiva", 8L, "Sede principal");
+	}
+
+	private UbicacionReporteRow locationRow(Long paisId, String pais, Long departamentoId, String departamento,
+			Long municipioId, String municipio, Long sedeId, String sede) {
+		return new UbicacionReporteRow(paisId, pais, departamentoId, departamento, municipioId, municipio, sedeId, sede,
+				9L, "Bloque A", 10L, "Espacio A", 11L, "Almacen A");
 	}
 }
