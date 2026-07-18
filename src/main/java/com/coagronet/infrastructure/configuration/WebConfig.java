@@ -2,6 +2,7 @@ package com.coagronet.infrastructure.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -21,6 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
 																						// confiables
 			.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 			.allowedHeaders("*") // o lista fina si prefieres
+			.exposedHeaders(HttpHeaders.CONTENT_DISPOSITION)
 			.allowCredentials(true)
 			.maxAge(3600); // 1 h cache pre‑flight
 	}
