@@ -1,3 +1,14 @@
+/*=============================================================================
+ Nombre del archivo : GridEmpresa.jsx
+ Descripcion        : GridEmpresa componente principal.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-18 | 0.5.0   | Jeisson Sanchez      | HU-043 Gestión de Empresas  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
  * GridEmpresa componente principal.
  * @module GridEmpresa
@@ -6,7 +17,8 @@
  */
 
 import * as React from 'react';
-import { DataGrid } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
+import AppDataGrid from '../common/AppDataGrid';
 import axios from 'axios';
 import { SiteProps } from "../dashboard/SiteProps";
 
@@ -34,10 +46,11 @@ import { SiteProps } from "../dashboard/SiteProps";
 
 /**
  * Componente GridEmpresa para mostrar la tabla de empresas.
- * @param {GridEmpresaProps} props
+ * @param {GridEmpresaProps & { personas: Array, tiposIdentificacion: Array }} props
  * @returns {JSX.Element}
  */
-export default function GridEmpresa(props) {
+export default function GridEmpresa({ selectedRow, setSelectedRow, empresas, personas = [], tiposIdentificacion = [] }) {
+  const { t } = useTranslation();
   const [data, setData] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [rowCount, setRowCount] = React.useState(0);
@@ -50,37 +63,55 @@ export default function GridEmpresa(props) {
   });
 
   const columns = [
-    { field: 'id', headerName: 'ID', width: 90, type: 'number' },
-    { field: 'nombre', headerName: 'Nombre', width: 150, type: 'string' },
-    { field: 'descripcion', headerName: 'Descripción', width: 250, type: 'string' },
+    { field: 'id', headerName: t('empresa.grid.id', 'ID'), width: 90, type: 'number' },
+    { field: 'nombre', headerName: t('empresa.grid.nombre', 'Nombre'), width: 150, type: 'string' },
+    { field: 'descripcion', headerName: t('empresa.grid.descripcion', 'Descripción'), width: 250, type: 'string' },
     {
       field: 'estado',
-      headerName: 'Estado',
+      headerName: t('empresa.grid.estado', 'Estado'),
       width: 100,
       type: 'string',
-      valueGetter: (params) => params.row.estado === 1 ? "Activo" : "Inactivo"
+      valueGetter: (params) => params.row.estado === 1 ? t('empresa.estado.activo', 'Activo') : t('empresa.estado.inactivo', 'Inactivo')
     },
-    { field: 'celular', headerName: 'Celular', width: 100, type: 'string' },
-    { field: 'correo', headerName: 'Correo', width: 150, type: 'string' },
-    { field: 'contacto', headerName: 'Contacto', width: 150, type: 'string' },
-    { field: 'tipoIdentificacionId', headerName: 'Tipo de Identificación', width: 150, type: 'number' },
-    { field: 'personaId', headerName: 'Persona', width: 100, type: 'number' },
-    { field: 'identificacion', headerName: 'No. de Identificación', width: 150, type: 'string' },
+    { field: 'celular', headerName: t('empresa.grid.celular', 'Celular'), width: 100, type: 'string' },
+    { field: 'correo', headerName: t('empresa.grid.correo', 'Correo'), width: 150, type: 'string' },
+    { field: 'contacto', headerName: t('empresa.grid.contacto', 'Contacto'), width: 150, type: 'string' },
+    { 
+      field: 'tipoIdentificacionId', 
+      headerName: t('empresa.grid.tipoIdentificacion', 'Tipo de Identificación'), 
+      width: 150, 
+      type: 'string',
+      valueGetter: (params) => {
+        const tipo = tiposIdentificacion.find(t => t.id === params.row.tipoIdentificacionId);
+        return tipo ? tipo.name : params.row.tipoIdentificacionId;
+      }
+    },
+    { 
+      field: 'personaId', 
+      headerName: t('empresa.grid.persona', 'Persona'), 
+      width: 150, 
+      type: 'string',
+      valueGetter: (params) => {
+        const persona = personas.find(p => p.id === params.row.personaId);
+        return persona ? `${persona.nombre} ${persona.apellido}` : params.row.personaId;
+      }
+    },
+    { field: 'identificacion', headerName: t('empresa.grid.identificacion', 'No. de Identificación'), width: 150, type: 'string' },
 
     // ✅ NUEVO: columna para el logo
     {
       field: 'logo',
-      headerName: 'Logo',
+      headerName: t('empresa.grid.logo', 'Logo'),
       width: 100,
       renderCell: (params) =>
         params.value ? (
           <img
             src={params.value}
-            alt="logo"
+            alt={t('empresa.grid.logoAlt', 'logo')}
             style={{ maxHeight: 40, maxWidth: "100%", objectFit: "contain" }}
           />
         ) : (
-          "Sin logo"
+          t('empresa.grid.sinLogo', 'Sin logo')
         ),
     }
   ];
@@ -124,7 +155,7 @@ export default function GridEmpresa(props) {
 
   return (
     <div style={{ height: 600, width: '100%' }}>
-      <DataGrid
+      <AppDataGrid
         rows={data || []}
         columns={columns}
         rowCount={rowCount}
@@ -137,11 +168,8 @@ export default function GridEmpresa(props) {
         filterMode="server"
         onFilterModelChange={(model) => setFilterModel(model)}
         pageSizeOptions={[5, 10, 20, 50]}
-        onRowSelectionModelChange={(id) => {
-          const selectedIDs = new Set(id);
-          const selectedRowData = data.filter((row) => selectedIDs.has(row.id));
-          props.setSelectedRow(selectedRowData[0]);
-        }}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
       />
     </div>
   );

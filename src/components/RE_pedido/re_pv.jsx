@@ -10,6 +10,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-11 | 0.4.1   | Jeisson Sanchez      | Rediseño alineación filtros |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -558,10 +560,19 @@ export default function RE_pedido() {
                   </Typography>
                   <Box sx={{ 
                     '.rdrCalendarWrapper': { 
-                      color: '#000',
-                      bgcolor: '#fff',
+                      color: isDark ? '#e7f6f7' : '#000',
+                      bgcolor: isDark ? 'transparent' : '#fff',
                       borderRadius: 2
-                    } 
+                    },
+                    '.rdrDayNumber span': { color: isDark ? '#e7f6f7' : '#1d2429' },
+                    '.rdrDayPassive .rdrDayNumber span': { color: isDark ? 'rgba(255,255,255,0.3)' : '#d5dce0' },
+                    '.rdrMonthAndYearPickers select': { color: isDark ? '#e7f6f7' : '#3e484f' },
+                    '.rdrNextPrevButton': { background: isDark ? 'rgba(255,255,255,0.1)' : '#eff2f7' },
+                    '.rdrWeekDay': { color: isDark ? 'rgba(255,255,255,0.7)' : '#849095' },
+                    '.rdrDateDisplayWrapper': { backgroundColor: isDark ? 'transparent' : '#eff2f7' },
+                    '.rdrDateDisplayItem': { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#fff', boxShadow: isDark ? 'none' : '0 1px 2px 0 rgba(35,57,66,.21)', borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'transparent' },
+                    '.rdrDateDisplayItemActive': { borderColor: isDark ? '#fff' : 'transparent' },
+                    '.rdrDateDisplayItem input': { color: isDark ? '#fff' : '#333' }
                   }}>
                     <DateRange
                       locale={i18n.language?.startsWith("en") ? enUS : es}

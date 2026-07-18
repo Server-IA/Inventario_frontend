@@ -1,3 +1,14 @@
+/*=============================================================================
+ Nombre del archivo : Empresa.jsx
+ Descripcion        : Componente principal para la gestión de empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-18 | 0.5.0   | Jeisson Sanchez      | HU-043 Gestión de Empresas  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
  * @file Empresa.jsx
  * @module Empresa
@@ -10,7 +21,10 @@
 
 import * as React from "react";
 import axios from "axios";
+import axiosInstance from "../axiosConfig";
+import { useTranslation } from 'react-i18next';
 import MessageSnackBar from "../MessageSnackBar";
+import GridActionBar from "../common/GridActionBar";
 import FormEmpresa from "./FormEmpresa";
 import GridEmpresa from "./GridEmpresa";
 import { SiteProps } from "../dashboard/SiteProps";
@@ -43,6 +57,7 @@ import { SiteProps } from "../dashboard/SiteProps";
  * @returns {JSX.Element} El módulo de gestión de empresas
  */
 export default function Empresa() {
+  const { t } = useTranslation();
   const defaultRow = {
     id: 0,
     nombre: "",
@@ -66,6 +81,8 @@ export default function Empresa() {
     })
   );
   const [empresas, setEmpresas] = React.useState(/** @type {EmpresaRow[]} */ ([]));
+  const [personas, setPersonas] = React.useState([]);
+  const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
   const [openForm, setOpenForm] = React.useState(false);
   const [methodName, setMethodName] = React.useState("Add");
 
@@ -85,6 +102,14 @@ export default function Empresa() {
       .catch((error) => {
         console.error("Error al buscar empresas!", error);
       });
+
+    axiosInstance.get("/v1/persona")
+      .then(res => setPersonas(res.data.content || []))
+      .catch(err => console.error("Error fetching personas:", err));
+
+    axiosInstance.get("/v1/items/tipo_identificacion/1")
+      .then(res => setTiposIdentificacion(res.data || []))
+      .catch(err => console.error("Error fetching tipos identificacion:", err));
   };
 
   React.useEffect(() => {
@@ -108,7 +133,7 @@ export default function Empresa() {
       setMessage({
         open: true,
         severity: "error",
-        text: "Selecciona una fila para actualizar.",
+        text: t('empresa.messages.selectToUpdate', 'Selecciona una fila para actualizar.'),
       });
       return;
     }
@@ -124,7 +149,7 @@ export default function Empresa() {
       setMessage({
         open: true,
         severity: "error",
-        text: "Selecciona una fila para eliminar.",
+        text: t('empresa.messages.selectToDelete', 'Selecciona una fila para eliminar.'),
       });
       return;
     }
@@ -139,7 +164,7 @@ export default function Empresa() {
         setMessage({
           open: true,
           severity: "success",
-          text: "Empresa eliminada con éxito!",
+          text: t('empresa.messages.deleted', 'Empresa eliminada con éxito!'),
         });
         reloadData();
       })
@@ -147,16 +172,24 @@ export default function Empresa() {
         setMessage({
           open: true,
           severity: "error",
-          text: `Error al eliminar empresa: ${error.response?.data.message || error.message}`,
+          text: `${t('empresa.messages.deleteError', 'Error al eliminar empresa:')} ${error.response?.data.message || error.message}`,
         });
       });
   };
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
-      <h1>Gestión de Empresas</h1>
+      <h1>{t('empresa.title', 'Gestión de Empresas')}</h1>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
+
+      <GridActionBar
+        onAdd={handleAdd}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+        canUpdate={Boolean(selectedRow?.id)}
+        canDelete={Boolean(selectedRow?.id)}
+      />
 
       <FormEmpresa
         selectedRow={selectedRow}
@@ -166,12 +199,16 @@ export default function Empresa() {
         open={openForm}
         setOpen={setOpenForm}
         methodName={methodName}
+        personas={personas}
+        tiposIdentificacion={tiposIdentificacion}
       />
 
       <GridEmpresa
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         empresas={empresas}
+        personas={personas}
+        tiposIdentificacion={tiposIdentificacion}
       />
     </div>
   );
