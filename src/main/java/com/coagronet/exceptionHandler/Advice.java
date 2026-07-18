@@ -37,6 +37,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.coagronet.reports.exceptions.ReporteVencimientoProductoException;
 
 import io.jsonwebtoken.ExpiredJwtException;
 
@@ -200,6 +201,17 @@ public class Advice extends ResponseEntityExceptionHandler {
         problemDetail.setType(URI.create("https://coagronet.com/errors/forbidden"));
 
         return problemDetail;
+    }
+
+    @ExceptionHandler(ReporteVencimientoProductoException.class)
+    public ProblemDetail handleReporteVencimientoProductoException(
+            ReporteVencimientoProductoException ex,
+            Locale locale) {
+        String mensaje = getMessageSource() != null
+                ? getMessageSource().getMessage(ex.getMessage(), null, ex.getMessage(), locale)
+                : ex.getMessage();
+
+        return ProblemDetail.forStatusAndDetail(ex.getStatus(), mensaje);
     }
 
     /**

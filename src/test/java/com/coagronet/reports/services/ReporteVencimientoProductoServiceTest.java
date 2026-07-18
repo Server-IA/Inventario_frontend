@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 
+import com.coagronet.empresa.services.EmpresaService;
 import com.coagronet.reports.dtos.ReporteKardexFiltroOpcionDTO;
 import com.coagronet.reports.dtos.ReporteVencimientoProductoConsultaResponseDTO;
 import com.coagronet.reports.dtos.ReporteVencimientoProductoEstado;
@@ -45,7 +48,13 @@ class ReporteVencimientoProductoServiceTest {
 	private UserEmpresaService userEmpresaService;
 
 	@Mock
+	private EmpresaService empresaService;
+
+	@Mock
 	private MessageSource messageSource;
+
+	@Mock
+	private DataSource dataSource;
 
 	@InjectMocks
 	private ReporteVencimientoProductoService service;
@@ -161,6 +170,45 @@ class ReporteVencimientoProductoServiceTest {
 		assertThat(response.total()).isEqualTo(2);
 		assertThat(response.resultados()).extracting("estadoCodigo")
 			.containsExactly("VENCIDO", "PROXIMO_A_VENCER");
+	}
+
+	@Test
+	void shouldBuildSafeJasperConditionFromTypedFilters() {
+		LocalDate today = LocalDate.now();
+		ReporteVencimientoProductoFiltroDTO filtro = filtroBase(
+				today,
+				today.plusDays(15),
+				ReporteVencimientoProductoEstado.PROXIMO_A_VENCER);
+
+		String condition = service.buildCondicion(EMPRESA_ID, filtro, today);
+
+		assertThat(condition).contains("ki.kai_empresa_id = 452");
+		assertThat(condition).contains("s.sed_id = 8");
+		assertThat(condition).contains("a.alm_id = 11");
+		assertThat(condition).contains("ki.kai_fecha_vencimiento BETWEEN DATE '" + today + "' AND DATE '" + today.plusDays(15) + "'");
+		assertThat(condition).contains("ki.kai_fecha_vencimiento > DATE '" + today + "'");
+		assertThat(condition).doesNotContain("$P");
+	}
+
+	@Test
+	void shouldNotGenerateReportWhenThereAreNoResults() {
+		LocalDate today = LocalDate.now();
+		ReporteVencimientoProductoFiltroDTO filtro = filtroBase(
+			today,
+			today.plusDays(15),
+			ReporteVencimientoProductoEstado.TODOS);
+		when(userEmpresaService.getEmpresaIdFromCurrentRequest()).thenReturn(EMPRESA_ID);
+		when(repository.findResultados(eq(EMPRESA_ID), any(ReporteVencimientoProductoFiltroDTO.class), eq(today)))
+			.thenReturn(List.of());
+
+		assertThatThrownBy(() -> service.exportar(
+				filtro,
+				ReporteVencimientoProductoService.ReporteVencimientoProductoFormato.PDF,
+				Locale.forLanguageTag("es")))
+			.isInstanceOfSatisfying(ReporteVencimientoProductoException.class, exception -> {
+				assertThat(exception.getMessage()).isEqualTo("report.vencimiento.no-results.export");
+				assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+			});
 	}
 
 	private ReporteVencimientoProductoFiltroDTO filtroBase(

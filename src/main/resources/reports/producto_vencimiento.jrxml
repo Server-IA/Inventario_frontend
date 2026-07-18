@@ -6,43 +6,71 @@
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="844"/>
 	<parameter name="logo_empresa" class="java.lang.String"/>
 	<parameter name="condicion" class="java.lang.String"/>
-	<query language="SQL"><![CDATA[SELECT 
+	<parameter name="report_title" class="java.lang.String"/>
+	<parameter name="label_fecha_generacion" class="java.lang.String"/>
+	<parameter name="label_empresa" class="java.lang.String"/>
+	<parameter name="label_sede" class="java.lang.String"/>
+	<parameter name="label_bloque" class="java.lang.String"/>
+	<parameter name="label_espacio" class="java.lang.String"/>
+	<parameter name="label_almacen" class="java.lang.String"/>
+	<parameter name="label_municipio" class="java.lang.String"/>
+	<parameter name="label_producto" class="java.lang.String"/>
+	<parameter name="label_estado" class="java.lang.String"/>
+	<parameter name="label_fecha_vencimiento" class="java.lang.String"/>
+	<parameter name="label_pagina" class="java.lang.String"/>
+	<parameter name="estado_vencido" class="java.lang.String"/>
+	<parameter name="estado_proximo" class="java.lang.String"/>
+	<parameter name="fecha_generacion" class="java.util.Date"/>
+	<query language="SQL"><![CDATA[
+SELECT
     em.emp_nombre AS nombre_empresa,
-    em.emp_logo AS logo_empresa,                
-
     p.pro_nombre AS nombre_producto,
-
     m.mun_nombre AS nombre_municipio,
     s.sed_nombre AS nombre_sede,
     b.blo_nombre AS nombre_bloque,
     e.esp_nombre AS nombre_espacio,
     a.alm_nombre AS nombre_almacen,
-
-    k.kai_fecha_vencimiento AS fecha_vencimiento,
-    k.kai_cantidad AS cantidad
-
-FROM producto p
-JOIN producto_presentacion pp ON p.pro_id = pp.prp_producto_id
-JOIN kardex_item k ON pp.prp_id = k.kai_producto_presentacion_id
-JOIN empresa em ON p.pro_empresa_id = em.emp_id
--- Nuevo orden de JOINs: empresa -> sede -> municipio
-JOIN sede s ON s.sed_empresa_id = em.emp_id
-JOIN municipio m ON s.sed_municipio_id = m.mun_id
-JOIN bloque b ON b.blo_sede_id = s.sed_id AND b.blo_empresa_id = em.emp_id
-JOIN espacio e ON e.esp_bloque_id = b.blo_id AND e.esp_empresa_id = em.emp_id
-JOIN almacen a ON a.alm_espacio_id = e.esp_id AND a.alm_empresa_id = em.emp_id
-WHERE 
+    ki.kai_fecha_vencimiento AS fecha_vencimiento
+FROM public.kardex_item ki
+JOIN public.kardex k
+  ON k.kar_id = ki.kai_kardex_id
+ AND k.kar_empresa_id = ki.kai_empresa_id
+JOIN public.producto_presentacion pp
+  ON pp.prp_id = ki.kai_producto_presentacion_id
+ AND pp.prp_empresa_id = ki.kai_empresa_id
+JOIN public.producto p
+  ON p.pro_id = pp.prp_producto_id
+ AND p.pro_empresa_id = ki.kai_empresa_id
+JOIN public.producto_categoria pc
+  ON pc.prc_id = p.pro_producto_categoria_id
+ AND pc.prc_empresa_id = ki.kai_empresa_id
+JOIN public.empresa em
+  ON em.emp_id = ki.kai_empresa_id
+JOIN public.almacen a
+  ON a.alm_id = k.kar_almacen_id
+ AND a.alm_empresa_id = ki.kai_empresa_id
+JOIN public.espacio e
+  ON e.esp_id = a.alm_espacio_id
+ AND e.esp_empresa_id = ki.kai_empresa_id
+JOIN public.bloque b
+  ON b.blo_id = e.esp_bloque_id
+ AND b.blo_empresa_id = ki.kai_empresa_id
+JOIN public.sede s
+  ON s.sed_id = b.blo_sede_id
+ AND s.sed_empresa_id = ki.kai_empresa_id
+JOIN public.municipio m
+  ON m.mun_id = s.sed_municipio_id
+JOIN public.departamento d
+  ON d.dep_id = m.mun_departamento_id
+JOIN public.pais pa
+  ON pa.pai_id = d.dep_pais_id
+WHERE
     $P!{condicion}
-
+ORDER BY ki.kai_fecha_vencimiento ASC, p.pro_nombre ASC
 ]]></query>
 	<field name="nombre_empresa" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="nombre_empresa"/>
 		<property name="com.jaspersoft.studio.field.label" value="nombre_empresa"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
-	</field>
-	<field name="logo_empresa" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="logo_empresa"/>
-		<property name="com.jaspersoft.studio.field.label" value="logo_empresa"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="empresa"/>
 	</field>
 	<field name="nombre_producto" class="java.lang.String">
@@ -75,14 +103,9 @@ WHERE
 		<property name="com.jaspersoft.studio.field.label" value="nombre_almacen"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="almacen"/>
 	</field>
-	<field name="fecha_vencimiento" class="java.sql.Timestamp">
+	<field name="fecha_vencimiento" class="java.sql.Date">
 		<property name="com.jaspersoft.studio.field.name" value="fecha_vencimiento"/>
 		<property name="com.jaspersoft.studio.field.label" value="fecha_vencimiento"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="kardex_item"/>
-	</field>
-	<field name="cantidad" class="java.lang.Double">
-		<property name="com.jaspersoft.studio.field.name" value="cantidad"/>
-		<property name="com.jaspersoft.studio.field.label" value="cantidad"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="kardex_item"/>
 	</field>
 	<background splitType="Stretch"/>
@@ -122,8 +145,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="2001d6b8-41e5-41cf-9a68-0471a952735c" mode="Opaque" x="300" y="120" width="80" height="20" forecolor="#000000" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Espacio:]]></text>
+		<element kind="textField" uuid="2001d6b8-41e5-41cf-9a68-0471a952735c" mode="Opaque" x="300" y="120" width="80" height="20" forecolor="#000000" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_espacio}]]></expression>
 			<property name="com.jaspersoft.studio.unit.width" value="px"/>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
@@ -133,8 +156,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="c7d436e7-8ee6-463a-b796-35f81c372bbc" mode="Opaque" x="46" y="150" width="80" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Sede:]]></text>
+		<element kind="textField" uuid="c7d436e7-8ee6-463a-b796-35f81c372bbc" mode="Opaque" x="46" y="150" width="80" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_sede}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
@@ -143,8 +166,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="8ea7b89e-3601-4b4d-80af-98da29b0450a" mode="Opaque" x="46" y="180" width="80" height="20" forecolor="#050505" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Bloque:]]></text>
+		<element kind="textField" uuid="8ea7b89e-3601-4b4d-80af-98da29b0450a" mode="Opaque" x="46" y="180" width="80" height="20" forecolor="#050505" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_bloque}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
@@ -153,8 +176,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="6c6c337b-3f45-4413-aaad-8a3553ef9a3d" mode="Opaque" x="300" y="150" width="80" height="20" forecolor="#050505" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Almacen:]]></text>
+		<element kind="textField" uuid="6c6c337b-3f45-4413-aaad-8a3553ef9a3d" mode="Opaque" x="300" y="150" width="80" height="20" forecolor="#050505" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_almacen}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
@@ -183,8 +206,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="271f29b6-2c3a-4d88-8388-a275e52ba74b" mode="Opaque" x="300" y="180" width="80" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Municipio:]]></text>
+		<element kind="textField" uuid="271f29b6-2c3a-4d88-8388-a275e52ba74b" mode="Opaque" x="300" y="180" width="80" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_municipio}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
@@ -193,8 +216,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="52531329-06e8-4d53-b20d-e370963a75de" mode="Opaque" x="46" y="120" width="80" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Empresa:]]></text>
+		<element kind="textField" uuid="52531329-06e8-4d53-b20d-e370963a75de" mode="Opaque" x="46" y="120" width="80" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_empresa}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#114232"/>
@@ -219,13 +242,13 @@ WHERE
 			<pen lineColor="#114232"/>
 		</element>
 		<element kind="image" uuid="ffd99f8c-542a-4868-9ebd-2f576f0540e0" x="50" y="0" width="70" height="75">
-			<expression><![CDATA[new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
+			<expression><![CDATA[$P{logo_empresa} != null && !$P{logo_empresa}.isBlank() && new java.io.File($P{logo_empresa}).exists() ? $P{logo_empresa} : null]]></expression>
 		</element>
-		<element kind="staticText" uuid="2f90147b-c71c-4bca-8d57-330b29f0775c" x="190" y="0" width="340" height="40" fontName="Arial" fontSize="26.0" bold="true" hTextAlign="Right">
-			<text><![CDATA[VENCIMIENTO PRODUCTO]]></text>
+		<element kind="textField" uuid="2f90147b-c71c-4bca-8d57-330b29f0775c" x="190" y="0" width="340" height="40" fontName="Arial" fontSize="26.0" bold="true" hTextAlign="Right">
+			<expression><![CDATA[$P{report_title}]]></expression>
 		</element>
-		<element kind="textField" uuid="b41c7d22-8d72-4dfb-8a7a-5101a98bfb96" x="440" y="40" width="90" height="20" hTextAlign="Right" vTextAlign="Middle">
-			<expression><![CDATA[new java.util.Date()]]></expression>
+		<element kind="textField" uuid="b41c7d22-8d72-4dfb-8a7a-5101a98bfb96" pattern="dd/MM/yyyy" x="440" y="40" width="90" height="20" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA[$P{fecha_generacion}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -234,8 +257,8 @@ WHERE
 				<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="1ceb350d-a09c-4db6-8f3e-71e0ef2688a6" mode="Transparent" x="330" y="40" width="110" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
-			<text><![CDATA[ Fecha de generacion:]]></text>
+		<element kind="textField" uuid="1ceb350d-a09c-4db6-8f3e-71e0ef2688a6" mode="Transparent" x="330" y="40" width="110" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[" " + $P{label_fecha_generacion}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -246,8 +269,8 @@ WHERE
 		</element>
 	</pageHeader>
 	<columnHeader height="47" splitType="Stretch">
-		<element kind="staticText" uuid="6207921f-eaef-4f61-a072-5cb4dbef585a" mode="Opaque" x="46" y="27" width="190" height="20" forecolor="#000000" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[Producto]]></text>
+		<element kind="textField" uuid="6207921f-eaef-4f61-a072-5cb4dbef585a" mode="Opaque" x="46" y="27" width="190" height="20" forecolor="#000000" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{label_producto}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
@@ -256,8 +279,8 @@ WHERE
 				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="97933d52-64ec-4108-abc6-e028a01fa94d" mode="Opaque" x="236" y="27" width="144" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[Estado]]></text>
+		<element kind="textField" uuid="97933d52-64ec-4108-abc6-e028a01fa94d" mode="Opaque" x="236" y="27" width="144" height="20" forecolor="#030303" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{label_estado}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
@@ -266,8 +289,8 @@ WHERE
 				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 			</box>
 		</element>
-		<element kind="staticText" uuid="68f8183a-12f1-4d41-ae8a-3322eaf3541e" mode="Opaque" x="380" y="27" width="130" height="20" forecolor="#000000" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[Fecha de vencimiento]]></text>
+		<element kind="textField" uuid="68f8183a-12f1-4d41-ae8a-3322eaf3541e" mode="Opaque" x="380" y="27" width="130" height="20" forecolor="#000000" backcolor="#E7F6F7" fontName="Arial" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{label_fecha_vencimiento}]]></expression>
 			<box>
 				<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
@@ -290,7 +313,7 @@ WHERE
 				</box>
 			</element>
 			<element kind="textField" uuid="858f7006-b175-4f6f-aed6-fc7c562f71a7" x="236" y="0" width="144" height="20" hTextAlign="Center" vTextAlign="Middle">
-				<expression><![CDATA[new java.util.Date().after($F{fecha_vencimiento}) ? "Vencido" : "Próximo a vencer"]]></expression>
+				<expression><![CDATA[$F{fecha_vencimiento}.after($P{fecha_generacion}) ? $P{estado_proximo} : $P{estado_vencido}]]></expression>
 				<box>
 					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
@@ -299,7 +322,7 @@ WHERE
 					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
 				</box>
 			</element>
-			<element kind="textField" uuid="3774290f-38f2-4997-a355-df4efdb70795" x="380" y="0" width="130" height="20" hTextAlign="Center" vTextAlign="Middle">
+			<element kind="textField" uuid="3774290f-38f2-4997-a355-df4efdb70795" pattern="dd/MM/yyyy" x="380" y="0" width="130" height="20" hTextAlign="Center" vTextAlign="Middle">
 				<expression><![CDATA[$F{fecha_vencimiento}]]></expression>
 				<box>
 					<pen lineWidth="1.0" lineStyle="Solid" lineColor="#114232"/>
@@ -314,7 +337,7 @@ WHERE
 	<columnFooter height="32" splitType="Stretch"/>
 	<pageFooter height="30" splitType="Stretch">
 		<element kind="textField" uuid="5dcf667a-9de1-46d6-800c-2d33499dd4b1" x="410" y="0" width="100" height="30" bold="true" hTextAlign="Right" vTextAlign="Middle">
-			<expression><![CDATA["Pagina " + $V{PAGE_NUMBER}]]></expression>
+			<expression><![CDATA[$P{label_pagina} + " " + $V{PAGE_NUMBER}]]></expression>
 		</element>
 	</pageFooter>
 </jasperReport>

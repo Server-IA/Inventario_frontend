@@ -1,18 +1,32 @@
 package com.coagronet.reports.services;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.coagronet.empresa.services.EmpresaService;
 import com.coagronet.reports.dtos.ReporteKardexFiltroOpcionDTO;
 import com.coagronet.reports.dtos.ReporteVencimientoProductoConsultaResponseDTO;
 import com.coagronet.reports.dtos.ReporteVencimientoProductoEstado;
@@ -30,17 +44,48 @@ import com.coagronet.utils.UserEmpresaService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class ReporteVencimientoProductoService {
 
+	private static final String REPORTE_NOMBRE = "producto_vencimiento";
+
+	private static final String REPORTE_RUTA = "reports/" + REPORTE_NOMBRE + ".jrxml";
+
+	private static final Long ESTADO_ACTIVO = 1L;
+
+	private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
+
+	private static final MediaType EXCEL_MEDIA_TYPE = MediaType.parseMediaType(
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
 	private final ReporteVencimientoProductoRepository repository;
 
 	private final UserEmpresaService userEmpresaService;
 
+	private final EmpresaService empresaService;
+
 	private final MessageSource messageSource;
+
+	private final DataSource dataSource;
+
+	@Value("${path.logos}")
+	private String pathLogos;
+
+	@Value("${path.logo.empresa}")
+	private String pathLogoCompany;
 
 	@Transactional(readOnly = true)
 	public ReporteVencimientoProductoPreloadDTO preload(Locale locale) {
@@ -93,6 +138,51 @@ public class ReporteVencimientoProductoService {
 			log.error("No fue posible precargar filtros de vencimiento para la empresa {}", empresaId, exception);
 			throw new ReporteVencimientoProductoException(
 					"report.vencimiento.preload.error",
+					HttpStatus.INTERNAL_SERVER_ERROR,
+					exception);
+		}
+	}
+
+	@Transactional(readOnly = true)
+	public ReporteVencimientoProductoArchivo exportar(
+			ReporteVencimientoProductoFiltroDTO filtro,
+			ReporteVencimientoProductoFormato formato,
+			Locale locale) {
+		ReporteVencimientoProductoFiltroDTO normalized = normalize(filtro);
+		validate(normalized);
+
+		Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		LocalDate fechaGeneracion = LocalDate.now();
+		ReporteVencimientoProductoFormato formatoNormalizado = formato == null
+				? ReporteVencimientoProductoFormato.PDF
+				: formato;
+		try {
+			List<ResultadoVencimientoRow> rows = repository.findResultados(empresaId, normalized, fechaGeneracion);
+			if (rows.isEmpty()) {
+				throw new ReporteVencimientoProductoException(
+						"report.vencimiento.no-results.export",
+						HttpStatus.NOT_FOUND);
+			}
+
+			Map<String, Object> parameters = buildReportParameters(empresaId, normalized, fechaGeneracion, locale);
+			JasperReport jasperReport = compileReport();
+			JasperPrint jasperPrint = fillReport(jasperReport, parameters);
+			byte[] content = switch (formatoNormalizado) {
+				case EXCEL -> exportXlsx(jasperPrint);
+				case PDF -> JasperExportManager.exportReportToPdf(jasperPrint);
+			};
+			return new ReporteVencimientoProductoArchivo(
+					content,
+					buildFileName(formatoNormalizado, fechaGeneracion),
+					formatoNormalizado.mediaType());
+		}
+		catch (ReporteVencimientoProductoException exception) {
+			throw exception;
+		}
+		catch (JRException | SQLException | DataAccessException | IllegalStateException exception) {
+			log.error("No fue posible generar el reporte de vencimiento para la empresa {}", empresaId, exception);
+			throw new ReporteVencimientoProductoException(
+					"report.vencimiento.export.error",
 					HttpStatus.INTERNAL_SERVER_ERROR,
 					exception);
 		}
@@ -165,6 +255,49 @@ public class ReporteVencimientoProductoService {
 				ReporteVencimientoProductoEstado.normalize(filtro.estado()));
 	}
 
+	String buildCondicion(
+			Long empresaId,
+			ReporteVencimientoProductoFiltroDTO filtro,
+			LocalDate fechaGeneracion) {
+		StringBuilder condition = new StringBuilder();
+		condition.append("ki.kai_empresa_id = ").append(empresaId);
+		condition.append(" AND ki.kai_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND k.kar_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND pp.prp_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND p.pro_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND pc.prc_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND a.alm_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND e.esp_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND b.blo_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND s.sed_estado_id = ").append(ESTADO_ACTIVO);
+		condition.append(" AND ki.kai_fecha_vencimiento IS NOT NULL");
+		condition.append(" AND ki.kai_fecha_vencimiento BETWEEN DATE '")
+			.append(filtro.fechaInicio())
+			.append("' AND DATE '")
+			.append(filtro.fechaFin())
+			.append("'");
+
+		appendLongCondition(condition, "pa.pai_id", filtro.paisId());
+		appendLongCondition(condition, "d.dep_id", filtro.departamentoId());
+		appendLongCondition(condition, "m.mun_id", filtro.municipioId());
+		appendLongCondition(condition, "s.sed_id", filtro.sedeId());
+		appendLongCondition(condition, "b.blo_id", filtro.bloqueId());
+		appendLongCondition(condition, "e.esp_id", filtro.espacioId());
+		appendLongCondition(condition, "a.alm_id", filtro.almacenId());
+		appendLongCondition(condition, "pc.prc_id", filtro.categoriaId());
+		appendLongCondition(condition, "p.pro_id", filtro.productoId());
+		appendLongCondition(condition, "pp.prp_id", filtro.presentacionId());
+
+		if (filtro.estadoNormalizado() == ReporteVencimientoProductoEstado.VENCIDO) {
+			condition.append(" AND ki.kai_fecha_vencimiento <= DATE '").append(fechaGeneracion).append("'");
+		}
+		if (filtro.estadoNormalizado() == ReporteVencimientoProductoEstado.PROXIMO_A_VENCER) {
+			condition.append(" AND ki.kai_fecha_vencimiento > DATE '").append(fechaGeneracion).append("'");
+		}
+
+		return condition.toString();
+	}
+
 	private void validate(ReporteVencimientoProductoFiltroDTO filtro) {
 		if (filtro.fechaInicio() == null || filtro.fechaFin() == null) {
 			throw new ReporteVencimientoProductoException(
@@ -181,6 +314,80 @@ public class ReporteVencimientoProductoService {
 					"report.vencimiento.location.required",
 					HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	private Map<String, Object> buildReportParameters(
+			Long empresaId,
+			ReporteVencimientoProductoFiltroDTO filtro,
+			LocalDate fechaGeneracion,
+			Locale locale) {
+		Map<String, Object> parameters = new HashMap<>();
+		parameters.put("condicion", buildCondicion(empresaId, filtro, fechaGeneracion));
+		parameters.put("logo_empresa", resolveLogo(empresaId));
+		parameters.put("report_title", message("report.vencimiento.title", null, locale));
+		parameters.put("label_fecha_generacion", message("report.vencimiento.generated-at", null, locale));
+		parameters.put("label_empresa", message("report.vencimiento.label.empresa", null, locale));
+		parameters.put("label_sede", message("report.vencimiento.label.sede", null, locale));
+		parameters.put("label_bloque", message("report.vencimiento.label.bloque", null, locale));
+		parameters.put("label_espacio", message("report.vencimiento.label.espacio", null, locale));
+		parameters.put("label_almacen", message("report.vencimiento.label.almacen", null, locale));
+		parameters.put("label_municipio", message("report.vencimiento.label.municipio", null, locale));
+		parameters.put("label_producto", message("report.vencimiento.column.producto", null, locale));
+		parameters.put("label_estado", message("report.vencimiento.column.estado", null, locale));
+		parameters.put("label_fecha_vencimiento", message("report.vencimiento.column.fecha-vencimiento", null, locale));
+		parameters.put("label_pagina", message("report.vencimiento.page", null, locale));
+		parameters.put("estado_vencido", message("report.vencimiento.estado.vencido", null, locale));
+		parameters.put("estado_proximo", message("report.vencimiento.estado.proximo", null, locale));
+		parameters.put("fecha_generacion", java.sql.Date.valueOf(fechaGeneracion));
+		return parameters;
+	}
+
+	private JasperReport compileReport() throws JRException {
+		try (InputStream stream = getClass().getClassLoader().getResourceAsStream(REPORTE_RUTA)) {
+			if (stream == null) {
+				throw new IllegalStateException("No se encontro: " + REPORTE_RUTA);
+			}
+			return JasperCompileManager.compileReport(stream);
+		}
+		catch (java.io.IOException exception) {
+			throw new JRException(exception);
+		}
+	}
+
+	private JasperPrint fillReport(JasperReport jasperReport, Map<String, Object> parameters)
+			throws SQLException, JRException {
+		try (Connection connection = dataSource.getConnection()) {
+			return JasperFillManager.fillReport(jasperReport, parameters, connection);
+		}
+	}
+
+	private byte[] exportXlsx(JasperPrint jasperPrint) throws JRException {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		JRXlsxExporter exporter = new JRXlsxExporter();
+		SimpleXlsxReportConfiguration configuration = new SimpleXlsxReportConfiguration();
+		configuration.setOnePagePerSheet(false);
+		configuration.setDetectCellType(true);
+		configuration.setCollapseRowSpan(false);
+		configuration.setWhitePageBackground(false);
+		configuration.setRemoveEmptySpaceBetweenRows(true);
+		exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+		exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
+		exporter.setConfiguration(configuration);
+		exporter.exportReport();
+		return outputStream.toByteArray();
+	}
+
+	private String resolveLogo(Long empresaId) {
+		String logoHash = empresaService.getLogoHashByEmpresaId(empresaId);
+		if (logoHash == null || logoHash.isBlank()) {
+			return "";
+		}
+		String logoFileName = empresaService.findLogoByHash(logoHash);
+		if (logoFileName == null || logoFileName.isBlank()) {
+			return "";
+		}
+		Path logoPath = Paths.get(pathLogos, pathLogoCompany, empresaId.toString(), logoFileName);
+		return logoPath.toString();
 	}
 
 	private ReporteVencimientoProductoResultadoDTO toResultadoDTO(
@@ -310,6 +517,12 @@ public class ReporteVencimientoProductoService {
 			.toList();
 	}
 
+	private void appendLongCondition(StringBuilder condition, String column, Long value) {
+		if (value != null) {
+			condition.append(" AND ").append(column).append(" = ").append(value);
+		}
+	}
+
 	private Long positiveOrNull(Long value) {
 		return value != null && value > 0 ? value : null;
 	}
@@ -322,6 +535,55 @@ public class ReporteVencimientoProductoService {
 
 	private String message(String key, Object[] args, Locale locale) {
 		return messageSource.getMessage(key, args, key, locale == null ? Locale.getDefault() : locale);
+	}
+
+	private String buildFileName(ReporteVencimientoProductoFormato formato, LocalDate fechaGeneracion) {
+		return "vencimiento-producto-" + FILE_DATE_FORMAT.format(fechaGeneracion) + formato.extension();
+	}
+
+	public enum ReporteVencimientoProductoFormato {
+
+		PDF(".pdf", MediaType.APPLICATION_PDF),
+
+		EXCEL(".xlsx", EXCEL_MEDIA_TYPE);
+
+		private final String extension;
+
+		private final MediaType mediaType;
+
+		ReporteVencimientoProductoFormato(String extension, MediaType mediaType) {
+			this.extension = extension;
+			this.mediaType = mediaType;
+		}
+
+		public static ReporteVencimientoProductoFormato parse(String raw) {
+			if (raw == null || raw.isBlank()) {
+				return PDF;
+			}
+			for (ReporteVencimientoProductoFormato formato : values()) {
+				if (formato.name().equalsIgnoreCase(raw)) {
+					return formato;
+				}
+			}
+			throw new ReporteVencimientoProductoException(
+					"report.vencimiento.format.invalid",
+					HttpStatus.BAD_REQUEST);
+		}
+
+		public String extension() {
+			return extension;
+		}
+
+		public MediaType mediaType() {
+			return mediaType;
+		}
+
+	}
+
+	public record ReporteVencimientoProductoArchivo(
+			byte[] contenido,
+			String nombreArchivo,
+			MediaType mediaType) {
 	}
 
 }
