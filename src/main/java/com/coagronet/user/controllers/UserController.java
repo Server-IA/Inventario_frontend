@@ -29,6 +29,14 @@
  |            |         |                      | @ApiResponses) reflejando   |
  |            |         |                      | las nuevas reglas de        |
  |            |         |                      | negocio.                    |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-24 | 0.4.0   | JUAN JOSE CASTRO     | Modificación de seguridad   |
+ |            |         |                      | en @PreAuthorize para el    |
+ |            |         |                      | endpoint de inactivación,   |
+ |            |         |                      | ampliando el acceso a los   |
+ |            |         |                      | roles ADMINISTRADOR_EMPRESA |
+ |            |         |                      | y al permiso específico     |
+ |            |         |                      | USUARIO_ROL_DELETE.         |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 package com.coagronet.user.controllers;
@@ -140,7 +148,7 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
 	})
 	@DeleteMapping("/api/v1/usuarios/{id}")
-	@PreAuthorize("hasRole('ADMINISTRADOR_SISTEMA')")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_DELETE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
 	public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
 		userUpdateService.deactivateUser(id);
 		return ResponseEntity.noContent().build();

@@ -39,6 +39,20 @@
  |            |         |                      | para todos los roles        |
  |            |         |                      | asociados al usuario.       |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-24 | 0.4.0   | JUAN JOSE CASTRO     | Modificación de la lógica   |
+ |            |         |                      | de inactivación para        |
+ |            |         |                      | soportar acceso por tenant. |
+ |            |         |                      | Validación para prevenir la |
+ |            |         |                      | inactivación en estado      |
+ |            |         |                      | PENDIENTE_VERIFICACION.     |
+ |            |         |                      | Implementación de alcance   |
+ |            |         |                      | diferenciado: el admin de   |
+ |            |         |                      | sistema inactiva al usuario |
+ |            |         |                      | globalmente, mientras que   |
+ |            |         |                      | el admin de empresa solo    |
+ |            |         |                      | inactiva los roles dentro   |
+ |            |         |                      | de su respectivo tenant.    |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 package com.coagronet.user.services;
@@ -287,20 +301,32 @@ public class UserUpdateService {
         boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
 
-        if (!isSystemAdmin) {
-            throw new AccessDeniedException("Solo el administrador del sistema puede inactivar usuarios.");
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para inactivar este usuario.");
         }
 
-        if (user.getUsuarioEstado() == null
-                || !user.getUsuarioEstado().getId().equals(UsuarioEstado.ID_ACTIVADO_CON_EMPRESA)) {
+        if (user.getUsuarioEstado() != null
+                && user.getUsuarioEstado().getId().equals(UsuarioEstado.ID_PENDIENTE_VERIFICACION)) {
             throw new BadRequestException(
-                    "El usuario debe estar en estado ACTIVADO CON EMPRESA para poder ser inactivado.");
+                    "No se puede inactivar un usuario que no ha completado su proceso de activacion.");
         }
 
-        user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
-
-        for (UsuarioRol ur : user.getRolesAsignados()) {
-            ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+        if (isSystemAdmin) {
+            user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
+            for (UsuarioRol ur : user.getRolesAsignados()) {
+                ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+            }
+        } else {
+            for (UsuarioRol ur : user.getRolesAsignados()) {
+                if (ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId)) {
+                    ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+                }
+            }
         }
 
         userRepository.save(user);
