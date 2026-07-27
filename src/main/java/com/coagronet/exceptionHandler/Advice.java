@@ -8,6 +8,7 @@
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2026-02-08 | 1.0.0   | Juan Jose Castro     | Creacion del archivo.                                                                                                              |
  | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ | 2026-07-27 | 1.2.0   | JUAN DIAZ            | Integracion del manejo de errores para los reportes Kardex, vencimiento de producto y pedido.                                      |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.exceptionHandler;
@@ -37,6 +38,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.coagronet.reports.exceptions.ReporteVencimientoProductoException;
 
 import io.jsonwebtoken.ExpiredJwtException;
 
@@ -200,6 +202,17 @@ public class Advice extends ResponseEntityExceptionHandler {
         problemDetail.setType(URI.create("https://coagronet.com/errors/forbidden"));
 
         return problemDetail;
+    }
+
+    @ExceptionHandler(ReporteVencimientoProductoException.class)
+    public ProblemDetail handleReporteVencimientoProductoException(
+            ReporteVencimientoProductoException ex,
+            Locale locale) {
+        String mensaje = getMessageSource() != null
+                ? getMessageSource().getMessage(ex.getMessage(), null, ex.getMessage(), locale)
+                : ex.getMessage();
+
+        return ProblemDetail.forStatusAndDetail(ex.getStatus(), mensaje);
     }
 
     /**
