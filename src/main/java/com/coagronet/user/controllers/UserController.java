@@ -1,4 +1,47 @@
+/*=============================================================================
+ Nombre del archivo : UserController.java
+ Descripcion        : Controlador REST para la gestión de usuarios.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-07 | 0.4.0   | JUAN JOSE CASTRO     | Refactorización del método  |
+ |            |         |                      | deleteUser: cambio de ruta  |
+ |            |         |                      | a /api/v1/usuarios/{id},    |
+ |            |         |                      | implementación de borrado   |
+ |            |         |                      | lógico (desactivación),     |
+ |            |         |                      | adición de seguridad con    |
+ |            |         |                      | @PreAuthorize y metadatos   |
+ |            |         |                      | de documentación en Swagger.|
+ |            |         |                      | Adición del endpoint        |
+ |            |         |                      | /api/v1/usuarios/{id}/activar|
+ |            |         |                      | para activar usuarios.      |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-09 | 0.4.0   | JUAN JOSE CASTRO     | Actualización de seguridad  |
+ |            |         |                      | en @PreAuthorize para       |
+ |            |         |                      | restringir el endpoint de   |
+ |            |         |                      | inactivación de usuarios    |
+ |            |         |                      | exclusivamente al rol       |
+ |            |         |                      | ADMINISTRADOR_SISTEMA.      |
+ |            |         |                      | Modificación de metadatos   |
+ |            |         |                      | de Swagger (@Operation y    |
+ |            |         |                      | @ApiResponses) reflejando   |
+ |            |         |                      | las nuevas reglas de        |
+ |            |         |                      | negocio.                    |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-24 | 0.4.0   | JUAN JOSE CASTRO     | Modificación de seguridad   |
+ |            |         |                      | en @PreAuthorize para el    |
+ |            |         |                      | endpoint de inactivación,   |
+ |            |         |                      | ampliando el acceso a los   |
+ |            |         |                      | roles ADMINISTRADOR_EMPRESA |
+ |            |         |                      | y al permiso específico     |
+ |            |         |                      | USUARIO_ROL_DELETE.         |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 package com.coagronet.user.controllers;
+
+import java.util.List;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -85,7 +128,11 @@ public class UserController {
 		if (null != user) {
 			String encodedPassword = passwordEncoder.encode(userDTOUpdate.getPassword());
 			UserDTO updatedUserDTO = new UserDTO(requestedId, encodedPassword, userDTOUpdate.getUsername(),
-					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId());
+					userDTOUpdate.getPersonaId(), userDTOUpdate.getUsuarioEstadoId(),
+					userDTOUpdate.getPreferredLanguage() != null
+							? userDTOUpdate.getPreferredLanguage()
+							: user.getPreferredLanguage());
+
 			User updatedUser = userMapper.toEntity(updatedUserDTO);
 			userRepository.save(updatedUser);
 			return ResponseEntity.noContent().build();
@@ -93,17 +140,31 @@ public class UserController {
 		return ResponseEntity.notFound().build();
 	}
 
-	@DeleteMapping("/api/v1/user/{id}")
-	private ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-		try {
-			if (userRepository.existsById(id)) {
-				userRepository.deleteById(id);
-				return ResponseEntity.noContent().build();
-			}
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.internalServerError().build();
-		}
+	@Operation(summary = "Desactivar un usuario", description = "Desactiva a un usuario del sistema (cambia su estado a desactivado) en lugar de eliminarlo físicamente, requiriendo rol de Administrador del Sistema y que el usuario se encuentre en estado ACTIVADO CON EMPRESA. Adicionalmente, inactiva todas sus asignaciones de rol.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Usuario desactivado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "El usuario no se encuentra en estado ACTIVADO CON EMPRESA"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado"),
+			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+	})
+	@DeleteMapping("/api/v1/usuarios/{id}")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_DELETE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+		userUpdateService.deactivateUser(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(summary = "Activar un usuario", description = "Activa a un usuario previamente desactivado en el sistema, aplicando las reglas de visibilidad del tenant actual.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Usuario activado exitosamente"),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado"),
+			@ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+	})
+	@PostMapping("/api/v1/usuarios/{id}/activar")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_UPDATE') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<Void> activateUser(@PathVariable Long id) {
+		userUpdateService.activateUser(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@Operation(summary = "Registrar un nuevo usuario", description = "Crea un nuevo usuario junto con su registro de Persona si no existe. Además, asigna los roles correspondientes en las empresas especificadas. Valida que el nombre de usuario no exista y que las fechas de los contratos sean congruentes.")
@@ -148,6 +209,22 @@ public class UserController {
 			@ParameterObject Pageable pageable) {
 
 		Page<UsuarioListResponse> response = usuarioListadoService.listarUsuarios(filtro, pageable);
+		return ResponseEntity.ok(response);
+	}
+
+	@Operation(summary = "Listar usuarios mínimos", description = "Obtiene un listado de usuarios con campos id y nombre, filtrados por la empresa del usuario actual sin paginación.", tags = {
+			"Usuarios" }, security = { @SecurityRequirement(name = "bearerAuth") })
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Listado de usuarios retornado exitosamente."),
+			@ApiResponse(responseCode = "401", description = "No autenticado.", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Acceso denegado.", content = @Content)
+	})
+	@GetMapping(value = "/api/v1/usuarios", params = "fields=id,nombre")
+	@PreAuthorize("hasAuthority('USUARIO_ROL_READ') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
+	public ResponseEntity<List<UserMinimalDTO>> listarUsuariosMinimal(
+			@ParameterObject UsuarioFiltroRequest filtro) {
+
+		List<UserMinimalDTO> response = usuarioListadoService.listarUsuariosMinimal(filtro);
 		return ResponseEntity.ok(response);
 	}
 

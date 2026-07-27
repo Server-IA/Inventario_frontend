@@ -15,6 +15,6 @@ public class AlmacenValidator implements BaseValidator {
 
     public Almacen validarAlmacen(Long almacenId, Long empresaId) {
         return almacenRepository.findByIdAndEmpresaId(almacenId, empresaId)
-                .orElseThrow(() -> new BadRequestException("almacen.not-found" + almacenId));
+                .orElseThrow(() -> new BadRequestException("almacen.not-found: " + almacenId));
     }
 }

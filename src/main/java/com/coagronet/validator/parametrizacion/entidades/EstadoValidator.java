@@ -54,7 +54,7 @@ public class EstadoValidator implements BaseValidator {
     private Estado validarEstadoPorCategoria(Long estadoId, Long estadoCategoriaId, String mensajeErrorKey) {
         return estadoRepository.findByIdAndEstadoCategoriaId(estadoId, estadoCategoriaId)
                 .orElseThrow(() -> new BadRequestException(
-                        mensajeErrorKey + estadoId));
+                        mensajeErrorKey + ": " + estadoId));
     }
 
 }

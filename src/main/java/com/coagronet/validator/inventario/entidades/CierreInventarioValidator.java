@@ -17,7 +17,7 @@ public class CierreInventarioValidator implements BaseValidator {
 
     public CierreInventario validarCierreInventario(Long cierreInventarioId, Long empresaId) {
         return cierreInventarioRepository.findByIdAndEmpresaId(cierreInventarioId, empresaId)
-                .orElseThrow(() -> new BadRequestException("cierre-inventario.not-found" + cierreInventarioId));
+                .orElseThrow(() -> new BadRequestException("cierre-inventario.not-found: " + cierreInventarioId));
     }
 
     public void validarDuplicado(Long empresaId, Long almacenId, LocalDate fechaInicio, LocalDate fechaCorte) {

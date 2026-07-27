@@ -32,6 +32,6 @@ public class NewUserCredentialsEmailListener {
 
 		emailService.sendNewUserCredentialsEmail(user.getUsername(), persona != null ? persona.getNombre() : null,
 				persona != null ? persona.getApellido() : null, ur.getEmpresa().getNombre(), ur.getRol().getNombre(),
-				event.tempPassword());
+				event.tempPassword(), event.fallbackLanguageTag());
 	}
 }

@@ -16,7 +16,7 @@ public class ProduccionValidator implements BaseValidator {
 
     public Produccion validarProduccion(Long produccionId, Long empresaId) {
         return produccionRepository.findByIdAndEmpresaId(produccionId, empresaId)
-                .orElseThrow(() -> new BadRequestException("produccion.not-found" + produccionId));
+                .orElseThrow(() -> new BadRequestException("produccion.not-found: " + produccionId));
     }
 
     public void validarFechasDeProduccion(Produccion produccion) {

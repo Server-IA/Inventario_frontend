@@ -1,3 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : KardexSpecifications.java
+ Descripcion        : Especificaciones JPA para la consulta dinámica y filtrado
+                      de Kardex.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Adición de un LEFT JOIN     |
+ |            |         |                      | (fetch) para la relación    |
+ |            |         |                      | username, optimizando la    |
+ |            |         |                      | carga de datos en consultas.|
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.kardex.repositories;
 
 import java.time.OffsetDateTime;
@@ -28,6 +44,7 @@ public class KardexSpecifications {
                 root.fetch("empresa", JoinType.LEFT);
                 root.fetch("clienteProveedor", JoinType.LEFT);
                 root.fetch("produccion", JoinType.LEFT);
+                root.fetch("username", JoinType.LEFT);
             }
 
             // 1. Use a standard ArrayList to hold your predicates

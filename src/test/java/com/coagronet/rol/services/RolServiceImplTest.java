@@ -1,3 +1,23 @@
+/*=============================================================================
+ Nombre del archivo : RolServiceImplTest.java
+ Descripcion        : Pruebas unitarias para la implementación del servicio 
+                      de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-22 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del uso de        |
+ |            |         |                      | OffsetDateTime por Instant. |
+ |            |         |                      | Eliminación del test de     |
+ |            |         |                      | actualización de roles      |
+ |            |         |                      | eliminados lógicamente y    |
+ |            |         |                      | ajuste en el test del       |
+ |            |         |                      | método getAll, reflejando   |
+ |            |         |                      | los cambios en el servicio. |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.rol.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -7,7 +27,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +45,6 @@ import com.coagronet.rol.dtos.RolResponseDTO;
 import com.coagronet.rol.mappers.RolMapper;
 import com.coagronet.rol.repositories.RolRepository;
 import com.coagronet.rol.services.impl.RolServiceImpl;
-import com.coagronet.user.User;
 import com.coagronet.utils.AuthenticatedUser;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -64,7 +83,7 @@ class RolServiceImplTest {
                 .nombre("Operario")
                 .descripcion("Rol operativo")
                 .estado(buildEstado(1L))
-                .createdAt(OffsetDateTime.now())
+                .createdAt(Instant.now())
                 .build();
 
         RolResponseDTO expected = new RolResponseDTO(10L, "Operario", "Rol operativo", 1L, "Activo", "admin",
@@ -99,16 +118,6 @@ class RolServiceImplTest {
     }
 
     @Test
-    void update_throwsIllegalStateException_whenRolWasSoftDeleted() {
-        Rol existing = Rol.builder().id(11L).nombre("Operario").deletedAt(OffsetDateTime.now()).build();
-        when(rolRepository.findById(11L)).thenReturn(Optional.of(existing));
-
-        assertThrows(IllegalStateException.class, () -> rolService.update(11L, buildRequest("Operario")));
-
-        verify(rolRepository, never()).save(any(Rol.class));
-    }
-
-    @Test
     void softDelete_setsDeletedAtAndDeletedBy_whenRolIsActive() {
         Rol existing = Rol.builder().id(12L).nombre("Operario").build();
         when(rolRepository.findById(12L)).thenReturn(Optional.of(existing));
@@ -126,12 +135,10 @@ class RolServiceImplTest {
     }
 
     @Test
-    void getAll_excludesSoftDeletedRoles() {
+    void getAll_returnsListOfRoles() {
         Rol active = Rol.builder().id(1L).nombre("Operario").estado(buildEstado(1L)).deletedAt(null).build();
-        Rol deleted = Rol.builder().id(2L).nombre("Temporal").estado(buildEstado(1L)).deletedAt(OffsetDateTime.now())
-                .build();
 
-        when(rolRepository.findAll()).thenReturn(List.of(active, deleted));
+        when(rolRepository.findAll()).thenReturn(List.of(active));
         when(rolMapper.toDTO(active)).thenReturn(
                 new RolResponseDTO(1L, "Operario", "Rol operativo", 1L, "Activo", null, null, null, null));
 

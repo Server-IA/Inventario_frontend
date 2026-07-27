@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : PaisMapper.java
+ Descripcion        : Mapper para conversion entre entidad y DTO de paises.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2025-03-31 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.pais.mappers;
 
 import org.mapstruct.Mapper;
@@ -9,11 +21,9 @@ import com.coagronet.pais.dtos.PaisDTO;
 @Mapper(componentModel = "spring")
 public interface PaisMapper {
 
-	@Mapping(source = "empresa.id", target = "empresaId")
 	@Mapping(source = "estado.id", target = "estadoId")
 	PaisDTO toDTO(Pais pais);
 
-	@Mapping(source = "empresaId", target = "empresa.id")
 	@Mapping(source = "estadoId", target = "estado.id")
 	Pais toEntity(PaisDTO paisDTO);
 
@@ -21,8 +31,16 @@ public interface PaisMapper {
 	@Mapping(source = "nombre", target = "nombre")
 	@Mapping(source = "codigo", target = "codigo")
 	@Mapping(source = "acronimo", target = "acronimo")
-	@Mapping(target = "empresaId", ignore = true)
 	@Mapping(target = "estadoId", source = "estado.id")
 	PaisDTO toListDto(Pais pais);
 
 }
+
+
+
+
+
+
+
+
+

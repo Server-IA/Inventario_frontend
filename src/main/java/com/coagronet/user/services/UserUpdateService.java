@@ -15,6 +15,43 @@
  |            |         |                      | roles no incluidos en el    |
  |            |         |                      | payload y soporte para la   |
  |            |         |                      | creación de nueva Persona.  |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-07 | 0.4.0   | JUAN JOSE CASTRO     | Implementación del método   |
+ |            |         |                      | deactivateUser para el      |
+ |            |         |                      | borrado lógico de usuarios, |
+ |            |         |                      | incorporando validaciones   |
+ |            |         |                      | de acceso por tenant y      |
+ |            |         |                      | actualizando el estado de   |
+ |            |         |                      | la entidad a desactivado.   |
+ |            |         |                      | Adición de método           |
+ |            |         |                      | activateUser para activar   |
+ |            |         |                      | usuarios con control tenant.|
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-09 | 0.4.0   | JUAN JOSE CASTRO     | Restricción de la           |
+ |            |         |                      | inactivación de usuarios    |
+ |            |         |                      | exclusivamente al           |
+ |            |         |                      | administrador del sistema.  |
+ |            |         |                      | Adición de validación de    |
+ |            |         |                      | estado previo requerido     |
+ |            |         |                      | (ACTIVADO CON EMPRESA) e    |
+ |            |         |                      | implementación de           |
+ |            |         |                      | inactivación en cascada     |
+ |            |         |                      | para todos los roles        |
+ |            |         |                      | asociados al usuario.       |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-24 | 0.4.0   | JUAN JOSE CASTRO     | Modificación de la lógica   |
+ |            |         |                      | de inactivación para        |
+ |            |         |                      | soportar acceso por tenant. |
+ |            |         |                      | Validación para prevenir la |
+ |            |         |                      | inactivación en estado      |
+ |            |         |                      | PENDIENTE_VERIFICACION.     |
+ |            |         |                      | Implementación de alcance   |
+ |            |         |                      | diferenciado: el admin de   |
+ |            |         |                      | sistema inactiva al usuario |
+ |            |         |                      | globalmente, mientras que   |
+ |            |         |                      | el admin de empresa solo    |
+ |            |         |                      | inactiva los roles dentro   |
+ |            |         |                      | de su respectivo tenant.    |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
@@ -47,6 +84,7 @@ import com.coagronet.user.dtos.AsignacionUpdateRequest;
 import com.coagronet.user.dtos.UsuarioUpdateRequest;
 import com.coagronet.user.repositories.UserRepository;
 import com.coagronet.usuariorol.UsuarioRol;
+import com.coagronet.usuarioEstado.UsuarioEstado;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -251,6 +289,72 @@ public class UserUpdateService {
             }
         }
 
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para inactivar este usuario.");
+        }
+
+        if (user.getUsuarioEstado() != null
+                && user.getUsuarioEstado().getId().equals(UsuarioEstado.ID_PENDIENTE_VERIFICACION)) {
+            throw new BadRequestException(
+                    "No se puede inactivar un usuario que no ha completado su proceso de activacion.");
+        }
+
+        if (isSystemAdmin) {
+            user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
+            for (UsuarioRol ur : user.getRolesAsignados()) {
+                ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+            }
+        } else {
+            for (UsuarioRol ur : user.getRolesAsignados()) {
+                if (ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId)) {
+                    ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+                }
+            }
+        }
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para activar este usuario.");
+        }
+
+        Long nuevoEstadoId = user.getRolesAsignados().isEmpty()
+                ? UsuarioEstado.ID_ACTIVADO_SIN_EMPRESA
+                : UsuarioEstado.ID_ACTIVADO_CON_EMPRESA;
+
+        user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, nuevoEstadoId));
         userRepository.save(user);
     }
 }

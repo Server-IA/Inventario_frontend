@@ -1,3 +1,16 @@
+/*=============================================================================
+ Nombre del archivo : SecurityConfig.java
+ Descripcion        : Configuracion de seguridad y reglas de autorizacion de la API.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ | 2026-07-27 | 1.2.0   | JUAN DIAZ            | Autorizacion de los endpoints de reportes Kardex, vencimiento de producto y pedido.                                                 |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.infrastructure.configuration;
 
 import org.springframework.context.annotation.Bean;
@@ -63,8 +76,9 @@ public class SecurityConfig {
 						.hasRole("ADMINISTRADOR_SISTEMA")
 						.requestMatchers(HttpMethod.DELETE, "/api/v1/tipo-unidad/**")
 						.hasRole("ADMINISTRADOR_SISTEMA")
-						.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**",
-								"/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**",
+						.requestMatchers("/api/v1/pais/**", "/api/v1/departamento/**", "/api/v1/municipio/**")
+						.hasRole("ADMINISTRADOR_SISTEMA")
+						.requestMatchers("/api/v1/marca/**", "/api/v1/tipo_bloque/**", "/api/v1/tipo_espacio/**",
 								"/api/v1/tipo_sede/**",
 								"/api/v1/grupo/**", "/api/v1/sede/**", "/api/v1/bloque/**", "/api/v1/espacio/**",
 								"/api/v1/almacen/**", "/api/v1/producto_categoria/**", "/api/v1/tipo_produccion/**",
@@ -85,6 +99,10 @@ public class SecurityConfig {
 								"/api/v1/estado_categoria/**", "/api/v1/empresa-rol/**", "/api/v1/usuario-roles/**",
 								"/empresa/usuarios-roles/**")
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
+						.requestMatchers("/api/v2/report/vencimiento-producto/**")
+						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE", "ALMACENISTA")
+						.requestMatchers("/api/v2/report/pedido/**")
+						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE", "ALMACENISTA")
 						.requestMatchers("/api/v2/report/**")
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
 						.anyRequest()
@@ -110,3 +128,12 @@ public class SecurityConfig {
 	}
 
 }
+
+
+
+
+
+
+
+
+

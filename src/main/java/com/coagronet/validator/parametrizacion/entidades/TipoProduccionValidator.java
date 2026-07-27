@@ -14,6 +14,6 @@ public class TipoProduccionValidator {
 
     public TipoProduccion validarTipoProduccion(Long tipoProduccionId, Long empresaId) {
         return tipoProduccionRepository.findByIdAndEmpresaId(tipoProduccionId, empresaId)
-                .orElseThrow(() -> new BadRequestException("tipo-produccion.not-found" + tipoProduccionId));
+                .orElseThrow(() -> new BadRequestException("tipo-produccion.not-found: " + tipoProduccionId));
     }
 }
