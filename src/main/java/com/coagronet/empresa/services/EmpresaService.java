@@ -8,6 +8,7 @@
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de listado filtrado y alcance por rol y empresa para la HU-043.2.                                                   |
+ | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Normalizacion de filtros de texto ausentes como cadenas vacias para asegurar su tipado correcto en PostgreSQL.                     |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.empresa.services;
@@ -204,7 +205,7 @@ public class EmpresaService {
 
 	private String normalizarFiltro(String valor) {
 		if (valor == null || valor.isBlank()) {
-			return null;
+			return "";
 		}
 		return valor.trim();
 	}

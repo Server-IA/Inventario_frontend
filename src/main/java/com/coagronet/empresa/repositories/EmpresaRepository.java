@@ -8,6 +8,7 @@
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta paginada, filtrada y con alcance por empresa para la HU-043.2.                                                  |
+ | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Correccion del tipado de filtros de texto opcionales en PostgreSQL para evitar llamadas LOWER sobre parametros bytea.             |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.empresa.repositories;
@@ -45,11 +46,11 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 					LEFT JOIN FETCH e.estado es
 					WHERE (:empresaId IS NULL OR e.id = :empresaId)
 					  AND (:tipoIdentificacionId IS NULL OR ti.id = :tipoIdentificacionId)
-					  AND (:identificacion IS NULL
+					  AND (:identificacion = ''
 					       OR LOWER(e.identificacion) LIKE LOWER(CONCAT('%', :identificacion, '%')))
-					  AND (:nombre IS NULL
+					  AND (:nombre = ''
 					       OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
-					  AND (:correo IS NULL
+					  AND (:correo = ''
 					       OR LOWER(e.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
 					  AND (:estadoId IS NULL OR es.id = :estadoId)
 					""",
@@ -60,11 +61,11 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 					LEFT JOIN e.estado es
 					WHERE (:empresaId IS NULL OR e.id = :empresaId)
 					  AND (:tipoIdentificacionId IS NULL OR ti.id = :tipoIdentificacionId)
-					  AND (:identificacion IS NULL
+					  AND (:identificacion = ''
 					       OR LOWER(e.identificacion) LIKE LOWER(CONCAT('%', :identificacion, '%')))
-					  AND (:nombre IS NULL
+					  AND (:nombre = ''
 					       OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
-					  AND (:correo IS NULL
+					  AND (:correo = ''
 					       OR LOWER(e.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
 					  AND (:estadoId IS NULL OR es.id = :estadoId)
 					""")

@@ -7,6 +7,7 @@
  |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2026-07-27 | 1.0.0   | JUAN DIAZ            | Creacion de pruebas para alcance por rol, empresa y filtros de la HU-043.2.                                                       |
+ | 2026-07-27 | 1.0.1   | JUAN DIAZ            | Ajuste de pruebas para verificar el tipado textual de filtros opcionales en PostgreSQL.                                            |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.empresa.services;
@@ -65,7 +66,7 @@ class EmpresaServiceListadoTest {
 	@Test
 	void listar_administradorSistemaConsultaTodasLasEmpresas() {
 		when(userRoleService.hasRoleInAuthentication("ROLE_ADMINISTRADOR_SISTEMA")).thenReturn(true);
-		when(empresaRepository.buscarEmpresas(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(),
+		when(empresaRepository.buscarEmpresas(isNull(), isNull(), eq(""), eq(""), eq(""), isNull(),
 				eq(pageable)))
 			.thenReturn(new PageImpl<>(List.of(empresa(1L, "Empresa Uno"), empresa(2L, "Empresa Dos")), pageable, 2));
 
@@ -100,7 +101,7 @@ class EmpresaServiceListadoTest {
 	@Test
 	void listar_sinResultadosRetornaPaginaVacia() {
 		when(userRoleService.hasRoleInAuthentication("ROLE_ADMINISTRADOR_SISTEMA")).thenReturn(true);
-		when(empresaRepository.buscarEmpresas(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(),
+		when(empresaRepository.buscarEmpresas(isNull(), isNull(), eq(""), eq(""), eq(""), isNull(),
 				any(Pageable.class)))
 			.thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
