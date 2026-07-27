@@ -8,7 +8,8 @@
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
- | 2026-07-27 | 1.2.0   | JUAN DIAZ            | Se protege el registro de empresas con la autoridad EMPRESA_CREATE para la HU-043.1.                                               |
+ | 2026-07-27 | 1.2.0   | JUAN DIAZ            | Autorizacion de los endpoints de reportes Kardex, vencimiento de producto y pedido.                                                 |
+ | 2026-07-27 | 1.3.0   | JUAN DIAZ            | Se protege el registro de empresas con la autoridad EMPRESA_CREATE para la HU-043.1.                                               |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.infrastructure.configuration;
@@ -101,6 +102,10 @@ public class SecurityConfig {
 								"/api/v1/estado_categoria/**", "/api/v1/empresa-rol/**", "/api/v1/usuario-roles/**",
 								"/empresa/usuarios-roles/**")
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA")
+						.requestMatchers("/api/v2/report/vencimiento-producto/**")
+						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE", "ALMACENISTA")
+						.requestMatchers("/api/v2/report/pedido/**")
+						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE", "ALMACENISTA")
 						.requestMatchers("/api/v2/report/**")
 						.hasAnyRole("ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_EMPRESA", "GERENTE")
 						.anyRequest()
