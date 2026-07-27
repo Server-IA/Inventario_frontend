@@ -1,3 +1,22 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRolService.java
+ Descripcion        : Servicio para la gestión de roles a nivel de empresa.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-27 | 0.4.0   | JUAN JOSE CASTRO     | Adición de funcionalidad    |
+ |            |         |                      | para obtener la lista de    |
+ |            |         |                      | roles activos para menús de |
+ |            |         |                      | selección, ajustando la     |
+ |            |         |                      | visibilidad de la           |
+ |            |         |                      | información dependiendo del |
+ |            |         |                      | nivel de acceso del usuario |
+ |            |         |                      | en sesión.                  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 package com.coagronet.empresarol.services;
 
 import com.coagronet.auditoria.AuthenticationService;
@@ -6,6 +25,7 @@ import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.dtos.requests.EmpresaRolCreateRequestDTO;
 import com.coagronet.empresarol.dtos.requests.EmpresaRolUpdateRequestDTO;
 import com.coagronet.empresarol.dtos.responses.EmpresaRolResponseDTO;
+import com.coagronet.empresarol.dtos.responses.EmpresaRolSelectDTO;
 import com.coagronet.empresarol.mappers.EmpresaRolMapper;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
@@ -19,6 +39,9 @@ import com.coagronet.validator.parametrizacion.constantes.RolConstantes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -38,6 +61,30 @@ public class EmpresaRolService {
 
         return empresaRolRepository
                 .findByEmpresaId(empresaId).stream().map(empresaRolMapper::toResponseDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmpresaRolSelectDTO> getForSelect() {
+        boolean isSysAdmin = false;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities() != null) {
+            isSysAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+        }
+
+        if (isSysAdmin) {
+            return empresaRolRepository.findAll().stream()
+                    .filter(er -> er.getRol().getDeletedAt() == null && er.getEstado().getId() == 1L)
+                    .map(er -> new EmpresaRolSelectDTO(er.getId(),
+                            er.getEmpresa().getNombre() + " - " + er.getRol().getNombre()))
+                    .toList();
+        } else {
+            Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+            return empresaRolRepository.findByEmpresaId(empresaId).stream()
+                    .filter(er -> er.getRol().getDeletedAt() == null && er.getEstado().getId() == 1L)
+                    .map(er -> new EmpresaRolSelectDTO(er.getRol().getId(), er.getRol().getNombre()))
+                    .toList();
+        }
     }
 
     public EmpresaRolResponseDTO findById(Long id) {
