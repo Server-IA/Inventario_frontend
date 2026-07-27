@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRepository.java
+ Descripcion        : Repositorio JPA para la persistencia y consulta de empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta paginada, filtrada y con alcance por empresa para la HU-043.2.                                                  |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.empresa.repositories;
 
 import java.util.Optional;
@@ -24,5 +36,45 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 
 	@Query("SELECT e FROM Empresa e WHERE e.id = :id AND e.estado.id = :estadoId")
 	Optional<Empresa> findByIdAndEstadoId(@Param("id") Long id, @Param("estadoId") Long estadoId);
+
+	@Query(
+			value = """
+					SELECT e
+					FROM Empresa e
+					JOIN FETCH e.tipoIdentificacion ti
+					LEFT JOIN FETCH e.estado es
+					WHERE (:empresaId IS NULL OR e.id = :empresaId)
+					  AND (:tipoIdentificacionId IS NULL OR ti.id = :tipoIdentificacionId)
+					  AND (:identificacion IS NULL
+					       OR LOWER(e.identificacion) LIKE LOWER(CONCAT('%', :identificacion, '%')))
+					  AND (:nombre IS NULL
+					       OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
+					  AND (:correo IS NULL
+					       OR LOWER(e.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
+					  AND (:estadoId IS NULL OR es.id = :estadoId)
+					""",
+			countQuery = """
+					SELECT COUNT(e)
+					FROM Empresa e
+					JOIN e.tipoIdentificacion ti
+					LEFT JOIN e.estado es
+					WHERE (:empresaId IS NULL OR e.id = :empresaId)
+					  AND (:tipoIdentificacionId IS NULL OR ti.id = :tipoIdentificacionId)
+					  AND (:identificacion IS NULL
+					       OR LOWER(e.identificacion) LIKE LOWER(CONCAT('%', :identificacion, '%')))
+					  AND (:nombre IS NULL
+					       OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
+					  AND (:correo IS NULL
+					       OR LOWER(e.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
+					  AND (:estadoId IS NULL OR es.id = :estadoId)
+					""")
+	Page<Empresa> buscarEmpresas(
+			@Param("empresaId") Long empresaId,
+			@Param("tipoIdentificacionId") Long tipoIdentificacionId,
+			@Param("identificacion") String identificacion,
+			@Param("nombre") String nombre,
+			@Param("correo") String correo,
+			@Param("estadoId") Long estadoId,
+			Pageable pageable);
 
 }
