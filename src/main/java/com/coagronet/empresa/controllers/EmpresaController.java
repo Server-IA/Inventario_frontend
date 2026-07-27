@@ -1,13 +1,26 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaController.java
+ Descripcion        : Controlador REST para la gestion de empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se implementa el endpoint de registro de empresas con soporte JSON y multipart para la HU-043.1.                                  |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.empresa.controllers;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,20 +30,30 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.dtos.EmpresaDTO;
+import com.coagronet.empresa.dtos.EmpresaRegistroRequestDTO;
+import com.coagronet.empresa.dtos.EmpresaRegistroResponseDTO;
 import com.coagronet.empresa.mappers.EmpresaMapper;
 import com.coagronet.empresa.services.EmpresaService;
-import org.springframework.web.multipart.MultipartFile;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/empresas")
+@RequiredArgsConstructor
 public class EmpresaController {
 
-	@Autowired
-	private EmpresaService empresaService;
+	private final EmpresaService empresaService;
 
 	@GetMapping
 	public ResponseEntity<?> getAllEmpresas(@RequestParam(defaultValue = "0") int page,
@@ -78,11 +101,36 @@ public class EmpresaController {
 		}
 	}
 
-	@PostMapping
-	public ResponseEntity<EmpresaDTO> createEmpresa(@RequestBody EmpresaDTO empresaDTO) {
-		Empresa empresa = EmpresaMapper.INSTANCE.toEmpresa(empresaDTO);
-		Empresa savedEmpresa = empresaService.save(empresa);
-		return ResponseEntity.ok(EmpresaMapper.INSTANCE.toEmpresaDTO(savedEmpresa));
+	@Operation(summary = "Registrar empresa",
+			description = "Registra una empresa sin logo mediante un cuerpo JSON y la asocia con una persona responsable.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "Empresa registrada exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Datos obligatorios o relaciones invalidas"),
+			@ApiResponse(responseCode = "401", description = "Usuario no autenticado"),
+			@ApiResponse(responseCode = "403", description = "Usuario sin permiso de gestion de empresas"),
+			@ApiResponse(responseCode = "409", description = "Identificacion o correo duplicado")
+	})
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<EmpresaRegistroResponseDTO> registrarEmpresa(
+			@Valid @RequestBody EmpresaRegistroRequestDTO request) {
+		return respuestaCreada(empresaService.registrar(request, null));
+	}
+
+	@Operation(summary = "Registrar empresa con logo",
+			description = "Registra una empresa y procesa un logo PNG opcional enviado como multipart/form-data.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201",
+					description = "Empresa registrada; la respuesta indica si el logo fue cargado o rechazado"),
+			@ApiResponse(responseCode = "400", description = "Datos obligatorios o relaciones invalidas"),
+			@ApiResponse(responseCode = "401", description = "Usuario no autenticado"),
+			@ApiResponse(responseCode = "403", description = "Usuario sin permiso de gestion de empresas"),
+			@ApiResponse(responseCode = "409", description = "Identificacion o correo duplicado")
+	})
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<EmpresaRegistroResponseDTO> registrarEmpresaConLogo(
+			@Valid @RequestPart("empresa") EmpresaRegistroRequestDTO request,
+			@RequestPart(value = "logo", required = false) MultipartFile logo) {
+		return respuestaCreada(empresaService.registrar(request, logo));
 	}
 
 	@PutMapping("/{id}")
@@ -103,6 +151,14 @@ public class EmpresaController {
 	public ResponseEntity<String> subirLogoEmpresa(@RequestParam("file") MultipartFile file) {
 		empresaService.subirLogoDesdeEmpresaLogueada(file);
 		return ResponseEntity.ok("Logo subido exitosamente");
+	}
+
+	private ResponseEntity<EmpresaRegistroResponseDTO> respuestaCreada(EmpresaRegistroResponseDTO response) {
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+			.path("/{id}")
+			.buildAndExpand(response.getId())
+			.toUri();
+		return ResponseEntity.created(location).body(response);
 	}
 
 }
