@@ -1,4 +1,15 @@
-<!-- RF-042 / HU-042.1 / HU-042.2 - JasperReports 7.0.3 -->
+<!--=============================================================================
+ Nombre del archivo : pedido.jrxml
+ Descripcion        : Plantilla Jasper para generar el reporte de pedido en PDF y Excel.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +============+=========+======================+====================================================================================================================================+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +============+=========+======================+====================================================================================================================================+
+ | 2025-05-09 | 1.0.0   | Zenway               | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de RF-042 y HU-042.1/HU-042.2 con i18n, multiples pedidos y resumen de totales.                                     |
+ +============+=========+======================+====================================================================================================================================+
+=============================================================================-->
 <jasperReport name="Reporte_pedido" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoPages" uuid="25e1c055-c456-49cb-ba58-2e49dfeaf867">
 	<style name="DetailCell" fontName="Arial" fontSize="9.0" vTextAlign="Middle">
 		<conditionalStyle mode="Opaque" backcolor="#E7F6F7">

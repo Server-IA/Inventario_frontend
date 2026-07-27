@@ -1,3 +1,15 @@
+<!--=============================================================================
+ Nombre del archivo : producto_vencimiento.jrxml
+ Descripcion        : Plantilla Jasper para generar el reporte de vencimiento de producto.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +============+=========+======================+====================================================================================================================================+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +============+=========+======================+====================================================================================================================================+
+ | 2025-07-17 | 1.0.0   | Sebastian Perdomo    | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Ajustes de filtros, internacionalizacion, formato y exportacion del reporte de vencimientos.                                       |
+ +============+=========+======================+====================================================================================================================================+
+=============================================================================-->
 <!-- Created with Jaspersoft Studio version 7.0.6.final using JasperReports Library version 7.0.6-5d2a603fdc6b3db8f842a83383e594f41891534d  -->
 <jasperReport name="producto_vencimiento" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="6842db66-f825-4df7-9130-ffe18d149a3a">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>

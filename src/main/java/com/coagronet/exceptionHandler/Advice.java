@@ -8,6 +8,7 @@
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2026-02-08 | 1.0.0   | Juan Jose Castro     | Creacion del archivo.                                                                                                              |
  | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
+ | 2026-07-27 | 1.2.0   | JUAN DIAZ            | Integracion del manejo de errores para los reportes Kardex, vencimiento de producto y pedido.                                      |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.exceptionHandler;
