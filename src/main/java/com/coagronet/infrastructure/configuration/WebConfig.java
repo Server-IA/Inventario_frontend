@@ -1,7 +1,20 @@
+/*=============================================================================
+ Nombre del archivo : WebConfig.java
+ Descripcion        : Configuracion web transversal de la aplicacion.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-10-30 | 1.0.0   | jujcgu               | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Ajustes de configuracion web requeridos por los endpoints de reportes.                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.infrastructure.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -21,6 +34,7 @@ public class WebConfig implements WebMvcConfigurer {
 																						// confiables
 			.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 			.allowedHeaders("*") // o lista fina si prefieres
+			.exposedHeaders(HttpHeaders.CONTENT_DISPOSITION)
 			.allowCredentials(true)
 			.maxAge(3600); // 1 h cache pre‑flight
 	}
