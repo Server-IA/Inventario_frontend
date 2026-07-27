@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaController.java
+ Descripcion        : Controlador REST para la gestion de empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se implementa el endpoint de detalle completo de empresa para la HU-043.3.                                                         |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.empresa.controllers;
 
 import java.util.HashMap;
@@ -21,9 +33,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.dtos.EmpresaDTO;
+import com.coagronet.empresa.dtos.EmpresaDetalleResponseDTO;
 import com.coagronet.empresa.mappers.EmpresaMapper;
 import com.coagronet.empresa.services.EmpresaService;
 import org.springframework.web.multipart.MultipartFile;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/v1/empresas")
@@ -68,14 +85,16 @@ public class EmpresaController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<EmpresaDTO> getEmpresaById(@PathVariable Long id) {
-		Empresa empresa = empresaService.getEmpresaById(id);
-		if (empresa != null) {
-			return ResponseEntity.ok(EmpresaMapper.INSTANCE.toEmpresaDTO(empresa));
-		}
-		else {
-			return ResponseEntity.notFound().build();
-		}
+	@Operation(summary = "Visualizar detalle de empresa",
+			description = "Consulta todos los datos registrados de la empresa respetando el alcance de la sesion.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Detalle obtenido exitosamente"),
+			@ApiResponse(responseCode = "401", description = "Usuario no autenticado"),
+			@ApiResponse(responseCode = "403", description = "Usuario sin permiso o fuera del alcance de la empresa"),
+			@ApiResponse(responseCode = "404", description = "Empresa no encontrada")
+	})
+	public ResponseEntity<EmpresaDetalleResponseDTO> getEmpresaById(@PathVariable Long id) {
+		return ResponseEntity.ok(empresaService.obtenerDetalle(id));
 	}
 
 	@PostMapping

@@ -1,16 +1,31 @@
+/*=============================================================================
+ Nombre del archivo : JwtAuthenticationFilter.java
+ Descripcion        : Filtro de autenticacion JWT y carga de autoridades del usuario.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2025-09-11 | 1.0.0   | Juan Jose Castro     | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se cargan permisos dinamicos del rol para aplicar EMPRESA_READ en la HU-043.3.                                                     |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.infrastructure.security;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.coagronet.infrastructure.security.service.DynamicRolePermissionService;
 import com.coagronet.user.repositories.UserRepository;
 
 import io.jsonwebtoken.Claims;
@@ -28,6 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtUtil jwtUtil;
 
 	private final UserRepository userRepo;
+
+	private final DynamicRolePermissionService dynamicRolePermissionService;
 
 	private static final String BEARER_PREFIX = "Bearer ";
 
@@ -82,7 +99,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				}
 
 				// 4. Construcción y asignación del Security Context
-				var authorities = List.of(new SimpleGrantedAuthority(rolName));
+				Collection<? extends GrantedAuthority> authorities = rolId != null
+						? dynamicRolePermissionService.getAuthorities(empresaId, rolId, rolName)
+						: List.of(new SimpleGrantedAuthority(rolName));
 
 				// <-- PASA EL USER ID AL CONSTRUCTOR -->
 				CustomUserDetails userDetails = new CustomUserDetails(userId, username, null, empresaId, rolId,

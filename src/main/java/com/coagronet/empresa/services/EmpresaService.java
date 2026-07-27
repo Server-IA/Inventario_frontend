@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaService.java
+ Descripcion        : Servicio de negocio para la gestion de empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion del detalle de empresa y control de alcance por sesion para la HU-043.3.                                            |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.empresa.services;
 
 import java.io.IOException;
@@ -7,23 +19,31 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.dtos.EmpresaDetalleResponseDTO;
 import com.coagronet.empresa.repositories.EmpresaRepository;
+import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.utils.Constantes;
 import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.utils.UserRoleService;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class EmpresaService {
+
+	private static final String ROLE_ADMINISTRADOR_SISTEMA = "ROLE_ADMINISTRADOR_SISTEMA";
 
 	@Value("${path.logos}")
 	private String pathLogos;
@@ -34,6 +54,18 @@ public class EmpresaService {
 	private final EmpresaRepository empresaRepository;
 
 	private final UserEmpresaService userEmpresaService;
+
+	private final UserRoleService userRoleService;
+
+	@Transactional(readOnly = true)
+	public EmpresaDetalleResponseDTO obtenerDetalle(Long id) {
+		validarAlcanceEmpresa(id);
+
+		Empresa empresa = empresaRepository.buscarDetallePorId(id)
+			.orElseThrow(() -> new RecursoNoEncontradoException("Empresa", id));
+
+		return toDetalleResponse(empresa);
+	}
 
 	public Page<Empresa> getAllEmpresas(Pageable pageable) {
 		return empresaRepository.findByEstadoNot(2, pageable);
@@ -136,6 +168,42 @@ public class EmpresaService {
 			hexString.append(hex);
 		}
 		return hexString.toString();
+	}
+
+	private void validarAlcanceEmpresa(Long empresaIdSolicitada) {
+		if (userRoleService.hasRoleInAuthentication(ROLE_ADMINISTRADOR_SISTEMA)) {
+			return;
+		}
+
+		Long empresaIdSesion = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		if (!Objects.equals(empresaIdSolicitada, empresaIdSesion)) {
+			throw new AccessDeniedException("La empresa solicitada no pertenece a la sesion autenticada.");
+		}
+	}
+
+	private EmpresaDetalleResponseDTO toDetalleResponse(Empresa empresa) {
+		String nombreResponsable = empresa.getPersona() != null
+				? String.join(" ",
+						empresa.getPersona().getNombre() == null ? "" : empresa.getPersona().getNombre(),
+						empresa.getPersona().getApellido() == null ? "" : empresa.getPersona().getApellido()).trim()
+				: null;
+
+		return EmpresaDetalleResponseDTO.builder()
+			.id(empresa.getId())
+			.tipoIdentificacionId(empresa.getTipoIdentificacion().getId())
+			.tipoIdentificacionNombre(empresa.getTipoIdentificacion().getNombre())
+			.identificacion(empresa.getIdentificacion())
+			.nombre(empresa.getNombre())
+			.correo(empresa.getCorreo())
+			.celular(empresa.getCelular())
+			.contacto(empresa.getContacto())
+			.descripcion(empresa.getDescripcion())
+			.logo(empresa.getLogo())
+			.estadoId(empresa.getEstado() != null ? empresa.getEstado().getId() : null)
+			.estadoNombre(empresa.getEstado() != null ? empresa.getEstado().getNombre() : null)
+			.personaResponsableId(empresa.getPersona() != null ? empresa.getPersona().getId() : null)
+			.personaResponsableNombre(nombreResponsable)
+			.build();
 	}
 
 }
