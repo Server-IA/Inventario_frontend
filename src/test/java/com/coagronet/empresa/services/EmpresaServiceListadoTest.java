@@ -83,8 +83,7 @@ class EmpresaServiceListadoTest {
 	@Test
 	void listar_administradorSistemaConsultaTodasLasEmpresas() {
 		when(userRoleService.hasRoleInAuthentication("ROLE_ADMINISTRADOR_SISTEMA")).thenReturn(true);
-		when(empresaRepository.buscarEmpresas(isNull(), isNull(), eq(""), eq(""), eq(""), isNull(),
-				eq(pageable)))
+		when(empresaRepository.buscarEmpresas(isNull(), isNull(), eq(""), eq(""), eq(""), isNull(), eq(pageable)))
 			.thenReturn(new PageImpl<>(List.of(empresa(1L, "Empresa Uno"), empresa(2L, "Empresa Dos")), pageable, 2));
 
 		EmpresaListadoResponseDTO response = empresaService.listar(new EmpresaListadoFiltroDTO(), pageable);

@@ -87,8 +87,7 @@ class EmpresaServiceRegistroTest {
 	@BeforeEach
 	void setUp() {
 		StaticMessageSource messageSource = new StaticMessageSource();
-		messageSource.addMessage("empresa.identificacion.existente", Locale.getDefault(),
-				"Identificacion duplicada");
+		messageSource.addMessage("empresa.identificacion.existente", Locale.getDefault(), "Identificacion duplicada");
 		messageSource.addMessage("empresa.correo.existente", Locale.getDefault(), "Correo duplicado");
 		messageSource.addMessage("empresa.tipo-identificacion.invalid", Locale.getDefault(),
 				"Tipo de identificacion invalido");
@@ -96,10 +95,8 @@ class EmpresaServiceRegistroTest {
 				"Persona responsable invalida");
 		messageSource.addMessage("empresa.estado-activo.invalid", Locale.getDefault(), "Estado activo invalido");
 		messageSource.addMessage("empresa.logo.formato-invalido", Locale.getDefault(), "Formato de logo invalido");
-		messageSource.addMessage("empresa.logo.tamano-excedido", Locale.getDefault(),
-				"Logo superior a {0} bytes");
-		messageSource.addMessage("empresa.logo.almacenamiento-error", Locale.getDefault(),
-				"Error almacenando logo");
+		messageSource.addMessage("empresa.logo.tamano-excedido", Locale.getDefault(), "Logo superior a {0} bytes");
+		messageSource.addMessage("empresa.logo.almacenamiento-error", Locale.getDefault(), "Error almacenando logo");
 
 		empresaService = new EmpresaService(empresaRepository, userEmpresaService, userRoleService,
 				tipoIdentificacionRepository, personaRepository, estadoRepository, messageSource);

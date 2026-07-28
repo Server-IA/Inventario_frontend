@@ -88,18 +88,12 @@ public class EmpresaService {
 
 	@Transactional(readOnly = true)
 	public EmpresaListadoResponseDTO listar(EmpresaListadoFiltroDTO filtro, Pageable pageable) {
-		Long empresaId = userRoleService.hasRoleInAuthentication(ROLE_ADMINISTRADOR_SISTEMA)
-				? null
+		Long empresaId = userRoleService.hasRoleInAuthentication(ROLE_ADMINISTRADOR_SISTEMA) ? null
 				: userEmpresaService.getEmpresaIdFromCurrentRequest();
 
-		Page<Empresa> pagina = empresaRepository.buscarEmpresas(
-				empresaId,
-				filtro.getTipoIdentificacionId(),
-				normalizarFiltro(filtro.getIdentificacion()),
-				normalizarFiltro(filtro.getNombre()),
-				normalizarFiltro(filtro.getCorreo()),
-				filtro.getEstadoId(),
-				pageable);
+		Page<Empresa> pagina = empresaRepository.buscarEmpresas(empresaId, filtro.getTipoIdentificacionId(),
+				normalizarFiltro(filtro.getIdentificacion()), normalizarFiltro(filtro.getNombre()),
+				normalizarFiltro(filtro.getCorreo()), filtro.getEstadoId(), pageable);
 
 		return EmpresaListadoResponseDTO.builder()
 			.header(EmpresaListadoResponseDTO.Paginacion.builder()
