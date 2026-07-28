@@ -7,6 +7,8 @@
  |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de listado filtrado y alcance por rol y empresa para la HU-043.2.                                                   |
+ | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Normalizacion de filtros de texto ausentes como cadenas vacias para asegurar su tipado correcto en PostgreSQL.                     |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de registro, validaciones de unicidad, responsable y carga opcional de logo para la HU-043.1.                      |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
@@ -34,6 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.dtos.EmpresaListadoFiltroDTO;
+import com.coagronet.empresa.dtos.EmpresaListadoItemDTO;
+import com.coagronet.empresa.dtos.EmpresaListadoResponseDTO;
 import com.coagronet.empresa.dtos.EmpresaRegistroRequestDTO;
 import com.coagronet.empresa.dtos.EmpresaRegistroResponseDTO;
 import com.coagronet.empresa.repositories.EmpresaRepository;
@@ -47,6 +52,7 @@ import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
 import com.coagronet.utils.Constantes;
 import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.utils.UserRoleService;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +60,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class EmpresaService {
+
+	private static final String ROLE_ADMINISTRADOR_SISTEMA = "ROLE_ADMINISTRADOR_SISTEMA";
 
 	@Value("${path.logos}")
 	private String pathLogos;
@@ -68,6 +76,8 @@ public class EmpresaService {
 
 	private final UserEmpresaService userEmpresaService;
 
+	private final UserRoleService userRoleService;
+
 	private final TipoIdentificacionRepository tipoIdentificacionRepository;
 
 	private final PersonaRepository personaRepository;
@@ -75,6 +85,30 @@ public class EmpresaService {
 	private final EstadoRepository estadoRepository;
 
 	private final MessageSource messageSource;
+
+	@Transactional(readOnly = true)
+	public EmpresaListadoResponseDTO listar(EmpresaListadoFiltroDTO filtro, Pageable pageable) {
+		Long empresaId = userRoleService.hasRoleInAuthentication(ROLE_ADMINISTRADOR_SISTEMA) ? null
+				: userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+		Page<Empresa> pagina = empresaRepository.buscarEmpresas(empresaId, filtro.getTipoIdentificacionId(),
+				normalizarFiltro(filtro.getIdentificacion()), normalizarFiltro(filtro.getNombre()),
+				normalizarFiltro(filtro.getCorreo()), filtro.getEstadoId(), pageable);
+
+		return EmpresaListadoResponseDTO.builder()
+			.header(EmpresaListadoResponseDTO.Paginacion.builder()
+				.totalElements(pagina.getTotalElements())
+				.totalPages(pagina.getTotalPages())
+				.size(pagina.getSize())
+				.number(pagina.getNumber())
+				.first(pagina.isFirst())
+				.last(pagina.isLast())
+				.numberOfElements(pagina.getNumberOfElements())
+				.empty(pagina.isEmpty())
+				.build())
+			.data(pagina.getContent().stream().map(this::toListadoItem).toList())
+			.build();
+	}
 
 	@Transactional
 	public EmpresaRegistroResponseDTO registrar(EmpresaRegistroRequestDTO request, MultipartFile logo) {
@@ -222,6 +256,26 @@ public class EmpresaService {
 			hexString.append(hex);
 		}
 		return hexString.toString();
+	}
+
+	private EmpresaListadoItemDTO toListadoItem(Empresa empresa) {
+		return EmpresaListadoItemDTO.builder()
+			.id(empresa.getId())
+			.tipoIdentificacionId(empresa.getTipoIdentificacion().getId())
+			.tipoIdentificacionNombre(empresa.getTipoIdentificacion().getNombre())
+			.identificacion(empresa.getIdentificacion())
+			.nombre(empresa.getNombre())
+			.correo(empresa.getCorreo())
+			.estadoId(empresa.getEstado() != null ? empresa.getEstado().getId() : null)
+			.estadoNombre(empresa.getEstado() != null ? empresa.getEstado().getNombre() : null)
+			.build();
+	}
+
+	private String normalizarFiltro(String valor) {
+		if (valor == null || valor.isBlank()) {
+			return "";
+		}
+		return valor.trim();
 	}
 
 	private void validarUnicidad(String identificacion, String correo) {

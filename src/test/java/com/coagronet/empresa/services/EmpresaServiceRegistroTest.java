@@ -50,6 +50,7 @@ import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
 import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.utils.UserRoleService;
 
 @ExtendWith(MockitoExtension.class)
 class EmpresaServiceRegistroTest {
@@ -59,6 +60,9 @@ class EmpresaServiceRegistroTest {
 
 	@Mock
 	private UserEmpresaService userEmpresaService;
+
+	@Mock
+	private UserRoleService userRoleService;
 
 	@Mock
 	private TipoIdentificacionRepository tipoIdentificacionRepository;
@@ -83,8 +87,7 @@ class EmpresaServiceRegistroTest {
 	@BeforeEach
 	void setUp() {
 		StaticMessageSource messageSource = new StaticMessageSource();
-		messageSource.addMessage("empresa.identificacion.existente", Locale.getDefault(),
-				"Identificacion duplicada");
+		messageSource.addMessage("empresa.identificacion.existente", Locale.getDefault(), "Identificacion duplicada");
 		messageSource.addMessage("empresa.correo.existente", Locale.getDefault(), "Correo duplicado");
 		messageSource.addMessage("empresa.tipo-identificacion.invalid", Locale.getDefault(),
 				"Tipo de identificacion invalido");
@@ -92,13 +95,11 @@ class EmpresaServiceRegistroTest {
 				"Persona responsable invalida");
 		messageSource.addMessage("empresa.estado-activo.invalid", Locale.getDefault(), "Estado activo invalido");
 		messageSource.addMessage("empresa.logo.formato-invalido", Locale.getDefault(), "Formato de logo invalido");
-		messageSource.addMessage("empresa.logo.tamano-excedido", Locale.getDefault(),
-				"Logo superior a {0} bytes");
-		messageSource.addMessage("empresa.logo.almacenamiento-error", Locale.getDefault(),
-				"Error almacenando logo");
+		messageSource.addMessage("empresa.logo.tamano-excedido", Locale.getDefault(), "Logo superior a {0} bytes");
+		messageSource.addMessage("empresa.logo.almacenamiento-error", Locale.getDefault(), "Error almacenando logo");
 
-		empresaService = new EmpresaService(empresaRepository, userEmpresaService, tipoIdentificacionRepository,
-				personaRepository, estadoRepository, messageSource);
+		empresaService = new EmpresaService(empresaRepository, userEmpresaService, userRoleService,
+				tipoIdentificacionRepository, personaRepository, estadoRepository, messageSource);
 		ReflectionTestUtils.setField(empresaService, "pathLogos", tempDir.toString());
 		ReflectionTestUtils.setField(empresaService, "pathLogoCompany", "empresas");
 		ReflectionTestUtils.setField(empresaService, "logoMaxSizeBytes", 2_097_152L);
