@@ -9,21 +9,28 @@
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de listado filtrado y alcance por rol y empresa para la HU-043.2.                                                   |
  | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Normalizacion de filtros de texto ausentes como cadenas vacias para asegurar su tipado correcto en PostgreSQL.                     |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de registro, validaciones de unicidad, responsable y carga opcional de logo para la HU-043.1.                      |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.empresa.services;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,10 +39,21 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.dtos.EmpresaListadoFiltroDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoItemDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoResponseDTO;
+import com.coagronet.empresa.dtos.EmpresaRegistroRequestDTO;
+import com.coagronet.empresa.dtos.EmpresaRegistroResponseDTO;
 import com.coagronet.empresa.repositories.EmpresaRepository;
+import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
+import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
+import com.coagronet.persona.Persona;
+import com.coagronet.persona.repositories.PersonaRepository;
+import com.coagronet.tipoIdentificacion.TipoIdentificacion;
+import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
 import com.coagronet.utils.Constantes;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.utils.UserRoleService;
+import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,6 +68,9 @@ public class EmpresaService {
 
 	@Value("${path.logo.empresa}")
 	private String pathLogoCompany;
+
+	@Value("${empresa.logo.max-size-bytes:2097152}")
+	private long logoMaxSizeBytes;
 
 	private final EmpresaRepository empresaRepository;
 
@@ -85,6 +106,57 @@ public class EmpresaService {
 				.build())
 			.data(pagina.getContent().stream().map(this::toListadoItem).toList())
 			.build();
+	private final TipoIdentificacionRepository tipoIdentificacionRepository;
+
+	private final PersonaRepository personaRepository;
+
+	private final EstadoRepository estadoRepository;
+
+	private final MessageSource messageSource;
+
+	@Transactional
+	public EmpresaRegistroResponseDTO registrar(EmpresaRegistroRequestDTO request, MultipartFile logo) {
+		String identificacion = request.getIdentificacion().trim();
+		String correo = request.getCorreo().trim().toLowerCase(Locale.ROOT);
+
+		validarUnicidad(identificacion, correo);
+
+		TipoIdentificacion tipoIdentificacion = obtenerTipoIdentificacionActivo(request.getTipoIdentificacionId());
+		Persona personaResponsable = obtenerPersonaResponsableActiva(request.getPersonaId());
+		Estado estadoActivo = estadoRepository.findById(EstadoConstantes.ESTADO_GENERAL_ACTIVO)
+			.orElseThrow(() -> new BadRequestException(mensaje("empresa.estado-activo.invalid")));
+
+		ValidacionLogo validacionLogo = validarLogo(logo);
+
+		Empresa empresa = Empresa.builder()
+			.tipoIdentificacion(tipoIdentificacion)
+			.identificacion(identificacion)
+			.nombre(request.getNombre().trim())
+			.persona(personaResponsable)
+			.descripcion(normalizarOpcional(request.getDescripcion()))
+			.estado(estadoActivo)
+			.celular(normalizarOpcional(request.getCelular()))
+			.correo(correo)
+			.contacto(normalizarOpcional(request.getContacto()))
+			.build();
+
+		Empresa empresaGuardada = empresaRepository.saveAndFlush(empresa);
+		LogoGuardado logoGuardado = null;
+
+		try {
+			if (validacionLogo.debeGuardarse()) {
+				logoGuardado = guardarLogo(empresaGuardada.getId(), logo);
+				empresaGuardada.setLogo(logoGuardado.nombreArchivo());
+				empresaGuardada.setLogoHash(logoGuardado.hash());
+				empresaGuardada = empresaRepository.saveAndFlush(empresaGuardada);
+			}
+		}
+		catch (RuntimeException ex) {
+			eliminarLogoSilenciosamente(logoGuardado);
+			throw ex;
+		}
+
+		return construirRespuesta(empresaGuardada, validacionLogo);
 	}
 
 	public Page<Empresa> getAllEmpresas(Pageable pageable) {
@@ -206,8 +278,112 @@ public class EmpresaService {
 	private String normalizarFiltro(String valor) {
 		if (valor == null || valor.isBlank()) {
 			return "";
+	private void validarUnicidad(String identificacion, String correo) {
+		if (empresaRepository.existsByIdentificacionIgnoreCase(identificacion)) {
+			throw new RecursoDuplicadoException(mensaje("empresa.identificacion.existente"));
+		}
+		if (empresaRepository.existsByCorreoIgnoreCase(correo)) {
+			throw new RecursoDuplicadoException(mensaje("empresa.correo.existente"));
+		}
+	}
+
+	private TipoIdentificacion obtenerTipoIdentificacionActivo(Long tipoIdentificacionId) {
+		return tipoIdentificacionRepository.findById(tipoIdentificacionId)
+			.filter(tipo -> tipo.getEstado() != null
+					&& EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(tipo.getEstado().getId()))
+			.orElseThrow(() -> new BadRequestException(mensaje("empresa.tipo-identificacion.invalid")));
+	}
+
+	private Persona obtenerPersonaResponsableActiva(Long personaId) {
+		return personaRepository.findById(personaId)
+			.filter(persona -> persona.getEstado() != null
+					&& EstadoConstantes.ESTADO_GENERAL_ACTIVO.equals(persona.getEstado().getId()))
+			.orElseThrow(() -> new BadRequestException(mensaje("empresa.persona-responsable.invalid")));
+	}
+
+	private ValidacionLogo validarLogo(MultipartFile logo) {
+		if (logo == null || logo.isEmpty()) {
+			return new ValidacionLogo(false, null);
+		}
+
+		if (!MediaType.IMAGE_PNG_VALUE.equalsIgnoreCase(logo.getContentType())) {
+			return new ValidacionLogo(false, mensaje("empresa.logo.formato-invalido"));
+		}
+
+		if (logo.getSize() > logoMaxSizeBytes) {
+			return new ValidacionLogo(false, mensaje("empresa.logo.tamano-excedido", logoMaxSizeBytes));
+		}
+
+		return new ValidacionLogo(true, null);
+	}
+
+	private LogoGuardado guardarLogo(Long empresaId, MultipartFile logo) {
+		String hash = generarHash(UUID.randomUUID().toString());
+		String nombreArchivo = "logo-" + hash.substring(0, 16) + ".png";
+		Path directorioEmpresa = Paths.get(pathLogos, pathLogoCompany, empresaId.toString()).normalize();
+		Path rutaLogo = directorioEmpresa.resolve(nombreArchivo).normalize();
+
+		try {
+			Files.createDirectories(directorioEmpresa);
+			logo.transferTo(rutaLogo);
+			return new LogoGuardado(nombreArchivo, hash, rutaLogo);
+		}
+		catch (IOException ex) {
+			try {
+				Files.deleteIfExists(rutaLogo);
+			}
+			catch (IOException cleanupException) {
+				ex.addSuppressed(cleanupException);
+			}
+			throw new UncheckedIOException(mensaje("empresa.logo.almacenamiento-error"), ex);
+		}
+	}
+
+	private void eliminarLogoSilenciosamente(LogoGuardado logoGuardado) {
+		if (logoGuardado == null) {
+			return;
+		}
+		try {
+			Files.deleteIfExists(logoGuardado.ruta());
+		}
+		catch (IOException ignored) {
+			// La excepcion original conserva la causa funcional de la transaccion.
+		}
+	}
+
+	private EmpresaRegistroResponseDTO construirRespuesta(Empresa empresa, ValidacionLogo validacionLogo) {
+		return EmpresaRegistroResponseDTO.builder()
+			.id(empresa.getId())
+			.tipoIdentificacionId(empresa.getTipoIdentificacion().getId())
+			.identificacion(empresa.getIdentificacion())
+			.nombre(empresa.getNombre())
+			.correo(empresa.getCorreo())
+			.celular(empresa.getCelular())
+			.contacto(empresa.getContacto())
+			.descripcion(empresa.getDescripcion())
+			.personaId(empresa.getPersona().getId())
+			.estadoId(empresa.getEstado().getId())
+			.logo(empresa.getLogo())
+			.logoCargado(empresa.getLogo() != null)
+			.advertenciaLogo(validacionLogo.advertencia())
+			.build();
+	}
+
+	private String normalizarOpcional(String valor) {
+		if (valor == null || valor.isBlank()) {
+			return null;
 		}
 		return valor.trim();
+	}
+
+	private String mensaje(String codigo, Object... argumentos) {
+		return messageSource.getMessage(codigo, argumentos, codigo, LocaleContextHolder.getLocale());
+	}
+
+	private record ValidacionLogo(boolean debeGuardarse, String advertencia) {
+	}
+
+	private record LogoGuardado(String nombreArchivo, String hash, Path ruta) {
 	}
 
 }

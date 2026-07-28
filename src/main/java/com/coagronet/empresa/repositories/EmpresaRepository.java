@@ -9,6 +9,7 @@
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta paginada, filtrada y con alcance por empresa para la HU-043.2.                                                  |
  | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Correccion del tipado de filtros de texto opcionales en PostgreSQL para evitar llamadas LOWER sobre parametros bytea.             |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agregan validaciones de unicidad de identificacion y correo para la HU-043.1.                                                   |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.empresa.repositories;
@@ -77,5 +78,8 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 			@Param("correo") String correo,
 			@Param("estadoId") Long estadoId,
 			Pageable pageable);
+	boolean existsByIdentificacionIgnoreCase(String identificacion);
+
+	boolean existsByCorreoIgnoreCase(String correo);
 
 }
