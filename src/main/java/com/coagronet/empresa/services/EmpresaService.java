@@ -78,6 +78,14 @@ public class EmpresaService {
 
 	private final UserRoleService userRoleService;
 
+	private final TipoIdentificacionRepository tipoIdentificacionRepository;
+
+	private final PersonaRepository personaRepository;
+
+	private final EstadoRepository estadoRepository;
+
+	private final MessageSource messageSource;
+
 	@Transactional(readOnly = true)
 	public EmpresaListadoResponseDTO listar(EmpresaListadoFiltroDTO filtro, Pageable pageable) {
 		Long empresaId = userRoleService.hasRoleInAuthentication(ROLE_ADMINISTRADOR_SISTEMA)
@@ -106,13 +114,7 @@ public class EmpresaService {
 				.build())
 			.data(pagina.getContent().stream().map(this::toListadoItem).toList())
 			.build();
-	private final TipoIdentificacionRepository tipoIdentificacionRepository;
-
-	private final PersonaRepository personaRepository;
-
-	private final EstadoRepository estadoRepository;
-
-	private final MessageSource messageSource;
+	}
 
 	@Transactional
 	public EmpresaRegistroResponseDTO registrar(EmpresaRegistroRequestDTO request, MultipartFile logo) {
@@ -278,6 +280,10 @@ public class EmpresaService {
 	private String normalizarFiltro(String valor) {
 		if (valor == null || valor.isBlank()) {
 			return "";
+		}
+		return valor.trim();
+	}
+
 	private void validarUnicidad(String identificacion, String correo) {
 		if (empresaRepository.existsByIdentificacionIgnoreCase(identificacion)) {
 			throw new RecursoDuplicadoException(mensaje("empresa.identificacion.existente"));

@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +38,10 @@ import com.coagronet.empresa.dtos.EmpresaListadoFiltroDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoResponseDTO;
 import com.coagronet.empresa.repositories.EmpresaRepository;
 import com.coagronet.estado.Estado;
+import com.coagronet.estado.repositories.EstadoRepository;
+import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
+import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.utils.UserRoleService;
 
@@ -53,13 +57,26 @@ class EmpresaServiceListadoTest {
 	@Mock
 	private UserRoleService userRoleService;
 
+	@Mock
+	private TipoIdentificacionRepository tipoIdentificacionRepository;
+
+	@Mock
+	private PersonaRepository personaRepository;
+
+	@Mock
+	private EstadoRepository estadoRepository;
+
+	@Mock
+	private MessageSource messageSource;
+
 	private EmpresaService empresaService;
 
 	private Pageable pageable;
 
 	@BeforeEach
 	void setUp() {
-		empresaService = new EmpresaService(empresaRepository, userEmpresaService, userRoleService);
+		empresaService = new EmpresaService(empresaRepository, userEmpresaService, userRoleService,
+				tipoIdentificacionRepository, personaRepository, estadoRepository, messageSource);
 		pageable = PageRequest.of(0, 10);
 	}
 

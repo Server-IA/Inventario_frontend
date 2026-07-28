@@ -13,19 +13,15 @@
 =============================================================================*/
 package com.coagronet.empresa.controllers;
 
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -44,20 +40,11 @@ import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.dtos.EmpresaDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoFiltroDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoResponseDTO;
-import com.coagronet.empresa.mappers.EmpresaMapper;
-import com.coagronet.empresa.services.EmpresaService;
-import com.coagronet.exceptionHandler.custom.BadRequestException;
-import org.springframework.web.multipart.MultipartFile;
 import com.coagronet.empresa.dtos.EmpresaRegistroRequestDTO;
 import com.coagronet.empresa.dtos.EmpresaRegistroResponseDTO;
 import com.coagronet.empresa.mappers.EmpresaMapper;
 import com.coagronet.empresa.services.EmpresaService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import com.coagronet.exceptionHandler.custom.BadRequestException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -65,11 +52,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import org.springframework.validation.annotation.Validated;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/empresas")
 @Validated
+@RequiredArgsConstructor
 public class EmpresaController {
 
 	private static final Map<String, String> CAMPOS_ORDENAMIENTO = Map.of(
@@ -79,11 +67,6 @@ public class EmpresaController {
 			"nombre", "nombre",
 			"correo", "correo",
 			"estado", "estado.nombre");
-
-	@Autowired
-	private EmpresaService empresaService;
-@RequiredArgsConstructor
-public class EmpresaController {
 
 	private final EmpresaService empresaService;
 
@@ -184,6 +167,8 @@ public class EmpresaController {
 
 		Sort sort = Sort.by(Sort.Direction.fromString(sortParams[1]), campo);
 		return PageRequest.of(page, size, sort);
+	}
+
 	private ResponseEntity<EmpresaRegistroResponseDTO> respuestaCreada(EmpresaRegistroResponseDTO response) {
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
 			.path("/{id}")

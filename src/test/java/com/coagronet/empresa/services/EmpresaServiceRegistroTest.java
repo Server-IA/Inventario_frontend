@@ -50,6 +50,7 @@ import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
 import com.coagronet.tipoIdentificacion.repositories.TipoIdentificacionRepository;
 import com.coagronet.utils.UserEmpresaService;
+import com.coagronet.utils.UserRoleService;
 
 @ExtendWith(MockitoExtension.class)
 class EmpresaServiceRegistroTest {
@@ -59,6 +60,9 @@ class EmpresaServiceRegistroTest {
 
 	@Mock
 	private UserEmpresaService userEmpresaService;
+
+	@Mock
+	private UserRoleService userRoleService;
 
 	@Mock
 	private TipoIdentificacionRepository tipoIdentificacionRepository;
@@ -97,8 +101,8 @@ class EmpresaServiceRegistroTest {
 		messageSource.addMessage("empresa.logo.almacenamiento-error", Locale.getDefault(),
 				"Error almacenando logo");
 
-		empresaService = new EmpresaService(empresaRepository, userEmpresaService, tipoIdentificacionRepository,
-				personaRepository, estadoRepository, messageSource);
+		empresaService = new EmpresaService(empresaRepository, userEmpresaService, userRoleService,
+				tipoIdentificacionRepository, personaRepository, estadoRepository, messageSource);
 		ReflectionTestUtils.setField(empresaService, "pathLogos", tempDir.toString());
 		ReflectionTestUtils.setField(empresaService, "pathLogoCompany", "empresas");
 		ReflectionTestUtils.setField(empresaService, "logoMaxSizeBytes", 2_097_152L);
