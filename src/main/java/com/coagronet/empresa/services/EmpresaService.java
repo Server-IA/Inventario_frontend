@@ -7,6 +7,7 @@
  |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion del detalle de empresa y control de alcance por sesion para la HU-043.3.                                            |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de listado filtrado y alcance por rol y empresa para la HU-043.2.                                                   |
  | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Normalizacion de filtros de texto ausentes como cadenas vacias para asegurar su tipado correcto en PostgreSQL.                     |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Implementacion de registro, validaciones de unicidad, responsable y carga opcional de logo para la HU-043.1.                      |
@@ -23,6 +24,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -30,12 +32,14 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.coagronet.empresa.Empresa;
+import com.coagronet.empresa.dtos.EmpresaDetalleResponseDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoFiltroDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoItemDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoResponseDTO;
@@ -46,6 +50,7 @@ import com.coagronet.estado.Estado;
 import com.coagronet.estado.repositories.EstadoRepository;
 import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.exceptionHandler.custom.RecursoDuplicadoException;
+import com.coagronet.exceptionHandler.custom.RecursoNoEncontradoException;
 import com.coagronet.persona.Persona;
 import com.coagronet.persona.repositories.PersonaRepository;
 import com.coagronet.tipoIdentificacion.TipoIdentificacion;
@@ -85,6 +90,16 @@ public class EmpresaService {
 	private final EstadoRepository estadoRepository;
 
 	private final MessageSource messageSource;
+
+	@Transactional(readOnly = true)
+	public EmpresaDetalleResponseDTO obtenerDetalle(Long id) {
+		validarAlcanceEmpresa(id);
+
+		Empresa empresa = empresaRepository.buscarDetallePorId(id)
+			.orElseThrow(() -> new RecursoNoEncontradoException("Empresa", id));
+
+		return toDetalleResponse(empresa);
+	}
 
 	@Transactional(readOnly = true)
 	public EmpresaListadoResponseDTO listar(EmpresaListadoFiltroDTO filtro, Pageable pageable) {
@@ -256,6 +271,41 @@ public class EmpresaService {
 			hexString.append(hex);
 		}
 		return hexString.toString();
+	}
+
+	private void validarAlcanceEmpresa(Long empresaIdSolicitada) {
+		if (userRoleService.hasRoleInAuthentication(ROLE_ADMINISTRADOR_SISTEMA)) {
+			return;
+		}
+
+		Long empresaIdSesion = userEmpresaService.getEmpresaIdFromCurrentRequest();
+		if (!Objects.equals(empresaIdSolicitada, empresaIdSesion)) {
+			throw new AccessDeniedException("La empresa solicitada no pertenece a la sesion autenticada.");
+		}
+	}
+
+	private EmpresaDetalleResponseDTO toDetalleResponse(Empresa empresa) {
+		String nombreResponsable = empresa.getPersona() != null ? String
+			.join(" ", empresa.getPersona().getNombre() == null ? "" : empresa.getPersona().getNombre(),
+					empresa.getPersona().getApellido() == null ? "" : empresa.getPersona().getApellido())
+			.trim() : null;
+
+		return EmpresaDetalleResponseDTO.builder()
+			.id(empresa.getId())
+			.tipoIdentificacionId(empresa.getTipoIdentificacion().getId())
+			.tipoIdentificacionNombre(empresa.getTipoIdentificacion().getNombre())
+			.identificacion(empresa.getIdentificacion())
+			.nombre(empresa.getNombre())
+			.correo(empresa.getCorreo())
+			.celular(empresa.getCelular())
+			.contacto(empresa.getContacto())
+			.descripcion(empresa.getDescripcion())
+			.logo(empresa.getLogo())
+			.estadoId(empresa.getEstado() != null ? empresa.getEstado().getId() : null)
+			.estadoNombre(empresa.getEstado() != null ? empresa.getEstado().getNombre() : null)
+			.personaResponsableId(empresa.getPersona() != null ? empresa.getPersona().getId() : null)
+			.personaResponsableNombre(nombreResponsable)
+			.build();
 	}
 
 	private EmpresaListadoItemDTO toListadoItem(Empresa empresa) {

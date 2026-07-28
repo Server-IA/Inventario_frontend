@@ -7,6 +7,7 @@
  |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se implementa el endpoint de detalle completo de empresa para la HU-043.3.                                                         |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se implementa el endpoint paginado y filtrado del listado de empresas para la HU-043.2.                                           |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se implementa el endpoint de registro de empresas con soporte JSON y multipart para la HU-043.1.                                  |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
@@ -38,6 +39,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresa.dtos.EmpresaDTO;
+import com.coagronet.empresa.dtos.EmpresaDetalleResponseDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoFiltroDTO;
 import com.coagronet.empresa.dtos.EmpresaListadoResponseDTO;
 import com.coagronet.empresa.dtos.EmpresaRegistroRequestDTO;
@@ -83,14 +85,14 @@ public class EmpresaController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<EmpresaDTO> getEmpresaById(@PathVariable Long id) {
-		Empresa empresa = empresaService.getEmpresaById(id);
-		if (empresa != null) {
-			return ResponseEntity.ok(EmpresaMapper.INSTANCE.toEmpresaDTO(empresa));
-		}
-		else {
-			return ResponseEntity.notFound().build();
-		}
+	@Operation(summary = "Visualizar detalle de empresa",
+			description = "Consulta todos los datos registrados de la empresa respetando el alcance de la sesion.")
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Detalle obtenido exitosamente"),
+			@ApiResponse(responseCode = "401", description = "Usuario no autenticado"),
+			@ApiResponse(responseCode = "403", description = "Usuario sin permiso o fuera del alcance de la empresa"),
+			@ApiResponse(responseCode = "404", description = "Empresa no encontrada") })
+	public ResponseEntity<EmpresaDetalleResponseDTO> getEmpresaById(@PathVariable Long id) {
+		return ResponseEntity.ok(empresaService.obtenerDetalle(id));
 	}
 
 	@Operation(summary = "Registrar empresa",

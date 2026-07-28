@@ -7,6 +7,7 @@
  |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta con relaciones requeridas para el detalle de empresa de la HU-043.3.                                            |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta paginada, filtrada y con alcance por empresa para la HU-043.2.                                                  |
  | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Correccion del tipado de filtros de texto opcionales en PostgreSQL para evitar llamadas LOWER sobre parametros bytea.             |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agregan validaciones de unicidad de identificacion y correo para la HU-043.1.                                                   |
@@ -38,6 +39,16 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 
 	@Query("SELECT e FROM Empresa e WHERE e.id = :id AND e.estado.id = :estadoId")
 	Optional<Empresa> findByIdAndEstadoId(@Param("id") Long id, @Param("estadoId") Long estadoId);
+
+	@Query("""
+			SELECT e
+			FROM Empresa e
+			JOIN FETCH e.tipoIdentificacion
+			JOIN FETCH e.persona
+			LEFT JOIN FETCH e.estado
+			WHERE e.id = :id
+			""")
+	Optional<Empresa> buscarDetallePorId(@Param("id") Long id);
 
 	@Query(
 			value = """
