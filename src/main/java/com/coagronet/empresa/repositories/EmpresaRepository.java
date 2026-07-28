@@ -1,3 +1,15 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRepository.java
+ Descripcion        : Repositorio JPA para la persistencia y consulta de empresas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ |   Fecha    | Version |      Autor           | Descripcion del cambio                                                                                                             |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+ | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agregan validaciones de unicidad de identificacion y correo para la HU-043.1.                                                   |
+ +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
+=============================================================================*/
 package com.coagronet.empresa.repositories;
 
 import java.util.Optional;
@@ -24,5 +36,9 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 
 	@Query("SELECT e FROM Empresa e WHERE e.id = :id AND e.estado.id = :estadoId")
 	Optional<Empresa> findByIdAndEstadoId(@Param("id") Long id, @Param("estadoId") Long estadoId);
+
+	boolean existsByIdentificacionIgnoreCase(String identificacion);
+
+	boolean existsByCorreoIgnoreCase(String correo);
 
 }
