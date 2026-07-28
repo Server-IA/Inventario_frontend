@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.coagronet.reports.exceptions.ReporteVencimientoProductoException;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Provee el manejo centralizado de excepciones para la API REST, interceptando
@@ -128,6 +129,23 @@ public class Advice extends ResponseEntityExceptionHandler {
         problemDetail.setTitle("Error de Validación");
 
         return createResponseEntity(problemDetail, headers, status, request);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
+        Map<String, String> errores = ex.getConstraintViolations().stream().collect(Collectors.toMap(violation -> {
+            String ruta = violation.getPropertyPath().toString();
+            int ultimoPunto = ruta.lastIndexOf('.');
+            return ultimoPunto >= 0 ? ruta.substring(ultimoPunto + 1) : ruta;
+        }, violation -> violation.getMessage(), (msg1, msg2) -> msg1 + "; " + msg2));
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Uno o más parámetros no cumplen las restricciones de validación.");
+        problemDetail.setProperty("errors", errores);
+        problemDetail.setType(URI.create("https://coagronet.com/errors/validation"));
+        problemDetail.setTitle("Error de Validación");
+
+        return problemDetail;
     }
 
     /**

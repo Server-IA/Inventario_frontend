@@ -160,6 +160,28 @@ class EmpresaControllerListadoTest {
 		verifyNoInteractions(empresaService);
 	}
 
+	@Test
+	@WithMockUser(authorities = "EMPRESA_READ_ALL")
+	void listar_retorna400CuandoPageEsNegativo() throws Exception {
+		mockMvc.perform(get("/api/v1/empresas").param("page", "-1"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.title").value("Error de Validación"))
+			.andExpect(jsonPath("$.errors.page").isString());
+
+		verifyNoInteractions(empresaService);
+	}
+
+	@Test
+	@WithMockUser(authorities = "EMPRESA_READ_ALL")
+	void listar_retorna400CuandoSizeSuperaElMaximo() throws Exception {
+		mockMvc.perform(get("/api/v1/empresas").param("size", "101"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.title").value("Error de Validación"))
+			.andExpect(jsonPath("$.errors.size").isString());
+
+		verifyNoInteractions(empresaService);
+	}
+
 	private EmpresaListadoResponseDTO responseValido() {
 		EmpresaListadoItemDTO item = EmpresaListadoItemDTO.builder()
 			.id(1L)
