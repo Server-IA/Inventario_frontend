@@ -9,6 +9,7 @@
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-05-27 | 1.1.0   | JUAN DIAZ            | Refactor de catalogos globales: ajustes en entidades, DTOs, mappers, repositorios y servicios, con validaciones de negocio.        |
  | 2026-07-27 | 1.2.0   | JUAN DIAZ            | Autorizacion de los endpoints de reportes Kardex, vencimiento de producto y pedido.                                                 |
+ | 2026-07-27 | 1.3.0   | JUAN DIAZ            | Se protege el listado de empresas con la autoridad EMPRESA_READ_ALL para la HU-043.2.                                              |
  | 2026-07-27 | 1.3.0   | JUAN DIAZ            | Se protege el registro de empresas con la autoridad EMPRESA_CREATE para la HU-043.1.                                               |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
@@ -50,6 +51,8 @@ public class SecurityConfig {
 				.csrf(AbstractHttpConfigurer::disable)
 				.authorizeHttpRequests(auth -> auth
 						.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/empresas")
+						.hasAnyAuthority("EMPRESA_READ_ALL", "ROLE_ADMINISTRADOR_SISTEMA")
 						.requestMatchers(HttpMethod.POST, "/api/v1/empresas")
 						.hasAnyAuthority("EMPRESA_CREATE", "ROLE_ADMINISTRADOR_SISTEMA")
 						.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/auth/**",
