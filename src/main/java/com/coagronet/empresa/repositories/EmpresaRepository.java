@@ -8,6 +8,9 @@
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
  | 2024-08-16 | 1.0.0   | yourusername         | Creacion del archivo.                                                                                                              |
  | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta con relaciones requeridas para el detalle de empresa de la HU-043.3.                                            |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agrega consulta paginada, filtrada y con alcance por empresa para la HU-043.2.                                                  |
+ | 2026-07-27 | 1.1.1   | JUAN DIAZ            | Correccion del tipado de filtros de texto opcionales en PostgreSQL para evitar llamadas LOWER sobre parametros bytea.             |
+ | 2026-07-27 | 1.1.0   | JUAN DIAZ            | Se agregan validaciones de unicidad de identificacion y correo para la HU-043.1.                                                   |
  +------------+---------+----------------------+------------------------------------------------------------------------------------------------------------------------------------+
 =============================================================================*/
 package com.coagronet.empresa.repositories;
@@ -46,5 +49,48 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 			WHERE e.id = :id
 			""")
 	Optional<Empresa> buscarDetallePorId(@Param("id") Long id);
+
+	@Query(
+			value = """
+					SELECT e
+					FROM Empresa e
+					JOIN FETCH e.tipoIdentificacion ti
+					LEFT JOIN FETCH e.estado es
+					WHERE (:empresaId IS NULL OR e.id = :empresaId)
+					  AND (:tipoIdentificacionId IS NULL OR ti.id = :tipoIdentificacionId)
+					  AND (:identificacion = ''
+					       OR LOWER(e.identificacion) LIKE LOWER(CONCAT('%', :identificacion, '%')))
+					  AND (:nombre = ''
+					       OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
+					  AND (:correo = ''
+					       OR LOWER(e.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
+					  AND (:estadoId IS NULL OR es.id = :estadoId)
+					""",
+			countQuery = """
+					SELECT COUNT(e)
+					FROM Empresa e
+					JOIN e.tipoIdentificacion ti
+					LEFT JOIN e.estado es
+					WHERE (:empresaId IS NULL OR e.id = :empresaId)
+					  AND (:tipoIdentificacionId IS NULL OR ti.id = :tipoIdentificacionId)
+					  AND (:identificacion = ''
+					       OR LOWER(e.identificacion) LIKE LOWER(CONCAT('%', :identificacion, '%')))
+					  AND (:nombre = ''
+					       OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
+					  AND (:correo = ''
+					       OR LOWER(e.correo) LIKE LOWER(CONCAT('%', :correo, '%')))
+					  AND (:estadoId IS NULL OR es.id = :estadoId)
+					""")
+	Page<Empresa> buscarEmpresas(
+			@Param("empresaId") Long empresaId,
+			@Param("tipoIdentificacionId") Long tipoIdentificacionId,
+			@Param("identificacion") String identificacion,
+			@Param("nombre") String nombre,
+			@Param("correo") String correo,
+			@Param("estadoId") Long estadoId,
+			Pageable pageable);
+	boolean existsByIdentificacionIgnoreCase(String identificacion);
+
+	boolean existsByCorreoIgnoreCase(String correo);
 
 }
