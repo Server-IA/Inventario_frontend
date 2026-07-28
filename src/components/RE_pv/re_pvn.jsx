@@ -12,6 +12,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-27 | 0.5.0   | Jeisson Sanchez      | Integración endpoints API   |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -54,6 +56,8 @@ export default function RE_productoVencimiento() {
 
   // ===== Utils
   const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? x?.data ?? []);
+  // Convert string IDs to integers for API calls (hook stores IDs as strings)
+  const toInt = (v) => (v && v !== "" ? Number(v) : null);
   
   const toLocal = (val) => {
     if (!val) return "";
@@ -74,10 +78,13 @@ export default function RE_productoVencimiento() {
 
   const getInitDates = () => {
     const today = new Date();
-    const y1 = today.getFullYear();
-    const m1 = String(today.getMonth() + 1).padStart(2, '0');
-    const d1 = String(today.getDate()).padStart(2, '0');
+    // Start 1 year ago to include vencidos from the past
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    const y1 = oneYearAgo.getFullYear();
+    const m1 = String(oneYearAgo.getMonth() + 1).padStart(2, '0');
+    const d1 = String(oneYearAgo.getDate()).padStart(2, '0');
     
+    // End 1 month from now to include products expiring soon
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
     const y2 = nextMonth.getFullYear();
     const m2 = String(nextMonth.getMonth() + 1).padStart(2, '0');
@@ -95,8 +102,11 @@ export default function RE_productoVencimiento() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData,
-  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
+    fetchInitialData: fetchFiltrosIniciales,
+    preloadData,
+    loading: catLoading,
+    error: catError,
+  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true, reportType: "vencimiento-producto" });
 
   const [formReporte, setFormReporte] = useState({
     ...getInitDates()
@@ -113,36 +123,43 @@ export default function RE_productoVencimiento() {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
-  const [catLoading, setCatLoading] = useState(false);
-  const [catError, setCatError] = useState(false);
-
-  const fetchCatalogos = () => {
-    setCatLoading(true);
-    setCatError(false);
-    Promise.all([
-      axios.get("/v1/items/producto_categoria/0", headers).catch(() => ({ data: [] })),
-      axios.get("/v1/items/producto/0", headers).catch(() => ({ data: [] })),
-      axios.get("/v1/presentacion", headers).catch(async () => {
-         return axios.get("/v1/producto_presentacion", headers).catch(() => ({ data: [] }));
-      })
-    ]).then(([cat, prod, pres]) => {
-      setCategorias(asArray(cat.data));
-      setProductos(asArray(prod.data));
-      setPresentaciones(asArray(pres.data));
-      setCatLoading(false);
-    }).catch(() => {
-      setCatError(true);
-      setCatLoading(false);
-    });
-  };
 
   useEffect(() => {
-    fetchCatalogos();
-    // eslint-disable-next-line
-  }, []);
+    if (preloadData) {
+      setCategorias(asArray(preloadData.categorias));
+    }
+  }, [preloadData]);
+
+  const fetchProductosPorCategoria = async (categoriaId) => {
+    if (!categoriaId) { setProductos([]); setPresentaciones([]); return; }
+    try {
+      const res = await axios.get(`/v2/report/vencimiento-producto/productos`, { ...headers, params: { categoriaId } });
+      setProductos(asArray(res.data));
+      setPresentaciones([]);
+    } catch { setProductos([]); }
+  };
+
+  const fetchPresentacionesPorProducto = async (productoId) => {
+    if (!productoId) { setPresentaciones([]); return; }
+    try {
+      const res = await axios.get(`/v2/report/vencimiento-producto/presentaciones`, { ...headers, params: { productoId } });
+      setPresentaciones(asArray(res.data));
+    } catch { setPresentaciones([]); }
+  };
+
+
 
   const handleProdChange = (field) => (e) => {
-    setFiltrosProd(p => ({ ...p, [field]: e.target.value }));
+    const val = e.target.value;
+    setFiltrosProd(p => ({ ...p, [field]: val }));
+    if (field === 'categoria_id') {
+      setFiltrosProd(p => ({ ...p, categoria_id: val, producto_id: '', presentacion_id: '' }));
+      fetchProductosPorCategoria(val);
+    }
+    if (field === 'producto_id') {
+      setFiltrosProd(p => ({ ...p, producto_id: val, presentacion_id: '' }));
+      fetchPresentacionesPorProducto(val);
+    }
   };
 
   // UI state
@@ -242,161 +259,120 @@ export default function RE_productoVencimiento() {
 
     setLoadingSearch(true);
     try {
-      // Pedir lista y simular fecha de vencimiento si el backend aún no la envía
-      const r = await axios.get("/v1/items/producto/0", headers);
-      let lista = asArray(r.data);
+      const payload = {
+        paisId:         toInt(ubi.pais_id),
+        departamentoId: toInt(ubi.departamento_id),
+        municipioId:    toInt(ubi.municipio_id),
+        sedeId:         toInt(ubi.sede_id),
+        bloqueId:       toInt(ubi.bloque_id),
+        espacioId:      toInt(ubi.espacio_id),
+        almacenId:      toInt(ubi.almacen_id),
+        categoriaId:    toInt(filtrosProd.categoria_id),
+        productoId:     toInt(filtrosProd.producto_id),
+        presentacionId: toInt(filtrosProd.presentacion_id),
+        fechaInicio: toLocal(formReporte.fecha_inicio),
+        fechaFin: toLocal(formReporte.fecha_fin),
+        estado: filtrosProd.estado || "TODOS"
+      };
 
-      if (filtrosProd.categoria_id) {
-        lista = lista.filter(p => String(p.productoCategoriaId ?? p.producto_categoria_id ?? p.categoriaId ?? "") === String(filtrosProd.categoria_id));
-      }
-      if (filtrosProd.producto_id) {
-        lista = lista.filter(p => String(p.id) === String(filtrosProd.producto_id));
-      }
-
-      const ini = new Date(formReporte.fecha_inicio);
-      const fin = new Date(formReporte.fecha_fin);
-      
-      const mapped = lista.map((p, i) => {
-        let fVenc = p.fechaVencimiento ?? p.fecha_vencimiento ?? p.kai_fecha_vencimiento;
-        if (!fVenc) {
-          const diff = fin.getTime() - ini.getTime();
-          const randomDate = new Date(ini.getTime() + (Math.random() * diff));
-          fVenc = randomDate.toISOString();
-        }
-        const st = calculateStatus(fVenc);
-        return {
-          ...p,
-          idRender: `${p.id}-${i}`,
-          fecha_vencimiento_calc: fVenc,
-          estado_calc: st
-        };
-      });
-
-      let finalLista = mapped.filter(p => {
-        const d = new Date(p.fecha_vencimiento_calc);
-        return d >= ini && d <= fin;
-      });
-
-      if (filtrosProd.estado && filtrosProd.estado !== "todos") {
-        finalLista = finalLista.filter(p => p.estado_calc === filtrosProd.estado);
-      }
-
-      setResultados(finalLista);
-      
-      if (finalLista.length === 0) {
-        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResultsEmpty", "No hay productos.") });
+      const res = await axios.post("/v2/report/vencimiento-producto/buscar", payload, headers);
+      const lista = asArray(res.data?.resultados || res.data);
+      setResultados(lista);
+      if (lista.length === 0) {
+        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResults", "No se encontraron productos.") });
       } else {
-        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResults", { count: finalLista.length }, `Mostrando ${finalLista.length} producto(s).`) });
+        setMessage({ open: true, severity: "info", text: `${lista.length} ${t("vencimiento.messages.found", "resultado(s) encontrado(s).")}` });
       }
-    } catch (err) {
-      console.error(err);
-      setMessage({ open: true, severity: "error", text: t("vencimiento.messages.searchError", "Error al buscar.") });
+    } catch (error) {
+      console.error(error);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: t("vencimiento.messages.searchError", "Error al buscar datos de vencimiento.")
+      });
     } finally {
       setLoadingSearch(false);
     }
   };
 
-  // Export
-  const [modalExportOpen, setModalExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [modalExportOpen, setModalExportOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const buildCondicion = () => {
-    const ALIAS_EMP = "em.emp_id";
-    const ALIAS_VENC = "k.kai_fecha_vencimiento";
-    const out = {};
-    let idx = 0;
-    
-    out[String(idx++)] = `${ALIAS_EMP} = $EMPRESA_ID$`;
-
-    if (filtrosProd.producto_id) out[String(idx++)] = `AND p.pro_id = ${Number(filtrosProd.producto_id)}`;
-    if (filtrosProd.categoria_id) out[String(idx++)] = `AND p.pro_producto_categoria_id = ${Number(filtrosProd.categoria_id)}`;
-
-    if (ubi.municipio_id) out[String(idx++)] = `AND m.mun_id = ${Number(ubi.municipio_id)}`;
-    if (ubi.sede_id) out[String(idx++)] = `AND s.sed_id = ${Number(ubi.sede_id)}`;
-    if (ubi.bloque_id) out[String(idx++)] = `AND blo.blo_id = ${Number(ubi.bloque_id)}`;
-    if (ubi.espacio_id) out[String(idx++)] = `AND esp.esp_id = ${Number(ubi.espacio_id)}`;
-    if (ubi.almacen_id) out[String(idx++)] = `AND al.alm_id = ${Number(ubi.almacen_id)}`;
-
-    const ini = toDateTimeStr(formReporte.fecha_inicio, false);
-    const fin = toDateTimeStr(formReporte.fecha_fin, true);
-    if (ini && fin) out[String(idx++)] = `AND ${ALIAS_VENC} BETWEEN "${ini}" AND "${fin}"`;
-
-    if (filtrosProd.estado === "vencido") {
-      const hoy = toDateTimeStr(new Date().toISOString(), true);
-      out[String(idx++)] = `AND ${ALIAS_VENC} <= "${hoy}"`;
-    } else if (filtrosProd.estado === "proximo") {
-      const hoy = toDateTimeStr(new Date().toISOString(), true);
-      out[String(idx++)] = `AND ${ALIAS_VENC} > "${hoy}"`;
-    }
-
-    return out;
-  };
-
-  const generarReporte = async (formato = "PDF") => {
+  const generarReporte = async (formato) => {
     if (!validarFiltros()) return;
     setExporting(true);
     try {
-      const condicion = buildCondicion();
-      const payload = { condicion, EMPRESA_ID: empresaId, formato };
-      
-      const res = await axios({
-        url: "/v2/report/nuevo/producto_vencimiento",
-        method: "POST",
-        data: payload,
-        responseType: "blob",
+      const payload = {
+        paisId:         toInt(ubi.pais_id),
+        departamentoId: toInt(ubi.departamento_id),
+        municipioId:    toInt(ubi.municipio_id),
+        sedeId:         toInt(ubi.sede_id),
+        bloqueId:       toInt(ubi.bloque_id),
+        espacioId:      toInt(ubi.espacio_id),
+        almacenId:      toInt(ubi.almacen_id),
+        categoriaId:    toInt(filtrosProd.categoria_id),
+        productoId:     toInt(filtrosProd.producto_id),
+        presentacionId: toInt(filtrosProd.presentacion_id),
+        fechaInicio: toLocal(formReporte.fecha_inicio),
+        fechaFin: toLocal(formReporte.fecha_fin),
+        estado: filtrosProd.estado || "TODOS"
+      };
+
+      const res = await axios.post("/v2/report/vencimiento-producto/exportar", payload, {
         ...headers,
+        params: { formato: formato },
+        responseType: "blob"
       });
       
-      const mimeType = formato === "EXCEL" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/pdf";
-      const blob = new Blob([res.data], { type: mimeType });
-      const objUrl = window.URL.createObjectURL(blob);
-      
-      if (formato === "EXCEL") {
-        const a = document.createElement("a");
-        a.href = objUrl;
-        a.download = `Vencimientos_${new Date().getTime()}.xlsx`;
-        a.click();
-        URL.revokeObjectURL(objUrl);
-        setMessage({ open: true, severity: "success", text: t("vencimiento.messages.excelSuccess", "Excel descargado.") });
-      } else {
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(objUrl);
-        setPreviewOpen(true);
-        setMessage({ open: true, severity: "success", text: t("vencimiento.messages.pdfSuccess", "PDF generado.") });
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage({ open: true, severity: "error", text: t("vencimiento.messages.exportError", "Error al exportar.") });
+      const blob = new Blob([res.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Reporte_Vencimiento_${formato}.${formato.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setMessage({ open: true, severity: "success", text: t("vencimiento.messages.exportSuccess", "Reporte descargado exitosamente.") });
+    } catch (error) {
+      console.error(error);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: t("vencimiento.messages.exportError", "Error al exportar reporte.")
+      });
     } finally {
       setExporting(false);
       setModalExportOpen(false);
     }
   };
 
-  // Columns for AppDataGrid
   const columns = useMemo(() => [
-    { field: "nombre", headerName: t("vencimiento.columns.productName", "Nombre del Producto"), flex: 1, minWidth: 200, valueGetter: (params) => params.row.nombre ?? params.row.name },
+    { field: 'kardexItemId', headerName: t("vencimiento.grid.id", "ID"), width: 80 },
+    { field: 'producto', headerName: t("vencimiento.grid.nombre", "Producto"), flex: 1, minWidth: 200 },
+    { field: 'sede', headerName: t("vencimiento.grid.sede", "Sede"), width: 150 },
+    { field: 'almacen', headerName: t("vencimiento.grid.almacen", "Almacén"), width: 150 },
     { 
-      field: "estado_calc", 
+      field: 'fechaVencimiento', 
+      headerName: t("vencimiento.grid.fechaVencimiento", "Fecha Vencimiento"), 
+      width: 160,
+      valueFormatter: (params) => params.value ? toLocal(params.value) : '' 
+    },
+    { field: 'cantidad', headerName: t("vencimiento.grid.cantidad", "Cantidad"), width: 120, align: 'right', headerAlign: 'right' },
+    { 
+      field: 'estado', 
       headerName: t("vencimiento.columns.status", "Estado"), 
       width: 180,
       renderCell: (params) => {
-        const val = params.row.estado_calc;
-        if (val === "vencido") {
-          return <Chip icon={<ErrorOutlineIcon />} label={t("vencimiento.statusOptions.vencido", "Vencido")} color="error" size="small" />;
-        } else if (val === "proximo") {
-          return <Chip icon={<WarningIcon />} label={t("vencimiento.statusOptions.proximo", "Próximo a vencer")} color="warning" size="small" />;
+        const code = params.row.estadoCodigo;
+        if (code === "VENCIDO") {
+          return <Chip icon={<ErrorOutlineIcon />} label={params.row.estado || t("vencimiento.statusOptions.vencido", "Vencido")} color="error" size="small" />;
+        } else if (code === "PROXIMO_A_VENCER") {
+          return <Chip icon={<WarningIcon />} label={params.row.estado || t("vencimiento.statusOptions.proximo", "Próximo a vencer")} color="warning" size="small" />;
         }
-        return val;
+        return params.row.estado || '';
       }
-    },
-    { 
-      field: "fecha_vencimiento_calc", 
-      headerName: t("vencimiento.columns.expirationDate", "Fecha de Vencimiento"), 
-      width: 200,
-      renderCell: (params) => toLocal(params.row.fecha_vencimiento_calc)
     }
   ], [t]);
 
@@ -408,16 +384,9 @@ export default function RE_productoVencimiento() {
   };
   const titleStyles = { fontWeight: 600, mb: 2, color: isDark ? "#e7f6f7" : "#173f39", display: "flex", alignItems: "center", gap: 1 };
 
-  // Filtrado de catálogos en cascada
-  const productosFiltrados = useMemo(() => {
-    if (!filtrosProd.categoria_id) return productos;
-    return productos.filter(p => String(p.productoCategoriaId ?? p.producto_categoria_id ?? p.categoriaId ?? "") === String(filtrosProd.categoria_id));
-  }, [productos, filtrosProd.categoria_id]);
+  const productosFiltrados = productos;
 
-  const presentacionesFiltradas = useMemo(() => {
-    if (!filtrosProd.producto_id) return presentaciones;
-    return presentaciones.filter(p => String(p.productoId ?? p.producto_id ?? "") === String(filtrosProd.producto_id));
-  }, [presentaciones, filtrosProd.producto_id]);
+  const presentacionesFiltradas = presentaciones;
 
   return (
     <Box sx={{ width: "100%", p: { xs: 2, md: 4 }, color: "text.primary" }}>
@@ -428,7 +397,6 @@ export default function RE_productoVencimiento() {
       </Box>
 
       <Grid container spacing={3} mb={3} alignItems="flex-start">
-        {/* Ubicacion (Izquierda) */}
         <Grid item xs={12} md={7}>
           <Paper sx={boxStyles}>
             <Typography variant="h6" sx={titleStyles}>
@@ -508,14 +476,13 @@ export default function RE_productoVencimiento() {
           </Paper>
         </Grid>
 
-        {/* Derecha: Producto/Estado + Tiempo */}
         <Grid item xs={12} md={5}>
           <Paper sx={boxStyles}>
             <Typography variant="h6" sx={titleStyles}>
               {t("vencimiento.sections.productData", "Producto / Estado")}
               {catLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
               {catError && (
-                <IconButton size="small" onClick={fetchCatalogos} color="error" title={t("common.actions.retry", "Reintentar")}>
+                <IconButton size="small" onClick={fetchFiltrosIniciales} color="error" title={t("common.actions.retry", "Reintentar")}>
                   <RefreshIcon fontSize="small"/>
                 </IconButton>
               )}
@@ -552,13 +519,12 @@ export default function RE_productoVencimiento() {
                 <FormControl size="small" fullWidth>
                   <InputLabel>{t("vencimiento.filters.status", "Estado")}</InputLabel>
                   <Select value={filtrosProd.estado || ""} label={t("vencimiento.filters.status", "Estado")} onChange={handleProdChange("estado")}>
-                    <MenuItem value=""><em>{t("vencimiento.statusOptions.todos", "Todos")}</em></MenuItem>
-                    <MenuItem value="vencido">{t("vencimiento.statusOptions.vencido", "Vencido")}</MenuItem>
-                    <MenuItem value="proximo">{t("vencimiento.statusOptions.proximo", "Próximo a vencer")}</MenuItem>
+                    <MenuItem value="TODOS">{t("vencimiento.filters.todos", "Todos")}</MenuItem>
+                    <MenuItem value="PROXIMO_A_VENCER">{t("vencimiento.filters.proximo", "Próximo a Vencer")}</MenuItem>
+                    <MenuItem value="VENCIDO">{t("vencimiento.filters.vencido", "Vencido")}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              {/* Tiempo — tercera fila, alineada con Bloque/Espacio/Almacén */}
               <Grid item xs={12}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? "#e7f6f7" : "#173f39", whiteSpace: "nowrap" }}>
@@ -681,7 +647,7 @@ export default function RE_productoVencimiento() {
           loading={loadingSearch} 
           containerSx={{ minHeight: 200 }} 
           autoHeight={true}
-          getRowId={(row) => row.idRender ?? row.id}
+          getRowId={(row) => row.kardexItemId ?? row.id ?? Math.random()}
         />
       </Box>
 

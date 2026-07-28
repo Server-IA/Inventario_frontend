@@ -12,6 +12,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-27 | 0.5.0   | Jeisson Sanchez      | Integración endpoints API   |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -50,8 +52,9 @@ export default function RE_pedido() {
   const token = localStorage.getItem("token");
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-  // ===== Utils
   const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? x?.data ?? []);
+  // Convert string IDs to integers for API calls (hook stores IDs as strings)
+  const toInt = (v) => (v && v !== "" ? Number(v) : null);
   
   const getFecha = (p) => p?.fechaHora ?? p?.pedFechaHora ?? p?.fecha ?? p?.createdAt ?? p?.ped_fecha_hora ?? null;
 
@@ -65,6 +68,16 @@ export default function RE_pedido() {
     const h = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
     return `${y}-${m}-${day} ${h}:${min}`;
+  };
+
+  const toDateStr = (val) => {
+    if (!val) return "";
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
 
   const toDateTimeStr = (val, end = false) => {
@@ -92,8 +105,11 @@ export default function RE_pedido() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData,
-  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
+    fetchInitialData: fetchCatalogos,
+    preloadData,
+    loading: catLoading,
+    error: catError,
+  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true, reportType: "pedido" });
 
   const [formReporte, setFormReporte] = useState({
     ...getInitDates()
@@ -107,29 +123,13 @@ export default function RE_pedido() {
   // Datos catálogos pedido
   const [pedidosBase, setPedidosBase] = useState([]);
   const [pedidoEstados, setPedidoEstados] = useState([]);
-  const [catLoading, setCatLoading] = useState(false);
-  const [catError, setCatError] = useState(false);
-
-  const fetchCatalogos = () => {
-    setCatLoading(true);
-    setCatError(false);
-    Promise.all([
-      axios.get("/v1/pedido", headers).catch(() => ({ data: [] })),
-      axios.get("/v1/items/pedido_estado/0", headers).catch(() => ({ data: [] }))
-    ]).then(([ped, est]) => {
-      setPedidosBase(asArray(ped.data));
-      setPedidoEstados(asArray(est.data));
-      setCatLoading(false);
-    }).catch(() => {
-      setCatError(true);
-      setCatLoading(false);
-    });
-  };
 
   useEffect(() => {
-    fetchCatalogos();
-    // eslint-disable-next-line
-  }, []);
+    if (preloadData) {
+      setPedidosBase(asArray(preloadData.pedidos));
+      setPedidoEstados(asArray(preloadData.estados));
+    }
+  }, [preloadData]);
 
   const handlePedidoChange = (field) => (e) => {
     setPedidoFiltros(p => ({ ...p, [field]: e.target.value }));
@@ -215,55 +215,28 @@ export default function RE_pedido() {
 
     setLoadingSearch(true);
     try {
-      let listaBase = [];
+      const payload = {
+        pedidoIds: pedidoFiltros.pedido_id ? [parseInt(pedidoFiltros.pedido_id, 10)] : [],
+        estadoId: toInt(pedidoFiltros.pedido_estado_id),
+        paisId:         toInt(ubi.pais_id),
+        departamentoId: toInt(ubi.departamento_id),
+        municipioId:    toInt(ubi.municipio_id),
+        sedeId:         toInt(ubi.sede_id),
+        bloqueId:       toInt(ubi.bloque_id),
+        espacioId:      toInt(ubi.espacio_id),
+        almacenId:      toInt(ubi.almacen_id),
+        fechaInicio: formReporte.fecha_inicio ? toDateStr(formReporte.fecha_inicio) : null,
+        fechaFin: formReporte.fecha_fin ? toDateStr(formReporte.fecha_fin) : null
+      };
+
+      const res = await axios.post("/v2/report/pedido/resumen", payload, headers);
+      const lista = asArray(res.data?.pedidos || res.data);
+      setResultados(lista);
       
-      if (pedidoFiltros.pedido_id) {
-        // Pedido especifico
-        const pRes = await axios.get(`/v1/pedido/${pedidoFiltros.pedido_id}`, headers);
-        listaBase = [pRes.data];
-      } else {
-        // Todos
-        const r = await axios.get("/v1/pedido", headers);
-        listaBase = asArray(r.data);
-      }
-
-      // Filtrar estado localmente si se pide
-      if (pedidoFiltros.pedido_estado_id) {
-        listaBase = listaBase.filter(p => String(p.estadoId ?? p.pedido_estado_id ?? p.ped_estado_id ?? "") === String(pedidoFiltros.pedido_estado_id));
-      }
-
-      // Filtrar por fechas
-      const ini = formReporte.fecha_inicio ? new Date(formReporte.fecha_inicio) : null;
-      const fin = formReporte.fecha_fin ? new Date(formReporte.fecha_fin) : null;
-
-      let listaFiltrada = listaBase.filter((p) => {
-        const f = getFecha(p);
-        if (!f || (!ini && !fin)) return true;
-        const d = new Date(f);
-        if (isNaN(d.getTime())) return true;
-        if (ini && d < ini) return false;
-        if (fin && d > fin) return false;
-        return true;
-      });
-
-      // Calcular totales para la grilla iterando y pidiendo artículos
-      const resultadosConTotales = await Promise.all(listaFiltrada.map(async (ped) => {
-        try {
-          const aRes = await axios.get(`/v1/pedido/${ped.id}/articulos`, headers);
-          const arts = asArray(aRes.data);
-          const totalUnits = arts.reduce((sum, a) => sum + (Number(a.cantidad ?? a.cantidad_pedida ?? 0) || 0), 0);
-          return { ...ped, totalUnits, articulosCargados: arts };
-        } catch (e) {
-          return { ...ped, totalUnits: 0, articulosCargados: [] };
-        }
-      }));
-
-      setResultados(resultadosConTotales);
-      
-      if (resultadosConTotales.length === 0) {
+      if (lista.length === 0) {
         setMessage({ open: true, severity: "info", text: t("pedido.messages.noOrders", "No se encontraron pedidos.") });
       } else {
-        setMessage({ open: true, severity: "info", text: t("pedido.messages.loaded", { count: resultadosConTotales.length }, `Mostrando ${resultadosConTotales.length} pedido(s).`) });
+        setMessage({ open: true, severity: "info", text: t("pedido.messages.loaded", { count: lista.length }, `Mostrando ${lista.length} pedido(s).`) });
       }
     } catch (err) {
       console.error(err);
@@ -279,46 +252,31 @@ export default function RE_pedido() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const buildCondicion = () => {
-    const parts = [];
-    parts.push(`p.ped_empresa_id = $EMPRESA_ID$`);
-
-    if (pedidoFiltros.pedido_id) parts.push(`AND p.ped_id = ${Number(pedidoFiltros.pedido_id)}`);
-    if (pedidoFiltros.pedido_estado_id) parts.push(`AND p.ped_estado_id = ${Number(pedidoFiltros.pedido_estado_id)}`);
-
-    // Ubicacion
-    if (ubi.municipio_id) parts.push(`AND m.mun_id = ${Number(ubi.municipio_id)}`);
-    if (ubi.sede_id) parts.push(`AND s.sed_id = ${Number(ubi.sede_id)}`);
-    if (ubi.bloque_id) parts.push(`AND blo.blo_id = ${Number(ubi.bloque_id)}`);
-    if (ubi.espacio_id) parts.push(`AND esp.esp_id = ${Number(ubi.espacio_id)}`);
-    if (ubi.almacen_id) parts.push(`AND al.alm_id = ${Number(ubi.almacen_id)}`);
-
-    const fIni = toDateTimeStr(formReporte.fecha_inicio, false);
-    const fFin = toDateTimeStr(formReporte.fecha_fin, true);
-    if (fIni && fFin) {
-      parts.push(`AND p.ped_fecha_hora BETWEEN "${fIni}" AND "${fFin}"`);
-    } else if (fIni) {
-      parts.push(`AND p.ped_fecha_hora >= "${fIni}"`);
-    } else if (fFin) {
-      parts.push(`AND p.ped_fecha_hora <= "${fFin}"`);
-    }
-
-    return Object.fromEntries(parts.map((v, i) => [String(i), v]));
-  };
-
   const generarReporte = async (formato = "PDF") => {
     if (!validarFiltros()) return;
     setExporting(true);
     try {
-      const condicion = buildCondicion();
-      const payload = { condicion, EMPRESA_ID: empresaId, formato };
+      const payload = {
+        pedidoIds: pedidoFiltros.pedido_id ? [parseInt(pedidoFiltros.pedido_id, 10)] : [],
+        estadoId: toInt(pedidoFiltros.pedido_estado_id),
+        paisId:         toInt(ubi.pais_id),
+        departamentoId: toInt(ubi.departamento_id),
+        municipioId:    toInt(ubi.municipio_id),
+        sedeId:         toInt(ubi.sede_id),
+        bloqueId:       toInt(ubi.bloque_id),
+        espacioId:      toInt(ubi.espacio_id),
+        almacenId:      toInt(ubi.almacen_id),
+        fechaInicio: formReporte.fecha_inicio ? toDateStr(formReporte.fecha_inicio) : null,
+        fechaFin: formReporte.fecha_fin ? toDateStr(formReporte.fecha_fin) : null
+      };
       
       const res = await axios({
-        url: "/v2/report/nuevo/pedido",
+        url: "/v2/report/pedido/exportar",
         method: "POST",
         data: payload,
         responseType: "blob",
         ...headers,
+        params: { formato: formato }
       });
       
       const mimeType = formato === "EXCEL" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/pdf";
@@ -349,32 +307,12 @@ export default function RE_pedido() {
 
   // Columns for AppDataGrid
   const columns = useMemo(() => [
-    { field: "id", headerName: t("pedido.columns.id", "ID"), width: 100 },
-    { 
-      field: "fechaHora", 
-      headerName: t("pedido.columns.date", "Fecha/Hora"), 
-      flex: 1, minWidth: 200,
-      renderCell: (params) => toLocal(getFecha(params.row))
-    },
-    { 
-      field: "sede", 
-      headerName: t("pedido.columns.headquarters", "Sede"), 
-      width: 150,
-      valueGetter: (params) => params.row.sedeNombre ?? params.row.sed_nombre ?? "N/A"
-    },
-    { 
-      field: "almacen", 
-      headerName: t("pedido.columns.warehouse", "Almacén"), 
-      width: 150,
-      valueGetter: (params) => params.row.almacenNombre ?? params.row.alm_nombre ?? "N/A"
-    },
-    {
-      field: "totalUnits",
-      headerName: t("pedido.columns.totalUnits", "Total Unidades"),
-      width: 150,
-      align: "right",
-      headerAlign: "right",
-    }
+    { field: "pedidoId", headerName: t("pedido.grid.id", "ID Pedido"), width: 90 },
+    { field: "fechaPedido", headerName: t("pedido.grid.fecha", "Fecha"), width: 180, valueFormatter: (params) => toLocal(params.value) },
+    { field: "estado", headerName: t("pedido.grid.estado", "Estado"), width: 140 },
+    { field: "almacen", headerName: t("pedido.grid.almacen", "Almacén"), flex: 1, minWidth: 200 },
+    { field: "cantidadProductos", headerName: t("pedido.grid.totalProducts", "Variedad Prods"), width: 150 },
+    { field: "totalCantidad", headerName: t("pedido.grid.totalUnits", "Total Unidades"), width: 150, align: "right", headerAlign: "right" }
   ], [t]);
 
   const boxStyles = {
@@ -501,7 +439,7 @@ export default function RE_pedido() {
                   <InputLabel>{t("pedido.filters.orderStatus", "Estado del Pedido")}</InputLabel>
                   <Select value={pedidoFiltros.pedido_estado_id || ""} label={t("pedido.filters.orderStatus", "Estado del Pedido")} onChange={handlePedidoChange("pedido_estado_id")}>
                     <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                    {pedidoEstados.map(e => <MenuItem key={e.id} value={String(e.id)}>{e.name}</MenuItem>)}
+                    {pedidoEstados.map(e => <MenuItem key={e.id} value={String(e.id)}>{e.nombre || e.name}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Grid>
@@ -628,7 +566,7 @@ export default function RE_pedido() {
           loading={loadingSearch} 
           containerSx={{ minHeight: 200 }} 
           autoHeight={true}
-          getRowId={(row) => row.id}
+          getRowId={(row) => row.pedidoId ?? row.id}
         />
       </Box>
 

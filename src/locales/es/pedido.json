@@ -53,6 +53,12 @@
     "previewTitle": "Vista previa del Reporte"
   },
   "grid": {
-    "title": "Pedidos encontrados"
+    "title": "Pedidos encontrados",
+    "id": "ID Pedido",
+    "fecha": "Fecha",
+    "estado": "Estado",
+    "almacen": "Almacén",
+    "totalProducts": "Variedad Prods",
+    "totalUnits": "Total Unidades"
   }
 }

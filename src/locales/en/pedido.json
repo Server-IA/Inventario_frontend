@@ -53,6 +53,12 @@
     "previewTitle": "Report Preview"
   },
   "grid": {
-    "title": "Orders found"
+    "title": "Orders found",
+    "id": "Order ID",
+    "fecha": "Date",
+    "estado": "Status",
+    "almacen": "Warehouse",
+    "totalProducts": "Variety",
+    "totalUnits": "Total Units"
   }
 }

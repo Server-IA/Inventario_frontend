@@ -12,6 +12,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-27 | 0.5.0   | Jeisson Sanchez      | Integración endpoints API   |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -59,13 +61,13 @@ export default function Rkardex() {
     return isNaN(d.getTime()) ? String(val) : d.toLocaleString();
   };
 
-  // init date (last month)
   const getInitDates = () => {
     const today = new Date();
-    const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const y1 = firstDayLastMonth.getFullYear();
-    const m1 = String(firstDayLastMonth.getMonth() + 1).padStart(2, '0');
-    const d1 = String(firstDayLastMonth.getDate()).padStart(2, '0');
+    // Iniciar desde hace 3 años (1 de enero) para poder ver registros históricos de prueba (2023)
+    const firstDay = new Date(today.getFullYear() - 3, 0, 1);
+    const y1 = firstDay.getFullYear();
+    const m1 = String(firstDay.getMonth() + 1).padStart(2, '0');
+    const d1 = String(firstDay.getDate()).padStart(2, '0');
     
     const y2 = today.getFullYear();
     const m2 = String(today.getMonth() + 1).padStart(2, '0');
@@ -92,8 +94,11 @@ export default function Rkardex() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData
-  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
+    fetchInitialData: fetchCatalogs,
+    preloadData,
+    loading: catalogsLoading,
+    error: catalogsError
+  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true, reportType: "kardex" });
 
   // Kardex filters
   const [kdxFiltro, setKdxFiltro] = useState({
@@ -107,6 +112,14 @@ export default function Rkardex() {
   const handleFiltroChange = (name) => (e) => {
     const value = e?.target ? e.target.value : e;
     setKdxFiltro((f) => ({ ...f, [name]: value }));
+    if (name === 'producto_categoria_id') {
+      setKdxFiltro((f) => ({ ...f, producto_categoria_id: value, producto_id: '', producto_presentacion_id: '' }));
+      fetchProductosPorCategoria(value);
+    }
+    if (name === 'producto_id') {
+      setKdxFiltro((f) => ({ ...f, producto_id: value, producto_presentacion_id: '' }));
+      fetchPresentacionesPorProducto(value);
+    }
   };
 
   // Catalogs
@@ -114,34 +127,29 @@ export default function Rkardex() {
   const [productos, setProductos] = useState([]);
   const [producciones, setProducciones] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
-  const [catalogsLoading, setCatalogsLoading] = useState(false);
-  const [catalogsError, setCatalogsError] = useState(false);
 
-  const fetchCatalogs = () => {
-    setCatalogsLoading(true);
-    setCatalogsError(false);
-    Promise.all([
-      axios.get("/v1/items/producto_categoria/0", headers).catch(() => ({ data: [] })),
-      axios.get("/v1/items/producto/0", headers).catch(() => ({ data: [] })),
-      axios.get("/v1/items/produccion/0", headers).catch(() => ({ data: [] })),
-      axios.get("/v1/items/producto_presentacion/0", headers).catch(() => ({ data: [] })),
-    ])
-    .then(([cat, pro, prod, pres]) => {
-      setCategorias(asArray(cat.data));
-      setProductos(asArray(pro.data));
-      setProducciones(asArray(prod.data));
-      setPresentaciones(asArray(pres.data));
-      setCatalogsLoading(false);
-    })
-    .catch(() => {
-      setCatalogsError(true);
-      setCatalogsLoading(false);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: t("kardex.messages.catalogsError", "Error al cargar catálogos. Por favor, reintente."),
-      });
-    });
+  useEffect(() => {
+    if (preloadData) {
+      setCategorias(asArray(preloadData.categorias));
+      setProducciones(asArray(preloadData.producciones));
+    }
+  }, [preloadData]);
+
+  const fetchProductosPorCategoria = async (categoriaId) => {
+    if (!categoriaId) { setProductos([]); setPresentaciones([]); return; }
+    try {
+      const res = await axios.get("/v2/report/kardex/productos", { ...headers, params: { categoriaId } });
+      setProductos(asArray(res.data));
+      setPresentaciones([]);
+    } catch { setProductos([]); }
+  };
+
+  const fetchPresentacionesPorProducto = async (productoId) => {
+    if (!productoId) { setPresentaciones([]); return; }
+    try {
+      const res = await axios.get("/v2/report/kardex/presentaciones", { ...headers, params: { productoId } });
+      setPresentaciones(asArray(res.data));
+    } catch { setPresentaciones([]); }
   };
 
   useEffect(() => {
@@ -227,29 +235,21 @@ export default function Rkardex() {
   };
 
   const fetchAllKardex = async () => {
-    const CANDIDATES = ["/v1/kardex"];
-    const size = 200;
-    for (const basePath of CANDIDATES) {
-      try {
-        const r0 = await axios.get(basePath, headers);
-        const list0 = asArray(r0.data);
-        if (list0.length) return list0;
-        let page = 0, acc = [];
-        for (let i = 0; i < 15; i++) {
-          const r = await axios.get(basePath, { params: { page, size }, ...headers });
-          const list = asArray(r.data);
-          if (!list.length) break;
-          acc = acc.concat(list);
-          page += 1;
-        }
-        if (acc.length) return acc;
-      } catch (err) {
-        if (import.meta.env.DEV) console.debug("[fetchAllKardex] fallo", basePath, err?.response?.status);
+    try {
+      const size = 1000;
+      let acc = [];
+      for (let page = 0; page < 10; page++) {
+        const r = await axios.get("/v1/kardex", { params: { page, size }, ...headers });
+        const list = asArray(r.data);
+        if (!list.length) break;
+        acc = acc.concat(list);
+        if (list.length < size) break;
       }
+      return acc;
+    } catch (err) {
+      console.error(err);
+      return [];
     }
-    const e = new Error("No se encontró endpoint para listar kardex.");
-    e.code = "NO_KARDEX_ENDPOINT";
-    throw e;
   };
 
   const buscar = async () => {
@@ -258,11 +258,101 @@ export default function Rkardex() {
 
     setLoadingSearch(true);
     try {
-      const all = await fetchAllKardex();
+      const allHeaders = await fetchAllKardex();
+      const detailedRows = [];
+
+      await Promise.all(
+        allHeaders.map(async (header) => {
+          try {
+            const res = await axios.get(`/v1/kardex/${header.id}/items`, headers);
+            const items = asArray(res.data);
+            
+            let sNombre = "";
+            if (ubiData && ubiData.almacenes) {
+              const almacenObj = ubiData.almacenes.find(a => a.nombre === header.nombreAlmacen);
+              if (almacenObj) {
+                const espacioObj = ubiData.espacios?.find(e => e.id === almacenObj.espacioId);
+                if (espacioObj) {
+                  const bloqueObj = ubiData.bloques?.find(b => b.id === espacioObj.bloqueId);
+                  if (bloqueObj) {
+                    const sedeObj = ubiData.sedes?.find(s => s.id === bloqueObj.sedeId);
+                    if (sedeObj) sNombre = sedeObj.nombre;
+                  }
+                }
+              }
+            }
+
+            if (items.length > 0) {
+              items.forEach((item) => {
+                detailedRows.push({
+                  id: `${header.id}-${item.id}`,
+                  kardexId: header.id,
+                  fechaHora: header.fechaHora,
+                  nombreAlmacen: header.nombreAlmacen,
+                  nombreTipoMovimiento: header.nombreTipoMovimiento,
+                  nombreProduccion: header.nombreProduccion,
+                  productoNombre: item.productoNombre?.includes('-') ? item.productoNombre.split('-')[0]?.trim() : item.productoNombre,
+                  presentacionNombre: item.presentacionNombre || (item.productoNombre?.includes('-') ? item.productoNombre.split('-')[1]?.trim() : ""),
+                  cantidad: item.cantidad,
+                  saldo: item.precioTotal || item.precio,
+                  sedeId: header.sedeId,
+                  nombreSede: sNombre,
+                  almacenId: header.almacenId,
+                  productoId: item.productoId,
+                  categoriaId: item.categoriaId
+                });
+              });
+            } else {
+              detailedRows.push({
+                id: `${header.id}-header`,
+                kardexId: header.id,
+                fechaHora: header.fechaHora,
+                nombreAlmacen: header.nombreAlmacen,
+                nombreTipoMovimiento: header.nombreTipoMovimiento,
+                nombreProduccion: header.nombreProduccion,
+                productoNombre: "",
+                presentacionNombre: "",
+                cantidad: 0,
+                saldo: 0,
+                nombreSede: sNombre
+              });
+            }
+          } catch {
+            let sNombreErr = "";
+            if (ubiData && ubiData.almacenes) {
+              const almacenObj = ubiData.almacenes.find(a => a.nombre === header.nombreAlmacen);
+              if (almacenObj) {
+                const espacioObj = ubiData.espacios?.find(e => e.id === almacenObj.espacioId);
+                if (espacioObj) {
+                  const bloqueObj = ubiData.bloques?.find(b => b.id === espacioObj.bloqueId);
+                  if (bloqueObj) {
+                    const sedeObj = ubiData.sedes?.find(s => s.id === bloqueObj.sedeId);
+                    if (sedeObj) sNombreErr = sedeObj.nombre;
+                  }
+                }
+              }
+            }
+            detailedRows.push({
+              id: `${header.id}-err`,
+              kardexId: header.id,
+              fechaHora: header.fechaHora,
+              nombreAlmacen: header.nombreAlmacen,
+              nombreTipoMovimiento: header.nombreTipoMovimiento,
+              nombreProduccion: header.nombreProduccion,
+              productoNombre: "",
+              presentacionNombre: "",
+              cantidad: 0,
+              saldo: 0,
+              nombreSede: sNombreErr
+            });
+          }
+        })
+      );
+
       const ini = new Date(kdxFiltro.fecha_inicio);
       const fin = new Date(kdxFiltro.fecha_fin);
 
-      const lista = all.filter((row) => {
+      const lista = detailedRows.filter((row) => {
         const f = getFechaKdx(row);
         if (!f) return true;
         const d = new Date(f);
@@ -270,8 +360,7 @@ export default function Rkardex() {
         if (d < ini) return false;
         if (d > fin) return false;
         
-        if (ubi.sede_id && row.sede?.id !== Number(ubi.sede_id)) return false;
-        if (kdxFiltro.producto_id && row.producto?.id !== Number(kdxFiltro.producto_id)) return false;
+        if (kdxFiltro.producto_id && row.productoId !== Number(kdxFiltro.producto_id)) return false;
 
         return true;
       });
@@ -295,27 +384,32 @@ export default function Rkardex() {
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const buildCondicion = () => {
-    const userIni = toDateStr(kdxFiltro.fecha_inicio, false);
-    const userFin = toDateStr(kdxFiltro.fecha_fin, true);
-
     const c = {};
     c["0"] = `e.emp_id = $EMPRESA_ID$`;
-    if (ubi.municipio_id) c["1"] = `AND m.mun_id = ${Number(ubi.municipio_id)}`;
-    if (ubi.sede_id) c["2"] = `AND s.sed_id = ${Number(ubi.sede_id)}`;
-    if (ubi.bloque_id) c["3"] = `AND blo.blo_id = ${Number(ubi.bloque_id)}`;
-    if (ubi.espacio_id) c["4"] = `AND esp.esp_id = ${Number(ubi.espacio_id)}`;
-    if (ubi.almacen_id) c["5"] = `AND al.alm_id = ${Number(ubi.almacen_id)}`;
-    if (kdxFiltro.producto_id) c["6"] = `AND p.pro_id = ${Number(kdxFiltro.producto_id)}`;
-    if (kdxFiltro.producto_categoria_id) c["7"] = `AND p.pro_producto_categoria_id = ${Number(kdxFiltro.producto_categoria_id)}`;
-    if (kdxFiltro.produccion_id) c["9"] = `AND pr.pro_id = ${Number(kdxFiltro.produccion_id)}`;
-    if (kdxFiltro.producto_presentacion_id) c["10"] = `AND pp.prp_id = ${Number(kdxFiltro.producto_presentacion_id)}`;
-    c["8"] = `AND k.kar_fecha_hora BETWEEN '${userIni}' AND '${userFin}'`;
+    c["1"] = ubi.municipio_id ? `AND m.mun_id = ${Number(ubi.municipio_id)}` : "";
+    c["2"] = ubi.sede_id ? `AND s.sed_id = ${Number(ubi.sede_id)}` : "";
+    c["3"] = ubi.bloque_id ? `AND blo.blo_id = ${Number(ubi.bloque_id)}` : "";
+    c["4"] = ubi.espacio_id ? `AND esp.esp_id = ${Number(ubi.espacio_id)}` : "";
+    c["5"] = ubi.almacen_id ? `AND al.alm_id = ${Number(ubi.almacen_id)}` : "";
+    c["6"] = kdxFiltro.producto_id ? `AND p.pro_id = ${Number(kdxFiltro.producto_id)}` : "";
+    c["7"] = kdxFiltro.producto_categoria_id ? `AND p.pro_producto_categoria_id = ${Number(kdxFiltro.producto_categoria_id)}` : "";
+    const userIni = toDateStr(kdxFiltro.fecha_inicio, false);
+    const userFin = toDateStr(kdxFiltro.fecha_fin, true);
+    c["8"] = (userIni && userFin) ? `AND k.kar_fecha_hora BETWEEN '${userIni}' AND '${userFin}'` : "";
     return c;
   };
 
+  const buildFiltrosAplicados = () => {
+    const arr = [];
+    if (ubi.sede_id) arr.push("SEDE");
+    if (ubi.almacen_id) arr.push("ALMACEN");
+    if (kdxFiltro.producto_id) arr.push("PRODUCTO");
+    if (kdxFiltro.produccion_id) arr.push("PRODUCCION");
+    if (kdxFiltro.producto_presentacion_id) arr.push("PRODUCTO_PRESENTACION");
+    return arr;
+  };
+
   const getReportPath = () => {
-    if (kdxFiltro.produccion_id) return "/v2/report/nuevo/kardex_produccion";
-    if (kdxFiltro.producto_presentacion_id) return "/v2/report/nuevo/kardex_producto_presentacion";
     return "/v2/report/nuevo/kardex";
   };
 
@@ -326,19 +420,19 @@ export default function Rkardex() {
     }
     setExporting(true);
     try {
-      const condicion = buildCondicion();
+      const payload = {
+        condicion: buildCondicion(),
+        EMPRESA_ID: empresaId,
+        formato: formato
+      };
+
       const url = getReportPath();
-      const payload = { condicion, EMPRESA_ID: empresaId, formato };
 
       let res;
       try {
         res = await axios({ url, method: "POST", data: payload, responseType: "blob", ...headers });
       } catch (e1) {
-        if (e1?.response?.status === 404 && url !== "/v2/report/nuevo/kardex") {
-          res = await axios({ url: "/v2/report/nuevo/kardex", method: "POST", data: payload, responseType: "blob", ...headers });
-        } else {
-          throw e1;
-        }
+        throw e1;
       }
 
       const mimeType = formato === "EXCEL" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/pdf";
@@ -369,7 +463,7 @@ export default function Rkardex() {
 
   // Columns for grid
   const columns = useMemo(() => [
-    { field: "id", headerName: "ID", width: 80 },
+    { field: "kardexId", headerName: "ID", width: 80 },
     { 
       field: "fecha", 
       headerName: t("kardex.columns.fecha", "Fecha/Hora"), 
@@ -380,40 +474,40 @@ export default function Rkardex() {
       field: "sede", 
       headerName: t("kardex.columns.sede", "Sede"), 
       flex: 1, minWidth: 120,
-      renderCell: (params) => params.row?.sede?.nombre || ""
+      renderCell: (params) => params.row.nombreSede || params.row.sedeNombre || ""
     },
     { 
       field: "almacen", 
       headerName: t("kardex.columns.almacen", "Almacén"), 
       flex: 1, minWidth: 120,
-      renderCell: (params) => params.row?.almacen?.nombre || ""
+      renderCell: (params) => params.row.nombreAlmacen || ""
     },
     { 
       field: "produccion", 
       headerName: t("kardex.columns.produccion", "Producción"), 
       flex: 1, minWidth: 120,
-      renderCell: (params) => params.row?.produccion?.nombre || ""
+      renderCell: (params) => params.row.nombreProduccion || ""
     },
     { 
       field: "movimiento", 
       headerName: t("kardex.columns.movimiento", "Tipo de Movimiento"), 
       flex: 1, minWidth: 150,
-      renderCell: (params) => params.row?.tipoMovimiento?.nombre || ""
+      renderCell: (params) => params.row.nombreTipoMovimiento || ""
     },
     { 
       field: "producto", 
       headerName: t("kardex.columns.producto", "Producto"), 
       flex: 1, minWidth: 150,
-      renderCell: (params) => params.row?.producto?.nombre || ""
+      renderCell: (params) => params.row.productoNombre || ""
     },
     { 
       field: "presentacion", 
       headerName: t("kardex.columns.presentacion", "Presentación"), 
       flex: 1, minWidth: 120,
-      renderCell: (params) => params.row?.presentacion?.nombre || ""
+      renderCell: (params) => params.row.presentacionNombre || ""
     },
     { field: "cantidad", headerName: t("kardex.columns.cantidad", "Cantidad"), width: 100, align: "right" },
-    { field: "saldo", headerName: t("kardex.columns.saldo", "Saldo"), width: 100, align: "right" }
+    { field: "saldo", headerName: t("kardex.columns.saldo", "Saldo/Precio"), width: 100, align: "right" }
   ], [t]);
 
   const boxStyles = {

@@ -63,6 +63,12 @@
     "previewTitle": "Report Preview"
   },
   "grid": {
-    "title": "Products found"
+    "title": "Products found",
+    "id": "ID",
+    "nombre": "Product",
+    "sede": "Headquarters",
+    "almacen": "Warehouse",
+    "fechaVencimiento": "Expiration Date",
+    "cantidad": "Quantity"
   }
 }

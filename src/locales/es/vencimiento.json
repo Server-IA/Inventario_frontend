@@ -63,6 +63,12 @@
     "previewTitle": "Vista previa del Reporte"
   },
   "grid": {
-    "title": "Productos encontrados"
+    "title": "Productos encontrados",
+    "id": "ID",
+    "nombre": "Producto",
+    "sede": "Sede",
+    "almacen": "Almacén",
+    "fechaVencimiento": "Fecha Vencimiento",
+    "cantidad": "Cantidad"
   }
 }
