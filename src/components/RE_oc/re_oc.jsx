@@ -1,552 +1,645 @@
-import React, { useEffect, useState } from "react";
+/*=============================================================================
+ Nombre del archivo : re_oc.jsx
+ Descripcion        : Módulo de Reportes de Ordenes de Compra.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-01 | 0.4.0   | Jeisson Sanchez      | Refactor UI/UX filtros, HU  |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-11 | 0.4.1   | Jeisson Sanchez      | Rediseño alineación filtros |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, TextField, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  Dialog, DialogTitle, DialogContent, IconButton,
-  Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
+  Paper, Divider, Popover, LinearProgress
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import {
+  Close as CloseIcon,
+  Search as SearchIcon,
+  Download as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableView as ExcelIcon,
+  CalendarToday as CalendarIcon,
+  Refresh as RefreshIcon
+} from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { es, enUS } from "date-fns/locale";
+
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
+import useUbicacionFilters from "../useUbicacionFilters";
+import AppDataGrid from "../common/AppDataGrid.jsx";
+
 import VistaPreviaPDFOrdenCompra from "../OrdenCompra/vistapreviapdfordencompra";
 import GridArticuloOrdenCompra from "../OrdenCompra/GridArticuloOrdenCompra";
 
-import useUbicacionFilters from "../useUbicacionFilters";
-import UbicacionProductoVencimientoFilters from "../UbicacionProductoVencimientoFilters.jsx";
-
 export default function RE_ordenCompra() {
+  const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
   const empresaId = localStorage.getItem("empresaId");
   const token = localStorage.getItem("token");
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
   // ===== Utils
   const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? x?.data ?? []);
-  const getFechaOC = (o) =>
-    o?.orcFechaHora ?? o?.fechaHora ?? o?.fecha ?? o?.createdAt ?? null;
-
-  const toDateTimeStr = (val) => {
-    if (!val) return null; // "YYYY-MM-DDTHH:mm"
-    const [d, t = "00:00"] = String(val).split("T");
-    return `${d} ${t}:00`;
+  const getFechaOC = (o) => o?.orcFechaHora ?? o?.fechaHora ?? o?.fecha ?? o?.createdAt ?? null;
+  const toLocal = (val) => {
+    if (!val) return "";
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? String(val) : d.toLocaleString();
   };
 
-  // ===== Hook unificado: ubicación + (pedido_id, categoria_estado_id, ...)
+  const toDateTimeStr = (val) => {
+    if (!val) return null;
+    const [d, time = "00:00"] = String(val).split("T");
+    return `${d} ${time}:00`;
+  };
+
+  const getInitDates = () => {
+    const today = new Date();
+    const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const y1 = firstDayLastMonth.getFullYear();
+    const m1 = String(firstDayLastMonth.getMonth() + 1).padStart(2, '0');
+    const d1 = String(firstDayLastMonth.getDate()).padStart(2, '0');
+    const y2 = today.getFullYear();
+    const m2 = String(today.getMonth() + 1).padStart(2, '0');
+    const d2 = String(today.getDate()).padStart(2, '0');
+    return {
+      fecha_inicio: `${y1}-${m1}-${d1}T00:00`,
+      fecha_fin: `${y2}-${m2}-${d2}T23:59`,
+    };
+  };
+
+  // ===== Hook unificado
   const {
     form: ubi,
     handleChange: handleUbiChange,
     data: ubiData,
-    resetTodo,
+    loading: ubiLoading,
+    error: ubiError,
+    fetchInitialData,
 
     pedido,
     handlePedidoChange,
     pedidos,
-    categoriasEstado, // ya no lo usamos para el combo, pero lo dejo por compatibilidad
   } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
 
-  // ===== Estado para el diálogo (producto/categoría/fechas)
   const [formReporte, setFormReporte] = useState({
-    producto_id: "",
-    producto_categoria_id: "",
-    fecha_inicio: "",
-    fecha_fin: "",
+    ...getInitDates()
   });
 
-  // Catálogos para el diálogo (items endpoints)
-  const [productos, setProductos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-
-  // NUEVO: estados de la orden de compra (vienen de /v1/items/orden_compra_estado/0)
   const [estadosOC, setEstadosOC] = useState([]);
+  const [estadosLoading, setEstadosLoading] = useState(false);
+  const [estadosError, setEstadosError] = useState(false);
 
-  useEffect(() => {
-    // Productos y categorías de producto
-    Promise.all([
-      axios.get("/v1/items/producto/0", headers).catch(() => ({ data: [] })),
-      axios
-        .get("/v1/items/producto_categoria/0", headers)
-        .catch(() => ({ data: [] })),
-    ]).then(([pr, cat]) => {
-      const productosArr = Array.isArray(pr.data)
-        ? pr.data
-        : pr.data?.content ?? [];
-      const categoriasArr = Array.isArray(cat.data)
-        ? cat.data
-        : cat.data?.content ?? [];
-
-      setProductos(
-        productosArr.map((p) => ({
-          id: p.id,
-          name: p.nombre ?? p.name ?? `Producto ${p.id}`,
-        }))
-      );
-      setCategorias(
-        categoriasArr.map((c) => ({
-          id: c.id,
-          name: c.nombre ?? c.name ?? `Categoría ${c.id}`,
-        }))
-      );
-    });
-
-    // Estados de la orden de compra
-    axios
-      .get("/v1/items/orden_compra_estado/0", headers)
+  const fetchEstados = () => {
+    setEstadosLoading(true);
+    setEstadosError(false);
+    axios.get("/v1/items/orden_compra_estado/0", headers)
       .then((res) => {
         setEstadosOC(asArray(res.data));
+        setEstadosLoading(false);
       })
       .catch((err) => {
-        console.error("Error cargando estados de orden de compra:", err);
-        setEstadosOC([]);
+        setEstadosError(true);
+        setEstadosLoading(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  };
+
+  useEffect(() => {
+    fetchEstados();
+    if (!pedidos?.length) axios.get("/v1/pedido", headers).catch(() => {});
+    // eslint-disable-next-line
   }, []);
 
-  // ===== Estado UI
+  // UI state
   const [ordenData, setOrdenData] = useState(null);
   const [articulos, setArticulos] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
   const [resultados, setResultados] = useState([]);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [message, setMessage] = useState({
-    open: false,
-    severity: "info",
-    text: "",
-  });
+  const [loadingSearch, setLoadingSearch] = useState(false);
+
+  const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
   const [errors, setErrors] = useState({ fechas_rango: false });
-  const [openUbi, setOpenUbi] = useState(false);
 
-  // Respaldos por si el hook aún no cargó combos (no interfiere si ya están)
-  useEffect(() => {
-    if (!pedidos?.length) axios.get("/v1/pedido", headers).catch(() => {});
-    // ya NO intentamos cargar categoriasEstado aquí,
-    // porque ahora usamos estadosOC con su propio useEffect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Date Popover
+  const [anchorElDate, setAnchorElDate] = useState(null);
+  const openDate = Boolean(anchorElDate);
+  const handleOpenDate = (e) => setAnchorElDate(e.currentTarget);
+  const handleCloseDate = () => setAnchorElDate(null);
 
-  // Validación de rango (usa formReporte.fecha_*)
+  const setQuickDate = (type) => {
+    const today = new Date();
+    let fInicio, fFin;
+    const y2 = today.getFullYear();
+    const m2 = String(today.getMonth() + 1).padStart(2, '0');
+    const d2 = String(today.getDate()).padStart(2, '0');
+    fFin = `${y2}-${m2}-${d2}T23:59`;
+    
+    if (type === 'hoy') fInicio = `${y2}-${m2}-${d2}T00:00`;
+    else if (type === 'semana') {
+      const past = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      fInicio = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}-${String(past.getDate()).padStart(2, '0')}T00:00`;
+    } else if (type === 'mes') {
+      const past = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      fInicio = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}-${String(past.getDate()).padStart(2, '0')}T00:00`;
+    } else if (type === 'trimestre') {
+      const past = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+      fInicio = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}-${String(past.getDate()).padStart(2, '0')}T00:00`;
+    } else if (type === 'anio') {
+      fInicio = `${y2}-01-01T00:00`;
+    }
+    setFormReporte(f => ({ ...f, fecha_inicio: fInicio, fecha_fin: fFin }));
+    handleCloseDate();
+  };
+
+  const handleSelectDateRange = (item) => {
+    const { startDate, endDate } = item.selection;
+    const y1 = startDate.getFullYear();
+    const m1 = String(startDate.getMonth() + 1).padStart(2, '0');
+    const d1 = String(startDate.getDate()).padStart(2, '0');
+    const fInicio = `${y1}-${m1}-${d1}T00:00`;
+    
+    let fFin = "";
+    if (endDate) {
+      const y2 = endDate.getFullYear();
+      const m2 = String(endDate.getMonth() + 1).padStart(2, '0');
+      const d2 = String(endDate.getDate()).padStart(2, '0');
+      fFin = `${y2}-${m2}-${d2}T23:59`;
+    } else {
+      fFin = `${y1}-${m1}-${d1}T23:59`;
+    }
+    setFormReporte(f => ({ ...f, fecha_inicio: fInicio, fecha_fin: fFin }));
+  };
+
   const validarRango = () => {
-    if (formReporte.fecha_inicio && formReporte.fecha_fin) {
-      const ini = new Date(formReporte.fecha_inicio);
-      const fin = new Date(formReporte.fecha_fin);
-      if (ini > fin) {
-        setErrors({ fechas_rango: true });
-        setMessage({
-          open: true,
-          severity: "warning",
-          text: "Inicio no puede ser mayor que fin.",
-        });
-        return false;
-      }
+    setErrors({ fechas_rango: false });
+    if (!formReporte.fecha_inicio || !formReporte.fecha_fin) {
+      setMessage({ open: true, severity: "warning", text: t("ordenCompra.messages.emptyDates", "El rango de fechas es obligatorio.") });
+      return false;
+    }
+    const ini = new Date(formReporte.fecha_inicio);
+    const fin = new Date(formReporte.fecha_fin);
+    if (ini > fin) {
+      setErrors({ fechas_rango: true });
+      setMessage({ open: true, severity: "warning", text: t("ordenCompra.messages.invalidDateRange", "La fecha de inicio no puede ser mayor que la fecha fin.") });
+      return false;
     }
     return true;
   };
 
-  // ---- Traer TODAS las órdenes paginando
   const fetchAllOrdenes = async () => {
     const CANDIDATES = ["/v1/orden_compra", "/v1/orden-compra", "/v1/ordenCompra"];
     const size = 200;
     let all = [];
-
     for (const basePath of CANDIDATES) {
       try {
-        // 1) intentar sin paginación
         const r0 = await axios.get(basePath, headers);
-        const list0 = Array.isArray(r0.data) ? r0.data : r0.data?.content ?? [];
+        const list0 = asArray(r0.data);
         if (list0.length) return list0;
-
-        // 2) con paginación
         let page = 0;
         for (let i = 0; i < 15; i++) {
-          const r = await axios.get(basePath, {
-            params: { page, size },
-            ...headers,
-          });
-          const list = Array.isArray(r.data) ? r.data : r.data?.content ?? [];
+          const r = await axios.get(basePath, { params: { page, size }, ...headers });
+          const list = asArray(r.data);
           if (!list.length) break;
           all = all.concat(list);
           page += 1;
         }
         if (all.length) return all;
       } catch (err) {
-        if (import.meta.env.DEV) {
-          console.debug(
-            `[fetchAllOrdenes] fallo en ${basePath}:`,
-            err?.response?.status,
-            err?.message
-          );
-        }
-        continue;
+        if (import.meta.env.DEV) console.debug(`[fetchAllOrdenes] fallo en ${basePath}`);
       }
     }
-
-    const e = new Error(
-      "No se encontró un endpoint válido para listar órdenes de compra."
-    );
+    const e = new Error("No se encontró endpoint.");
     e.code = "NO_OC_ENDPOINT";
     throw e;
   };
 
-  // ---- Buscar
   const buscar = async () => {
     setOrdenData(null);
     setArticulos([]);
     setPresentaciones([]);
     setResultados([]);
-    setErrors({ fechas_rango: false });
     if (!validarRango()) return;
 
+    setLoadingSearch(true);
     try {
       const all = await fetchAllOrdenes();
-
-      const ini = formReporte.fecha_inicio
-        ? new Date(formReporte.fecha_inicio)
-        : null;
-      const fin = formReporte.fecha_fin
-        ? new Date(formReporte.fecha_fin)
-        : null;
+      const ini = new Date(formReporte.fecha_inicio);
+      const fin = new Date(formReporte.fecha_fin);
 
       const byDate = all.filter((oc) => {
         const f = getFechaOC(oc);
-        if (!f || (!ini && !fin)) return true;
+        if (!f) return true;
         const d = new Date(f);
         if (isNaN(d.getTime())) return true;
-        if (ini && d < ini) return false;
-        if (fin && d > fin) return false;
+        if (d < ini) return false;
+        if (d > fin) return false;
+        if (pedido.categoria_estado_id && oc.estado?.id !== Number(pedido.categoria_estado_id)) return false;
         return true;
       });
 
       if (!pedido.pedido_id) {
-        setResultados(byDate);
-        setMessage({
-          open: true,
-          severity: "info",
-          text: `Mostrando ${byDate.length} orden(es).`,
-        });
+        // Calcular totales para la grilla
+        const resultadosConTotales = await Promise.all(byDate.map(async (oc) => {
+          try {
+            const aRes = await axios.get(`/v1/orden_compra/${oc.id}/articulos`, headers).catch(async () => {
+              return await axios.get(`/v1/orden-compra/${oc.id}/articulos`, headers).catch(() => {
+                return axios.get(`/v1/ordenCompra/${oc.id}/articulos`, headers);
+              });
+            });
+            const arts = asArray(aRes.data);
+            const totalUnits = arts.reduce((sum, a) => sum + (Number(a.cantidad) || 0), 0);
+            const totalValue = arts.reduce((sum, a) => sum + ((Number(a.cantidad) || 0) * (Number(a.precioUnitario) || Number(a.precio) || 0)), 0);
+            return { ...oc, totalUnits, totalValue, articulosCargados: arts };
+          } catch (e) {
+            return { ...oc, totalUnits: 0, totalValue: 0, articulosCargados: [] };
+          }
+        }));
+
+        setResultados(resultadosConTotales);
+        if (resultadosConTotales.length === 0) {
+          setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResultsEmpty", "No se encontraron registros.") });
+        } else {
+          setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResults", { count: resultadosConTotales.length }, `Mostrando ${resultadosConTotales.length} orden(es).`) });
+        }
         return;
       }
 
-      const orden = byDate.find(
-        (o) => String(o.pedidoId) === String(pedido.pedido_id)
-      );
+      const orden = byDate.find((o) => String(o.pedidoId) === String(pedido.pedido_id));
       if (!orden) {
-        setMessage({
-          open: true,
-          severity: "warning",
-          text: "No se encontró la orden para ese pedido.",
-        });
+        setMessage({ open: true, severity: "warning", text: t("ordenCompra.messages.noOrders", "No se encontró la orden.") });
         return;
       }
 
       const [aRes, prRes] = await Promise.all([
-        axios
-          .get(`/v1/orden_compra/${orden.id}/articulos`, headers)
-          .catch(async () => {
-            const alt = await axios
-              .get(`/v1/orden-compra/${orden.id}/articulos`, headers)
-              .catch(async () => {
-                return axios.get(
-                  `/v1/ordenCompra/${orden.id}/articulos`,
-                  headers
-                );
-              });
-            return alt;
-          }),
-        axios
-          .get("/v1/producto_presentacion", headers)
-          .catch(() => axios.get("/v1/presentacion", headers)),
+        axios.get(`/v1/orden_compra/${orden.id}/articulos`, headers).catch(async () => {
+          return await axios.get(`/v1/orden-compra/${orden.id}/articulos`, headers).catch(() => {
+            return axios.get(`/v1/ordenCompra/${orden.id}/articulos`, headers);
+          });
+        }),
+        axios.get("/v1/producto_presentacion", headers).catch(() => axios.get("/v1/presentacion", headers))
       ]);
 
       setOrdenData(orden);
-      setArticulos(
-        Array.isArray(aRes.data) ? aRes.data : aRes.data?.content ?? []
-      );
-      setPresentaciones(
-        Array.isArray(prRes.data) ? prRes.data : prRes.data?.content ?? []
-      );
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl("");
-      setMessage({
-        open: true,
-        severity: "success",
-        text: "Datos de la orden cargados.",
-      });
+      setArticulos(asArray(aRes.data));
+      setPresentaciones(asArray(prRes.data));
+      setMessage({ open: true, severity: "success", text: t("ordenCompra.messages.loaded", "Datos cargados.") });
     } catch (err) {
-      const msg =
-        err?.code === "NO_OC_ENDPOINT"
-          ? "No se encontró el endpoint de órdenes de compra (404). Revisa la ruta en axiosConfig o el nombre del recurso."
-          : "No fue posible cargar las órdenes.";
-      console.error(err);
+      const msg = err?.code === "NO_OC_ENDPOINT" ? t("ordenCompra.messages.endpointError", "Endpoint 404") : t("ordenCompra.messages.searchError", "Error");
       setMessage({ open: true, severity: "error", text: msg });
+    } finally {
+      setLoadingSearch(false);
     }
   };
 
-  // ---- construir condicion indexada EXACTA ("0".."3")
+  // Export
+  const [modalExportOpen, setModalExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const buildCondicion = () => {
     const out = {};
     let idx = 0;
-
-    // 0) empresa (obligatoria)
     out[String(idx++)] = `oc.orc_empresa_id = $EMPRESA_ID$`;
+    if (pedido.pedido_id) out[String(idx++)] = `AND oc.orc_pedido_id = ${Number(pedido.pedido_id)}`;
+    if (pedido.categoria_estado_id) out[String(idx++)] = `AND oc.orc_orden_compra_estado_id = ${Number(pedido.categoria_estado_id)}`;
+    
+    // Ubi
+    if (ubi.municipio_id) out[String(idx++)] = `AND m.mun_id = ${Number(ubi.municipio_id)}`;
+    if (ubi.sede_id) out[String(idx++)] = `AND s.sed_id = ${Number(ubi.sede_id)}`;
+    if (ubi.bloque_id) out[String(idx++)] = `AND blo.blo_id = ${Number(ubi.bloque_id)}`;
+    if (ubi.espacio_id) out[String(idx++)] = `AND esp.esp_id = ${Number(ubi.espacio_id)}`;
+    if (ubi.almacen_id) out[String(idx++)] = `AND al.alm_id = ${Number(ubi.almacen_id)}`;
 
-    // 1) pedido (si viene)
-    if (pedido.pedido_id) {
-      out[String(idx++)] = `AND oc.orc_pedido_id = ${Number(
-        pedido.pedido_id
-      )}`;
-    }
-
-    // 2) estado de la orden de compra (usamos el mismo campo categoria_estado_id del hook)
-    if (pedido.categoria_estado_id) {
-      // OJO: ajusta esta condición al alias/columna real en tu reporte Jasper.
-      out[String(idx++)] = `AND oc.orc_orden_compra_estado_id = ${Number(
-        pedido.categoria_estado_id
-      )}`;
-    }
-
-    // 3) between fechas (si hay ambas)
     const ini = toDateTimeStr(formReporte.fecha_inicio);
     const fin = toDateTimeStr(formReporte.fecha_fin);
-    if (ini && fin) {
-      out[String(idx++)] = `AND oc.orc_fecha_hora BETWEEN "${ini}" AND "${fin}"`;
-    }
-
+    if (ini && fin) out[String(idx++)] = `AND oc.orc_fecha_hora BETWEEN "${ini}" AND "${fin}"`;
     return out;
   };
 
-  // ---- Generar PDF
-  const generarReporte = async () => {
+  const generarReporte = async (formato = "PDF") => {
     if (!validarRango()) return;
+    setExporting(true);
     try {
       const condicion = buildCondicion();
+      const payload = { condicion, EMPRESA_ID: empresaId, formato };
+      
       const res = await axios({
         url: "/v2/report/nuevo/orden_compra",
         method: "POST",
-        data: { condicion, EMPRESA_ID: empresaId },
+        data: payload,
         responseType: "blob",
         ...headers,
       });
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const url = window.URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      setPreviewOpen(true);
-      setMessage({ open: true, severity: "success", text: "PDF generado." });
+      
+      const mimeType = formato === "EXCEL" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/pdf";
+      const blob = new Blob([res.data], { type: mimeType });
+      const objUrl = window.URL.createObjectURL(blob);
+      
+      if (formato === "EXCEL") {
+        const a = document.createElement("a");
+        a.href = objUrl;
+        a.download = `OrdenCompra_${new Date().getTime()}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(objUrl);
+        setMessage({ open: true, severity: "success", text: t("ordenCompra.messages.excelSuccess", "Excel descargado.") });
+      } else {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(objUrl);
+        setPreviewOpen(true);
+        setMessage({ open: true, severity: "success", text: t("ordenCompra.messages.pdfSuccess", "PDF generado.") });
+      }
     } catch (err) {
       console.error(err);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Error al generar el PDF.",
-      });
+      setMessage({ open: true, severity: "error", text: t("ordenCompra.messages.exportError", "Error al exportar.") });
+    } finally {
+      setExporting(false);
+      setModalExportOpen(false);
     }
   };
 
+  // Columns for AppDataGrid
+  const columns = useMemo(() => [
+    { field: "id", headerName: t("ordenCompra.columns.id", "ID"), width: 100 },
+    { 
+      field: "fecha", 
+      headerName: t("ordenCompra.columns.fecha", "Fecha/Hora"), 
+      flex: 1, minWidth: 200,
+      renderCell: (params) => toLocal(getFechaOC(params.row))
+    },
+    {
+      field: "totalUnits",
+      headerName: t("ordenCompra.columns.totalUnits", "Total Unidades"),
+      width: 150,
+      align: "right",
+      headerAlign: "right",
+    },
+    {
+      field: "totalValue",
+      headerName: t("ordenCompra.columns.totalValue", "Valor Total"),
+      width: 150,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => {
+        const val = Number(params.row.totalValue) || 0;
+        return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "COP" }).format(val);
+      }
+    }
+  ], [t, i18n.language]);
+
+  const boxStyles = {
+    p: 3, 
+    borderRadius: 4, 
+    bgcolor: isDark ? "rgba(255,255,255,0.02)" : "#fff",
+    boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.2)" : "0 4px 12px rgba(23,63,57,0.06)"
+  };
+  const titleStyles = { fontWeight: 600, mb: 2, color: isDark ? "#e7f6f7" : "#173f39", display: "flex", alignItems: "center", gap: 1 };
+
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Reporte de Orden de Compra
-      </Typography>
+    <Box sx={{ width: "100%", p: { xs: 2, md: 4 }, color: "text.primary" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: isDark ? "#fff" : "#173f39" }}>
+          {t("ordenCompra.title", "Reporte de Orden de Compra")}
+        </Typography>
+      </Box>
 
-      {/* Filtros principales */}
-      <Grid container spacing={2} mb={2}>
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Pedido</InputLabel>
-            <Select
-              name="pedido_id"
-              value={pedido.pedido_id || ""}
-              label="Pedido"
-              onChange={handlePedidoChange("pedido_id")}
-            >
-              {asArray(pedidos).map((p) => (
-                <MenuItem key={p.id} value={String(p.id)}>
-                  {`Pedido ${p.id}`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* AHORA: estados de la orden de compra */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Estado de la orden</InputLabel>
-            <Select
-              name="categoria_estado_id"
-              value={pedido.categoria_estado_id || ""}
-              label="Estado de la orden"
-              onChange={handlePedidoChange("categoria_estado_id")}
-            >
-              {estadosOC.length ? (
-                estadosOC.map((e) => (
-                  <MenuItem key={e.id} value={String(e.id)}>
-                    {e.name ?? e.nombre ?? `Estado ${e.id}`}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled value="">
-                  Sin opciones
-                </MenuItem>
+      <Grid container spacing={3} mb={3} alignItems="flex-start">
+        {/* Ubicacion (Izquierda) */}
+        <Grid item xs={12} md={7}>
+          <Paper sx={boxStyles}>
+            <Typography variant="h6" sx={titleStyles}>
+              {t("ordenCompra.sections.location", "Ubicación")}
+              {ubiLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
+              {ubiError && (
+                <IconButton size="small" onClick={fetchInitialData} color="error" title={t("common.actions.retry", "Reintentar")}>
+                  <RefreshIcon fontSize="small"/>
+                </IconButton>
               )}
-            </Select>
-          </FormControl>
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
+                  <InputLabel>{t("ordenCompra.filters.country", "País")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.country", "País")} value={ubi.pais_id || ""} onChange={handleUbiChange("pais_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.paises?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.pais_id}>
+                  <InputLabel>{t("ordenCompra.filters.department", "Departamento")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.department", "Departamento")} value={ubi.departamento_id || ""} onChange={handleUbiChange("departamento_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.departamentos?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.departamento_id}>
+                  <InputLabel>{t("ordenCompra.filters.municipality", "Municipio")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.municipality", "Municipio")} value={ubi.municipio_id || ""} onChange={handleUbiChange("municipio_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.municipios?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
+                  <InputLabel>{t("ordenCompra.filters.headquarters", "Sede")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.headquarters", "Sede")} value={ubi.sede_id || ""} onChange={handleUbiChange("sede_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {ubiData?.sedes?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.sede_id}>
+                  <InputLabel>{t("ordenCompra.filters.block", "Bloque")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.block", "Bloque")} value={ubi.bloque_id || ""} onChange={handleUbiChange("bloque_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.bloques?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.bloque_id}>
+                  <InputLabel>{t("ordenCompra.filters.space", "Espacio")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.space", "Espacio")} value={ubi.espacio_id || ""} onChange={handleUbiChange("espacio_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.espacios?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.espacio_id}>
+                  <InputLabel>{t("ordenCompra.filters.warehouse", "Almacén")}</InputLabel>
+                  <Select label={t("ordenCompra.filters.warehouse", "Almacén")} value={ubi.almacen_id || ""} onChange={handleUbiChange("almacen_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.almacenes?.map(it => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Paper>
         </Grid>
 
-        {/* Fechas */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha Inicio"
-            name="fecha_inicio"
-            type="datetime-local"
-            fullWidth
-            value={formReporte.fecha_inicio || ""}
-            onChange={(e) =>
-              setFormReporte((fr) => ({
-                ...fr,
-                fecha_inicio: e.target.value,
-              }))
-            }
-            InputLabelProps={{ shrink: true }}
-            error={errors.fechas_rango}
-            helperText={
-              errors.fechas_rango ? "Inicio no puede ser mayor que fin." : ""
-            }
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha Fin"
-            name="fecha_fin"
-            type="datetime-local"
-            fullWidth
-            value={formReporte.fecha_fin || ""}
-            onChange={(e) =>
-              setFormReporte((fr) => ({
-                ...fr,
-                fecha_fin: e.target.value,
-              }))
-            }
-            InputLabelProps={{ shrink: true }}
-            error={errors.fechas_rango}
-            helperText={
-              errors.fechas_rango ? "Fin debe ser >= Inicio." : ""
-            }
-          />
+        {/* Derecha: Datos de Orden + Tiempo */}
+        <Grid item xs={12} md={5}>
+          <Paper sx={boxStyles}>
+            <Typography variant="h6" sx={titleStyles}>
+              {t("ordenCompra.sections.orderData", "Datos de Orden")}
+              {estadosLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
+              {estadosError && (
+                <IconButton size="small" onClick={fetchEstados} color="error" title={t("common.actions.retry", "Reintentar")}>
+                  <RefreshIcon fontSize="small"/>
+                </IconButton>
+              )}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl size="small" fullWidth>
+                  <InputLabel>{t("ordenCompra.filters.order", "Pedido")}</InputLabel>
+                  <Select name="pedido_id" value={pedido.pedido_id || ""} label={t("ordenCompra.filters.order", "Pedido")} onChange={handlePedidoChange("pedido_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {asArray(pedidos).map(p => <MenuItem key={p.id} value={String(p.id)}>{`${t("ordenCompra.filters.order", "Pedido")} ${p.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl size="small" fullWidth disabled={estadosLoading || estadosError}>
+                  <InputLabel>{t("ordenCompra.filters.status", "Estado de la orden")}</InputLabel>
+                  <Select name="categoria_estado_id" value={pedido.categoria_estado_id || ""} label={t("ordenCompra.filters.status", "Estado de la orden")} onChange={handlePedidoChange("categoria_estado_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {estadosOC.map(e => <MenuItem key={e.id} value={String(e.id)}>{e.name ?? e.nombre ?? `Estado ${e.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              {/* Tiempo — tercera fila, alineada con Bloque/Espacio/Almacén */}
+              <Grid item xs={12}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? "#e7f6f7" : "#173f39", whiteSpace: "nowrap" }}>
+                    {t("ordenCompra.sections.time", "Tiempo")}
+                  </Typography>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    onClick={handleOpenDate}
+                    endIcon={<CalendarIcon />}
+                    sx={{ 
+                      justifyContent: "space-between", 
+                      py: 1, 
+                      color: isDark ? "#e7f6f7" : "#173f39",
+                      borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.23)",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      borderRadius: 2
+                    }}
+                  >
+                    {formReporte.fecha_inicio && formReporte.fecha_fin 
+                      ? `${toDateTimeStr(formReporte.fecha_inicio).split(" ")[0]} - ${toDateTimeStr(formReporte.fecha_fin).split(" ")[0]}`
+                      : t("ordenCompra.filters.selectDates", "Seleccionar fechas")}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+            <Popover
+              open={openDate}
+              anchorEl={anchorElDate}
+              onClose={handleCloseDate}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+              PaperProps={{ sx: { borderRadius: 3, mt: 1, maxWidth: 900 } }}
+            >
+              <Stack direction={{ xs: 'column', md: 'row' }} sx={{ p: 2 }}>
+                <Box sx={{ minWidth: 200, pr: 2, borderRight: { md: `1px solid ${theme.palette.divider}` }, mb: { xs: 2, md: 0 } }}>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                    {t("ordenCompra.filters.quickSelect", "Selección rápida")}
+                  </Typography>
+                  <Stack spacing={1}>
+                    {["hoy", "semana", "mes", "trimestre", "anio"].map(type => (
+                      <Button key={type} variant="text" size="small" fullWidth onClick={() => setQuickDate(type)} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
+                        {t(`ordenCompra.filters.quick.${type}`)}
+                      </Button>
+                    ))}
+                  </Stack>
+                </Box>
+                <Box sx={{ pl: { md: 2 } }}>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                    {t("ordenCompra.filters.customRange", "Rango personalizado")}
+                  </Typography>
+                  <Box sx={{ 
+                    '.rdrCalendarWrapper': { 
+                      color: isDark ? '#e7f6f7' : '#000',
+                      bgcolor: isDark ? 'transparent' : '#fff',
+                      borderRadius: 2
+                    },
+                    '.rdrDayNumber span': { color: isDark ? '#e7f6f7' : '#1d2429' },
+                    '.rdrDayPassive .rdrDayNumber span': { color: isDark ? 'rgba(255,255,255,0.3)' : '#d5dce0' },
+                    '.rdrMonthAndYearPickers select': { color: isDark ? '#e7f6f7' : '#3e484f' },
+                    '.rdrNextPrevButton': { background: isDark ? 'rgba(255,255,255,0.1)' : '#eff2f7' },
+                    '.rdrWeekDay': { color: isDark ? 'rgba(255,255,255,0.7)' : '#849095' },
+                    '.rdrDateDisplayWrapper': { backgroundColor: isDark ? 'transparent' : '#eff2f7' },
+                    '.rdrDateDisplayItem': { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#fff', boxShadow: isDark ? 'none' : '0 1px 2px 0 rgba(35,57,66,.21)', borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'transparent' },
+                    '.rdrDateDisplayItemActive': { borderColor: isDark ? '#fff' : 'transparent' },
+                    '.rdrDateDisplayItem input': { color: isDark ? '#fff' : '#333' }
+                  }}>
+                    <DateRange
+                      locale={i18n.language?.startsWith("en") ? enUS : es}
+                      editableDateInputs={true}
+                      onChange={handleSelectDateRange}
+                      moveRangeOnFirstSelection={false}
+                      ranges={[{
+                        startDate: formReporte.fecha_inicio ? new Date(formReporte.fecha_inicio) : new Date(),
+                        endDate: formReporte.fecha_fin ? new Date(formReporte.fecha_fin) : new Date(),
+                        key: 'selection'
+                      }]}
+                      months={2}
+                      direction="horizontal"
+                      rangeColors={["#173f39"]}
+                    />
+                  </Box>
+                </Box>
+              </Stack>
+            </Popover>
+          </Paper>
         </Grid>
       </Grid>
 
-      {/* Acciones */}
-      <Stack direction="row" spacing={2} mb={3}>
-        <Button variant="contained" onClick={buscar}>
-          Buscar
-        </Button>
-        <Button variant="outlined" onClick={generarReporte}>
-          Generar Reporte
-        </Button>
-        <Button variant="text" onClick={() => setOpenUbi(true)}>
-          Filtros (ubicación)
-        </Button>
-      </Stack>
-
-      {/* Diálogo de filtros de ubicación + producto/categoría */}
-      <UbicacionProductoVencimientoFilters
-        variant="dialog"
-        title="Filtros (ubicación)"
-        open={openUbi}
-        onClose={() => setOpenUbi(false)}
-        onApply={() => {
-          setOpenUbi(false);
-          buscar();
-        }}
-        // Reporte
-        formReporte={formReporte}
-        setFormReporte={setFormReporte}
-        productos={productos}
-        categorias={categorias}
-        fechasError={errors.fechas_rango}
-        tried={false}
-        // Ubicación
-        ubiForm={ubi}
-        ubiData={ubiData}
-        handleUbiChange={handleUbiChange}
-        onUbiReset={resetTodo}
-      />
-
-      {/* Vista previa PDF */}
-      <Dialog
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        fullWidth
-        maxWidth="lg"
-      >
-        <DialogTitle>
-          Vista previa del Reporte
-          <IconButton
-            onClick={() => setPreviewOpen(false)}
-            sx={{ position: "absolute", right: 8, top: 8 }}
+      {/* Botones de accion */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 4 }}>
+        <Stack direction="row" spacing={2}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<SearchIcon />} 
+            onClick={buscar}
+            disabled={loadingSearch}
+            sx={{ borderRadius: 2, px: 4, py: 1, bgcolor: "#173f39", "&:hover": { bgcolor: "#21534b" } }}
           >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {previewUrl && (
-            <iframe
-              src={previewUrl}
-              width="100%"
-              height="600"
-              title="PDF"
-              style={{ border: "none" }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+            {t("common.actions.search", "Buscar")}
+          </Button>
+        </Stack>
+      </Box>
 
-      {/* Resultados detalle */}
-      {ordenData && (
-        <>
-          <VistaPreviaPDFOrdenCompra orden={ordenData} />
-          <Box mt={4}>
-            <Typography variant="h6">Artículos de la Orden</Typography>
-            <GridArticuloOrdenCompra
-              items={articulos}
-              presentaciones={presentaciones}
-              setSelectedRows={() => {}}
-              setSelectedRow={() => {}}
-            />
-          </Box>
-        </>
-      )}
-
-      {/* Resultados listado simple */}
-      {!ordenData && resultados.length > 0 && (
-        <Box mt={4}>
-          <Typography variant="h6" gutterBottom>
-            Órdenes de compra encontradas
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Fecha/Hora</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {resultados.map((oc) => (
-                  <TableRow key={oc.id}>
-                    <TableCell>{oc.id}</TableCell>
-                    <TableCell>
-                      {getFechaOC(oc)
-                        ? new Date(getFechaOC(oc)).toLocaleString()
-                        : ""}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
+      <Box>
+        <AppDataGrid rows={resultados} columns={columns} loading={loadingSearch} containerSx={{ minHeight: 200 }} autoHeight={true} />
+      </Box>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>

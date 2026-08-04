@@ -1,0 +1,63 @@
+{
+  "title": "Reporte de Orden de Compra",
+  "sections": {
+    "location": "Ubicación",
+    "orderData": "Datos de Orden",
+    "time": "Tiempo"
+  },
+  "filters": {
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio",
+    "headquarters": "Sede",
+    "block": "Bloque",
+    "space": "Espacio",
+    "warehouse": "Almacén",
+    "order": "Pedido",
+    "status": "Estado de la orden",
+    "quickSelect": "Selección rápida",
+    "customRange": "Rango personalizado",
+    "selectDates": "Seleccionar fechas",
+    "startDate": "Fecha Inicio",
+    "endDate": "Fecha Fin",
+    "quick": {
+      "hoy": "Hoy",
+      "semana": "Última Semana",
+      "mes": "Último Mes",
+      "trimestre": "Último Trimestre",
+      "anio": "Este Año"
+    }
+  },
+  "columns": {
+    "id": "ID",
+    "fecha": "Fecha/Hora",
+    "totalUnits": "Total Unidades",
+    "totalValue": "Valor Total"
+  },
+  "actions": {
+    "generate": "Generar Reporte"
+  },
+  "messages": {
+    "noOrders": "No se encontró la orden para ese pedido.",
+    "loaded": "Datos de la orden cargados.",
+    "endpointError": "No se encontró el endpoint de órdenes de compra (404).",
+    "searchError": "No fue posible cargar las órdenes.",
+    "emptyDates": "El rango de fechas es obligatorio.",
+    "invalidDateRange": "La fecha de inicio no puede ser mayor que la fecha fin.",
+    "noResults": "Mostrando {{count}} orden(es).",
+    "noResultsEmpty": "No se encontraron registros para los filtros seleccionados.",
+    "excelSuccess": "Excel descargado correctamente.",
+    "pdfSuccess": "PDF generado correctamente.",
+    "exportError": "No se pudo generar el reporte."
+  },
+  "modal": {
+    "exportTitle": "Generar Reporte de Orden de Compra",
+    "exporting": "Generando documento, por favor espere...",
+    "exportSub": "Seleccione el formato en el que desea descargar su reporte.",
+    "previewTitle": "Vista previa del Reporte"
+  },
+  "grid": {
+    "title": "Órdenes de compra encontradas",
+    "detailsTitle": "Artículos de la Orden"
+  }
+}
