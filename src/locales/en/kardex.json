@@ -1,0 +1,63 @@
+{
+  "title": "Kardex Reports",
+  "sections": {
+    "location": "Location",
+    "product": "Product",
+    "time": "Time"
+  },
+  "filters": {
+    "country": "Country",
+    "department": "Department",
+    "municipality": "Municipality",
+    "headquarters": "Headquarters",
+    "block": "Block",
+    "space": "Space",
+    "warehouse": "Warehouse",
+    "category": "Category",
+    "product": "Product",
+    "presentation": "Presentation",
+    "production": "Production",
+    "quickSelect": "Quick Select",
+    "customRange": "Custom Range",
+    "selectDates": "Select Dates",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "quick": {
+      "hoy": "Today",
+      "semana": "Last Week",
+      "mes": "Last Month",
+      "trimestre": "Last Quarter",
+      "anio": "This Year"
+    }
+  },
+  "columns": {
+    "fecha": "Date/Time",
+    "sede": "Headquarters",
+    "almacen": "Warehouse",
+    "produccion": "Production",
+    "movimiento": "Movement Type",
+    "producto": "Product",
+    "presentacion": "Presentation",
+    "cantidad": "Quantity",
+    "saldo": "Balance"
+  },
+  "actions": {
+    "generate": "Generate Report"
+  },
+  "messages": {
+    "catalogsError": "Error loading catalogs. Please retry.",
+    "emptyDates": "Date range is mandatory.",
+    "invalidDateRange": "Start date cannot be greater than end date.",
+    "noResults": "No records found for the selected filters.",
+    "searchError": "Error performing search.",
+    "excelSuccess": "Excel downloaded successfully.",
+    "pdfSuccess": "PDF generated successfully.",
+    "exportError": "Could not generate the report."
+  },
+  "modal": {
+    "exportTitle": "Generate Kardex Report",
+    "exporting": "Generating document, please wait...",
+    "exportSub": "Select the format to download your Kardex report.",
+    "previewTitle": "Report Preview"
+  }
+}

@@ -12,7 +12,9 @@
     "viewDetail": "Ver detalle",
     "viewPermissions": "Ver permisos",
     "remove": "Quitar",
-    "addAssignment": "Agregar asignación"
+    "addAssignment": "Agregar asignación",
+    "search": "Buscar",
+    "retry": "Reintentar"
   },
   "labels": {
     "status": "Estado",
