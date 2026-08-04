@@ -547,6 +547,15 @@ export default function RE_pedido() {
           >
             {t("common.actions.search", "Buscar")}
           </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            startIcon={<DownloadIcon />} 
+            onClick={() => setModalExportOpen(true)}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("pedido.actions.generate", "Generar Reporte")}
+          </Button>
         </Stack>
       </Box>
 
@@ -560,6 +569,52 @@ export default function RE_pedido() {
           getRowId={(row) => row.pedidoId ?? row.id}
         />
       </Box>
+
+      <Dialog open={modalExportOpen} onClose={() => !exporting && setModalExportOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 }}}>
+        <DialogTitle sx={{ fontWeight: 700, textAlign: "center", pb: 1 }}>
+          {t("pedido.modal.exportTitle", "Generar Reporte")}
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: "center", pb: 2 }}>
+          {exporting ? (
+            <Box sx={{ py: 3 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>{t("pedido.modal.exporting", "Generando documento...")}</Typography>
+              <LinearProgress color="success" />
+            </Box>
+          ) : (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {t("pedido.modal.exportSub", "Seleccione el formato.")}
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button variant="outlined" color="error" size="large" onClick={() => generarReporte("PDF")} sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}>
+                  <PdfIcon fontSize="large" />
+                  PDF
+                </Button>
+                <Button variant="outlined" color="success" size="large" onClick={() => generarReporte("EXCEL")} sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}>
+                  <ExcelIcon fontSize="large" />
+                  Excel
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        {!exporting && (
+          <DialogActions sx={{ justifyContent: "center", pt: 0, pb: 2 }}>
+            <Button onClick={() => setModalExportOpen(false)} color="inherit" sx={{ textTransform: "none" }}>{t("common.actions.cancel", "Cancelar")}</Button>
+          </DialogActions>
+        )}
+      </Dialog>
+
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {t("pedido.modal.previewTitle", "Vista previa")}
+          <IconButton onClick={() => setPreviewOpen(false)}><CloseIcon /></IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          {previewUrl && <iframe src={previewUrl} width="100%" height="100%" title="PDF" style={{ border: "none" }} />}
+        </DialogContent>
+      </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
