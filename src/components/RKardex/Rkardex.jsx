@@ -775,6 +775,15 @@ export default function Rkardex() {
           >
             {t("common.actions.search", "Buscar")}
           </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            startIcon={<DownloadIcon />} 
+            onClick={() => setModalExportOpen(true)}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("kardex.actions.generate", "Generar Reporte")}
+          </Button>
         </Stack>
       </Box>
 
@@ -788,6 +797,72 @@ export default function Rkardex() {
           autoHeight={true}
         />
       </Box>
+
+      {/* Export Modal */}
+      <Dialog open={modalExportOpen} onClose={() => !exporting && setModalExportOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 }}}>
+        <DialogTitle sx={{ fontWeight: 700, textAlign: "center", pb: 1 }}>
+          {t("kardex.modal.exportTitle", "Generar Reporte Kardex")}
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: "center", pb: 2 }}>
+          {exporting ? (
+            <Box sx={{ py: 3 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                {t("kardex.modal.exporting", "Generando documento, por favor espere...")}
+              </Typography>
+              <LinearProgress color="success" />
+            </Box>
+          ) : (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {t("kardex.modal.exportSub", "Seleccione el formato en el que desea descargar su reporte de Kardex.")}
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button 
+                  variant="outlined" 
+                  color="error" 
+                  size="large"
+                  onClick={() => generarReporte("PDF")}
+                  sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}
+                >
+                  <PdfIcon fontSize="large" />
+                  PDF
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  color="success" 
+                  size="large"
+                  onClick={() => generarReporte("EXCEL")}
+                  sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}
+                >
+                  <ExcelIcon fontSize="large" />
+                  Excel
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        {!exporting && (
+          <DialogActions sx={{ justifyContent: "center", pt: 0, pb: 2 }}>
+            <Button onClick={() => setModalExportOpen(false)} color="inherit" sx={{ textTransform: "none" }}>
+              {t("common.actions.cancel", "Cancelar")}
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
+
+      {/* Preview PDF */}
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {t("kardex.modal.previewTitle", "Vista previa del Reporte")}
+          <IconButton onClick={() => setPreviewOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          {previewUrl && <iframe src={previewUrl} width="100%" height="100%" title="PDF" style={{ border: "none" }} />}
+        </DialogContent>
+      </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
