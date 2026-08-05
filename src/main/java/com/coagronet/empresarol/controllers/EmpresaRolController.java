@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -70,8 +71,9 @@ public class EmpresaRolController {
     @PreAuthorize("hasAuthority('ROL_READ_ALL') or hasAnyRole('ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA')")
     @Operation(summary = "Obtener roles de empresa para listas de selección", description = "Retorna una lista simplificada de roles activos (ID y nombre) para poblar componentes select en el frontend.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    public ResponseEntity<List<EmpresaRolSelectDTO>> getForSelect() {
-        return ResponseEntity.ok(empresaRolService.getForSelect());
+    public ResponseEntity<List<EmpresaRolSelectDTO>> getForSelect(
+            @RequestParam(required = false) Long empresaId) {
+        return ResponseEntity.ok(empresaRolService.getForSelect(empresaId));
     }
 
     @GetMapping("/{id}")
