@@ -15,7 +15,7 @@ import { authenticateByApi } from './helpers/e2e.shared.utils';
 test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
 
   test('Test Búsqueda de Reporte de Vencimiento de Producto', async ({ page, request }) => {
-    await authenticateByApi(page, request, 'u20211196841@usco.edu.co', 'Mivida1*', 'RE_pv');
+    await authenticateByApi(page, request, process.env.TEST_USERNAME, process.env.TEST_PASSWORD, 'RE_pv');
     await page.goto('/');
 
     // Verify the page loaded the correct report
@@ -38,7 +38,9 @@ test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
 
     // Click SEARCH
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
-    await page.waitForTimeout(3000);
+    
+    // Wait for datagrid to load or show no results
+    await expect(page.locator('div[role="grid"], text=resultado(s) encontrado(s), text=No se encontraron productos')).toBeVisible({ timeout: 10000 });
   });
 
 });
