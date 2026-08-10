@@ -6,6 +6,14 @@
  +------------+---------+----------------------+-----------------------------+
  |    Fecha   | Versión |       Autor          | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-07-27 | 0.4.0   | JUAN JOSE CASTRO     | Adición de funcionalidad    |
+ |            |         |                      | para obtener la lista de    |
+ |            |         |                      | roles activos para menús de |
+ |            |         |                      | selección, ajustando la     |
+ |            |         |                      | visibilidad de la           |
+ |            |         |                      | información dependiendo del |
+ |            |         |                      | nivel de acceso del usuario |
+ |            |         |                      | en sesión.                  |
  | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del uso de        |
  |            |         |                      | OffsetDateTime por Instant  |
  |            |         |                      | para establecer la fecha    |
@@ -19,30 +27,34 @@
 
 package com.coagronet.empresarol.services;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.coagronet.auditoria.AuthenticationService;
 import com.coagronet.empresa.Empresa;
 import com.coagronet.empresarol.EmpresaRol;
 import com.coagronet.empresarol.dtos.requests.EmpresaRolCreateRequestDTO;
 import com.coagronet.empresarol.dtos.requests.EmpresaRolUpdateRequestDTO;
 import com.coagronet.empresarol.dtos.responses.EmpresaRolResponseDTO;
+import com.coagronet.empresarol.dtos.responses.EmpresaRolSelectDTO;
 import com.coagronet.empresarol.mappers.EmpresaRolMapper;
 import com.coagronet.empresarol.repositories.EmpresaRolRepository;
 import com.coagronet.estado.Estado;
 import com.coagronet.exceptionHandler.UserRoleForbiddenException;
 import com.coagronet.exceptionHandler.custom.BadRequestException;
 import com.coagronet.rol.Rol;
+import com.coagronet.user.User;
 import com.coagronet.utils.UserEmpresaService;
 import com.coagronet.validator.EntidadValidatorFacade;
 import com.coagronet.validator.parametrizacion.constantes.EstadoConstantes;
 import com.coagronet.validator.parametrizacion.constantes.RolConstantes;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.List;
-
-import com.coagronet.user.User;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +71,26 @@ public class EmpresaRolService {
 
         return empresaRolRepository
                 .findByEmpresaId(empresaId).stream().map(empresaRolMapper::toResponseDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmpresaRolSelectDTO> getForSelect(Long empresaId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSysAdmin = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long targetEmpresaId;
+        if (isSysAdmin && empresaId != null) {
+            targetEmpresaId = empresaId;
+        } else if (!isSysAdmin) {
+            targetEmpresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        } else {
+            return List.of();
+        }
+
+        return empresaRolRepository.findActiveByEmpresaId(targetEmpresaId).stream()
+                .map(er -> new EmpresaRolSelectDTO(er.getRol().getId(), er.getRol().getNombre()))
+                .toList();
     }
 
     public EmpresaRolResponseDTO findById(Long id) {
