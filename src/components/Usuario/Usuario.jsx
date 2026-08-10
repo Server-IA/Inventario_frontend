@@ -13,6 +13,12 @@ CONTROL DE CAMBIOS
 | 2026-06-29 | 0.4.0   | Cesar Medina         | Se corrige la paginación del listado.         |
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se integra registro con HU-037.1 y nuevo modal|
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se ajusta formato del payload de registro.    |
+| 2026-06-10 | 0.4.0   | Cesar Medina         | Se integra actualización con HU-037.4.        |
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se corrige timestamp del PUT de usuarios.     |
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se alinea timestamp del PUT al body ejemplo.  |
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se alinea rolPreferidoId al rol preferido.    |
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se omite usuarioRolId en asignaciones nuevas. |
+| 2026-08-10 | 0.4.0   | Cesar Medina         | Se integra filtro de usuarios.                |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -28,9 +34,12 @@ import GridActionBar from "../common/GridActionBar.jsx";
 import SectionHeader from "../common/SectionHeader.jsx";
 import AppDataGrid from "../common/AppDataGrid.jsx";
 import FormUsuario from "./FormUsuario.jsx";
+import UserFiltersDialog from "./UserFiltersDialog.jsx";
 import UserDetailDialog from "./UserDetailDialog.jsx";
 import MessageSnackBar from "../MessageSnackBar";
 import axios from "../axiosConfig";
+
+const SYSTEM_ROLE_REGEX = /(ROLE_ADMINISTRADOR_SISTEMA|ADMINISTRADOR[_\s-]*SISTEMA|ADMIN\s*SISTEMA)/i;
 
 const emptyRow = {
   id: null,
@@ -54,6 +63,15 @@ const emptyRow = {
   asignaciones: [],
 };
 
+const buildInitialFilters = (isAdmin, empresaIdOwn) => ({
+  username: "",
+  nombre: "",
+  apellido: "",
+  rolId: "",
+  estadoId: "",
+  empresaId: isAdmin ? "" : String(empresaIdOwn || ""),
+});
+
 /**
  * Normaliza respuestas del backend que pueden venir paginadas o como arreglo.
  *
@@ -61,6 +79,36 @@ const emptyRow = {
  * @returns {Array}
  */
 const extractItems = (resp) => resp.data?.content ?? resp.data ?? [];
+
+/**
+ * Obtiene los roles por empresa persistidos en sesión.
+ *
+ * @returns {Array}
+ */
+const parseRolesByCompany = () => {
+  try {
+    return JSON.parse(localStorage.getItem("rolesByCompany") || "[]");
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Resuelve el nombre del rol actual tomando en cuenta el contexto de empresa.
+ *
+ * @returns {string}
+ */
+const resolveCurrentRoleName = () => {
+  const empresaId = Number(localStorage.getItem("empresaId"));
+  const rolId = Number(localStorage.getItem("rolId"));
+  const rolesByCompany = parseRolesByCompany();
+
+  const byContext = rolesByCompany.find(
+    (item) => Number(item?.empresaId) === empresaId && Number(item?.rolId) === rolId
+  );
+
+  return byContext?.rolNombre || localStorage.getItem("rolNombre") || "";
+};
 
 /**
  * Obtiene las asignaciones de un usuario como arreglo seguro.
@@ -166,6 +214,63 @@ const toOffsetDateTime = (value) => {
 };
 
 /**
+ * Convierte una fecha simple al formato UTC usado por el endpoint PUT de
+ * actualización de usuarios.
+ *
+ * @param {string} value Fecha en formato YYYY-MM-DD o datetime existente.
+ * @returns {string|null}
+ */
+const toUtcDateTime = (value) => {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return null;
+  if (normalized.endsWith("Z")) return normalized;
+  if (normalized.includes("T")) {
+    const baseDate = normalized.split("T")[0];
+    return `${baseDate}T00:00:00Z`;
+  }
+  return `${normalized}T00:00:00Z`;
+};
+
+/**
+ * Convierte una fecha del backend al formato YYYY-MM-DD para inputs tipo date.
+ *
+ * @param {string} value Fecha recibida desde el backend.
+ * @returns {string}
+ */
+const toDateInputValue = (value) => {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return "";
+  return normalized.includes("T") ? normalized.split("T")[0] : normalized;
+};
+
+/**
+ * Normaliza el valor de género para el formulario.
+ *
+ * @param {string} value Valor recibido del backend.
+ * @returns {string}
+ */
+const normalizeGenderForForm = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "m" || normalized.includes("mascul")) return "M";
+  if (normalized === "f" || normalized.includes("femen")) return "F";
+  return String(value ?? "");
+};
+
+/**
+ * Serializa el género al formato esperado por el endpoint de actualización.
+ *
+ * @param {string} value Valor del formulario.
+ * @returns {string}
+ */
+const serializeGenderForUpdate = (value) => {
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (normalized === "M") return "Masculino";
+  if (normalized === "F") return "Femenino";
+  return String(value ?? "");
+};
+
+/**
  * Resuelve los estilos visuales del estado del usuario en la tabla.
  *
  * Registro 2026-06-10: acompana el ajuste visual documentado en la cabecera
@@ -231,19 +336,25 @@ export default function Usuario() {
   const [pageSize, setPageSize] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [openForm, setOpenForm] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [formMode, setFormMode] = useState("create");
   const [formData, setFormData] = useState(emptyRow);
+  const [openFilters, setOpenFilters] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
-  const [inactivatedCache, setInactivatedCache] = useState([]);
+  const [, setInactivatedCache] = useState([]);
 
-  const isAdmin = String(localStorage.getItem("rolId")) === "1";
+  const currentRoleName = resolveCurrentRoleName();
+  const isAdmin = SYSTEM_ROLE_REGEX.test(currentRoleName);
   const empresaIdOwn = Number(localStorage.getItem("empresaId"));
+  const [filters, setFilters] = useState(() => buildInitialFilters(isAdmin, empresaIdOwn));
+  const [filterDraft, setFilterDraft] = useState(() => buildInitialFilters(isAdmin, empresaIdOwn));
 
   const [empresasList, setEmpresasList] = useState([]);
   const [rolesList, setRolesList] = useState([]);
+  const [empresaRolesList, setEmpresaRolesList] = useState([]);
   const [tiposIdentificacionList, setTiposIdentificacionList] = useState([]);
 
   const columns = useMemo(() => {
@@ -294,12 +405,74 @@ export default function Usuario() {
     return cols;
   }, [isAdmin]);
 
+  const roleFilterOptions = useMemo(
+    () =>
+      (Array.isArray(rolesList) ? rolesList : []).map((item) => ({
+        value: String(item.id),
+        label: item.nombre ?? item.name ?? String(item.id),
+      })),
+    [rolesList]
+  );
+
+  const companyFilterOptions = useMemo(
+    () =>
+      (Array.isArray(empresasList) ? empresasList : []).map((item) => ({
+        value: String(item.id),
+        label: item.nombre ?? item.name ?? String(item.id),
+      })),
+    [empresasList]
+  );
+
+  const statusFilterOptions = useMemo(
+    () => [
+      { value: "1", label: t("common.labels.active") },
+      { value: "2", label: t("common.labels.inactive") },
+    ],
+    [t]
+  );
+
+  const hasActiveFilters = useMemo(
+    () =>
+      Boolean(
+        String(filters.username ?? "").trim() ||
+          String(filters.nombre ?? "").trim() ||
+          String(filters.apellido ?? "").trim() ||
+          String(filters.rolId ?? "").trim() ||
+          String(filters.estadoId ?? "").trim() ||
+          (isAdmin && String(filters.empresaId ?? "").trim())
+      ),
+    [filters, isAdmin]
+  );
+
   const loadData = async () => {
     setLoading(true);
     try {
+      const params = {
+        page,
+        size: pageSize,
+        ...(String(filters.username ?? "").trim()
+          ? { username: String(filters.username).trim() }
+          : {}),
+        ...(String(filters.nombre ?? "").trim()
+          ? { nombre: String(filters.nombre).trim() }
+          : {}),
+        ...(String(filters.apellido ?? "").trim()
+          ? { apellido: String(filters.apellido).trim() }
+          : {}),
+        ...(String(filters.rolId ?? "").trim()
+          ? { rolId: Number(filters.rolId) }
+          : {}),
+        ...(String(filters.estadoId ?? "").trim()
+          ? { estadoId: Number(filters.estadoId) }
+          : {}),
+        ...(!isAdmin && String(filters.empresaId ?? "").trim()
+          ? { empresaId: Number(filters.empresaId) }
+          : {}),
+      };
+
       // Registro 2026-06-10: la consulta respeta page/size del backend para que
       // el grid avance pagina por pagina sin cargar todo el listado a la vez.
-      const resp = await axios.get("/v1/usuarios", { params: { page, size: pageSize } });
+      const resp = await axios.get("/v1/usuarios", { params });
       const list = extractItems(resp);
       const totalElements = Number(resp?.data?.page?.totalElements ?? 0);
       // Registro 2026-06-10: el listado se unifica con GET /v1/usuarios y se mapea
@@ -343,7 +516,14 @@ export default function Usuario() {
 
   useEffect(() => {
     loadData();
-  }, [page, pageSize]);
+  }, [page, pageSize, filters, isAdmin]);
+
+  useEffect(() => {
+    const nextFilters = buildInitialFilters(isAdmin, empresaIdOwn);
+    setFilters(nextFilters);
+    setFilterDraft(nextFilters);
+    setPage(0);
+  }, [isAdmin, empresaIdOwn]);
 
   useEffect(() => {
     // combos
@@ -351,18 +531,21 @@ export default function Usuario() {
       axios.get("/v1/items/empresa/0"),
       axios.get("/v1/items/rol/0"),
       axios.get("/v1/items/tipo_identificacion/0"),
+      axios.get(isAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol"),
     ])
-      .then(([eRes, rRes, tRes]) => {
+      .then(([eRes, rRes, tRes, erRes]) => {
         setEmpresasList(extractItems(eRes));
         setRolesList(extractItems(rRes) || []);
         setTiposIdentificacionList(extractItems(tRes) || []);
+        setEmpresaRolesList(extractItems(erRes) || []);
       })
       .catch(() => {
         setEmpresasList([]);
         setRolesList([]);
+        setEmpresaRolesList([]);
         setTiposIdentificacionList([]);
       });
-  }, []);
+  }, [isAdmin]);
 
   const handlePaginationModelChange = (model) => {
     if (model.size !== pageSize) {
@@ -378,43 +561,136 @@ export default function Usuario() {
     setFormData(emptyRow);
     setOpenForm(true);
   };
-  const handleEdit = () => {
-    if (!selectedRow) return;
-    const assignmentRef = selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
 
-    if (!assignmentRef) {
-      setMessage({
-        open: true,
-        severity: "info",
-        text: t("usuario.messages.assignmentActionUnavailable"),
-      });
-      return;
-    }
+  const handleOpenFilters = () => {
+    setFilterDraft(filters);
+    setOpenFilters(true);
+  };
 
-    setFormMode("edit");
-    setFormData({
-      username: selectedRow.username,
-      rolId: assignmentRef?.rolId ?? "",
-      nombre: selectedRow.nombre ?? "",
-      apellido: selectedRow.apellido ?? "",
-      genero: selectedRow.raw?.genero ?? "",
-      tipoIdentificacionId:
-        selectedRow.raw?.tipoIdentificacionId ??
-        selectedRow.raw?.tipoDocumentoIdentidadId ??
-        "",
-      identificacion:
-        selectedRow.raw?.identificacion ?? selectedRow.raw?.codigoIdentificacion ?? "",
-      fechaNacimiento: selectedRow.raw?.fechaNacimiento ?? "",
-      estrato: selectedRow.raw?.estrato ?? "",
-      direccion: selectedRow.raw?.direccion ?? "",
-      celular: selectedRow.celular ?? selectedRow.raw?.celular ?? "",
-      emailPersonal: selectedRow.raw?.emailPersonal ?? "",
-      empresaId: assignmentRef?.empresaId ?? "",
-      empresaNombre: assignmentRef?.empresaNombre ?? "",
-      estadoId: selectedRow.estadoId ?? 1,
-      asignaciones: [],
+  const handleFilterDraftChange = (name, value) => {
+    setFilterDraft((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleApplyFilters = () => {
+    setFilters({
+      username: String(filterDraft.username ?? "").trim(),
+      nombre: String(filterDraft.nombre ?? "").trim(),
+      apellido: String(filterDraft.apellido ?? "").trim(),
+      rolId: String(filterDraft.rolId ?? "").trim(),
+      estadoId: String(filterDraft.estadoId ?? "").trim(),
+      empresaId: isAdmin
+        ? ""
+        : String(filterDraft.empresaId ?? filters.empresaId ?? empresaIdOwn ?? ""),
     });
-    setOpenForm(true);
+    setOpenFilters(false);
+    setPage(0);
+  };
+
+  const handleClearFilters = () => {
+    const nextFilters = buildInitialFilters(isAdmin, empresaIdOwn);
+    setFilters(nextFilters);
+    setFilterDraft(nextFilters);
+    setOpenFilters(false);
+    setPage(0);
+  };
+
+  const handleResetFilterDraft = () => {
+    setFilterDraft(buildInitialFilters(isAdmin, empresaIdOwn));
+  };
+
+  const handleEdit = async () => {
+    if (!selectedRow) return;
+
+    const requestId = selectedRow?.raw?.id ?? selectedRow?.id;
+    const roleById = new Map((rolesList || []).map((item) => [Number(item.id), item.nombre ?? item.name]));
+    const companyById = new Map((empresasList || []).map((item) => [Number(item.id), item.nombre ?? item.name]));
+
+    setFormLoading(true);
+
+    try {
+      // HU-037.4: consulta el detalle real para editar datos personales y
+      // asignaciones con el contrato unificado del usuario.
+      const resp = await axios.get(`/v1/usuarios/${requestId}`);
+      const payload = resp?.data ?? {};
+      const asignaciones = Array.isArray(payload.asignaciones) ? payload.asignaciones : [];
+      const preferredAssignment =
+        asignaciones.find(
+          (item) =>
+            Number(item?.usuarioRolId) === Number(payload?.rolPreferidoId) &&
+            Number(item?.empresaId) === Number(payload?.empresaPreferidaId)
+        ) ??
+        asignaciones.find((item) => Number(item?.usuarioRolId) === Number(payload?.rolPreferidoId)) ??
+        asignaciones.find(
+          (item) =>
+            Number(item?.rolId) === Number(payload?.rolPreferidoId) &&
+            Number(item?.empresaId) === Number(payload?.empresaPreferidaId)
+        ) ??
+        asignaciones[0] ??
+        null;
+
+      setFormMode("edit");
+      setFormData({
+        requestId,
+        username: payload?.username ?? selectedRow.username ?? "",
+        nombre: payload?.nombre ?? selectedRow.nombre ?? "",
+        apellido: payload?.apellido ?? selectedRow.apellido ?? "",
+        genero: normalizeGenderForForm(payload?.genero),
+        tipoIdentificacionId:
+          payload?.tipoIdentificacionId ??
+          payload?.tipoDocumentoIdentidadId ??
+          selectedRow.raw?.tipoIdentificacionId ??
+          "",
+        identificacion:
+          payload?.identificacion ??
+          selectedRow.raw?.identificacion ??
+          selectedRow.raw?.codigoIdentificacion ??
+          "",
+        fechaNacimiento: toDateInputValue(payload?.fechaNacimiento),
+        estrato: payload?.estrato != null ? String(payload.estrato) : "",
+        direccion: payload?.direccion ?? "",
+        celular: payload?.celular ?? "",
+        emailPersonal: payload?.emailPersonal ?? "",
+        rolPreferidoId: payload?.rolPreferidoId ?? preferredAssignment?.rolId ?? "",
+        empresaPreferidaId: payload?.empresaPreferidaId ?? preferredAssignment?.empresaId ?? "",
+        estadoId: payload?.estadoId ?? selectedRow.estadoId ?? 1,
+        asignaciones: asignaciones.map((item) => ({
+          usuarioRolId: item?.usuarioRolId ?? "",
+          empresaId: String(item?.empresaId ?? ""),
+          empresaNombre: companyById.get(Number(item?.empresaId)) ?? item?.empresaNombre ?? "",
+          rolId: String(item?.rolId ?? ""),
+          rolNombre: roleById.get(Number(item?.rolId)) ?? item?.rolNombre ?? "",
+          estadoId: Number(item?.estadoId ?? 1),
+          iniciaContratoEn: toDateInputValue(item?.fechaInicioContrato ?? item?.iniciaContratoEn),
+          finalizaContratoEn: toDateInputValue(item?.fechaFinContrato ?? item?.finalizaContratoEn),
+          fechaFinalizacionValida:
+            item?.fechaFinalizacionValida ??
+            !(
+              item?.fechaInicioContrato &&
+              item?.fechaFinContrato &&
+              new Date(item.fechaFinContrato) < new Date(item.fechaInicioContrato)
+            ),
+          preferido:
+            (Number(item?.usuarioRolId) === Number(payload?.rolPreferidoId) &&
+              Number(item?.empresaId) === Number(payload?.empresaPreferidaId)) ||
+            (Number(item?.rolId) === Number(payload?.rolPreferidoId) &&
+              Number(item?.empresaId) === Number(payload?.empresaPreferidaId)),
+        })),
+      });
+      setOpenForm(true);
+    } catch (err) {
+      const status = err?.response?.status;
+      const resolvedMessage =
+        err?.response?.data?.message ??
+        (status === 401 || status === 403
+          ? t("usuario.messages.updateAccessDenied")
+          : t("usuario.messages.detailLoadError"));
+      setMessage({ open: true, severity: "error", text: resolvedMessage });
+    } finally {
+      setFormLoading(false);
+    }
   };
   const handleView = () => {
     if (!selectedRow) return;
@@ -583,31 +859,71 @@ export default function Usuario() {
         }
         await axios.post("/v1/usuarios/registro", body);
       } else {
-        const assignmentRef =
-          selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
-        const assignId = assignmentRef?.usuarioRolId ?? selectedRow?.raw?.usuarioRolId;
+        const requestId =
+          payload.requestId ??
+          selectedRow?.raw?.id ??
+          selectedRow?.id;
+        const assignments = Array.isArray(payload.asignaciones) ? payload.asignaciones : [];
+        const preferredAssignment =
+          assignments.find((item) => Boolean(item?.preferido)) ??
+          assignments[0] ??
+          null;
 
-        if (!assignId) {
+        if (!requestId) {
           throw new Error("assignment-action-unavailable");
         }
 
-        if (assignId) {
-          const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
-          // Orden exacto del payload de asignación (mismo que POST)
-          const body = {};
-          body.usuarioId = selectedRow.raw.id ?? selectedRow.raw.usuarioId;
-          body.rolId = Number(payload.rolId ?? assignmentRef?.rolId);
-          body.estadoId = payload.estadoId ?? assignmentRef?.estadoId ?? selectedRow.raw.estadoId;
-          body.iniciaContratoEn =
-            payload.iniciaContratoEn ??
-            assignmentRef?.iniciaContratoEn ??
-            assignmentRef?.fechaInicioContrato;
-          body.finalizaContratoEn =
-            payload.finalizaContratoEn ??
-            assignmentRef?.finalizaContratoEn ??
-            assignmentRef?.fechaFinContrato;
-          await axios.put(`${base}/${assignId}`, body);
-        }
+        const body = {};
+        // HU-037.4: consolida en un solo PUT la información personal y todas
+        // las asignaciones del usuario con su rol/empresa preferidos.
+        body.username = payload.username?.trim();
+        body.tipoIdentificacionId = payload.tipoIdentificacionId
+          ? Number(payload.tipoIdentificacionId)
+          : null;
+        body.identificacion = payload.identificacion?.trim() ?? "";
+        body.nombre = payload.nombre?.trim() ?? "";
+        body.apellido = payload.apellido?.trim() ?? "";
+        body.emailPersonal = payload.emailPersonal?.trim() ?? "";
+        body.genero = serializeGenderForUpdate(payload.genero);
+        body.fechaNacimiento = payload.fechaNacimiento || null;
+        body.direccion = payload.direccion?.trim() ?? "";
+        body.celular = payload.celular?.trim() ?? "";
+        body.estrato =
+          payload.estrato === "" || payload.estrato == null
+            ? null
+            : Number(payload.estrato);
+        // Registro 2026-06-30: rolPreferidoId debe corresponder al rolId de la
+        // asignación marcada como preferida para validar este contrato.
+        body.rolPreferidoId = preferredAssignment?.rolId
+          ? Number(preferredAssignment.rolId)
+          : null;
+        body.empresaPreferidaId = preferredAssignment?.empresaId
+          ? Number(isAdmin ? preferredAssignment.empresaId : empresaIdOwn)
+          : null;
+        body.asignaciones = assignments.map((item) => {
+          const startValue = item.fechaInicioContrato ?? item.iniciaContratoEn;
+          const endValue = item.fechaFinContrato ?? item.finalizaContratoEn;
+          const hasValidEnd =
+            !startValue ||
+            !endValue ||
+            new Date(endValue) >= new Date(startValue);
+
+          return {
+            ...(item?.usuarioRolId
+              ? { usuarioRolId: Number(item.usuarioRolId) }
+              : {}),
+            empresaId: Number(isAdmin ? item.empresaId : empresaIdOwn),
+            rolId: Number(item.rolId),
+            estadoId: Number(item?.estadoId ?? 1),
+            // Registro 2026-06-30: el PUT replica la sintaxis del body de
+            // ejemplo usando timestamps UTC tipo 2023-01-01T00:00:00Z.
+            fechaInicioContrato: toUtcDateTime(startValue),
+            fechaFinContrato: toUtcDateTime(endValue),
+            fechaFinalizacionValida: Boolean(hasValidEnd),
+          };
+        });
+
+        await axios.put(`/v1/usuarios/${requestId}`, body);
       }
       setOpenForm(false);
       await loadData();
@@ -637,6 +953,9 @@ export default function Usuario() {
         onAdd={handleCreate}
         onUpdate={handleEdit}
         onDelete={handleDelete}
+        onFilters={handleOpenFilters}
+        onClearFilters={handleClearFilters}
+        hasActiveFilters={hasActiveFilters}
         canUpdate={Boolean(selectedRow)}
         canDelete={Boolean(selectedRow)}
         extraActions={
@@ -667,10 +986,12 @@ export default function Usuario() {
         open={openForm}
         onClose={() => setOpenForm(false)}
         mode={formMode}
+        loading={formLoading}
         initialData={formData}
         onSubmit={handleSubmit}
         roles={rolesList}
         empresas={empresasList}
+        empresaRoles={empresaRolesList}
         tiposIdentificacion={tiposIdentificacionList}
         isAdmin={isAdmin}
         sessionCompanyId={empresaIdOwn}
@@ -687,6 +1008,20 @@ export default function Usuario() {
           setDetail(null);
           setDetailError("");
         }}
+      />
+
+      <UserFiltersDialog
+        open={openFilters}
+        onClose={() => setOpenFilters(false)}
+        values={filterDraft}
+        onChange={handleFilterDraftChange}
+        onApply={handleApplyFilters}
+        onClear={handleResetFilterDraft}
+        roles={roleFilterOptions}
+        empresas={companyFilterOptions}
+        estados={statusFilterOptions}
+        isAdmin={isAdmin}
+        companyLocked={!isAdmin}
       />
 
       <MessageSnackBar message={message} setMessage={setMessage} />

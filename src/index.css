@@ -1,8 +1,9 @@
-/* Evita barra de desplazamiento horizontal en toda la app */
-html, body, #root {
-  max-width: 100%;
-  overflow-x: hidden;
+/* Evita saltos visuales cuando MUI bloquea el scroll del body al abrir modales. */
+html {
+  scrollbar-gutter: stable;
 }
+
+/* Evita barra de desplazamiento horizontal en toda la app */
 html, body, #root {
   max-width: 100%;
   overflow-x: hidden;

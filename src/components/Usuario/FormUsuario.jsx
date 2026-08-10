@@ -8,6 +8,7 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se rediseña el modal y se alinea a HU-037.1.  |
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se integra precarga por identificación.       |
+| 2026-06-30 | 0.4.0   | Cesar Medina         | Se ajusta el modal para HU-037.4.             |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -15,7 +16,7 @@ CONTROL DE CAMBIOS
  * @description Renderiza el formulario modal para registro y actualización de
  * usuarios, incluyendo datos personales y asignaciones de rol/empresa.
  */
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -23,6 +24,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -62,6 +64,28 @@ const emptyAssignment = {
   iniciaContratoEn: "",
   finalizaContratoEn: "",
   preferido: false,
+};
+
+const PHONE_MAX_LENGTH = 10;
+const IDENTIFICATION_MAX_LENGTH = 20;
+const ADDRESS_MAX_LENGTH = 120;
+const ADDRESS_REGEX =
+  /^(?=.*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])(?=.*\d)[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s#.,\-°/]+$/;
+
+const normalizeLookupKey = (value) =>
+  String(value ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const parseRolesByCompany = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem("rolesByCompany") || "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
 };
 
 const buildAssignmentDraft = (isAdmin, sessionCompanyId, sessionCompanyName) => ({
@@ -120,10 +144,12 @@ export default function FormUsuario({
   open,
   onClose,
   mode = "create",
+  loading = false,
   initialData,
   onSubmit,
   roles = [],
   empresas = [],
+  empresaRoles = [],
   tiposIdentificacion = [],
   isAdmin = false,
   sessionCompanyId = "",
@@ -150,8 +176,13 @@ export default function FormUsuario({
   const [assignmentErrors, setAssignmentErrors] = useState({});
   const [formAlert, setFormAlert] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [companyRolesLoading, setCompanyRolesLoading] = useState(false);
+  const [selectedCompanyRoles, setSelectedCompanyRoles] = useState(
+    Array.isArray(empresaRoles) ? empresaRoles : []
+  );
   const [existingPersonInfo, setExistingPersonInfo] = useState(null);
   const [lastLookupIdentification, setLastLookupIdentification] = useState("");
+  const latestCompanyRequestRef = useRef("");
 
   useEffect(() => {
     setFormData({
@@ -172,27 +203,185 @@ export default function FormUsuario({
     setAssignmentErrors({});
     setFormAlert("");
     setLookupLoading(false);
+    setCompanyRolesLoading(false);
+    setSelectedCompanyRoles(isAdmin ? [] : Array.isArray(empresaRoles) ? empresaRoles : []);
     setExistingPersonInfo(null);
     setLastLookupIdentification("");
-  }, [initialData, open, isAdmin, sessionCompanyId, sessionCompanyName]);
-
-  const rolesOptions = useMemo(
-    () =>
-      (Array.isArray(roles) ? roles : []).map((r) => ({
-        value: String(r.id),
-        label: r.nombre ?? r.name ?? String(r.id),
-      })),
-    [roles]
-  );
+  }, [initialData, open, isAdmin, sessionCompanyId, sessionCompanyName, empresaRoles]);
 
   const empresasOptions = useMemo(
     () =>
       (Array.isArray(empresas) ? empresas : []).map((e) => ({
         value: String(e.id),
-        label: e.nombre,
+        label: e.nombre ?? e.name ?? String(e.id),
       })),
     [empresas]
   );
+
+  const roleCatalogById = useMemo(
+    () =>
+      new Map(
+        (Array.isArray(roles) ? roles : []).map((role) => [
+          String(role.id),
+          {
+            value: String(role.id),
+            label: role.nombre ?? role.name ?? String(role.id),
+          },
+        ])
+      ),
+    [roles]
+  );
+
+  const roleCatalogByName = useMemo(
+    () => {
+      const aliases = new Map();
+
+      (Array.isArray(roles) ? roles : []).forEach((role) => {
+        const option = {
+          value: String(role.id),
+          label: role.nombre ?? role.name ?? String(role.id),
+        };
+
+        [
+          role.nombre,
+          role.name,
+          role.rolNombre,
+          role.descripcion,
+        ]
+          .map((alias) => normalizeLookupKey(alias))
+          .filter(Boolean)
+          .forEach((alias) => {
+            if (!aliases.has(alias)) {
+              aliases.set(alias, option);
+            }
+          });
+      });
+
+      return aliases;
+    },
+    [roles]
+  );
+
+  const selectedAssignmentCompanyId = useMemo(
+    () => (isAdmin ? String(assignDraft?.empresaId ?? "") : String(sessionCompanyId || "")),
+    [assignDraft?.empresaId, isAdmin, sessionCompanyId]
+  );
+
+  const loadCompanyRolesByCompanyId = async (companyId) => {
+    const normalizedCompanyId = String(companyId ?? "").trim();
+
+    if (!isAdmin) {
+      setSelectedCompanyRoles(Array.isArray(empresaRoles) ? empresaRoles : []);
+      setCompanyRolesLoading(false);
+      return;
+    }
+
+    latestCompanyRequestRef.current = normalizedCompanyId;
+
+    if (!normalizedCompanyId) {
+      setSelectedCompanyRoles([]);
+      setCompanyRolesLoading(false);
+      return;
+    }
+
+    setCompanyRolesLoading(true);
+
+    try {
+      const response = await axios.get("/v1/system/empresa-rol", {
+        params: { empresaId: Number(normalizedCompanyId) },
+      });
+
+      const resolvedRows = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.data?.content)
+          ? response.data.content
+          : [];
+      const matchingRows = resolvedRows.filter(
+        (item) => String(item?.empresaId ?? "") === normalizedCompanyId
+      );
+      const storageRows = parseRolesByCompany().filter(
+        (item) => String(item?.empresaId ?? "") === normalizedCompanyId
+      );
+      const rowsToUse = matchingRows.length > 0 ? matchingRows : storageRows;
+
+      if (latestCompanyRequestRef.current === normalizedCompanyId) {
+        setSelectedCompanyRoles(rowsToUse);
+      }
+    } catch {
+      const storageRows = parseRolesByCompany().filter(
+        (item) => String(item?.empresaId ?? "") === normalizedCompanyId
+      );
+
+      if (latestCompanyRequestRef.current === normalizedCompanyId) {
+        setSelectedCompanyRoles(storageRows);
+      }
+    } finally {
+      if (latestCompanyRequestRef.current === normalizedCompanyId) {
+        setCompanyRolesLoading(false);
+      }
+    }
+  };
+
+  const availableRolesOptions = useMemo(() => {
+    if (!selectedAssignmentCompanyId) return [];
+
+    const rows = isAdmin
+      ? Array.isArray(selectedCompanyRoles)
+        ? selectedCompanyRoles
+        : []
+      : Array.isArray(empresaRoles)
+        ? empresaRoles
+        : [];
+    const seen = new Set();
+    const options = [];
+
+    rows.forEach((item) => {
+      const companyId = String(item?.empresaId ?? (!isAdmin ? sessionCompanyId : "") ?? "");
+
+      if (companyId !== selectedAssignmentCompanyId) return;
+
+      const resolvedRole =
+        roleCatalogById.get(String(item?.rolId ?? "")) ??
+        roleCatalogByName.get(
+          normalizeLookupKey(
+            item?.rolNombre ?? item?.nombre ?? item?.name ?? item?.descripcion ?? ""
+          )
+        );
+
+      const fallbackRole =
+        resolvedRole ??
+        (item?.rolId || item?.rolNombre || item?.nombre || item?.name
+          ? {
+              value: String(item?.rolId ?? item?.rolNombre ?? item?.nombre ?? item?.name),
+              label: item?.nombre ?? item?.name ?? item?.rolNombre ?? String(item?.rolId ?? ""),
+            }
+          : null);
+
+      if (!fallbackRole || seen.has(fallbackRole.value)) return;
+
+      seen.add(fallbackRole.value);
+      options.push(fallbackRole);
+    });
+
+    return options;
+  }, [
+    empresaRoles,
+    isAdmin,
+    roleCatalogById,
+    roleCatalogByName,
+    selectedAssignmentCompanyId,
+    sessionCompanyId,
+  ]);
+
+  const roleFieldHelperText =
+    assignmentErrors.rolId ||
+    (companyRolesLoading
+      ? t("usuario.form.helpers.loadingCompanyRoles")
+      : isAdmin && !selectedAssignmentCompanyId
+      ? t("usuario.form.helpers.selectCompanyFirst")
+      : availableRolesOptions.length === 0
+        ? t("usuario.form.helpers.noRolesForCompany")
+        : "");
 
   const tiposIdentificacionOptions = useMemo(
     () =>
@@ -203,9 +392,49 @@ export default function FormUsuario({
     [tiposIdentificacion]
   );
 
+  const selectedIdentificationLabel = useMemo(() => {
+    return (
+      tiposIdentificacionOptions.find(
+        (item) => String(item.value) === String(formData?.tipoIdentificacionId ?? "")
+      )?.label ?? ""
+    );
+  }, [formData?.tipoIdentificacionId, tiposIdentificacionOptions]);
+
+  const requiresNumericIdentification = useMemo(() => {
+    const normalized = String(selectedIdentificationLabel ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    return /cedula|cedula de ciudadania|cedula de extranjeria|tarjeta|nit|identidad/.test(
+      normalized
+    );
+  }, [selectedIdentificationLabel]);
+
   const handleChange = (name, value) => {
+    let normalizedValue = value;
+
+    if (name === "celular") {
+      normalizedValue = String(value ?? "")
+        .replace(/\D/g, "")
+        .slice(0, PHONE_MAX_LENGTH);
+    }
+
+    if (name === "identificacion") {
+      const rawValue = String(value ?? "");
+      normalizedValue = requiresNumericIdentification
+        ? rawValue.replace(/\D/g, "").slice(0, IDENTIFICATION_MAX_LENGTH)
+        : rawValue.replace(/[^A-Za-z0-9-]/g, "").slice(0, IDENTIFICATION_MAX_LENGTH);
+    }
+
+    if (name === "direccion") {
+      normalizedValue = String(value ?? "")
+        .replace(/\s{2,}/g, " ")
+        .slice(0, ADDRESS_MAX_LENGTH);
+    }
+
     setFormData((prev) => {
-      const nextState = { ...prev, [name]: value };
+      const nextState = { ...prev, [name]: normalizedValue };
 
       if (
         isCreateMode &&
@@ -241,10 +470,46 @@ export default function FormUsuario({
   };
 
   const handleAssignChange = (name, value) => {
-    setAssignDraft((prev) => ({ ...prev, [name]: value }));
-    setAssignmentErrors((prev) => ({ ...prev, [name]: "" }));
+    if (name === "empresaId") {
+      loadCompanyRolesByCompanyId(value);
+    }
+
+    setAssignDraft((prev) => {
+      if (name === "empresaId") {
+        return {
+          ...prev,
+          empresaId: value,
+          rolId: "",
+          rolNombre: "",
+        };
+      }
+
+      return { ...prev, [name]: value };
+    });
+    setAssignmentErrors((prev) => ({
+      ...prev,
+      [name]: "",
+      ...(name === "empresaId" ? { rolId: "" } : {}),
+    }));
     setFormAlert("");
   };
+
+  useEffect(() => {
+    if (!assignDraft?.rolId) return;
+
+    const roleStillAvailable = availableRolesOptions.some(
+      (role) => String(role.value) === String(assignDraft.rolId)
+    );
+
+    if (roleStillAvailable) return;
+
+    setAssignDraft((prev) => ({
+      ...prev,
+      rolId: "",
+      rolNombre: "",
+    }));
+    setAssignmentErrors((prev) => ({ ...prev, rolId: "" }));
+  }, [assignDraft?.rolId, availableRolesOptions]);
 
   const validateForm = () => {
     const nextErrors = {};
@@ -252,6 +517,9 @@ export default function FormUsuario({
     const nombre = String(formData?.nombre ?? "").trim();
     const apellido = String(formData?.apellido ?? "").trim();
     const emailPersonal = String(formData?.emailPersonal ?? "").trim();
+    const identificacion = String(formData?.identificacion ?? "").trim();
+    const celular = String(formData?.celular ?? "").trim();
+    const direccion = String(formData?.direccion ?? "").trim();
 
     if (!username) nextErrors.username = t("usuario.form.validation.required");
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
@@ -263,6 +531,29 @@ export default function FormUsuario({
 
     if (emailPersonal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPersonal)) {
       nextErrors.emailPersonal = t("usuario.form.validation.invalidEmail");
+    }
+
+    if (identificacion) {
+      if (requiresNumericIdentification && !/^\d{5,20}$/.test(identificacion)) {
+        nextErrors.identificacion = t("usuario.form.validation.invalidNumericDocumentNumber");
+      } else if (!requiresNumericIdentification && !/^[A-Za-z0-9-]{5,20}$/.test(identificacion)) {
+        nextErrors.identificacion = t("usuario.form.validation.invalidDocumentNumber");
+      }
+    }
+
+    if (celular && !/^\d{10}$/.test(celular)) {
+      nextErrors.celular = t("usuario.form.validation.invalidPhone");
+    }
+
+    if (direccion) {
+      const normalizedAddress = direccion.replace(/\s+/g, " ").trim();
+      if (
+        normalizedAddress.length < 8 ||
+        normalizedAddress.length > ADDRESS_MAX_LENGTH ||
+        !ADDRESS_REGEX.test(normalizedAddress)
+      ) {
+        nextErrors.direccion = t("usuario.form.validation.invalidAddress");
+      }
     }
 
     if (
@@ -509,76 +800,98 @@ export default function FormUsuario({
           backgroundColor: dialogSurface,
         }}
       >
-        <Stack
-          spacing={3}
-          sx={{
-            width: "100%",
-            maxWidth: contentMaxWidth,
-            mx: "auto",
-            mt: 1.5,
-          }}
-        >
-          <Card
-            elevation={0}
+        {/* HU-037.4: muestra un estado de carga mientras se consulta el detalle
+            completo del usuario antes de habilitar la edición. */}
+        {loading ? (
+          <Box sx={{ py: 6 }}>
+            <Stack spacing={2} alignItems="center" justifyContent="center">
+              <CircularProgress />
+              <Typography color="text.secondary">
+                {t("usuario.form.messages.loadingEdit")}
+              </Typography>
+            </Stack>
+          </Box>
+        ) : (
+          <Stack
+            spacing={3}
             sx={{
-              borderRadius: 2,
-              border: `1px solid ${subtleBorder}`,
-              boxShadow: sectionShadow,
-              backgroundColor: summarySurface,
-            }}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-              <Stack spacing={1}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: darkGreen }}>
-                  {t("usuario.form.summaryTitle")}
-                </Typography>
-                <Typography variant="body2" sx={{ color: darkGreen }}>
-                  {t("usuario.form.summaryDescription")}
-                </Typography>
-                {isCreateMode && !isAdmin ? (
-                  <Alert
-                    severity="info"
-                    sx={{
-                      mt: 1,
-                      borderRadius: 2,
-                      backgroundColor: alpha(theme.palette.info.main, 0.08),
-                    }}
-                  >
-                    {t("usuario.form.messages.autoCompanyAssigned", {
-                      company: sessionCompanyName || t("usuario.form.messages.currentCompany"),
-                    })}
-                  </Alert>
-                ) : null}
-                {formAlert ? (
-                  <Alert
-                    severity={
-                      existingPersonInfo?.existeUsuario
-                        ? "info"
-                        : formAlert === t("usuario.form.messages.personNotFound")
-                          ? "success"
-                          : "warning"
-                    }
-                    sx={{ mt: 1, borderRadius: 2 }}
-                  >
-                    {formAlert}
-                  </Alert>
-                ) : null}
-              </Stack>
-            </CardContent>
-          </Card>
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                lg: "minmax(0, 1.45fr) minmax(0, 1fr)",
-              },
-              gap: 3,
-              alignItems: "start",
               width: "100%",
+              maxWidth: contentMaxWidth,
+              mx: "auto",
+              mt: 1.5,
             }}
           >
+            <Card
+              elevation={0}
+              sx={{
+                borderRadius: 2,
+                border: `1px solid ${subtleBorder}`,
+                boxShadow: sectionShadow,
+                backgroundColor: summarySurface,
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                <Stack spacing={1}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: darkGreen }}>
+                    {isCreateMode
+                      ? t("usuario.form.summaryTitle")
+                      : t("usuario.form.editSummaryTitle")}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: darkGreen }}>
+                    {isCreateMode
+                      ? t("usuario.form.summaryDescription")
+                      : t("usuario.form.editSummaryDescription")}
+                  </Typography>
+                  {!isAdmin ? (
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mt: 1,
+                        borderRadius: 2,
+                        backgroundColor: alpha(theme.palette.info.main, 0.08),
+                      }}
+                    >
+                      {t(
+                        isCreateMode
+                          ? "usuario.form.messages.autoCompanyAssigned"
+                          : "usuario.form.messages.companyRestricted",
+                        {
+                          company:
+                            sessionCompanyName || t("usuario.form.messages.currentCompany"),
+                        }
+                      )}
+                    </Alert>
+                  ) : null}
+                  {formAlert ? (
+                    <Alert
+                      severity={
+                        existingPersonInfo?.existeUsuario
+                          ? "info"
+                          : formAlert === t("usuario.form.messages.personNotFound")
+                            ? "success"
+                            : "warning"
+                      }
+                      sx={{ mt: 1, borderRadius: 2 }}
+                    >
+                      {formAlert}
+                    </Alert>
+                  ) : null}
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  lg: "minmax(0, 1.45fr) minmax(0, 1fr)",
+                },
+                gap: 3,
+                alignItems: "start",
+                width: "100%",
+              }}
+            >
             <Box sx={{ minWidth: 0 }}>
               <Card
                 sx={{
@@ -730,12 +1043,18 @@ export default function FormUsuario({
                           onChange={(e) => handleChange("identificacion", e.target.value)}
                           onBlur={lookupPersonByIdentification}
                           fullWidth
+                          error={Boolean(errors.identificacion)}
                           helperText={
-                            lookupLoading
+                            errors.identificacion ||
+                            (lookupLoading
                               ? t("usuario.form.helpers.lookupLoading")
-                              : ""
+                              : "")
                           }
                           InputLabelProps={{ shrink: true }}
+                          inputProps={{
+                            inputMode: requiresNumericIdentification ? "numeric" : "text",
+                            maxLength: IDENTIFICATION_MAX_LENGTH,
+                          }}
                           InputProps={{
                             startAdornment: (
                               <BadgeOutlinedIcon
@@ -770,7 +1089,14 @@ export default function FormUsuario({
                           value={formData?.celular ?? ""}
                           onChange={(e) => handleChange("celular", e.target.value)}
                           fullWidth
+                          error={Boolean(errors.celular)}
+                          helperText={errors.celular}
                           InputLabelProps={{ shrink: true }}
+                          inputProps={{
+                            inputMode: "numeric",
+                            pattern: "[0-9]*",
+                            maxLength: PHONE_MAX_LENGTH,
+                          }}
                           InputProps={{
                             startAdornment: (
                               <PhoneOutlinedIcon
@@ -787,7 +1113,12 @@ export default function FormUsuario({
                           value={formData?.direccion ?? ""}
                           onChange={(e) => handleChange("direccion", e.target.value)}
                           fullWidth
+                          error={Boolean(errors.direccion)}
+                          helperText={errors.direccion}
                           InputLabelProps={{ shrink: true }}
+                          inputProps={{
+                            maxLength: ADDRESS_MAX_LENGTH,
+                          }}
                           InputProps={{
                             startAdornment: (
                               <HomeOutlinedIcon
@@ -824,27 +1155,8 @@ export default function FormUsuario({
 
                       <TextField
                         select
-                        label={t("usuario.form.fields.role")}
-                        value={assignDraft.rolId}
-                        onChange={(e) => handleAssignChange("rolId", e.target.value)}
-                        fullWidth
-                        required
-                        error={Boolean(assignmentErrors.rolId)}
-                        helperText={assignmentErrors.rolId}
-                        InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {rolesOptions.map((role) => (
-                          <MenuItem key={role.value} value={role.value}>
-                            {role.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-
-                      <TextField
-                        select
                         label={t("usuario.form.fields.company")}
-                        value={isAdmin ? assignDraft.empresaId : String(sessionCompanyId || "")}
+                        value={selectedAssignmentCompanyId}
                         onChange={(e) => handleAssignChange("empresaId", e.target.value)}
                         fullWidth
                         required={isAdmin}
@@ -865,6 +1177,30 @@ export default function FormUsuario({
                         {empresasOptions.map((company) => (
                           <MenuItem key={company.value} value={company.value}>
                             {company.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+
+                      <TextField
+                        select
+                        label={t("usuario.form.fields.role")}
+                        value={assignDraft.rolId}
+                        onChange={(e) => handleAssignChange("rolId", e.target.value)}
+                        fullWidth
+                        required
+                        disabled={
+                          !selectedAssignmentCompanyId ||
+                          companyRolesLoading ||
+                          availableRolesOptions.length === 0
+                        }
+                        error={Boolean(assignmentErrors.rolId)}
+                        helperText={roleFieldHelperText}
+                        InputLabelProps={{ shrink: true }}
+                      >
+                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
+                        {availableRolesOptions.map((role) => (
+                          <MenuItem key={role.value} value={role.value}>
+                            {role.label}
                           </MenuItem>
                         ))}
                       </TextField>
@@ -963,13 +1299,14 @@ export default function FormUsuario({
                             >
                               <CardContent sx={{ py: 1.75 }}>
                                 <Stack spacing={1.25}>
-                                  <Stack
-                                    direction={{ xs: "column", md: "row" }}
-                                    spacing={1.5}
-                                    alignItems={{ xs: "flex-start", md: "center" }}
-                                    justifyContent="space-between"
-                                  >
-                                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                  <Stack spacing={1.25} sx={{ width: "100%", minWidth: 0 }}>
+                                    <Stack
+                                      direction="row"
+                                      spacing={1}
+                                      useFlexGap
+                                      flexWrap="wrap"
+                                      sx={{ minWidth: 0, flex: 1 }}
+                                    >
                                       <Chip
                                         icon={<WorkOutlineOutlinedIcon />}
                                         label={`${t("common.labels.role")}: ${
@@ -977,11 +1314,15 @@ export default function FormUsuario({
                                         }`}
                                         size="small"
                                         sx={{
+                                          maxWidth: "100%",
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
                                               ? alpha("#2b6b60", 0.26)
                                               : "#dfeae6",
+                                          "& .MuiChip-label": {
+                                            display: "block",
+                                          },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
                                       />
@@ -992,11 +1333,15 @@ export default function FormUsuario({
                                         }`}
                                         size="small"
                                         sx={{
+                                          maxWidth: "100%",
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
                                               ? alpha("#2b6b60", 0.26)
                                               : "#dfeae6",
+                                          "& .MuiChip-label": {
+                                            display: "block",
+                                          },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
                                       />
@@ -1012,8 +1357,19 @@ export default function FormUsuario({
                                         />
                                       ) : null}
                                     </Stack>
-                                    <Stack direction="row" spacing={1}>
+                                    <Stack
+                                      direction="row"
+                                      spacing={1}
+                                      useFlexGap
+                                      flexWrap="wrap"
+                                      sx={{
+                                        width: "100%",
+                                        justifyContent: "flex-start",
+                                        alignItems: "center",
+                                      }}
+                                    >
                                       <FormControlLabel
+                                        sx={{ m: 0 }}
                                         control={
                                           <Switch
                                             checked={Boolean(assignment.preferido)}
@@ -1026,6 +1382,7 @@ export default function FormUsuario({
                                         color="error"
                                         onClick={() => removeAssign(idx)}
                                         startIcon={<DeleteOutlineIcon />}
+                                        sx={{ whiteSpace: "nowrap" }}
                                       >
                                         {t("common.actions.delete")}
                                       </Button>
@@ -1070,8 +1427,9 @@ export default function FormUsuario({
                 </Card>
               </Stack>
             </Box>
-          </Box>
-        </Stack>
+            </Box>
+          </Stack>
+        )}
       </DialogContent>
 
       <DialogActions
@@ -1096,6 +1454,7 @@ export default function FormUsuario({
           <Button
             variant="contained"
             onClick={handleSave}
+            disabled={loading}
             sx={{
               minWidth: 120,
               fontWeight: 700,

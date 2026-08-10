@@ -18,7 +18,8 @@
     "createSuccess": "Usuario registrado correctamente.",
     "updateSuccess": "Usuario actualizado correctamente.",
     "detailLoadError": "No fue posible cargar el detalle del usuario.",
-    "detailAccessDenied": "No tienes permisos para consultar el detalle de este usuario."
+    "detailAccessDenied": "No tienes permisos para consultar el detalle de este usuario.",
+    "updateAccessDenied": "No tienes permisos para actualizar este usuario."
   },
   "detail": {
     "title": "Detalle de usuario",
@@ -36,11 +37,21 @@
     "contractStart": "Fecha inicio contrato",
     "contractEnd": "Fecha fin contrato"
   },
+  "filters": {
+    "title": "Filtrar usuarios",
+    "description": "Acota el listado de usuarios utilizando los criterios disponibles.",
+    "sections": {
+      "main": "Criterios de búsqueda",
+      "mainDescription": "Puedes filtrar por correo electrónico, nombre, apellido, rol, estado y empresa."
+    }
+  },
   "form": {
     "createTitle": "Registrar usuario",
     "editTitle": "Actualizar usuario",
     "summaryTitle": "Registro de usuario",
     "summaryDescription": "Completa los datos personales y agrega una o varias asignaciones para definir el acceso del usuario en el sistema.",
+    "editSummaryTitle": "Actualización de usuario",
+    "editSummaryDescription": "Actualiza la información personal y ajusta las asignaciones del usuario para mantener sus datos vigentes.",
     "sections": {
       "personalInformation": "Información personal",
       "personalInformationDescription": "Registra los datos base del usuario para su creación en el sistema.",
@@ -52,7 +63,9 @@
     "messages": {
       "autoCompanyAssigned": "La empresa se asignará automáticamente con la sesión actual: {{company}}.",
       "currentCompany": "Empresa actual",
+      "loadingEdit": "Cargando información del usuario...",
       "assignmentRequired": "Debes agregar al menos una asignación antes de guardar.",
+      "companyRestricted": "La empresa está restringida a la sesión actual: {{company}}.",
       "existingPersonLoaded": "La persona ya existe en el sistema. Se precargaron los datos personales y el username quedó bloqueado para evitar duplicidad.",
       "personLoaded": "Se encontraron datos previos para la identificación ingresada y fueron precargados en el formulario.",
       "personNotFound": "No se encontraron datos previos para esta identificación. Puedes continuar con el registro manual."
@@ -61,7 +74,10 @@
       "optional": "Opcional",
       "autoAssignedCompany": "Empresa asignada automáticamente: {{company}}.",
       "existingUsernameLocked": "El username no puede modificarse porque la persona ya tiene usuario registrado.",
-      "lookupLoading": "Consultando datos por identificación..."
+      "lookupLoading": "Consultando datos por identificación...",
+      "loadingCompanyRoles": "Consultando los roles disponibles para la empresa seleccionada...",
+      "selectCompanyFirst": "Selecciona primero una empresa para consultar los roles disponibles.",
+      "noRolesForCompany": "No hay roles disponibles para la empresa seleccionada."
     },
     "actions": {
       "register": "Registrar"
@@ -73,6 +89,10 @@
     "validation": {
       "required": "Este campo es obligatorio.",
       "invalidEmail": "Ingresa un correo electrónico válido.",
+      "invalidNumericDocumentNumber": "Este tipo de documento solo admite números y debe tener entre 5 y 20 dígitos.",
+      "invalidDocumentNumber": "Ingresa un código de identificación válido.",
+      "invalidPhone": "Ingresa un celular válido de 10 dígitos.",
+      "invalidAddress": "Ingresa una dirección válida con letras y números, por ejemplo Calle 123 # 45-67.",
       "assignmentRequired": "Debes agregar al menos una asignación.",
       "roleRequired": "Debes seleccionar un rol.",
       "companyRequired": "Debes seleccionar una empresa.",
