@@ -38,7 +38,7 @@
     "@mui/x-date-pickers": "^7.9.0",
     "axios": "^1.7.3",
     "cors": "^2.8.5",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.6.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "fast-glob": "^3.3.3",
