@@ -1,0 +1,73 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-test-lint:
+    name: Install → Build → Test → Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      # ──────────────────────────────────────────────
+      # 1. Checkout
+      # ──────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ──────────────────────────────────────────────
+      # 2. Setup Node
+      # ──────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # ──────────────────────────────────────────────
+      # 3. Instalación limpia
+      # ──────────────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ──────────────────────────────────────────────
+      # 4. Build (equivalente a "arranca" en frontend)
+      # ──────────────────────────────────────────────
+      - name: Build
+        run: npm run build
+
+      # ──────────────────────────────────────────────
+      # 5. Tests — solo si existe el script "test"
+      # ──────────────────────────────────────────────
+      - name: Detect test script
+        id: has_test
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✓ npm test script found"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠ No npm test script — skipping"
+          fi
+
+      - name: Run tests
+        if: steps.has_test.outputs.exists == 'true'
+        run: npm test
+
+      # ──────────────────────────────────────────────
+      # 6. Lint — no bloquea, solo advertencia
+      # ──────────────────────────────────────────────
+      - name: Detect lint script
+        id: has_lint
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Lint
+        if: steps.has_lint.outputs.exists == 'true'
+        continue-on-error: true
+        run: npm run lint
