@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 
 const env = globalThis.process?.env ?? {};
 
-export const BACKEND_URI = env.VITE_BACKEND_URI;
+export const BACKEND_URI = env.VITE_BACKEND_URI || 'http://localhost:8080';
 export const E2E_BASE_URL = env.E2E_BASE_URL;
 
 export const ADMIN_EMAIL = env.E2E_ADMIN_EMAIL;
