@@ -5,7 +5,6 @@ import {
   clickActionButton,
   getActiveDialog,
   clickDialogButton,
-  expectSnackMessage,
   fillDialogField,
   selectDialogOptionByLabel,
   ensureGridColumnVisible,

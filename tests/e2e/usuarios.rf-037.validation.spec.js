@@ -41,7 +41,7 @@ test.describe('RF-037 - Gestión de Usuarios (validaciones y errores)', () => {
 
     // Crear primer usuario
     await clickActionButton(page, 'AGREGAR');
-    let dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
     await fillDialogField(page, 'username', username1);
     await fillDialogField(page, 'nombre', nombreA);
     await fillDialogField(page, 'apellido', 'E2E');
@@ -59,7 +59,7 @@ test.describe('RF-037 - Gestión de Usuarios (validaciones y errores)', () => {
 
     // Crear segundo usuario con mismo username
     await clickActionButton(page, 'AGREGAR');
-    dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
     await fillDialogField(page, 'username', username1);
     await fillDialogField(page, 'nombre', nombreB);
     await fillDialogField(page, 'apellido', 'E2E');

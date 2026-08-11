@@ -10,8 +10,6 @@ import {
   clickDialogButton,
   fillDialogField,
   selectDialogOptionByLabel,
-  ensureGridColumnVisible,
-  findGridCellInColumnAcrossPages,
   NOADMIN_EMAIL,
   NOADMIN_PASSWORD,
 } from './helpers/e2e.shared.utils';

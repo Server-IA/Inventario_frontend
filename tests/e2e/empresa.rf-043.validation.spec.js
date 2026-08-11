@@ -8,7 +8,6 @@ import {
   getActiveDialog,
   clickDialogButton,
   fillDialogField,
-  selectDialogOptionByLabel,
   NOADMIN_EMAIL,
   NOADMIN_PASSWORD,
 } from './helpers/e2e.shared.utils';
@@ -35,7 +34,7 @@ test.describe('RF-043 - Gestión de Empresas (validaciones y errores)', () => {
 
   test('Validación: campos requeridos vacíos muestran error', async ({ page }) => {
     await clickActionButton(page, 'AGREGAR');
-    const dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
 
     // Intentar guardar sin llenar nada
     await clickDialogButton(page, 'Guardar');
@@ -55,7 +54,7 @@ test.describe('RF-043 - Gestión de Empresas (validaciones y errores)', () => {
 
     // Primera empresa
     await clickActionButton(page, 'AGREGAR');
-    let dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
     await fillDialogField(page, 'nombre', nombre1);
     await fillDialogField(page, 'correo', emailDuplicado);
 
@@ -72,7 +71,7 @@ test.describe('RF-043 - Gestión de Empresas (validaciones y errores)', () => {
 
     // Segunda empresa con mismo email
     await clickActionButton(page, 'AGREGAR');
-    dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
     await fillDialogField(page, 'nombre', nombre2);
     await fillDialogField(page, 'correo', emailDuplicado);
 
@@ -109,7 +108,7 @@ test.describe('RF-043 - Gestión de Empresas (validaciones y errores)', () => {
 
     // Primera empresa
     await clickActionButton(page, 'AGREGAR');
-    let dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
     await fillDialogField(page, 'nombre', nombre1);
     await fillDialogField(page, 'correo', `e2e.dupida.${unique}@test.com`);
 
@@ -126,7 +125,7 @@ test.describe('RF-043 - Gestión de Empresas (validaciones y errores)', () => {
 
     // Segunda empresa con misma identificación
     await clickActionButton(page, 'AGREGAR');
-    dialog = await getActiveDialog(page);
+    await getActiveDialog(page);
     await fillDialogField(page, 'nombre', nombre2);
     await fillDialogField(page, 'correo', `e2e.dupidb.${unique}@test.com`);
     await fillDialogField(page, 'identificacion', identificacion);

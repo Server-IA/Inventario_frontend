@@ -10,12 +10,12 @@
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import { test, expect } from '@playwright/test';
-import { authenticateByApi } from './helpers/e2e.shared.utils';
+import { authenticateByApi, ADMIN_EMAIL, ADMIN_PASSWORD } from './helpers/e2e.shared.utils';
 
 test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
 
   test('Test Búsqueda de Reporte de Vencimiento de Producto', async ({ page, request }) => {
-    await authenticateByApi(page, request, process.env.TEST_USERNAME, process.env.TEST_PASSWORD, 'RE_pv');
+    await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_pv');
     await page.goto('/');
 
     // Verify the page loaded the correct report

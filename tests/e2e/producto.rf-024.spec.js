@@ -6,14 +6,11 @@ import {
   clickActionButton,
   getActiveDialog,
   clickDialogButton,
-  expectSnackMessage,
   fillDialogField,
   selectDialogOptionByLabel,
   ensureGridColumnVisible,
   findGridCellInColumnAcrossPages,
   getGridColumnIndex,
-  goToGridFirstPage,
-  goToNextGridPage,
 } from './helpers/e2e.shared.utils';
 
 const TEST_PRODUCT_PREFIX = 'E2E Producto';
