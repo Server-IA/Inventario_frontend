@@ -16,5 +16,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: "/coagronet",
+    test: {
+      environment: "jsdom",
+      globals: true,
+      setupFiles: ["./src/test-setup.js"],
+    },
   };
 });
