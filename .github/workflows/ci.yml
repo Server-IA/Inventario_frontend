@@ -3,6 +3,8 @@ name: Frontend CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [ci/cd-pipelines]
 
 jobs:
   # ──────────────────────────────────────────────────
