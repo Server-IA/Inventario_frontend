@@ -7,6 +7,13 @@
  +------------+---------+----------------------+-----------------------------+
  |    Fecha   | Versión |       Autor          | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-08-12 | 0.4.1   | Oscar Andrade        | Fix cross-tenant y auditoría|
+ |            |         |                      | - Eliminado @TenantId para  |
+ |            |         |                      |   permitir consulta de roles|
+ |            |         |                      |   de otras empresas.        |
+ |            |         |                      | - createdBy/updatedBy de    |
+ |            |         |                      |   @Column a @ManyToOne.     |
+ +------------+---------+----------------------+-----------------------------+
  | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Reemplazo del tipo de dato  |
  |            |         |                      | OffsetDateTime por Instant  |
  |            |         |                      | en los atributos de         |
@@ -21,7 +28,6 @@ package com.coagronet.empresarol;
 
 import java.time.Instant;
 
-import org.hibernate.annotations.TenantId;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -73,10 +79,6 @@ public class EmpresaRol {
     @JoinColumn(name = "empresa_id", nullable = false, foreignKey = @ForeignKey(name = "fk_empresa_rol_empresa"))
     private Empresa empresa;
 
-    @TenantId
-    @Column(name = "empresa_id", insertable = false, updatable = false)
-    private Long tenantEmpresaId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "rol_id", nullable = false, foreignKey = @ForeignKey(name = "fk_empresa_rol_rol"))
     private Rol rol;
@@ -94,11 +96,13 @@ public class EmpresaRol {
     private Instant updatedAt;
 
     @CreatedBy
-    @Column(name = "created_by", length = 150)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "usu_id", updatable = false, foreignKey = @ForeignKey(name = "fk_empresa_rol_created_by"))
     private User createdBy;
 
     @LastModifiedBy
-    @Column(name = "updated_by", length = 150)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by", referencedColumnName = "usu_id", foreignKey = @ForeignKey(name = "fk_empresa_rol_updated_by"))
     private User updatedBy;
 
 }
