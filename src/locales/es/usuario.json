@@ -10,11 +10,17 @@
     "company": "Empresa"
   },
   "messages": {
+    "activateSuccess": "Usuario activado correctamente.",
+    "inactivateSuccess": "Usuario inactivado correctamente.",
+    "confirmActivate": "¿Seguro que deseas activar este usuario nuevamente?",
     "confirmInactivate": "¿Seguro que deseas inactivar este usuario? Debe permanecer visible.",
+    "cannotActivate": "No se pudo activar el usuario.",
     "cannotInactivate": "No se pudo inactivar",
     "loadError": "Error cargando usuarios",
     "listAccessDenied": "No tienes permisos para consultar el listado de usuarios.",
     "assignmentActionUnavailable": "La acción requiere datos de asignación que no vienen en el listado actual.",
+    "statusActionRestrictedByRole": "Solo un Administrador del Sistema puede activar o inactivar usuarios desde este módulo.",
+    "statusActionRestrictedByCompany": "No puedes activar o inactivar usuarios que no pertenezcan a tu empresa.",
     "createSuccess": "Usuario registrado correctamente.",
     "updateSuccess": "Usuario actualizado correctamente.",
     "detailLoadError": "No fue posible cargar el detalle del usuario.",
@@ -44,6 +50,10 @@
       "main": "Criterios de búsqueda",
       "mainDescription": "Puedes filtrar por correo electrónico, nombre, apellido, rol, estado y empresa."
     }
+  },
+  "actions": {
+    "activate": "Activar",
+    "inactivate": "Inactivar"
   },
   "form": {
     "createTitle": "Registrar usuario",

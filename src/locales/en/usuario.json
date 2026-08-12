@@ -10,11 +10,17 @@
     "company": "Company"
   },
   "messages": {
+    "activateSuccess": "User activated successfully.",
+    "inactivateSuccess": "User inactivated successfully.",
+    "confirmActivate": "Are you sure you want to activate this user again?",
     "confirmInactivate": "Are you sure you want to inactivate this user? It must remain visible.",
+    "cannotActivate": "The user could not be activated.",
     "cannotInactivate": "User could not be inactivated",
     "loadError": "Error loading users",
     "listAccessDenied": "You do not have permission to view the user list.",
     "assignmentActionUnavailable": "This action requires assignment data not available in the current list response.",
+    "statusActionRestrictedByRole": "Only a System Administrator can activate or inactivate users from this module.",
+    "statusActionRestrictedByCompany": "You cannot activate or inactivate users that do not belong to your company.",
     "createSuccess": "User created successfully.",
     "updateSuccess": "User updated successfully.",
     "detailLoadError": "The user detail could not be loaded.",
@@ -44,6 +50,10 @@
       "main": "Search criteria",
       "mainDescription": "You can filter by email address, first name, last name, role, status, and company."
     }
+  },
+  "actions": {
+    "activate": "Activate",
+    "inactivate": "Inactivate"
   },
   "form": {
     "createTitle": "Register user",

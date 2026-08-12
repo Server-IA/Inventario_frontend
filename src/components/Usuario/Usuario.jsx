@@ -19,6 +19,8 @@ CONTROL DE CAMBIOS
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se alinea rolPreferidoId al rol preferido.    |
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se omite usuarioRolId en asignaciones nuevas. |
 | 2026-08-10 | 0.4.0   | Cesar Medina         | Se integra filtro de usuarios.                |
+| 2026-08-12 | 0.4.0   | Cesar Medina         | Se integra activación e inactivación HU-037.5.|
+| 2026-08-12 | 0.4.0   | Cesar Medina         | Se corrige permiso HU-037.5 para admin sistema|
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -94,6 +96,26 @@ const parseRolesByCompany = () => {
 };
 
 /**
+ * Decodifica el payload del token activo sin dependencias externas.
+ *
+ * @returns {object}
+ */
+const parseSessionTokenPayload = () => {
+  try {
+    const token = localStorage.getItem("token") || "";
+    const [, raw] = token.split(".");
+    if (!raw) return {};
+
+    const normalized = raw.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = normalized.length % 4 === 2 ? "==" : normalized.length % 4 === 3 ? "=" : "";
+
+    return JSON.parse(atob(normalized + padding));
+  } catch {
+    return {};
+  }
+};
+
+/**
  * Resuelve el nombre del rol actual tomando en cuenta el contexto de empresa.
  *
  * @returns {string}
@@ -102,12 +124,31 @@ const resolveCurrentRoleName = () => {
   const empresaId = Number(localStorage.getItem("empresaId"));
   const rolId = Number(localStorage.getItem("rolId"));
   const rolesByCompany = parseRolesByCompany();
+  const tokenPayload = parseSessionTokenPayload();
 
   const byContext = rolesByCompany.find(
     (item) => Number(item?.empresaId) === empresaId && Number(item?.rolId) === rolId
   );
 
-  return byContext?.rolNombre || localStorage.getItem("rolNombre") || "";
+  const byRoleId = rolesByCompany.find((item) => Number(item?.rolId) === rolId);
+  const tokenRoles = [
+    tokenPayload?.rolNombre,
+    tokenPayload?.role,
+    tokenPayload?.authorities,
+    tokenPayload?.roles,
+  ]
+    .flat()
+    .filter(Boolean)
+    .map((item) => String(item).trim());
+
+  return (
+    byContext?.rolNombre ||
+    localStorage.getItem("rolNombre") ||
+    byRoleId?.rolNombre ||
+    tokenRoles.find((item) => SYSTEM_ROLE_REGEX.test(item)) ||
+    tokenRoles[0] ||
+    ""
+  );
 };
 
 /**
@@ -187,11 +228,15 @@ const normalizeStatusId = (value) => {
   }
 
   if (
+    value === 0 ||
+    value === "0" ||
     value === 2 ||
     value === "2" ||
     normalized === "inactivo" ||
     normalized === "inactive" ||
-    normalized === "inactiva"
+    normalized === "inactiva" ||
+    normalized === "desactivado" ||
+    normalized === "disabled"
   ) {
     return 2;
   }
@@ -344,8 +389,6 @@ export default function Usuario() {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
-  const [, setInactivatedCache] = useState([]);
-
   const currentRoleName = resolveCurrentRoleName();
   const isAdmin = SYSTEM_ROLE_REGEX.test(currentRoleName);
   const empresaIdOwn = Number(localStorage.getItem("empresaId"));
@@ -444,6 +487,18 @@ export default function Usuario() {
     [filters, isAdmin]
   );
 
+  const selectedRowStatusId = normalizeStatusId(
+    selectedRow?.raw?.estadoNombre ??
+      selectedRow?.estadoNombre ??
+      selectedRow?.raw?.estadoId ??
+      selectedRow?.estadoId
+  );
+  const selectedRowIsInactive = selectedRowStatusId === 2;
+  const canToggleUserStatus = Boolean(selectedRow) && isAdmin;
+  const deleteActionLabel = selectedRowIsInactive
+    ? t("usuario.actions.activate")
+    : t("usuario.actions.inactivate");
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -489,7 +544,7 @@ export default function Usuario() {
           rolPreferido: getPreferredRoleLabel(a),
           estadoNombre: a.estadoNombre ?? "",
           empresaNombre: getCompanyLabel(a),
-          estadoId: normalizeStatusId(a.estadoId),
+        estadoId: normalizeStatusId(a.estadoNombre ?? a.estadoId),
           preferredAssignment,
           raw: a,
         };
@@ -746,70 +801,58 @@ export default function Usuario() {
   };
   const handleDelete = async () => {
     if (!selectedRow) return;
-    const assignmentRef = selectedRow?.preferredAssignment ?? getPreferredAssignment(selectedRow?.raw);
-    const assignId = assignmentRef?.usuarioRolId ?? selectedRow?.raw?.usuarioRolId;
 
-    if (!assignId) {
+    // HU-037.5: la acción solo depende del rol de Administrador del Sistema;
+    // no se restringe por la empresa en contexto.
+    if (!isAdmin) {
       setMessage({
         open: true,
-        severity: "info",
-        text: t("usuario.messages.assignmentActionUnavailable"),
+        severity: "warning",
+        text: t("usuario.messages.statusActionRestrictedByRole"),
       });
       return;
     }
 
-    const ok = window.confirm(t("usuario.messages.confirmInactivate"));
+    const requestId = selectedRow?.raw?.id ?? selectedRow?.id;
+    const activating =
+      normalizeStatusId(
+        selectedRow?.raw?.estadoNombre ??
+          selectedRow?.estadoNombre ??
+          selectedRow?.raw?.estadoId ??
+          selectedRow?.estadoId
+      ) === 2;
+    const ok = window.confirm(
+      activating
+        ? t("usuario.messages.confirmActivate")
+        : t("usuario.messages.confirmInactivate")
+    );
     if (!ok) return;
-    const base = isAdmin ? "/v1/system/usuario-roles" : "/v1/usuario-roles";
+
     try {
-      // intento toggle (si existe)
-      try {
-        const params = isAdmin ? { params: { empresaId: empresaIdOwn } } : undefined;
-        await axios.patch(`${base}/${assignId}/toggle-estado`, null, params);
-        const ghost = { ...selectedRow, estadoId: 2 };
-        setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: 2 } : r));
-        setInactivatedCache((prev) => {
-          const map = new Map((prev || []).map((x) => [x.id, x]));
-          map.set(ghost.id, ghost);
-          return Array.from(map.values());
-        });
-        setSelectedRow(null);
-        return;
-      } catch (e) {
-        if (e?.response?.status && e.response.status !== 404) throw e;
+      if (activating) {
+        await axios.post(`/v1/usuarios/${requestId}/activar`);
+      } else {
+        await axios.delete(`/v1/usuarios/${requestId}`);
       }
-      // intento PUT forzando estado inactivo
-      try {
-        await axios.put(`${base}/${assignId}`, {
-          id: assignId,
-          usuarioId: selectedRow.raw.id ?? selectedRow.raw.usuarioId,
-          rolId: assignmentRef?.rolId,
-          estadoId: 2,
-        });
-        const ghost = { ...selectedRow, estadoId: 2 };
-        setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: 2 } : r));
-        setInactivatedCache((prev) => {
-          const map = new Map((prev || []).map((x) => [x.id, x]));
-          map.set(ghost.id, ghost);
-          return Array.from(map.values());
-        });
-        setSelectedRow(null);
-        return;
-      } catch (e) {
-        // continúa a DELETE si no permite
-      }
-      // DELETE lógico
-      await axios.delete(`${base}/${assignId}`);
-      const ghost = { ...selectedRow, estadoId: 2 };
-      setRows((prev) => (Array.isArray(prev) ? prev : []).map((r) => r.id === selectedRow.id ? { ...r, estadoId: 2 } : r));
-      setInactivatedCache((prev) => {
-        const map = new Map((prev || []).map((x) => [x.id, x]));
-        map.set(ghost.id, ghost);
-        return Array.from(map.values());
+
+      await loadData();
+      setMessage({
+        open: true,
+        severity: "success",
+        text: activating
+          ? t("usuario.messages.activateSuccess")
+          : t("usuario.messages.inactivateSuccess"),
       });
-      setSelectedRow(null);
     } catch (err) {
-      setMessage({ open: true, severity: "error", text: err.response?.data?.message ?? t("usuario.messages.cannotInactivate") });
+      setMessage({
+        open: true,
+        severity: "error",
+        text:
+          err?.response?.data?.message ??
+          (activating
+            ? t("usuario.messages.cannotActivate")
+            : t("usuario.messages.cannotInactivate")),
+      });
     }
   };
 
@@ -957,7 +1000,8 @@ export default function Usuario() {
         onClearFilters={handleClearFilters}
         hasActiveFilters={hasActiveFilters}
         canUpdate={Boolean(selectedRow)}
-        canDelete={Boolean(selectedRow)}
+        canDelete={canToggleUserStatus}
+        labels={{ delete: deleteActionLabel }}
         extraActions={
           <Button
             onClick={handleView}
