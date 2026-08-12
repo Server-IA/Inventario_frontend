@@ -1,3 +1,14 @@
+/*=============================================================================
+ Nombre del archivo : useUbicacionFilters.js
+ Descripcion        : Hook unificado para carga y manejo de filtros de ubicación.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-28 | 1.0.0   | Jeisson Sanchez      | Integración reportes (Kardex, PV, Pedidos) |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 // src/components/useUbicacionFilters.js
 import { useEffect, useState } from "react";
 import axios from "../components/axiosConfig";
@@ -67,6 +78,7 @@ export default function useUbicacionFilters({
   headers = {},
   autoselectSingle = true,
   initialForm = {},
+  reportType = null,
 } = {}) {
   /* ---------- Ubicación (cascada) ---------- */
   const [form, setForm] = useState({
@@ -90,6 +102,81 @@ export default function useUbicacionFilters({
     almacenes: [],
   });
 
+  const [rawPaises, setRawPaises] = useState([]);
+  const [rawDepartamentos, setRawDepartamentos] = useState([]);
+  const [rawMunicipios, setRawMunicipios] = useState([]);
+  const [rawSedes, setRawSedes] = useState([]);
+  const [rawBloques, setRawBloques] = useState([]);
+  const [rawEspacios, setRawEspacios] = useState([]);
+  const [rawAlmacenes, setRawAlmacenes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [preloadData, setPreloadData] = useState(null);
+  const [useV2Cascade, setUseV2Cascade] = useState(!!reportType);
+
+  const fetchV1Countries = async () => {
+    try {
+      const res = await axios.get("/v1/pais", headers);
+      setData((d) => ({ ...d, paises: asArray(res.data) }));
+    } catch {
+      setData((d) => ({ ...d, paises: [] }));
+    }
+  };
+
+  const fetchInitialData = async () => {
+    if (!reportType) return;
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await axios.get(`/v2/report/${reportType}/filtros`, headers);
+      const d = res.data;
+      setPreloadData(d);
+      const p = asArray(d?.paises);
+      if (p.length > 0) {
+        setUseV2Cascade(true);
+        setRawPaises(p);
+        setRawDepartamentos(asArray(d?.departamentos));
+        setRawMunicipios(asArray(d?.municipios));
+        setRawSedes(asArray(d?.sedes));
+        setRawBloques(asArray(d?.bloques));
+        setRawEspacios(asArray(d?.espacios));
+        setRawAlmacenes(asArray(d?.almacenes));
+
+        // Apply seleccionInicial from the API to the form so filters are pre-populated
+        const si = d?.seleccionInicial;
+        if (si) {
+          setForm(f => ({
+            ...f,
+            pais_id:        si.paisId        ? String(si.paisId)        : f.pais_id,
+            departamento_id: si.departamentoId ? String(si.departamentoId) : f.departamento_id,
+            municipio_id:   si.municipioId   ? String(si.municipioId)   : f.municipio_id,
+            sede_id:        si.sedeId        ? String(si.sedeId)        : f.sede_id,
+            bloque_id:      si.bloqueId      ? String(si.bloqueId)      : f.bloque_id,
+            espacio_id:     si.espacioId     ? String(si.espacioId)     : f.espacio_id,
+            almacen_id:     si.almacenId     ? String(si.almacenId)     : f.almacen_id,
+          }));
+        }
+      } else {
+        setUseV2Cascade(false);
+        fetchV1Countries();
+      }
+      setLoading(false);
+    } catch {
+      setError(true);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (reportType) {
+      fetchInitialData();
+    } else {
+      setUseV2Cascade(false);
+      fetchV1Countries();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportType]);
+
   const limpiarCamposDesde = (campo) => {
     const orden = [
       "pais_id",
@@ -111,11 +198,29 @@ export default function useUbicacionFilters({
 
   const handleChange = (field) => (e) => {
     const value = e?.target ? e.target.value : e;
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((f) => {
+      const next = { ...f, [field]: value };
+      const orden = [
+        "pais_id",
+        "departamento_id",
+        "municipio_id",
+        "sede_id",
+        "bloque_id",
+        "espacio_id",
+        "almacen_id",
+      ];
+      const i = orden.indexOf(field);
+      if (i !== -1) {
+        // Clear all downstream fields when a parent changes
+        for (const c of orden.slice(i + 1)) next[c] = "";
+      }
+      return next;
+    });
   };
 
-  // Países
+  // Países (V1 fallback)
   useEffect(() => {
+    if (useV2Cascade) return;
     let mounted = true;
     (async () => {
       try {
@@ -130,10 +235,11 @@ export default function useUbicacionFilters({
       mounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [useV2Cascade]);
 
   // País -> Departamentos
   useEffect(() => {
+    if (useV2Cascade) return;
     if (!form.pais_id) {
       setData((d) => ({
         ...d,
@@ -163,10 +269,11 @@ export default function useUbicacionFilters({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.pais_id]);
+  }, [form.pais_id, useV2Cascade]);
 
   // Depto -> Municipios
   useEffect(() => {
+    if (useV2Cascade) return;
     if (!form.departamento_id) {
       setData((d) => ({
         ...d,
@@ -195,10 +302,11 @@ export default function useUbicacionFilters({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.departamento_id]);
+  }, [form.departamento_id, useV2Cascade]);
 
-  // Municipio -> Sedes (filtra por empresa cuando la data lo permite)
+  // Municipio -> Sedes
   useEffect(() => {
+    if (useV2Cascade) return;
     if (!form.municipio_id) {
       setData((d) => ({
         ...d,
@@ -237,10 +345,11 @@ export default function useUbicacionFilters({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.municipio_id, empresaId]);
+  }, [form.municipio_id, empresaId, useV2Cascade]);
 
   // Sede -> Bloques
   useEffect(() => {
+    if (useV2Cascade) return;
     if (!form.sede_id) {
       setData((d) => ({ ...d, bloques: [], espacios: [], almacenes: [] }));
       return;
@@ -262,10 +371,11 @@ export default function useUbicacionFilters({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.sede_id]);
+  }, [form.sede_id, useV2Cascade]);
 
   // Bloque -> Espacios
   useEffect(() => {
+    if (useV2Cascade) return;
     if (!form.bloque_id) {
       setData((d) => ({ ...d, espacios: [], almacenes: [] }));
       return;
@@ -287,10 +397,11 @@ export default function useUbicacionFilters({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.bloque_id]);
+  }, [form.bloque_id, useV2Cascade]);
 
   // Espacio -> Almacenes
   useEffect(() => {
+    if (useV2Cascade) return;
     if (!form.espacio_id) {
       setData((d) => ({ ...d, almacenes: [] }));
       return;
@@ -312,7 +423,97 @@ export default function useUbicacionFilters({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.espacio_id]);
+  }, [form.espacio_id, useV2Cascade]);
+
+  /* ---------- LOCAL CASCADING FOR V2 REPORTS ---------- */
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    setData((d) => ({ ...d, paises: rawPaises }));
+  }, [rawPaises, useV2Cascade]);
+
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    if (!form.pais_id) {
+      setData((d) => ({ ...d, departamentos: [], municipios: [], sedes: [], bloques: [], espacios: [], almacenes: [] }));
+      return;
+    }
+    const filtered = rawDepartamentos.filter(it => String(it.padreId) === String(form.pais_id));
+    setData((d) => ({ ...d, departamentos: filtered }));
+    if (autoselectSingle && filtered.length === 1) {
+      setForm((f) => ({ ...f, departamento_id: String(filtered[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.pais_id, rawDepartamentos, useV2Cascade]);
+
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    if (!form.departamento_id) {
+      setData((d) => ({ ...d, municipios: [], sedes: [], bloques: [], espacios: [], almacenes: [] }));
+      return;
+    }
+    const filtered = rawMunicipios.filter(it => String(it.padreId) === String(form.departamento_id));
+    setData((d) => ({ ...d, municipios: filtered }));
+    if (autoselectSingle && filtered.length === 1) {
+      setForm((f) => ({ ...f, municipio_id: String(filtered[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.departamento_id, rawMunicipios, useV2Cascade]);
+
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    if (!form.municipio_id) {
+      setData((d) => ({ ...d, sedes: [], bloques: [], espacios: [], almacenes: [] }));
+      return;
+    }
+    const filtered = rawSedes.filter(it => String(it.padreId) === String(form.municipio_id));
+    setData((d) => ({ ...d, sedes: filtered }));
+    if (autoselectSingle && filtered.length === 1) {
+      setForm((f) => ({ ...f, sede_id: String(filtered[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.municipio_id, rawSedes, useV2Cascade]);
+
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    if (!form.sede_id) {
+      setData((d) => ({ ...d, bloques: [], espacios: [], almacenes: [] }));
+      return;
+    }
+    const filtered = rawBloques.filter(it => String(it.padreId) === String(form.sede_id));
+    setData((d) => ({ ...d, bloques: filtered }));
+    if (autoselectSingle && filtered.length === 1) {
+      setForm((f) => ({ ...f, bloque_id: String(filtered[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.sede_id, rawBloques, useV2Cascade]);
+
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    if (!form.bloque_id) {
+      setData((d) => ({ ...d, espacios: [], almacenes: [] }));
+      return;
+    }
+    const filtered = rawEspacios.filter(it => String(it.padreId) === String(form.bloque_id));
+    setData((d) => ({ ...d, espacios: filtered }));
+    if (autoselectSingle && filtered.length === 1) {
+      setForm((f) => ({ ...f, espacio_id: String(filtered[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.bloque_id, rawEspacios, useV2Cascade]);
+
+  useEffect(() => {
+    if (!useV2Cascade) return;
+    if (!form.espacio_id) {
+      setData((d) => ({ ...d, almacenes: [] }));
+      return;
+    }
+    const filtered = rawAlmacenes.filter(it => String(it.padreId) === String(form.espacio_id));
+    setData((d) => ({ ...d, almacenes: filtered }));
+    if (autoselectSingle && filtered.length === 1) {
+      setForm((f) => ({ ...f, almacen_id: String(filtered[0].id) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.espacio_id, rawAlmacenes, useV2Cascade]);
 
   const resetTodo = () => {
     setForm({
@@ -372,6 +573,10 @@ export default function useUbicacionFilters({
     handleChange,
     limpiarCamposDesde,
     resetTodo,
+    loading,
+    error,
+    preloadData,
+    fetchInitialData,
 
     // pedido (4 campos + listas)
     pedido,

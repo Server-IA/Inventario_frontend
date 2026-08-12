@@ -97,6 +97,13 @@ export default function AppDataGrid({
   rightActions,
   containerSx,
   onEscape,
+  slots,
+  slotProps,
+  checkboxSelection = false,
+  rowSelectionModel,
+  onRowSelectionModelChange,
+  disableRowSelectionOnClick,
+  hideFooterSelectedRowCount = true,
 }) {
   const theme = useTheme();
   const { t, i18n } = useTranslation();
@@ -394,6 +401,15 @@ export default function AppDataGrid({
     }
   };
 
+  const resolvedSlots = slots ?? (quickFilter ? { toolbar: Toolbar } : undefined);
+  const resolvedDisableRowSelectionOnClick =
+    typeof disableRowSelectionOnClick === "boolean"
+      ? disableRowSelectionOnClick
+      : !selectOnClick;
+  const internalRowSelectionModel =
+    rowSelectionModel ??
+    (selectOnClick && (selectedRow && getRowId ? [getRowId(selectedRow)] : selectedRow?.id ? [selectedRow.id] : []));
+
   return (
     <Paper sx={{ p: 0, width: "100%", maxWidth: "100%", overflowX: "auto", borderRadius: 6, boxShadow: paperShadow, bgcolor: "transparent", ...containerSx }}>
       {(leftActions || rightActions) && (
@@ -422,7 +438,9 @@ export default function AppDataGrid({
         getRowId={getRowId}
         loading={loading}
         autoHeight={autoHeight}
-        hideFooterSelectedRowCount
+        pageSizeOptions={pageSizeOptions}
+        hideFooterSelectedRowCount={hideFooterSelectedRowCount}
+        checkboxSelection={checkboxSelection}
         paginationMode={serverPagination ? "server" : "client"}
         {...(serverPagination
           ? {
@@ -440,23 +458,21 @@ export default function AppDataGrid({
               rowCount,
             }
           : {
-              pageSizeOptions,
               initialState: {
                 pagination: { paginationModel: { page: 0, pageSize: pageSizeOptions[0] ?? 5 } },
               },
             })}
         onRowClick={selectOnClick ? (params) => setSelectedRow?.(params.row) : undefined}
-        rowSelectionModel={
-          selectOnClick && (selectedRow && getRowId ? [getRowId(selectedRow)] : selectedRow?.id ? [selectedRow.id] : [])
-        }
+        rowSelectionModel={internalRowSelectionModel}
         onRowSelectionModelChange={(selection) => {
-          if (!selectOnClick) return;
+          onRowSelectionModelChange?.(selection);
+          if (!selectOnClick || onRowSelectionModelChange) return;
           const id = Array.isArray(selection) && selection.length ? selection[0] : null;
           if (id == null) {
             setSelectedRow?.(null);
             return;
           }
-          const row = (Array.isArray(rows) ? rows : []).find((r) => getRowId ? getRowId(r) === id : r?.id === id) || null;
+          const row = (Array.isArray(rows) ? rows : []).find((r) => (getRowId ? getRowId(r) === id : r?.id === id)) || null;
           setSelectedRow?.(row);
         }}
         disableRowSelectionOnClick={!selectOnClick}
@@ -499,4 +515,11 @@ AppDataGrid.propTypes = {
   rightActions: PropTypes.node,
   containerSx: PropTypes.object,
   onEscape: PropTypes.func,
+  slots: PropTypes.object,
+  slotProps: PropTypes.object,
+  checkboxSelection: PropTypes.bool,
+  rowSelectionModel: PropTypes.array,
+  onRowSelectionModelChange: PropTypes.func,
+  disableRowSelectionOnClick: PropTypes.bool,
+  hideFooterSelectedRowCount: PropTypes.bool,
 };

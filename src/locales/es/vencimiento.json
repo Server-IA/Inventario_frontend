@@ -1,0 +1,74 @@
+{
+  "title": "Reporte de Vencimiento de Producto",
+  "sections": {
+    "location": "Ubicación",
+    "productData": "Producto / Estado",
+    "time": "Fechas de Vencimiento"
+  },
+  "filters": {
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio",
+    "headquarters": "Sede",
+    "block": "Bloque",
+    "space": "Espacio",
+    "warehouse": "Almacén",
+    "category": "Categoría",
+    "product": "Producto",
+    "presentation": "Presentación",
+    "status": "Estado",
+    "quickSelect": "Selección rápida",
+    "customRange": "Rango personalizado",
+    "selectDates": "Seleccionar fechas",
+    "startDate": "Fecha Inicio",
+    "endDate": "Fecha Fin",
+    "quick": {
+      "hoy": "Hoy",
+      "dias7": "Próximos 7 días",
+      "dias15": "Próximos 15 días",
+      "mes": "Próximo mes"
+    }
+  },
+  "statusOptions": {
+    "vencido": "Vencido",
+    "proximo": "Próximo a vencer",
+    "todos": "Todos"
+  },
+  "columns": {
+    "productName": "Nombre del Producto",
+    "status": "Estado",
+    "expirationDate": "Fecha de Vencimiento"
+  },
+  "actions": {
+    "generate": "Generar Reporte"
+  },
+  "messages": {
+    "catalogsError": "No se pudieron cargar los catálogos.",
+    "loaded": "Datos de productos cargados.",
+    "endpointError": "No se encontró el endpoint (404).",
+    "searchError": "No fue posible cargar productos.",
+    "emptyDates": "El rango de fechas es obligatorio.",
+    "invalidDateRange": "La fecha de inicio no puede ser mayor que la fecha fin.",
+    "noResults": "Mostrando {{count}} producto(s).",
+    "noResultsEmpty": "No hay productos que cumplan los criterios seleccionados.",
+    "noLocation": "Debe seleccionar al menos un nivel de ubicación (Sede o Almacén).",
+    "excelSuccess": "Excel descargado correctamente.",
+    "pdfSuccess": "PDF generado correctamente.",
+    "exportError": "No se pudo generar el reporte."
+  },
+  "modal": {
+    "exportTitle": "Generar Reporte de Vencimientos",
+    "exporting": "Generando documento, por favor espere...",
+    "exportSub": "Seleccione el formato en el que desea descargar su reporte.",
+    "previewTitle": "Vista previa del Reporte"
+  },
+  "grid": {
+    "title": "Productos encontrados",
+    "id": "ID",
+    "nombre": "Producto",
+    "sede": "Sede",
+    "almacen": "Almacén",
+    "fechaVencimiento": "Fecha Vencimiento",
+    "cantidad": "Cantidad"
+  }
+}

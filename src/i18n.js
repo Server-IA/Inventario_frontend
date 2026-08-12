@@ -8,6 +8,10 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Traducciones geográficas.   |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-26 | 0.4.0   | Jeisson Sanchez      | Traducciones Kardex.        |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
  * @module i18n
@@ -22,11 +26,15 @@ import esAuth from "./locales/es/auth.json";
 import esUsuario from "./locales/es/usuario.json";
 import esAlmacen from "./locales/es/almacen.json";
 import esEmpresaRol from "./locales/es/empresaRol.json";
+import esLocalizacionGeografica from "./locales/es/localizacionGeografica.json";
+import esVencimiento from "./locales/es/vencimiento.json";
 import enCommon from "./locales/en/common.json";
 import enAuth from "./locales/en/auth.json";
 import enUsuario from "./locales/en/usuario.json";
 import enAlmacen from "./locales/en/almacen.json";
 import enEmpresaRol from "./locales/en/empresaRol.json";
+import enLocalizacionGeografica from "./locales/en/localizacionGeografica.json";
+import enVencimiento from "./locales/en/vencimiento.json";
 
 const normalizeLanguage = (language) =>
   String(language || "")
@@ -55,6 +63,8 @@ i18n
           usuario: esUsuario,
           almacen: esAlmacen,
           empresaRol: esEmpresaRol,
+          localizacionGeografica: esLocalizacionGeografica,
+          vencimiento: esVencimiento,
         },
       },
       en: {
@@ -64,6 +74,8 @@ i18n
           usuario: enUsuario,
           almacen: enAlmacen,
           empresaRol: enEmpresaRol,
+          localizacionGeografica: enLocalizacionGeografica,
+          vencimiento: enVencimiento,
         },
       },
     },

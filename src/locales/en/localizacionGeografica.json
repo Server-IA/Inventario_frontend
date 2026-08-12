@@ -1,0 +1,44 @@
+{
+  "menuTitle": "Geographic Location",
+  "title": "Geographic Location Management",
+  "columns": {
+    "code": "Code",
+    "name": "Name",
+    "acronym": "Acronym",
+    "status": "Status"
+  },
+  "actions": {
+    "activate": "Activate",
+    "inactivate": "Inactivate",
+    "viewMunicipalities": "View municipalities",
+    "filter": "Filter"
+  },
+  "labels": {
+    "country": "Country",
+    "inactiveSuffix": "[Inactive]"
+  },
+  "forms": {
+    "countryCreate": "Create Country",
+    "countryUpdate": "Update Country",
+    "departmentCreate": "Create Department",
+    "departmentUpdate": "Update Department",
+    "municipalityCreate": "Create Municipality",
+    "municipalityUpdate": "Update Municipality",
+    "municipalitiesTitle": "Municipalities - {{country}} > {{department}}",
+    "filterTitle": "Filter",
+    "fields": {
+      "name": "Name",
+      "code": "Code",
+      "acronym": "Acronym",
+      "status": "Status"
+    }
+  },
+  "confirm": {
+    "title": "Activate/Inactivate {{type}}",
+    "message": "Are you sure you want to {{action}} this record?",
+    "impactIntro": "This action will affect the following related records:",
+    "notShown": "They will not appear in system selectors.",
+    "departmentsAffected": "{{count}} departments will become inactive",
+    "municipalitiesAffected": "{{count}} municipalities will become inactive"
+  }
+}
