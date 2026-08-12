@@ -19,19 +19,19 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
-  Paper, Divider, Popover, LinearProgress, Chip
+  IconButton, Paper, Popover, LinearProgress, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, Divider
 } from "@mui/material";
 import {
-  Close as CloseIcon,
   Search as SearchIcon,
-  Download as DownloadIcon,
-  PictureAsPdf as PdfIcon,
-  TableView as ExcelIcon,
   CalendarToday as CalendarIcon,
   Refresh as RefreshIcon,
   Warning as WarningIcon,
-  ErrorOutline as ErrorOutlineIcon
+  ErrorOutline as ErrorOutlineIcon,
+  Close as CloseIcon,
+  Download as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableView as ExcelIcon
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -102,7 +102,7 @@ export default function RE_productoVencimiento() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData: fetchFiltrosIniciales,
+    fetchFiltrosIniciales: fetchFiltrosIniciales,
     preloadData,
     loading: catLoading,
     error: catError,
@@ -166,7 +166,6 @@ export default function RE_productoVencimiento() {
   const [resultados, setResultados] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
-  const [errors, setErrors] = useState({ fechas_rango: false });
 
   // Date Popover
   const [anchorElDate, setAnchorElDate] = useState(null);
@@ -222,7 +221,6 @@ export default function RE_productoVencimiento() {
   };
 
   const validarFiltros = () => {
-    setErrors({ fechas_rango: false });
     
     // Validar ubicación mínima (Sede o Almacén)
     if (!ubi.sede_id && !ubi.almacen_id) {
@@ -237,21 +235,13 @@ export default function RE_productoVencimiento() {
     const ini = new Date(formReporte.fecha_inicio);
     const fin = new Date(formReporte.fecha_fin);
     if (ini > fin) {
-      setErrors({ fechas_rango: true });
       setMessage({ open: true, severity: "warning", text: t("vencimiento.messages.invalidDateRange", "La fecha de inicio no puede ser mayor que la fecha fin.") });
       return false;
     }
     return true;
   };
 
-  const calculateStatus = (fechaVencimiento) => {
-    if (!fechaVencimiento) return null;
-    const venc = new Date(fechaVencimiento);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    venc.setHours(0, 0, 0, 0);
-    return venc <= hoy ? "vencido" : "proximo";
-  };
+
 
   const buscar = async () => {
     setResultados([]);
@@ -295,9 +285,11 @@ export default function RE_productoVencimiento() {
     }
   };
 
-  const [exporting, setExporting] = useState(false);
+
+
   const [modalExportOpen, setModalExportOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const generarReporte = async (formato) => {
@@ -384,9 +376,7 @@ export default function RE_productoVencimiento() {
   };
   const titleStyles = { fontWeight: 600, mb: 2, color: isDark ? "#e7f6f7" : "#173f39", display: "flex", alignItems: "center", gap: 1 };
 
-  const productosFiltrados = productos;
 
-  const presentacionesFiltradas = presentaciones;
 
   return (
     <Box sx={{ width: "100%", p: { xs: 2, md: 4 }, color: "text.primary" }}>
@@ -403,7 +393,7 @@ export default function RE_productoVencimiento() {
               {t("vencimiento.sections.location", "Ubicación")}
               {ubiLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
               {ubiError && (
-                <IconButton size="small" onClick={fetchInitialData} color="error" title={t("common.actions.retry", "Reintentar")}>
+                <IconButton size="small" onClick={fetchFiltrosIniciales} color="error" title={t("common.actions.retry", "Reintentar")}>
                   <RefreshIcon fontSize="small"/>
                 </IconButton>
               )}
@@ -502,7 +492,7 @@ export default function RE_productoVencimiento() {
                   <InputLabel>{t("vencimiento.filters.product", "Producto")}</InputLabel>
                   <Select value={filtrosProd.producto_id || ""} label={t("vencimiento.filters.product", "Producto")} onChange={handleProdChange("producto_id")}>
                     <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                    {productosFiltrados.map(p => <MenuItem key={p.id} value={String(p.id)}>{p.nombre ?? p.name}</MenuItem>)}
+                    {productos.map(p => <MenuItem key={p.id} value={String(p.id)}>{p.nombre ?? p.name}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Grid>
@@ -511,7 +501,7 @@ export default function RE_productoVencimiento() {
                   <InputLabel>{t("vencimiento.filters.presentation", "Presentación")}</InputLabel>
                   <Select value={filtrosProd.presentacion_id || ""} label={t("vencimiento.filters.presentation", "Presentación")} onChange={handleProdChange("presentacion_id")}>
                     <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                    {presentacionesFiltradas.map(p => <MenuItem key={p.id} value={String(p.id)}>{p.nombre ?? p.name}</MenuItem>)}
+                    {presentaciones.map(p => <MenuItem key={p.id} value={String(p.id)}>{p.nombre ?? p.name}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Grid>
@@ -647,7 +637,7 @@ export default function RE_productoVencimiento() {
           loading={loadingSearch} 
           containerSx={{ minHeight: 200 }} 
           autoHeight={true}
-          getRowId={(row) => row.kardexItemId ?? row.id ?? Math.random()}
+          getRowId={(row) => row.kardexItemId ?? row.id}
         />
       </Box>
 
