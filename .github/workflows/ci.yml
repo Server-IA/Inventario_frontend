@@ -81,7 +81,9 @@ jobs:
         run: npm install
 
       - name: Build (apuntando a back desplegado)
-        run: npm run build
+        run: |
+          npm run build
+          ln -sf . dist/coagronet
         env:
           VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
 
