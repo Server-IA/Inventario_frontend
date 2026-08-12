@@ -5,41 +5,29 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  # ──────────────────────────────────────────────────
+  # Job 1: Unit tests + Build + Lint
+  # ──────────────────────────────────────────────────
   build-test-lint:
     name: Install → Build → Test → Lint
     runs-on: ubuntu-latest
 
     steps:
-      # ──────────────────────────────────────────────
-      # 1. Checkout
-      # ──────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ──────────────────────────────────────────────
-      # 2. Setup Node
-      # ──────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
 
-      # ──────────────────────────────────────────────
-      # 3. Instalar dependencias
-      # ──────────────────────────────────────────────
       - name: Install dependencies
         run: npm install
 
-      # ──────────────────────────────────────────────
-      # 4. Build (equivalente a "arranca" en frontend)
-      # ──────────────────────────────────────────────
       - name: Build
         run: npm run build
 
-      # ──────────────────────────────────────────────
-      # 5. Tests — solo si existe el script "test"
-      # ──────────────────────────────────────────────
       - name: Detect test script
         id: has_test
         run: |
@@ -55,9 +43,6 @@ jobs:
         if: steps.has_test.outputs.exists == 'true'
         run: npm test
 
-      # ──────────────────────────────────────────────
-      # 6. Lint — no bloquea, solo advertencia
-      # ──────────────────────────────────────────────
       - name: Detect lint script
         id: has_lint
         run: |
@@ -71,3 +56,57 @@ jobs:
         if: steps.has_lint.outputs.exists == 'true'
         continue-on-error: true
         run: npm run lint
+
+  # ──────────────────────────────────────────────────
+  # Job 2: E2E Playwright (frontend local → back desplegado)
+  # ──────────────────────────────────────────────────
+  e2e:
+    name: E2E Playwright
+    needs: build-test-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build (apuntando a back desplegado)
+        run: npm run build
+        env:
+          VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Start frontend (serve)
+        run: npx serve -s dist -l 5173 &
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 20); do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/coagronet/ | grep -q 200 && break
+            sleep 1
+          done
+
+      - name: Run E2E tests
+        env:
+          VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
+          E2E_BASE_URL: http://localhost:5173/coagronet
+          E2E_WEB_SERVER_URL: http://localhost:5173
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_COMPANY_CONTEXT_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_NAME }}
+          E2E_COMPANY_CONTEXT_ROLE_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_ROLE_NAME }}
+        run: npx playwright test --reporter=line --timeout=45000
+
+      - name: Stop serve
+        if: always()
+        run: kill $(lsof -t -i:5173) 2>/dev/null || true
