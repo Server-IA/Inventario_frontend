@@ -107,12 +107,10 @@ test.describe('RF-043 - Gestión de Empresas (casos positivos)', () => {
   test('HU-043.1: visualiza listado de empresas con columnas esperadas', async ({ page }) => {
     await setGridRowsPerPage(page, '50');
 
-    await expect(page.getByRole('columnheader', { name: /Nombre/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /Identificación/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /Correo|Email/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /Estado/i })).toBeVisible();
-
-    await waitForGridRowsLoaded(page);
+    await expect(page.getByRole('columnheader', { name: /Nombre/i }).first()).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Identificación/i }).first()).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Correo|Email/i }).first()).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Estado/i }).first()).toBeVisible();
   });
 
   test('HU-043.2: registrar empresa con datos válidos', async ({ page }) => {

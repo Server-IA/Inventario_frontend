@@ -157,12 +157,12 @@ test.describe('RF-043 - Gestión de Empresas (validaciones y errores)', () => {
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 
     await authenticateByApi(page, request, NOADMIN_EMAIL, NOADMIN_PASSWORD);
-    await page.goto('/');
+    await page.goto('/coagronet/');
 
     await page.evaluate(() => {
       localStorage.setItem('activeModule', 'empresa');
     });
-    await page.goto('/');
+    await page.goto('/coagronet/');
 
     const unauthorizedMsg = page.getByText(
       /Error cargando|acceso denegado|forbidden|no autorizado/i

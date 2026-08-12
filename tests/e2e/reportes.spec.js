@@ -16,7 +16,7 @@ test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
 
   test('Test Búsqueda de Reporte de Vencimiento de Producto', async ({ page, request }) => {
     await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_pv');
-    await page.goto('/');
+    await page.goto('/coagronet/');
 
     // Verify the page loaded the correct report
     await expect(

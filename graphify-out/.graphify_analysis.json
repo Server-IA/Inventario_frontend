@@ -1,0 +1,1450 @@
+{
+  "communities": {
+    "0": [
+      "src_components_almacen_personaservicefile",
+      "src_components_almacen_personaservicefile_createpersona",
+      "src_components_almacen_personaservicefile_deletepersona",
+      "src_components_almacen_personaservicefile_getallpersonas",
+      "src_components_almacen_personaservicefile_updatepersona",
+      "src_components_axiosconfig",
+      "src_components_axiosconfig_instance",
+      "src_components_bloque_formbloque",
+      "src_components_bloque_formbloque_formbloque",
+      "src_components_common_baseformcampos",
+      "src_components_common_baseformcampos_baseformcampos",
+      "src_components_criterio_evaluacion_criterio_evaluacion",
+      "src_components_criterio_evaluacion_criterio_evaluacion_criterioevaluacion",
+      "src_components_criterio_evaluacion_formcriterioevaluacion",
+      "src_components_criterio_evaluacion_formcriterioevaluacion_formcriterioevaluacion",
+      "src_components_criterio_evaluacion_gridcriterioevaluacion",
+      "src_components_criterio_evaluacion_gridcriterioevaluacion_gridcriterioevaluacion",
+      "src_components_espacio_formespacio",
+      "src_components_espacio_formespacio_formespacio",
+      "src_components_grupo_formgrupo",
+      "src_components_grupo_formgrupo_formgrupo",
+      "src_components_ingrediente_formingrediente",
+      "src_components_ingrediente_formingrediente_formingrediente",
+      "src_components_marca_formmarca",
+      "src_components_marca_formmarca_formmarca",
+      "src_components_modulo_formmodulo",
+      "src_components_modulo_formmodulo_formmodulo",
+      "src_components_modulo_gridmodulo",
+      "src_components_modulo_gridmodulo_gridmodulo",
+      "src_components_modulo_modulodetalledialog",
+      "src_components_modulo_modulodetalledialog_modulodetalledialog",
+      "src_components_modulo_modulodisponiblesmenu",
+      "src_components_modulo_modulodisponiblesmenu_modulodisponiblesmenu",
+      "src_components_modulo_modulos",
+      "src_components_modulo_modulos_modulo",
+      "src_components_movimiento_frommovimiento",
+      "src_components_movimiento_frommovimiento_formmovimiento",
+      "src_components_ocupacion_formocupacion",
+      "src_components_ordencompra_formordencompra",
+      "src_components_ordencompra_formordencompra_formordencompra",
+      "src_components_ordencompra_formordencompra_numberrequired",
+      "src_components_ordencompra_formordencompra_ordencompraschema",
+      "src_components_ordencompra_formordencompra_toarray",
+      "src_components_p_cotizacion_formpedidocotizacion",
+      "src_components_p_cotizacion_formpedidocotizacion_estados",
+      "src_components_p_cotizacion_formpedidocotizacion_formpedidocotizacion",
+      "src_components_p_cotizacion_gridpedidocotizacion",
+      "src_components_p_cotizacion_gridpedidocotizacion_gridpedidocotizacion",
+      "src_components_p_cotizacion_pedidocotizacion",
+      "src_components_p_cotizacion_pedidocotizacion_pedidocotizacion",
+      "src_components_personas_formpersona",
+      "src_components_presentacion_formpresentacion",
+      "src_components_presentacion_formpresentacion_formpresentacion",
+      "src_components_presentacionproducto_formpresentacionproducto",
+      "src_components_presentacionproducto_formpresentacionproducto_formpresentacionproducto",
+      "src_components_proceso_fromproceso",
+      "src_components_proceso_fromproceso_formproceso",
+      "src_components_proceso_fromproceso_tolist",
+      "src_components_producto_categoria_formproductocategoria",
+      "src_components_producto_categoria_formproductocategoria_formproductocategoria",
+      "src_components_r_pedido_formarticulopedido",
+      "src_components_sede_formsede",
+      "src_components_sede_formsede_formsede",
+      "src_components_stackbuttons",
+      "src_components_stackbuttons_stackbuttons",
+      "src_components_tipo_bloque_formtipobloque",
+      "src_components_tipo_bloque_formtipobloque_formtipobloque",
+      "src_components_tipo_espacio_formtipoespacio",
+      "src_components_tipo_espacio_formtipoespacio_formtipoespacio",
+      "src_components_tipo_evaluacion_formtipoevaluacion",
+      "src_components_tipo_evaluacion_formtipoevaluacion_formtipoevaluacion",
+      "src_components_tipo_movimiento_formtipomovimiento",
+      "src_components_tipo_movimiento_formtipomovimiento_formtipomovimiento",
+      "src_components_tipo_produccion_formtipoproduccion",
+      "src_components_tipo_produccion_formtipoproduccion_formtipoproduccion",
+      "src_components_tipo_sede_formtiposede",
+      "src_components_tipo_sede_formtiposede_formtiposede",
+      "src_components_tipo_unidad_formtipounida",
+      "src_components_tipo_unidad_formtipounida_formtipounida",
+      "src_components_tipo_unidad_gridtipounida",
+      "src_components_tipo_unidad_gridtipounida_gridtipounida",
+      "src_components_tipo_unidad_tipounidad",
+      "src_components_tipo_unidad_tipounidad_tipounida",
+      "src_components_tipoidentificacion_formtipoidentificacion",
+      "src_components_tipoidentificacion_formtipoidentificacion_formtipoidentificacion",
+      "src_components_unidad_formunidad",
+      "src_components_unidad_formunidad_formunidad",
+      "src_components_usario_rol_formusuariorol",
+      "src_components_usario_rol_formusuariorol_formusuariorol",
+      "src_components_usario_rol_gridusuariorol",
+      "src_components_usario_rol_gridusuariorol_gridusuariorol",
+      "src_components_usario_rol_usariorol",
+      "src_components_usario_rol_usariorol_usuariorol",
+      "src_components_utils_validations",
+      "src_components_utils_validations_containstags",
+      "src_components_utils_validations_dangerouspatterns",
+      "src_components_utils_validations_hasdangerous",
+      "src_components_utils_validations_normalize",
+      "src_components_utils_validations_validatecamposbase"
+    ],
+    "1": [
+      "src_components_categoriaestado_categoria_estado",
+      "src_components_categoriaestado_categoria_estado_categoriaestado",
+      "src_components_categoriaestado_formcategoriaestado",
+      "src_components_categoriaestado_formcategoriaestado_formcategoriaestado",
+      "src_components_categoriaestado_gridcategoriaestado",
+      "src_components_categoriaestado_gridcategoriaestado_gridcategoriaestado",
+      "src_components_common_appdatagrid",
+      "src_components_common_appdatagrid_appdatagrid",
+      "src_components_common_appdatagrid_loadstoredvisibilitymodel",
+      "src_components_common_gridactionbar",
+      "src_components_common_gridactionbar_gridactionbar",
+      "src_components_common_sectionheader",
+      "src_components_common_sectionheader_sectionheader",
+      "src_components_empresarol_empresarol",
+      "src_components_empresarol_empresarol_empresarol",
+      "src_components_empresarol_empresarol_parserolesbycompany",
+      "src_components_empresarol_empresarol_resolvecurrentrolename",
+      "src_components_empresarol_formempresarol",
+      "src_components_empresarol_formempresarol_formempresarol",
+      "src_components_empresarol_gridempresarol",
+      "src_components_empresarol_gridempresarol_gridempresarol",
+      "src_components_empresarol_modalverpermisos",
+      "src_components_empresarol_modalverpermisos_modalverpermisos",
+      "src_components_estado_estado",
+      "src_components_estado_estado_estado",
+      "src_components_estado_formestado",
+      "src_components_estado_formestado_formestado",
+      "src_components_estado_gridestado",
+      "src_components_estado_gridestado_estadotoolbar",
+      "src_components_estado_gridestado_gridestado",
+      "src_components_localizacion_geografica_confirminactivatemodal",
+      "src_components_localizacion_geografica_confirminactivatemodal_confirminactivatemodal",
+      "src_components_localizacion_geografica_departamentomodal",
+      "src_components_localizacion_geografica_departamentomodal_departamentomodal",
+      "src_components_localizacion_geografica_filtromodal",
+      "src_components_localizacion_geografica_filtromodal_filtromodal",
+      "src_components_localizacion_geografica_localizaciongeografica",
+      "src_components_localizacion_geografica_localizaciongeografica_initialdepartamentos",
+      "src_components_localizacion_geografica_localizaciongeografica_initialmunicipios",
+      "src_components_localizacion_geografica_localizaciongeografica_initialpaises",
+      "src_components_localizacion_geografica_localizaciongeografica_localizaciongeografica",
+      "src_components_localizacion_geografica_municipiomodal",
+      "src_components_localizacion_geografica_municipiomodal_municipiomodal",
+      "src_components_localizacion_geografica_municipioslistmodal",
+      "src_components_localizacion_geografica_municipioslistmodal_municipioslistmodal",
+      "src_components_localizacion_geografica_paismodal",
+      "src_components_localizacion_geografica_paismodal_paismodal",
+      "src_components_rol_formrol",
+      "src_components_rol_formrol_formrol",
+      "src_components_rol_gridrol",
+      "src_components_rol_gridrol_default_column_visibility",
+      "src_components_rol_gridrol_gridrol",
+      "src_components_rol_rol",
+      "src_components_rol_rol_estados_rol",
+      "src_components_rol_rol_rol",
+      "src_components_usuario_formusuario",
+      "src_components_usuario_formusuario_formusuario",
+      "src_components_usuario_userdetaildialog",
+      "src_components_usuario_userdetaildialog_detailfield",
+      "src_components_usuario_userdetaildialog_formatdate",
+      "src_components_usuario_userdetaildialog_formatdatetime",
+      "src_components_usuario_userdetaildialog_sectionheader",
+      "src_components_usuario_userdetaildialog_userdetaildialog",
+      "src_components_usuario_usuario",
+      "src_components_usuario_usuario_emptyrow",
+      "src_components_usuario_usuario_extractitems",
+      "src_components_usuario_usuario_usuario"
+    ],
+    "2": [
+      "src_app_app",
+      "src_components_axiosconfig2",
+      "src_components_axiosconfig2_axiosv2",
+      "src_components_changelogodialog",
+      "src_components_changelogodialog_changelogodialog",
+      "src_components_changepassworddialog",
+      "src_components_changepassworddialog_changepassworddialog",
+      "src_components_changepassworddialog_decodejwt",
+      "src_components_changepassworddialog_go",
+      "src_components_dashboard_appbarcomponent",
+      "src_components_dashboard_appbarcomponent_appbarcomponent",
+      "src_components_dashboard_appbarcomponent_decodejwt",
+      "src_components_dashboard_appbarcomponent_hide_auth_btns_routes",
+      "src_components_dashboard_themetoggleprovider",
+      "src_components_dashboard_themetoggleprovider_themetogglecontext",
+      "src_components_dashboard_themetoggleprovider_themetoggleprovider",
+      "src_components_dashboard_themetoggleprovider_usethemetoggle",
+      "src_components_inicio",
+      "src_components_inicio_contactsection",
+      "src_components_inicio_featuressection",
+      "src_components_inicio_fullwidthcarousel",
+      "src_components_inicio_images",
+      "src_components_inicio_inicio",
+      "src_components_inicio_toolscolumnssection",
+      "src_components_inicio_usetokens",
+      "src_components_login",
+      "src_components_login_decodejwt",
+      "src_components_login_login",
+      "src_components_navbar",
+      "src_components_navbar_navbar",
+      "src_components_profilemenu",
+      "src_components_profilemenu_profilemenu",
+      "src_components_register",
+      "src_components_register_register",
+      "src_components_resetpassword",
+      "src_components_resetpassword_resetpassword",
+      "src_components_roleswitchermodal",
+      "src_components_roleswitchermodal_decodejwt",
+      "src_components_roleswitchermodal_getrolesfromstorage",
+      "src_components_roleswitchermodal_roleimages",
+      "src_components_roleswitchermodal_roleswitchermodal",
+      "src_forgotpassword",
+      "src_forgotpassword_forgotpassword",
+      "src_i18n",
+      "src_i18n_normalizelanguage",
+      "src_i18n_resolveapplanguage",
+      "src_main",
+      "src_main_main"
+    ],
+    "3": [
+      "tests_e2e_helpers_e2e_shared_utils",
+      "tests_e2e_helpers_e2e_shared_utils_admin_email",
+      "tests_e2e_helpers_e2e_shared_utils_admin_password",
+      "tests_e2e_helpers_e2e_shared_utils_authheaders",
+      "tests_e2e_helpers_e2e_shared_utils_autoregister_password",
+      "tests_e2e_helpers_e2e_shared_utils_backend_uri",
+      "tests_e2e_helpers_e2e_shared_utils_clearmailhoginbox",
+      "tests_e2e_helpers_e2e_shared_utils_clickprimarybutton",
+      "tests_e2e_helpers_e2e_shared_utils_company_admin_email",
+      "tests_e2e_helpers_e2e_shared_utils_company_admin_password",
+      "tests_e2e_helpers_e2e_shared_utils_company_context_name",
+      "tests_e2e_helpers_e2e_shared_utils_company_context_role_name",
+      "tests_e2e_helpers_e2e_shared_utils_createmodulobyapi",
+      "tests_e2e_helpers_e2e_shared_utils_decodejwtforstorage",
+      "tests_e2e_helpers_e2e_shared_utils_e2e_base_url",
+      "tests_e2e_helpers_e2e_shared_utils_expectbasemenuvisible",
+      "tests_e2e_helpers_e2e_shared_utils_expectgridcolumnvaluevisible",
+      "tests_e2e_helpers_e2e_shared_utils_fetchbackendmodulopaginationstats",
+      "tests_e2e_helpers_e2e_shared_utils_fetchcatalogids",
+      "tests_e2e_helpers_e2e_shared_utils_fetchmodulopage",
+      "tests_e2e_helpers_e2e_shared_utils_fetchmodulos",
+      "tests_e2e_helpers_e2e_shared_utils_fillfieldbyname",
+      "tests_e2e_helpers_e2e_shared_utils_fillloginform",
+      "tests_e2e_helpers_e2e_shared_utils_findgridcellincolumn",
+      "tests_e2e_helpers_e2e_shared_utils_gotologinfromhome",
+      "tests_e2e_helpers_e2e_shared_utils_gotoregisterfromhome",
+      "tests_e2e_helpers_e2e_shared_utils_injectauthstorage",
+      "tests_e2e_helpers_e2e_shared_utils_injectauthstoragefromlogindata",
+      "tests_e2e_helpers_e2e_shared_utils_ismailhogavailable",
+      "tests_e2e_helpers_e2e_shared_utils_mailhog_api_url",
+      "tests_e2e_helpers_e2e_shared_utils_normalizelogincontext",
+      "tests_e2e_helpers_e2e_shared_utils_onboarding_state2_email",
+      "tests_e2e_helpers_e2e_shared_utils_onboarding_state2_password",
+      "tests_e2e_helpers_e2e_shared_utils_onboarding_state3_email",
+      "tests_e2e_helpers_e2e_shared_utils_onboarding_state3_password",
+      "tests_e2e_helpers_e2e_shared_utils_openpublichome",
+      "tests_e2e_helpers_e2e_shared_utils_selectoptionbyname",
+      "tests_e2e_helpers_e2e_shared_utils_submitlogin",
+      "tests_e2e_helpers_e2e_shared_utils_system_admin_email",
+      "tests_e2e_helpers_e2e_shared_utils_system_admin_password",
+      "tests_e2e_helpers_e2e_shared_utils_uniqueemail",
+      "tests_e2e_helpers_e2e_shared_utils_unwrap",
+      "tests_e2e_helpers_e2e_shared_utils_verification_link_provider_url",
+      "tests_e2e_helpers_e2e_shared_utils_verification_token",
+      "tests_e2e_helpers_e2e_shared_utils_verification_token_provider_url"
+    ],
+    "4": [
+      "src_components_almacen_almacen",
+      "src_components_almacen_almacen_almacen",
+      "src_components_almacen_formalmacen",
+      "src_components_almacen_formalmacen_formalmacen",
+      "src_components_bloque_bloque",
+      "src_components_bloque_bloque_bloque",
+      "src_components_bloque_gridbloque",
+      "src_components_bloque_gridbloque_bloquetoolbar",
+      "src_components_bloque_gridbloque_gridbloque",
+      "src_components_common_crudfiltermodal",
+      "src_components_common_crudfiltermodal_crudfiltermodal",
+      "src_components_common_filtersloaders",
+      "src_components_common_filtersloaders_makeloaders",
+      "src_components_common_filtersloaders_uniqbyid",
+      "src_components_common_filtersloaders_unwrap",
+      "src_components_espacio_espacio",
+      "src_components_espacio_espacio_espacio",
+      "src_components_espacio_gridespacio",
+      "src_components_espacio_gridespacio_gridespacio",
+      "src_components_inventario_forminventario",
+      "src_components_inventario_forminventario_forminventario",
+      "src_components_inventario_gridinventario",
+      "src_components_inventario_gridinventario_gridinventario",
+      "src_components_inventario_inventario",
+      "src_components_inventario_inventario_inventario",
+      "src_components_seccion_fromseccion",
+      "src_components_seccion_fromseccion_formseccion",
+      "src_components_seccion_gridseccion",
+      "src_components_seccion_gridseccion_gridseccion",
+      "src_components_seccion_seccion",
+      "src_components_seccion_seccion_seccion",
+      "src_components_sede_gridsede",
+      "src_components_sede_gridsede_gridsede",
+      "src_components_sede_gridsede_sedetoolbar",
+      "src_components_sede_sede",
+      "src_components_sede_sede_sede",
+      "src_components_subseccion_formsubseccion",
+      "src_components_subseccion_formsubseccion_formsubseccion",
+      "src_components_subseccion_gridsubseccion",
+      "src_components_subseccion_gridsubseccion_gridsubseccion",
+      "src_components_subseccion_subseccion",
+      "src_components_subseccion_subseccion_subseccion"
+    ],
+    "5": [
+      "src_components_kardex_formarticulokardex",
+      "src_components_kardex_formarticulokardex_formarticulokardex",
+      "src_components_kardex_formarticulokardex_mapheaderanditemstokardexpayload",
+      "src_components_kardex_formarticulokardex_toarray",
+      "src_components_kardex_formkardex",
+      "src_components_kardex_formkardex_default_article_filters",
+      "src_components_kardex_formkardex_extractapimessage",
+      "src_components_kardex_formkardex_formkardex",
+      "src_components_kardex_formkardex_getpresentacionid",
+      "src_components_kardex_formkardex_ispresentaciondevolutiva",
+      "src_components_kardex_formkardex_kardexschema",
+      "src_components_kardex_formkardex_newarticledraft",
+      "src_components_kardex_formkardex_normalize",
+      "src_components_kardex_formkardex_numberrequired",
+      "src_components_kardex_formkardex_picklist",
+      "src_components_kardex_formkardex_rendername",
+      "src_components_kardex_formkardex_renderpresentacion",
+      "src_components_kardex_formkardex_todatetimelocal",
+      "src_components_kardex_formkardex_tonumericidornull",
+      "src_components_kardex_gridarticulokardex",
+      "src_components_kardex_gridarticulokardex_gridarticulokardex",
+      "src_components_kardex_gridkardex",
+      "src_components_kardex_gridkardex_gridkardex",
+      "src_components_kardex_kardexarticulossection",
+      "src_components_kardex_kardexarticulossection_kardexarticulossection",
+      "src_components_kardex_kardexformscontainer",
+      "src_components_kardex_kardexformscontainer_kardexformscontainer",
+      "src_components_kardex_utils_kardexformatters",
+      "src_components_kardex_utils_kardexformatters_createlookupmap",
+      "src_components_kardex_utils_kardexformatters_extractname",
+      "src_components_kardex_utils_kardexformatters_formatestado",
+      "src_components_kardex_utils_kardexformatters_normalizepageresponse",
+      "src_components_kardex_utils_kardexformatters_resolvearticulokardexid",
+      "src_components_kardex_utils_kardexformatters_resolvekardexid",
+      "src_components_kardex_utils_kardexformatters_safedatetime",
+      "src_components_kardex_utils_kardexformatters_toarray"
+    ],
+    "6": [
+      "src_components_combobox1",
+      "src_components_combobox1_combobox",
+      "src_components_dashboard_copyright",
+      "src_components_dashboard_copyright_copyright",
+      "src_components_dashboard_drawer",
+      "src_components_dashboard_drawer_drawer",
+      "src_components_dashboard_siteprops",
+      "src_components_dashboard_siteprops_siteprops",
+      "src_components_empresas_empresa",
+      "src_components_empresas_empresa_empresa",
+      "src_components_empresas_formempresa",
+      "src_components_empresas_formempresa_formempresa",
+      "src_components_empresas_gridempresa",
+      "src_components_empresas_gridempresa_gridempresa",
+      "src_components_perfilgroup",
+      "src_components_perfilgroup_perfilgroup",
+      "src_components_personas_formpersona_formpersona",
+      "src_components_personas_gridpersona",
+      "src_components_personas_gridpersona_gridpersona",
+      "src_components_personas_gridpersona_personatoolbar",
+      "src_components_personas_persona",
+      "src_components_personas_persona_persona",
+      "src_components_r_tipo_evaluacion_tipoevaluacionreport",
+      "src_components_r_tipo_evaluacion_tipoevaluacionreport_tipoevaluacionreport",
+      "src_components_seguridad_formregistroempresa",
+      "src_components_seguridad_formregistroempresa_decodejwt",
+      "src_components_seguridad_formregistroempresa_formregistroempresa",
+      "src_components_seguridad_formregistroempresa_iscedulatipo",
+      "src_components_seguridad_formregistroempresa_isemail",
+      "src_components_seguridad_formregistroempresa_isnittipo",
+      "src_components_seguridad_formregistroempresa_isphonedigits",
+      "src_components_seguridad_formregistroempresa_nitdv",
+      "src_components_seguridad_formregistroempresa_normalize",
+      "src_components_seguridad_formregistropersona",
+      "src_components_seguridad_formregistropersona_formregistropersona"
+    ],
+    "7": [
+      "src_components_kardex_constants_index",
+      "src_components_kardex_constants_kardexconstants",
+      "src_components_kardex_constants_kardexconstants_default_filters",
+      "src_components_kardex_constants_kardexconstants_estados",
+      "src_components_kardex_constants_kardexconstants_max_records",
+      "src_components_kardex_constants_kardexconstants_messages",
+      "src_components_kardex_constants_kardexconstants_page_size",
+      "src_components_kardex_constants_kardexconstants_roles",
+      "src_components_kardex_constants_kardexconstants_tipo_mov_entrada_compra",
+      "src_components_kardex_hooks_index",
+      "src_components_kardex_hooks_usekardexauth",
+      "src_components_kardex_hooks_usekardexauth_usekardexauth",
+      "src_components_kardex_hooks_usekardexdata",
+      "src_components_kardex_hooks_usekardexdata_usekardexdata",
+      "src_components_kardex_hooks_usekardexfilters",
+      "src_components_kardex_hooks_usekardexfilters_normalize",
+      "src_components_kardex_hooks_usekardexfilters_usekardexfilters",
+      "src_components_kardex_kardex_kardex",
+      "src_components_kardex_utils_dateutils",
+      "src_components_kardex_utils_dateutils_filterbydaterange",
+      "src_components_kardex_utils_dateutils_parsedate",
+      "src_components_kardex_utils_dateutils_safedatetime",
+      "src_components_kardex_utils_index",
+      "src_components_kardex_utils_jwtutils",
+      "src_components_kardex_utils_jwtutils_decodejwt",
+      "src_components_kardex_utils_jwtutils_extractjwtdata"
+    ],
+    "8": [
+      "src_components_ordencompra_formarticuloordencompra",
+      "src_components_ordencompra_formarticuloordencompra_formarticuloordencompra",
+      "src_components_ordencompra_formarticuloordencompra_issqlsuspicious",
+      "src_components_ordencompra_formarticuloordencompra_numberrequired",
+      "src_components_ordencompra_formarticuloordencompra_schema",
+      "src_components_ordencompra_gridarticuloordencompra",
+      "src_components_ordencompra_gridarticuloordencompra_gridarticuloordencompra",
+      "src_components_ordencompra_gridarticuloordencompra_toolbar",
+      "src_components_ordencompra_gridordencompra",
+      "src_components_ordencompra_gridordencompra_customtoolbar",
+      "src_components_ordencompra_gridordencompra_gridordencompra",
+      "src_components_ordencompra_ordencompra",
+      "src_components_ordencompra_ordencompra_ordencompra",
+      "src_components_re_oc_re_oc_re_ordencompra",
+      "src_components_useubicacionfilters",
+      "src_components_useubicacionfilters_appendrangofecha",
+      "src_components_useubicacionfilters_appendubicacionconds",
+      "src_components_useubicacionfilters_buildfacturacondicionempresa",
+      "src_components_useubicacionfilters_buildkardexcondicionempresa",
+      "src_components_useubicacionfilters_buildordencompracondicionempresa",
+      "src_components_useubicacionfilters_buildpedidocondicionempresa",
+      "src_components_useubicacionfilters_buildpedidoreporteespecifico",
+      "src_components_useubicacionfilters_buildproductovencidocondicionempresa",
+      "src_components_useubicacionfilters_default_aliases",
+      "src_components_useubicacionfilters_toreportdt",
+      "src_components_useubicacionfilters_tosqldate"
+    ],
+    "9": [
+      "tests_e2e_empresa_rol_admin_rf_036_validation_spec",
+      "tests_e2e_empresa_rol_system_rf_036_spec",
+      "tests_e2e_empresa_rol_system_rf_036_spec_getgridrowssnapshot",
+      "tests_e2e_empresa_rol_system_rf_036_spec_opensubsistemaandmodulo",
+      "tests_e2e_empresa_rol_system_rf_036_spec_parserowid",
+      "tests_e2e_empresa_rol_system_rf_036_spec_picksaferowbyhighestid",
+      "tests_e2e_empresa_rol_system_rf_036_spec_waitforgridrowsloaded",
+      "tests_e2e_empresa_rol_system_rf_036_spec_waitforpermissionstreeready",
+      "tests_e2e_empresa_rol_system_rf_036_validation_spec",
+      "tests_e2e_helpers_e2e_shared_utils_checkfirstdialogcheckbox",
+      "tests_e2e_helpers_e2e_shared_utils_clickactionbutton",
+      "tests_e2e_helpers_e2e_shared_utils_clickdialogbutton",
+      "tests_e2e_helpers_e2e_shared_utils_clickdialogradiobylabel",
+      "tests_e2e_helpers_e2e_shared_utils_escaperegex",
+      "tests_e2e_helpers_e2e_shared_utils_exacttextregex",
+      "tests_e2e_helpers_e2e_shared_utils_expectsnackmessage",
+      "tests_e2e_helpers_e2e_shared_utils_getactivedialog",
+      "tests_e2e_helpers_e2e_shared_utils_loginascompanyadmin",
+      "tests_e2e_helpers_e2e_shared_utils_openfirstaccordionindialog",
+      "tests_e2e_helpers_e2e_shared_utils_openmodulescreen",
+      "tests_e2e_helpers_e2e_shared_utils_openmoduloscreen",
+      "tests_e2e_helpers_e2e_shared_utils_openprofilemenu",
+      "tests_e2e_helpers_e2e_shared_utils_selectdialogfirstoptionbylabel",
+      "tests_e2e_helpers_e2e_shared_utils_selectdialogoptionbylabel",
+      "tests_e2e_helpers_e2e_shared_utils_switchcompanyrolefromprofile"
+    ],
+    "10": [
+      "src_app",
+      "src_app_modulemap",
+      "src_components_dashboard_contenido",
+      "src_components_dashboard_contenido_contenido",
+      "src_components_dashboard_navigator2_navigator2",
+      "src_components_presentacion_gridpresentacion",
+      "src_components_presentacion_gridpresentacion_gridpresentacion",
+      "src_components_presentacion_presentacion",
+      "src_components_presentacion_presentacion_presentacion",
+      "src_components_seguridad_changepasswordinitial",
+      "src_components_seguridad_changepasswordinitial_changepasswordinitial",
+      "src_components_tipo_produccion_gridtipoproduccion",
+      "src_components_tipo_produccion_gridtipoproduccion_gridtipoproduccion",
+      "src_components_tipo_produccion_tipoproduccion",
+      "src_components_tipo_produccion_tipoproduccion_tipoproduccion",
+      "src_components_unidad_gridunidad",
+      "src_components_unidad_gridunidad_gridunidad",
+      "src_components_unidad_unidad",
+      "src_components_unidad_unidad_unidad"
+    ],
+    "11": [
+      "src_components_dashboard_navigator2",
+      "src_components_dashboard_navigator2_bottomtosidebar",
+      "src_components_dashboard_navigator2_components",
+      "src_components_dashboard_navigator2_icons",
+      "src_components_dashboard_navigator2_moduleimages",
+      "src_components_dashboard_navigator2_sidebartobottom",
+      "src_components_mediacard",
+      "src_components_mediacard_mediacard",
+      "src_components_movimiento_gridmovimiento",
+      "src_components_movimiento_gridmovimiento_gridmovimineto",
+      "src_components_movimiento_movimiento",
+      "src_components_movimiento_movimiento_movimineto",
+      "src_components_producto_categoria_gridproductocategoria",
+      "src_components_producto_categoria_gridproductocategoria_gridproductocategoria",
+      "src_components_producto_categoria_productocategoria",
+      "src_components_producto_categoria_productocategoria_productocategoria",
+      "src_components_rol_usuario_rol_usuario",
+      "src_components_rol_usuario_rol_usuario_rol_usuario"
+    ],
+    "12": [
+      "src_components_kardex_kardex",
+      "src_components_messagesnackbar",
+      "src_components_messagesnackbar_messagesnackbar",
+      "src_components_ordencompra_vistapreviapdfordencompra",
+      "src_components_ordencompra_vistapreviapdfordencompra_vistapreviapdfordencompra",
+      "src_components_re_fc_re_fc",
+      "src_components_re_fc_re_fc_re_kardexpedido",
+      "src_components_re_oc_re_oc",
+      "src_components_re_pv_re_pvn",
+      "src_components_re_pv_re_pvn_re_productovencimiento",
+      "src_components_rkardex_rkardex",
+      "src_components_rkardex_rkardex_re_kardexpedido",
+      "src_components_ubicacionproductovencimientofilters",
+      "src_components_ubicacionproductovencimientofilters_asarray",
+      "src_components_ubicacionproductovencimientofilters_ubicacionproductovencimientofilters",
+      "src_components_useubicacionfilters_asarray",
+      "src_components_useubicacionfilters_uniqbyid",
+      "src_components_useubicacionfilters_useubicacionfilters"
+    ],
+    "13": [
+      "src_components_r_pedido_formarticulopedido_formarticulopedido",
+      "src_components_r_pedido_formpedido",
+      "src_components_r_pedido_formpedido_formpedido",
+      "src_components_r_pedido_gridarticulopedido",
+      "src_components_r_pedido_gridarticulopedido_articulotoolbar",
+      "src_components_r_pedido_gridarticulopedido_gridarticulopedido",
+      "src_components_r_pedido_gridpedido",
+      "src_components_r_pedido_gridpedido_gridpedido",
+      "src_components_r_pedido_gridpedido_pedidotoolbar",
+      "src_components_r_pedido_pedido",
+      "src_components_r_pedido_pedido_pedido",
+      "src_components_r_pedido_vistapreviapdfpedido",
+      "src_components_r_pedido_vistapreviapdfpedido_vistapreviapdfpedido",
+      "src_components_re_pedido_re_pv",
+      "src_components_re_pedido_re_pv_re_pedido",
+      "src_components_ubicacionpedidofilters",
+      "src_components_ubicacionpedidofilters_asarray",
+      "src_components_ubicacionpedidofilters_ubicacionpedidofilters"
+    ],
+    "14": [
+      "tests_e2e_helpers_e2e_shared_utils_countfrontendgridpages",
+      "tests_e2e_helpers_e2e_shared_utils_ensuregridcolumnvisible",
+      "tests_e2e_helpers_e2e_shared_utils_expectgridcheckboxindicatorincolumn",
+      "tests_e2e_helpers_e2e_shared_utils_expectgridiconindicatorincolumn",
+      "tests_e2e_helpers_e2e_shared_utils_findgridcellincolumnacrosspages",
+      "tests_e2e_helpers_e2e_shared_utils_getgridcolumnindex",
+      "tests_e2e_helpers_e2e_shared_utils_gotogridfirstpage",
+      "tests_e2e_helpers_e2e_shared_utils_gotonextgridpage",
+      "tests_e2e_helpers_e2e_shared_utils_gridfooter",
+      "tests_e2e_helpers_e2e_shared_utils_gridnextpagebutton",
+      "tests_e2e_helpers_e2e_shared_utils_gridprevpagebutton",
+      "tests_e2e_helpers_e2e_shared_utils_togglefirstgridswitchincolumn",
+      "tests_e2e_modulos_rf_035_spec",
+      "tests_e2e_modulos_rf_035_spec_getmodulerowacrosspages",
+      "tests_e2e_modulos_rf_035_spec_openeditmodalformodule",
+      "tests_e2e_modulos_rf_035_spec_pickexistingtestmodulename",
+      "tests_e2e_modulos_rf_035_spec_setgridrowsperpage",
+      "tests_e2e_modulos_rf_035_spec_waitformodulevisibleacrosspages"
+    ],
+    "15": [
+      "babel_core",
+      "babel_preset_env",
+      "eslint_plugin_react_hooks",
+      "globals",
+      "jsdoc",
+      "package_devdependencies",
+      "package_devdependencies_babel_core",
+      "package_devdependencies_babel_preset_env",
+      "package_devdependencies_eslint",
+      "package_devdependencies_eslint_plugin_react_hooks",
+      "package_devdependencies_globals",
+      "package_devdependencies_jsdoc",
+      "package_devdependencies_playwright_test",
+      "package_devdependencies_types_react_dom",
+      "package_json_eslint",
+      "playwright_test",
+      "types_react_dom"
+    ],
+    "16": [
+      "docs_scripts_prettify_prettify",
+      "docs_scripts_prettify_prettify_b",
+      "docs_scripts_prettify_prettify_c",
+      "docs_scripts_prettify_prettify_d",
+      "docs_scripts_prettify_prettify_e",
+      "docs_scripts_prettify_prettify_k",
+      "docs_scripts_prettify_prettify_l",
+      "docs_scripts_prettify_prettify_m",
+      "docs_scripts_prettify_prettify_u",
+      "docs_scripts_prettify_prettify_x",
+      "src_components_presentacionproducto_gridpresentacionproducto",
+      "src_components_presentacionproducto_gridpresentacionproducto_gridpresentacionproducto",
+      "src_components_presentacionproducto_gridpresentacionproducto_pptoolbar",
+      "src_components_presentacionproducto_presentacionproducto",
+      "src_components_presentacionproducto_presentacionproducto_labelof",
+      "src_components_presentacionproducto_presentacionproducto_presentacionproducto",
+      "src_components_presentacionproducto_presentacionproducto_tolist"
+    ],
+    "17": [
+      "package_scripts",
+      "package_scripts_autodoc",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_docs",
+      "package_scripts_lint",
+      "package_scripts_mailhog_logs",
+      "package_scripts_mailhog_start",
+      "package_scripts_mailhog_stop",
+      "package_scripts_preview",
+      "package_scripts_start",
+      "package_scripts_test_e2e",
+      "package_scripts_test_e2e_debug",
+      "package_scripts_test_e2e_headed",
+      "package_scripts_test_e2e_onboarding",
+      "package_scripts_test_e2e_ui"
+    ],
+    "18": [
+      "docref_rfc_9457",
+      "tests_e2e_helpers_e2e_shared_utils_clickcreatemodulobutton",
+      "tests_e2e_helpers_e2e_shared_utils_clickdialogselectfirstoption",
+      "tests_e2e_helpers_e2e_shared_utils_clickdialogselectoption",
+      "tests_e2e_helpers_e2e_shared_utils_filldialogfield",
+      "tests_e2e_helpers_e2e_shared_utils_filldialogfieldbyname",
+      "tests_e2e_helpers_e2e_shared_utils_fillmoduloform",
+      "tests_e2e_helpers_e2e_shared_utils_noadmin_email",
+      "tests_e2e_helpers_e2e_shared_utils_noadmin_password",
+      "tests_e2e_helpers_e2e_shared_utils_opendialogselectbyname",
+      "tests_e2e_helpers_e2e_shared_utils_selectfirstgridrow",
+      "tests_e2e_helpers_e2e_shared_utils_toggledialogcheckbox",
+      "tests_e2e_modulos_rf_035_validation_spec",
+      "tests_e2e_modulos_rf_035_validation_spec_waitmoduloeditdialogloaded"
+    ],
+    "19": [
+      "tests_e2e_empresa_rol_admin_rf_036_spec",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_ensureidsortdescending",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_getgridrowssnapshot",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_opensubsistemaandmodulo",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_parserowid",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_picksaferowbyhighestid",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_selectroleforcreation",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_waitfordeleteoutcome",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_waitforgridrowsloaded",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_waitforpermissionstreeready",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_waitforsaveordialogstillopen",
+      "tests_e2e_empresa_rol_admin_rf_036_spec_waitforsaveoutcome"
+    ],
+    "20": [
+      "axios",
+      "glob",
+      "jwt_decode",
+      "mui_material",
+      "package_dependencies",
+      "package_dependencies_axios",
+      "package_dependencies_glob",
+      "package_dependencies_jwt_decode",
+      "package_dependencies_mui_material",
+      "package_dependencies_recast",
+      "recast"
+    ],
+    "21": [
+      "src_components_usuarioroles_formusuarioroles",
+      "src_components_usuarioroles_formusuarioroles_formusuarioroles",
+      "src_components_usuarioroles_formusuarioroles_todatetimelocal",
+      "src_components_usuarioroles_gridusuarioroles",
+      "src_components_usuarioroles_gridusuarioroles_customtoolbar",
+      "src_components_usuarioroles_gridusuarioroles_gridusuarioroles",
+      "src_components_usuarioroles_usuarioroles",
+      "src_components_usuarioroles_usuarioroles_buildmap",
+      "src_components_usuarioroles_usuarioroles_emptyrow",
+      "src_components_usuarioroles_usuarioroles_extractitems",
+      "src_components_usuarioroles_usuarioroles_usuarioroles"
+    ],
+    "22": [
+      "tests_e2e_helpers_e2e_shared_utils_authenticatebyapi",
+      "tests_e2e_helpers_e2e_shared_utils_loginapigettoken",
+      "tests_e2e_helpers_e2e_shared_utils_loginasadmin",
+      "tests_e2e_helpers_e2e_shared_utils_loginasadmingettoken",
+      "tests_e2e_helpers_e2e_shared_utils_loginasnoadmin",
+      "tests_e2e_helpers_e2e_shared_utils_loginassystemadmin",
+      "tests_e2e_helpers_e2e_shared_utils_loginbyapi",
+      "tests_e2e_helpers_e2e_shared_utils_registerbyapi",
+      "tests_e2e_helpers_e2e_shared_utils_requireenv",
+      "tests_e2e_helpers_e2e_shared_utils_verifybyapi",
+      "tests_e2e_reportes_spec"
+    ],
+    "23": [
+      "src_components_chart_chart",
+      "src_components_chart_chart1",
+      "src_components_chart_chart1_chart1",
+      "src_components_chart_chart_chart",
+      "src_components_chart_chart_createdata",
+      "src_components_chart_chart_data",
+      "src_components_chart_deposits",
+      "src_components_chart_deposits_deposits",
+      "src_components_chart_deposits_preventdefault"
+    ],
+    "24": [
+      "src_components_produccion_formproduccion",
+      "src_components_produccion_formproduccion_formproduccion",
+      "src_components_produccion_gridproduccion",
+      "src_components_produccion_gridproduccion_gridproduccion",
+      "src_components_produccion_gridproduccion_producciontoolbar",
+      "src_components_produccion_produccion",
+      "src_components_produccion_produccion_produccion",
+      "src_components_produccion_produccion_tolist",
+      "src_components_produccion_produccion_tomap"
+    ],
+    "25": [
+      "src_components_producto_formproducto",
+      "src_components_producto_formproducto_emptyform",
+      "src_components_producto_formproducto_formproducto",
+      "src_components_producto_gridproducto",
+      "src_components_producto_gridproducto_gridproducto",
+      "src_components_producto_gridproducto_productotoolbar",
+      "src_components_producto_producto",
+      "src_components_producto_producto_producto"
+    ],
+    "26": [
+      "docgen",
+      "docgen_autofixsourcecode",
+      "docgen_cleanolddoccomments",
+      "docgen_createfallbackcomponent",
+      "docgen_parser",
+      "docgen_processfile",
+      "docgen_run"
+    ],
+    "27": [
+      "package",
+      "package_homepage",
+      "package_name",
+      "package_private",
+      "package_proxy",
+      "package_type",
+      "package_version"
+    ],
+    "28": [
+      "src_components_api_verifyclient",
+      "src_components_api_verifyclient_backend_base",
+      "src_components_api_verifyclient_verifyaxios",
+      "src_components_api_verifyclient_verifyemail",
+      "src_components_verify",
+      "src_components_verify_persisttokens",
+      "src_components_verify_verify"
+    ],
+    "29": [
+      "src_components_ingredientepp_formingredientepresentacionp",
+      "src_components_ingredientepp_formingredientepresentacionp_formingredientepresentacionp",
+      "src_components_ingredientepp_gridingredientepresentacionp",
+      "src_components_ingredientepp_gridingredientepresentacionp_gridingredientepresentacionp",
+      "src_components_ingredientepp_gridingredientepresentacionp_ingredientepptoolbar",
+      "src_components_ingredientepp_ingredientepp",
+      "src_components_ingredientepp_ingredientepp_ingredientepresentacionproducto"
+    ],
+    "30": [
+      "src_components_proveedor_formproveedor",
+      "src_components_proveedor_formproveedor_formproveedor",
+      "src_components_proveedor_gridproveedor",
+      "src_components_proveedor_gridproveedor_gridproveedor",
+      "src_components_proveedor_gridproveedor_proveedortoolbar",
+      "src_components_proveedor_proveedor",
+      "src_components_proveedor_proveedor_proveedor"
+    ],
+    "31": [
+      "src_components_evaluacion_item_evaluacion_item",
+      "src_components_evaluacion_item_evaluacion_item_evaluacionitem",
+      "src_components_evaluacion_item_formevaluacionitem",
+      "src_components_evaluacion_item_formevaluacionitem_formevaluacionitem",
+      "src_components_evaluacion_item_gridevaluacionitem",
+      "src_components_evaluacion_item_gridevaluacionitem_gridevaluacionitem"
+    ],
+    "32": [
+      "src_components_proceso_gridproceso",
+      "src_components_proceso_gridproceso_gridproceso",
+      "src_components_proceso_proceso",
+      "src_components_proceso_proceso_proceso",
+      "src_components_proceso_proceso_tolist",
+      "src_components_proceso_proceso_tomap"
+    ],
+    "33": [
+      "src_components_tipo_inventario_formtipoinventario",
+      "src_components_tipo_inventario_formtipoinventario_formtipoinventario",
+      "src_components_tipo_inventario_gridtipoinventario",
+      "src_components_tipo_inventario_gridtipoinventario_gridtipoinventario",
+      "src_components_tipo_inventario_tipo_inventario",
+      "src_components_tipo_inventario_tipo_inventario_tipoinventario"
+    ],
+    "34": [
+      "tests_e2e_helpers_e2e_shared_utils_extracttokenfromverificationlink",
+      "tests_e2e_helpers_e2e_shared_utils_extractverificationlink",
+      "tests_e2e_helpers_e2e_shared_utils_resolvefrommailhog",
+      "tests_e2e_helpers_e2e_shared_utils_resolvefromprovider",
+      "tests_e2e_helpers_e2e_shared_utils_resolveverificationlink",
+      "tests_e2e_helpers_e2e_shared_utils_resolveverificationtoken"
+    ],
+    "35": [
+      "add_jsdoc_header",
+      "add_jsdoc_header_agregarheaderjsdoc",
+      "add_jsdoc_header_components_dir",
+      "add_jsdoc_header_dirname",
+      "add_jsdoc_header_filename"
+    ],
+    "36": [
+      "src_components_ocupacion_formocupacion_formocupacion",
+      "src_components_ocupacion_gridocupacion",
+      "src_components_ocupacion_gridocupacion_gridocupacion",
+      "src_components_ocupacion_ocupacion",
+      "src_components_ocupacion_ocupacion_ocupacion"
+    ],
+    "37": [
+      "src_components_grid_grid1",
+      "src_components_grid_grid1_grid1",
+      "src_components_home",
+      "src_components_home_home"
+    ],
+    "38": [
+      "src_components_grupo_gridgrupo",
+      "src_components_grupo_gridgrupo_gridgrupo",
+      "src_components_grupo_grupo",
+      "src_components_grupo_grupo_grupo"
+    ],
+    "39": [
+      "src_components_ingrediente_gridingrediente",
+      "src_components_ingrediente_gridingrediente_gridingrediente",
+      "src_components_ingrediente_ingrediente",
+      "src_components_ingrediente_ingrediente_ingrediente"
+    ],
+    "40": [
+      "src_components_marca_gridmarca",
+      "src_components_marca_gridmarca_gridmarca",
+      "src_components_marca_marca",
+      "src_components_marca_marca_marca"
+    ],
+    "41": [
+      "src_components_tipo_bloque_gridtipobloque",
+      "src_components_tipo_bloque_gridtipobloque_gridtipobloque",
+      "src_components_tipo_bloque_tipobloque",
+      "src_components_tipo_bloque_tipobloque_tipobloque"
+    ],
+    "42": [
+      "src_components_tipo_espacio_gridtipoespacio",
+      "src_components_tipo_espacio_gridtipoespacio_gridtipoespacio",
+      "src_components_tipo_espacio_tipoespacio",
+      "src_components_tipo_espacio_tipoespacio_tipoespacio"
+    ],
+    "43": [
+      "src_components_tipo_evaluacion_gridtipoevaluacion",
+      "src_components_tipo_evaluacion_gridtipoevaluacion_gridtipoevaluacion",
+      "src_components_tipo_evaluacion_tipo_evaluacion",
+      "src_components_tipo_evaluacion_tipo_evaluacion_tipoevaluacion"
+    ],
+    "44": [
+      "src_components_tipo_movimiento_gridtipomovimiento",
+      "src_components_tipo_movimiento_gridtipomovimiento_gridtipomovimiento",
+      "src_components_tipo_movimiento_tipomovimiento",
+      "src_components_tipo_movimiento_tipomovimiento_tipomovimiento"
+    ],
+    "45": [
+      "src_components_tipo_sede_gridtiposede",
+      "src_components_tipo_sede_gridtiposede_gridtiposede",
+      "src_components_tipo_sede_tiposede",
+      "src_components_tipo_sede_tiposede_tiposede"
+    ],
+    "46": [
+      "src_components_tipoidentificacion_gridtipoidentificacion",
+      "src_components_tipoidentificacion_gridtipoidentificacion_gridtipoidentificacion",
+      "src_components_tipoidentificacion_tipoidentificacion",
+      "src_components_tipoidentificacion_tipoidentificacion_tipoidentificacion"
+    ],
+    "47": [
+      "fix_jsx_comments",
+      "fix_jsx_comments_fixcommentsinfiles",
+      "fix_jsx_comments_replacejsxcomments"
+    ],
+    "48": [
+      "clean_jsdoc_theme",
+      "package_devdependencies_clean_jsdoc_theme"
+    ],
+    "49": [
+      "babel_parser",
+      "package_dependencies_babel_parser"
+    ],
+    "50": [
+      "babel_preset_react",
+      "package_devdependencies_babel_preset_react"
+    ],
+    "51": [
+      "cors",
+      "package_dependencies_cors"
+    ],
+    "52": [
+      "date_fns",
+      "package_dependencies_date_fns"
+    ],
+    "53": [
+      "docdash",
+      "package_devdependencies_docdash"
+    ],
+    "54": [
+      "docs_scripts_collapse",
+      "docs_scripts_collapse_hideallbutcurrent"
+    ],
+    "55": [
+      "docs_scripts_nav",
+      "docs_scripts_nav_scrolltonavitem"
+    ],
+    "56": [
+      "docs_scripts_search",
+      "docs_scripts_search_contains"
+    ],
+    "57": [
+      "dotenv",
+      "package_devdependencies_dotenv"
+    ],
+    "58": [
+      "embla_carousel_autoplay",
+      "package_dependencies_embla_carousel_autoplay"
+    ],
+    "59": [
+      "embla_carousel_react",
+      "package_dependencies_embla_carousel_react"
+    ],
+    "60": [
+      "emotion_react",
+      "package_dependencies_emotion_react"
+    ],
+    "61": [
+      "emotion_styled",
+      "package_dependencies_emotion_styled"
+    ],
+    "62": [
+      "eslint_js",
+      "package_devdependencies_eslint_js"
+    ],
+    "63": [
+      "eslint_plugin_react",
+      "package_devdependencies_eslint_plugin_react"
+    ],
+    "64": [
+      "eslint_plugin_react_refresh",
+      "package_devdependencies_eslint_plugin_react_refresh"
+    ],
+    "65": [
+      "fast_glob",
+      "package_dependencies_fast_glob"
+    ],
+    "66": [
+      "fontsource_roboto",
+      "package_dependencies_fontsource_roboto"
+    ],
+    "67": [
+      "formik",
+      "package_dependencies_formik"
+    ],
+    "68": [
+      "fs_extra",
+      "package_devdependencies_fs_extra"
+    ],
+    "69": [
+      "globby",
+      "package_devdependencies_globby"
+    ],
+    "70": [
+      "http_proxy_middleware",
+      "package_dependencies_http_proxy_middleware"
+    ],
+    "71": [
+      "i18next",
+      "package_dependencies_i18next"
+    ],
+    "72": [
+      "i18next_browser_languagedetector",
+      "package_dependencies_i18next_browser_languagedetector"
+    ],
+    "73": [
+      "jsdoc_babel",
+      "package_devdependencies_jsdoc_babel"
+    ],
+    "74": [
+      "jspdf",
+      "package_dependencies_jspdf"
+    ],
+    "75": [
+      "jspdf_autotable",
+      "package_dependencies_jspdf_autotable"
+    ],
+    "76": [
+      "mui_icons_material",
+      "package_dependencies_mui_icons_material"
+    ],
+    "77": [
+      "mui_lab",
+      "package_dependencies_mui_lab"
+    ],
+    "78": [
+      "mui_styled_engine_sc",
+      "package_dependencies_mui_styled_engine_sc"
+    ],
+    "79": [
+      "mui_styles",
+      "package_dependencies_mui_styles"
+    ],
+    "80": [
+      "mui_system",
+      "package_dependencies_mui_system"
+    ],
+    "81": [
+      "mui_x_charts",
+      "package_dependencies_mui_x_charts"
+    ],
+    "82": [
+      "mui_x_data_grid",
+      "package_dependencies_mui_x_data_grid"
+    ],
+    "83": [
+      "mui_x_date_pickers",
+      "package_dependencies_mui_x_date_pickers"
+    ],
+    "84": [
+      "package_dependencies_prop_types",
+      "prop_types"
+    ],
+    "85": [
+      "package_dependencies_react",
+      "react"
+    ],
+    "86": [
+      "package_dependencies_react_date_range",
+      "react_date_range"
+    ],
+    "87": [
+      "package_dependencies_react_dom",
+      "react_dom"
+    ],
+    "88": [
+      "package_dependencies_react_hook_form",
+      "react_hook_form"
+    ],
+    "89": [
+      "package_dependencies_react_i18next",
+      "react_i18next"
+    ],
+    "90": [
+      "package_dependencies_react_responsive_carousel",
+      "react_responsive_carousel"
+    ],
+    "91": [
+      "package_dependencies_react_router_dom",
+      "react_router_dom"
+    ],
+    "92": [
+      "package_dependencies_react_slick",
+      "react_slick"
+    ],
+    "93": [
+      "package_dependencies_serve",
+      "serve"
+    ],
+    "94": [
+      "package_dependencies_slick_carousel",
+      "slick_carousel"
+    ],
+    "95": [
+      "package_dependencies_styled_components",
+      "styled_components"
+    ],
+    "96": [
+      "package_dependencies_validator",
+      "validator"
+    ],
+    "97": [
+      "package_dependencies_yup",
+      "yup"
+    ],
+    "98": [
+      "package_devdependencies_types_react",
+      "types_react"
+    ],
+    "99": [
+      "package_devdependencies_vite",
+      "vite"
+    ],
+    "100": [
+      "package_devdependencies_vitejs_plugin_react",
+      "vitejs_plugin_react"
+    ],
+    "101": [
+      "sanitize_jsx_comments",
+      "sanitize_jsx_comments_regexfixes"
+    ],
+    "102": [
+      "src_components_combobox",
+      "src_components_combobox_combobox"
+    ],
+    "103": [
+      "src_components_dashboard_title",
+      "src_components_dashboard_title_title"
+    ],
+    "104": [
+      "src_components_kardex_kardextoolbar",
+      "src_components_kardex_kardextoolbar_kardextoolbar"
+    ],
+    "105": [
+      "src_components_kardex_vistapreviapdfkardex",
+      "src_components_kardex_vistapreviapdfkardex_vistapreviapdfkardex"
+    ],
+    "106": [
+      "src_components_logout",
+      "src_components_logout_logout"
+    ],
+    "107": [
+      "src_components_perfilcard",
+      "src_components_perfilcard_perfilcard"
+    ],
+    "108": [
+      "src_components_re_fc_vistapreviapdffactura",
+      "src_components_re_fc_vistapreviapdffactura_vistapreviapdffactura"
+    ],
+    "109": [
+      "src_components_re_pv_vistapreviapdfproductovencido",
+      "src_components_re_pv_vistapreviapdfproductovencido_vistapreviapdfproductovencido"
+    ],
+    "110": [
+      "src_layout",
+      "src_layout_layout"
+    ],
+    "111": [
+      "docs_scripts_commonnav"
+    ],
+    "112": [
+      "docs_scripts_linenumber"
+    ],
+    "113": [
+      "docs_scripts_polyfill"
+    ],
+    "114": [
+      "docs_scripts_prettify_lang_css"
+    ],
+    "115": [
+      "eslint_config"
+    ],
+    "116": [
+      "eslint_eslint"
+    ],
+    "117": [
+      "playwright_config"
+    ],
+    "118": [
+      "src_components_vite_config"
+    ],
+    "119": [
+      "tests_e2e_onboarding_autoregistro_spec"
+    ],
+    "120": [
+      "tests_e2e_onboarding_autoregistro_validation_spec"
+    ],
+    "121": [
+      "tests_e2e_rol_system_rf_036_spec"
+    ],
+    "122": [
+      "tests_e2e_rol_system_rf_036_validation_spec"
+    ],
+    "123": [
+      "vite_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.05792620078334364,
+    "1": 0.055178652193577565,
+    "2": 0.07712765957446809,
+    "3": 0.05757575757575758,
+    "4": 0.10220673635307782,
+    "5": 0.11428571428571428,
+    "6": 0.10084033613445378,
+    "7": 0.13230769230769232,
+    "8": 0.12923076923076923,
+    "9": 0.14333333333333334,
+    "10": 0.15204678362573099,
+    "11": 0.1503267973856209,
+    "12": 0.24836601307189543,
+    "13": 0.1830065359477124,
+    "14": 0.20261437908496732,
+    "15": 0.11764705882352941,
+    "16": 0.20588235294117646,
+    "17": 0.125,
+    "18": 0.17582417582417584,
+    "19": 0.25757575757575757,
+    "20": 0.18181818181818182,
+    "21": 0.2909090909090909,
+    "22": 0.2545454545454545,
+    "23": 0.2777777777777778,
+    "24": 0.3888888888888889,
+    "25": 0.35714285714285715,
+    "26": 0.47619047619047616,
+    "27": 0.2857142857142857,
+    "28": 0.42857142857142855,
+    "29": 0.42857142857142855,
+    "30": 0.42857142857142855,
+    "31": 0.4666666666666667,
+    "32": 0.6,
+    "33": 0.4666666666666667,
+    "34": 0.5333333333333333,
+    "35": 0.4,
+    "36": 0.5,
+    "37": 0.6666666666666666,
+    "38": 0.6666666666666666,
+    "39": 0.6666666666666666,
+    "40": 0.6666666666666666,
+    "41": 0.6666666666666666,
+    "42": 0.6666666666666666,
+    "43": 0.6666666666666666,
+    "44": 0.6666666666666666,
+    "45": 0.6666666666666666,
+    "46": 0.6666666666666666,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0,
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0,
+    "105": 1.0,
+    "106": 1.0,
+    "107": 1.0,
+    "108": 1.0,
+    "109": 1.0,
+    "110": 1.0,
+    "111": 1.0,
+    "112": 1.0,
+    "113": 1.0,
+    "114": 1.0,
+    "115": 1.0,
+    "116": 1.0,
+    "117": 1.0,
+    "118": 1.0,
+    "119": 1.0,
+    "120": 1.0,
+    "121": 1.0,
+    "122": 1.0,
+    "123": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_components_axiosconfig_instance",
+      "label": "instance",
+      "degree": 109
+    },
+    {
+      "id": "src_components_messagesnackbar_messagesnackbar",
+      "label": "MessageSnackBar()",
+      "degree": 51
+    },
+    {
+      "id": "src_components_utils_validations_validatecamposbase",
+      "label": "validateCamposBase()",
+      "degree": 48
+    },
+    {
+      "id": "src_components_stackbuttons_stackbuttons",
+      "label": "StackButtons()",
+      "degree": 27
+    },
+    {
+      "id": "src_components_common_filtersloaders_makeloaders",
+      "label": "makeLoaders()",
+      "degree": 17
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 16
+    },
+    {
+      "id": "src_components_common_appdatagrid_appdatagrid",
+      "label": "AppDataGrid()",
+      "degree": 15
+    },
+    {
+      "id": "tests_e2e_helpers_e2e_shared_utils_getactivedialog",
+      "label": "getActiveDialog()",
+      "degree": 14
+    },
+    {
+      "id": "src_components_kardex_formkardex_formkardex",
+      "label": "FormKardex()",
+      "degree": 13
+    },
+    {
+      "id": "src_components_useubicacionfilters_useubicacionfilters",
+      "label": "useUbicacionFilters()",
+      "degree": 13
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Presentacionproducto()",
+      "target": "u()",
+      "source_files": [
+        "src/components/Presentacionproducto/Presentacionproducto.jsx",
+        "docs/scripts/prettify/prettify.js"
+      ],
+      "confidence": "INFERRED",
+      "relation": "indirect_call",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "KardexArticulosSection()",
+      "target": "resolveKardexId()",
+      "source_files": [
+        "src/components/Kardex/KardexArticulosSection.jsx",
+        "src/components/Kardex/utils/kardexFormatters.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "peripheral node `KardexArticulosSection()` unexpectedly reaches hub `resolveKardexId()`"
+    },
+    {
+      "source": "useKardexData()",
+      "target": "toArray()",
+      "source_files": [
+        "src/components/Kardex/hooks/useKardexData.js",
+        "src/components/Kardex/utils/kardexFormatters.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "Navbar()",
+      "target": "useThemeToggle()",
+      "source_files": [
+        "src/components/Navbar.jsx",
+        "src/components/dashboard/ThemeToggleProvider.jsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "peripheral node `Navbar()` unexpectedly reaches hub `useThemeToggle()`"
+    },
+    {
+      "source": "RE_ordenCompra()",
+      "target": "useUbicacionFilters()",
+      "source_files": [
+        "src/components/RE_oc/re_oc.jsx",
+        "src/components/useUbicacionFilters.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `dependencies` connect `dependencies` to `package.json`, `@babel/parser`, `cors`, `date-fns`, `embla-carousel-autoplay`, `embla-carousel-react`, `@emotion/react`, `@emotion/styled`, `fast-glob`, `@fontsource/roboto`, `formik`, `http-proxy-middleware`, `i18next`, `i18next-browser-languagedetector`, `jspdf`, `jspdf-autotable`, `@mui/icons-material`, `@mui/lab`, `@mui/styled-engine-sc`, `@mui/styles`, `@mui/system`, `@mui/x-charts`, `@mui/x-data-grid`, `@mui/x-date-pickers`, `prop-types`, `react`, `react-date-range`, `react-dom`, `react-hook-form`, `react-i18next`, `react-responsive-carousel`, `react-router-dom`, `react-slick`, `serve`, `slick-carousel`, `styled-components`, `validator`, `yup`?",
+      "why": "High betweenness centrality (0.134) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `instance` connect `axiosConfig.js` to `LocalizacionGeografica.jsx`, `Inicio.jsx`, `Almacen.jsx`, `FormKardex.jsx`, `FormRegistroEmpresa.jsx`, `kardexConstants.js`, `useUbicacionFilters.js`, `App.jsx`, `Navigator2.jsx`, `MessageSnackBar.jsx`, `Pedido.jsx`, `Presentacionproducto.jsx`, `UsuarioRoles.jsx`, `Produccion.jsx`, `Producto.jsx`, `IngredientePP.jsx`, `Proveedor.jsx`, `Proceso.jsx`, `Tipo_inventario.jsx`, `Ocupacion.jsx`, `Grupo.jsx`, `ingrediente.jsx`, `Marca.jsx`, `Tipobloque.jsx`, `TipoEspacio.jsx`, `Tipo_evaluacion.jsx`, `TipoMovimiento.jsx`, `TipoSede.jsx`, `TipoIdentificacion.jsx`?",
+      "why": "High betweenness centrality (0.081) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `devDependencies` to `eslint-plugin-react-refresh`, `@types/react`, `vite`, `fs-extra`, `globby`, `@vitejs/plugin-react`, `jsdoc-babel`, `clean-jsdoc-theme`, `@babel/preset-react`, `docdash`, `dotenv`, `package.json`, `@eslint/js`, `eslint-plugin-react`?",
+      "why": "High betweenness centrality (0.069) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `__filename`, `__dirname`, `COMPONENTS_DIR` to the rest of the system?",
+      "why": "143 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `axiosConfig.js` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05792620078334364 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `LocalizacionGeografica.jsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.055178652193577565 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Inicio.jsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07712765957446809 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

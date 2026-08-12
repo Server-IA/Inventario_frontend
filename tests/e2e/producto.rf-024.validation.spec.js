@@ -192,12 +192,12 @@ test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 
     await authenticateByApi(page, request, NOADMIN_EMAIL, NOADMIN_PASSWORD);
-    await page.goto('/');
+    await page.goto('/coagronet/');
 
     await page.evaluate(() => {
       localStorage.setItem('activeModule', 'producto');
     });
-    await page.goto('/');
+    await page.goto('/coagronet/');
 
     const unauthorizedMsg = page.getByText(
       /Error cargando|acceso denegado|forbidden|no autorizado/i

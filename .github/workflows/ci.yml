@@ -57,7 +57,7 @@ jobs:
       - name: E2E shard 1/2
         env:
           VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
-          E2E_BASE_URL: http://localhost:5173/coagronet
+          E2E_BASE_URL: http://localhost:5173
           E2E_WEB_SERVER_URL: http://localhost:5173
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
@@ -68,7 +68,7 @@ jobs:
       - name: E2E shard 2/2
         env:
           VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
-          E2E_BASE_URL: http://localhost:5173/coagronet
+          E2E_BASE_URL: http://localhost:5173
           E2E_WEB_SERVER_URL: http://localhost:5173
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
