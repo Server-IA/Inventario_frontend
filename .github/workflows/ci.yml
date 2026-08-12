@@ -3,16 +3,12 @@ name: Frontend CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches: [ci/cd-pipelines]
 
 jobs:
-  # ──────────────────────────────────────────────────
-  # Job 1: Unit tests + Build + Lint
-  # ──────────────────────────────────────────────────
-  build-test-lint:
-    name: Install → Build → Test → Lint
+  ci:
+    name: Install → Build → Test → Lint → E2E
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -27,81 +23,38 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build
+      - name: Build (dev)
         run: npm run build
 
-      - name: Detect test script
-        id: has_test
-        run: |
-          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✓ npm test script found"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "⚠ No npm test script — skipping"
-          fi
-
-      - name: Run tests
-        if: steps.has_test.outputs.exists == 'true'
+      - name: Run unit tests
         run: npm test
 
-      - name: Detect lint script
-        id: has_lint
-        run: |
-          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Lint
-        if: steps.has_lint.outputs.exists == 'true'
         continue-on-error: true
         run: npm run lint
 
-  # ──────────────────────────────────────────────────
-  # Job 2: E2E Playwright (frontend local → back desplegado)
-  # ──────────────────────────────────────────────────
-  e2e:
-    name: E2E Playwright
-    needs: build-test-lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build (apuntando a back desplegado)
+      # ── E2E ──────────────────────────────────────
+      - name: Build (back desplegado)
         run: |
           npm run build
           ln -sf . dist/coagronet
         env:
           VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
 
-      - name: Install Playwright browsers
+      - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
-      - name: Start frontend (serve)
+      - name: Start serve
         run: npx serve -s dist -l 5173 &
 
-      - name: Wait for frontend
+      - name: Wait for serve
         run: |
-          for i in $(seq 1 20); do
+          for i in $(seq 1 30); do
             curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/coagronet/ | grep -q 200 && break
-            sleep 1
+            sleep 2
           done
 
-      - name: Run E2E tests
+      - name: E2E shard 1/2
         env:
           VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
           E2E_BASE_URL: http://localhost:5173/coagronet
@@ -110,7 +63,18 @@ jobs:
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
           E2E_COMPANY_CONTEXT_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_NAME }}
           E2E_COMPANY_CONTEXT_ROLE_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_ROLE_NAME }}
-        run: npx playwright test --reporter=line --timeout=45000
+        run: npx playwright test --shard=1/2
+
+      - name: E2E shard 2/2
+        env:
+          VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
+          E2E_BASE_URL: http://localhost:5173/coagronet
+          E2E_WEB_SERVER_URL: http://localhost:5173
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_COMPANY_CONTEXT_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_NAME }}
+          E2E_COMPANY_CONTEXT_ROLE_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_ROLE_NAME }}
+        run: npx playwright test --shard=2/2
 
       - name: Stop serve
         if: always()
