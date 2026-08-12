@@ -105,7 +105,7 @@ export default function RE_pedido() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData: fetchCatalogos,
+    fetchFiltrosIniciales: fetchCatalogos,
     preloadData,
     loading: catLoading,
     error: catError,
@@ -339,7 +339,7 @@ export default function RE_pedido() {
               {t("pedido.sections.location", "Ubicación")}
               {ubiLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
               {ubiError && (
-                <IconButton size="small" onClick={fetchInitialData} color="error" title={t("common.actions.retry", "Reintentar")}>
+                <IconButton size="small" onClick={fetchFiltrosIniciales} color="error" title={t("common.actions.retry", "Reintentar")}>
                   <RefreshIcon fontSize="small"/>
                 </IconButton>
               )}
