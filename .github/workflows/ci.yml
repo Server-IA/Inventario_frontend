@@ -63,6 +63,8 @@ jobs:
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
           E2E_COMPANY_CONTEXT_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_NAME }}
           E2E_COMPANY_CONTEXT_ROLE_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_ROLE_NAME }}
+          E2E_NOADMIN_EMAIL: ${{ secrets.E2E_NOADMIN_EMAIL }}
+          E2E_NOADMIN_PASSWORD: ${{ secrets.E2E_NOADMIN_PASSWORD }}
         run: npx playwright test --shard=1/2
 
       - name: E2E shard 2/2
@@ -74,6 +76,8 @@ jobs:
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
           E2E_COMPANY_CONTEXT_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_NAME }}
           E2E_COMPANY_CONTEXT_ROLE_NAME: ${{ secrets.E2E_COMPANY_CONTEXT_ROLE_NAME }}
+          E2E_NOADMIN_EMAIL: ${{ secrets.E2E_NOADMIN_EMAIL }}
+          E2E_NOADMIN_PASSWORD: ${{ secrets.E2E_NOADMIN_PASSWORD }}
         run: npx playwright test --shard=2/2
 
       - name: Stop serve
