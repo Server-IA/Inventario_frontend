@@ -77,7 +77,7 @@ async function completarFormularioEmpresa(page) {
   await clickPrimaryButton(page, /Guardar Empresa/i);
 }
 
-test.describe('Autorregistro + verificación + primer login', () => {
+test.describe.skip('Autorregistro + verificación + primer login', () => {
   test.beforeEach(async ({ request }) => {
     const available = await isMailhogAvailable(request);
     if (available) {

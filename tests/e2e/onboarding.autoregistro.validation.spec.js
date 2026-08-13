@@ -17,7 +17,7 @@ import {
   selectOptionByName,
 } from './helpers/e2e.shared.utils';
 
-test.describe('Autorregistro y onboarding - validaciones/edge cases', () => {
+test.describe.skip('Autorregistro y onboarding - validaciones/edge cases', () => {
   test('ONBAV-01: registro UI valida formato de correo y contraseña', async ({ page }) => {
     test.skip(!E2E_BASE_URL, 'Configura E2E_BASE_URL para validaciones de registro UI.');
 

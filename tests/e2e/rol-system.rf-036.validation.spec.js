@@ -52,7 +52,7 @@ test.describe('RF-036 - Rol (admin sistema) validaciones', () => {
   test('RSV-02: validación de formato en nombre de rol (solo mayúsculas y un guion bajo)', async ({ page }) => {
     await clickActionButton(page, 'AGREGAR');
 
-    await fillDialogFieldByName(page, 'nombre', 'rol invalido 123');
+    await fillDialogFieldByName(page, 'nombre', 'ROL_');
     await fillDialogFieldByName(page, 'descripcion', 'Descripción válida');
     await clickDialogButton(page, 'Agregar');
 

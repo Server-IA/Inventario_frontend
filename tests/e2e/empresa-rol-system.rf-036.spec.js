@@ -51,6 +51,23 @@ async function deleteRoleByApi(request, id) {
   await request.delete(`${BACKEND_URI}/api/v1/roles/${id}`, { headers: authHeaders(token) });
 }
 
+async function deleteEmpresaRolByApi(request, rolNombre) {
+  if (!rolNombre) return;
+  const token = await loginAsAdminGetToken(request);
+  const res = await request.get(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok()) return;
+  const list = await res.json();
+  const arr = Array.isArray(list) ? list : list?.content ?? [];
+  const found = arr.find((er) => er.rolNombre === rolNombre);
+  if (found?.id != null) {
+    await request.delete(`${BACKEND_URI}/api/v1/system/empresa-rol/${found.id}`, {
+      headers: authHeaders(token),
+    });
+  }
+}
+
 async function waitForGridRowsLoaded(page, minRows = 1, timeout = 12000) {
   await expect
     .poll(async () => page.locator('[role="row"][data-id]').count(), {
@@ -112,6 +129,7 @@ test.describe('RF-036 - Empresa Rol (admin sistema) casos positivos', () => {
   });
 
   test.afterAll(async ({ request }) => {
+    await deleteEmpresaRolByApi(request, uniqueRoleName);
     await deleteRoleByApi(request, uniqueRoleId);
   });
 

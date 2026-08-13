@@ -40,7 +40,7 @@ test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
     
     // Wait for datagrid to load or show no results
-    await expect(page.locator('div[role="grid"], text=resultado(s) encontrado(s), text=No se encontraron productos')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
   });
 
 });

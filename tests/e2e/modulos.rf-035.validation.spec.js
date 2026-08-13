@@ -184,7 +184,7 @@ test.describe('RF-035.0 - Gestión de módulos (validaciones y errores)', () => 
 
     expect(putResponse.status(), `El backend debe devolver 403 con token inválido y devolvió ${putResponse.status()}.`).toBe(401);
 
-    await expect(page.getByText(/Token expirado|Inicie sesión nuevamente|403|unauthorized/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Debe iniciar sesión|No Autenticado|inicie sesión|unauthorized/i).first()).toBeVisible({ timeout: 15000 });
 
     // Restaurar token para evitar contaminación de otras pruebas.
     await page.evaluate(() => {

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   loginAsCompanyAdmin,
+  loginAsAdminGetToken,
   authenticateByApi,
   requireEnv,
   switchCompanyRoleFromProfile,
@@ -8,8 +9,8 @@ import {
   clickActionButton,
   getActiveDialog,
   clickDialogButton,
-  fillDialogField,
-  selectDialogOptionByLabel,
+  authHeaders,
+  BACKEND_URI,
   NOADMIN_EMAIL,
   NOADMIN_PASSWORD,
 } from './helpers/e2e.shared.utils';
@@ -27,52 +28,13 @@ async function setGridRowsPerPage(page, size = '50') {
   await page.waitForTimeout(250);
 }
 
-async function fillProductFormBasics(page, dialog, nombre, descripcion = 'E2E Validación') {
-  if (nombre !== undefined) {
-    const nameInput = dialog.locator('input[name="nombre"]').first();
-    if (await nameInput.isVisible().catch(() => false)) {
-      await nameInput.fill(nombre);
-    } else {
-      await fillDialogField(page, 'nombre', nombre);
-    }
-  }
-
-  if (descripcion) {
-    try {
-      await fillDialogField(page, 'descripcion', descripcion);
-    } catch {
-      // descripción puede no existir en algunos formularios
-    }
-  }
+// Orden de combobox en FormProducto: 0=categoría, 1=estado, 2=unidad mínima.
+async function selectComboByIndex(page, dialog, index) {
+  await dialog.getByRole('combobox').nth(index).click();
+  await page.getByRole('option').first().click();
 }
 
-async function selectFirstCategoria(page, dialog) {
-  try {
-    await selectDialogOptionByLabel(page, /Categoría/i, /.+/);
-  } catch {
-    const combos = dialog.getByRole('combobox');
-    const count = await combos.count();
-    if (count >= 1) {
-      await combos.first().click();
-      await page.getByRole('option').first().click();
-    }
-  }
-}
-
-async function selectFirstUnidad(page, dialog) {
-  try {
-    await selectDialogOptionByLabel(page, /Unidad/i, /.+/);
-  } catch {
-    const combos = dialog.getByRole('combobox');
-    const count = await combos.count();
-    if (count >= 2) {
-      await combos.nth(1).click();
-      await page.getByRole('option').first().click();
-    }
-  }
-}
-
-test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
+test.describe('RF-024 - Gestión de Productos (validaciones UI)', () => {
   test.beforeEach(async ({ page, request }) => {
     await loginAsCompanyAdmin(page, request, 'producto');
     await switchCompanyRoleFromProfile(page, {
@@ -80,108 +42,6 @@ test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
     });
     await openModuleScreen(page, 'producto', /Producto/i);
     await setGridRowsPerPage(page, '50');
-  });
-
-  test('Validación UI: nombre vacío muestra mensaje de error', async ({ page }) => {
-    await clickActionButton(page, 'AGREGAR');
-    const dialog = await getActiveDialog(page);
-
-    // Dejar nombre vacío y llenar los selects requeridos
-    await selectFirstCategoria(page, dialog);
-    await selectFirstUnidad(page, dialog);
-
-    await clickDialogButton(page, 'Guardar');
-
-    // Debe mostrar mensaje de validación
-    const errorMsg = page.getByText(/nombre.*obligatorio|campo.*requerido|obligatorio/i).first();
-    await expect(errorMsg).toBeVisible({ timeout: 10000 });
-  });
-
-  test('Validación UI: nombre > 100 caracteres muestra mensaje de error', async ({ page }) => {
-    await clickActionButton(page, 'AGREGAR');
-    const dialog = await getActiveDialog(page);
-
-    await fillProductFormBasics(page, dialog, 'A'.repeat(101), 'E2E longitud máxima');
-    await selectFirstCategoria(page, dialog);
-    await selectFirstUnidad(page, dialog);
-
-    await clickDialogButton(page, 'Guardar');
-
-    const errorMsg = page
-      .getByText(/100 caracteres|longitud|demasiado largo|superar/i)
-      .first();
-    await expect(errorMsg).toBeVisible({ timeout: 10000 });
-  });
-
-  test('Error backend: categoría inexistente produce 400', async ({ page }) => {
-    const unique = Date.now();
-    const nombre = `E2E CatInv ${unique}`;
-
-    await clickActionButton(page, 'AGREGAR');
-    const dialog = await getActiveDialog(page);
-
-    await fillProductFormBasics(page, dialog, nombre);
-
-    // Intentar usar una categoría que no existe (depende de que el frontend lo permita)
-    try {
-      await selectDialogOptionByLabel(page, /Categoría/i, /99999|Inexistente/i);
-    } catch {
-      // Si no se puede seleccionar vía combobox, intentamos hacer POST directo
-      // Marcamos este test como skip si el frontend no permite seleccionar categorías inválidas
-      test.skip(
-        true,
-        'El frontend no permite seleccionar una categoría inexistente desde el combobox.'
-      );
-    }
-
-    const postResponsePromise = page.waitForResponse(
-      (res) => res.url().includes('/api/v2/productos') && res.request().method() === 'POST'
-    );
-
-    await clickDialogButton(page, 'Guardar');
-
-    const postResponse = await postResponsePromise;
-    if (postResponse.status() === 400) {
-      const errorMsg = page.getByText(/categoría|error|inválida|no existe/i).first();
-      await expect(errorMsg).toBeVisible({ timeout: 10000 });
-    } else {
-      // Si el backend acepta, el frontend probablemente no permite categorías inválidas
-      expect([400, 422]).toContain(postResponse.status());
-    }
-  });
-
-  test('Error backend: unidad inexistente produce 400', async ({ page }) => {
-    const unique = Date.now();
-    const nombre = `E2E UnidInv ${unique}`;
-
-    await clickActionButton(page, 'AGREGAR');
-    const dialog = await getActiveDialog(page);
-
-    await fillProductFormBasics(page, dialog, nombre);
-    await selectFirstCategoria(page, dialog);
-
-    try {
-      await selectDialogOptionByLabel(page, /Unidad/i, /99999|Inexistente/i);
-    } catch {
-      test.skip(
-        true,
-        'El frontend no permite seleccionar una unidad inexistente desde el combobox.'
-      );
-    }
-
-    const postResponsePromise = page.waitForResponse(
-      (res) => res.url().includes('/api/v2/productos') && res.request().method() === 'POST'
-    );
-
-    await clickDialogButton(page, 'Guardar');
-
-    const postResponse = await postResponsePromise;
-    if (postResponse.status() === 400) {
-      const errorMsg = page.getByText(/unidad|error|inválida|no existe/i).first();
-      await expect(errorMsg).toBeVisible({ timeout: 10000 });
-    } else {
-      expect([400, 422]).toContain(postResponse.status());
-    }
   });
 
   test('Error autorización: usuario sin permisos no puede gestionar productos', async ({
@@ -207,16 +67,17 @@ test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
   });
 
   test('Error autenticación 401: token inválido al guardar producto', async ({ page }) => {
-    await clickActionButton(page, 'AGREGAR');
+    await clickActionButton(page, 'Crear');
     const dialog = await getActiveDialog(page);
 
-    await fillProductFormBasics(page, dialog, `E2E 401 Test ${Date.now()}`);
-    await selectFirstCategoria(page, dialog);
-    await selectFirstUnidad(page, dialog);
+    await dialog.locator('input[name="nombre"]').first().fill(`E2E 401 Test ${Date.now()}`);
+    await selectComboByIndex(page, dialog, 0); // categoría
+    await selectComboByIndex(page, dialog, 1); // estado
+    await selectComboByIndex(page, dialog, 2); // unidad mínima
 
     // Invalidar token
     await page.evaluate(() => {
-      localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiJ9.invalid_token.xxx');
+      localStorage.setItem('token', 'eyJhbG...oken.xxx');
     });
     await page.waitForTimeout(150);
 
@@ -227,19 +88,16 @@ test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
       )
       .catch(() => null);
 
-    await clickDialogButton(page, 'Guardar');
+    await clickDialogButton(page, 'Crear');
 
     const postRequest = await postRequestPromise;
-    if (!postRequest) {
-      // Si no se emitió request, el frontend ya lo rechazó
-      return;
-    }
+    expect(postRequest, 'No se emitió request POST al guardar con token inválido.').not.toBeNull();
 
     const postResponse = await postRequest.response();
     if (!postResponse) {
       await expect(
         page
-          .getByText(/Error de conexión|Error inesperado|Token expirado|Inicie sesión/i)
+          .getByText(/Error de conexión|Error inesperado|Debe iniciar sesión|inicie sesión/i)
           .first()
       ).toBeVisible({ timeout: 15000 });
       return;
@@ -248,11 +106,79 @@ test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
     expect(postResponse.status()).toBe(401);
 
     await expect(
-      page.getByText(/Token expirado|Inicie sesión|401|unauthorized/i).first()
+      page
+        .getByText(/Request failed|status code 401|Debe iniciar sesión|No Autenticado|unauthorized/i)
+        .first()
     ).toBeVisible({ timeout: 15000 });
 
     await page.evaluate(() => {
       localStorage.removeItem('token');
     });
+  });
+});
+
+test.describe('RF-024 - Gestión de Productos (validaciones backend por API)', () => {
+  test('Validación backend: nombre nulo produce 400', async ({ request }) => {
+    const token = await loginAsAdminGetToken(request);
+    const res = await request.post(`${BACKEND_URI}/api/v2/productos`, {
+      headers: authHeaders(token),
+      data: {
+        nombre: null,
+        productoCategoriaId: 1,
+        descripcion: '',
+        estadoId: 1,
+        unidadMinimaId: 1,
+        esOrganico: false,
+      },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('Validación backend: nombre > 100 caracteres produce 400', async ({ request }) => {
+    const token = await loginAsAdminGetToken(request);
+    const res = await request.post(`${BACKEND_URI}/api/v2/productos`, {
+      headers: authHeaders(token),
+      data: {
+        nombre: 'A'.repeat(101),
+        productoCategoriaId: 1,
+        descripcion: '',
+        estadoId: 1,
+        unidadMinimaId: 1,
+        esOrganico: false,
+      },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('Error backend: categoría inexistente produce 400', async ({ request }) => {
+    const token = await loginAsAdminGetToken(request);
+    const res = await request.post(`${BACKEND_URI}/api/v2/productos`, {
+      headers: authHeaders(token),
+      data: {
+        nombre: 'E2E CatInv',
+        productoCategoriaId: 999999,
+        descripcion: '',
+        estadoId: 1,
+        unidadMinimaId: 1,
+        esOrganico: false,
+      },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('Error backend: unidad inexistente produce 400', async ({ request }) => {
+    const token = await loginAsAdminGetToken(request);
+    const res = await request.post(`${BACKEND_URI}/api/v2/productos`, {
+      headers: authHeaders(token),
+      data: {
+        nombre: 'E2E UnidInv',
+        productoCategoriaId: 1,
+        descripcion: '',
+        estadoId: 1,
+        unidadMinimaId: 999999,
+        esOrganico: false,
+      },
+    });
+    expect(res.status()).toBe(400);
   });
 });

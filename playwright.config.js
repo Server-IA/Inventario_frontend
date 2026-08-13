@@ -10,7 +10,7 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: 2,
+  workers: 1,
   reporter: [['list']],
   use: {
     baseURL,
