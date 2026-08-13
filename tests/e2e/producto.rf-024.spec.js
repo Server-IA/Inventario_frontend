@@ -7,10 +7,8 @@ import {
   getActiveDialog,
   clickDialogButton,
   fillDialogField,
-  selectDialogOptionByLabel,
   ensureGridColumnVisible,
   findGridCellInColumnAcrossPages,
-  getGridColumnIndex,
 } from './helpers/e2e.shared.utils';
 
 const TEST_PRODUCT_PREFIX = 'E2E Producto';
@@ -69,26 +67,6 @@ async function findProductCellAcrossPages(page, column, value, timeout = 12000) 
   });
 }
 
-async function pickExistingTestProduct(page, actionLabel) {
-  try {
-    await ensureGridColumnVisible(page, 'Nombre');
-    const cell = await findProductCellAcrossPages(page, 'Nombre', TEST_PRODUCT_PREFIX, 8000);
-    const row = cell.locator('xpath=ancestor::*[@role="row" and @data-id]').first();
-    const nombreColIndex = await getGridColumnIndex(page, 'Nombre');
-    const nameCell = row.locator(`[role="cell"][aria-colindex="${nombreColIndex}"]`).first();
-    const productName = ((await nameCell.textContent()) || '').trim();
-
-    if (!productName) {
-      throw new Error('La celda encontrada no contiene nombre de producto.');
-    }
-    return productName;
-  } catch {
-    throw new Error(
-      `No se encontró un producto de pruebas con prefijo "${TEST_PRODUCT_PREFIX}" para ${actionLabel}. Ejecuta primero el test de creación.`
-    );
-  }
-}
-
 async function openEditDialogForProduct(page, nombre) {
   const row = await getProductRowAcrossPages(page, nombre);
   await row.click();
@@ -110,6 +88,10 @@ async function openEditDialogForProduct(page, nombre) {
 test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
   test.describe.configure({ mode: 'serial' });
 
+  // Producto creado por este spec; update/inactivar operan sobre ÉL (no sobre
+  // leftovers de corridas anteriores).
+  let testProductName = null;
+
   test.beforeEach(async ({ page, request }) => {
     await loginAsCompanyAdmin(page, request, 'producto');
     await switchCompanyRoleFromProfile(page, {
@@ -123,7 +105,7 @@ test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
 
     await expect(page.getByRole('columnheader', { name: /Nombre/i })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: /Categoría/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /Unidad/i })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Unidad/i }).first()).toBeVisible();
     await expect(page.getByRole('columnheader', { name: /Estado/i })).toBeVisible();
 
     await waitForGridRowsLoaded(page);
@@ -132,9 +114,10 @@ test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
   test('HU-024.2: crear producto con datos válidos', async ({ page }) => {
     const unique = Date.now();
     const nombre = `${TEST_PRODUCT_PREFIX} ${unique}`;
+    testProductName = nombre;
 
     await setGridRowsPerPage(page, '50');
-    await clickActionButton(page, 'AGREGAR');
+    await clickActionButton(page, 'Crear');
 
     const dialog = await getActiveDialog(page);
     await expect(dialog.getByRole('heading', { name: /Crear Producto|Producto/i })).toBeVisible({
@@ -144,31 +127,23 @@ test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
     await fillDialogField(page, 'nombre', nombre);
     await fillDialogField(page, 'descripcion', 'Producto creado por prueba E2E');
 
-    // Seleccionar categoría (primer opción disponible)
-    await selectDialogOptionByLabel(page, /Categoría/i, /.+/).catch(async () => {
-      const combos = dialog.getByRole('combobox');
-      const count = await combos.count();
-      if (count >= 1) {
-        await combos.first().click();
-        await page.getByRole('option').first().click();
-      }
-    });
+    // Categoría (requerido) — 1er combobox del form.
+    await dialog.getByRole('combobox').nth(0).click();
+    await page.getByRole('option').first().click();
 
-    // Seleccionar unidad (siguiente combo)
-    await selectDialogOptionByLabel(page, /Unidad/i, /.+/).catch(async () => {
-      const combos = dialog.getByRole('combobox');
-      const count = await combos.count();
-      if (count >= 2) {
-        await combos.nth(1).click();
-        await page.getByRole('option').first().click();
-      }
-    });
+    // Estado (requerido) — 2º combobox del form.
+    await dialog.getByRole('combobox').nth(1).click();
+    await page.getByRole('option', { name: /Activo/i }).first().click();
+
+    // Unidad mínima (requerido) — 3er combobox del form.
+    await dialog.getByRole('combobox').nth(2).click();
+    await page.getByRole('option').first().click();
 
     const postResponsePromise = page.waitForResponse(
       (res) => res.url().includes('/api/v2/productos') && res.request().method() === 'POST'
     );
 
-    await clickDialogButton(page, 'Guardar');
+    await clickDialogButton(page, 'Crear');
 
     const postResponse = await postResponsePromise;
     expect([200, 201]).toContain(postResponse.status());
@@ -184,7 +159,6 @@ test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
       const cell = await findProductCellAcrossPages(page, 'Nombre', nombre, 15000);
       await expect(cell).toBeVisible();
     } catch {
-      // Si no se encuentra en el grid, verificar que al menos el POST devolvió 201
       expect(postResponse.status()).toBeLessThan(300);
     }
   });
@@ -196,21 +170,21 @@ test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
     const firstRow = page.locator('[role="row"][data-id]').first();
     await firstRow.click();
 
-    await page.getByRole('button', { name: /Detalle|Ver|Consultar/i }).click();
+    // El módulo producto no tiene vista "detalle": se usa el diálogo de edición
+    // para consultar los datos del producto.
+    await page.getByRole('button', { name: /^Editar$/i }).click();
 
     const dialog = page.locator('[role="dialog"]:visible').last();
     await expect(dialog).toBeVisible({ timeout: 15000 });
+    await expect(dialog.locator('input[name="nombre"]').first()).toBeVisible({ timeout: 10000 });
 
-    // El diálogo de detalle debe mostrar datos del producto
-    await expect(dialog.getByText(/Nombre|Producto/i).first()).toBeVisible({ timeout: 10000 });
-
-    await clickDialogButton(page, 'Cerrar');
+    await clickDialogButton(page, 'Cancelar');
   });
 
   test('HU-024.4: actualizar producto existente', async ({ page }) => {
     await setGridRowsPerPage(page, '50');
-    const nombre = await pickExistingTestProduct(page, 'actualizar');
-    await openEditDialogForProduct(page, nombre);
+    expect(testProductName, 'HU-024.2 debió crear un producto primero').toBeTruthy();
+    await openEditDialogForProduct(page, testProductName);
 
     const descripcion = `Actualización E2E ${Date.now()}`;
     await fillDialogField(page, 'descripcion', descripcion);
@@ -231,19 +205,12 @@ test.describe('RF-024 - Gestión de Productos (casos positivos)', () => {
 
   test('HU-024.5: inactivar producto (soft delete)', async ({ page }) => {
     await setGridRowsPerPage(page, '50');
-    const nombre = await pickExistingTestProduct(page, 'inactivar');
-    await openEditDialogForProduct(page, nombre);
+    expect(testProductName, 'HU-024.2 debió crear un producto primero').toBeTruthy();
+    await openEditDialogForProduct(page, testProductName);
 
-    // Cambiar estado a Inactivo
-    await selectDialogOptionByLabel(page, /Estado/i, /Inactivo/i).catch(async () => {
-      // Alternativa: buscar combo de estado
-      const dialog = page.locator('[role="dialog"]:visible').last();
-      const stateCombo = dialog.getByRole('combobox').last();
-      if (await stateCombo.isVisible().catch(() => false)) {
-        await stateCombo.click();
-        await page.getByRole('option', { name: /Inactivo/i }).first().click();
-      }
-    });
+    // Cambiar estado a Inactivo (2º combobox del form).
+    await page.locator('[role="dialog"]:visible').last().getByRole('combobox').nth(1).click();
+    await page.getByRole('option', { name: /Inactivo/i }).first().click();
 
     const putResponsePromise = page.waitForResponse(
       (res) => /\/api\/v2\/productos\/\d+$/.test(res.url()) && res.request().method() === 'PUT'

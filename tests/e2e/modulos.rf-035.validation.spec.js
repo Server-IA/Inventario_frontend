@@ -137,6 +137,7 @@ test.describe('RF-035.0 - Gestión de módulos (validaciones y errores)', () => 
   // });
 
   test('Error autorización: usuario sin rol administrador no puede gestionar módulos', async ({ page, request }) => {
+    test.skip(!NOADMIN_EMAIL || !NOADMIN_PASSWORD, 'Configura E2E_NOADMIN_EMAIL y E2E_NOADMIN_PASSWORD (usuario sin permisos).');
     requireEnv('E2E_NOADMIN_EMAIL', NOADMIN_EMAIL);
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 

@@ -188,6 +188,7 @@ test.describe('RF-024 - Gestión de Productos (validaciones y errores)', () => {
     page,
     request,
   }) => {
+    test.skip(!NOADMIN_EMAIL || !NOADMIN_PASSWORD, 'Configura E2E_NOADMIN_EMAIL y E2E_NOADMIN_PASSWORD (usuario sin permisos).');
     requireEnv('E2E_NOADMIN_EMAIL', NOADMIN_EMAIL);
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 

@@ -29,7 +29,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--disable-web-security'] } },
+      use: { ...devices['Desktop Chrome'], locale: 'es-CO', launchOptions: { args: ['--disable-web-security'] } },
     },
   ],
 });
