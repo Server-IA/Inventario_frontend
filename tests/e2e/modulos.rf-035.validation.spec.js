@@ -137,11 +137,12 @@ test.describe('RF-035.0 - Gestión de módulos (validaciones y errores)', () => 
   // });
 
   test('Error autorización: usuario sin rol administrador no puede gestionar módulos', async ({ page, request }) => {
+    test.skip(!NOADMIN_EMAIL || !NOADMIN_PASSWORD, 'Configura E2E_NOADMIN_EMAIL y E2E_NOADMIN_PASSWORD (usuario sin permisos).');
     requireEnv('E2E_NOADMIN_EMAIL', NOADMIN_EMAIL);
     requireEnv('E2E_NOADMIN_PASSWORD', NOADMIN_PASSWORD);
 
     await authenticateByApi(page, request, NOADMIN_EMAIL, NOADMIN_PASSWORD);
-    await page.goto('/');
+    await page.goto('/coagronet/');
 
     const unauthorizedUiMessage = page.getByText(/Error cargando módulos|acceso denegado|forbidden/i);
     await expect(unauthorizedUiMessage.first()).toBeVisible({ timeout: 20000 });
@@ -183,7 +184,7 @@ test.describe('RF-035.0 - Gestión de módulos (validaciones y errores)', () => 
 
     expect(putResponse.status(), `El backend debe devolver 403 con token inválido y devolvió ${putResponse.status()}.`).toBe(401);
 
-    await expect(page.getByText(/Token expirado|Inicie sesión nuevamente|403|unauthorized/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Debe iniciar sesión|No Autenticado|inicie sesión|unauthorized/i).first()).toBeVisible({ timeout: 15000 });
 
     // Restaurar token para evitar contaminación de otras pruebas.
     await page.evaluate(() => {

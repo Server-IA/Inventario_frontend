@@ -1,149 +1,228 @@
-// En construcción - pendiente de definición final de flujos para gestión de roles a nivel sistema
+import { test, expect } from '@playwright/test';
+import {
+  loginAsSystemAdmin,
+  openModuleScreen,
+  clickActionButton,
+  fillDialogFieldByName,
+  selectDialogOptionByLabel,
+  clickDialogButton,
+  expectSnackMessage,
+  findGridCellInColumnAcrossPages,
+} from './helpers/e2e.shared.utils';
 
-// import { test, expect } from '@playwright/test';
-// import {
-//   loginAsSystemAdmin,
-//   openModuleScreen,
-//   clickActionButton,
-//   fillDialogFieldByName,
-//   selectDialogOptionByLabel,
-//   clickDialogButton,
-//   expectSnackMessage,
-//   findGridCellInColumnAcrossPages,
-// } from './helpers/e2e.shared.utils';
+// Roles de sistema que NUNCA deben editarse ni eliminarse por un test.
+const PROTECTED_ROLE_IDS = [1, 2];
 
-// const PROTECTED_ROLE_REGEX = /(^|\b)(ROLE_)?ADMIN(ISTRADOR)?[_\s]*(EMPRESA|SISTEMA)\b/i;
+// Prefijo reconocible de dato de prueba. El nombre se completa con letras
+// aleatorias para garantizar unicidad (el backend solo acepta mayúsculas y un
+// único '_', por eso NO se usa timestamp con dígitos: `ROLE_E2E_123` es inválido).
+const TEST_ROLE_PREFIX = 'ROLE_QA';
 
-// function randomUpperLetters(length = 6) {
-//   return Array.from({ length }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
-// }
+function buildValidRoleName() {
+  const rand = Array.from(
+    { length: 8 },
+    () => String.fromCharCode(65 + Math.floor(Math.random() * 26))
+  ).join('');
+  return `${TEST_ROLE_PREFIX}${rand}`;
+}
 
-// function buildValidRoleName(prefix = 'ROLE') {
-//   // Formato valido en FormRol: solo mayusculas y maximo un '_' en medio.
-//   return `${prefix}_${randomUpperLetters(7)}`;
-// }
+async function waitForGridRowsLoaded(page, minRows = 1, timeout = 12000) {
+  await expect
+    .poll(() => page.locator('[role="row"][data-id]').count(), {
+      timeout,
+      message: 'No se cargaron filas en la tabla dentro del tiempo esperado',
+    })
+    .toBeGreaterThanOrEqual(minRows);
+}
 
-// async function waitForTableRows(page, minRows = 1, timeout = 20000) {
-//   await expect
-//     .poll(async () => page.locator('[role="row"][data-id]').count(), {
-//       timeout,
-//       message: 'La tabla de roles no cargó registros en el tiempo esperado',
-//     })
-//     .toBeGreaterThanOrEqual(minRows);
-// }
+// Busca la fila cuyo valor en `column` coincide con `name` (recorriendo la
+// paginación si hace falta) y devuelve el locator de la FILA, no de la celda.
+async function getRowByExactText(page, column, name) {
+  const cell = await findGridCellInColumnAcrossPages(page, column, name, {
+    timeout: 15000,
+    maxPages: 80,
+  });
+  return cell.locator('xpath=ancestor::*[@role="row" and @data-id]').first();
+}
 
-// async function selectSafeRoleRow(page, actionLabel = 'modificar') {
-//   await waitForTableRows(page, 1, 30000);
+async function readConfirmDialogText(page) {
+  const dialog = page.locator('[role="dialog"]:visible').last();
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+  return ((await dialog.textContent()) || '').trim();
+}
 
-//   const rows = page.locator('[role="row"][data-id]');
-//   const rowCount = await rows.count();
+// Selecciona la fila por nombre y abre el diálogo de confirmación de borrado.
+// Si el click cayó en otra fila (re-render del grid) el diálogo NO mostrará el
+// rol esperado: se cierra y se reintenta. Nunca se confirma el borrado de un
+// rol distinto al que creó el test.
+async function selectRowAndOpenDeleteConfirm(page, roleName, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const row = await getRowByExactText(page, 'Nombre', roleName);
+    const rowId = await row.getAttribute('data-id');
+    await row.click();
+    await page.waitForTimeout(300);
 
-//   for (let i = 0; i < rowCount; i += 1) {
-//     const row = rows.nth(i);
-//     const roleName = ((await row.locator('[role="cell"]').first().textContent()) || '').trim();
+    // La fila debe quedar seleccionada (botón ELIMINAR habilitado).
+    const deleteButton = page.getByRole('button', { name: /^ELIMINAR$/i }).first();
+    if (!(await deleteButton.isEnabled().catch(() => false))) {
+      continue;
+    }
+    await deleteButton.click();
 
-//     if (!PROTECTED_ROLE_REGEX.test(roleName)) {
-//       await row.click();
-//       return roleName;
-//     }
-//   }
+    const dialogText = await readConfirmDialogText(page);
+    if (dialogText.includes(roleName)) {
+      return rowId;
+    }
 
-//   throw new Error(
-//     `No hay filas seguras para ${actionLabel}. Todas las filas visibles son roles protegidos (admin empresa/sistema).`
-//   );
-// }
+    // Selección incorrecta: cerrar y reintentar.
+    await page.getByRole('button', { name: /^Cancelar$/i }).first().click();
+    await page
+      .locator('[role="dialog"]:visible')
+      .last()
+      .waitFor({ state: 'detached' })
+      .catch(() => {});
+  }
 
-// test.describe('RF-036 - Rol (admin sistema) casos positivos', () => {
-//   test.beforeEach(async ({ page, request }) => {
-//     await loginAsSystemAdmin(page, request, 'rol');
-//     await openModuleScreen(page, 'rol', /Gestión de Rol/i);
-//   });
+  throw new Error(
+    `No se pudo seleccionar el rol "${roleName}" para eliminar tras ${maxAttempts} intentos.`
+  );
+}
 
-//   test('RS-01: visualiza listado de roles', async ({ page }) => {
-//     await expect(page.getByRole('columnheader', { name: 'Nombre' })).toBeVisible();
-//     await expect(page.getByRole('columnheader', { name: 'Descripción' })).toBeVisible();
-//     await expect(page.getByRole('columnheader', { name: /^Estado ID$/i })).toBeVisible();
-//     await expect(page.getByRole('columnheader', { name: /^Estado$/i })).toBeVisible();
+// Selecciona la fila por nombre y abre el diálogo de actualización, verificando
+// que el formulario muestre el rol esperado antes de editar (misma filosofía de
+// reintento: si se seleccionó otro rol, se cierra y se vuelve a intentar).
+async function selectRowAndOpenUpdateDialog(page, roleName, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const row = await getRowByExactText(page, 'Nombre', roleName);
+    await row.click();
+    await page.waitForTimeout(300);
 
-//     await waitForTableRows(page, 1, 30000);
-//     const totalRows = await page.locator('[role="row"][data-id]').count();
-//     expect(totalRows).toBeGreaterThan(0);
-//   });
+    const updateButton = page.getByRole('button', { name: /^ACTUALIZAR$/i }).first();
+    if (!(await updateButton.isEnabled().catch(() => false))) {
+      continue;
+    }
+    await updateButton.click();
 
-//   test('RS-02: crear rol con nombre, descripción y estado', async ({ page }) => {
-//     const unique = Date.now();
-//     const roleName = buildValidRoleName('ROLE');
+    const dialog = page.locator('[role="dialog"]:visible').last();
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const nameValue = (await dialog.locator('input[name="nombre"]').first().inputValue().catch(() => '')).trim();
 
-//     await clickActionButton(page, 'AGREGAR');
-//     await fillDialogFieldByName(page, 'nombre', roleName);
-//     await fillDialogFieldByName(page, 'descripcion', `Rol de prueba ${unique}`);
-//     await selectDialogOptionByLabel(page, 'Estado', 'Activo');
+    if (nameValue === roleName) {
+      return dialog;
+    }
 
-//     const postResponsePromise = page.waitForResponse(
-//       (res) => res.url().includes('/v1/roles') && res.request().method() === 'POST'
-//     );
+    await dialog.getByRole('button', { name: /^Cancelar$/i }).first().click();
+    await dialog.waitFor({ state: 'detached' }).catch(() => {});
+  }
 
-//     await clickDialogButton(page, 'Agregar');
-//     const postResponse = await postResponsePromise;
+  throw new Error(
+    `No se pudo seleccionar el rol "${roleName}" para actualizar tras ${maxAttempts} intentos.`
+  );
+}
 
-//     expect([200, 201]).toContain(postResponse.status());
-//     await expectSnackMessage(page, /Rol creado/i);
+test.describe('RF-036 - Rol (admin sistema) casos positivos', () => {
+  // Serial: un solo dato recorre crear -> actualizar -> eliminar. Así el paso
+  // de eliminar SIEMPRE tiene un dato recién creado y no toca roles ajenos.
+  test.describe.configure({ mode: 'serial' });
 
-//     await findGridCellInColumnAcrossPages(page, 'Nombre', roleName, { timeout: 15000, maxPages: 80 });
-//   });
+  let testRoleName = null;
 
-//   test('RS-03: actualizar rol existente', async ({ page }) => {
-//     await selectSafeRoleRow(page, 'actualizar');
-//     await clickActionButton(page, 'ACTUALIZAR');
+  test.beforeEach(async ({ page, request }) => {
+    await loginAsSystemAdmin(page, request, 'rol');
+    await openModuleScreen(page, 'rol', /Gestión de Rol/i);
+  });
 
-//     const updatedDescription = `Actualizado E2E ${Date.now()}`;
-//     await fillDialogFieldByName(page, 'descripcion', updatedDescription);
+  test('RS-01: visualizar listado de roles con nombre, descripción y estado', async ({ page }) => {
+    await expect(page.getByRole('columnheader', { name: 'Nombre' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Descripción' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /^Estado$/i })).toBeVisible();
+    await waitForGridRowsLoaded(page, 1, 30000);
+  });
 
-//     const putResponsePromise = page.waitForResponse(
-//       (res) => /\/v1\/roles\/\d+$/.test(res.url()) && res.request().method() === 'PUT'
-//     );
+  test('RS-02: crear rol con nombre, descripción y estado activo', async ({ page }) => {
+    testRoleName = buildValidRoleName();
+    const uniqueDesc = `Rol de prueba E2E ${Date.now()}`;
 
-//     await clickDialogButton(page, 'Actualizar');
-//     const putResponse = await putResponsePromise;
+    await clickActionButton(page, 'AGREGAR');
+    await fillDialogFieldByName(page, 'nombre', testRoleName);
+    await fillDialogFieldByName(page, 'descripcion', uniqueDesc);
+    await selectDialogOptionByLabel(page, 'Estado', 'Activo');
 
-//     expect([200, 204]).toContain(putResponse.status());
-//     await expectSnackMessage(page, /Rol actualizado/i);
-//   });
+    const postResponsePromise = page.waitForResponse(
+      (res) => res.url().includes('/v1/roles') && res.request().method() === 'POST'
+    );
 
-//   test('RS-04: eliminar rol no asociado', async ({ page }) => {
-//     const unique = Date.now();
-//     const roleName = buildValidRoleName('ROLEDEL');
+    await clickDialogButton(page, 'Agregar');
+    const postResponse = await postResponsePromise;
+    expect([200, 201]).toContain(postResponse.status());
+    await expectSnackMessage(page, /Rol creado/i);
 
-//     // Crear un rol temporal para garantizar que no esté asociado.
-//     await clickActionButton(page, 'AGREGAR');
-//     await fillDialogFieldByName(page, 'nombre', roleName);
-//     await fillDialogFieldByName(page, 'descripcion', `Rol temporal para eliminar ${unique}`);
-//     await selectDialogOptionByLabel(page, 'Estado', 'Activo');
+    // Verificar que aparece en el grid (paginando si hace falta).
+    const cell = await findGridCellInColumnAcrossPages(page, 'Nombre', testRoleName, {
+      timeout: 15000,
+      maxPages: 80,
+    });
+    await expect(cell).toBeVisible();
+  });
 
-//     const postResponsePromise = page.waitForResponse(
-//       (res) => res.url().includes('/v1/roles') && res.request().method() === 'POST'
-//     );
+  test('RS-03: actualizar descripción del rol creado', async ({ page }) => {
+    test.slow();
+    expect(testRoleName, 'RS-02 debió crear un rol primero').toBeTruthy();
+    await waitForGridRowsLoaded(page, 1, 30000);
 
-//     await clickDialogButton(page, 'Agregar');
-//     const postResponse = await postResponsePromise;
-//     expect([200, 201]).toContain(postResponse.status());
-//     await expectSnackMessage(page, /Rol creado/i);
+    const row = await getRowByExactText(page, 'Nombre', testRoleName);
+    const rowId = await row.getAttribute('data-id');
+    expect(PROTECTED_ROLE_IDS).not.toContain(Number(rowId));
 
-//     const targetCell = await findGridCellInColumnAcrossPages(page, 'Nombre', roleName, {
-//       timeout: 15000,
-//       maxPages: 80,
-//     });
-//     await targetCell.click();
+    await selectRowAndOpenUpdateDialog(page, testRoleName);
 
-//     const deleteResponsePromise = page.waitForResponse(
-//       (res) => /\/v1\/roles\/\d+$/.test(res.url()) && res.request().method() === 'DELETE'
-//     );
+    const updatedDesc = `Actualizado E2E ${Date.now()}`;
+    await fillDialogFieldByName(page, 'descripcion', updatedDesc);
 
-//     await clickActionButton(page, 'ELIMINAR');
-//     await page.getByRole('button', { name: /^Eliminar$/i }).click();
-//     const deleteResponse = await deleteResponsePromise;
+    const putResponsePromise = page.waitForResponse(
+      (res) => res.url().includes(`/v1/roles/${rowId}`) && res.request().method() === 'PUT'
+    );
 
-//     expect([200, 202, 204]).toContain(deleteResponse.status());
-//     await expectSnackMessage(page, /Rol eliminado|Registro eliminado|eliminado/i);
-//   });
-// });
+    await clickDialogButton(page, 'Actualizar');
+    const putResponse = await putResponsePromise;
+    expect([200, 204]).toContain(putResponse.status());
+    await expectSnackMessage(page, /Rol actualizado/i);
+  });
+
+  test('RS-04: eliminar el rol creado (soft delete)', async ({ page }) => {
+    test.slow();
+    expect(testRoleName, 'RS-02 debió crear un rol primero').toBeTruthy();
+    await waitForGridRowsLoaded(page, 1, 30000);
+
+    const rowId = await selectRowAndOpenDeleteConfirm(page, testRoleName);
+    expect(PROTECTED_ROLE_IDS).not.toContain(Number(rowId));
+
+    const deleteResponsePromise = page.waitForResponse(
+      (res) => res.url().includes(`/v1/roles/${rowId}`) && res.request().method() === 'DELETE'
+    );
+
+    const dialog = page.locator('[role="dialog"]:visible').last();
+    await dialog.getByRole('button', { name: /^Eliminar$/i }).click();
+    const deleteResponse = await deleteResponsePromise;
+    expect([200, 202, 204]).toContain(deleteResponse.status());
+    await expectSnackMessage(page, /Rol eliminado|Registro eliminado|eliminado/i);
+
+    // Verificación UI: el rol ya no debe aparecer en el grid.
+    await expect
+      .poll(
+        async () => {
+          try {
+            await findGridCellInColumnAcrossPages(page, 'Nombre', testRoleName, {
+              timeout: 3000,
+              maxPages: 80,
+            });
+            return false;
+          } catch {
+            return true;
+          }
+        },
+        { timeout: 15000, message: `El rol "${testRoleName}" sigue visible tras eliminar` }
+      )
+      .toBe(true);
+  });
+});

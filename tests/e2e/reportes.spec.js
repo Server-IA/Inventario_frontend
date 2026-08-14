@@ -10,13 +10,13 @@
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import { test, expect } from '@playwright/test';
-import { authenticateByApi } from './helpers/e2e.shared.utils';
+import { authenticateByApi, ADMIN_EMAIL, ADMIN_PASSWORD } from './helpers/e2e.shared.utils';
 
 test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
 
   test('Test Búsqueda de Reporte de Vencimiento de Producto', async ({ page, request }) => {
-    await authenticateByApi(page, request, process.env.TEST_USERNAME, process.env.TEST_PASSWORD, 'RE_pv');
-    await page.goto('/');
+    await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_pv');
+    await page.goto('/coagronet/');
 
     // Verify the page loaded the correct report
     await expect(
@@ -40,7 +40,7 @@ test.describe('E2E Reporte Vencimiento - Búsqueda', () => {
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
     
     // Wait for datagrid to load or show no results
-    await expect(page.locator('div[role="grid"], text=resultado(s) encontrado(s), text=No se encontraron productos')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
   });
 
 });
