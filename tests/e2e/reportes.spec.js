@@ -116,32 +116,24 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
       page.locator('h4', { hasText: /Kardex Report|Reporte Kardex|Kardex Reports/i })
     ).toBeVisible({ timeout: 15000 });
 
-    // Open the date picker (Kardex has a button with date range text)
-    const dateBtn = page.locator('button').filter({ hasText: /\d{4}-\d{2}-\d{2}/ }).first();
-    await dateBtn.click();
-
-    const inputs = page.locator('.rdrDateInput input');
-    if (await inputs.count() > 0) {
-      await inputs.first().fill('01/01/2020');
-      await inputs.first().press('Enter');
-      await inputs.last().fill('31/12/2030');
-      await inputs.last().press('Enter');
-    }
-    await page.keyboard.press('Escape');
+    // Kardex uses standard datetime-local inputs directly on the page, not a popup date picker.
+    // Fill the datetime-local inputs
+    await page.locator('input[type="datetime-local"]').first().fill('2020-01-01T00:00');
+    await page.locator('input[type="datetime-local"]').last().fill('2030-12-31T23:59');
 
     // Click SEARCH / Buscar
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
-    // Wait for datagrid to load or show no results
-    await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
+    // Kardex uses a plain <Table> (not MUI DataGrid) that only shows when there are results.
+    // Wait for the snackbar message that always appears after search (success or empty).
+    await expect(page.getByRole('alert').first()).toBeVisible({ timeout: 10000 });
 
-    // Click Generate Report
-    // Confirmed dialog title: "Generate Kardex Report"
+    // Click Generate Report - Kardex directly generates PDF (no format selection dialog)
     await page.locator('button', { hasText: /GENERATE REPORT|Generar Reporte/i }).click();
 
-    // Verify the format selection Dialog opened
+    // Verify the PDF preview dialog opened (Kardex shows an iframe preview, not PDF/EXCEL buttons)
     await expect(page.locator('[role="dialog"]')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[role="dialog"] button:has-text("PDF")')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('[role="dialog"] button:has-text("EXCEL")')).toBeVisible({ timeout: 5000 });
+    // Kardex preview dialog has a close button and the title "Vista previa del Reporte"
+    await expect(page.locator('[role="dialog"]')).toContainText(/Vista previa del Reporte|Preview/i);
   });
 
 });
