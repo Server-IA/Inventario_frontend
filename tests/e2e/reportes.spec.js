@@ -40,8 +40,9 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
     // Verify the page loaded the correct report
     await expect(page.locator('h4', { hasText: /Order Report|Reporte de Pedido/i })).toBeVisible({ timeout: 15000 });
 
-    // Open the date picker ÔÇö the button shows the current date range e.g. "2026-07-27 - 2026-07-27"
-    const dateBtn = page.locator('button').filter({ hasText: /\d{4}-\d{2}-\d{2}/ }).first();
+    // Open the date picker — the button shows "Seleccionar fechas" when no dates are set,
+    // OR shows the date range like "2026-07-27 - 2026-07-27" when dates are already set.
+    const dateBtn = page.locator('button').filter({ hasText: /\d{4}-\d{2}-\d{2}|Seleccionar fechas|Select dates/i }).first();
     await dateBtn.click();
 
     // Fill the DateRange inputs with a wide range to capture any existing test data
@@ -59,7 +60,7 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
     // Wait for datagrid to load or show no results
     await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
 
-    // Click "Generar Reporte / GENERATE REPORT" ÔåÆ opens format selection Dialog
+    // Click "Generar Reporte / GENERATE REPORT" → opens format selection Dialog
     await page.locator('button', { hasText: /GENERATE REPORT|Generar Reporte/i }).click();
 
     // Verify the format selection Dialog opened (Pedidos title: "Generar Reporte")
