@@ -10,7 +10,7 @@
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import { test, expect } from '@playwright/test';
-import { authenticateByApi } from './helpers/e2e.shared.utils';
+import { authenticateByApi, ADMIN_EMAIL, ADMIN_PASSWORD } from './helpers/e2e.shared.utils';
 
 /**
  * E2E Tests for the 3 Report modules (Pedidos, Vencimiento de Producto, Kardex).
@@ -34,8 +34,8 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
 
   // ─── TEST 1: Reporte de Pedidos ──────────────────────────────────────────────
   test('Test Reporte de Pedidos', async ({ page, request }) => {
-    await authenticateByApi(page, request, process.env.TEST_USERNAME, process.env.TEST_PASSWORD, 'RE_pedido');
-    await page.goto('/');
+    await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_pedido');
+    await page.goto('/coagronet/');
 
     // Verify the page loaded the correct report
     await expect(page.locator('h4', { hasText: /Order Report|Reporte de Pedido/i })).toBeVisible({ timeout: 15000 });
@@ -57,7 +57,7 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
     // Click SEARCH
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
     // Wait for datagrid to load or show no results
-    await expect(page.locator('div[role="grid"], text=resultado(s) encontrado(s), text=No se encontraron productos')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
 
     // Click "Generar Reporte / GENERATE REPORT" → opens format selection Dialog
     await page.locator('button', { hasText: /GENERATE REPORT|Generar Reporte/i }).click();
@@ -70,8 +70,8 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
 
   // ─── TEST 2: Reporte de Vencimiento de Producto ──────────────────────────────
   test('Test Reporte de Vencimiento de Producto', async ({ page, request }) => {
-    await authenticateByApi(page, request, process.env.TEST_USERNAME, process.env.TEST_PASSWORD, 'RE_pv');
-    await page.goto('/');
+    await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_pv');
+    await page.goto('/coagronet/');
 
     // Verify the page loaded the correct report
     await expect(
@@ -94,9 +94,9 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
     // Click SEARCH
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
     // Wait for datagrid to load or show no results
-    await expect(page.locator('div[role="grid"], text=resultado(s) encontrado(s), text=No se encontraron productos')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
 
-    // Click "GENERATE REPORT" → opens format selection Dialog  
+    // Click "GENERATE REPORT" → opens format selection Dialog
     // Confirmed dialog title: "Generate Expiration Report"
     await page.locator('button', { hasText: /GENERATE REPORT|Generar Reporte/i }).click();
 
@@ -108,8 +108,8 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
 
   // ─── TEST 3: Reporte Kardex ──────────────────────────────────────────────────
   test('Test Reporte Kardex', async ({ page, request }) => {
-    await authenticateByApi(page, request, process.env.TEST_USERNAME, process.env.TEST_PASSWORD, 'RE_kardex');
-    await page.goto('/');
+    await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_kardex');
+    await page.goto('/coagronet/');
 
     // Verify the page loaded the correct report
     await expect(
@@ -132,7 +132,7 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
     // Click SEARCH / Buscar
     await page.locator('button', { hasText: /^SEARCH$|^Buscar$/i }).click();
     // Wait for datagrid to load or show no results
-    await expect(page.locator('div[role="grid"], text=resultado(s) encontrado(s), text=No se encontraron productos')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('div[role="grid"]')).toBeVisible({ timeout: 10000 });
 
     // Click Generate Report
     // Confirmed dialog title: "Generate Kardex Report"
