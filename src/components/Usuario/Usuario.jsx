@@ -21,6 +21,7 @@ CONTROL DE CAMBIOS
 | 2026-08-10 | 0.4.0   | Cesar Medina         | Se integra filtro de usuarios.                |
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se integra activación e inactivación HU-037.5.|
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se corrige permiso HU-037.5 para admin sistema|
+| 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de empresa-rol por selección. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -582,11 +583,18 @@ export default function Usuario() {
 
   useEffect(() => {
     // combos
+    const empresaRolesRequest =
+      !isAdmin && Number(empresaIdOwn)
+        ? axios.get("/v1/empresa-rol/select", {
+            params: { empresaId: Number(empresaIdOwn) },
+          })
+        : Promise.resolve({ data: [] });
+
     Promise.all([
       axios.get("/v1/items/empresa/0"),
       axios.get("/v1/items/rol/0"),
       axios.get("/v1/items/tipo_identificacion/0"),
-      axios.get(isAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol"),
+      empresaRolesRequest,
     ])
       .then(([eRes, rRes, tRes, erRes]) => {
         setEmpresasList(extractItems(eRes));
@@ -600,7 +608,7 @@ export default function Usuario() {
         setEmpresaRolesList([]);
         setTiposIdentificacionList([]);
       });
-  }, [isAdmin]);
+  }, [isAdmin, empresaIdOwn]);
 
   const handlePaginationModelChange = (model) => {
     if (model.size !== pageSize) {
