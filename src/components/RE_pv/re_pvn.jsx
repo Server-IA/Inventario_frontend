@@ -269,9 +269,9 @@ export default function RE_productoVencimiento() {
       const lista = asArray(res.data?.resultados || res.data);
       setResultados(lista);
       if (lista.length === 0) {
-        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResults", "No se encontraron productos.") });
+        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResultsEmpty", "No se encontraron productos.") });
       } else {
-        setMessage({ open: true, severity: "info", text: `${lista.length} ${t("vencimiento.messages.found", "resultado(s) encontrado(s).")}` });
+        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResults", { count: lista.length, defaultValue: `${lista.length} resultado(s) encontrado(s).` }) });
       }
     } catch (error) {
       console.error(error);
@@ -326,7 +326,8 @@ export default function RE_productoVencimiento() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setMessage({ open: true, severity: "success", text: t("vencimiento.messages.exportSuccess", "Reporte descargado exitosamente.") });
+      const successMsg = formato.toLowerCase() === 'excel' ? t("vencimiento.messages.excelSuccess", "Excel descargado exitosamente.") : t("vencimiento.messages.pdfSuccess", "PDF generado exitosamente.");
+      setMessage({ open: true, severity: "success", text: successMsg });
     } catch (error) {
       console.error(error);
       setMessage({
@@ -509,9 +510,9 @@ export default function RE_productoVencimiento() {
                 <FormControl size="small" fullWidth>
                   <InputLabel>{t("vencimiento.filters.status", "Estado")}</InputLabel>
                   <Select value={filtrosProd.estado || ""} label={t("vencimiento.filters.status", "Estado")} onChange={handleProdChange("estado")}>
-                    <MenuItem value="TODOS">{t("vencimiento.filters.todos", "Todos")}</MenuItem>
-                    <MenuItem value="PROXIMO_A_VENCER">{t("vencimiento.filters.proximo", "Próximo a Vencer")}</MenuItem>
-                    <MenuItem value="VENCIDO">{t("vencimiento.filters.vencido", "Vencido")}</MenuItem>
+                    <MenuItem value="TODOS">{t("vencimiento.statusOptions.todos", "Todos")}</MenuItem>
+                    <MenuItem value="PROXIMO_A_VENCER">{t("vencimiento.statusOptions.proximo", "Próximo a Vencer")}</MenuItem>
+                    <MenuItem value="VENCIDO">{t("vencimiento.statusOptions.vencido", "Vencido")}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>

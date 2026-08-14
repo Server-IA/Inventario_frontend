@@ -18,7 +18,6 @@ import {
 } from './helpers/e2e.shared.utils';
 
 const TEST_MODULE_PREFIX = 'E2E Modulo';
-const TEST_MODULE_ACRONYM_PREFIX = 'e2e_modulo_';
 
 async function setGridRowsPerPage(page, size = '50') {
   const footer = page.locator('.MuiDataGrid-footerContainer').first();
@@ -35,7 +34,7 @@ async function setGridRowsPerPage(page, size = '50') {
 
 async function getModuleRowAcrossPages(page, nombre) {
   await ensureGridColumnVisible(page, 'Nombre');
-  const cell = await findGridCellInColumnAcrossPages(page, 'Nombre', nombre, { maxPages: 80, timeout: 15000 });
+  const cell = await waitForModuleVisibleAcrossPages(page, 'Nombre', nombre, 15000);
   return cell.locator('xpath=ancestor::*[@role="row" and @data-id]').first();
 }
 
@@ -63,34 +62,6 @@ async function waitForModuleVisibleAcrossPages(page, columnName, value, timeout 
   return findGridCellInColumnAcrossPages(page, columnName, value, { maxPages: 80, timeout: 15000 });
 }
 
-async function pickExistingTestModuleName(page, actionLabel) {
-  try {
-    await ensureGridColumnVisible(page, 'Nombre');
-    const nombreColIndex = await getGridColumnIndex(page, 'Nombre');
-
-    let cell;
-    try {
-      cell = await waitForModuleVisibleAcrossPages(page, 'Nombre', TEST_MODULE_PREFIX, 8000);
-    } catch {
-      await ensureGridColumnVisible(page, 'Acrónimo');
-      cell = await waitForModuleVisibleAcrossPages(page, 'Acrónimo', TEST_MODULE_ACRONYM_PREFIX, 8000);
-    }
-
-    const row = cell.locator('xpath=ancestor::*[@role="row" and @data-id]').first();
-    const nameCell = row.locator(`[role="cell"][aria-colindex="${nombreColIndex}"]`).first();
-    const moduleName = ((await nameCell.textContent()) || '').trim();
-
-    if (!moduleName) {
-      throw new Error('La celda encontrada no contiene nombre de módulo.');
-    }
-    return moduleName;
-  } catch {
-    throw new Error(
-      `No se encontró un módulo de pruebas con prefijo "${TEST_MODULE_PREFIX}" para ${actionLabel}. Ejecuta primero HU-035.2.`
-    );
-  }
-}
-
 async function openEditModalForModule(page, nombre) {
   const row = await getModuleRowAcrossPages(page, nombre);
   await row.click();
@@ -108,6 +79,10 @@ async function openEditModalForModule(page, nombre) {
 
 test.describe('RF-035.0 - Gestión de módulos (casos positivos)', () => {
   test.describe.configure({ mode: 'serial' });
+
+  // Módulo creado por este spec; update/inactivar operan sobre ÉL (no sobre
+  // leftovers de corridas anteriores).
+  let testModuleName = null;
 
   test.beforeEach(async ({ page, request }) => {
     await loginAsAdmin(page, request);
@@ -140,7 +115,8 @@ test.describe('RF-035.0 - Gestión de módulos (casos positivos)', () => {
 
   test('HU-035.2: crear módulo con datos válidos', async ({ page }) => {
     const unique = Date.now();
-    const nombre = `E2E Modulo ${unique}`;
+    const nombre = `${TEST_MODULE_PREFIX} ${unique}`;
+    testModuleName = nombre;
 
     const token = await loginAsAdminGetToken(page.request);
     const beforeStats = await fetchBackendModuloPaginationStats(page.request, token, { backendPageSize: 20 });
@@ -200,8 +176,8 @@ test.describe('RF-035.0 - Gestión de módulos (casos positivos)', () => {
   test('HU-035.3: modifica módulo existente', async ({ page }) => {
     await openModuloScreen(page);
     await setGridRowsPerPage(page, '50');
-    const nombre = await pickExistingTestModuleName(page, 'actualizar');
-    await openEditModalForModule(page, nombre);
+    expect(testModuleName, 'HU-035.2 debió crear un módulo primero').toBeTruthy();
+    await openEditModalForModule(page, testModuleName);
 
     const descripcion = `Actualización E2E ${Date.now()}`;
     await fillDialogField(page, 'descripcion', descripcion);
@@ -221,8 +197,9 @@ test.describe('RF-035.0 - Gestión de módulos (casos positivos)', () => {
   test('HU-035.4: cambia obligatoriedad desde switch en listado', async ({ page }) => {
     await openModuloScreen(page);
     await setGridRowsPerPage(page, '50');
-    const nombre = await pickExistingTestModuleName(page, 'cambiar obligatoriedad');
-    const row = await getModuleRowAcrossPages(page, nombre);
+    await page.waitForTimeout(500);
+    expect(testModuleName, 'HU-035.2 debió crear un módulo primero').toBeTruthy();
+    const row = await getModuleRowAcrossPages(page, testModuleName);
 
     const requeridoResponsePromise = page.waitForResponse(
       (res) => /\/api\/v2\/modulos\/\d+$/.test(res.url()) && res.request().method() === 'PATCH'
@@ -240,8 +217,8 @@ test.describe('RF-035.0 - Gestión de módulos (casos positivos)', () => {
   test('HU-035.5: inactiva módulo desde edición (estado Inactivo)', async ({ page }) => {
     await openModuloScreen(page);
     await setGridRowsPerPage(page, '50');
-    const nombre = await pickExistingTestModuleName(page, 'inactivar');
-    await openEditModalForModule(page, nombre);
+    expect(testModuleName, 'HU-035.2 debió crear un módulo primero').toBeTruthy();
+    await openEditModalForModule(page, testModuleName);
     await clickDialogSelectOption(page, 'estadoId', 'Inactivo');
 
     const putResponsePromise = page.waitForResponse(
