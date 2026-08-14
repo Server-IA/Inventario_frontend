@@ -537,15 +537,7 @@ export default function RE_pedido() {
       {/* Botones de accion */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 4 }}>
         <Stack direction="row" spacing={2}>
-          <Button 
-            variant="outlined" 
-            color="primary" 
-            startIcon={<DownloadIcon />} 
-            onClick={() => setModalExportOpen(true)}
-            sx={{ borderRadius: 2, px: 3, py: 1, borderColor: "rgba(23,63,57,0.5)", color: isDark ? "#e7f6f7" : "#173f39", "&:hover": { borderColor: "#173f39", bgcolor: "rgba(23,63,57,0.05)" } }}
-          >
-            {t("common.actions.generateReport", "Generar Reporte")}
-          </Button>
+
           <Button 
             variant="contained" 
             color="primary" 
@@ -627,34 +619,6 @@ export default function RE_pedido() {
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
-      {/* Modal Exportar */}
-      <Dialog open={modalExportOpen} onClose={() => !exporting && setModalExportOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 }}}>
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-          {t("pedido.modal.exportTitle", "Generar Reporte")}
-        </DialogTitle>
-        <DialogContent sx={{ pb: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {exporting ? (
-            <>
-              <Typography variant="body2" sx={{ mb: 2 }}>{t("pedido.modal.exporting", "Generando documento...")}</Typography>
-              <LinearProgress sx={{ width: "100%", height: 6, borderRadius: 3 }} />
-            </>
-          ) : (
-            <>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
-                {t("pedido.modal.exportSub", "Seleccione el formato.")}
-              </Typography>
-              <Stack direction="row" spacing={3} justifyContent="center" sx={{ width: "100%" }}>
-                <Button variant="outlined" color="error" size="large" onClick={() => generarReporte("PDF")} sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}>
-                  <Typography variant="h6" fontWeight={700}>PDF</Typography>
-                </Button>
-                <Button variant="outlined" color="success" size="large" onClick={() => generarReporte("EXCEL")} sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}>
-                  <Typography variant="h6" fontWeight={700}>Excel</Typography>
-                </Button>
-              </Stack>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </Box>
   );
 }
