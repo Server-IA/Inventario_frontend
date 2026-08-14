@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 
 const env = globalThis.process?.env ?? {};
 
-export const BACKEND_URI = env.VITE_BACKEND_URI;
+export const BACKEND_URI = env.VITE_BACKEND_URI || 'http://localhost:8080';
 export const E2E_BASE_URL = env.E2E_BASE_URL;
 
 export const ADMIN_EMAIL = env.E2E_ADMIN_EMAIL;
@@ -209,7 +209,7 @@ export async function openPublicHome(page) {
   if (E2E_BASE_URL) {
     await page.goto(E2E_BASE_URL);
   } else {
-    await page.goto('/');
+    await page.goto('/coagronet/');
   }
   await expect(page.getByRole('button', { name: /Empezar Ya/i })).toBeVisible({ timeout: 20000 });
 }
@@ -258,7 +258,7 @@ export async function expectBaseMenuVisible(page) {
 
 export async function openModuleScreen(page, moduleKey, headingRegex) {
   // Ensure we have an origin before touching localStorage.
-  await page.goto('/');
+  await page.goto('/coagronet/');
 
   await page.evaluate(
     ({ activeModule }) => {
@@ -268,7 +268,7 @@ export async function openModuleScreen(page, moduleKey, headingRegex) {
     { activeModule: moduleKey }
   );
 
-  await page.goto('/');
+  await page.goto('/coagronet/');
   if (headingRegex) {
     await expect(page.getByRole('heading', { name: headingRegex })).toBeVisible({ timeout: 20000 });
   }
@@ -300,7 +300,7 @@ export async function switchCompanyRoleFromProfile(page, options = {}) {
     roleName = COMPANY_CONTEXT_ROLE_NAME,
   } = options;
 
-  await page.goto('/');
+  await page.goto('/coagronet/');
   await openProfileMenu(page);
 
   const switchMenuItem = page.getByRole('menuitem', { name: /Cambiar empresa\/rol/i }).first();

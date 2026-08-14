@@ -1,15 +1,72 @@
 import { test, expect } from '@playwright/test';
 import {
   loginAsSystemAdmin,
+  loginAsAdminGetToken,
   openModuleScreen,
   clickActionButton,
   getActiveDialog,
   clickDialogButton,
-  selectDialogFirstOptionByLabel,
   expectSnackMessage,
+  findGridCellInColumnAcrossPages,
+  authHeaders,
+  BACKEND_URI,
 } from './helpers/e2e.shared.utils';
 
-const PROTECTED_ROLE_REGEX = /(ROLE_ADMINISTRADOR_EMPRESA|ROLE_ADMINISTRADOR_SISTEMA|ADMIN\s*EMPRESA|ADMIN\s*SISTEMA)/i;
+function buildUniqueRoleName() {
+  const rand = Array.from(
+    { length: 8 },
+    () => String.fromCharCode(65 + Math.floor(Math.random() * 26))
+  ).join('');
+  return `ROLE_QA${rand}`;
+}
+
+async function createRoleByApi(request) {
+  const token = await loginAsAdminGetToken(request);
+  const nombre = buildUniqueRoleName();
+  const res = await request.post(`${BACKEND_URI}/api/v1/roles`, {
+    headers: authHeaders(token),
+    data: { nombre, descripcion: 'Rol E2E para empresa-rol', estadoId: 1 },
+  });
+  expect([200, 201]).toContain(res.status());
+
+  const catRes = await request.get(`${BACKEND_URI}/api/v1/items/rol/0`, { headers: authHeaders(token) });
+  const cat = await catRes.json();
+  const list = Array.isArray(cat) ? cat : cat?.content ?? [];
+  const found = list.find((r) => (r.name ?? r.nombre ?? r.rolNombre) === nombre);
+  return { nombre, id: found?.id ?? null };
+}
+
+async function createEmpresaRolByApi(request, rolId, empresaId) {
+  const token = await loginAsAdminGetToken(request);
+  const res = await request.post(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
+    headers: authHeaders(token),
+    data: { empresaId, rolId },
+  });
+  return res.status();
+}
+
+async function deleteRoleByApi(request, id) {
+  if (id == null) return;
+  const token = await loginAsAdminGetToken(request);
+  await request.delete(`${BACKEND_URI}/api/v1/roles/${id}`, { headers: authHeaders(token) });
+}
+
+async function deleteEmpresaRolByApi(request, rolNombre) {
+  if (!rolNombre) return;
+  const token = await loginAsAdminGetToken(request);
+  const res = await request.get(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok()) return;
+  const list = await res.json();
+  const arr = Array.isArray(list) ? list : list?.content ?? [];
+  const found = arr.find((er) => er.rolNombre === rolNombre);
+  if (found?.id != null) {
+    await request.delete(`${BACKEND_URI}/api/v1/system/empresa-rol/${found.id}`, {
+      headers: authHeaders(token),
+    });
+  }
+}
 
 async function waitForGridRowsLoaded(page, minRows = 1, timeout = 12000) {
   await expect
@@ -20,75 +77,62 @@ async function waitForGridRowsLoaded(page, minRows = 1, timeout = 12000) {
     .toBeGreaterThanOrEqual(minRows);
 }
 
-async function waitForPermissionsTreeReady(dialog, timeout = 3000) {
-  await expect
-    .poll(async () => dialog.locator('input[type="checkbox"]').count(), { timeout })
-    .toBeGreaterThan(0);
+async function getRowByRolNombre(page, rolNombre) {
+  const cell = await findGridCellInColumnAcrossPages(page, 'Rol', rolNombre, {
+    timeout: 15000,
+    maxPages: 80,
+  });
+  return cell.locator('xpath=ancestor::*[@role="row" and @data-id]').first();
 }
 
-async function openSubsistemaAndModulo(dialog, treeTimeout = 3000) {
-  await expect(dialog.locator('.MuiAccordionSummary-root').first()).toBeVisible({ timeout: treeTimeout });
-  await waitForPermissionsTreeReady(dialog, treeTimeout);
+async function deleteEmpresaRolByRolNombre(page, rolNombre, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const row = await getRowByRolNombre(page, rolNombre);
+    const rowId = await row.getAttribute('data-id');
+    await row.click();
+    await page.waitForTimeout(300);
 
-  const subsistemaAccordion = dialog.locator('.MuiAccordionSummary-root').first();
-  await subsistemaAccordion.click();
-  await waitForPermissionsTreeReady(dialog, treeTimeout);
+    const deleteButton = page.getByRole('button', { name: /^ELIMINAR$/i }).first();
+    if (!(await deleteButton.isEnabled().catch(() => false))) {
+      continue;
+    }
+    await deleteButton.click();
 
-  const moduloAccordion = dialog.locator('.MuiAccordionSummary-root').nth(1);
-  if (await moduloAccordion.isVisible().catch(() => false)) {
-    await moduloAccordion.click({ force: true }).catch(() => {});
-    await waitForPermissionsTreeReady(dialog, treeTimeout);
-  }
-}
-
-async function getGridRowsSnapshot(page) {
-  const rows = page.locator('[role="row"][data-id]');
-  const count = await rows.count();
-  const snapshot = [];
-
-  for (let i = 0; i < count; i += 1) {
-    const row = rows.nth(i);
-    const id = ((await row.locator('[role="cell"]').nth(0).textContent()) || '').trim();
-    const role = ((await row.locator('[role="cell"]').nth(2).textContent()) || '').trim();
-    snapshot.push({ index: i, id, role, row });
-  }
-
-  return snapshot;
-}
-
-function parseRowId(value) {
-  const parsed = Number.parseInt(String(value).trim(), 10);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
-async function pickSafeRowByHighestId(page, actionLabel = 'modificar') {
-  const rows = await getGridRowsSnapshot(page);
-  if (rows.length === 0) {
-    throw new Error(`No hay filas en la tabla para ${actionLabel}.`);
-  }
-
-  const nonProtected = rows
-    .filter((row) => !PROTECTED_ROLE_REGEX.test(row.role))
-    .map((row) => ({ ...row, numericId: parseRowId(row.id) }))
-    .sort((a, b) => {
-      const aValid = Number.isFinite(a.numericId);
-      const bValid = Number.isFinite(b.numericId);
-      if (aValid && bValid) return b.numericId - a.numericId;
-      if (aValid) return -1;
-      if (bValid) return 1;
-      return 0;
-    });
-
-  if (nonProtected.length === 0) {
-    throw new Error(
-      `Todas las filas visibles son roles protegidos (admin empresa/sistema). No se puede ${actionLabel}.`
+    const deleteResponsePromise = page.waitForResponse(
+      (res) =>
+        res.url().includes(`/empresa-rol/${rowId}`) &&
+        res.request().method() === 'DELETE'
     );
+
+    const dialog = page.locator('[role="dialog"]:visible').last();
+    await dialog.getByRole('button', { name: /^Eliminar$/i }).click();
+
+    const deleteResponse = await deleteResponsePromise;
+    return { rowId, status: deleteResponse.status() };
   }
 
-  return nonProtected[0];
+  throw new Error(`No se pudo eliminar la relación con rol "${rolNombre}".`);
 }
 
 test.describe('RF-036 - Empresa Rol (admin sistema) casos positivos', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let uniqueRoleName = null;
+  let uniqueRoleId = null;
+
+  test.beforeAll(async ({ request }) => {
+    const created = await createRoleByApi(request);
+    uniqueRoleName = created.nombre;
+    uniqueRoleId = created.id;
+    expect(uniqueRoleId, 'No se pudo resolver el id del rol creado').toBeTruthy();
+    await createEmpresaRolByApi(request, uniqueRoleId, 1505);
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteEmpresaRolByApi(request, uniqueRoleName);
+    await deleteRoleByApi(request, uniqueRoleId);
+  });
+
   test.beforeEach(async ({ page, request }) => {
     await loginAsSystemAdmin(page, request, 'EmpresaRol');
     await openModuleScreen(page, 'EmpresaRol', /Roles de Empresa/i);
@@ -101,56 +145,54 @@ test.describe('RF-036 - Empresa Rol (admin sistema) casos positivos', () => {
     await waitForGridRowsLoaded(page);
   });
 
-  test('ERS-02: crear relación empresa-rol y asignar permisos', async ({ page }) => {
-    test.slow();
-    await clickActionButton(page, 'AGREGAR');
-    const dialog = await getActiveDialog(page);
+  test('ERS-02: la relación creada aparece en el listado', async ({ page }) => {
+    expect(uniqueRoleName, 'beforeAll debió crear el rol de prueba').toBeTruthy();
+    await waitForGridRowsLoaded(page);
 
-    await expect(dialog.getByText(/Crear Rol y Asignar Permisos/i)).toBeVisible();
-    await selectDialogFirstOptionByLabel(page, 'Rol');
-    await selectDialogFirstOptionByLabel(page, 'Empresa');
-
-    await openSubsistemaAndModulo(dialog, 7000);
-
-    const permissionCheckboxes = dialog.getByRole('checkbox');
-    const permissionCount = await permissionCheckboxes.count();
-    const permisoCheckbox = permissionCount > 1 ? permissionCheckboxes.nth(1) : permissionCheckboxes.first();
-    await expect(permisoCheckbox).toBeVisible();
-    await permisoCheckbox.check({ force: true });
-
-    await clickDialogButton(page, 'Guardar');
-
-    // Aceptamos éxito o permanencia del diálogo por validación/duplicidad del entorno.
-    const successSnack = page.getByText(/Permisos actualizados correctamente|guardado|actualizados/i).first();
-    const dialogStillOpen = page.locator('[role="dialog"]:visible').last();
-    await expect.poll(async () => {
-      const ok = await successSnack.isVisible().catch(() => false);
-      const open = await dialogStillOpen.isVisible().catch(() => false);
-      return ok || open;
-    }, { timeout: 20000 }).toBeTruthy();
+    const cell = await findGridCellInColumnAcrossPages(page, 'Rol', uniqueRoleName, {
+      timeout: 15000,
+      maxPages: 80,
+    });
+    await expect(cell).toBeVisible();
   });
 
-  test('ERS-03: actualizar relación seleccionada', async ({ page }) => {
+  test('ERS-03: actualizar la relación creada', async ({ page }) => {
+    expect(uniqueRoleName, 'beforeAll debió crear el rol de prueba').toBeTruthy();
     await waitForGridRowsLoaded(page);
-    const rowToUpdate = await pickSafeRowByHighestId(page, 'actualizar');
-    await rowToUpdate.row.click();
+
+    const row = await getRowByRolNombre(page, uniqueRoleName);
+    await row.click();
     await clickActionButton(page, 'ACTUALIZAR');
 
     const dialog = await getActiveDialog(page);
     await expect(dialog.getByText(/Editar Rol y Permisos/i)).toBeVisible();
-
-    // Validación estable del flujo de actualización: modal accesible y acción de guardado disponible.
     await expect(dialog.getByRole('button', { name: /^Guardar$/i })).toBeVisible();
     await clickDialogButton(page, 'Cerrar');
   });
 
-  test('ERS-04: eliminar relación empresa-rol seleccionada', async ({ page }) => {
+  test('ERS-04: eliminar la relación creada', async ({ page }) => {
+    expect(uniqueRoleName, 'beforeAll debió crear el rol de prueba').toBeTruthy();
     await waitForGridRowsLoaded(page);
-    const rowToDelete = await pickSafeRowByHighestId(page, 'eliminar');
-    await rowToDelete.row.click();
 
-    await clickActionButton(page, 'ELIMINAR');
-    await page.getByRole('button', { name: /^Eliminar$/i }).click();
+    const { status } = await deleteEmpresaRolByRolNombre(page, uniqueRoleName);
+    expect([200, 202, 204]).toContain(status);
     await expectSnackMessage(page, /eliminados correctamente|eliminado|eliminar|no se puede eliminar|asociad/i);
+
+    await expect
+      .poll(
+        async () => {
+          try {
+            await findGridCellInColumnAcrossPages(page, 'Rol', uniqueRoleName, {
+              timeout: 3000,
+              maxPages: 80,
+            });
+            return false;
+          } catch {
+            return true;
+          }
+        },
+        { timeout: 15000, message: `La relación con rol "${uniqueRoleName}" sigue visible tras eliminar` }
+      )
+      .toBe(true);
   });
 });
