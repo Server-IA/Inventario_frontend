@@ -9,6 +9,7 @@ CONTROL DE CAMBIOS
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se rediseña el modal y se alinea a HU-037.1.  |
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se integra precarga por identificación.       |
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se ajusta el modal para HU-037.4.             |
+| 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de roles por empresa activa.  |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -269,13 +270,6 @@ export default function FormUsuario({
 
   const loadCompanyRolesByCompanyId = async (companyId) => {
     const normalizedCompanyId = String(companyId ?? "").trim();
-
-    if (!isAdmin) {
-      setSelectedCompanyRoles(Array.isArray(empresaRoles) ? empresaRoles : []);
-      setCompanyRolesLoading(false);
-      return;
-    }
-
     latestCompanyRequestRef.current = normalizedCompanyId;
 
     if (!normalizedCompanyId) {
@@ -287,7 +281,7 @@ export default function FormUsuario({
     setCompanyRolesLoading(true);
 
     try {
-      const response = await axios.get("/v1/system/empresa-rol", {
+      const response = await axios.get("/v1/empresa-rol/select", {
         params: { empresaId: Number(normalizedCompanyId) },
       });
 
@@ -297,23 +291,38 @@ export default function FormUsuario({
           ? response.data.content
           : [];
       const matchingRows = resolvedRows.filter(
+        (item) => String(item?.empresaId ?? normalizedCompanyId) === normalizedCompanyId
+      );
+      const normalizedRows = (matchingRows.length > 0 ? matchingRows : resolvedRows).map((item) => ({
+        ...item,
+        empresaId: item?.empresaId ?? normalizedCompanyId,
+      }));
+      const propRows = (Array.isArray(empresaRoles) ? empresaRoles : []).filter(
         (item) => String(item?.empresaId ?? "") === normalizedCompanyId
       );
       const storageRows = parseRolesByCompany().filter(
         (item) => String(item?.empresaId ?? "") === normalizedCompanyId
       );
-      const rowsToUse = matchingRows.length > 0 ? matchingRows : storageRows;
+      const rowsToUse =
+        normalizedRows.length > 0
+          ? normalizedRows
+          : propRows.length > 0
+            ? propRows
+            : storageRows;
 
       if (latestCompanyRequestRef.current === normalizedCompanyId) {
         setSelectedCompanyRoles(rowsToUse);
       }
-    } catch {
+    } catch (error) {
+      const propRows = (Array.isArray(empresaRoles) ? empresaRoles : []).filter(
+        (item) => String(item?.empresaId ?? "") === normalizedCompanyId
+      );
       const storageRows = parseRolesByCompany().filter(
         (item) => String(item?.empresaId ?? "") === normalizedCompanyId
       );
 
       if (latestCompanyRequestRef.current === normalizedCompanyId) {
-        setSelectedCompanyRoles(storageRows);
+        setSelectedCompanyRoles(propRows.length > 0 ? propRows : storageRows);
       }
     } finally {
       if (latestCompanyRequestRef.current === normalizedCompanyId) {
@@ -322,21 +331,29 @@ export default function FormUsuario({
     }
   };
 
+  useEffect(() => {
+    if (!open) return;
+
+    if (!selectedAssignmentCompanyId) {
+      setSelectedCompanyRoles([]);
+      setCompanyRolesLoading(false);
+      return;
+    }
+
+    loadCompanyRolesByCompanyId(selectedAssignmentCompanyId);
+  }, [open, selectedAssignmentCompanyId]);
+
   const availableRolesOptions = useMemo(() => {
     if (!selectedAssignmentCompanyId) return [];
 
-    const rows = isAdmin
-      ? Array.isArray(selectedCompanyRoles)
-        ? selectedCompanyRoles
-        : []
-      : Array.isArray(empresaRoles)
-        ? empresaRoles
-        : [];
+    const rows = Array.isArray(selectedCompanyRoles) ? selectedCompanyRoles : [];
     const seen = new Set();
     const options = [];
 
     rows.forEach((item) => {
-      const companyId = String(item?.empresaId ?? (!isAdmin ? sessionCompanyId : "") ?? "");
+      const companyId = String(
+        item?.empresaId ?? selectedAssignmentCompanyId ?? (!isAdmin ? sessionCompanyId : "") ?? ""
+      );
 
       if (companyId !== selectedAssignmentCompanyId) return;
 
@@ -365,12 +382,10 @@ export default function FormUsuario({
 
     return options;
   }, [
-    empresaRoles,
-    isAdmin,
     roleCatalogById,
     roleCatalogByName,
+    selectedCompanyRoles,
     selectedAssignmentCompanyId,
-    sessionCompanyId,
   ]);
 
   const roleFieldHelperText =
@@ -470,10 +485,6 @@ export default function FormUsuario({
   };
 
   const handleAssignChange = (name, value) => {
-    if (name === "empresaId") {
-      loadCompanyRolesByCompanyId(value);
-    }
-
     setAssignDraft((prev) => {
       if (name === "empresaId") {
         return {
