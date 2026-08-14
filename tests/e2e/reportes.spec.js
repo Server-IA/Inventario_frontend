@@ -40,9 +40,8 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
     // Verify the page loaded the correct report
     await expect(page.locator('h4', { hasText: /Order Report|Reporte de Pedido/i })).toBeVisible({ timeout: 15000 });
 
-    // Open the date picker — the button shows "Seleccionar fechas" when no dates are set,
-    // OR shows the date range like "2026-07-27 - 2026-07-27" when dates are already set.
-    const dateBtn = page.locator('button').filter({ hasText: /\d{4}-\d{2}-\d{2}|Seleccionar fechas|Select dates/i }).first();
+    // Open the date picker — use the Calendar icon since the text can vary based on state/i18n
+    const dateBtn = page.locator('button:has(svg[data-testid="CalendarTodayIcon"])').first();
     await dateBtn.click();
 
     // Fill the DateRange inputs with a wide range to capture any existing test data
@@ -79,8 +78,8 @@ test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
       page.locator('h4', { hasText: /Product Expiration Report|Reporte de Vencimiento/i })
     ).toBeVisible({ timeout: 15000 });
 
-    // Open the date picker button (shows the current date range)
-    const dateBtn = page.locator('button').filter({ hasText: /\d{4}-\d{2}-\d{2}/ }).first();
+    // Open the date picker button (shows the current date range or 'Select dates')
+    const dateBtn = page.locator('button:has(svg[data-testid="CalendarTodayIcon"])').first();
     await dateBtn.click();
 
     const inputs = page.locator('.rdrDateInput input');
