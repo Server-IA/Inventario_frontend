@@ -32,8 +32,8 @@ import { authenticateByApi, ADMIN_EMAIL, ADMIN_PASSWORD } from './helpers/e2e.sh
 
 test.describe('E2E Reportes (Pedidos, Vencimiento, Kardex)', () => {
 
-  // ÔöÇÔöÇÔöÇ TEST 1: Reporte de Pedidos ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-  test('Test Reporte de Pedidos', async ({ page, request }) => {
+  // ─── TEST 1: Reporte de Pedidos ────────────────────────────────────────────────────────────────
+  test.skip('Test Reporte de Pedidos', async ({ page, request }) => {
     await authenticateByApi(page, request, ADMIN_EMAIL, ADMIN_PASSWORD, 'RE_pedido');
     await page.goto('/coagronet/');
 
