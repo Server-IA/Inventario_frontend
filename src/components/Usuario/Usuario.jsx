@@ -246,6 +246,26 @@ const normalizeStatusId = (value) => {
 };
 
 /**
+ * Resuelve un mensaje visible a partir de una respuesta del backend.
+ *
+ * @param {object} payload Cuerpo de respuesta.
+ * @returns {string}
+ */
+const resolveBackendMessage = (payload) => {
+  if (typeof payload === "string") return payload;
+  if (!payload || typeof payload !== "object") return "";
+
+  return (
+    payload?.message ??
+    payload?.mensaje ??
+    payload?.detail ??
+    payload?.data?.message ??
+    payload?.data?.mensaje ??
+    ""
+  );
+};
+
+/**
  * Convierte una fecha simple a formato ISO con zona horaria para el endpoint
  * de registro de usuarios.
  *
@@ -256,7 +276,7 @@ const toOffsetDateTime = (value) => {
   const normalized = String(value ?? "").trim();
   if (!normalized) return null;
   if (normalized.includes("T")) return normalized;
-  return `${normalized}T00:00:00-05:00`;
+  return `${normalized}T08:00:00-05:00`;
 };
 
 /**
@@ -876,11 +896,11 @@ export default function Usuario() {
           ? Number(payload.tipoIdentificacionId)
           : null;
         body.identificacion = payload.identificacion?.trim() ?? "";
-        body.nombre = payload.nombre;
-        body.apellido = payload.apellido;
+        body.nombre = payload.nombre?.trim() ?? "";
+        body.apellido = payload.apellido?.trim() ?? "";
         body.emailPersonal = payload.emailPersonal?.trim() ?? "";
         body.genero = payload.genero;
-        body.fechaNacimiento = payload.fechaNacimiento;
+        body.fechaNacimiento = payload.fechaNacimiento || null;
         body.direccion = payload.direccion?.trim() ?? "";
         body.celular = payload.celular?.trim() ?? "";
         body.estrato =
@@ -908,7 +928,16 @@ export default function Usuario() {
             empresaId: Number(empresaIdOwn),
           }));
         }
-        await axios.post("/v1/usuarios/registro", body);
+        const response = await axios.post("/v1/usuarios/registro", body);
+        const successMessage =
+          resolveBackendMessage(response?.data) || t("usuario.messages.createSuccess");
+        setOpenForm(false);
+        await loadData();
+        setMessage({
+          open: true,
+          severity: "success",
+          text: successMessage,
+        });
       } else {
         const requestId =
           payload.requestId ??
@@ -974,15 +1003,17 @@ export default function Usuario() {
           };
         });
 
-        await axios.put(`/v1/usuarios/${requestId}`, body);
+        const response = await axios.put(`/v1/usuarios/${requestId}`, body);
+        const successMessage =
+          resolveBackendMessage(response?.data) || t("usuario.messages.updateSuccess");
+        setOpenForm(false);
+        await loadData();
+        setMessage({
+          open: true,
+          severity: "success",
+          text: successMessage,
+        });
       }
-      setOpenForm(false);
-      await loadData();
-      setMessage({
-        open: true,
-        severity: "success",
-        text: formMode === "create" ? t("usuario.messages.createSuccess") : t("usuario.messages.updateSuccess"),
-      });
     } catch (err) {
       const fallbackMessage =
         err?.message === "assignment-action-unavailable"
@@ -991,7 +1022,7 @@ export default function Usuario() {
       setMessage({
         open: true,
         severity: "error",
-        text: err.response?.data?.message ?? fallbackMessage,
+        text: resolveBackendMessage(err?.response?.data) || fallbackMessage,
       });
     }
   };
