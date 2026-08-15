@@ -87,7 +87,8 @@
       "lookupLoading": "Searching data by identification...",
       "loadingCompanyRoles": "Loading the available roles for the selected company...",
       "selectCompanyFirst": "Select a company first to view the available roles.",
-      "noRolesForCompany": "There are no available roles for the selected company."
+      "noRolesForCompany": "There are no available roles for the selected company.",
+      "selectContractStartFirst": "Select the start date first to enable the end date."
     },
     "actions": {
       "register": "Register"
@@ -106,6 +107,7 @@
       "assignmentRequired": "You must add at least one assignment.",
       "roleRequired": "You must select a role.",
       "companyRequired": "You must select a company.",
+      "contractStartRequiredForEnd": "You must select the start date first.",
       "contractDateOrder": "End date cannot be earlier than start date."
     },
     "fields": {
