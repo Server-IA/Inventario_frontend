@@ -10,6 +10,7 @@ CONTROL DE CAMBIOS
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se integra precarga por identificación.       |
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se ajusta el modal para HU-037.4.             |
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de roles por empresa activa.  |
+| 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -72,6 +73,7 @@ const IDENTIFICATION_MAX_LENGTH = 20;
 const ADDRESS_MAX_LENGTH = 120;
 const ADDRESS_REGEX =
   /^(?=.*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])(?=.*\d)[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s#.,\-°/]+$/;
+const STRATUM_OPTIONS = ["1", "2", "3", "4", "5", "6"];
 
 const normalizeLookupKey = (value) =>
   String(value ?? "")
@@ -79,6 +81,24 @@ const normalizeLookupKey = (value) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+
+const resolveIdentificationRule = (label) => {
+  const normalized = normalizeLookupKey(label);
+
+  if (
+    /cedula de ciudadania|cedula ciudadania|cedula de extranjeria|cedula extranjeria/.test(
+      normalized
+    )
+  ) {
+    return "numeric";
+  }
+
+  if (/dni|nit|pasaporte/.test(normalized)) {
+    return "alphanumeric";
+  }
+
+  return "alphanumeric";
+};
 
 const parseRolesByCompany = () => {
   try {
@@ -416,14 +436,7 @@ export default function FormUsuario({
   }, [formData?.tipoIdentificacionId, tiposIdentificacionOptions]);
 
   const requiresNumericIdentification = useMemo(() => {
-    const normalized = String(selectedIdentificationLabel ?? "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-
-    return /cedula|cedula de ciudadania|cedula de extranjeria|tarjeta|nit|identidad/.test(
-      normalized
-    );
+    return resolveIdentificationRule(selectedIdentificationLabel) === "numeric";
   }, [selectedIdentificationLabel]);
 
   const handleChange = (name, value) => {
@@ -433,6 +446,12 @@ export default function FormUsuario({
       normalizedValue = String(value ?? "")
         .replace(/\D/g, "")
         .slice(0, PHONE_MAX_LENGTH);
+    }
+
+    if (name === "estrato") {
+      normalizedValue = STRATUM_OPTIONS.includes(String(value ?? ""))
+        ? String(value)
+        : "";
     }
 
     if (name === "identificacion") {
@@ -450,6 +469,22 @@ export default function FormUsuario({
 
     setFormData((prev) => {
       const nextState = { ...prev, [name]: normalizedValue };
+
+      if (name === "tipoIdentificacionId") {
+        const nextLabel =
+          tiposIdentificacionOptions.find(
+            (item) => String(item.value) === String(normalizedValue ?? "")
+          )?.label ?? "";
+        const nextRule = resolveIdentificationRule(nextLabel);
+        const currentIdentification = String(prev?.identificacion ?? "");
+
+        nextState.identificacion =
+          nextRule === "numeric"
+            ? currentIdentification.replace(/\D/g, "").slice(0, IDENTIFICATION_MAX_LENGTH)
+            : currentIdentification
+                .replace(/[^A-Za-z0-9-]/g, "")
+                .slice(0, IDENTIFICATION_MAX_LENGTH);
+      }
 
       if (
         isCreateMode &&
@@ -487,12 +522,32 @@ export default function FormUsuario({
   const handleAssignChange = (name, value) => {
     setAssignDraft((prev) => {
       if (name === "empresaId") {
+        const selectedCompany =
+          empresasOptions.find((item) => String(item.value) === String(value ?? "")) ?? null;
+
         return {
           ...prev,
           empresaId: value,
+          empresaNombre: selectedCompany?.label ?? "",
           rolId: "",
           rolNombre: "",
         };
+      }
+
+      if (name === "iniciaContratoEn") {
+        const nextStart = String(value ?? "");
+        const nextEnd = String(prev?.finalizaContratoEn ?? "");
+
+        return {
+          ...prev,
+          iniciaContratoEn: nextStart,
+          finalizaContratoEn:
+            nextStart && nextEnd && new Date(nextEnd) >= new Date(nextStart) ? nextEnd : "",
+        };
+      }
+
+      if (name === "finalizaContratoEn" && !prev?.iniciaContratoEn) {
+        return prev;
       }
 
       return { ...prev, [name]: value };
@@ -501,6 +556,7 @@ export default function FormUsuario({
       ...prev,
       [name]: "",
       ...(name === "empresaId" ? { rolId: "" } : {}),
+      ...(name === "iniciaContratoEn" ? { finalizaContratoEn: "" } : {}),
     }));
     setFormAlert("");
   };
@@ -586,6 +642,10 @@ export default function FormUsuario({
       nextErrors.empresaId = t("usuario.form.validation.companyRequired");
     }
 
+    if (assignDraft.finalizaContratoEn && !assignDraft.iniciaContratoEn) {
+      nextErrors.finalizaContratoEn = t("usuario.form.validation.contractStartRequiredForEnd");
+    }
+
     if (
       assignDraft.iniciaContratoEn &&
       assignDraft.finalizaContratoEn &&
@@ -602,9 +662,8 @@ export default function FormUsuario({
     if (!validateAssignmentDraft()) return;
 
     const empresaIdResolved = isAdmin ? assignDraft.empresaId : String(sessionCompanyId || "");
-    const empresaResolved = (Array.isArray(empresas) ? empresas : []).find(
-      (e) => String(e.id) === String(empresaIdResolved)
-    );
+    const empresaResolved =
+      empresasOptions.find((item) => String(item.value) === String(empresaIdResolved)) ?? null;
     const rol = (Array.isArray(roles) ? roles : []).find(
       (r) => String(r.id) === String(assignDraft.rolId)
     );
@@ -613,7 +672,9 @@ export default function FormUsuario({
       ...assignDraft,
       empresaId: empresaIdResolved,
       empresaNombre:
-        empresaResolved?.nombre ?? sessionCompanyName ?? assignDraft.empresaNombre,
+        empresaResolved?.label ??
+        assignDraft.empresaNombre ??
+        (!isAdmin ? sessionCompanyName : ""),
       rolNombre: rol?.nombre ?? rol?.name ?? assignDraft.rolNombre,
     };
 
@@ -922,19 +983,11 @@ export default function FormUsuario({
 
                     <Grid
                       container
+                      rowSpacing={2}
+                      columnSpacing={{ xs: 0, md: 2 }}
                       sx={{
                         mt: 0.25,
                         width: "100%",
-                        "& > .MuiGrid-item": {
-                          pl: 0,
-                          pt: 2,
-                        },
-                        "& > .MuiGrid-item:nth-of-type(-n+2)": {
-                          pt: 0,
-                        },
-                        "& > .MuiGrid-item:nth-of-type(2n)": {
-                          pl: { xs: 0, md: 2 },
-                        },
                       }}
                     >
                       <Grid item xs={12} md={6}>
@@ -1016,18 +1069,20 @@ export default function FormUsuario({
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
+                          select
                           label={t("usuario.form.fields.stratum")}
                           value={formData?.estrato ?? ""}
-                          onChange={(e) =>
-                            handleChange("estrato", e.target.value.replace(/\D/g, ""))
-                          }
+                          onChange={(e) => handleChange("estrato", e.target.value)}
                           fullWidth
                           InputLabelProps={{ shrink: true }}
-                          inputProps={{
-                            inputMode: "numeric",
-                            pattern: "[0-9]*",
-                          }}
-                        />
+                        >
+                          <MenuItem value="">{t("common.labels.select")}</MenuItem>
+                          {STRATUM_OPTIONS.map((item) => (
+                            <MenuItem key={item} value={item}>
+                              {item}
+                            </MenuItem>
+                          ))}
+                        </TextField>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
@@ -1064,6 +1119,7 @@ export default function FormUsuario({
                           InputLabelProps={{ shrink: true }}
                           inputProps={{
                             inputMode: requiresNumericIdentification ? "numeric" : "text",
+                            pattern: requiresNumericIdentification ? "[0-9]*" : "[A-Za-z0-9-]*",
                             maxLength: IDENTIFICATION_MAX_LENGTH,
                           }}
                           InputProps={{
@@ -1216,8 +1272,16 @@ export default function FormUsuario({
                         ))}
                       </TextField>
 
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                          columnGap: { xs: 0, sm: 2 },
+                          rowGap: 2,
+                          width: "100%",
+                        }}
+                      >
+                        <Box>
                           <TextField
                             label={t("usuario.form.fields.contractStart")}
                             type="date"
@@ -1228,8 +1292,8 @@ export default function FormUsuario({
                             fullWidth
                             InputLabelProps={{ shrink: true }}
                           />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
+                        </Box>
+                        <Box>
                           <TextField
                             label={t("usuario.form.fields.contractEnd")}
                             type="date"
@@ -1238,12 +1302,18 @@ export default function FormUsuario({
                               handleAssignChange("finalizaContratoEn", e.target.value)
                             }
                             fullWidth
+                            disabled={!assignDraft.iniciaContratoEn}
                             error={Boolean(assignmentErrors.finalizaContratoEn)}
-                            helperText={assignmentErrors.finalizaContratoEn}
+                            helperText={
+                              assignmentErrors.finalizaContratoEn ||
+                              (!assignDraft.iniciaContratoEn
+                                ? t("usuario.form.helpers.selectContractStartFirst")
+                                : "")
+                            }
                             InputLabelProps={{ shrink: true }}
                           />
-                        </Grid>
-                      </Grid>
+                        </Box>
+                      </Box>
 
                       <FormControlLabel
                         control={
