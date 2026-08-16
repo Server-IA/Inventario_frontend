@@ -18,7 +18,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, Button, Stack, Grid,
-  FormControl, InputLabel, Select, MenuItem,
+  FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText,
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
   Paper, Divider, Popover, LinearProgress
 } from "@mui/material";
@@ -29,7 +29,8 @@ import {
   PictureAsPdf as PdfIcon,
   TableView as ExcelIcon,
   CalendarToday as CalendarIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  FilterAltOff as ClearFiltersIcon
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -107,6 +108,7 @@ export default function RE_pedido() {
     error: ubiError,
     fetchFiltrosIniciales: fetchCatalogos,
     preloadData,
+    resetTodo,
     loading: catLoading,
     error: catError,
   } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true, reportType: "pedido" });
@@ -116,7 +118,7 @@ export default function RE_pedido() {
   });
   
   const [pedidoFiltros, setPedidoFiltros] = useState({
-    pedido_id: "",
+    pedido_ids: [],
     pedido_estado_id: ""
   });
 
@@ -134,6 +136,29 @@ export default function RE_pedido() {
   const handlePedidoChange = (field) => (e) => {
     setPedidoFiltros(p => ({ ...p, [field]: e.target.value }));
   };
+
+  const handlePedidoIdsChange = (e) => {
+    const { value } = e.target;
+    const pedidoIds = typeof value === "string" ? value.split(",") : value;
+    setPedidoFiltros(p => ({
+      ...p,
+      pedido_ids: pedidoIds.includes("") ? [] : pedidoIds
+    }));
+  };
+
+  const buildPayload = () => ({
+    pedidoIds: pedidoFiltros.pedido_ids.map((id) => parseInt(id, 10)),
+    estadoId: toInt(pedidoFiltros.pedido_estado_id),
+    paisId: toInt(ubi.pais_id),
+    departamentoId: toInt(ubi.departamento_id),
+    municipioId: toInt(ubi.municipio_id),
+    sedeId: toInt(ubi.sede_id),
+    bloqueId: toInt(ubi.bloque_id),
+    espacioId: toInt(ubi.espacio_id),
+    almacenId: toInt(ubi.almacen_id),
+    fechaInicio: formReporte.fecha_inicio ? toDateStr(formReporte.fecha_inicio) : null,
+    fechaFin: formReporte.fecha_fin ? toDateStr(formReporte.fecha_fin) : null
+  });
 
   // UI state
   const [resultados, setResultados] = useState([]);
@@ -194,6 +219,15 @@ export default function RE_pedido() {
     setFormReporte(f => ({ ...f, fecha_inicio: fInicio, fecha_fin: fFin }));
   };
 
+  const handleClearFilters = () => {
+    resetTodo();
+    setPedidoFiltros({ pedido_ids: [], pedido_estado_id: "" });
+    setFormReporte({ fecha_inicio: "", fecha_fin: "" });
+    setResultados([]);
+    setErrors({ fechas_rango: false });
+    handleCloseDate();
+  };
+
   const validarFiltros = () => {
     setErrors({ fechas_rango: false });
     
@@ -215,19 +249,7 @@ export default function RE_pedido() {
 
     setLoadingSearch(true);
     try {
-      const payload = {
-        pedidoIds: pedidoFiltros.pedido_id ? [parseInt(pedidoFiltros.pedido_id, 10)] : [],
-        estadoId: toInt(pedidoFiltros.pedido_estado_id),
-        paisId:         toInt(ubi.pais_id),
-        departamentoId: toInt(ubi.departamento_id),
-        municipioId:    toInt(ubi.municipio_id),
-        sedeId:         toInt(ubi.sede_id),
-        bloqueId:       toInt(ubi.bloque_id),
-        espacioId:      toInt(ubi.espacio_id),
-        almacenId:      toInt(ubi.almacen_id),
-        fechaInicio: formReporte.fecha_inicio ? toDateStr(formReporte.fecha_inicio) : null,
-        fechaFin: formReporte.fecha_fin ? toDateStr(formReporte.fecha_fin) : null
-      };
+      const payload = buildPayload();
 
       const res = await axios.post("/v2/report/pedido/resumen", payload, headers);
       const lista = asArray(res.data?.pedidos || res.data);
@@ -256,19 +278,7 @@ export default function RE_pedido() {
     if (!validarFiltros()) return;
     setExporting(true);
     try {
-      const payload = {
-        pedidoIds: pedidoFiltros.pedido_id ? [parseInt(pedidoFiltros.pedido_id, 10)] : [],
-        estadoId: toInt(pedidoFiltros.pedido_estado_id),
-        paisId:         toInt(ubi.pais_id),
-        departamentoId: toInt(ubi.departamento_id),
-        municipioId:    toInt(ubi.municipio_id),
-        sedeId:         toInt(ubi.sede_id),
-        bloqueId:       toInt(ubi.bloque_id),
-        espacioId:      toInt(ubi.espacio_id),
-        almacenId:      toInt(ubi.almacen_id),
-        fechaInicio: formReporte.fecha_inicio ? toDateStr(formReporte.fecha_inicio) : null,
-        fechaFin: formReporte.fecha_fin ? toDateStr(formReporte.fecha_fin) : null
-      };
+      const payload = buildPayload();
       
       const res = await axios({
         url: "/v2/report/pedido/exportar",
@@ -428,9 +438,20 @@ export default function RE_pedido() {
               <Grid item xs={12}>
                 <FormControl size="small" fullWidth disabled={catLoading || catError}>
                   <InputLabel>{t("pedido.filters.orderId", "Pedido")}</InputLabel>
-                  <Select value={pedidoFiltros.pedido_id || ""} label={t("pedido.filters.orderId", "Pedido")} onChange={handlePedidoChange("pedido_id")}>
+                  <Select
+                    multiple
+                    value={pedidoFiltros.pedido_ids}
+                    label={t("pedido.filters.orderId", "Pedido")}
+                    onChange={handlePedidoIdsChange}
+                    renderValue={(selected) => selected.map((id) => `Pedido ${id}`).join(", ")}
+                  >
                     <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
-                    {pedidosBase.map(p => <MenuItem key={p.id} value={String(p.id)}>{`Pedido ${p.id}`}</MenuItem>)}
+                    {pedidosBase.map((p) => (
+                      <MenuItem key={p.id} value={String(p.id)}>
+                        <Checkbox checked={pedidoFiltros.pedido_ids.includes(String(p.id))} />
+                        <ListItemText primary={`Pedido ${p.id}`} />
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -518,8 +539,8 @@ export default function RE_pedido() {
                       onChange={handleSelectDateRange}
                       moveRangeOnFirstSelection={false}
                       ranges={[{
-                        startDate: formReporte.fecha_inicio ? new Date(formReporte.fecha_inicio) : new Date(),
-                        endDate: formReporte.fecha_fin ? new Date(formReporte.fecha_fin) : new Date(),
+                        startDate: formReporte.fecha_inicio ? new Date(formReporte.fecha_inicio) : undefined,
+                        endDate: formReporte.fecha_fin ? new Date(formReporte.fecha_fin) : undefined,
                         key: 'selection'
                       }]}
                       months={2}
@@ -537,7 +558,16 @@ export default function RE_pedido() {
       {/* Botones de accion */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 4 }}>
         <Stack direction="row" spacing={2}>
-
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<ClearFiltersIcon />}
+            onClick={handleClearFilters}
+            disabled={loadingSearch || exporting}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("common.actions.clear", "Limpiar")}
+          </Button>
           <Button 
             variant="contained" 
             color="primary" 
