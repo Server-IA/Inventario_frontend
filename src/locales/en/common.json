@@ -12,7 +12,8 @@
     "viewDetail": "View detail",
     "viewPermissions": "View permissions",
     "remove": "Remove",
-    "addAssignment": "Add assignment"
+    "addAssignment": "Add assignment",
+    "search": "Search"
   },
   "labels": {
     "status": "Status",

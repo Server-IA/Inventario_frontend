@@ -27,6 +27,7 @@ import esUsuario from "./locales/es/usuario.json";
 import esAlmacen from "./locales/es/almacen.json";
 import esEmpresaRol from "./locales/es/empresaRol.json";
 import esLocalizacionGeografica from "./locales/es/localizacionGeografica.json";
+import esPedido from "./locales/es/pedido.json";
 import esVencimiento from "./locales/es/vencimiento.json";
 import enCommon from "./locales/en/common.json";
 import enAuth from "./locales/en/auth.json";
@@ -34,6 +35,7 @@ import enUsuario from "./locales/en/usuario.json";
 import enAlmacen from "./locales/en/almacen.json";
 import enEmpresaRol from "./locales/en/empresaRol.json";
 import enLocalizacionGeografica from "./locales/en/localizacionGeografica.json";
+import enPedido from "./locales/en/pedido.json";
 import enVencimiento from "./locales/en/vencimiento.json";
 
 const normalizeLanguage = (language) =>
@@ -64,6 +66,7 @@ i18n
           almacen: esAlmacen,
           empresaRol: esEmpresaRol,
           localizacionGeografica: esLocalizacionGeografica,
+          pedido: esPedido,
           vencimiento: esVencimiento,
         },
       },
@@ -75,6 +78,7 @@ i18n
           almacen: enAlmacen,
           empresaRol: enEmpresaRol,
           localizacionGeografica: enLocalizacionGeografica,
+          pedido: enPedido,
           vencimiento: enVencimiento,
         },
       },
