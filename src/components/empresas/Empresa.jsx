@@ -1,34 +1,28 @@
+/*=============================================================================
+ Nombre del archivo : Empresa.jsx
+ Descripcion        : Componente principal del módulo de empresas (HU-043.1).
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.1 Registrar empresa  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
  * @file Empresa.jsx
  * @module Empresa
  * @description Componente principal para la gestión de empresas.
- *
- * Este componente maneja la lógica del módulo de empresas, incluyendo la carga de datos,
- * manejo de mensajes, y renderizado de los formularios y la tabla de empresas.
- * @author Karla
+ * @author Jeisson Sanchez
  */
 
 import * as React from "react";
-import axios from "axios";
+import axios from "../axiosConfig";
+import { useTranslation } from "react-i18next";
 import MessageSnackBar from "../MessageSnackBar";
+import GridActionBar from "../common/GridActionBar";
 import FormEmpresa from "./FormEmpresa";
 import GridEmpresa from "./GridEmpresa";
-import { SiteProps } from "../dashboard/SiteProps";
-
-/**
- * @typedef {Object} EmpresaRow
- * @property {number} id - ID de la empresa
- * @property {string} nombre - Nombre de la empresa
- * @property {string} descripcion - Descripción de la empresa
- * @property {number} estado - Estado (1: activo, 0: inactivo)
- * @property {string} celular - Número de celular de contacto
- * @property {string} correo - Correo electrónico de la empresa
- * @property {string} contacto - Nombre del contacto principal
- * @property {number} tipoIdentificacionId - ID del tipo de identificación
- * @property {number} personaId - ID de la persona asociada
- * @property {string} identificacion - Número de identificación
- * @property {string} logo - URL o nombre del logo de la empresa
- */
 
 /**
  * @typedef {Object} SnackbarMessage
@@ -43,21 +37,7 @@ import { SiteProps } from "../dashboard/SiteProps";
  * @returns {JSX.Element} El módulo de gestión de empresas
  */
 export default function Empresa() {
-  const defaultRow = {
-    id: 0,
-    nombre: "",
-    descripcion: "",
-    estado: 0,
-    celular: "",
-    correo: "",
-    contacto: "",
-    tipoIdentificacionId: 0,
-    personaId: 0,
-    identificacion: "",
-    logo: "",
-  };
-
-  const [selectedRow, setSelectedRow] = React.useState(defaultRow);
+  const { t } = useTranslation();
   const [message, setMessage] = React.useState(
     /** @type {SnackbarMessage} */ ({
       open: false,
@@ -65,114 +45,54 @@ export default function Empresa() {
       text: "",
     })
   );
-  const [empresas, setEmpresas] = React.useState(/** @type {EmpresaRow[]} */ ([]));
+  const [personas, setPersonas] = React.useState([]);
+  const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
   const [openForm, setOpenForm] = React.useState(false);
-  const [methodName, setMethodName] = React.useState("Add");
 
   /**
-   * Carga los datos de empresas desde la API.
+   * Carga las personas y los tipos de identificación usados por el formulario.
    */
-  const reloadData = () => {
+  const reloadData = React.useCallback(() => {
     axios
-      .get(`${SiteProps.urlbasev1}/empresas`)
-      .then((response) => {
-        const empresaData = response.data.data.map((item) => ({
-          ...item,
-          id: item.id,
-        }));
-        setEmpresas(empresaData);
-      })
-      .catch((error) => {
-        console.error("Error al buscar empresas!", error);
-      });
-  };
+      .get("/v1/persona")
+      .then((res) => setPersonas(res.data.content || []))
+      .catch((err) => console.error("Error al cargar personas:", err));
+
+    axios
+      .get("/v1/tipo_identificacion")
+      .then((res) => setTiposIdentificacion(res.data || []))
+      .catch((err) => console.error("Error al cargar tipos de identificación:", err));
+  }, []);
 
   React.useEffect(() => {
     reloadData();
-  }, []);
+  }, [reloadData]);
 
   /**
-   * Maneja la acción de agregar una nueva empresa.
+   * Abre el formulario de registro de una nueva empresa.
    */
   const handleAdd = () => {
-    setSelectedRow(defaultRow);
-    setMethodName("Add");
     setOpenForm(true);
-  };
-
-  /**
-   * Maneja la acción de actualizar una empresa existente.
-   */
-  const handleUpdate = () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona una fila para actualizar.",
-      });
-      return;
-    }
-    setMethodName("Update");
-    setOpenForm(true);
-  };
-
-  /**
-   * Maneja la acción de eliminar una empresa.
-   */
-  const handleDelete = () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona una fila para eliminar.",
-      });
-      return;
-    }
-
-    axios
-      .delete(`${SiteProps.urlbasev1}/empresas/${selectedRow.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Empresa eliminada con éxito!",
-        });
-        reloadData();
-      })
-      .catch((error) => {
-        setMessage({
-          open: true,
-          severity: "error",
-          text: `Error al eliminar empresa: ${error.response?.data.message || error.message}`,
-        });
-      });
   };
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
-      <h1>Gestión de Empresas</h1>
+      <h1>{t("empresa.title", "Gestión de Empresas")}</h1>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
+      <GridActionBar onAdd={handleAdd} />
+
       <FormEmpresa
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
+        personas={personas}
+        tiposIdentificacion={tiposIdentificacion}
         setMessage={setMessage}
         reloadData={reloadData}
         open={openForm}
         setOpen={setOpenForm}
-        methodName={methodName}
       />
 
-      <GridEmpresa
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        empresas={empresas}
-      />
+      <GridEmpresa />
     </div>
   );
 }

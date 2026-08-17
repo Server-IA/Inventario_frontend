@@ -1,7 +1,19 @@
+/*=============================================================================
+ Nombre del archivo : FormEmpresa.jsx
+ Descripcion        : Formulario de registro de empresa (HU-043.1).
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.1 Registrar empresa  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
- * Componente principal del formulario de empresa.
+ * Componente del formulario de empresa.
  *
- * Este componente permite crear, actualizar o eliminar una empresa mediante un formulario emergente.
+ * Permite registrar una nueva empresa con sus datos generales y un logo
+ * opcional (formato PNG/JPG, máximo 2MB).
  *
  * @module FormEmpresa
  * @component
@@ -10,7 +22,8 @@
 
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import axios from "axios";
+import axios from "../axiosConfig";
+import { useTranslation } from "react-i18next";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Dialog from "@mui/material/Dialog";
@@ -22,211 +35,289 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
-import StackButtons from "../StackButtons";
-import { SiteProps } from "../dashboard/SiteProps";
+
+const LOGO_MAX_SIZE = 2 * 1024 * 1024;
+const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg"];
 
 /**
- * @typedef {Object} EmpresaRow
- * @property {number} id
- * @property {string} nombre
- * @property {string} descripcion
- * @property {number} estado
- * @property {string} celular
- * @property {string} correo
- * @property {string} contacto
+ * @typedef {Object} EmpresaRegistro
  * @property {number|string} tipoIdentificacionId
- * @property {number|string} personaId
  * @property {string} identificacion
- * @property {string} logo
- */
-
-/**
- * @typedef {Object} SnackbarMessage
- * @property {boolean} open
- * @property {string} severity
- * @property {string} text
+ * @property {string} nombre
+ * @property {string} correo
+ * @property {string} celular
+ * @property {string} contacto
+ * @property {string} descripcion
+ * @property {number|string} personaId
  */
 
 /**
  * @param {{
- *   selectedRow: EmpresaRow,
- *   setSelectedRow: Function,
+ *   personas: Array<{id: number, nombre: string, apellido: string}>,
+ *   tiposIdentificacion: Array<{id: number, nombre: string}>,
  *   setMessage: Function,
- *   reloadData: Function
+ *   reloadData: Function,
+ *   open: boolean,
+ *   setOpen: Function
  * }} props
  * @returns {JSX.Element}
  */
-export default function FormEmpresa({ selectedRow, setSelectedRow, setMessage, reloadData }) {
-  const [open, setOpen] = useState(false);
-  const [methodName, setMethodName] = useState("");
+export default function FormEmpresa({
+  personas = [],
+  tiposIdentificacion = [],
+  setMessage,
+  reloadData,
+  open,
+  setOpen,
+}) {
+  const { t } = useTranslation();
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoError, setLogoError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Valores iniciales de empresa
-  const defaultRow = {
-    id: 0,
-    nombre: "",
-    descripcion: "",
-    estado: 1,
-    celular: "",
-    correo: "",
-    contacto: "",
-    tipoIdentificacionId: "",
-    personaId: "",
-    identificacion: "",
-    logo: "", // ✅ nuevo campo
+  const handleClose = () => {
+    if (saving) return;
+    setOpen(false);
+    setLogoFile(null);
+    setLogoError("");
   };
 
-  const create = () => {
-    setSelectedRow(defaultRow);
-    setMethodName("Add");
-    setOpen(true);
-  };
-
-  const update = () => {
-    if (!selectedRow || !selectedRow.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona una fila para actualizar.",
-      });
-      return;
-    }
-    setMethodName("Actualizar ");
-    setOpen(true);
-  };
-
-  const deleteRow = () => {
-    if (!selectedRow || !selectedRow.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona una fila para eliminar.",
-      });
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setLogoFile(null);
+      setLogoError("");
       return;
     }
 
-    const url = `${SiteProps.urlbasev1}/empresas/${selectedRow.id}`;
-    axios
-      .delete(url, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Empresa eliminada con éxito!",
-        });
-        reloadData();
-      })
-      .catch((error) => {
-        setMessage({
-          open: true,
-          severity: "error",
-          text: `Error al eliminar empresa: ${error.response?.data.message || error.message}`,
-        });
-      });
+    if (file.size > LOGO_MAX_SIZE) {
+      setLogoError(t("empresa.messages.logoSize", "El archivo supera el tamaño permitido de 2MB"));
+    } else if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
+      setLogoError(t("empresa.messages.logoFormat", "Formato no soportado, usa PNG o JPG"));
+    } else {
+      setLogoError("");
+    }
+    setLogoFile(file);
   };
-
-  const handleClose = () => setOpen(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (logoError) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: t("empresa.messages.logoError", "Corrige los errores del logo antes de guardar."),
+      });
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
-    const formJson = Object.fromEntries(formData.entries());
+    const empresa = {
+      tipoIdentificacionId: Number(formData.get("tipoIdentificacionId")),
+      identificacion: formData.get("identificacion"),
+      nombre: formData.get("nombre"),
+      correo: formData.get("correo"),
+      celular: formData.get("celular") || "",
+      contacto: formData.get("contacto") || "",
+      descripcion: formData.get("descripcion") || "",
+      personaId: Number(formData.get("personaId")),
+    };
 
-    const url = `${SiteProps.urlbasev1}/empresas`;
-    const method = methodName === "Add" ? axios.post : axios.put;
-    const endpoint = methodName === "Add" ? url : `${url}/${selectedRow.id}`;
+    const payload = new FormData();
+    payload.append("empresa", JSON.stringify(empresa));
+    if (logoFile) {
+      payload.append("logo", logoFile);
+    }
 
-    method(endpoint, formJson, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
+    setSaving(true);
+    axios
+      .post("/v1/empresas", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
       .then(() => {
         setMessage({
           open: true,
           severity: "success",
-          text: methodName === "Add" ? "Empresa creada con éxito!" : "Empresa actualizada con éxito!",
+          text: t("empresa.messages.created", "Empresa creada con éxito!"),
         });
         setOpen(false);
+        setLogoFile(null);
+        setLogoError("");
         reloadData();
       })
       .catch((error) => {
         setMessage({
           open: true,
           severity: "error",
-          text: `Error al guardar empresa: ${error.response?.data.message || error.message}`,
+          text: `${t("empresa.messages.saveError", "Error al guardar empresa:")} ${
+            error.response?.data?.message || error.message
+          }`,
         });
-      });
+      })
+      .finally(() => setSaving(false));
   };
 
   return (
-    <>
-      <StackButtons methods={{ create, update, deleteRow }} />
-      <Dialog open={open} onClose={handleClose} PaperProps={{ component: "form", onSubmit: handleSubmit }}>
-        <DialogTitle>{methodName} Empresa</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Completa el formulario.</DialogContentText>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ component: "form", onSubmit: handleSubmit }}
+    >
+      <DialogTitle>{t("empresa.form.registerTitle", "Registrar Empresa")}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          {t("empresa.form.subtitle", "Completa el formulario.")}
+        </DialogContentText>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="nombre" name="nombre" label="Nombre" variant="standard" defaultValue={selectedRow?.nombre || ""} />
-          </FormControl>
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel id="tipoIdentificacionId-label">
+            {t("empresa.form.tipoIdentificacion", "Tipo de Identificación")}
+          </InputLabel>
+          <Select
+            labelId="tipoIdentificacionId-label"
+            id="tipoIdentificacionId"
+            name="tipoIdentificacionId"
+            required
+            defaultValue=""
+            fullWidth
+          >
+            {tiposIdentificacion.map((tipo) => (
+              <MenuItem key={tipo.id} value={tipo.id}>
+                {tipo.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="descripcion" name="descripcion" label="Descripción" variant="standard" defaultValue={selectedRow?.descripcion || ""} />
-          </FormControl>
+        <FormControl fullWidth margin="normal">
+          <TextField
+            required
+            id="identificacion"
+            name="identificacion"
+            label={t("empresa.form.identificacion", "Número de Identificación")}
+            variant="standard"
+          />
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="estado-label">Estado</InputLabel>
-            <Select labelId="estado-label" id="estado" name="estado" defaultValue={selectedRow?.estado || ""} fullWidth>
-              <MenuItem value={1}>Activo</MenuItem>
-              <MenuItem value={0}>Inactivo</MenuItem>
-            </Select>
-          </FormControl>
+        <FormControl fullWidth margin="normal">
+          <TextField
+            required
+            id="nombre"
+            name="nombre"
+            label={t("empresa.form.nombre", "Nombre")}
+            variant="standard"
+          />
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="celular" name="celular" label="Celular" variant="standard" defaultValue={selectedRow?.celular || ""} />
-          </FormControl>
+        <FormControl fullWidth margin="normal">
+          <TextField
+            required
+            id="correo"
+            name="correo"
+            label={t("empresa.form.correo", "Correo")}
+            type="email"
+            variant="standard"
+          />
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="correo" name="correo" label="Correo" type="email" variant="standard" defaultValue={selectedRow?.correo || ""} />
-          </FormControl>
+        <FormControl fullWidth margin="normal">
+          <TextField
+            id="celular"
+            name="celular"
+            label={t("empresa.form.celular", "Celular")}
+            variant="standard"
+          />
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="contacto" name="contacto" label="Contacto" variant="standard" defaultValue={selectedRow?.contacto || ""} />
-          </FormControl>
+        <FormControl fullWidth margin="normal">
+          <TextField
+            id="contacto"
+            name="contacto"
+            label={t("empresa.form.contacto", "Contacto")}
+            variant="standard"
+          />
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="tipoIdentificacionId-label">Tipo de Identificación</InputLabel>
-            <Select labelId="tipoIdentificacionId-label" id="tipoIdentificacionId" name="tipoIdentificacionId" defaultValue={selectedRow?.tipoIdentificacionId || ""} fullWidth>
-              <MenuItem value={1}>Cédula</MenuItem>
-              <MenuItem value={2}>Pasaporte</MenuItem>
-            </Select>
-          </FormControl>
+        <FormControl fullWidth margin="normal">
+          <TextField
+            id="descripcion"
+            name="descripcion"
+            label={t("empresa.form.descripcion", "Descripción")}
+            variant="standard"
+            multiline
+            minRows={2}
+          />
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="personaId" name="personaId" label="ID Persona" variant="standard" defaultValue={selectedRow?.personaId || ""} />
-          </FormControl>
+        <FormControl fullWidth margin="normal" required>
+          <InputLabel id="personaId-label">
+            {t("empresa.form.personaId", "Persona Responsable")}
+          </InputLabel>
+          <Select
+            labelId="personaId-label"
+            id="personaId"
+            name="personaId"
+            required
+            defaultValue=""
+            fullWidth
+          >
+            {personas.map((persona) => (
+              <MenuItem key={persona.id} value={persona.id}>
+                {persona.nombre} {persona.apellido}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <TextField required id="identificacion" name="identificacion" label="Número de Identificación" variant="standard" defaultValue={selectedRow?.identificacion || ""} />
-          </FormControl>
-
-          {/* ✅ NUEVO CAMPO: URL del Logo */}
-          <FormControl fullWidth margin="normal">
-            <TextField id="logo" name="logo" label="URL del Logo" variant="standard" defaultValue={selectedRow?.logo || ""} />
-          </FormControl>
-
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button type="submit">{methodName}</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+        <FormControl fullWidth margin="normal">
+          <Button
+            variant="outlined"
+            component="label"
+            color={logoError ? "error" : "primary"}
+            disabled={saving}
+          >
+            {t("empresa.form.uploadLogo", "Subir Logo (PNG/JPG)")}
+            <input
+              type="file"
+              name="logo"
+              hidden
+              accept="image/png, image/jpeg"
+              onChange={handleLogoChange}
+            />
+          </Button>
+          {logoFile && !logoError && (
+            <span style={{ fontSize: "0.8rem", marginTop: "5px" }}>
+              {t("empresa.form.file", "Archivo:")} {logoFile.name}
+            </span>
+          )}
+          {logoError && (
+            <span style={{ color: "red", fontSize: "0.8rem", marginTop: "5px" }}>
+              {logoError}
+            </span>
+          )}
+        </FormControl>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} disabled={saving}>
+          {t("common.actions.cancel", "Cancelar")}
+        </Button>
+        <Button type="submit" variant="contained" disabled={saving}>
+          {saving
+            ? t("common.actions.saving", "Guardando...")
+            : t("empresa.actions.create", "Registrar")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
-// Validación de Props con PropTypes
 FormEmpresa.propTypes = {
-  selectedRow: PropTypes.object.isRequired,
-  setSelectedRow: PropTypes.func.isRequired,
+  personas: PropTypes.array,
+  tiposIdentificacion: PropTypes.array,
   setMessage: PropTypes.func.isRequired,
   reloadData: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
 };

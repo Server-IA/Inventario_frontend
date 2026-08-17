@@ -1,0 +1,55 @@
+{
+  "title": "Gestión de Empresas",
+  "titleSingle": "Empresa",
+  "actions": {
+    "create": "Registrar",
+    "update": "Actualizar",
+    "delete": "Eliminar",
+    "inactivate": "Inactivar",
+    "activate": "Activar"
+  },
+  "estado": {
+    "activo": "Activo",
+    "inactivo": "Inactivo"
+  },
+  "form": {
+    "registerTitle": "Registrar Empresa",
+    "subtitle": "Completa el formulario.",
+    "tipoIdentificacion": "Tipo de Identificación",
+    "identificacion": "Número de Identificación",
+    "nombre": "Nombre",
+    "correo": "Correo",
+    "celular": "Celular",
+    "contacto": "Contacto",
+    "descripcion": "Descripción",
+    "personaId": "Persona Responsable",
+    "uploadLogo": "Subir Logo (PNG/JPG)",
+    "file": "Archivo:"
+  },
+  "grid": {
+    "id": "ID",
+    "nombre": "Nombre",
+    "identificacion": "No. de Identificación",
+    "correo": "Correo",
+    "estado": "Estado",
+    "celular": "Celular",
+    "contacto": "Contacto",
+    "tipoIdentificacion": "Tipo de Identificación",
+    "persona": "Persona",
+    "logo": "Logo",
+    "logoAlt": "logo",
+    "sinLogo": "Sin logo"
+  },
+  "messages": {
+    "created": "Empresa creada con éxito!",
+    "updated": "Empresa actualizada con éxito!",
+    "deleted": "Empresa eliminada con éxito!",
+    "saveError": "Error al guardar empresa:",
+    "deleteError": "Error al eliminar empresa:",
+    "selectToUpdate": "Selecciona una fila para actualizar.",
+    "selectToDelete": "Selecciona una fila para eliminar.",
+    "logoError": "Corrige los errores del logo antes de guardar.",
+    "logoSize": "El archivo supera el tamaño permitido de 2MB",
+    "logoFormat": "Formato no soportado, usa PNG o JPG"
+  }
+}
