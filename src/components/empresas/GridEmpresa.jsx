@@ -1,16 +1,16 @@
 /*=============================================================================
  Nombre del archivo : GridEmpresa.jsx
- Descripcion        : Grilla de empresas (HU-043.1).
+ Descripcion        : Grilla de listado de empresas (HU-043.2).
 ===============================================================================
  CONTROL DE CAMBIOS
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
- | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.1 Registrar empresa  |
+ | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.2 Listado empresas   |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
- * Grilla de empresas.
+ * Grilla de listado de empresas.
  * @module GridEmpresa
  * @component
  * @returns {JSX.Element}
@@ -23,10 +23,35 @@ import axios from "../axiosConfig";
 import AppDataGrid from "../common/AppDataGrid";
 
 /**
- * Componente GridEmpresa para mostrar la tabla de empresas.
+ * Construye el filtro del backend a partir de los filtros del DataGrid.
  *
- * Consume `GET /api/v1/empresas`, cuyos ítems exponen `nombre`,
- * `identificacion`, `correo`, `estadoNombre` y `tipoIdentificacionNombre`.
+ * El endpoint `GET /api/v1/empresas` espera el parámetro `filtros` con un
+ * objeto `EmpresaListadoFiltroDTO`:
+ * `{ tipoIdentificacionId, identificacion, nombre, correo, estadoId }`.
+ *
+ * @param {Object} filterModel Modelo de filtros del DataGrid.
+ * @returns {Object} Filtro serializable para el backend.
+ */
+const buildFiltros = (filterModel) => {
+  const filtros = {};
+  (filterModel?.items || []).forEach((item) => {
+    const value = item.value;
+    if (value === undefined || value === null || value === "") return;
+    if (item.columnField === "estadoNombre") {
+      filtros.estadoId = 1;
+    } else {
+      filtros[item.columnField] = value;
+    }
+  });
+  return filtros;
+};
+
+/**
+ * Componente GridEmpresa para mostrar el listado de empresas.
+ *
+ * Consume `GET /api/v1/empresas` con paginación, ordenamiento y filtros
+ * server-side. Cada ítem expone `nombre`, `identificacion`, `correo`,
+ * `estadoNombre` y `tipoIdentificacionNombre`.
  *
  * @param {object} props Propiedades del componente.
  * @param {number} [props.refreshKey] Contador que al incrementarse fuerza la
@@ -45,9 +70,9 @@ export default function GridEmpresa({ refreshKey = 0 }) {
 
   const columns = [
     {
-      field: "nombre",
-      headerName: t("empresa.grid.nombre", "Nombre"),
-      width: 200,
+      field: "tipoIdentificacionNombre",
+      headerName: t("empresa.grid.tipoIdentificacion", "Tipo de Identificación"),
+      width: 180,
       type: "string",
     },
     {
@@ -57,9 +82,15 @@ export default function GridEmpresa({ refreshKey = 0 }) {
       type: "string",
     },
     {
+      field: "nombre",
+      headerName: t("empresa.grid.nombre", "Nombre"),
+      width: 200,
+      type: "string",
+    },
+    {
       field: "correo",
       headerName: t("empresa.grid.correo", "Correo"),
-      width: 200,
+      width: 220,
       type: "string",
     },
     {
@@ -70,12 +101,13 @@ export default function GridEmpresa({ refreshKey = 0 }) {
     },
   ];
 
-  const fetchData = async (page, pageSize) => {
+  const fetchData = async (page, pageSize, filterModel) => {
     setLoading(true);
     try {
       const response = await axios.get("/v1/empresas", {
         params: {
-          page,
+          filtros: JSON.stringify(buildFiltros(filterModel)),
+          page: page + 1,
           size: pageSize,
           sortBy: "id,desc",
         },
@@ -104,6 +136,7 @@ export default function GridEmpresa({ refreshKey = 0 }) {
         paginationModel={paginationModel}
         setPaginationModel={setPaginationModel}
         pageSizeOptions={[5, 10, 20, 50]}
+        quickFilter
       />
     </div>
   );
