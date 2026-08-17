@@ -7,6 +7,7 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.2 Listado empresas   |
+ | 2026-08-16 | 0.5.1   | Jeisson Sanchez      | QA: filtros flat + page 0-based |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -21,44 +22,26 @@ import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import axios from "../axiosConfig";
 import AppDataGrid from "../common/AppDataGrid";
-
-/**
- * Construye el filtro del backend a partir de los filtros del DataGrid.
- *
- * El endpoint `GET /api/v1/empresas` espera el parámetro `filtros` con un
- * objeto `EmpresaListadoFiltroDTO`:
- * `{ tipoIdentificacionId, identificacion, nombre, correo, estadoId }`.
- *
- * @param {Object} filterModel Modelo de filtros del DataGrid.
- * @returns {Object} Filtro serializable para el backend.
- */
-const buildFiltros = (filterModel) => {
-  const filtros = {};
-  (filterModel?.items || []).forEach((item) => {
-    const value = item.value;
-    if (value === undefined || value === null || value === "") return;
-    if (item.columnField === "estadoNombre") {
-      filtros.estadoId = 1;
-    } else {
-      filtros[item.columnField] = value;
-    }
-  });
-  return filtros;
-};
+import { Box, Button, MenuItem, Select, TextField, InputLabel, FormControl } from "@mui/material";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import ClearIcon from "@mui/icons-material/Clear";
 
 /**
  * Componente GridEmpresa para mostrar el listado de empresas.
  *
- * Consume `GET /api/v1/empresas` con paginación, ordenamiento y filtros
- * server-side. Cada ítem expone `nombre`, `identificacion`, `correo`,
- * `estadoNombre` y `tipoIdentificacionNombre`.
+ * Consume `GET /api/v1/empresas` con paginación (0-based) y filtros
+ * server-side mediante query params planos (nombre, identificacion,
+ * correo, tipoIdentificacionId, estadoId). Cada ítem expone `nombre`,
+ * `identificacion`, `correo`, `estadoNombre` y `tipoIdentificacionNombre`.
  *
  * @param {object} props Propiedades del componente.
  * @param {number} [props.refreshKey] Contador que al incrementarse fuerza la
  * recarga del listado (se usa tras registrar una empresa).
+ * @param {Object|null} [props.selectedRow] Fila seleccionada externamente.
+ * @param {function} [props.setSelectedRow] Setter para la selección externa.
  * @returns {JSX.Element}
  */
-export default function GridEmpresa({ refreshKey = 0 }) {
+export default function GridEmpresa({ refreshKey = 0, selectedRow, setSelectedRow }) {
   const { t } = useTranslation();
   const [data, setData] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -67,12 +50,20 @@ export default function GridEmpresa({ refreshKey = 0 }) {
     pageSize: 5,
     page: 0,
   });
+  const [filters, setFilters] = React.useState({
+    tipoIdentificacionId: "",
+    identificacion: "",
+    nombre: "",
+    correo: "",
+    estadoId: "",
+  });
+  const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
 
   const columns = [
     {
       field: "tipoIdentificacionNombre",
       headerName: t("empresa.grid.tipoIdentificacion", "Tipo de Identificación"),
-      width: 180,
+      width: 190,
       type: "string",
     },
     {
@@ -84,13 +75,13 @@ export default function GridEmpresa({ refreshKey = 0 }) {
     {
       field: "nombre",
       headerName: t("empresa.grid.nombre", "Nombre"),
-      width: 200,
+      width: 220,
       type: "string",
     },
     {
       field: "correo",
       headerName: t("empresa.grid.correo", "Correo"),
-      width: 220,
+      width: 240,
       type: "string",
     },
     {
@@ -101,30 +92,132 @@ export default function GridEmpresa({ refreshKey = 0 }) {
     },
   ];
 
-  const fetchData = async (page, pageSize, filterModel) => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/v1/empresas", {
-        params: {
-          filtros: JSON.stringify(buildFiltros(filterModel)),
-          page: page + 1,
+  const fetchData = React.useCallback(
+    async (page, pageSize) => {
+      setLoading(true);
+      try {
+        const params = {
+          page,
           size: pageSize,
           sortBy: "id,desc",
-        },
-      });
+        };
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params[key] = value;
+          }
+        });
 
-      setData(response.data?.data || []);
-      setRowCount(response.data?.header?.totalElements || 0);
-    } catch (error) {
-      console.error("Error al consultar empresas:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const response = await axios.get("/v1/empresas", { params });
+        setData(response.data?.data || []);
+        setRowCount(response.data?.header?.totalElements || 0);
+      } catch (error) {
+        console.error("Error al consultar empresas:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters]
+  );
 
   React.useEffect(() => {
     fetchData(paginationModel.page, paginationModel.pageSize);
-  }, [paginationModel, refreshKey]);
+  }, [fetchData, paginationModel, refreshKey]);
+
+  React.useEffect(() => {
+    axios
+      .get("/v1/tipo_identificacion")
+      .then((res) => setTiposIdentificacion(res.data || []))
+      .catch((err) => console.error("Error al cargar tipos de identificación:", err));
+  }, []);
+
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSearch = () => {
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    fetchData(0, paginationModel.pageSize);
+  };
+
+  const handleClear = () => {
+    setFilters({
+      tipoIdentificacionId: "",
+      identificacion: "",
+      nombre: "",
+      correo: "",
+      estadoId: "",
+    });
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    fetchData(0, paginationModel.pageSize);
+  };
+
+  const filterBar = (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+      <FormControl size="small" sx={{ minWidth: 180 }}>
+        <InputLabel id="tipo-identificacion-filter-label">
+          {t("empresa.grid.tipoIdentificacion", "Tipo de Identificación")}
+        </InputLabel>
+        <Select
+          labelId="tipo-identificacion-filter-label"
+          id="tipo-identificacion-filter"
+          value={filters.tipoIdentificacionId}
+          onChange={(e) => handleFilterChange("tipoIdentificacionId", e.target.value)}
+          size="small"
+          label={t("empresa.grid.tipoIdentificacion", "Tipo de Identificación")}
+        >
+          <MenuItem value="">
+            <em>{t("common.labels.all", "Todos")}</em>
+          </MenuItem>
+          {tiposIdentificacion.map((tipo) => (
+            <MenuItem key={tipo.id} value={tipo.id}>
+              {tipo.nombre}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <TextField
+        size="small"
+        label={t("empresa.grid.identificacion", "No. de Identificación")}
+        value={filters.identificacion}
+        onChange={(e) => handleFilterChange("identificacion", e.target.value)}
+      />
+      <TextField
+        size="small"
+        label={t("empresa.grid.nombre", "Nombre")}
+        value={filters.nombre}
+        onChange={(e) => handleFilterChange("nombre", e.target.value)}
+      />
+      <TextField
+        size="small"
+        label={t("empresa.grid.correo", "Correo")}
+        value={filters.correo}
+        onChange={(e) => handleFilterChange("correo", e.target.value)}
+      />
+      <FormControl size="small" sx={{ minWidth: 120 }}>
+        <InputLabel id="estado-filter-label">{t("empresa.grid.estado", "Estado")}</InputLabel>
+        <Select
+          labelId="estado-filter-label"
+          id="estado-filter"
+          value={filters.estadoId}
+          onChange={(e) => handleFilterChange("estadoId", e.target.value)}
+          size="small"
+          label={t("empresa.grid.estado", "Estado")}
+        >
+          <MenuItem value="">
+            <em>{t("common.labels.all", "Todos")}</em>
+          </MenuItem>
+          <MenuItem value={1}>{t("common.labels.active", "Activo")}</MenuItem>
+          <MenuItem value={2}>{t("common.labels.inactive", "Inactivo")}</MenuItem>
+        </Select>
+      </FormControl>
+      <Button variant="contained" size="small" startIcon={<FilterAltIcon />} onClick={handleSearch}>
+        {t("common.actions.filters", "Filtrar")}
+      </Button>
+      <Button variant="outlined" size="small" startIcon={<ClearIcon />} onClick={handleClear}>
+        {t("common.actions.clear", "Limpiar")}
+      </Button>
+    </Box>
+  );
 
   return (
     <div style={{ height: 600, width: "100%" }}>
@@ -136,7 +229,9 @@ export default function GridEmpresa({ refreshKey = 0 }) {
         paginationModel={paginationModel}
         setPaginationModel={setPaginationModel}
         pageSizeOptions={[5, 10, 20, 50]}
-        quickFilter
+        leftActions={filterBar}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
       />
     </div>
   );
@@ -144,4 +239,6 @@ export default function GridEmpresa({ refreshKey = 0 }) {
 
 GridEmpresa.propTypes = {
   refreshKey: PropTypes.number,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
 };
