@@ -149,12 +149,14 @@ export default function FormEmpresa({
         reloadData();
       })
       .catch((error) => {
+        const detail =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          error.message;
         setMessage({
           open: true,
           severity: "error",
-          text: `${t("empresa.messages.saveError", "Error al guardar empresa:")} ${
-            error.response?.data?.message || error.message
-          }`,
+          text: `${t("empresa.messages.saveError", "Error al guardar empresa:")} ${detail}`,
         });
       })
       .finally(() => setSaving(false));
