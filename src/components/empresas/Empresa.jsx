@@ -1,4 +1,4 @@
-/*=============================================================================
+﻿/*=============================================================================
  Nombre del archivo : Empresa.jsx
  Descripcion        : Componente principal del módulo de empresas (HU-043.1).
 ===============================================================================
@@ -7,6 +7,7 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.1 Registrar empresa  |
+ | 2026-08-16 | 0.5.1   | Jeisson Sanchez      | HU-043.3 Detalle empresa    |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -17,6 +18,8 @@
  */
 
 import * as React from "react";
+import { Button } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import axios from "../axiosConfig";
 import { useTranslation } from "react-i18next";
 import MessageSnackBar from "../MessageSnackBar";
@@ -24,7 +27,8 @@ import GridActionBar from "../common/GridActionBar";
 import SectionHeader from "../common/SectionHeader";
 import FormEmpresa from "./FormEmpresa";
 import GridEmpresa from "./GridEmpresa";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
+import DetailEmpresa from "./DetailEmpresa";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 
 /**
  * @typedef {Object} SnackbarMessage
@@ -51,6 +55,7 @@ export default function Empresa() {
   const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
   const [openForm, setOpenForm] = React.useState(false);
   const [gridRefreshKey, setGridRefreshKey] = React.useState(0);
+  
   const [openFilters, setOpenFilters] = React.useState(false);
   const [filters, setFilters] = React.useState({
     tipoIdentificacionId: "",
@@ -60,6 +65,12 @@ export default function Empresa() {
     estadoId: "",
   });
   const [tempFilters, setTempFilters] = React.useState(filters);
+
+  const [selectedRow, setSelectedRow] = React.useState(null);
+  const [openDetail, setOpenDetail] = React.useState(false);
+  const [detail, setDetail] = React.useState(null);
+  const [detailLoading, setDetailLoading] = React.useState(false);
+  const [detailError, setDetailError] = React.useState("");
 
   /**
    * Carga las personas y los tipos de identificación usados por el formulario.
@@ -119,13 +130,49 @@ export default function Empresa() {
     setOpenFilters(false);
   };
 
+  /**
+   * Consulta el detalle de la empresa seleccionada en el modal.
+   */
+  const handleView = () => {
+    if (!selectedRow) return;
+    setOpenDetail(true);
+    setDetail(null);
+    setDetailError("");
+    setDetailLoading(true);
+
+    axios
+      .get(\/v1/empresas/\\)
+      .then((resp) => {
+        setDetail(resp?.data ?? {});
+      })
+      .catch((err) => {
+        console.error("Error al consultar detalle de empresa:", err);
+        setDetailError(err.response?.data?.message ?? t("empresa.detail.loadError", "No se pudo cargar el detalle."));
+      })
+      .finally(() => setDetailLoading(false));
+  };
+
   return (
     <div style={{ height: "100%", width: "100%" }}>
       <SectionHeader title={t("empresa.title", "Gestión de Empresas")} />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
-      <GridActionBar onAdd={handleAdd} onFilters={handleOpenFilters} />
+      <GridActionBar
+        onAdd={handleAdd}
+        onFilters={handleOpenFilters}
+        canUpdate={false}
+        canDelete={false}
+        extraActions={
+          <Button
+            onClick={handleView}
+            startIcon={<VisibilityIcon />}
+            disabled={!selectedRow}
+          >
+            {t("common.actions.viewDetail")}
+          </Button>
+        }
+      />
 
       <FormEmpresa
         personas={personas}
@@ -136,7 +183,24 @@ export default function Empresa() {
         setOpen={setOpenForm}
       />
 
-      <GridEmpresa refreshKey={gridRefreshKey} filters={filters} />
+      <GridEmpresa 
+        refreshKey={gridRefreshKey} 
+        filters={filters} 
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+      />
+
+      <DetailEmpresa
+        open={openDetail}
+        data={detail}
+        loading={detailLoading}
+        error={detailError}
+        onClose={() => {
+          setOpenDetail(false);
+          setDetail(null);
+          setDetailError("");
+        }}
+      />
 
       <Dialog open={openFilters} onClose={() => setOpenFilters(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{t("common.actions.filters", "Filtros")}</DialogTitle>
