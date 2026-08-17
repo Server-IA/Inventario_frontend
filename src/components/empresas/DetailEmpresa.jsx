@@ -338,6 +338,11 @@ export default function DetailEmpresa({ open, data, loading = false, error = "",
                       />
                       <DetailField
                         icon={PersonOutlineIcon}
+                        label={t("empresa.form.contacto", "Contacto")}
+                        value={data?.contacto}
+                      />
+                      <DetailField
+                        icon={PersonOutlineIcon}
                         label={t("empresa.detail.personaResponsable", "Persona Responsable")}
                         value={data?.personaResponsableNombre}
                         showDivider={false}
