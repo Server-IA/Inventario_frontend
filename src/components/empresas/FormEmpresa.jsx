@@ -37,7 +37,7 @@ import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 
 const LOGO_MAX_SIZE = 2 * 1024 * 1024;
-const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg"];
+const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
 
 /**
  * @typedef {Object} EmpresaRegistro
@@ -92,24 +92,18 @@ export default function FormEmpresa({
 
     if (file.size > LOGO_MAX_SIZE) {
       setLogoError(t("empresa.messages.logoSize", "El archivo supera el tamaño permitido de 2MB"));
+      setLogoFile(null);
     } else if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
-      setLogoError(t("empresa.messages.logoFormat", "Formato no soportado, usa PNG o JPG"));
+      setLogoError(t("empresa.messages.logoFormat", "Formato no soportado, usa PNG, JPG, SVG o WEBP"));
+      setLogoFile(null);
     } else {
       setLogoError("");
+      setLogoFile(file);
     }
-    setLogoFile(file);
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (logoError) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: t("empresa.messages.logoError", "Corrige los errores del logo antes de guardar."),
-      });
-      return;
-    }
 
     const formData = new FormData(event.currentTarget);
     const empresa = {
@@ -124,9 +118,18 @@ export default function FormEmpresa({
     };
 
     const payload = new FormData();
-    payload.append("empresa", JSON.stringify(empresa));
+    payload.append(
+      "empresa",
+      new Blob([JSON.stringify(empresa)], { type: "application/json" })
+    );
     if (logoFile) {
       payload.append("logo", logoFile);
+    } else if (logoError) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: t("empresa.messages.logoError", "El logo no se cargó. Corrige el archivo para adjuntarlo."),
+      });
     }
 
     setSaving(true);
@@ -278,12 +281,12 @@ export default function FormEmpresa({
             color={logoError ? "error" : "primary"}
             disabled={saving}
           >
-            {t("empresa.form.uploadLogo", "Subir Logo (PNG/JPG)")}
+            {t("empresa.form.uploadLogo", "Subir Logo (PNG/JPG/SVG/WEBP)")}
             <input
               type="file"
               name="logo"
               hidden
-              accept="image/png, image/jpeg"
+              accept="image/png, image/jpeg, image/svg+xml, image/webp"
               onChange={handleLogoChange}
             />
           </Button>
