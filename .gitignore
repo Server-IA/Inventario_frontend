@@ -54,6 +54,10 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# Javadoc generado
+src/main/resources/javadocs/
+target/
+
 ### VS Code ###
 .vscode/
 .env

@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+    <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -11,12 +11,12 @@
         <relativePath />
     </parent>
 
-    <groupId>com.coagronet</groupId>
-    <artifactId>coagronet</artifactId>
+    <groupId>com.inventario</groupId>
+    <artifactId>inventario</artifactId>
     <version>0.3.1</version>
     <packaging>jar</packaging>
-    <name>Coagronet</name>
-    <description>Servicio de gestión Coagronet</description>
+    <name>Inventario</name>
+    <description>Servicio de gestión de Inventario</description>
 
     <!-- ─────────────── Global properties ────────────── -->
     <properties>
@@ -187,7 +187,7 @@
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
                         <configuration>
-                            <mainClass>com.coagronet.CoagronetApplication</mainClass>
+                            <mainClass>com.inventario.InventarioApplication</mainClass>
                         </configuration>
                     </plugin>
 
@@ -264,7 +264,7 @@
             </dependencies>
 
             <build>
-                <finalName>coagronet</finalName>
+                <finalName>inventario</finalName>
                 <plugins>
                     <!-- War plugin opcional -->
                     <plugin>
@@ -279,7 +279,7 @@
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
                         <configuration>
-                            <mainClass>com.coagronet.CoagronetApplication</mainClass>
+                            <mainClass>com.inventario.InventarioApplication</mainClass>
                             <excludeDevtools>true</excludeDevtools>
                         </configuration>
                     </plugin>

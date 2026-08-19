@@ -38,7 +38,7 @@ EXPOSE 8080
 
 # Copiamos el archivo .jar compilado desde la etapa de '''build''' a la imagen final
 # El nombre del JAR se define en el pom.xml (<artifactId>-<version>.jar)
-COPY --from=build /app/target/coagronet-0.3.1.jar app.jar
+COPY --from=build /app/target/inventario-0.3.1.jar app.jar
 
 # Comando para ejecutar la aplicación cuando se inicie el contenedor
 ENTRYPOINT ["java", "-jar", "app.jar"]

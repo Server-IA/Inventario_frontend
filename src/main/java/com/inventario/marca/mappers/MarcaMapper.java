@@ -1,0 +1,24 @@
+package com.inventario.marca.mappers;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+import com.inventario.marca.Marca;
+import com.inventario.marca.dtos.MarcaDTO;
+
+@Mapper(componentModel = "spring")
+public interface MarcaMapper {
+
+	@Mapping(source = "estado.id", target = "estadoId")
+	@Mapping(source = "empresa.id", target = "empresaId")
+	MarcaDTO toDTO(Marca marca);
+
+	@Mapping(source = "estadoId", target = "estado.id")
+	@Mapping(source = "empresaId", target = "empresa.id")
+	Marca toEntity(MarcaDTO marcaDTO);
+
+	@Mapping(source = "estado.id", target = "estadoId")
+	@Mapping(source = "empresa.id", target = "empresaId", ignore = true)
+	MarcaDTO toListDto(Marca marca);
+
+}

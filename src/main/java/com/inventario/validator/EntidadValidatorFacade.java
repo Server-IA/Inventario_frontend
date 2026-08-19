@@ -1,0 +1,231 @@
+package com.inventario.validator;
+
+import java.time.LocalDate;
+
+import org.springframework.stereotype.Component;
+
+import com.inventario.almacen.Almacen;
+import com.inventario.articuloKardex.ArticuloKardex;
+import com.inventario.cierreinventario.CierreInventario;
+import com.inventario.cierreinventariodetalle.CierreInventarioDetalle;
+import com.inventario.criterioEvaluacion.CriterioEvaluacion;
+import com.inventario.empresa.Empresa;
+import com.inventario.empresarol.EmpresaRol;
+import com.inventario.espacio.Espacio;
+import com.inventario.estado.Estado;
+import com.inventario.evaluacion.Evaluacion;
+import com.inventario.evaluacionitem.EvaluacionItem;
+import com.inventario.movimiento.Movimiento;
+import com.inventario.ordenCompra.OrdenCompra;
+import com.inventario.pedido.Pedido;
+import com.inventario.pedidocotizacion.PedidoCotizacion;
+import com.inventario.presentacionProducto.PresentacionProducto;
+import com.inventario.produccion.Produccion;
+import com.inventario.productoCategoria.ProductoCategoria;
+import com.inventario.proveedor.Proveedor;
+import com.inventario.rol.Rol;
+import com.inventario.subseccion.Subseccion;
+import com.inventario.tipoMovimiento.TipoMovimiento;
+import com.inventario.tipoProduccion.TipoProduccion;
+import com.inventario.tipounidad.TipoUnidad;
+import com.inventario.validator.common.ValidatorRegistry;
+import com.inventario.validator.inventario.entidades.AlmacenValidator;
+import com.inventario.validator.inventario.entidades.ArticuloKardexValidator;
+import com.inventario.validator.inventario.entidades.CierreInventarioDetalleValidator;
+import com.inventario.validator.inventario.entidades.CierreInventarioValidator;
+import com.inventario.validator.inventario.entidades.CriterioEvaluacionValidator;
+import com.inventario.validator.inventario.entidades.EmpresaValidator;
+import com.inventario.validator.inventario.entidades.EspacioValidator;
+import com.inventario.validator.inventario.entidades.EvaluacionItemValidator;
+import com.inventario.validator.inventario.entidades.EvaluacionValidator;
+import com.inventario.validator.inventario.entidades.MovimientoValidator;
+import com.inventario.validator.inventario.entidades.OrdenCompraValidator;
+import com.inventario.validator.inventario.entidades.PedidoCotizacionValidator;
+import com.inventario.validator.inventario.entidades.PedidoValidator;
+import com.inventario.validator.inventario.entidades.ProduccionValidator;
+import com.inventario.validator.inventario.entidades.ProductoCategoriaValidator;
+import com.inventario.validator.inventario.entidades.ProductoPresentacionValidator;
+import com.inventario.validator.inventario.entidades.ProveedorValidator;
+import com.inventario.validator.parametrizacion.entidades.EstadoValidator;
+import com.inventario.validator.parametrizacion.entidades.SubseccionValidator;
+import com.inventario.validator.parametrizacion.entidades.TipoMovimientoValidator;
+import com.inventario.validator.parametrizacion.entidades.TipoProduccionValidator;
+import com.inventario.validator.parametrizacion.entidades.TipoUnidadValidator;
+import com.inventario.validator.seguridad.EmpresaRolValidator;
+import com.inventario.validator.seguridad.RolValidator;
+
+import lombok.RequiredArgsConstructor;
+
+@Component
+@RequiredArgsConstructor
+public class EntidadValidatorFacade {
+
+	private final ValidatorRegistry validatorRegistry;
+
+	private final TipoMovimientoValidator tipoMovimientoValidator;
+
+	private final PedidoValidator pedidoValidator;
+
+	private final ProveedorValidator proveedorValidator;
+
+	private final TipoProduccionValidator tipoProduccionValidator;
+
+	private final SubseccionValidator subseccionValidator;
+
+	private final ProductoPresentacionValidator productoPresentacionValidator;
+
+	private final MovimientoValidator movimientoValidator;
+
+	private final PedidoCotizacionValidator pedidoCotizacionValidator;
+
+	private final EvaluacionValidator evaluacionValidator;
+
+	private final CriterioEvaluacionValidator criterioEvaluacionValidator;
+
+	private final EvaluacionItemValidator evaluacionItemValidator;
+
+	private final ProductoCategoriaValidator productoCategoriaValidator;
+
+	private final TipoUnidadValidator tipoUnidadValidator;
+
+	public Empresa validarEmpresa(Long empresaId) {
+		return validatorRegistry.getValidator(EmpresaValidator.class).validarEmpresa(empresaId);
+	}
+
+	public Empresa validarClienteProveedor(Long clienteProveedorId) {
+		return validatorRegistry.getValidator(EmpresaValidator.class).validarClienteProveedor(clienteProveedorId);
+
+	}
+
+	public Estado validarEstadoGeneral(Long estadoId) {
+		return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoGeneral(estadoId);
+	}
+
+	public Estado validarEstadoParaOrdenCompra(Long estadoId) {
+		return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaOrdenCompra(estadoId);
+	}
+
+	public Estado validarEstadoParaPedido(Long estadoId) {
+		return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaPedido(estadoId);
+
+	}
+
+	public Estado validarEstadoParaFactura(Long estadoId) {
+		return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaFactura(estadoId);
+
+	}
+
+	public Estado validarEstadoParaCierre(Long estadoId) {
+		return validatorRegistry.getValidator(EstadoValidator.class).validarEstadoParaCierre(estadoId);
+	}
+
+	public Almacen validarAlmacen(Long almacenId, Long empresaId) {
+		return validatorRegistry.getValidator(AlmacenValidator.class).validarAlmacen(almacenId, empresaId);
+	}
+
+	public Produccion validarProduccion(Long produccionId, Long empresaId) {
+		return validatorRegistry.getValidator(ProduccionValidator.class).validarProduccion(produccionId, empresaId);
+	}
+
+	public void validarFechasProduccion(Produccion produccion) {
+		validatorRegistry.getValidator(ProduccionValidator.class).validarFechasDeProduccion(produccion);
+	}
+
+	public TipoMovimiento validarTipoMovimiento(Long tipoMovimientoId, Long empresaId) {
+		return tipoMovimientoValidator.validarTipoMovimiento(tipoMovimientoId, empresaId);
+	}
+
+	public OrdenCompra validarOrdenCompra(Long ordenCompraId, Long empresaId) {
+		return validatorRegistry.getValidator(OrdenCompraValidator.class).validarOrdenCompra(ordenCompraId, empresaId);
+	}
+
+	public Pedido validarPedido(Long pedidoId, Long empresaId) {
+		return pedidoValidator.validarPedido(pedidoId, empresaId);
+	}
+
+	public Proveedor validarProveedor(Long proveedorId, Long empresaId) {
+		return proveedorValidator.validarProveedor(proveedorId, empresaId);
+	}
+
+	public TipoProduccion validarTipoProduccion(Long tipoProduccion, Long empresaId) {
+		return tipoProduccionValidator.validarTipoProduccion(tipoProduccion, empresaId);
+	}
+
+	public Espacio validarEspacio(Long espacioId, Long empresaId) {
+		return validatorRegistry.getValidator(EspacioValidator.class).validarEspacio(espacioId, empresaId);
+	}
+
+	public Subseccion validarSubseccion(Long subseccionId, Long empresaId) {
+		return subseccionValidator.validarSubseccion(subseccionId, empresaId);
+	}
+
+	public PresentacionProducto validarProductoPresentacion(Long productoPresentacionId, Long empresaId) {
+		return productoPresentacionValidator.validarProductoPresentacion(productoPresentacionId, empresaId);
+	}
+
+	public ArticuloKardex validarArticuloKardex(Long articuloKardexId, Long empresaId) {
+		return validatorRegistry.getValidator(ArticuloKardexValidator.class)
+			.validarArticuloKardex(articuloKardexId, empresaId);
+	}
+
+	public PedidoCotizacion validarPedidoCotizacion(Long pedidoCotizacionId, Long empresaId) {
+		return pedidoCotizacionValidator.validarPedidoCotizacion(pedidoCotizacionId, empresaId);
+	}
+
+	public Movimiento validarMovimiento(Long movimientoId) {
+		return movimientoValidator.validarMovimiento(movimientoId);
+	}
+
+	public Evaluacion validarEvaluacion(Long evaluacionId, Long empresaId) {
+		return evaluacionValidator.validarEvaluacionPorEmpresa(evaluacionId, empresaId);
+	}
+
+	public EvaluacionItem validarEvaluacionItem(Long evaItemId, Long empresaId) {
+		return evaluacionItemValidator.validarEvaluacionItemPorEmpresa(evaItemId, empresaId);
+	}
+
+	public CriterioEvaluacion validarCriterioEvaluacion(Long criterioEvId, Long empresaId) {
+		return criterioEvaluacionValidator.validarCriterioEvaluacionPorEmpresa(criterioEvId, empresaId);
+	}
+
+	public ProductoCategoria validarProductoCategoria(Long productoCategoriaId, Long empresaId) {
+		return productoCategoriaValidator.validarProductoCategoriaPorEmpresa(productoCategoriaId, empresaId);
+	}
+
+	public TipoUnidad validarTipoUnidad(Long tipoUnidad) {
+		return tipoUnidadValidator.validarTipoUnidad(tipoUnidad);
+	}
+
+	public void validarDuplicadoCierreInventario(Long empresaId, Long almacenId, LocalDate fechaInicio,
+			LocalDate fechaCorte) {
+		validatorRegistry.getValidator(CierreInventarioValidator.class)
+			.validarDuplicado(empresaId, almacenId, fechaInicio, fechaCorte);
+	}
+
+	public CierreInventario validarCierreInventario(Long cierreId, Long empresaId) {
+		return validatorRegistry.getValidator(CierreInventarioValidator.class)
+			.validarCierreInventario(cierreId, empresaId);
+	}
+
+	public CierreInventarioDetalle validarDetalleCierreInventario(Long detalleId, Long empresaId) {
+		return validatorRegistry.getValidator(CierreInventarioDetalleValidator.class)
+			.validarCierreDetalle(detalleId, empresaId);
+	}
+
+	public EmpresaRol validarEmpresaRol(Long empresaRolId, Long empresaId) {
+		return validatorRegistry.getValidator(EmpresaRolValidator.class).validarEmpresaRol(empresaRolId, empresaId);
+	}
+
+	public Rol validarRol(Long rolId) {
+		return validatorRegistry.getValidator(RolValidator.class).validarRol(rolId);
+	}
+
+	public EmpresaRol validarEmpresaRolAdmin(Long empresaRolId) {
+		return validatorRegistry.getValidator(EmpresaRolValidator.class).validarEmpresaRolAdmin(empresaRolId);
+	}
+
+	public EmpresaRol validarRolDeEmpresaActivo(Long empresaId, Long rolId) {
+		return validatorRegistry.getValidator(EmpresaRolValidator.class).validarRolDeEmpresaActivo(empresaId, rolId);
+	}
+
+}

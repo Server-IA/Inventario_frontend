@@ -1,11 +1,11 @@
-# 📦 Coagronet Backend
+# 📦 Inventario Backend
 
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.12-brightgreen)
 ![Java](https://img.shields.io/badge/Java-25-orange)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.14-blue)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
-Coagronet is a robust inventory and resource management system designed for agricultural operations. This backend provides a scalable API to handle complex product flows, kardex movements, and a granular role-based access control (RBAC) system.
+Inventario is a robust inventory and resource management system designed for agricultural operations. This backend provides a scalable API to handle complex product flows, kardex movements, and a granular role-based access control (RBAC) system.
 
 ---
 
@@ -51,7 +51,7 @@ Coagronet is a robust inventory and resource management system designed for agri
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd coagronet-backend
+   cd inventario-backend
    ```
 
 2. **Configure Environment**:
@@ -80,4 +80,4 @@ Once the server is running, you can access the interactive API documentation via
 
 ---
 
-© 2026 Coagronet Project Team.
+© 2026 Inventario Project Team.

@@ -10,10 +10,10 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com</groupId>
-	<artifactId>coagronet</artifactId>
+	<artifactId>inventario</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Coagronet</name>
-	<description>Servicio de gestion Coagronet</description>
+	<name>Inventario</name>
+	<description>Servicio de gestion de Inventario</description>
 	<url />
 	<licenses>
 		<license />

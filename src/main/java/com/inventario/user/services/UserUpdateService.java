@@ -1,0 +1,360 @@
+/*=============================================================================
+ Nombre del archivo : UserUpdateService.java
+ Descripcion        : Servicio para la actualización de detalles de usuario, 
+                      información personal y asignación de roles.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |    Fecha   | Versión |       Autor          | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-24 | 0.4.0   | JUAN JOSE CASTRO     | Refactorización de las      |
+ |            |         |                      | validaciones para acumular  |
+ |            |         |                      | errores y lanzar un único   |
+ |            |         |                      | BadRequestException.        |
+ |            |         |                      | Adición de inactivación de  |
+ |            |         |                      | roles no incluidos en el    |
+ |            |         |                      | payload y soporte para la   |
+ |            |         |                      | creación de nueva Persona.  |
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-07 | 0.4.0   | JUAN JOSE CASTRO     | Implementación del método   |
+ |            |         |                      | deactivateUser para el      |
+ |            |         |                      | borrado lógico de usuarios, |
+ |            |         |                      | incorporando validaciones   |
+ |            |         |                      | de acceso por tenant y      |
+ |            |         |                      | actualizando el estado de   |
+ |            |         |                      | la entidad a desactivado.   |
+ |            |         |                      | Adición de método           |
+ |            |         |                      | activateUser para activar   |
+ |            |         |                      | usuarios con control tenant.|
++------------+---------+----------------------+-----------------------------+
+ | 2026-07-09 | 0.4.0   | JUAN JOSE CASTRO     | Restricción de la           |
+ |            |         |                      | inactivación de usuarios    |
+ |            |         |                      | exclusivamente al           |
+ |            |         |                      | administrador del sistema.  |
+ |            |         |                      | Adición de validación de    |
+ |            |         |                      | estado previo requerido     |
+ |            |         |                      | (ACTIVADO CON EMPRESA) e    |
+ |            |         |                      | implementación de           |
+ |            |         |                      | inactivación en cascada     |
+ |            |         |                      | para todos los roles        |
+ |            |         |                      | asociados al usuario.       |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-24 | 0.4.0   | JUAN JOSE CASTRO     | Modificación de la lógica   |
+ |            |         |                      | de inactivación para        |
+ |            |         |                      | soportar acceso por tenant. |
+ |            |         |                      | Validación para prevenir la |
+ |            |         |                      | inactivación en estado      |
+ |            |         |                      | PENDIENTE_VERIFICACION.     |
+ |            |         |                      | Implementación de alcance   |
+ |            |         |                      | diferenciado: el admin de   |
+ |            |         |                      | sistema inactiva al usuario |
+ |            |         |                      | globalmente, mientras que   |
+ |            |         |                      | el admin de empresa solo    |
+ |            |         |                      | inactiva los roles dentro   |
+ |            |         |                      | de su respectivo tenant.    |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
+package com.inventario.user.services;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.inventario.empresa.Empresa;
+import com.inventario.empresarol.repositories.EmpresaRolRepository;
+import com.inventario.estado.Estado;
+import com.inventario.exceptionHandler.custom.BadRequestException;
+import com.inventario.exceptionHandler.custom.RecursoNoEncontradoException;
+import com.inventario.infrastructure.configuration.EmpresaTenantIdentifierResolver;
+import com.inventario.persona.Persona;
+import com.inventario.persona.repositories.PersonaRepository;
+import com.inventario.rol.Rol;
+import com.inventario.tipoIdentificacion.TipoIdentificacion;
+import com.inventario.user.User;
+import com.inventario.user.dtos.AsignacionUpdateRequest;
+import com.inventario.user.dtos.UsuarioUpdateRequest;
+import com.inventario.user.repositories.UserRepository;
+import com.inventario.usuariorol.UsuarioRol;
+import com.inventario.usuarioEstado.UsuarioEstado;
+
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class UserUpdateService {
+
+    private static final Long ESTADO_INACTIVO_ID = 2L;
+
+    private final UserRepository userRepository;
+    private final PersonaRepository personaRepository;
+    private final EmpresaRolRepository empresaRolRepository;
+    private final EmpresaTenantIdentifierResolver tenantResolver;
+    private final EntityManager entityManager;
+
+    @Transactional
+    public void updateUserDetails(Long requestedId, UsuarioUpdateRequest request) {
+        Map<String, String> errors = new HashMap<>();
+        User user = userRepository.findById(requestedId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", requestedId));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para modificar este usuario.");
+        }
+
+        // --- 1. FASE DE VALIDACIÓN ---
+
+        // Validar Username
+        if (!user.getUsername().equals(request.username()) && userRepository.existsByUsername(request.username())) {
+            errors.put("username", "El username ya se encuentra registrado.");
+        }
+
+        // Validar Identificación
+        Persona persona = user.getPersona();
+        boolean isNewPersona = (persona == null);
+
+        if (isNewPersona) {
+            if (personaRepository.existsByIdentificacion(request.identificacion())) {
+                errors.put("identificacion", "La identificación ya se encuentra registrada.");
+            }
+            if (request.tipoIdentificacionId() == null) {
+                errors.put("tipoIdentificacionId", "El tipo de identificación es requerido.");
+            }
+        } else {
+            if (!persona.getIdentificacion().equals(request.identificacion())
+                    && personaRepository.existsByIdentificacion(request.identificacion())) {
+                errors.put("identificacion", "La identificación ya se encuentra registrada.");
+            }
+        }
+
+        // Validar Asignaciones
+        if (request.asignaciones() != null) {
+            for (int i = 0; i < request.asignaciones().size(); i++) {
+                AsignacionUpdateRequest asigReq = request.asignaciones().get(i);
+                String prefix = "asignaciones[" + i + "].";
+
+                // 1. Validar permisos de rol de sistema
+                if (asigReq.rolId().equals(1L) && !isSystemAdmin) {
+                    errors.put(prefix + "rolId", "No tiene permisos para asignar el rol de Administrador del Sistema.");
+                }
+
+                if (asigReq.usuarioRolId() != null) { // Es una actualización
+                    UsuarioRol existingUr = user.getRolesAsignados().stream()
+                            .filter(ur -> ur.getId().equals(asigReq.usuarioRolId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (existingUr == null) {
+                        errors.put(prefix + "usuarioRolId", "La asignación especificada no existe en este usuario.");
+                    } else {
+                        if (!isSystemAdmin && existingUr.getEmpresa() != null
+                                && !existingUr.getEmpresa().getId().equals(currentEmpresaId)) {
+                            errors.put(prefix + "usuarioRolId", "No tiene permisos para modificar esta asignación.");
+                        } else {
+                            // Validar que el rol esté activo en la empresa
+                            Long empId = existingUr.getTenantEmpresaId();
+                            boolean rolActivo = empresaRolRepository
+                                    .findRolByEmpresaIdAndRolIdAndEstadoId(empId, asigReq.rolId(), 1L).isPresent();
+                            if (!rolActivo) {
+                                errors.put(prefix + "rolId", "Rol no activo en la empresa asociada.");
+                            }
+                        }
+                    }
+                } else { // Es una creación
+                    Long empId = isSystemAdmin ? asigReq.empresaId() : currentEmpresaId;
+                    if (empId == null) {
+                        errors.put(prefix + "empresaId", "Debe especificar la empresa para nuevas asignaciones.");
+                    } else {
+                        // Validar que el rol esté activo en la empresa
+                        boolean rolActivo = empresaRolRepository
+                                .findRolByEmpresaIdAndRolIdAndEstadoId(empId, asigReq.rolId(), 1L).isPresent();
+                        if (!rolActivo) {
+                            errors.put(prefix + "rolId", "Rol no activo en la empresa asociada.");
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new BadRequestException("La solicitud contiene datos inválidos o acciones no permitidas.", errors);
+        }
+
+        // --- 2. FASE DE MUTACIÓN Y PERSISTENCIA ---
+
+        if (isNewPersona) {
+            persona = Persona.builder()
+                    .tipoIdentificacion(
+                            entityManager.getReference(TipoIdentificacion.class, request.tipoIdentificacionId()))
+                    .identificacion(request.identificacion())
+                    .nombre(request.nombre())
+                    .apellido(request.apellido())
+                    .emailPersonal(request.emailPersonal())
+                    .genero(request.genero())
+                    .fechaNacimiento(request.fechaNacimiento())
+                    .direccion(request.direccion())
+                    .celular(request.celular())
+                    .estrato(request.estrato())
+                    .estado(entityManager.getReference(Estado.class, 1L))
+                    .build();
+        } else {
+            persona.setIdentificacion(request.identificacion());
+            if (request.tipoIdentificacionId() != null) {
+                persona.setTipoIdentificacion(
+                        entityManager.getReference(TipoIdentificacion.class, request.tipoIdentificacionId()));
+            }
+            persona.setNombre(request.nombre());
+            persona.setApellido(request.apellido());
+            persona.setEmailPersonal(request.emailPersonal());
+            persona.setGenero(request.genero());
+            persona.setFechaNacimiento(request.fechaNacimiento());
+            persona.setDireccion(request.direccion());
+            persona.setCelular(request.celular());
+            persona.setEstrato(request.estrato());
+        }
+
+        personaRepository.save(persona);
+        user.setPersona(persona);
+
+        user.setUsername(request.username());
+        user.setPreferredRol(
+                request.rolPreferidoId() != null ? entityManager.getReference(Rol.class, request.rolPreferidoId())
+                        : null);
+        user.setPreferredEmpresa(request.empresaPreferidaId() != null
+                ? entityManager.getReference(Empresa.class, request.empresaPreferidaId())
+                : null);
+
+        // Procesar asignaciones
+        if (request.asignaciones() != null) {
+            for (AsignacionUpdateRequest asigReq : request.asignaciones()) {
+                if (asigReq.usuarioRolId() != null) {
+                    // Update
+                    UsuarioRol existingUr = user.getRolesAsignados().stream()
+                            .filter(ur -> ur.getId().equals(asigReq.usuarioRolId()))
+                            .findFirst().get();
+
+                    existingUr.setRol(entityManager.getReference(Rol.class, asigReq.rolId()));
+                    existingUr.setEstado(entityManager.getReference(Estado.class, asigReq.estadoId()));
+                    existingUr.setIniciaContratoEn(asigReq.fechaInicioContrato());
+                    existingUr.setFinalizaContratoEn(asigReq.fechaFinContrato());
+                } else {
+                    // Create
+                    Long empId = isSystemAdmin ? asigReq.empresaId() : currentEmpresaId;
+
+                    UsuarioRol newUr = UsuarioRol.builder()
+                            .empresa(entityManager.getReference(Empresa.class, empId))
+                            .tenantEmpresaId(empId)
+                            .rol(entityManager.getReference(Rol.class, asigReq.rolId()))
+                            .estado(entityManager.getReference(Estado.class, asigReq.estadoId()))
+                            .iniciaContratoEn(asigReq.fechaInicioContrato())
+                            .finalizaContratoEn(asigReq.fechaFinContrato())
+                            .build();
+
+                    user.addUsuarioRol(newUr);
+                }
+            }
+        }
+
+        // Inactivar asignaciones no incluidas en el payload
+        Set<Long> asignacionesRecibidas = request.asignaciones() != null
+                ? request.asignaciones().stream()
+                        .filter(a -> a.usuarioRolId() != null)
+                        .map(AsignacionUpdateRequest::usuarioRolId)
+                        .collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        for (UsuarioRol ur : user.getRolesAsignados()) {
+            if (!asignacionesRecibidas.contains(ur.getId())) {
+                if (isSystemAdmin || (ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId))) {
+                    ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+                }
+            }
+        }
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para inactivar este usuario.");
+        }
+
+        if (user.getUsuarioEstado() != null
+                && user.getUsuarioEstado().getId().equals(UsuarioEstado.ID_PENDIENTE_VERIFICACION)) {
+            throw new BadRequestException(
+                    "No se puede inactivar un usuario que no ha completado su proceso de activacion.");
+        }
+
+        if (isSystemAdmin) {
+            user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, UsuarioEstado.ID_DESACTIVADO));
+            for (UsuarioRol ur : user.getRolesAsignados()) {
+                ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+            }
+        } else {
+            for (UsuarioRol ur : user.getRolesAsignados()) {
+                if (ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId)) {
+                    ur.setEstado(entityManager.getReference(Estado.class, ESTADO_INACTIVO_ID));
+                }
+            }
+        }
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", id));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSystemAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR_SISTEMA"));
+
+        Long currentEmpresaId = isSystemAdmin ? null : tenantResolver.resolveCurrentTenantIdentifier();
+
+        boolean hasAccess = isSystemAdmin || user.getRolesAsignados().stream()
+                .anyMatch(ur -> ur.getEmpresa() != null && ur.getEmpresa().getId().equals(currentEmpresaId));
+
+        if (!hasAccess) {
+            throw new AccessDeniedException("No tiene permisos para activar este usuario.");
+        }
+
+        Long nuevoEstadoId = user.getRolesAsignados().isEmpty()
+                ? UsuarioEstado.ID_ACTIVADO_SIN_EMPRESA
+                : UsuarioEstado.ID_ACTIVADO_CON_EMPRESA;
+
+        user.setUsuarioEstado(entityManager.getReference(UsuarioEstado.class, nuevoEstadoId));
+        userRepository.save(user);
+    }
+}
