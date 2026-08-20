@@ -23,7 +23,9 @@
     "contacto": "Contact",
     "descripcion": "Description",
     "personaId": "Responsible Person",
-    "uploadLogo": "Upload Logo (PNG/JPG)",
+    "personaSearch": "Search by name, last name or ID",
+    "logoPreviewAlt": "Logo preview",
+    "uploadLogo": "Upload Logo (PNG/JPG/SVG/WEBP)",
     "file": "File:"
   },
   "grid": {

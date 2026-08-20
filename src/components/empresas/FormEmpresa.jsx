@@ -35,6 +35,8 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
+import Box from "@mui/material/Box";
+import Autocomplete from "@mui/material/Autocomplete";
 
 const LOGO_MAX_SIZE = 2 * 1024 * 1024;
 const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
@@ -72,20 +74,26 @@ export default function FormEmpresa({
 }) {
   const { t } = useTranslation();
   const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState("");
   const [logoError, setLogoError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [persona, setPersona] = useState(null);
 
   const handleClose = () => {
     if (saving) return;
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
     setOpen(false);
     setLogoFile(null);
+    setLogoPreview("");
     setLogoError("");
+    setPersona(null);
   };
 
   const handleLogoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) {
       setLogoFile(null);
+      setLogoPreview("");
       setLogoError("");
       return;
     }
@@ -93,12 +101,15 @@ export default function FormEmpresa({
     if (file.size > LOGO_MAX_SIZE) {
       setLogoError(t("empresa.messages.logoSize", "El archivo supera el tamaño permitido de 2MB"));
       setLogoFile(null);
+      setLogoPreview("");
     } else if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
       setLogoError(t("empresa.messages.logoFormat", "Formato no soportado, usa PNG, JPG, SVG o WEBP"));
       setLogoFile(null);
+      setLogoPreview("");
     } else {
       setLogoError("");
       setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -114,7 +125,7 @@ export default function FormEmpresa({
       celular: formData.get("celular") || "",
       contacto: formData.get("contacto") || "",
       descripcion: formData.get("descripcion") || "",
-      personaId: Number(formData.get("personaId")),
+      personaId: Number(persona?.id),
     };
 
     const payload = new FormData();
@@ -138,6 +149,7 @@ export default function FormEmpresa({
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then(() => {
+        if (logoPreview) URL.revokeObjectURL(logoPreview);
         setMessage({
           open: true,
           severity: "success",
@@ -145,7 +157,9 @@ export default function FormEmpresa({
         });
         setOpen(false);
         setLogoFile(null);
+        setLogoPreview("");
         setLogoError("");
+        setPersona(null);
         reloadData();
       })
       .catch((error) => {
@@ -184,6 +198,7 @@ export default function FormEmpresa({
             labelId="tipoIdentificacionId-label"
             id="tipoIdentificacionId"
             name="tipoIdentificacionId"
+            label={t("empresa.form.tipoIdentificacion", "Tipo de Identificación")}
             required
             defaultValue=""
             fullWidth
@@ -202,7 +217,6 @@ export default function FormEmpresa({
             id="identificacion"
             name="identificacion"
             label={t("empresa.form.identificacion", "Número de Identificación")}
-            variant="standard"
           />
         </FormControl>
 
@@ -212,7 +226,6 @@ export default function FormEmpresa({
             id="nombre"
             name="nombre"
             label={t("empresa.form.nombre", "Nombre")}
-            variant="standard"
           />
         </FormControl>
 
@@ -223,7 +236,6 @@ export default function FormEmpresa({
             name="correo"
             label={t("empresa.form.correo", "Correo")}
             type="email"
-            variant="standard"
           />
         </FormControl>
 
@@ -232,7 +244,6 @@ export default function FormEmpresa({
             id="celular"
             name="celular"
             label={t("empresa.form.celular", "Celular")}
-            variant="standard"
           />
         </FormControl>
 
@@ -241,7 +252,6 @@ export default function FormEmpresa({
             id="contacto"
             name="contacto"
             label={t("empresa.form.contacto", "Contacto")}
-            variant="standard"
           />
         </FormControl>
 
@@ -250,30 +260,34 @@ export default function FormEmpresa({
             id="descripcion"
             name="descripcion"
             label={t("empresa.form.descripcion", "Descripción")}
-            variant="standard"
             multiline
             minRows={2}
           />
         </FormControl>
 
         <FormControl fullWidth margin="normal" required>
-          <InputLabel id="personaId-label">
-            {t("empresa.form.personaId", "Persona Responsable")}
-          </InputLabel>
-          <Select
-            labelId="personaId-label"
+          <Autocomplete
             id="personaId"
-            name="personaId"
-            required
-            defaultValue=""
-            fullWidth
-          >
-            {personas.map((persona) => (
-              <MenuItem key={persona.id} value={persona.id}>
-                {persona.nombre} {persona.apellido}
-              </MenuItem>
-            ))}
-          </Select>
+            options={personas}
+            getOptionLabel={(p) => `${p.nombre} ${p.apellido}`}
+            value={persona}
+            onChange={(event, newValue) => setPersona(newValue)}
+            filterOptions={(options, state) => {
+              const input = (state.inputValue || "").trim().toLowerCase();
+              if (!input) return options;
+              return options.filter((p) =>
+                `${p.nombre} ${p.apellido} ${p.identificacion || ""}`.toLowerCase().includes(input)
+              );
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                required
+                label={t("empresa.form.personaId", "Persona Responsable")}
+                placeholder={t("empresa.form.personaSearch", "Buscar por nombre, apellido o identificación")}
+              />
+            )}
+          />
         </FormControl>
 
         <FormControl fullWidth margin="normal">
@@ -293,9 +307,25 @@ export default function FormEmpresa({
             />
           </Button>
           {logoFile && !logoError && (
-            <span style={{ fontSize: "0.8rem", marginTop: "5px" }}>
-              {t("empresa.form.file", "Archivo:")} {logoFile.name}
-            </span>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, marginTop: "5px" }}>
+              {logoPreview && (
+                <Box
+                  component="img"
+                  src={logoPreview}
+                  alt={t("empresa.form.logoPreviewAlt", "Vista previa del logo")}
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    objectFit: "contain",
+                    borderRadius: 1,
+                    border: "1px solid rgba(23,63,57,0.25)",
+                  }}
+                />
+              )}
+              <span style={{ fontSize: "0.8rem" }}>
+                {t("empresa.form.file", "Archivo:")} {logoFile.name}
+              </span>
+            </Box>
           )}
           {logoError && (
             <span style={{ color: "red", fontSize: "0.8rem", marginTop: "5px" }}>

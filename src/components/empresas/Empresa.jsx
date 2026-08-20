@@ -48,13 +48,14 @@ export default function Empresa() {
   const [personas, setPersonas] = React.useState([]);
   const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
   const [openForm, setOpenForm] = React.useState(false);
+  const [gridRefreshKey, setGridRefreshKey] = React.useState(0);
 
   /**
    * Carga las personas y los tipos de identificación usados por el formulario.
    */
   const reloadData = React.useCallback(() => {
     axios
-      .get("/v1/persona")
+      .get("/v1/persona", { params: { page: 0, size: 500 } })
       .then((res) => setPersonas(res.data.content || []))
       .catch((err) => console.error("Error al cargar personas:", err));
 
@@ -63,6 +64,15 @@ export default function Empresa() {
       .then((res) => setTiposIdentificacion(res.data || []))
       .catch((err) => console.error("Error al cargar tipos de identificación:", err));
   }, []);
+
+  /**
+   * Recarga datos de soporte y dispara el refresco del listado de empresas.
+   * Se usa como callback de éxito del formulario tras registrar una empresa.
+   */
+  const handleEmpresaCreated = React.useCallback(() => {
+    reloadData();
+    setGridRefreshKey((key) => key + 1);
+  }, [reloadData]);
 
   React.useEffect(() => {
     reloadData();
@@ -87,12 +97,12 @@ export default function Empresa() {
         personas={personas}
         tiposIdentificacion={tiposIdentificacion}
         setMessage={setMessage}
-        reloadData={reloadData}
+        reloadData={handleEmpresaCreated}
         open={openForm}
         setOpen={setOpenForm}
       />
 
-      <GridEmpresa />
+      <GridEmpresa refreshKey={gridRefreshKey} />
     </div>
   );
 }

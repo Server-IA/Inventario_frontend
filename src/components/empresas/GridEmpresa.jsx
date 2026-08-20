@@ -18,6 +18,7 @@
 
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
 import axios from "../axiosConfig";
 import AppDataGrid from "../common/AppDataGrid";
 
@@ -27,9 +28,12 @@ import AppDataGrid from "../common/AppDataGrid";
  * Consume `GET /api/v1/empresas`, cuyos ítems exponen `nombre`,
  * `identificacion`, `correo`, `estadoNombre` y `tipoIdentificacionNombre`.
  *
+ * @param {object} props Propiedades del componente.
+ * @param {number} [props.refreshKey] Contador que al incrementarse fuerza la
+ * recarga del listado (se usa tras registrar una empresa).
  * @returns {JSX.Element}
  */
-export default function GridEmpresa() {
+export default function GridEmpresa({ refreshKey = 0 }) {
   const { t } = useTranslation();
   const [data, setData] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -87,7 +91,7 @@ export default function GridEmpresa() {
 
   React.useEffect(() => {
     fetchData(paginationModel.page, paginationModel.pageSize);
-  }, [paginationModel]);
+  }, [paginationModel, refreshKey]);
 
   return (
     <div style={{ height: 600, width: "100%" }}>
@@ -103,3 +107,7 @@ export default function GridEmpresa() {
     </div>
   );
 }
+
+GridEmpresa.propTypes = {
+  refreshKey: PropTypes.number,
+};
