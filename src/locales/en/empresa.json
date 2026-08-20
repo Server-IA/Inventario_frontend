@@ -14,6 +14,7 @@
   },
   "form": {
     "registerTitle": "Register Company",
+    "editTitle": "Update Company",
     "subtitle": "Complete the form.",
     "tipoIdentificacion": "Identification Type",
     "identificacion": "Identification Number",
@@ -25,8 +26,12 @@
     "personaId": "Responsible Person",
     "personaSearch": "Search by name, last name or ID",
     "logoPreviewAlt": "Logo preview",
+    "currentLogo": "Current logo",
     "uploadLogo": "Upload Logo (PNG/JPG/SVG/WEBP)",
-    "file": "File:"
+    "file": "File:",
+    "validation": {
+      "personaRequired": "You must select a Responsible Person"
+    }
   },
   "grid": {
     "id": "ID",
@@ -58,6 +63,7 @@
     "selectToDelete": "Select a row to delete.",
     "logoError": "Fix the logo errors before saving.",
     "logoSize": "The file exceeds the allowed size of 2MB",
-    "logoFormat": "Unsupported format, use PNG or JPG"
+    "logoFormat": "Unsupported format, use PNG or JPG",
+    "loadError": "Error loading company data."
   }
 }

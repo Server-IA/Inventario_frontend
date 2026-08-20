@@ -71,6 +71,8 @@ export default function FormEmpresa({
   reloadData,
   open,
   setOpen,
+  formMode = "create",
+  selectedRow = null,
 }) {
   const { t } = useTranslation();
   const [logoFile, setLogoFile] = useState(null);
@@ -78,6 +80,76 @@ export default function FormEmpresa({
   const [logoError, setLogoError] = useState("");
   const [saving, setSaving] = useState(false);
   const [persona, setPersona] = useState(null);
+  const [loadingData, setLoadingData] = useState(false);
+  
+  // Estados para controlar los valores de los campos (necesario para edición)
+  const [formData, setFormData] = useState({
+    tipoIdentificacionId: "",
+    identificacion: "",
+    nombre: "",
+    correo: "",
+    celular: "",
+    contacto: "",
+    descripcion: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  React.useEffect(() => {
+    if (open) {
+      if (formMode === "edit" && selectedRow) {
+        setLoadingData(true);
+        axios
+          .get(`/v1/empresas/${selectedRow.id}`)
+          .then((res) => {
+            const data = res.data;
+            setFormData({
+              tipoIdentificacionId: data.tipoIdentificacionId || "",
+              identificacion: data.identificacion || "",
+              nombre: data.nombre || "",
+              correo: data.correo || "",
+              celular: data.celular || "",
+              contacto: data.contacto || "",
+              descripcion: data.descripcion || "",
+            });
+            // Buscar la persona en la lista para setear el Autocomplete
+            if (data.personaResponsableId && personas.length > 0) {
+              const found = personas.find((p) => p.id === data.personaResponsableId);
+              setPersona(found || null);
+            }
+            if (data.logo) {
+              setLogoPreview(data.logo);
+            }
+          })
+          .catch((err) => {
+            console.error("Error al cargar detalle para edición:", err);
+            setMessage({
+              open: true,
+              severity: "error",
+              text: t("empresa.messages.loadError", "Error al cargar los datos de la empresa."),
+            });
+          })
+          .finally(() => setLoadingData(false));
+      } else {
+        setFormData({
+          tipoIdentificacionId: "",
+          identificacion: "",
+          nombre: "",
+          correo: "",
+          celular: "",
+          contacto: "",
+          descripcion: "",
+        });
+        setPersona(null);
+        setLogoPreview("");
+        setLogoFile(null);
+        setLogoError("");
+      }
+    }
+  }, [open, formMode, selectedRow, personas, t, setMessage]);
 
   const handleClose = () => {
     if (saving) return;
@@ -113,67 +185,118 @@ export default function FormEmpresa({
     }
   };
 
-  const handleSubmit = (event) => {
+  const getBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-    const empresa = {
-      tipoIdentificacionId: Number(formData.get("tipoIdentificacionId")),
-      identificacion: formData.get("identificacion"),
-      nombre: formData.get("nombre"),
-      correo: formData.get("correo"),
-      celular: formData.get("celular") || "",
-      contacto: formData.get("contacto") || "",
-      descripcion: formData.get("descripcion") || "",
+    const empresaPayload = {
+      tipoIdentificacionId: Number(formData.tipoIdentificacionId),
+      identificacion: formData.identificacion,
+      nombre: formData.nombre,
+      correo: formData.correo,
+      celular: formData.celular,
+      contacto: formData.contacto,
+      descripcion: formData.descripcion,
       personaId: Number(persona?.id),
     };
 
-    const payload = new FormData();
-    payload.append(
-      "empresa",
-      new Blob([JSON.stringify(empresa)], { type: "application/json" })
-    );
-    if (logoFile) {
-      payload.append("logo", logoFile);
-    } else if (logoError) {
+    if (!empresaPayload.personaId) {
       setMessage({
         open: true,
         severity: "warning",
-        text: t("empresa.messages.logoError", "El logo no se cargó. Corrige el archivo para adjuntarlo."),
+        text: t("empresa.form.validation.personaRequired", "Debe seleccionar una Persona Responsable"),
       });
+      return;
     }
 
     setSaving(true);
-    axios
-      .post("/v1/empresas", payload, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then(() => {
-        if (logoPreview) URL.revokeObjectURL(logoPreview);
+
+    try {
+      if (formMode === "edit" && selectedRow) {
+        empresaPayload.id = selectedRow.id;
+        empresaPayload.estadoId = selectedRow.estadoId; // Mantener el estado
+        
+        // Si hay un logo nuevo en edición, lo convertimos a base64
+        if (logoFile) {
+          const b64 = await getBase64(logoFile);
+          empresaPayload.logo = b64;
+        } else if (logoPreview && logoPreview.startsWith("data:image")) {
+          // Si el logo no fue cambiado pero ya era base64 (viene del back), lo devolvemos
+          empresaPayload.logo = logoPreview;
+        }
+
+        await axios.put(`/v1/empresas/${selectedRow.id}`, empresaPayload, {
+          headers: { "Content-Type": "application/json" },
+        });
+
+        setMessage({
+          open: true,
+          severity: "success",
+          text: t("empresa.messages.updated", "Empresa actualizada con éxito!"),
+        });
+      } else {
+        const payloadFormData = new FormData();
+        payloadFormData.append(
+          "empresa",
+          new Blob([JSON.stringify(empresaPayload)], { type: "application/json" })
+        );
+        if (logoFile) {
+          payloadFormData.append("logo", logoFile);
+        } else if (logoError) {
+          setMessage({
+            open: true,
+            severity: "warning",
+            text: t("empresa.messages.logoError", "El logo no se cargó. Corrige el archivo para adjuntarlo."),
+          });
+        }
+
+        await axios.post("/v1/empresas", payloadFormData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
         setMessage({
           open: true,
           severity: "success",
           text: t("empresa.messages.created", "Empresa creada con éxito!"),
         });
-        setOpen(false);
-        setLogoFile(null);
-        setLogoPreview("");
-        setLogoError("");
-        setPersona(null);
-        reloadData();
-      })
-      .catch((error) => {
-        const detail =
-          error.response?.data?.detail ||
-          error.response?.data?.message ||
-          error.message;
-        setMessage({
-          open: true,
-          severity: "error",
-          text: `${t("empresa.messages.saveError", "Error al guardar empresa:")} ${detail}`,
-        });
-      })
-      .finally(() => setSaving(false));
+      }
+
+      if (logoPreview && formMode === "create") URL.revokeObjectURL(logoPreview);
+      setOpen(false);
+      setLogoFile(null);
+      setLogoPreview("");
+      setLogoError("");
+      setPersona(null);
+      setFormData({
+        tipoIdentificacionId: "",
+        identificacion: "",
+        nombre: "",
+        correo: "",
+        celular: "",
+        contacto: "",
+        descripcion: "",
+      });
+      reloadData();
+    } catch (error) {
+      const detail =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message;
+      setMessage({
+        open: true,
+        severity: "error",
+        text: `${t("empresa.messages.saveError", "Error al guardar empresa:")} ${detail}`,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -184,7 +307,11 @@ export default function FormEmpresa({
       fullWidth
       PaperProps={{ component: "form", onSubmit: handleSubmit }}
     >
-      <DialogTitle>{t("empresa.form.registerTitle", "Registrar Empresa")}</DialogTitle>
+      <DialogTitle>
+        {formMode === "edit"
+          ? t("empresa.form.editTitle", "Actualizar Empresa")
+          : t("empresa.form.registerTitle", "Registrar Empresa")}
+      </DialogTitle>
       <DialogContent>
         <DialogContentText>
           {t("empresa.form.subtitle", "Completa el formulario.")}
@@ -200,8 +327,10 @@ export default function FormEmpresa({
             name="tipoIdentificacionId"
             label={t("empresa.form.tipoIdentificacion", "Tipo de Identificación")}
             required
-            defaultValue=""
+            value={formData.tipoIdentificacionId}
+            onChange={handleChange}
             fullWidth
+            disabled={loadingData}
           >
             {tiposIdentificacion.map((tipo) => (
               <MenuItem key={tipo.id} value={tipo.id}>
@@ -216,6 +345,9 @@ export default function FormEmpresa({
             required
             id="identificacion"
             name="identificacion"
+            value={formData.identificacion}
+            onChange={handleChange}
+            disabled={loadingData}
             label={t("empresa.form.identificacion", "Número de Identificación")}
           />
         </FormControl>
@@ -225,6 +357,9 @@ export default function FormEmpresa({
             required
             id="nombre"
             name="nombre"
+            value={formData.nombre}
+            onChange={handleChange}
+            disabled={loadingData}
             label={t("empresa.form.nombre", "Nombre")}
           />
         </FormControl>
@@ -234,6 +369,9 @@ export default function FormEmpresa({
             required
             id="correo"
             name="correo"
+            value={formData.correo}
+            onChange={handleChange}
+            disabled={loadingData}
             label={t("empresa.form.correo", "Correo")}
             type="email"
           />
@@ -243,6 +381,9 @@ export default function FormEmpresa({
           <TextField
             id="celular"
             name="celular"
+            value={formData.celular}
+            onChange={handleChange}
+            disabled={loadingData}
             label={t("empresa.form.celular", "Celular")}
           />
         </FormControl>
@@ -251,6 +392,9 @@ export default function FormEmpresa({
           <TextField
             id="contacto"
             name="contacto"
+            value={formData.contacto}
+            onChange={handleChange}
+            disabled={loadingData}
             label={t("empresa.form.contacto", "Contacto")}
           />
         </FormControl>
@@ -259,6 +403,9 @@ export default function FormEmpresa({
           <TextField
             id="descripcion"
             name="descripcion"
+            value={formData.descripcion}
+            onChange={handleChange}
+            disabled={loadingData}
             label={t("empresa.form.descripcion", "Descripción")}
             multiline
             minRows={2}
@@ -272,6 +419,7 @@ export default function FormEmpresa({
             getOptionLabel={(p) => `${p.nombre} ${p.apellido}`}
             value={persona}
             onChange={(event, newValue) => setPersona(newValue)}
+            disabled={loadingData}
             filterOptions={(options, state) => {
               const input = (state.inputValue || "").trim().toLowerCase();
               if (!input) return options;
@@ -306,6 +454,26 @@ export default function FormEmpresa({
               onChange={handleLogoChange}
             />
           </Button>
+          {/* Preview de logo actual (en edición) o nuevo archivo seleccionado */}
+          {!logoFile && logoPreview && !logoError && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, marginTop: "5px" }}>
+              <Box
+                component="img"
+                src={logoPreview}
+                alt={t("empresa.form.logoPreviewAlt", "Vista previa del logo")}
+                sx={{
+                  width: 56,
+                  height: 56,
+                  objectFit: "contain",
+                  borderRadius: 1,
+                  border: "1px solid rgba(23,63,57,0.25)",
+                }}
+              />
+              <span style={{ fontSize: "0.8rem" }}>
+                {t("empresa.form.currentLogo", "Logo actual")}
+              </span>
+            </Box>
+          )}
           {logoFile && !logoError && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, marginTop: "5px" }}>
               {logoPreview && (
@@ -338,9 +506,11 @@ export default function FormEmpresa({
         <Button onClick={handleClose} disabled={saving}>
           {t("common.actions.cancel", "Cancelar")}
         </Button>
-        <Button type="submit" variant="contained" disabled={saving}>
+        <Button type="submit" variant="contained" disabled={saving || loadingData}>
           {saving
             ? t("common.actions.saving", "Guardando...")
+            : formMode === "edit"
+            ? t("empresa.actions.update", "Actualizar")
             : t("empresa.actions.create", "Registrar")}
         </Button>
       </DialogActions>
@@ -355,4 +525,6 @@ FormEmpresa.propTypes = {
   reloadData: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
+  formMode: PropTypes.string,
+  selectedRow: PropTypes.object,
 };
