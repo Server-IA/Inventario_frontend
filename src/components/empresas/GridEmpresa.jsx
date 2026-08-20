@@ -75,8 +75,9 @@ export default function GridEmpresa({ refreshKey = 0 }) {
     try {
       const response = await axios.get("/v1/empresas", {
         params: {
-          page: page + 1,
+          page,
           size: pageSize,
+          sortBy: "id,desc",
         },
       });
 
