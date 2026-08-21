@@ -99,6 +99,8 @@
     },
     "validation": {
       "required": "This field is required.",
+      "personalEmailRequired": "You must enter the personal email.",
+      "stratumRequired": "You must select a stratum.",
       "invalidEmail": "Enter a valid email address.",
       "invalidNumericDocumentNumber": "This document type only allows numbers and must contain between 5 and 20 digits.",
       "invalidDocumentNumber": "Enter a valid identification code.",

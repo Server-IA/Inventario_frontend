@@ -99,6 +99,8 @@
     },
     "validation": {
       "required": "Este campo es obligatorio.",
+      "personalEmailRequired": "Debes ingresar el correo personal.",
+      "stratumRequired": "Debes seleccionar un estrato.",
       "invalidEmail": "Ingresa un correo electrónico válido.",
       "invalidNumericDocumentNumber": "Este tipo de documento solo admite números y debe tener entre 5 y 20 dígitos.",
       "invalidDocumentNumber": "Ingresa un código de identificación válido.",

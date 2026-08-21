@@ -983,10 +983,6 @@ export default function Usuario() {
         body.asignaciones = assignments.map((item) => {
           const startValue = item.fechaInicioContrato ?? item.iniciaContratoEn;
           const endValue = item.fechaFinContrato ?? item.finalizaContratoEn;
-          const hasValidEnd =
-            !startValue ||
-            !endValue ||
-            new Date(endValue) >= new Date(startValue);
 
           return {
             ...(item?.usuarioRolId
@@ -999,7 +995,6 @@ export default function Usuario() {
             // ejemplo usando timestamps UTC tipo 2023-01-01T00:00:00Z.
             fechaInicioContrato: toUtcDateTime(startValue),
             fechaFinContrato: toUtcDateTime(endValue),
-            fechaFinalizacionValida: Boolean(hasValidEnd),
           };
         });
 

@@ -584,6 +584,7 @@ export default function FormUsuario({
     const nombre = String(formData?.nombre ?? "").trim();
     const apellido = String(formData?.apellido ?? "").trim();
     const emailPersonal = String(formData?.emailPersonal ?? "").trim();
+    const estrato = String(formData?.estrato ?? "").trim();
     const identificacion = String(formData?.identificacion ?? "").trim();
     const celular = String(formData?.celular ?? "").trim();
     const direccion = String(formData?.direccion ?? "").trim();
@@ -596,8 +597,14 @@ export default function FormUsuario({
     if (!nombre) nextErrors.nombre = t("usuario.form.validation.required");
     if (!apellido) nextErrors.apellido = t("usuario.form.validation.required");
 
-    if (emailPersonal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPersonal)) {
+    if (!emailPersonal) {
+      nextErrors.emailPersonal = t("usuario.form.validation.personalEmailRequired");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPersonal)) {
       nextErrors.emailPersonal = t("usuario.form.validation.invalidEmail");
+    }
+
+    if (!estrato) {
+      nextErrors.estrato = t("usuario.form.validation.stratumRequired");
     }
 
     if (identificacion) {
@@ -1024,8 +1031,9 @@ export default function FormUsuario({
                           value={formData?.emailPersonal ?? ""}
                           onChange={(e) => handleChange("emailPersonal", e.target.value)}
                           fullWidth
+                          required
                           error={Boolean(errors.emailPersonal)}
-                          helperText={errors.emailPersonal || t("usuario.form.helpers.optional")}
+                          helperText={errors.emailPersonal}
                           InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
@@ -1074,6 +1082,9 @@ export default function FormUsuario({
                           value={formData?.estrato ?? ""}
                           onChange={(e) => handleChange("estrato", e.target.value)}
                           fullWidth
+                          required
+                          error={Boolean(errors.estrato)}
+                          helperText={errors.estrato}
                           InputLabelProps={{ shrink: true }}
                         >
                           <MenuItem value="">{t("common.labels.select")}</MenuItem>
