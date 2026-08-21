@@ -23,6 +23,7 @@ CONTROL DE CAMBIOS
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se corrige permiso HU-037.5 para admin sistema|
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de empresa-rol por selección. |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se ajusta body del PUT según contrato backend.|
+| 2026-08-21 | 0.4.0   | Cesar Medina         | Se traduce estado del listado vía i18n.       |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -389,6 +390,38 @@ const getUserStatusMeta = (statusName) => {
 };
 
 /**
+ * Resuelve la clave de traducción del estado visible en la tabla.
+ *
+ * @param {number|string} statusName Estado recibido desde backend.
+ * @returns {string}
+ */
+const resolveUserStatusTranslationKey = (statusName) => {
+  const normalized = String(statusName ?? "").trim().toLowerCase();
+
+  if (
+    normalized.includes("activo") ||
+    normalized.includes("active")
+  ) {
+    return "usuario.statusLabels.active";
+  }
+
+  if (
+    normalized.includes("inactivo") ||
+    normalized.includes("inactive") ||
+    normalized.includes("desactivado") ||
+    normalized.includes("disabled")
+  ) {
+    return "usuario.statusLabels.inactive";
+  }
+
+  if (normalized.includes("pendiente") || normalized.includes("pending")) {
+    return "usuario.statusLabels.pending";
+  }
+
+  return "";
+};
+
+/**
  * Componente principal del módulo Usuarios.
  *
  * @returns {JSX.Element}
@@ -439,11 +472,13 @@ export default function Usuario() {
         headerAlign: "left",
         renderCell: (params) => {
           const meta = getUserStatusMeta(params?.value);
+          const statusLabelKey = resolveUserStatusTranslationKey(params?.value);
+          const statusLabel = statusLabelKey ? t(statusLabelKey) : params?.value || "-";
 
           return (
             <Box sx={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
               <Chip
-                label={params?.value || "-"}
+                label={statusLabel}
                 size="small"
                 sx={{
                   height: 28,
@@ -468,7 +503,7 @@ export default function Usuario() {
         : []),
     ];
     return cols;
-  }, [isAdmin]);
+  }, [isAdmin, t]);
 
   const roleFilterOptions = useMemo(
     () =>

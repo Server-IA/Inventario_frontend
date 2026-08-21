@@ -55,6 +55,11 @@
     "activate": "Activar",
     "inactivate": "Inactivar"
   },
+  "statusLabels": {
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "pending": "Pendiente"
+  },
   "form": {
     "createTitle": "Registrar usuario",
     "editTitle": "Actualizar usuario",

@@ -55,6 +55,11 @@
     "activate": "Activate",
     "inactivate": "Inactivate"
   },
+  "statusLabels": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending"
+  },
   "form": {
     "createTitle": "Register user",
     "editTitle": "Update user",
