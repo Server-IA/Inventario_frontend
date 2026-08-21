@@ -22,6 +22,7 @@ CONTROL DE CAMBIOS
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se integra activación e inactivación HU-037.5.|
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se corrige permiso HU-037.5 para admin sistema|
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de empresa-rol por selección. |
+| 2026-08-21 | 0.4.0   | Cesar Medina         | Se ajusta body del PUT según contrato backend.|
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**

@@ -11,6 +11,7 @@ CONTROL DE CAMBIOS
 | 2026-06-30 | 0.4.0   | Cesar Medina         | Se ajusta el modal para HU-037.4.             |
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de roles por empresa activa.  |
 | 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
+| 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
