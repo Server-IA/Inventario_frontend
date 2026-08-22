@@ -42,6 +42,12 @@
     "logoAlt": "logo",
     "sinLogo": "Sin logo"
   },
+  "detail": {
+    "title": "Detalle de Empresa",
+    "loadError": "No se pudo cargar el detalle.",
+    "personaResponsable": "Persona Responsable",
+    "loading": "Cargando..."
+  },
   "messages": {
     "created": "Empresa creada con éxito!",
     "updated": "Empresa actualizada con éxito!",
