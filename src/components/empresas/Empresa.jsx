@@ -164,7 +164,7 @@ export default function Empresa() {
     setDetailLoading(true);
 
     axios
-      .get(\/v1/empresas/\\)
+      .get(`/v1/empresas/${selectedRow.id}`)
       .then((resp) => {
         setDetail(resp?.data ?? {});
       })
@@ -188,11 +188,11 @@ export default function Empresa() {
     const nuevoEstado = isActive ? 2 : 1;
 
     axios
-      .get(\/v1/empresas/\\)
+      .get(`/v1/empresas/${selectedRow.id}`)
       .then((res) => {
         const data = res.data;
         return axios.put(
-          \/v1/empresas/\\,
+          `/v1/empresas/${selectedRow.id}`,
           {
             id: data.id,
             nombre: data.nombre,
@@ -229,7 +229,7 @@ export default function Empresa() {
         setMessage({
           open: true,
           severity: "error",
-          text: \\ \\,
+          text: `${t("empresa.messages.toggleError", "Error al cambiar el estado:")} ${detail}`,
         });
       })
       .finally(() => setToggling(false));
