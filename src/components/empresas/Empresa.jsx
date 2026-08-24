@@ -1,10 +1,10 @@
-﻿/*=============================================================================
+/*=============================================================================
  Nombre del archivo : Empresa.jsx
- Descripcion        : Componente principal del módulo de empresas (HU-043.1).
+ Descripcion        : Componente principal del m�dulo de empresas (HU-043.1).
 ===============================================================================
  CONTROL DE CAMBIOS
  +------------+---------+----------------------+-----------------------------+
- |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ |   Fecha    | Versi�n |      Autor           | Descripci�n del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.1 Registrar empresa  |
  | 2026-08-16 | 0.5.1   | Jeisson Sanchez      | HU-043.3 Detalle empresa    |
@@ -15,7 +15,7 @@
 /**
  * @file Empresa.jsx
  * @module Empresa
- * @description Componente principal para la gestión de empresas.
+ * @description Componente principal para la gesti�n de empresas.
  * @author Jeisson Sanchez
  */
 
@@ -41,15 +41,15 @@ import { TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/
 
 /**
  * @typedef {Object} SnackbarMessage
- * @property {boolean} open - Si el mensaje está visible
+ * @property {boolean} open - Si el mensaje est� visible
  * @property {string} severity - Nivel de severidad ("success", "error", etc.)
  * @property {string} text - Texto del mensaje
  */
 
 /**
- * Componente principal para la gestión de empresas.
+ * Componente principal para la gesti�n de empresas.
  *
- * @returns {JSX.Element} El módulo de gestión de empresas
+ * @returns {JSX.Element} El m�dulo de gesti�n de empresas
  */
 export default function Empresa() {
   const { t } = useTranslation();
@@ -85,7 +85,7 @@ export default function Empresa() {
   const [toggling, setToggling] = React.useState(false);
 
   /**
-   * Carga las personas y los tipos de identificación usados por el formulario.
+   * Carga las personas y los tipos de identificaci�n usados por el formulario.
    */
   const reloadData = React.useCallback(() => {
     axios
@@ -96,12 +96,12 @@ export default function Empresa() {
     axios
       .get("/v1/tipo_identificacion")
       .then((res) => setTiposIdentificacion(res.data || []))
-      .catch((err) => console.error("Error al cargar tipos de identificación:", err));
+      .catch((err) => console.error("Error al cargar tipos de identificaci�n:", err));
   }, []);
 
   /**
    * Recarga datos de soporte y dispara el refresco del listado de empresas.
-   * Se usa como callback de éxito del formulario tras registrar una empresa.
+   * Se usa como callback de �xito del formulario tras registrar una empresa.
    */
   const handleEmpresaCreated = React.useCallback(() => {
     reloadData();
@@ -237,7 +237,7 @@ export default function Empresa() {
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
-      <SectionHeader title={t("empresa.title", "Gestión de Empresas")} />
+      <SectionHeader title={t("empresa.title", "Gesti�n de Empresas")} />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
@@ -346,10 +346,10 @@ export default function Empresa() {
         <DialogContent>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 1 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>{t("empresa.grid.tipoIdentificacion", "Tipo de Identificación")}</InputLabel>
+              <InputLabel>{t("empresa.grid.tipoIdentificacion", "Tipo de Identificaci�n")}</InputLabel>
               <Select
                 value={tempFilters.tipoIdentificacionId}
-                label={t("empresa.grid.tipoIdentificacion", "Tipo de Identificación")}
+                label={t("empresa.grid.tipoIdentificacion", "Tipo de Identificaci�n")}
                 onChange={(e) => setTempFilters({ ...tempFilters, tipoIdentificacionId: e.target.value })}
               >
                 <MenuItem value="">{t("common.labels.all", "Todos")}</MenuItem>
@@ -364,7 +364,7 @@ export default function Empresa() {
             <TextField
               size="small"
               fullWidth
-              label={t("empresa.grid.identificacion", "No. de Identificación")}
+              label={t("empresa.grid.identificacion", "No. de Identificaci�n")}
               value={tempFilters.identificacion}
               onChange={(e) => setTempFilters({ ...tempFilters, identificacion: e.target.value })}
             />
