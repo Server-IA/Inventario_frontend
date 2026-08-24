@@ -42,6 +42,12 @@
     "logoAlt": "logo",
     "sinLogo": "No logo"
   },
+  "detail": {
+    "title": "Company Detail",
+    "loadError": "Could not load detail.",
+    "personaResponsable": "Responsible Person",
+    "loading": "Loading..."
+  },
   "messages": {
     "created": "Company created successfully!",
     "updated": "Company updated successfully!",
