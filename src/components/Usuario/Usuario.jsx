@@ -27,6 +27,7 @@ CONTROL DE CAMBIOS
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se amplía traducción de estados del listado.  |
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se habilita estado para admin empresa contexto|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se reemplaza confirmación nativa por modal MUI|
+| 2026-08-24 | 0.4.0   | Cesar Medina         | Se corrige prioridad de mapeo para inactivo.  |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -394,19 +395,19 @@ const getUserStatusMeta = (statusName) => {
     };
   }
 
-  if (normalized.includes("activo") || normalized.includes("active")) {
-    return {
-      text: "#1B5E20",
-      background: "rgba(46,125,50,0.10)",
-      border: "rgba(46,125,50,0.18)",
-    };
-  }
-
   if (normalized.includes("inactivo") || normalized.includes("inactive")) {
     return {
       text: "#B3261E",
       background: "rgba(211,47,47,0.10)",
       border: "rgba(211,47,47,0.18)",
+    };
+  }
+
+  if (normalized.includes("activo") || normalized.includes("active")) {
+    return {
+      text: "#1B5E20",
+      background: "rgba(46,125,50,0.10)",
+      border: "rgba(46,125,50,0.18)",
     };
   }
 
@@ -455,19 +456,19 @@ const resolveUserStatusTranslationKey = (statusName) => {
   }
 
   if (
-    normalized.includes("activo") ||
-    normalized.includes("active")
-  ) {
-    return "usuario.statusLabels.active";
-  }
-
-  if (
     normalized.includes("inactivo") ||
     normalized.includes("inactive") ||
     normalized.includes("desactivado") ||
     normalized.includes("disabled")
   ) {
     return "usuario.statusLabels.inactive";
+  }
+
+  if (
+    normalized.includes("activo") ||
+    normalized.includes("active")
+  ) {
+    return "usuario.statusLabels.active";
   }
 
   if (normalized.includes("pendiente") || normalized.includes("pending")) {

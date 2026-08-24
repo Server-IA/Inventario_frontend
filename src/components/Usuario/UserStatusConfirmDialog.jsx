@@ -7,6 +7,8 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio                        |
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se crea modal MUI para confirmar cambio estado|
+| 2026-08-24 | 0.4.0   | Cesar Medina         | Se suavizan transiciones y ajusta botón cerrar|
+| 2026-08-24 | 0.4.0   | Cesar Medina         | Se separan acciones y refuerza feedback click |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -161,7 +163,17 @@ export default function UserStatusConfirmDialog({
             size="small"
             disabled={submitting}
             aria-label={t("common.actions.close")}
-            sx={{ color: darkGreen }}
+            sx={{
+              color: darkGreen,
+              mr: { xs: 0.25, sm: 0.75 },
+              transition: theme.transitions.create(["transform", "background-color", "box-shadow"], {
+                duration: theme.transitions.duration.shorter,
+              }),
+              "&:hover": {
+                backgroundColor: alpha(darkGreen, 0.08),
+                transform: "translateX(-3px)",
+              },
+            }}
           >
             <CloseIcon sx={{ color: darkGreen }} />
           </IconButton>
@@ -297,6 +309,8 @@ export default function UserStatusConfirmDialog({
           backgroundColor: dialogSurface,
           borderTop: `1px solid ${subtleBorder}`,
           gap: 1.25,
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
         <Button
@@ -309,6 +323,22 @@ export default function UserStatusConfirmDialog({
             borderRadius: 1.5,
             color: darkGreen,
             borderColor: alpha(darkGreen, 0.24),
+            transition: theme.transitions.create(
+              ["background-color", "border-color", "transform", "box-shadow"],
+              { duration: theme.transitions.duration.shorter }
+            ),
+            "&:hover": {
+              borderColor: alpha(darkGreen, 0.34),
+              backgroundColor: alpha(darkGreen, 0.05),
+              boxShadow: `0 8px 18px ${alpha(darkGreen, 0.08)}`,
+              transform: "translateY(-1px)",
+            },
+            "&:active": {
+              backgroundColor: alpha(darkGreen, 0.12),
+              borderColor: alpha(darkGreen, 0.4),
+              boxShadow: `0 2px 8px ${alpha(darkGreen, 0.14)}`,
+              transform: "translateY(1px) scale(0.98)",
+            },
           }}
         >
           {t("common.actions.cancel")}
@@ -324,9 +354,19 @@ export default function UserStatusConfirmDialog({
             borderRadius: 1.5,
             boxShadow: "none",
             backgroundColor: activating ? theme.palette.success.dark : theme.palette.error.main,
+            transition: theme.transitions.create(
+              ["background-color", "transform", "box-shadow"],
+              { duration: theme.transitions.duration.shorter }
+            ),
             "&:hover": {
               backgroundColor: activating ? theme.palette.success.main : theme.palette.error.dark,
-              boxShadow: "none",
+              boxShadow: `0 10px 20px ${alpha(actionColor, 0.22)}`,
+              transform: "translateY(-1px)",
+            },
+            "&:active": {
+              backgroundColor: activating ? theme.palette.success.dark : theme.palette.error.dark,
+              boxShadow: `0 3px 10px ${alpha(actionColor, 0.24)}`,
+              transform: "translateY(1px) scale(0.985)",
             },
           }}
         >
