@@ -19,7 +19,7 @@
     "loadError": "Error loading users",
     "listAccessDenied": "You do not have permission to view the user list.",
     "assignmentActionUnavailable": "This action requires assignment data not available in the current list response.",
-    "statusActionRestrictedByRole": "Only a System Administrator can activate or inactivate users from this module.",
+    "statusActionRestrictedByRole": "Only a System Administrator or an in-context Company Administrator can activate or inactivate users from this module.",
     "statusActionRestrictedByCompany": "You cannot activate or inactivate users that do not belong to your company.",
     "createSuccess": "User created successfully.",
     "updateSuccess": "User updated successfully.",
@@ -54,6 +54,21 @@
   "actions": {
     "activate": "Activate",
     "inactivate": "Inactivate"
+  },
+  "statusDialog": {
+    "activateTitle": "Activate user",
+    "inactivateTitle": "Inactivate user",
+    "activateDescription": "Confirm that you want to reactivate this user to restore access to the application.",
+    "inactivateDescription": "Confirm that you want to inactivate this user. The record will remain visible in the list.",
+    "userSectionTitle": "Selected user",
+    "userName": "Full name",
+    "userEmail": "Login email",
+    "userCompany": "Company",
+    "userRole": "Preferred role",
+    "confirmActivate": "Confirm activation",
+    "confirmInactivate": "Confirm inactivation",
+    "activating": "Activating...",
+    "inactivating": "Inactivating..."
   },
   "statusLabels": {
     "active": "Active",

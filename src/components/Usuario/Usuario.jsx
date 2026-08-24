@@ -25,6 +25,8 @@ CONTROL DE CAMBIOS
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se ajusta body del PUT según contrato backend.|
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se traduce estado del listado vía i18n.       |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se amplía traducción de estados del listado.  |
+| 2026-08-24 | 0.4.0   | Cesar Medina         | Se habilita estado para admin empresa contexto|
+| 2026-08-24 | 0.4.0   | Cesar Medina         | Se reemplaza confirmación nativa por modal MUI|
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -42,10 +44,12 @@ import AppDataGrid from "../common/AppDataGrid.jsx";
 import FormUsuario from "./FormUsuario.jsx";
 import UserFiltersDialog from "./UserFiltersDialog.jsx";
 import UserDetailDialog from "./UserDetailDialog.jsx";
+import UserStatusConfirmDialog from "./UserStatusConfirmDialog.jsx";
 import MessageSnackBar from "../MessageSnackBar";
 import axios from "../axiosConfig";
 
 const SYSTEM_ROLE_REGEX = /(ROLE_ADMINISTRADOR_SISTEMA|ADMINISTRADOR[_\s-]*SISTEMA|ADMIN\s*SISTEMA)/i;
+const COMPANY_ROLE_REGEX = /(ROLE_ADMINISTRADOR_EMPRESA|ADMINISTRADOR[_\s-]*EMPRESA|ADMIN\s*EMPRESA)/i;
 
 const emptyRow = {
   id: null,
@@ -210,6 +214,37 @@ const getCompanyLabel = (user) => {
     .filter(Boolean);
 
   return Array.from(new Set(companyNames)).join(", ");
+};
+
+/**
+ * Determina si el usuario listado pertenece a la empresa activa en sesión.
+ *
+ * @param {object} user Usuario del backend o fila normalizada.
+ * @param {number|string} empresaId Empresa en contexto.
+ * @returns {boolean}
+ */
+const belongsToContextCompany = (user, empresaId) => {
+  const targetEmpresaId = Number(empresaId);
+  if (!targetEmpresaId) return false;
+
+  const assignmentCompanyIds = getAssignments(user)
+    .map((item) => Number(item?.empresaId))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (assignmentCompanyIds.length > 0) {
+    return assignmentCompanyIds.includes(targetEmpresaId);
+  }
+
+  const fallbackCompanyIds = [
+    Number(user?.empresaId),
+    Number(user?.empresaPreferidaId),
+    Number(user?.preferredAssignment?.empresaId),
+    Number(user?.raw?.empresaId),
+    Number(user?.raw?.empresaPreferidaId),
+    Number(user?.raw?.preferredAssignment?.empresaId),
+  ].filter((value) => Number.isFinite(value) && value > 0);
+
+  return fallbackCompanyIds.includes(targetEmpresaId);
 };
 
 /**
@@ -465,8 +500,12 @@ export default function Usuario() {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
+  const [openStatusDialog, setOpenStatusDialog] = useState(false);
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
+  const [statusDialogError, setStatusDialogError] = useState("");
   const currentRoleName = resolveCurrentRoleName();
   const isAdmin = SYSTEM_ROLE_REGEX.test(currentRoleName);
+  const isCompanyAdmin = COMPANY_ROLE_REGEX.test(currentRoleName);
   const empresaIdOwn = Number(localStorage.getItem("empresaId"));
   const [filters, setFilters] = useState(() => buildInitialFilters(isAdmin, empresaIdOwn));
   const [filterDraft, setFilterDraft] = useState(() => buildInitialFilters(isAdmin, empresaIdOwn));
@@ -572,7 +611,13 @@ export default function Usuario() {
       selectedRow?.estadoId
   );
   const selectedRowIsInactive = selectedRowStatusId === 2;
-  const canToggleUserStatus = Boolean(selectedRow) && isAdmin;
+  const selectedRowBelongsToContextCompany = belongsToContextCompany(
+    selectedRow?.raw ?? selectedRow,
+    empresaIdOwn
+  );
+  const canToggleUserStatus = Boolean(selectedRow) && (
+    isAdmin || (isCompanyAdmin && selectedRowBelongsToContextCompany)
+  );
   const deleteActionLabel = selectedRowIsInactive
     ? t("usuario.actions.activate")
     : t("usuario.actions.inactivate");
@@ -887,9 +932,7 @@ export default function Usuario() {
   const handleDelete = async () => {
     if (!selectedRow) return;
 
-    // HU-037.5: la acción solo depende del rol de Administrador del Sistema;
-    // no se restringe por la empresa en contexto.
-    if (!isAdmin) {
+    if (!isAdmin && !isCompanyAdmin) {
       setMessage({
         open: true,
         severity: "warning",
@@ -898,20 +941,33 @@ export default function Usuario() {
       return;
     }
 
+    if (!isAdmin && !selectedRowBelongsToContextCompany) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: t("usuario.messages.statusActionRestrictedByCompany"),
+      });
+      return;
+    }
+
+    setStatusDialogError("");
+    setOpenStatusDialog(true);
+  };
+
+  const handleCloseStatusDialog = () => {
+    if (statusSubmitting) return;
+    setOpenStatusDialog(false);
+    setStatusDialogError("");
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!selectedRow) return;
+
     const requestId = selectedRow?.raw?.id ?? selectedRow?.id;
-    const activating =
-      normalizeStatusId(
-        selectedRow?.raw?.estadoNombre ??
-          selectedRow?.estadoNombre ??
-          selectedRow?.raw?.estadoId ??
-          selectedRow?.estadoId
-      ) === 2;
-    const ok = window.confirm(
-      activating
-        ? t("usuario.messages.confirmActivate")
-        : t("usuario.messages.confirmInactivate")
-    );
-    if (!ok) return;
+    const activating = selectedRowIsInactive;
+
+    setStatusSubmitting(true);
+    setStatusDialogError("");
 
     try {
       if (activating) {
@@ -920,6 +976,7 @@ export default function Usuario() {
         await axios.delete(`/v1/usuarios/${requestId}`);
       }
 
+      setOpenStatusDialog(false);
       await loadData();
       setMessage({
         open: true,
@@ -929,15 +986,14 @@ export default function Usuario() {
           : t("usuario.messages.inactivateSuccess"),
       });
     } catch (err) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text:
-          err?.response?.data?.message ??
+      setStatusDialogError(
+        err?.response?.data?.message ??
           (activating
             ? t("usuario.messages.cannotActivate")
-            : t("usuario.messages.cannotInactivate")),
-      });
+            : t("usuario.messages.cannotInactivate"))
+      );
+    } finally {
+      setStatusSubmitting(false);
     }
   };
 
@@ -1143,6 +1199,16 @@ export default function Usuario() {
           setDetail(null);
           setDetailError("");
         }}
+      />
+
+      <UserStatusConfirmDialog
+        open={openStatusDialog}
+        user={selectedRow}
+        activating={selectedRowIsInactive}
+        submitting={statusSubmitting}
+        error={statusDialogError}
+        onClose={handleCloseStatusDialog}
+        onConfirm={handleConfirmStatusChange}
       />
 
       <UserFiltersDialog

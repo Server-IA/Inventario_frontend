@@ -19,7 +19,7 @@
     "loadError": "Error cargando usuarios",
     "listAccessDenied": "No tienes permisos para consultar el listado de usuarios.",
     "assignmentActionUnavailable": "La acción requiere datos de asignación que no vienen en el listado actual.",
-    "statusActionRestrictedByRole": "Solo un Administrador del Sistema puede activar o inactivar usuarios desde este módulo.",
+    "statusActionRestrictedByRole": "Solo un Administrador del Sistema o un Administrador de Empresa en contexto puede activar o inactivar usuarios desde este módulo.",
     "statusActionRestrictedByCompany": "No puedes activar o inactivar usuarios que no pertenezcan a tu empresa.",
     "createSuccess": "Usuario registrado correctamente.",
     "updateSuccess": "Usuario actualizado correctamente.",
@@ -54,6 +54,21 @@
   "actions": {
     "activate": "Activar",
     "inactivate": "Inactivar"
+  },
+  "statusDialog": {
+    "activateTitle": "Activar usuario",
+    "inactivateTitle": "Inactivar usuario",
+    "activateDescription": "Confirma que deseas reactivar este usuario para restablecer su acceso en la aplicación.",
+    "inactivateDescription": "Confirma que deseas inactivar este usuario. El registro seguirá visible en el listado.",
+    "userSectionTitle": "Usuario seleccionado",
+    "userName": "Nombre completo",
+    "userEmail": "Correo de acceso",
+    "userCompany": "Empresa",
+    "userRole": "Rol preferido",
+    "confirmActivate": "Confirmar activación",
+    "confirmInactivate": "Confirmar inactivación",
+    "activating": "Activando...",
+    "inactivating": "Inactivando..."
   },
   "statusLabels": {
     "active": "Activo",
