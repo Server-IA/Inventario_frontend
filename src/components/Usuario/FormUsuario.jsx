@@ -12,6 +12,7 @@ CONTROL DE CAMBIOS
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de roles por empresa activa.  |
 | 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
+| 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -586,6 +587,7 @@ export default function FormUsuario({
     const apellido = String(formData?.apellido ?? "").trim();
     const emailPersonal = String(formData?.emailPersonal ?? "").trim();
     const estrato = String(formData?.estrato ?? "").trim();
+    const tipoIdentificacionId = String(formData?.tipoIdentificacionId ?? "").trim();
     const identificacion = String(formData?.identificacion ?? "").trim();
     const celular = String(formData?.celular ?? "").trim();
     const direccion = String(formData?.direccion ?? "").trim();
@@ -608,7 +610,13 @@ export default function FormUsuario({
       nextErrors.estrato = t("usuario.form.validation.stratumRequired");
     }
 
-    if (identificacion) {
+    if (!tipoIdentificacionId) {
+      nextErrors.tipoIdentificacionId = t("usuario.form.validation.documentTypeRequired");
+    }
+
+    if (!identificacion) {
+      nextErrors.identificacion = t("usuario.form.validation.documentNumberRequired");
+    } else if (tipoIdentificacionId) {
       if (requiresNumericIdentification && !/^\d{5,20}$/.test(identificacion)) {
         nextErrors.identificacion = t("usuario.form.validation.invalidNumericDocumentNumber");
       } else if (!requiresNumericIdentification && !/^[A-Za-z0-9-]{5,20}$/.test(identificacion)) {
@@ -648,6 +656,9 @@ export default function FormUsuario({
     if (!assignDraft.rolId) nextErrors.rolId = t("usuario.form.validation.roleRequired");
     if (isAdmin && !assignDraft.empresaId) {
       nextErrors.empresaId = t("usuario.form.validation.companyRequired");
+    }
+    if (!assignDraft.iniciaContratoEn) {
+      nextErrors.iniciaContratoEn = t("usuario.form.validation.contractStartRequired");
     }
 
     if (assignDraft.finalizaContratoEn && !assignDraft.iniciaContratoEn) {
@@ -1104,6 +1115,9 @@ export default function FormUsuario({
                           onChange={(e) => handleChange("tipoIdentificacionId", e.target.value)}
                           onBlur={lookupPersonByIdentification}
                           fullWidth
+                          required
+                          error={Boolean(errors.tipoIdentificacionId)}
+                          helperText={errors.tipoIdentificacionId}
                           InputLabelProps={{ shrink: true }}
                         >
                           <MenuItem value="">{t("common.labels.select")}</MenuItem>
@@ -1121,6 +1135,7 @@ export default function FormUsuario({
                           onChange={(e) => handleChange("identificacion", e.target.value)}
                           onBlur={lookupPersonByIdentification}
                           fullWidth
+                          required
                           error={Boolean(errors.identificacion)}
                           helperText={
                             errors.identificacion ||
@@ -1302,6 +1317,9 @@ export default function FormUsuario({
                               handleAssignChange("iniciaContratoEn", e.target.value)
                             }
                             fullWidth
+                            required
+                            error={Boolean(assignmentErrors.iniciaContratoEn)}
+                            helperText={assignmentErrors.iniciaContratoEn}
                             InputLabelProps={{ shrink: true }}
                           />
                         </Box>
