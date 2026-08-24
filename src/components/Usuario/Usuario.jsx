@@ -24,6 +24,7 @@ CONTROL DE CAMBIOS
 | 2026-08-12 | 0.4.0   | Cesar Medina         | Se alinea carga de empresa-rol por selección. |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se ajusta body del PUT según contrato backend.|
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se traduce estado del listado vía i18n.       |
+| 2026-08-21 | 0.4.0   | Cesar Medina         | Se amplía traducción de estados del listado.  |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -397,6 +398,26 @@ const getUserStatusMeta = (statusName) => {
  */
 const resolveUserStatusTranslationKey = (statusName) => {
   const normalized = String(statusName ?? "").trim().toLowerCase();
+  const compact = normalized
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+
+  if (compact === "perfil_incompleto" || compact === "incomplete_profile") {
+    return "usuario.statusLabels.incompleteProfile";
+  }
+
+  if (compact === "no_verificado" || compact === "not_verified") {
+    return "usuario.statusLabels.notVerified";
+  }
+
+  if (compact === "sin_empresa" || compact === "without_company" || compact === "no_company") {
+    return "usuario.statusLabels.withoutCompany";
+  }
+
+  if (compact === "clave_expirada" || compact === "expired_password" || compact === "password_expired") {
+    return "usuario.statusLabels.expiredPassword";
+  }
 
   if (
     normalized.includes("activo") ||

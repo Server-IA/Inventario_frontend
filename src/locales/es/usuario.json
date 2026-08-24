@@ -58,7 +58,11 @@
   "statusLabels": {
     "active": "Activo",
     "inactive": "Inactivo",
-    "pending": "Pendiente"
+    "pending": "Pendiente",
+    "incompleteProfile": "Perfil incompleto",
+    "notVerified": "No verificado",
+    "withoutCompany": "Sin empresa",
+    "expiredPassword": "Clave expirada"
   },
   "form": {
     "createTitle": "Registrar usuario",
