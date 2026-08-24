@@ -39,7 +39,7 @@ jobs:
           npm run build
           ln -sf . dist/coagronet
         env:
-          VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
+          VITE_BACKEND_URI: https://dev.api.inmero.co/inventario
 
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
@@ -56,7 +56,7 @@ jobs:
 
       - name: E2E shard 1/2
         env:
-          VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
+          VITE_BACKEND_URI: https://dev.api.inmero.co/inventario
           E2E_BASE_URL: http://localhost:5173
           E2E_WEB_SERVER_URL: http://localhost:5173
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
@@ -69,7 +69,7 @@ jobs:
 
       - name: E2E shard 2/2
         env:
-          VITE_BACKEND_URI: https://dev.api.inmero.co/coagronet
+          VITE_BACKEND_URI: https://dev.api.inmero.co/inventario
           E2E_BASE_URL: http://localhost:5173
           E2E_WEB_SERVER_URL: http://localhost:5173
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}

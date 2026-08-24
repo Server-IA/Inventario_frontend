@@ -1,34 +1,30 @@
+/*=============================================================================
+ Nombre del archivo : Empresa.jsx
+ Descripcion        : Componente principal del módulo de empresas (HU-043.1).
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.1 Registrar empresa  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
  * @file Empresa.jsx
  * @module Empresa
  * @description Componente principal para la gestión de empresas.
- *
- * Este componente maneja la lógica del módulo de empresas, incluyendo la carga de datos,
- * manejo de mensajes, y renderizado de los formularios y la tabla de empresas.
- * @author Karla
+ * @author Jeisson Sanchez
  */
 
 import * as React from "react";
-import axios from "axios";
+import axios from "../axiosConfig";
+import { useTranslation } from "react-i18next";
 import MessageSnackBar from "../MessageSnackBar";
+import GridActionBar from "../common/GridActionBar";
+import SectionHeader from "../common/SectionHeader";
 import FormEmpresa from "./FormEmpresa";
 import GridEmpresa from "./GridEmpresa";
-import { SiteProps } from "../dashboard/SiteProps";
-
-/**
- * @typedef {Object} EmpresaRow
- * @property {number} id - ID de la empresa
- * @property {string} nombre - Nombre de la empresa
- * @property {string} descripcion - Descripción de la empresa
- * @property {number} estado - Estado (1: activo, 0: inactivo)
- * @property {string} celular - Número de celular de contacto
- * @property {string} correo - Correo electrónico de la empresa
- * @property {string} contacto - Nombre del contacto principal
- * @property {number} tipoIdentificacionId - ID del tipo de identificación
- * @property {number} personaId - ID de la persona asociada
- * @property {string} identificacion - Número de identificación
- * @property {string} logo - URL o nombre del logo de la empresa
- */
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 
 /**
  * @typedef {Object} SnackbarMessage
@@ -43,21 +39,7 @@ import { SiteProps } from "../dashboard/SiteProps";
  * @returns {JSX.Element} El módulo de gestión de empresas
  */
 export default function Empresa() {
-  const defaultRow = {
-    id: 0,
-    nombre: "",
-    descripcion: "",
-    estado: 0,
-    celular: "",
-    correo: "",
-    contacto: "",
-    tipoIdentificacionId: 0,
-    personaId: 0,
-    identificacion: "",
-    logo: "",
-  };
-
-  const [selectedRow, setSelectedRow] = React.useState(defaultRow);
+  const { t } = useTranslation();
   const [message, setMessage] = React.useState(
     /** @type {SnackbarMessage} */ ({
       open: false,
@@ -65,114 +47,162 @@ export default function Empresa() {
       text: "",
     })
   );
-  const [empresas, setEmpresas] = React.useState(/** @type {EmpresaRow[]} */ ([]));
+  const [personas, setPersonas] = React.useState([]);
+  const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
   const [openForm, setOpenForm] = React.useState(false);
-  const [methodName, setMethodName] = React.useState("Add");
+  const [gridRefreshKey, setGridRefreshKey] = React.useState(0);
+  const [openFilters, setOpenFilters] = React.useState(false);
+  const [filters, setFilters] = React.useState({
+    tipoIdentificacionId: "",
+    identificacion: "",
+    nombre: "",
+    correo: "",
+    estadoId: "",
+  });
+  const [tempFilters, setTempFilters] = React.useState(filters);
 
   /**
-   * Carga los datos de empresas desde la API.
+   * Carga las personas y los tipos de identificación usados por el formulario.
    */
-  const reloadData = () => {
+  const reloadData = React.useCallback(() => {
     axios
-      .get(`${SiteProps.urlbasev1}/empresas`)
-      .then((response) => {
-        const empresaData = response.data.data.map((item) => ({
-          ...item,
-          id: item.id,
-        }));
-        setEmpresas(empresaData);
-      })
-      .catch((error) => {
-        console.error("Error al buscar empresas!", error);
-      });
-  };
+      .get("/v1/persona", { params: { page: 0, size: 500 } })
+      .then((res) => setPersonas(res.data.content || []))
+      .catch((err) => console.error("Error al cargar personas:", err));
 
-  React.useEffect(() => {
-    reloadData();
+    axios
+      .get("/v1/tipo_identificacion")
+      .then((res) => setTiposIdentificacion(res.data || []))
+      .catch((err) => console.error("Error al cargar tipos de identificación:", err));
   }, []);
 
   /**
-   * Maneja la acción de agregar una nueva empresa.
+   * Recarga datos de soporte y dispara el refresco del listado de empresas.
+   * Se usa como callback de éxito del formulario tras registrar una empresa.
+   */
+  const handleEmpresaCreated = React.useCallback(() => {
+    reloadData();
+    setGridRefreshKey((key) => key + 1);
+  }, [reloadData]);
+
+  React.useEffect(() => {
+    reloadData();
+  }, [reloadData]);
+
+  /**
+   * Abre el formulario de registro de una nueva empresa.
    */
   const handleAdd = () => {
-    setSelectedRow(defaultRow);
-    setMethodName("Add");
     setOpenForm(true);
   };
 
-  /**
-   * Maneja la acción de actualizar una empresa existente.
-   */
-  const handleUpdate = () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona una fila para actualizar.",
-      });
-      return;
-    }
-    setMethodName("Update");
-    setOpenForm(true);
+  const handleOpenFilters = () => {
+    setTempFilters(filters);
+    setOpenFilters(true);
   };
 
-  /**
-   * Maneja la acción de eliminar una empresa.
-   */
-  const handleDelete = () => {
-    if (!selectedRow?.id) {
-      setMessage({
-        open: true,
-        severity: "error",
-        text: "Selecciona una fila para eliminar.",
-      });
-      return;
-    }
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setOpenFilters(false);
+  };
 
-    axios
-      .delete(`${SiteProps.urlbasev1}/empresas/${selectedRow.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      .then(() => {
-        setMessage({
-          open: true,
-          severity: "success",
-          text: "Empresa eliminada con éxito!",
-        });
-        reloadData();
-      })
-      .catch((error) => {
-        setMessage({
-          open: true,
-          severity: "error",
-          text: `Error al eliminar empresa: ${error.response?.data.message || error.message}`,
-        });
-      });
+  const handleClearFilters = () => {
+    const emptyFilters = {
+      tipoIdentificacionId: "",
+      identificacion: "",
+      nombre: "",
+      correo: "",
+      estadoId: "",
+    };
+    setTempFilters(emptyFilters);
+    setFilters(emptyFilters);
+    setOpenFilters(false);
   };
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
-      <h1>Gestión de Empresas</h1>
+      <SectionHeader title={t("empresa.title", "Gestión de Empresas")} />
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
+      <GridActionBar onAdd={handleAdd} onFilters={handleOpenFilters} />
+
       <FormEmpresa
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
+        personas={personas}
+        tiposIdentificacion={tiposIdentificacion}
         setMessage={setMessage}
-        reloadData={reloadData}
+        reloadData={handleEmpresaCreated}
         open={openForm}
         setOpen={setOpenForm}
-        methodName={methodName}
       />
 
-      <GridEmpresa
-        selectedRow={selectedRow}
-        setSelectedRow={setSelectedRow}
-        empresas={empresas}
-      />
+      <GridEmpresa refreshKey={gridRefreshKey} filters={filters} />
+
+      <Dialog open={openFilters} onClose={() => setOpenFilters(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t("common.actions.filters", "Filtros")}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 1 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>{t("empresa.grid.tipoIdentificacion", "Tipo de Identificación")}</InputLabel>
+              <Select
+                value={tempFilters.tipoIdentificacionId}
+                label={t("empresa.grid.tipoIdentificacion", "Tipo de Identificación")}
+                onChange={(e) => setTempFilters({ ...tempFilters, tipoIdentificacionId: e.target.value })}
+              >
+                <MenuItem value="">{t("common.labels.all", "Todos")}</MenuItem>
+                {tiposIdentificacion.map((tipo) => (
+                  <MenuItem key={tipo.id} value={tipo.id}>
+                    {tipo.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              size="small"
+              fullWidth
+              label={t("empresa.grid.identificacion", "No. de Identificación")}
+              value={tempFilters.identificacion}
+              onChange={(e) => setTempFilters({ ...tempFilters, identificacion: e.target.value })}
+            />
+
+            <TextField
+              size="small"
+              fullWidth
+              label={t("empresa.grid.nombre", "Nombre")}
+              value={tempFilters.nombre}
+              onChange={(e) => setTempFilters({ ...tempFilters, nombre: e.target.value })}
+            />
+
+            <TextField
+              size="small"
+              fullWidth
+              label={t("empresa.grid.correo", "Correo")}
+              value={tempFilters.correo}
+              onChange={(e) => setTempFilters({ ...tempFilters, correo: e.target.value })}
+            />
+
+            <FormControl fullWidth size="small">
+              <InputLabel>{t("empresa.grid.estado", "Estado")}</InputLabel>
+              <Select
+                value={tempFilters.estadoId}
+                label={t("empresa.grid.estado", "Estado")}
+                onChange={(e) => setTempFilters({ ...tempFilters, estadoId: e.target.value })}
+              >
+                <MenuItem value="">{t("common.labels.all", "Todos")}</MenuItem>
+                <MenuItem value={1}>{t("empresa.estado.activo", "Activo")}</MenuItem>
+                <MenuItem value={2}>{t("empresa.estado.inactivo", "Inactivo")}</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearFilters}>{t("common.actions.clear", "Limpiar")}</Button>
+          <Button variant="contained" onClick={handleApplyFilters}>
+            {t("common.actions.apply", "Aplicar")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
