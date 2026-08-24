@@ -277,17 +277,6 @@ export default function DetailEmpresa({ open, data, loading = false, error = "",
                           "& .MuiChip-icon": { color: "inherit" },
                         }}
                       />
-                      {data?.estadoNombre ? (
-                        <Chip
-                          label={data.estadoNombre}
-                          size="small"
-                          sx={{
-                            fontWeight: 500,
-                            color: darkGreen,
-                            backgroundColor: lighterGreen,
-                          }}
-                        />
-                      ) : null}
                     </Stack>
                   </Stack>
                 </Stack>
