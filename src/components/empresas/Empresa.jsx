@@ -54,6 +54,7 @@ export default function Empresa() {
   const [personas, setPersonas] = React.useState([]);
   const [tiposIdentificacion, setTiposIdentificacion] = React.useState([]);
   const [openForm, setOpenForm] = React.useState(false);
+  const [formMode, setFormMode] = React.useState("create");
   const [gridRefreshKey, setGridRefreshKey] = React.useState(0);
   
   const [openFilters, setOpenFilters] = React.useState(false);
@@ -104,6 +105,17 @@ export default function Empresa() {
    * Abre el formulario de registro de una nueva empresa.
    */
   const handleAdd = () => {
+    setFormMode("create");
+    setSelectedRow(null);
+    setOpenForm(true);
+  };
+
+  /**
+   * Abre el formulario para actualizar la empresa seleccionada.
+   */
+  const handleUpdate = () => {
+    if (!selectedRow) return;
+    setFormMode("edit");
     setOpenForm(true);
   };
 
@@ -160,8 +172,9 @@ export default function Empresa() {
 
       <GridActionBar
         onAdd={handleAdd}
+        onUpdate={handleUpdate}
         onFilters={handleOpenFilters}
-        canUpdate={false}
+        canUpdate={!!selectedRow}
         canDelete={false}
         extraActions={
           <Button
@@ -181,6 +194,8 @@ export default function Empresa() {
         reloadData={handleEmpresaCreated}
         open={openForm}
         setOpen={setOpenForm}
+        formMode={formMode}
+        selectedRow={selectedRow}
       />
 
       <GridEmpresa 
