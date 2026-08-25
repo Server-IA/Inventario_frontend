@@ -14,6 +14,7 @@
   },
   "form": {
     "registerTitle": "Registrar Empresa",
+    "editTitle": "Actualizar Empresa",
     "subtitle": "Completa el formulario.",
     "tipoIdentificacion": "Tipo de Identificación",
     "identificacion": "Número de Identificación",
@@ -25,8 +26,12 @@
     "personaId": "Persona Responsable",
     "personaSearch": "Buscar por nombre, apellido o identificación",
     "logoPreviewAlt": "Vista previa del logo",
+    "currentLogo": "Logo actual",
     "uploadLogo": "Subir Logo (PNG/JPG/SVG/WEBP)",
-    "file": "Archivo:"
+    "file": "Archivo:",
+    "validation": {
+      "personaRequired": "Debe seleccionar una Persona Responsable"
+    }
   },
   "grid": {
     "id": "ID",
@@ -58,6 +63,7 @@
     "selectToDelete": "Selecciona una fila para eliminar.",
     "logoError": "Corrige los errores del logo antes de guardar.",
     "logoSize": "El archivo supera el tamaño permitido de 2MB",
-    "logoFormat": "Formato no soportado, usa PNG o JPG"
+    "logoFormat": "Formato no soportado, usa PNG o JPG",
+    "loadError": "Error al cargar los datos de la empresa."
   }
 }
