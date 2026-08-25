@@ -185,14 +185,6 @@ export default function FormEmpresa({
     }
   };
 
-  const getBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -207,7 +199,7 @@ export default function FormEmpresa({
       personaId: Number(persona?.id),
     };
 
-    if (!empresaPayload.personaId) {
+    if (!empresaPayload.personaId && formMode === "create") {
       setMessage({
         open: true,
         severity: "warning",
@@ -220,21 +212,39 @@ export default function FormEmpresa({
 
     try {
       if (formMode === "edit" && selectedRow) {
-        empresaPayload.id = selectedRow.id;
-        empresaPayload.estadoId = selectedRow.estadoId; // Mantener el estado
+        // En edición, solo mandamos los campos permitidos. Eliminamos los no permitidos.
+        const updatePayload = {
+          identificacion: empresaPayload.identificacion,
+          nombre: empresaPayload.nombre,
+          correo: empresaPayload.correo,
+          celular: empresaPayload.celular,
+          contacto: empresaPayload.contacto,
+          descripcion: empresaPayload.descripcion,
+        };
         
-        // Si hay un logo nuevo en edición, lo convertimos a base64
+        // Si hay un logo nuevo en edición, lo mandamos como multipart
         if (logoFile) {
-          const b64 = await getBase64(logoFile);
-          empresaPayload.logo = b64;
-        } else if (logoPreview && logoPreview.startsWith("data:image")) {
-          // Si el logo no fue cambiado pero ya era base64 (viene del back), lo devolvemos
-          empresaPayload.logo = logoPreview;
-        }
+          const payloadFormData = new FormData();
+          payloadFormData.append(
+            "empresa",
+            new Blob([JSON.stringify(updatePayload)], { type: "application/json" })
+          );
+          payloadFormData.append("logo", logoFile);
 
-        await axios.put(`/v1/empresas/${selectedRow.id}`, empresaPayload, {
-          headers: { "Content-Type": "application/json" },
-        });
+          const resp = await axios.put(`/v1/empresas/${selectedRow.id}`, payloadFormData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+
+          // Avisar si el backend indica que el logo no se actualizó (dependiendo de su estructura)
+          if (resp.data && resp.data.logoActualizado === false) {
+             console.warn("Backend indica que el logo no se actualizó.");
+          }
+        } else {
+          // Si no hay logo nuevo, mandamos json plano
+          await axios.put(`/v1/empresas/${selectedRow.id}`, updatePayload, {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
 
         setMessage({
           open: true,
@@ -330,7 +340,7 @@ export default function FormEmpresa({
             value={formData.tipoIdentificacionId}
             onChange={handleChange}
             fullWidth
-            disabled={loadingData}
+            disabled={loadingData || formMode === "edit"}
           >
             {tiposIdentificacion.map((tipo) => (
               <MenuItem key={tipo.id} value={tipo.id}>
@@ -419,7 +429,7 @@ export default function FormEmpresa({
             getOptionLabel={(p) => `${p.nombre} ${p.apellido}`}
             value={persona}
             onChange={(event, newValue) => setPersona(newValue)}
-            disabled={loadingData}
+            disabled={loadingData || formMode === "edit"}
             filterOptions={(options, state) => {
               const input = (state.inputValue || "").trim().toLowerCase();
               if (!input) return options;
