@@ -180,35 +180,17 @@ export default function Empresa() {
 
   /**
    * Ejecuta el cambio de estado de la empresa seleccionada (Activar/Inactivar).
-   * Obtiene el detalle completo y envía PUT con el estadoId invertido.
    */
   const confirmToggleEstado = () => {
     if (!selectedRow) return;
     setToggling(true);
-    const nuevoEstado = isActive ? 2 : 1;
 
     axios
-      .get(`/v1/empresas/${selectedRow.id}`)
-      .then((res) => {
-        const data = res.data;
-        return axios.put(
-          `/v1/empresas/${selectedRow.id}`,
-          {
-            id: data.id,
-            nombre: data.nombre,
-            descripcion: data.descripcion,
-            estadoId: nuevoEstado,
-            celular: data.celular,
-            correo: data.correo,
-            contacto: data.contacto,
-            tipoIdentificacionId: data.tipoIdentificacionId,
-            personaId: data.personaResponsableId,
-            identificacion: data.identificacion,
-            logo: data.logo,
-          },
-          { headers: { "Content-Type": "application/json" } }
-        );
-      })
+      .patch(
+        `/v1/empresas/${selectedRow.id}/estado`,
+        { activo: !isActive },
+        { headers: { "Content-Type": "application/json" } }
+      )
       .then(() => {
         setMessage({
           open: true,
