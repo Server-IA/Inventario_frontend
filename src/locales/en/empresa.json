@@ -64,6 +64,15 @@
     "logoError": "Fix the logo errors before saving.",
     "logoSize": "The file exceeds the allowed size of 2MB",
     "logoFormat": "Unsupported format, use PNG or JPG",
-    "loadError": "Error loading company data."
+    "loadError": "Error loading company data.",
+    "inactivated": "Company inactivated successfully!",
+    "activated": "Company activated successfully!",
+    "toggleError": "Error changing status:"
+  },
+  "confirm": {
+    "inactivateTitle": "Inactivate company",
+    "activateTitle": "Activate company",
+    "inactivateBody": "Are you sure you want to inactivate the company «{{nombre}}»?",
+    "activateBody": "Are you sure you want to activate the company «{{nombre}}»?"
   }
 }

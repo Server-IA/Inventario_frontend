@@ -64,6 +64,15 @@
     "logoError": "Corrige los errores del logo antes de guardar.",
     "logoSize": "El archivo supera el tamaño permitido de 2MB",
     "logoFormat": "Formato no soportado, usa PNG o JPG",
-    "loadError": "Error al cargar los datos de la empresa."
+    "loadError": "Error al cargar los datos de la empresa.",
+    "inactivated": "Empresa inactivada con éxito!",
+    "activated": "Empresa activada con éxito!",
+    "toggleError": "Error al cambiar el estado:"
+  },
+  "confirm": {
+    "inactivateTitle": "Inactivar empresa",
+    "activateTitle": "Activar empresa",
+    "inactivateBody": "¿Está seguro de que desea inactivar la empresa «{{nombre}}»?",
+    "activateBody": "¿Está seguro de que desea activar la empresa «{{nombre}}»?"
   }
 }
