@@ -1,0 +1,69 @@
+{
+  "title": "Company Management",
+  "titleSingle": "Company",
+  "actions": {
+    "create": "Register",
+    "update": "Update",
+    "delete": "Delete",
+    "inactivate": "Inactivate",
+    "activate": "Activate"
+  },
+  "estado": {
+    "activo": "Active",
+    "inactivo": "Inactive"
+  },
+  "form": {
+    "registerTitle": "Register Company",
+    "editTitle": "Update Company",
+    "subtitle": "Complete the form.",
+    "tipoIdentificacion": "Identification Type",
+    "identificacion": "Identification Number",
+    "nombre": "Name",
+    "correo": "Email",
+    "celular": "Phone",
+    "contacto": "Contact",
+    "descripcion": "Description",
+    "personaId": "Responsible Person",
+    "personaSearch": "Search by name, last name or ID",
+    "logoPreviewAlt": "Logo preview",
+    "currentLogo": "Current logo",
+    "uploadLogo": "Upload Logo (PNG/JPG/SVG/WEBP)",
+    "file": "File:",
+    "validation": {
+      "personaRequired": "You must select a Responsible Person"
+    }
+  },
+  "grid": {
+    "id": "ID",
+    "nombre": "Name",
+    "identificacion": "Identification Number",
+    "correo": "Email",
+    "estado": "Status",
+    "celular": "Phone",
+    "contacto": "Contact",
+    "tipoIdentificacion": "Identification Type",
+    "persona": "Person",
+    "logo": "Logo",
+    "logoAlt": "logo",
+    "sinLogo": "No logo"
+  },
+  "detail": {
+    "title": "Company Detail",
+    "loadError": "Could not load detail.",
+    "personaResponsable": "Responsible Person",
+    "loading": "Loading..."
+  },
+  "messages": {
+    "created": "Company created successfully!",
+    "updated": "Company updated successfully!",
+    "deleted": "Company deleted successfully!",
+    "saveError": "Error saving company:",
+    "deleteError": "Error deleting company:",
+    "selectToUpdate": "Select a row to update.",
+    "selectToDelete": "Select a row to delete.",
+    "logoError": "Fix the logo errors before saving.",
+    "logoSize": "The file exceeds the allowed size of 2MB",
+    "logoFormat": "Unsupported format, use PNG or JPG",
+    "loadError": "Error loading company data."
+  }
+}

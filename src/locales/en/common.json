@@ -4,6 +4,7 @@
     "update": "Update",
     "delete": "Delete",
     "save": "Save",
+    "saving": "Saving...",
     "close": "Close",
     "cancel": "Cancel",
     "apply": "Apply",
@@ -12,7 +13,8 @@
     "viewDetail": "View detail",
     "viewPermissions": "View permissions",
     "remove": "Remove",
-    "addAssignment": "Add assignment"
+    "addAssignment": "Add assignment",
+    "search": "Search"
   },
   "labels": {
     "status": "Status",
