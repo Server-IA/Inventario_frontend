@@ -12,6 +12,7 @@ CONTROL DE CAMBIOS
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se ajusta Tooltip en botones|
 |            |         |                      | deshabilitados.             |
+| 2026-08-25 | 0.4.0   | Jeisson Sanchez      | Agregar prop showDelete     |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -61,6 +62,7 @@ export default function GridActionBar({
   hasActiveFilters = false,
   rightActions,
   labels,
+  showDelete = true,
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -290,18 +292,20 @@ export default function GridActionBar({
             </Button>
           </span>
         </Tooltip>
-        <Tooltip title={resolvedLabels.delete}>
-          <span>
-            <Button
-              onClick={onDelete}
-              startIcon={<DeleteOutlineIcon />}
-              disabled={!canDelete}
-              sx={deleteButtonSx}
-            >
-              {resolvedLabels.delete}
-            </Button>
-          </span>
-        </Tooltip>
+        {showDelete && (
+          <Tooltip title={resolvedLabels.delete}>
+            <span>
+              <Button
+                onClick={onDelete}
+                startIcon={<DeleteOutlineIcon />}
+                disabled={!canDelete}
+                sx={deleteButtonSx}
+              >
+                {resolvedLabels.delete}
+              </Button>
+            </span>
+          </Tooltip>
+        )}
       </Stack>
     </Stack>
   );
@@ -326,4 +330,5 @@ GridActionBar.propTypes = {
     filters: PropTypes.string,
     clear: PropTypes.string,
   }),
+  showDelete: PropTypes.bool,
 };
