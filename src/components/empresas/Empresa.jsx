@@ -10,6 +10,7 @@
  | 2026-08-16 | 0.5.1   | Jeisson Sanchez      | HU-043.3 Detalle empresa    |
  | 2026-08-16 | 0.5.2   | Jeisson Sanchez      | HU-043.4 Actualizar empresa |
  | 2026-08-16 | 0.5.3   | Jeisson Sanchez      | HU-043.5 Activar/Inactivar  |
+ | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | Ajustes de UX segun QA      |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -37,7 +38,7 @@ import SectionHeader from "../common/SectionHeader";
 import FormEmpresa from "./FormEmpresa";
 import GridEmpresa from "./GridEmpresa";
 import DetailEmpresa from "./DetailEmpresa";
-import { TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
+import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Stack } from "@mui/material";
 
 /**
  * @typedef {Object} SnackbarMessage
@@ -229,8 +230,9 @@ export default function Empresa() {
         onFilters={handleOpenFilters}
         canUpdate={!!selectedRow}
         canDelete={false}
+        showDelete={false}
         extraActions={
-          <>
+          <Stack direction="row" spacing={{ xs: 1, md: 2 }}>
             <Button
               onClick={handleView}
               startIcon={<VisibilityIcon />}
@@ -248,7 +250,7 @@ export default function Empresa() {
                 ? t("empresa.actions.inactivate", "Inactivar")
                 : t("empresa.actions.activate", "Activar")}
             </Button>
-          </>
+          </Stack>
         }
       />
 
