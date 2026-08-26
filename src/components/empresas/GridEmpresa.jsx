@@ -1,148 +1,141 @@
+/*=============================================================================
+ Nombre del archivo : GridEmpresa.jsx
+ Descripcion        : Grilla de listado de empresas (HU-043.2).
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-08-16 | 0.5.0   | Jeisson Sanchez      | HU-043.2 Listado empresas   |
+ | 2026-08-16 | 0.5.1   | Jeisson Sanchez      | QA: filtros flat + page 0-based |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 /**
- * GridEmpresa componente principal.
+ * Grilla de listado de empresas.
  * @module GridEmpresa
  * @component
  * @returns {JSX.Element}
  */
 
-import * as React from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import { SiteProps } from "../dashboard/SiteProps";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
+import axios from "../axiosConfig";
+import AppDataGrid from "../common/AppDataGrid";
+import { Box } from "@mui/material";
 
 /**
- * @typedef {Object} EmpresaRow
- * @property {number} id
- * @property {string} nombre
- * @property {string} descripcion
- * @property {number} estado
- * @property {string} celular
- * @property {string} correo
- * @property {string} contacto
- * @property {number} tipoIdentificacionId
- * @property {number} personaId
- * @property {string} identificacion
- * @property {string} logo // ✅ nuevo campo
- */
-
-/**
- * @typedef {Object} GridEmpresaProps
- * @property {EmpresaRow} selectedRow - La fila seleccionada actualmente.
- * @property {function} setSelectedRow - Función para establecer la fila seleccionada.
- * @property {EmpresaRow[]} empresas - Lista de empresas disponibles.
- */
-
-/**
- * Componente GridEmpresa para mostrar la tabla de empresas.
- * @param {GridEmpresaProps} props
+ * Componente GridEmpresa para mostrar el listado de empresas.
+ *
+ * Consume `GET /api/v1/empresas` con paginación (0-based) y filtros
+ * server-side mediante query params planos (nombre, identificacion,
+ * correo, tipoIdentificacionId, estadoId). Cada ítem expone `nombre`,
+ * `identificacion`, `correo`, `estadoNombre` y `tipoIdentificacionNombre`.
+ *
+ * @param {object} props Propiedades del componente.
+ * @param {number} [props.refreshKey] Contador que al incrementarse fuerza la
+ * recarga del listado (se usa tras registrar una empresa).
+ * @param {Object|null} [props.selectedRow] Fila seleccionada externamente.
+ * @param {function} [props.setSelectedRow] Setter para la selección externa.
  * @returns {JSX.Element}
  */
-export default function GridEmpresa(props) {
+export default function GridEmpresa({ refreshKey = 0, selectedRow, setSelectedRow, filters = {} }) {
+  const { t } = useTranslation();
   const [data, setData] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [rowCount, setRowCount] = React.useState(0);
-  const [sortModel, setSortModel] = React.useState([]);
-  const [filterModel, setFilterModel] = React.useState({ items: [] });
-
   const [paginationModel, setPaginationModel] = React.useState({
-    pageSize: 5,
+    size: 5,
     page: 0,
   });
 
   const columns = [
-    { field: 'id', headerName: 'ID', width: 90, type: 'number' },
-    { field: 'nombre', headerName: 'Nombre', width: 150, type: 'string' },
-    { field: 'descripcion', headerName: 'Descripción', width: 250, type: 'string' },
     {
-      field: 'estado',
-      headerName: 'Estado',
-      width: 100,
-      type: 'string',
-      valueGetter: (params) => params.row.estado === 1 ? "Activo" : "Inactivo"
+      field: "tipoIdentificacionNombre",
+      headerName: t("empresa.grid.tipoIdentificacion", "Tipo de Identificación"),
+      width: 190,
+      type: "string",
     },
-    { field: 'celular', headerName: 'Celular', width: 100, type: 'string' },
-    { field: 'correo', headerName: 'Correo', width: 150, type: 'string' },
-    { field: 'contacto', headerName: 'Contacto', width: 150, type: 'string' },
-    { field: 'tipoIdentificacionId', headerName: 'Tipo de Identificación', width: 150, type: 'number' },
-    { field: 'personaId', headerName: 'Persona', width: 100, type: 'number' },
-    { field: 'identificacion', headerName: 'No. de Identificación', width: 150, type: 'string' },
-
-    // ✅ NUEVO: columna para el logo
     {
-      field: 'logo',
-      headerName: 'Logo',
-      width: 100,
-      renderCell: (params) =>
-        params.value ? (
-          <img
-            src={params.value}
-            alt="logo"
-            style={{ maxHeight: 40, maxWidth: "100%", objectFit: "contain" }}
-          />
-        ) : (
-          "Sin logo"
-        ),
-    }
+      field: "identificacion",
+      headerName: t("empresa.grid.identificacion", "No. de Identificación"),
+      width: 180,
+      type: "string",
+    },
+    {
+      field: "nombre",
+      headerName: t("empresa.grid.nombre", "Nombre"),
+      flex: 1,
+      minWidth: 200,
+      type: "string",
+    },
+    {
+      field: "correo",
+      headerName: t("empresa.grid.correo", "Correo"),
+      flex: 1,
+      minWidth: 200,
+      type: "string",
+    },
+    {
+      field: "estadoNombre",
+      headerName: t("empresa.grid.estado", "Estado"),
+      width: 120,
+      type: "string",
+    },
   ];
 
-  const fetchData = async (page, pageSize, sortModel, filterModel) => {
-    setLoading(true);
-    try {
-      const baseURL = `${SiteProps.urlbasev1}/empresas`;
+  const fetchData = React.useCallback(
+    async (page, size) => {
+      setLoading(true);
+      try {
+        const params = {
+          page,
+          size,
+          sortBy: "id,desc",
+        };
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params[key] = value;
+          }
+        });
 
-      const filterParams = filterModel.items.length > 0 ? {
-        [filterModel.items[0]?.columnField]: filterModel.items[0]?.value
-      } : {};
-
-      const response = await axios.get(baseURL, {
-        params: {
-          page: page + 1,
-          size: pageSize,
-          sortBy: sortModel[0]?.field || '',
-          sortDirection: sortModel[0]?.sort || 'asc',
-          ...filterParams
-        },
-      });
-
-      setData(response.data?.data || []);
-      setRowCount(response.data?.header?.totalElements || 0);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const response = await axios.get("/v1/empresas", { params });
+        setData(response.data?.data || []);
+        setRowCount(response.data?.header?.totalElements || 0);
+      } catch (error) {
+        console.error("Error al consultar empresas:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters]
+  );
 
   React.useEffect(() => {
-    fetchData(paginationModel.page, paginationModel.pageSize, sortModel, filterModel);
-  }, [paginationModel, sortModel, filterModel]);
-
-  const handlePaginationModelChange = (model) => {
-    setPaginationModel(model);
-    fetchData(model.page, model.pageSize, sortModel, filterModel);
-  };
+    fetchData(paginationModel.page, paginationModel.size);
+  }, [fetchData, paginationModel, refreshKey]);
 
   return (
-    <div style={{ height: 600, width: '100%' }}>
-      <DataGrid
-        rows={data || []}
+    <Box sx={{ width: "100%", marginTop: 2, minHeight: 400 }}>
+      <AppDataGrid
+        rows={data}
         columns={columns}
-        rowCount={rowCount}
         loading={loading}
-        paginationMode="server"
+        rowCount={rowCount}
         paginationModel={paginationModel}
-        onPaginationModelChange={handlePaginationModelChange}
-        sortingMode="server"
-        onSortModelChange={(model) => setSortModel(model)}
-        filterMode="server"
-        onFilterModelChange={(model) => setFilterModel(model)}
+        setPaginationModel={setPaginationModel}
         pageSizeOptions={[5, 10, 20, 50]}
-        onRowSelectionModelChange={(id) => {
-          const selectedIDs = new Set(id);
-          const selectedRowData = data.filter((row) => selectedIDs.has(row.id));
-          props.setSelectedRow(selectedRowData[0]);
-        }}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        autoHeight
       />
-    </div>
+    </Box>
   );
 }
+
+GridEmpresa.propTypes = {
+  refreshKey: PropTypes.number,
+  selectedRow: PropTypes.object,
+  setSelectedRow: PropTypes.func,
+  filters: PropTypes.object,
+};

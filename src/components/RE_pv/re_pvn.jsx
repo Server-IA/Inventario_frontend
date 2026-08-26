@@ -19,14 +19,19 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  IconButton, Paper, Popover, LinearProgress, Chip
+  IconButton, Paper, Popover, LinearProgress, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, Divider
 } from "@mui/material";
 import {
   Search as SearchIcon,
   CalendarToday as CalendarIcon,
   Refresh as RefreshIcon,
   Warning as WarningIcon,
-  ErrorOutline as ErrorOutlineIcon
+  ErrorOutline as ErrorOutlineIcon,
+  Close as CloseIcon,
+  Download as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableView as ExcelIcon
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -97,7 +102,7 @@ export default function RE_productoVencimiento() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData: fetchFiltrosIniciales,
+    fetchFiltrosIniciales: fetchFiltrosIniciales,
     preloadData,
     loading: catLoading,
     error: catError,
@@ -264,9 +269,9 @@ export default function RE_productoVencimiento() {
       const lista = asArray(res.data?.resultados || res.data);
       setResultados(lista);
       if (lista.length === 0) {
-        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResults", "No se encontraron productos.") });
+        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResultsEmpty", "No se encontraron productos.") });
       } else {
-        setMessage({ open: true, severity: "info", text: `${lista.length} ${t("vencimiento.messages.found", "resultado(s) encontrado(s).")}` });
+        setMessage({ open: true, severity: "info", text: t("vencimiento.messages.noResults", { count: lista.length, defaultValue: `${lista.length} resultado(s) encontrado(s).` }) });
       }
     } catch (error) {
       console.error(error);
@@ -281,6 +286,60 @@ export default function RE_productoVencimiento() {
   };
 
 
+
+  const [modalExportOpen, setModalExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const generarReporte = async (formato) => {
+    if (!validarFiltros()) return;
+    setExporting(true);
+    try {
+      const payload = {
+        paisId:         toInt(ubi.pais_id),
+        departamentoId: toInt(ubi.departamento_id),
+        municipioId:    toInt(ubi.municipio_id),
+        sedeId:         toInt(ubi.sede_id),
+        bloqueId:       toInt(ubi.bloque_id),
+        espacioId:      toInt(ubi.espacio_id),
+        almacenId:      toInt(ubi.almacen_id),
+        categoriaId:    toInt(filtrosProd.categoria_id),
+        productoId:     toInt(filtrosProd.producto_id),
+        presentacionId: toInt(filtrosProd.presentacion_id),
+        fechaInicio: toLocal(formReporte.fecha_inicio),
+        fechaFin: toLocal(formReporte.fecha_fin),
+        estado: filtrosProd.estado || "TODOS"
+      };
+
+      const res = await axios.post("/v2/report/vencimiento-producto/exportar", payload, {
+        ...headers,
+        params: { formato: formato },
+        responseType: "blob"
+      });
+      
+      const blob = new Blob([res.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Reporte_Vencimiento_${formato}.${formato.toLowerCase() === 'excel' ? 'xlsx' : 'pdf'}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      const successMsg = formato.toLowerCase() === 'excel' ? t("vencimiento.messages.excelSuccess", "Excel descargado exitosamente.") : t("vencimiento.messages.pdfSuccess", "PDF generado exitosamente.");
+      setMessage({ open: true, severity: "success", text: successMsg });
+    } catch (error) {
+      console.error(error);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: t("vencimiento.messages.exportError", "Error al exportar reporte.")
+      });
+    } finally {
+      setExporting(false);
+      setModalExportOpen(false);
+    }
+  };
 
   const columns = useMemo(() => [
     { field: 'kardexItemId', headerName: t("vencimiento.grid.id", "ID"), width: 80 },
@@ -451,9 +510,9 @@ export default function RE_productoVencimiento() {
                 <FormControl size="small" fullWidth>
                   <InputLabel>{t("vencimiento.filters.status", "Estado")}</InputLabel>
                   <Select value={filtrosProd.estado || ""} label={t("vencimiento.filters.status", "Estado")} onChange={handleProdChange("estado")}>
-                    <MenuItem value="TODOS">{t("vencimiento.filters.todos", "Todos")}</MenuItem>
-                    <MenuItem value="PROXIMO_A_VENCER">{t("vencimiento.filters.proximo", "Próximo a Vencer")}</MenuItem>
-                    <MenuItem value="VENCIDO">{t("vencimiento.filters.vencido", "Vencido")}</MenuItem>
+                    <MenuItem value="TODOS">{t("vencimiento.statusOptions.todos", "Todos")}</MenuItem>
+                    <MenuItem value="PROXIMO_A_VENCER">{t("vencimiento.statusOptions.proximo", "Próximo a Vencer")}</MenuItem>
+                    <MenuItem value="VENCIDO">{t("vencimiento.statusOptions.vencido", "Vencido")}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -560,6 +619,15 @@ export default function RE_productoVencimiento() {
           >
             {t("common.actions.search", "Buscar")}
           </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            startIcon={<DownloadIcon />} 
+            onClick={() => setModalExportOpen(true)}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("vencimiento.actions.generate", "Generar Reporte")}
+          </Button>
         </Stack>
       </Box>
 
@@ -573,6 +641,52 @@ export default function RE_productoVencimiento() {
           getRowId={(row) => row.kardexItemId ?? row.id}
         />
       </Box>
+
+      <Dialog open={modalExportOpen} onClose={() => !exporting && setModalExportOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 }}}>
+        <DialogTitle sx={{ fontWeight: 700, textAlign: "center", pb: 1 }}>
+          {t("vencimiento.modal.exportTitle", "Generar Reporte")}
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: "center", pb: 2 }}>
+          {exporting ? (
+            <Box sx={{ py: 3 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>{t("vencimiento.modal.exporting", "Generando documento...")}</Typography>
+              <LinearProgress color="success" />
+            </Box>
+          ) : (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {t("vencimiento.modal.exportSub", "Seleccione el formato.")}
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button variant="outlined" color="error" size="large" onClick={() => generarReporte("PDF")} sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}>
+                  <PdfIcon fontSize="large" />
+                  PDF
+                </Button>
+                <Button variant="outlined" color="success" size="large" onClick={() => generarReporte("EXCEL")} sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}>
+                  <ExcelIcon fontSize="large" />
+                  Excel
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        {!exporting && (
+          <DialogActions sx={{ justifyContent: "center", pt: 0, pb: 2 }}>
+            <Button onClick={() => setModalExportOpen(false)} color="inherit" sx={{ textTransform: "none" }}>{t("common.actions.cancel", "Cancelar")}</Button>
+          </DialogActions>
+        )}
+      </Dialog>
+
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {t("vencimiento.modal.previewTitle", "Vista previa")}
+          <IconButton onClick={() => setPreviewOpen(false)}><CloseIcon /></IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          {previewUrl && <iframe src={previewUrl} width="100%" height="100%" title="PDF" style={{ border: "none" }} />}
+        </DialogContent>
+      </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
