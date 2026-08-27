@@ -1166,7 +1166,6 @@ export default function Usuario() {
         roles={roleFilterOptions}
         empresas={companyFilterOptions}
         estados={statusFilterOptions}
-        isAdmin={isAdmin}
         companyLocked={!isAdmin}
       />
 

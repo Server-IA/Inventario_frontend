@@ -426,6 +426,5 @@ UserFiltersDialog.propTypes = {
   roles: PropTypes.array,
   empresas: PropTypes.array,
   estados: PropTypes.array,
-  isAdmin: PropTypes.bool,
   companyLocked: PropTypes.bool,
 };
