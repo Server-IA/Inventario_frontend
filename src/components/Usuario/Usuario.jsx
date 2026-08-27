@@ -598,7 +598,9 @@ export default function Usuario() {
         ...(String(filters.estadoId ?? "").trim()
           ? { estadoId: Number(filters.estadoId) }
           : {}),
-        ...(!isAdmin && String(filters.empresaId ?? "").trim()
+        // El backend permite filtrar por empresa a ADMINISTRADOR_SISTEMA
+        // (lectura global multiempresa) y a Admin Empresa (tenant forzado).
+        ...(String(filters.empresaId ?? "").trim()
           ? { empresaId: Number(filters.empresaId) }
           : {}),
       };
@@ -620,9 +622,12 @@ export default function Usuario() {
           apellido: a.apellido ?? "",
           celular: a.celular ?? "",
           rolPreferido: getPreferredRoleLabel(a),
-          estadoNombre: a.estadoNombre ?? "",
+          // estadoContexto: el backend devuelve el estado correcto segun el rol
+          // (Admin Sistema -> estado global; Admin Empresa -> estado de la
+          // asignacion de su tenant). Se usa con fallback al estado global.
+          estadoNombre: a.estadoContextoNombre ?? a.estadoNombre ?? "",
           empresaNombre: getCompanyLabel(a),
-        estadoId: normalizeStatusId(a.estadoNombre ?? a.estadoId),
+          estadoId: normalizeStatusId(a.estadoContextoId ?? a.estadoId),
           preferredAssignment,
           raw: a,
         };

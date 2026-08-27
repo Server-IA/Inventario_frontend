@@ -53,7 +53,8 @@
   },
   "actions": {
     "activate": "Activate",
-    "inactivate": "Inactivate"
+    "inactivate": "Inactivate",
+    "inactivateAssignment": "Inactivate assignment"
   },
   "statusLabels": {
     "active": "Active",
