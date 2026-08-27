@@ -51,7 +51,6 @@ export default function UserFiltersDialog({
   roles = [],
   empresas = [],
   estados = [],
-  isAdmin = false,
   companyLocked = false,
 }) {
   const { t } = useTranslation();
@@ -316,36 +315,34 @@ export default function UserFiltersDialog({
                       ))}
                     </TextField>
                   </Grid>
-                  {!isAdmin ? (
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label={t("usuario.form.fields.company")}
-                        value={values.empresaId ?? ""}
-                        onChange={handleFieldChange("empresaId")}
-                        disabled={companyLocked}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <BusinessOutlinedIcon
-                                fontSize="small"
-                                sx={{ color: alpha(darkGreen, 0.7) }}
-                              />
-                            </InputAdornment>
-                          ),
-                        }}
-                      >
-                        <MenuItem value="">{t("common.labels.all")}</MenuItem>
-                        {empresas.map((item) => (
-                          <MenuItem key={item.value} value={item.value}>
-                            {item.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-                  ) : null}
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      select
+                      fullWidth
+                      label={t("usuario.form.fields.company")}
+                      value={values.empresaId ?? ""}
+                      onChange={handleFieldChange("empresaId")}
+                      disabled={companyLocked}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <BusinessOutlinedIcon
+                              fontSize="small"
+                              sx={{ color: alpha(darkGreen, 0.7) }}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                    >
+                      <MenuItem value="">{t("common.labels.all")}</MenuItem>
+                      {empresas.map((item) => (
+                        <MenuItem key={item.value} value={item.value}>
+                          {item.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
                 </Grid>
               </Stack>
             </CardContent>

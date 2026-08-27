@@ -359,19 +359,21 @@ const getUserStatusMeta = (statusName) => {
     };
   }
 
+  // OJO: "inactivo" contiene "activo" como subcadena; el chequeo de inactivo
+  // debe ir ANTES del de activo para no clasificar estados inactivos como activos.
+  if (normalized.includes("inactivo") || normalized.includes("inactive") || normalized.includes("desactivado") || normalized.includes("disabled")) {
+    return {
+      text: "#B3261E",
+      background: "rgba(211,47,47,0.10)",
+      border: "rgba(211,47,47,0.18)",
+    };
+  }
+
   if (normalized.includes("activo") || normalized.includes("active")) {
     return {
       text: "#1B5E20",
       background: "rgba(46,125,50,0.10)",
       border: "rgba(46,125,50,0.18)",
-    };
-  }
-
-  if (normalized.includes("inactivo") || normalized.includes("inactive")) {
-    return {
-      text: "#B3261E",
-      background: "rgba(211,47,47,0.10)",
-      border: "rgba(211,47,47,0.18)",
     };
   }
 
@@ -419,13 +421,8 @@ const resolveUserStatusTranslationKey = (statusName) => {
     return "usuario.statusLabels.expiredPassword";
   }
 
-  if (
-    normalized.includes("activo") ||
-    normalized.includes("active")
-  ) {
-    return "usuario.statusLabels.active";
-  }
-
+  // OJO: "inactivo" contiene "activo" como subcadena; el chequeo de inactivo
+  // debe ir ANTES del de activo para no traducir estados inactivos como activos.
   if (
     normalized.includes("inactivo") ||
     normalized.includes("inactive") ||
@@ -433,6 +430,13 @@ const resolveUserStatusTranslationKey = (statusName) => {
     normalized.includes("disabled")
   ) {
     return "usuario.statusLabels.inactive";
+  }
+
+  if (
+    normalized.includes("activo") ||
+    normalized.includes("active")
+  ) {
+    return "usuario.statusLabels.active";
   }
 
   if (normalized.includes("pendiente") || normalized.includes("pending")) {
@@ -726,9 +730,11 @@ export default function Usuario() {
       apellido: String(filterDraft.apellido ?? "").trim(),
       rolId: String(filterDraft.rolId ?? "").trim(),
       estadoId: String(filterDraft.estadoId ?? "").trim(),
-      empresaId: isAdmin
-        ? ""
-        : String(filterDraft.empresaId ?? filters.empresaId ?? empresaIdOwn ?? ""),
+      // Admin Sistema puede filtrar por cualquier empresa (lectura global);
+      // Admin Empresa conserva su tenant (empresaIdOwn).
+      empresaId: String(
+        filterDraft.empresaId ?? filters.empresaId ?? (isAdmin ? "" : empresaIdOwn ?? "")
+      ).trim(),
     });
     setOpenFilters(false);
     setPage(0);
