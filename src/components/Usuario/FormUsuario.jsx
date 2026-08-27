@@ -1477,7 +1477,11 @@ export default function FormUsuario({
                                         startIcon={<BlockOutlinedIcon />}
                                         sx={{ whiteSpace: "nowrap" }}
                                       >
-                                        {t("usuario.actions.inactivateAssignment")}
+                                        {t(
+                                          mode === "edit"
+                                            ? "usuario.actions.inactivateAssignment"
+                                            : "usuario.actions.removeAssignment"
+                                        )}
                                       </Button>
                                     </Stack>
                                   </Stack>
