@@ -53,7 +53,9 @@
   },
   "actions": {
     "activate": "Activate",
-    "inactivate": "Inactivate"
+    "inactivate": "Inactivate",
+    "inactivateAssignment": "Inactivate assignment",
+    "removeAssignment": "Remove"
   },
   "statusDialog": {
     "activateTitle": "Activate user",

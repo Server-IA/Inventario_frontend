@@ -395,7 +395,14 @@ const getUserStatusMeta = (statusName) => {
     };
   }
 
-  if (normalized.includes("inactivo") || normalized.includes("inactive")) {
+  // OJO: "inactivo" contiene "activo" como subcadena; el chequeo de inactivo
+  // debe ir ANTES del de activo para no clasificar estados inactivos como activos.
+  if (
+    normalized.includes("inactivo") ||
+    normalized.includes("inactive") ||
+    normalized.includes("desactivado") ||
+    normalized.includes("disabled")
+  ) {
     return {
       text: "#B3261E",
       background: "rgba(211,47,47,0.10)",
@@ -455,6 +462,8 @@ const resolveUserStatusTranslationKey = (statusName) => {
     return "usuario.statusLabels.expiredPassword";
   }
 
+  // OJO: "inactivo" contiene "activo" como subcadena; el chequeo de inactivo
+  // debe ir ANTES del de activo para no traducir estados inactivos como activos.
   if (
     normalized.includes("inactivo") ||
     normalized.includes("inactive") ||
@@ -644,7 +653,9 @@ export default function Usuario() {
         ...(String(filters.estadoId ?? "").trim()
           ? { estadoId: Number(filters.estadoId) }
           : {}),
-        ...(!isAdmin && String(filters.empresaId ?? "").trim()
+        // El backend permite filtrar por empresa a ADMINISTRADOR_SISTEMA
+        // (lectura global multiempresa) y a Admin Empresa (tenant forzado).
+        ...(String(filters.empresaId ?? "").trim()
           ? { empresaId: Number(filters.empresaId) }
           : {}),
       };
@@ -666,9 +677,12 @@ export default function Usuario() {
           apellido: a.apellido ?? "",
           celular: a.celular ?? "",
           rolPreferido: getPreferredRoleLabel(a),
-          estadoNombre: a.estadoNombre ?? "",
+          // estadoContexto: el backend devuelve el estado correcto segun el rol
+          // (Admin Sistema -> estado global; Admin Empresa -> estado de la
+          // asignacion de su tenant). Se usa con fallback al estado global.
+          estadoNombre: a.estadoContextoNombre ?? a.estadoNombre ?? "",
           empresaNombre: getCompanyLabel(a),
-        estadoId: normalizeStatusId(a.estadoNombre ?? a.estadoId),
+          estadoId: normalizeStatusId(a.estadoContextoId ?? a.estadoId),
           preferredAssignment,
           raw: a,
         };
@@ -767,9 +781,11 @@ export default function Usuario() {
       apellido: String(filterDraft.apellido ?? "").trim(),
       rolId: String(filterDraft.rolId ?? "").trim(),
       estadoId: String(filterDraft.estadoId ?? "").trim(),
-      empresaId: isAdmin
-        ? ""
-        : String(filterDraft.empresaId ?? filters.empresaId ?? empresaIdOwn ?? ""),
+      // Admin Sistema puede filtrar por cualquier empresa (lectura global);
+      // Admin Empresa conserva su tenant (empresaIdOwn).
+      empresaId: String(
+        filterDraft.empresaId ?? filters.empresaId ?? (isAdmin ? "" : empresaIdOwn ?? "")
+      ).trim(),
     });
     setOpenFilters(false);
     setPage(0);
@@ -1222,7 +1238,6 @@ export default function Usuario() {
         roles={roleFilterOptions}
         empresas={companyFilterOptions}
         estados={statusFilterOptions}
-        isAdmin={isAdmin}
         companyLocked={!isAdmin}
       />
 

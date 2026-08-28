@@ -51,7 +51,7 @@ import PermIdentityOutlinedIcon from "@mui/icons-material/PermIdentityOutlined";
 import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
@@ -1474,10 +1474,14 @@ export default function FormUsuario({
                                       <Button
                                         color="error"
                                         onClick={() => removeAssign(idx)}
-                                        startIcon={<DeleteOutlineIcon />}
+                                        startIcon={<BlockOutlinedIcon />}
                                         sx={{ whiteSpace: "nowrap" }}
                                       >
-                                        {t("common.actions.delete")}
+                                        {t(
+                                          mode === "edit"
+                                            ? "usuario.actions.inactivateAssignment"
+                                            : "usuario.actions.removeAssignment"
+                                        )}
                                       </Button>
                                     </Stack>
                                   </Stack>
