@@ -91,6 +91,8 @@ export default function UserStatusConfirmDialog({
   activating = false,
   submitting = false,
   error = "",
+  tenantScoped = false,
+  contextCompanyName = "",
   onClose,
   onConfirm,
 }) {
@@ -219,9 +221,18 @@ export default function UserStatusConfirmDialog({
                   </Typography>
                   <Typography variant="body2" sx={{ color: darkGreen }}>
                     {activating
-                      ? t("usuario.statusDialog.activateDescription")
-                      : t("usuario.statusDialog.inactivateDescription")}
+                      ? tenantScoped
+                        ? t("usuario.statusDialog.activateTenantDescription")
+                        : t("usuario.statusDialog.activateDescription")
+                      : tenantScoped
+                        ? t("usuario.statusDialog.inactivateTenantDescription")
+                        : t("usuario.statusDialog.inactivateDescription")}
                   </Typography>
+                  {tenantScoped ? (
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: darkGreen }}>
+                      {t("usuario.statusDialog.tenantScope", { empresa: contextCompanyName || "-" })}
+                    </Typography>
+                  ) : null}
                   <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                     <Chip
                       icon={actionIcon}
@@ -396,6 +407,8 @@ UserStatusConfirmDialog.propTypes = {
   activating: PropTypes.bool,
   submitting: PropTypes.bool,
   error: PropTypes.string,
+  tenantScoped: PropTypes.bool,
+  contextCompanyName: PropTypes.string,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
 };

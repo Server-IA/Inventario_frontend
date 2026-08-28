@@ -60,8 +60,11 @@
   "statusDialog": {
     "activateTitle": "Activate user",
     "inactivateTitle": "Inactivate user",
-    "activateDescription": "Confirm that you want to reactivate this user to restore access to the application.",
+    "activateDescription": "Confirm that you want to reactivate this user to restore their access to the application.",
     "inactivateDescription": "Confirm that you want to inactivate this user. The record will remain visible in the list.",
+    "activateTenantDescription": "Confirm that you want to reactivate this user's access only in the current company.",
+    "inactivateTenantDescription": "Confirm that you want to inactivate this user's access only in the current company.",
+    "tenantScope": "Action limited to company: {{empresa}}",
     "userSectionTitle": "Selected user",
     "userName": "Full name",
     "userEmail": "Login email",

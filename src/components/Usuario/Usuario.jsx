@@ -295,9 +295,12 @@ const resolveBackendMessage = (payload) => {
   if (!payload || typeof payload !== "object") return "";
 
   return (
+    // RFC 7807 / ProblemDetail: detail explica la regla de negocio fallida.
+    // Debe prevalecer sobre message genérico cuando ambos están presentes.
+    payload?.detail ??
     payload?.message ??
     payload?.mensaje ??
-    payload?.detail ??
+    payload?.data?.detail ??
     payload?.data?.message ??
     payload?.data?.mensaje ??
     ""
@@ -615,10 +618,12 @@ export default function Usuario() {
   );
 
   const selectedRowStatusId = normalizeStatusId(
-    selectedRow?.raw?.estadoNombre ??
+    selectedRow?.raw?.estadoContextoId ??
+      selectedRow?.raw?.estadoContextoNombre ??
+      selectedRow?.estadoId ??
       selectedRow?.estadoNombre ??
       selectedRow?.raw?.estadoId ??
-      selectedRow?.estadoId
+      selectedRow?.raw?.estadoNombre
   );
   const selectedRowIsInactive = selectedRowStatusId === 2;
   const selectedRowBelongsToContextCompany = belongsToContextCompany(
@@ -987,11 +992,7 @@ export default function Usuario() {
     setStatusDialogError("");
 
     try {
-      if (activating) {
-        await axios.post(`/v1/usuarios/${requestId}/activar`);
-      } else {
-        await axios.delete(`/v1/usuarios/${requestId}`);
-      }
+      await axios.patch(`/v1/usuarios/${requestId}/estado`, { activo: activating });
 
       setOpenStatusDialog(false);
       await loadData();
@@ -1004,7 +1005,7 @@ export default function Usuario() {
       });
     } catch (err) {
       setStatusDialogError(
-        err?.response?.data?.message ??
+        resolveBackendMessage(err?.response?.data) ||
           (activating
             ? t("usuario.messages.cannotActivate")
             : t("usuario.messages.cannotInactivate"))
@@ -1224,6 +1225,15 @@ export default function Usuario() {
         activating={selectedRowIsInactive}
         submitting={statusSubmitting}
         error={statusDialogError}
+        tenantScoped={isCompanyAdmin && !isAdmin}
+        contextCompanyName={
+          localStorage.getItem("empresaNombre") ||
+          getAssignments(selectedRow?.raw ?? selectedRow).find(
+            (assignment) => Number(assignment?.empresaId) === Number(empresaIdOwn)
+          )?.empresaNombre ||
+          selectedRow?.empresaNombre ||
+          ""
+        }
         onClose={handleCloseStatusDialog}
         onConfirm={handleConfirmStatusChange}
       />
