@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 
 const ThemeToggleContext = createContext();
@@ -41,6 +42,11 @@ export const ThemeToggleProvider = ({ children }) => {
           },
         },
         components: {
+          MuiModal: {
+            defaultProps: {
+              disableScrollLock: true,
+            },
+          },
           MuiAppBar: {
             styleOverrides: {
               root: {
@@ -140,4 +146,8 @@ MuiDataGrid: {
       <ThemeProvider theme={theme}>{children}</ThemeProvider>
     </ThemeToggleContext.Provider>
   );
+};
+
+ThemeToggleProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };

@@ -8,6 +8,7 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.                         |
 | 2026-06-03 | 0.4.0   | Cesar Medina         | Se documenta y ajusta detalle visual del modal|
+| 2026-06-29 | 0.4.0   | Cesar Medina         | Se corrige el estado visible del encabezado.  |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -71,6 +72,67 @@ const formatDateTime = (value, language) => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+};
+
+/**
+ * Resuelve la presentación visual del estado del usuario o de una asignación.
+ *
+ * Registro 2026-06-10: usa el estado real informado por el backend para evitar
+ * que el encabezado del detalle muestre "Inactivo" cuando no corresponde.
+ *
+ * @param {object} params Parámetros del estado.
+ * @param {string} [params.statusName] Nombre visible del estado.
+ * @param {number|string} [params.statusId] Identificador del estado.
+ * @param {Function} params.t Función de traducción.
+ * @param {object} palette Paleta del tema.
+ * @param {string} darkGreen Tono principal del texto.
+ * @param {string} green Tono principal de acento.
+ * @returns {{ label: string, color: string, backgroundColor: string, borderColor: string }}
+ */
+const getStatusVisuals = ({ statusName, statusId, t }, palette, darkGreen, green) => {
+  const normalizedName = String(statusName ?? "").trim();
+  const normalizedLower = normalizedName.toLowerCase();
+  const fallbackActive =
+    statusId === 1 ||
+    statusId === "1" ||
+    normalizedLower === "activo" ||
+    normalizedLower === "active" ||
+    normalizedLower === "activa";
+
+  const label = normalizedName || (fallbackActive ? t("common.labels.active") : t("common.labels.inactive"));
+
+  if (
+    normalizedLower.includes("inactivo") ||
+    normalizedLower.includes("inactive") ||
+    normalizedLower.includes("rechaz")
+  ) {
+    return {
+      label,
+      color: palette.error.dark,
+      backgroundColor: alpha(palette.error.main, 0.12),
+      borderColor: alpha(palette.error.main, 0.18),
+    };
+  }
+
+  if (
+    normalizedLower.includes("pendiente") ||
+    normalizedLower.includes("pending") ||
+    normalizedLower.includes("verific")
+  ) {
+    return {
+      label,
+      color: palette.warning.dark,
+      backgroundColor: alpha(palette.warning.main, 0.16),
+      borderColor: alpha(palette.warning.main, 0.24),
+    };
+  }
+
+  return {
+    label,
+    color: darkGreen,
+    backgroundColor: alpha(green, 0.14),
+    borderColor: alpha(green, 0.18),
+  };
 };
 
 /**
@@ -204,8 +266,6 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
   const asignaciones = Array.isArray(data?.asignaciones) ? data.asignaciones : [];
   const documentValue = data?.identificacion ?? data?.documento ?? "";
   const fullName = [data?.nombre ?? firstName, data?.apellido ?? lastName].filter(Boolean).join(" ");
-  const isActive = Number(data?.estadoId ?? 1) === 1;
-  const statusLabel = isActive ? t("common.labels.active") : t("common.labels.inactive");
   const darkGreen = theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
   const lightGreen = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.24) : "#E7F6F7";
@@ -218,6 +278,16 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
   const subtleDivider = alpha(darkGreen, 0.14);
   const softShadow = `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`;
   const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const userStatus = getStatusVisuals(
+    {
+      statusName: data?.estadoNombre,
+      statusId: data?.estadoId,
+      t,
+    },
+    theme.palette,
+    darkGreen,
+    green
+  );
 
   return (
     <Dialog
@@ -338,17 +408,13 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
                     <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                       <Chip
                         icon={<CheckCircleOutlineIcon />}
-                        label={statusLabel}
+                        label={userStatus.label}
                         size="small"
                         sx={{
                           fontWeight: 700,
-                          color: isActive ? darkGreen : theme.palette.error.dark,
-                          backgroundColor: isActive
-                            ? alpha(green, 0.14)
-                            : alpha(theme.palette.error.main, 0.12),
-                          border: isActive
-                            ? `1px solid ${alpha(green, 0.18)}`
-                            : `1px solid ${alpha(theme.palette.error.main, 0.18)}`,
+                          color: userStatus.color,
+                          backgroundColor: userStatus.backgroundColor,
+                          border: `1px solid ${userStatus.borderColor}`,
                           "& .MuiChip-icon": {
                             color: "inherit",
                           },

@@ -1,20 +1,31 @@
 {
   "title": "User Management",
   "columns": {
-    "name": "Name",
-    "email": "Email",
-    "role": "Role",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "username": "Email",
+    "phone": "Phone",
+    "preferredRole": "Preferred role",
     "status": "Status",
     "company": "Company"
   },
   "messages": {
+    "activateSuccess": "User activated successfully.",
+    "inactivateSuccess": "User inactivated successfully.",
+    "confirmActivate": "Are you sure you want to activate this user again?",
     "confirmInactivate": "Are you sure you want to inactivate this user? It must remain visible.",
+    "cannotActivate": "The user could not be activated.",
     "cannotInactivate": "User could not be inactivated",
     "loadError": "Error loading users",
+    "listAccessDenied": "You do not have permission to view the user list.",
+    "assignmentActionUnavailable": "This action requires assignment data not available in the current list response.",
+    "statusActionRestrictedByRole": "Only a System Administrator or an in-context Company Administrator can activate or inactivate users from this module.",
+    "statusActionRestrictedByCompany": "You cannot activate or inactivate users that do not belong to your company.",
     "createSuccess": "User created successfully.",
     "updateSuccess": "User updated successfully.",
     "detailLoadError": "The user detail could not be loaded.",
-    "detailAccessDenied": "You do not have permission to view this user's detail."
+    "detailAccessDenied": "You do not have permission to view this user's detail.",
+    "updateAccessDenied": "You do not have permission to update this user."
   },
   "detail": {
     "title": "User detail",
@@ -32,11 +43,110 @@
     "contractStart": "Contract start date",
     "contractEnd": "Contract end date"
   },
+  "filters": {
+    "title": "User filters",
+    "description": "Narrow down the user list using the available criteria.",
+    "sections": {
+      "main": "Search criteria",
+      "mainDescription": "You can filter by email address, first name, last name, role, status, and company."
+    }
+  },
+  "actions": {
+    "activate": "Activate",
+    "inactivate": "Inactivate",
+    "inactivateAssignment": "Inactivate assignment",
+    "removeAssignment": "Remove"
+  },
+  "statusDialog": {
+    "activateTitle": "Activate user",
+    "inactivateTitle": "Inactivate user",
+    "activateDescription": "Confirm that you want to reactivate this user to restore their access to the application.",
+    "inactivateDescription": "Confirm that you want to inactivate this user. The record will remain visible in the list.",
+    "activateTenantDescription": "Confirm that you want to reactivate this user's access only in the current company.",
+    "inactivateTenantDescription": "Confirm that you want to inactivate this user's access only in the current company.",
+    "tenantScope": "Action limited to company: {{empresa}}",
+    "userSectionTitle": "Selected user",
+    "userName": "Full name",
+    "userEmail": "Login email",
+    "userCompany": "Company",
+    "userRole": "Preferred role",
+    "confirmActivate": "Confirm activation",
+    "confirmInactivate": "Confirm inactivation",
+    "activating": "Activating...",
+    "inactivating": "Inactivating..."
+  },
+  "statusLabels": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "incompleteProfile": "Incomplete profile",
+    "notVerified": "Not verified",
+    "withoutCompany": "Without company",
+    "expiredPassword": "Expired password"
+  },
   "form": {
     "createTitle": "Register user",
     "editTitle": "Update user",
+    "summaryTitle": "User registration",
+    "summaryDescription": "Complete the personal data and add one or more assignments to define the user's access in the system.",
+    "editSummaryTitle": "User update",
+    "editSummaryDescription": "Update the personal information and adjust the user's assignments to keep the data up to date.",
+    "sections": {
+      "personalInformation": "Personal information",
+      "personalInformationDescription": "Register the user's base information for creation in the system.",
+      "assignmentConfiguration": "Assignment setup",
+      "assignmentConfigurationDescription": "Add roles, companies and contract ranges for the user.",
+      "assignmentList": "Added assignments",
+      "assignmentListDescription": "Review the assignments before confirming the registration."
+    },
+    "messages": {
+      "autoCompanyAssigned": "The company will be assigned automatically from the current session: {{company}}.",
+      "currentCompany": "Current company",
+      "loadingEdit": "Loading user information...",
+      "assignmentRequired": "You must add at least one assignment before saving.",
+      "companyRestricted": "The company is restricted to the current session: {{company}}.",
+      "existingPersonLoaded": "The person already exists in the system. Personal data was preloaded and the username was locked to avoid duplication.",
+      "personLoaded": "Existing data was found for the entered identification and preloaded into the form.",
+      "personNotFound": "No previous data was found for this identification. You can continue with manual registration."
+    },
+    "helpers": {
+      "optional": "Optional",
+      "autoAssignedCompany": "Company assigned automatically: {{company}}.",
+      "existingUsernameLocked": "The username cannot be modified because the person already has a registered user.",
+      "lookupLoading": "Searching data by identification...",
+      "loadingCompanyRoles": "Loading the available roles for the selected company...",
+      "selectCompanyFirst": "Select a company first to view the available roles.",
+      "noRolesForCompany": "There are no available roles for the selected company.",
+      "selectContractStartFirst": "Select the start date first to enable the end date."
+    },
+    "actions": {
+      "register": "Register"
+    },
+    "options": {
+      "genderMale": "Male",
+      "genderFemale": "Female"
+    },
+    "validation": {
+      "required": "This field is required.",
+      "personalEmailRequired": "You must enter the personal email.",
+      "stratumRequired": "You must select a stratum.",
+      "documentTypeRequired": "You must select the document type.",
+      "documentNumberRequired": "You must enter the identification number.",
+      "invalidEmail": "Enter a valid email address.",
+      "invalidNumericDocumentNumber": "This document type only allows numbers and must contain between 5 and 20 digits.",
+      "invalidDocumentNumber": "Enter a valid identification code.",
+      "invalidPhone": "Enter a valid 10-digit phone number.",
+      "invalidAddress": "Enter a valid address with letters and numbers, for example Calle 123 # 45-67.",
+      "assignmentRequired": "You must add at least one assignment.",
+      "roleRequired": "You must select a role.",
+      "companyRequired": "You must select a company.",
+      "contractStartRequired": "You must select the contract start date.",
+      "contractStartRequiredForEnd": "You must select the start date first.",
+      "contractDateOrder": "End date cannot be earlier than start date."
+    },
     "fields": {
       "username": "Username (email)",
+      "personalEmail": "Personal email",
       "name": "Name",
       "lastName": "Last name",
       "gender": "Gender",
