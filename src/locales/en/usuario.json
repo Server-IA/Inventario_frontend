@@ -130,6 +130,8 @@
       "required": "This field is required.",
       "personalEmailRequired": "You must enter the personal email.",
       "stratumRequired": "You must select a stratum.",
+      "documentTypeRequired": "You must select the document type.",
+      "documentNumberRequired": "You must enter the identification number.",
       "invalidEmail": "Enter a valid email address.",
       "invalidNumericDocumentNumber": "This document type only allows numbers and must contain between 5 and 20 digits.",
       "invalidDocumentNumber": "Enter a valid identification code.",
@@ -138,6 +140,7 @@
       "assignmentRequired": "You must add at least one assignment.",
       "roleRequired": "You must select a role.",
       "companyRequired": "You must select a company.",
+      "contractStartRequired": "You must select the contract start date.",
       "contractStartRequiredForEnd": "You must select the start date first.",
       "contractDateOrder": "End date cannot be earlier than start date."
     },
