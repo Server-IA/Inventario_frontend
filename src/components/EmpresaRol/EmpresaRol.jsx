@@ -7,6 +7,10 @@ import {
   Box,
   Button,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -64,6 +68,30 @@ export default function EmpresaRol() {
   const permisosLegacyParams = (targetEmpresaId) =>
     isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [empresas, setEmpresas] = useState([]);
+  const [filters, setFilters] = useState({
+    empresaId: "",
+    rolId: "",
+    estadoId: "",
+  });
+  const [tempFilters, setTempFilters] = useState(filters);
+
+  const loadEmpresas = useCallback(async () => {
+    if (!isSystemAdmin) return;
+    try {
+      const res = await axios.get("/v1/items/empresa/0");
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.content)
+        ? res.data.content
+        : [];
+      setEmpresas(list);
+    } catch (err) {
+      console.error("Error cargando empresas:", err);
+      setEmpresas([]);
+    }
+  }, [isSystemAdmin]);
 
   const reloadData = useCallback(async () => {
     try {
@@ -134,7 +162,8 @@ export default function EmpresaRol() {
   useEffect(() => {
     reloadData();
     loadRoles();
-  }, [reloadData, loadRoles]);
+    loadEmpresas();
+  }, [reloadData, loadRoles, loadEmpresas]);
 
   const handleCreate = () => {
     setSelectedRow(null);
@@ -151,6 +180,50 @@ export default function EmpresaRol() {
     }
     setFormOpen(true);
   };
+
+  const handleOpenFilters = () => {
+    setTempFilters(filters);
+    setFilterModalOpen(true);
+  };
+
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setFilterModalOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    const emptyFilters = { empresaId: "", rolId: "", estadoId: "" };
+    setTempFilters(emptyFilters);
+    setFilters(emptyFilters);
+    setFilterModalOpen(false);
+  };
+
+  const hasActiveFilters = Boolean(filters.empresaId || filters.rolId || filters.estadoId);
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      if (filters.empresaId && String(row.empresaId) !== String(filters.empresaId)) {
+        return false;
+      }
+      if (filters.rolId) {
+        const selectedRol = roles.find((r) => String(r.id) === String(filters.rolId));
+        if (selectedRol && row.rolNombre !== selectedRol.name) {
+          return false;
+        }
+      }
+      if (filters.estadoId) {
+        const rowEstadoId = row.estadoId ?? row.estado?.id;
+        const rowEstadoNombre = (row.estadoNombre ?? row.estado?.nombre ?? "").toLowerCase();
+        if (filters.estadoId === "1" && rowEstadoId !== 1 && rowEstadoNombre !== "activo") {
+          return false;
+        }
+        if (filters.estadoId === "2" && rowEstadoId !== 2 && rowEstadoNombre !== "inactivo") {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [rows, filters, roles]);
 
   const handleViewPermisos = () => {
     if (!selectedRow?.id) {
@@ -322,13 +395,9 @@ export default function EmpresaRol() {
         onDelete={handleDeleteIntent}
         canUpdate={Boolean(selectedRow)}
         canDelete={Boolean(selectedRow)}
-        onFilters={() =>
-          setMessage({
-            open: true,
-            severity: "info",
-            text: t("common.messages.filtersComingSoon"),
-          })
-        }
+        onFilters={handleOpenFilters}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={handleClearFilters}
         extraActions={
           <Button
             onClick={handleViewPermisos}
@@ -360,7 +429,7 @@ export default function EmpresaRol() {
       />
 
       <AppDataGrid
-        rows={rows}
+        rows={filteredRows}
         columns={columns}
         loading={loading}
         selectedRow={selectedRow}
@@ -370,8 +439,97 @@ export default function EmpresaRol() {
           setFormOpen(false);
           setModalPermisosOpen(false);
           setConfirmOpen(false);
+          setFilterModalOpen(false);
         }}
       />
+
+      <Dialog
+        open={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t("common.actions.filters", "Filtros")}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "grid", gridTemplateColumns: isSystemAdmin ? "1fr 1fr" : "1fr", gap: 2, mt: 1 }}>
+            {isSystemAdmin && (
+              <FormControl fullWidth size="small">
+                <InputLabel id="empresa-filter-label">
+                  {t("common.labels.company", "Empresa")}
+                </InputLabel>
+                <Select
+                  labelId="empresa-filter-label"
+                  value={tempFilters.empresaId}
+                  label={t("common.labels.company", "Empresa")}
+                  onChange={(e) =>
+                    setTempFilters((prev) => ({ ...prev, empresaId: e.target.value }))
+                  }
+                >
+                  <MenuItem value="">
+                    <em>{t("common.labels.all", "Todos")}</em>
+                  </MenuItem>
+                  {empresas.map((emp) => (
+                    <MenuItem key={emp.id} value={emp.id}>
+                      {emp.nombre || emp.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+
+            <FormControl fullWidth size="small">
+              <InputLabel id="rol-filter-label">
+                {t("empresaRol.columns.role", "Rol")}
+              </InputLabel>
+              <Select
+                labelId="rol-filter-label"
+                value={tempFilters.rolId}
+                label={t("empresaRol.columns.role", "Rol")}
+                onChange={(e) =>
+                  setTempFilters((prev) => ({ ...prev, rolId: e.target.value }))
+                }
+              >
+                <MenuItem value="">
+                  <em>{t("common.labels.all", "Todos")}</em>
+                </MenuItem>
+                {roles.map((r) => (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.name || r.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <InputLabel id="estado-filter-label">
+                {t("empresaRol.columns.status", "Estado")}
+              </InputLabel>
+              <Select
+                labelId="estado-filter-label"
+                value={tempFilters.estadoId}
+                label={t("empresaRol.columns.status", "Estado")}
+                onChange={(e) =>
+                  setTempFilters((prev) => ({ ...prev, estadoId: e.target.value }))
+                }
+              >
+                <MenuItem value="">
+                  <em>{t("common.labels.all", "Todos")}</em>
+                </MenuItem>
+                <MenuItem value="1">{t("common.labels.active", "Activo")}</MenuItem>
+                <MenuItem value="2">{t("common.labels.inactive", "Inactivo")}</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearFilters}>
+            {t("common.actions.clear", "Limpiar")}
+          </Button>
+          <Button variant="contained" onClick={handleApplyFilters}>
+            {t("common.actions.apply", "Aplicar")}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>{t("empresaRol.confirmDelete.title")}</DialogTitle>
