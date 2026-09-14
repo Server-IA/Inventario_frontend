@@ -21,7 +21,8 @@
     "roleRequired": "Debe seleccionar un rol",
     "companyRequired": "Debe seleccionar una empresa",
     "saveSuccess": "Permisos actualizados correctamente",
-    "saveError": "Error al guardar permisos"
+    "saveError": "Error al guardar permisos",
+    "noFilterResults": "No se encontraron roles con los criterios seleccionados."
   },
   "permissions": {
     "withoutPermissions": "Sin permisos",

@@ -9,6 +9,7 @@
  | 2026-05-22 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
  | 2026-09-03 | 0.4.0   | Jeisson Sanchez      | [Issue #284] Modal de filtros de roles. |
  | 2026-09-11 | 0.4.0   | Jeisson Sanchez      | [HU-036.6] Filtro por nombre de rol como campo de texto libre. |
+ | 2026-09-14 | 0.4.0   | Jeisson Sanchez      | [HU-036.6 / #284 / #291] Mensaje informativo cuando ningún rol coincide con los filtros. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -203,6 +204,47 @@ export default function EmpresaRol() {
   const handleApplyFilters = () => {
     setFilters(tempFilters);
     setFilterModalOpen(false);
+
+    // Criterio 6 HU-036.6: Si ningún registro coincide con los filtros aplicados, mostrar mensaje informativo
+    const hasSearchFilters = Boolean(
+      tempFilters.empresaId ||
+      (tempFilters.nombre && tempFilters.nombre.trim() !== "") ||
+      tempFilters.estadoId
+    );
+
+    if (hasSearchFilters) {
+      const matchCount = rows.filter((row) => {
+        if (tempFilters.empresaId && String(row.empresaId ?? empresaId) !== String(tempFilters.empresaId)) {
+          return false;
+        }
+        if (tempFilters.nombre && tempFilters.nombre.trim() !== "") {
+          const search = tempFilters.nombre.trim().toLowerCase();
+          const rowNombre = (row.rolNombre || "").toLowerCase();
+          if (!rowNombre.includes(search)) {
+            return false;
+          }
+        }
+        if (tempFilters.estadoId) {
+          const rowEstadoId = row.estadoId ?? row.estado?.id;
+          const rowEstadoNombre = (row.estadoNombre ?? row.estado?.nombre ?? "").toLowerCase();
+          if (tempFilters.estadoId === "1" && rowEstadoId !== 1 && rowEstadoNombre !== "activo") {
+            return false;
+          }
+          if (tempFilters.estadoId === "2" && rowEstadoId !== 2 && rowEstadoNombre !== "inactivo") {
+            return false;
+          }
+        }
+        return true;
+      }).length;
+
+      if (matchCount === 0) {
+        setMessage({
+          open: true,
+          severity: "info",
+          text: t("empresaRol.messages.noFilterResults", "No se encontraron roles con los criterios seleccionados."),
+        });
+      }
+    }
   };
 
   const handleClearFilters = () => {

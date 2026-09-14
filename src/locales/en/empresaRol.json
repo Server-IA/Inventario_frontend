@@ -21,7 +21,8 @@
     "roleRequired": "You must select a role",
     "companyRequired": "You must select a company",
     "saveSuccess": "Permissions updated successfully",
-    "saveError": "Error saving permissions"
+    "saveError": "Error saving permissions",
+    "noFilterResults": "No roles found matching the selected criteria."
   },
   "permissions": {
     "withoutPermissions": "No permissions",
