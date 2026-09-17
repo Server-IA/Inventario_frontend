@@ -7,6 +7,7 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio                        |
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
+| 2026-09-17 | 0.4.0   | Jeisson Sanchez      | [Issue #297] Validar selección obligatoria de permisos antes de guardar. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -326,6 +327,16 @@ const handleSave = async () => {
       open: true,
       severity: "warning",
       text: t("empresaRol.messages.companyRequired"),
+    });
+    return;
+  }
+
+  // Issue #297: Validar que se haya seleccionado al menos un permiso antes de proceder
+  if (!permisosSeleccionados || permisosSeleccionados.length === 0) {
+    setMessage({
+      open: true,
+      severity: "warning",
+      text: t("empresaRol.messages.permissionsRequired", "Debe seleccionar al menos un permiso."),
     });
     return;
   }
@@ -673,3 +684,20 @@ const subsistemasAgrupados = agruparPorSubsistema(modulos);
     </Dialog>
   );
 }
+
+FormEmpresaRol.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  selectedRow: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rolId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rolNombre: PropTypes.string,
+  }),
+  setSelectedRow: PropTypes.func.isRequired,
+  setMessage: PropTypes.func.isRequired,
+  reloadData: PropTypes.func.isRequired,
+  roles: PropTypes.array,
+  empresaId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isSystemAdmin: PropTypes.bool,
+};

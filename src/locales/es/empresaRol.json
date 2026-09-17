@@ -20,6 +20,7 @@
     "permissionRemoveError": "Error eliminando permiso",
     "roleRequired": "Debe seleccionar un rol",
     "companyRequired": "Debe seleccionar una empresa",
+    "permissionsRequired": "Debe seleccionar al menos un permiso.",
     "saveSuccess": "Permisos actualizados correctamente",
     "saveError": "Error al guardar permisos"
   },
