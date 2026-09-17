@@ -9,6 +9,7 @@ CONTROL DE CAMBIOS
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
 | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #277] Enviar empresa elegida al crear. |
 | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #278] Enviar empresa objetivo al quitar permiso. |
+| 2026-09-17 | 0.4.0   | Jeisson Sanchez      | [Issue #297] Validar selección obligatoria de permisos antes de guardar. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -331,6 +332,16 @@ const handleSave = async () => {
       open: true,
       severity: "warning",
       text: t("empresaRol.messages.companyRequired"),
+    });
+    return;
+  }
+
+  // Issue #297: Validar que se haya seleccionado al menos un permiso antes de proceder
+  if (!permisosSeleccionados || permisosSeleccionados.length === 0) {
+    setMessage({
+      open: true,
+      severity: "warning",
+      text: t("empresaRol.messages.permissionsRequired", "Debe seleccionar al menos un permiso."),
     });
     return;
   }

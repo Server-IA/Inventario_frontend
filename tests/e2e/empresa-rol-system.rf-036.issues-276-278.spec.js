@@ -331,6 +331,11 @@ test.describe('Empresa-Rol - cobertura E2E issues #276, #277 y #278', () => {
     await selectMuiOption(dialog, 0, role.nombre);
     await selectMuiOption(dialog, 1, targetCompany.nombre ?? targetCompany.name);
 
+    // Seleccionar al menos un permiso para cumplir la validación de guardado (Issue #297)
+    const { permission, subsystemName, moduleName } = await firstAvailablePermission(request, role.token);
+    await expandPermissionPath(dialog, subsystemName, moduleName, permission.nombre);
+    await dialog.getByText(permission.nombre, { exact: true }).click();
+
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes('/api/v1/system/empresa-rol') && response.request().method() === 'POST'
