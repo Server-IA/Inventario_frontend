@@ -1,30 +1,63 @@
-import React, { useEffect, useState } from "react";
+/*=============================================================================
+ Nombre del archivo : FormSede.jsx
+ Descripcion        : Formulario de creacion y edicion de sedes.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-09-21 | 0.4.0   | Cesar Medina         | Agrega cascada geografica   |
+ |            |         |                      | pais/departamento/municipio |
+ |            |         |                      | y validaciones de coherencia|
+ |            |         |                      | con i18n.                   |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
+import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, FormControl, InputLabel,
-  Select, MenuItem, FormHelperText
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from "@mui/material";
 import axios from "../axiosConfig";
+import { useTranslation } from "react-i18next";
 import { validateCamposBase } from "../utils/validations";
+
+const asArray = (payload) =>
+  Array.isArray(payload) ? payload : payload?.content ?? [];
 
 export default function FormSede({
   open = false,
   setOpen = () => {},
   formMode = "create",
   selectedRow = null,
-  municipioId = "",
+  initialPaisId = "",
+  initialDeptoId = "",
+  initialMunicipioId = "",
   grupos = [],
   tiposSede = [],
   reloadData = () => {},
   setMessage = () => {},
   authHeaders = {},
 }) {
+  const { t } = useTranslation();
   const initialData = {
     id: null,
+    paisId: initialPaisId || "",
+    deptoId: initialDeptoId || "",
     grupoId: "",
     tipoSedeId: "",
     nombre: "",
-    municipioId: municipioId || "",
+    municipioId: initialMunicipioId || "",
     geolocalizacion: "",
     coordenadas: "",
     area: "",
@@ -35,9 +68,13 @@ export default function FormSede({
 
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
+  const [paisesOpts, setPaisesOpts] = useState([]);
+  const [departamentosCatalog, setDepartamentosCatalog] = useState([]);
+  const [municipiosCatalog, setMunicipiosCatalog] = useState([]);
+  const [departamentosOpts, setDepartamentosOpts] = useState([]);
   const [municipiosOpts, setMunicipiosOpts] = useState([]);
 
-  const invalidCharsRegex = /[<>/"'`;(){}\[\]\\]/g;
+  const invalidCharsRegex = /[<>/"'`;(){}[\]\\]/g;
   const sqliWordsRegex =
     /\b(select|insert|update|delete|drop|union|exec|xp_|information_schema)\b|--|\/\*|\*\//i;
 
@@ -54,55 +91,247 @@ export default function FormSede({
     return "";
   };
 
+  const departamentosById = useMemo(
+    () =>
+      new Map(
+        departamentosCatalog.map((departamento) => [Number(departamento.id), departamento])
+      ),
+    [departamentosCatalog]
+  );
+  const municipiosById = useMemo(
+    () =>
+      new Map(
+        municipiosCatalog.map((municipio) => [Number(municipio.id), municipio])
+      ),
+    [municipiosCatalog]
+  );
+
+  const resolveInitialLocation = ({
+    row,
+    municipios,
+    departamentos,
+  }) => {
+    const municipioId = getSafeId(
+      row?.municipioId,
+      row?.municipio?.id,
+      initialMunicipioId
+    );
+    const municipio = municipios.find(
+      (item) => Number(item.id) === Number(municipioId)
+    );
+    const deptoId = getSafeId(
+      row?.deptoId,
+      row?.departamentoId,
+      row?.departamento?.id,
+      municipio?.departamentoId,
+      initialDeptoId
+    );
+    const departamento = departamentos.find(
+      (item) => Number(item.id) === Number(deptoId)
+    );
+    const paisId = getSafeId(
+      row?.paisId,
+      row?.pais?.id,
+      departamento?.paisId,
+      initialPaisId
+    );
+
+    return {
+      paisId,
+      deptoId,
+      municipioId,
+    };
+  };
+
   useEffect(() => {
     if (!open) return;
-    axios
-      .get("/v1/items/municipio/0", { ...authHeaders })
-      .then((res) => {
-        const arr = Array.isArray(res.data) ? res.data : [];
-        setMunicipiosOpts(
-          arr.map((m) => ({
-            id: Number(m.id),
-            nombre: m.nombre ?? m.name ?? String(m.id),
-          }))
+
+    let active = true;
+
+    const loadLocationCatalogs = async () => {
+      try {
+        const [paisesResult, departamentosResult, municipiosResult] =
+          await Promise.allSettled([
+            axios.get("/v1/pais", {
+              ...authHeaders,
+              params: { page: 0, size: 1000 },
+            }),
+            axios.get("/v1/departamento", {
+              ...authHeaders,
+              params: { page: 0, size: 1000 },
+            }),
+            axios.get("/v1/municipio", {
+              ...authHeaders,
+              params: { page: 0, size: 5000 },
+            }),
+          ]);
+
+        if (!active) return;
+
+        const paises =
+          paisesResult.status === "fulfilled"
+            ? asArray(paisesResult.value.data).map((pais) => ({
+                id: Number(pais.id),
+                nombre: pais.nombre ?? pais.name ?? String(pais.id),
+              }))
+            : [];
+        const departamentos =
+          departamentosResult.status === "fulfilled"
+            ? asArray(departamentosResult.value.data).map((departamento) => ({
+                id: Number(departamento.id),
+                paisId: Number(departamento.paisId),
+                nombre:
+                  departamento.nombre ??
+                  departamento.name ??
+                  String(departamento.id),
+              }))
+            : [];
+        const municipios =
+          municipiosResult.status === "fulfilled"
+            ? asArray(municipiosResult.value.data).map((municipio) => ({
+                id: Number(municipio.id),
+                departamentoId: Number(municipio.departamentoId),
+                nombre: municipio.nombre ?? municipio.name ?? String(municipio.id),
+              }))
+            : [];
+
+        const location = resolveInitialLocation({
+          row: formMode === "edit" ? selectedRow : null,
+          municipios,
+          departamentos,
+        });
+
+        setPaisesOpts(paises);
+        setDepartamentosCatalog(departamentos);
+        setMunicipiosCatalog(municipios);
+        setDepartamentosOpts(
+          location.paisId
+            ? departamentos.filter(
+                (departamento) =>
+                  Number(departamento.paisId) === Number(location.paisId)
+              )
+            : []
         );
-      })
-      .catch(() => setMunicipiosOpts([]));
-  }, [open]);
+        setFormData({
+          id:
+            formMode === "edit" && selectedRow
+              ? toNum(selectedRow.id)
+              : initialData.id,
+          paisId: location.paisId,
+          deptoId: location.deptoId,
+          grupoId:
+            formMode === "edit" && selectedRow
+              ? getSafeId(selectedRow.grupoId, selectedRow?.grupo?.id)
+              : initialData.grupoId,
+          tipoSedeId:
+            formMode === "edit" && selectedRow
+              ? getSafeId(selectedRow.tipoSedeId, selectedRow?.tipoSede?.id)
+              : initialData.tipoSedeId,
+          nombre:
+            formMode === "edit" && selectedRow ? selectedRow.nombre ?? "" : "",
+          municipioId: location.municipioId,
+          geolocalizacion:
+            formMode === "edit" && selectedRow
+              ? selectedRow.geolocalizacion ?? ""
+              : "",
+          coordenadas:
+            formMode === "edit" && selectedRow ? selectedRow.coordenadas ?? "" : "",
+          area: formMode === "edit" && selectedRow ? selectedRow.area ?? "" : "",
+          comuna:
+            formMode === "edit" && selectedRow ? selectedRow.comuna ?? "" : "",
+          descripcion:
+            formMode === "edit" && selectedRow ? selectedRow.descripcion ?? "" : "",
+          estadoId:
+            formMode === "edit" && selectedRow
+              ? toNum(selectedRow.estadoId) || 1
+              : 1,
+        });
+        setErrors({});
+      } catch {
+        if (!active) return;
+        setPaisesOpts([]);
+        setDepartamentosCatalog([]);
+        setMunicipiosCatalog([]);
+        setDepartamentosOpts([]);
+        setMunicipiosOpts([]);
+      }
+    };
+
+    loadLocationCatalogs();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    open,
+    formMode,
+    selectedRow,
+    initialPaisId,
+    initialDeptoId,
+    initialMunicipioId,
+  ]);
 
   useEffect(() => {
     if (!open) return;
 
-    if (formMode === "edit" && selectedRow) {
-      setFormData({
-        id: toNum(selectedRow.id),
-        nombre: selectedRow.nombre ?? "",
-        grupoId: getSafeId(selectedRow.grupoId, selectedRow?.grupo?.id),
-        tipoSedeId: getSafeId(
-          selectedRow.tipoSedeId,
-          selectedRow?.tipoSede?.id
-        ),
-        municipioId: getSafeId(
-          selectedRow.municipioId,
-          selectedRow?.municipio?.id,
-          municipioId
-        ),
-        geolocalizacion: selectedRow.geolocalizacion ?? "",
-        coordenadas: selectedRow.coordenadas ?? "",
-        area: selectedRow.area ?? "",
-        comuna: selectedRow.comuna ?? "",
-        descripcion: selectedRow.descripcion ?? "",
-        estadoId: toNum(selectedRow.estadoId) || 1,
-      });
-    } else {
-      setFormData({
-        ...initialData,
-        municipioId: getSafeId(municipioId),
-      });
+    if (!formData.paisId) {
+      setDepartamentosOpts([]);
+      setMunicipiosOpts([]);
+      return;
     }
 
-    setErrors({});
-  }, [open, formMode, selectedRow, municipioId]);
+    const nextDepartamentos = departamentosCatalog.filter(
+      (departamento) =>
+        Number(departamento.paisId) === Number(formData.paisId)
+    );
+    setDepartamentosOpts(nextDepartamentos);
+
+    if (!formData.deptoId) {
+      setMunicipiosOpts([]);
+      return;
+    }
+
+    let active = true;
+
+    const loadMunicipiosByDepartment = async () => {
+      try {
+        const response = await axios.get("/v1/municipio", {
+          ...authHeaders,
+          params: { departamentoId: Number(formData.deptoId), page: 0, size: 1000 },
+        });
+        if (!active) return;
+
+        const municipios = asArray(response.data).map((municipio) => ({
+          id: Number(municipio.id),
+          nombre: municipio.nombre ?? municipio.name ?? String(municipio.id),
+        }));
+        setMunicipiosOpts(municipios);
+        if (
+          formData.municipioId &&
+          !municipios.some(
+            (municipio) => Number(municipio.id) === Number(formData.municipioId)
+          )
+        ) {
+          setFormData((current) => ({ ...current, municipioId: "" }));
+        }
+      } catch {
+        if (!active) return;
+        setMunicipiosOpts([]);
+      }
+    };
+
+    loadMunicipiosByDepartment();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    departamentosCatalog,
+    formData.deptoId,
+    formData.municipioId,
+    formData.paisId,
+    open,
+  ]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -137,8 +366,34 @@ export default function FormSede({
       v = Number(v);
     }
 
+    if (name === "paisId") {
+      setFormData((prev) => ({
+        ...prev,
+        paisId: toNum(v),
+        deptoId: "",
+        municipioId: "",
+      }));
+      return;
+    }
+
+    if (name === "deptoId") {
+      setFormData((prev) => ({
+        ...prev,
+        deptoId: toNum(v),
+        municipioId: "",
+      }));
+      return;
+    }
+
     const newVal =
-      ["estadoId", "grupoId", "tipoSedeId", "municipioId"].includes(name)
+      [
+        "estadoId",
+        "grupoId",
+        "tipoSedeId",
+        "municipioId",
+        "paisId",
+        "deptoId",
+      ].includes(name)
         ? toNum(v)
         : v;
 
@@ -174,57 +429,79 @@ export default function FormSede({
 
     // Nombre: obligatorio + NO solo números
     if (!formData.nombre.trim()) {
-      e.nombre = "El nombre es obligatorio.";
+      e.nombre = t("sede.form.validation.nameRequired");
     } else if (/^\d+$/.test(formData.nombre.trim())) {
-      e.nombre = "El nombre no puede ser solo números.";
+      e.nombre = t("sede.form.validation.nameOnlyNumbers");
     }
 
     // Grupo / Tipo Sede / Municipio obligatorios
     if (!Number(formData.grupoId))
-      e.grupoId = "Debe seleccionar un grupo.";
+      e.grupoId = t("sede.form.validation.groupRequired");
     if (!Number(formData.tipoSedeId))
-      e.tipoSedeId = "Debe seleccionar un tipo de sede.";
+      e.tipoSedeId = t("sede.form.validation.typeRequired");
+    if (!Number(formData.paisId))
+      e.paisId = t("sede.form.validation.countryRequired");
+    if (!Number(formData.deptoId))
+      e.deptoId = t("sede.form.validation.departmentRequired");
     if (!Number(formData.municipioId))
-      e.municipioId = "Debe seleccionar un municipio.";
+      e.municipioId = t("sede.form.validation.municipalityRequired");
+
+    const selectedMunicipio = municipiosById.get(Number(formData.municipioId));
+    const selectedDepartamento = departamentosById.get(Number(formData.deptoId));
+
+    if (
+      Number(formData.municipioId) &&
+      (!selectedMunicipio ||
+        Number(selectedMunicipio.departamentoId) !== Number(formData.deptoId))
+    ) {
+      e.municipioId = t("sede.form.validation.municipalityMismatch");
+    }
+
+    if (
+      Number(formData.deptoId) &&
+      (!selectedDepartamento ||
+        Number(selectedDepartamento.paisId) !== Number(formData.paisId))
+    ) {
+      e.deptoId = t("sede.form.validation.departmentMismatch");
+    }
 
     // Área: numérica y no negativa
     if (formData.area !== "") {
       const n = Number(formData.area);
-      if (isNaN(n)) e.area = "El área debe ser numérica.";
-      else if (n < 0) e.area = "El área no puede ser negativa.";
+      if (isNaN(n)) e.area = t("sede.form.validation.areaNumeric");
+      else if (n < 0) e.area = t("sede.form.validation.areaNonNegative");
     }
 
     // Geolocalización: solo números (ya limpiada en handleChange)
     if (formData.geolocalizacion && !/^[0-9]+$/.test(formData.geolocalizacion)) {
-      e.geolocalizacion = "La geolocalización debe contener solo números.";
+      e.geolocalizacion = t("sede.form.validation.geolocationNumeric");
     }
 
     // Coordenadas: formato numérico y rangos de lat/long
     if (formData.coordenadas) {
       const coords = parseCoordinates(formData.coordenadas);
       if (!coords) {
-        e.coordenadas =
-          "Debes ingresar coordenadas numéricas en formato 'latitud, longitud'.";
+        e.coordenadas = t("sede.form.validation.coordinatesFormat");
       } else {
         const { lat, lon } = coords;
         if (lat < -90 || lat > 90) {
-          e.coordenadas = "La latitud debe estar entre -90° y 90°.";
+          e.coordenadas = t("sede.form.validation.latitudeRange");
         } else if (lon < -180 || lon > 180) {
-          e.coordenadas = "La longitud debe estar entre -180° y 180°.";
+          e.coordenadas = t("sede.form.validation.longitudeRange");
         }
       }
     }
 
     // COMUNA → OBLIGATORIA + SOLO 1–10
     if (!formData.comuna) {
-      e.comuna = "Debe seleccionar la comuna.";
+      e.comuna = t("sede.form.validation.communeRequired");
     } else if (formData.comuna < 1 || formData.comuna > 10) {
-      e.comuna = "La comuna debe estar entre 1 y 10.";
+      e.comuna = t("sede.form.validation.communeRange");
     }
 
     // Descripción: no solo números
     if (formData.descripcion && /^\d+$/.test(formData.descripcion.trim())) {
-      e.descripcion = "La descripción no puede ser solo números.";
+      e.descripcion = t("sede.form.validation.descriptionOnlyNumbers");
     }
 
     setErrors(e);
@@ -257,14 +534,14 @@ export default function FormSede({
         setMessage({
           open: true,
           severity: "success",
-          text: "Sede actualizada correctamente.",
+          text: t("sede.messages.updateSuccess"),
         });
       } else {
         await axios.post("/v1/sede", payload, authHeaders);
         setMessage({
           open: true,
           severity: "success",
-          text: "Sede creada correctamente.",
+          text: t("sede.messages.createSuccess"),
         });
       }
       setOpen(false);
@@ -275,8 +552,8 @@ export default function FormSede({
         api.message ||
         api.error ||
         (err.response?.status === 409
-          ? "Datos duplicados o restricción en BD."
-          : "Error al guardar sede.");
+          ? t("sede.messages.saveConflict")
+          : t("sede.messages.saveError"));
       setMessage({ open: true, severity: "error", text: txt });
     }
   };
@@ -284,7 +561,9 @@ export default function FormSede({
   return (
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {formMode === "edit" ? "Editar Sede" : "Nueva Sede"}
+        {formMode === "edit"
+          ? t("sede.form.editTitle")
+          : t("sede.form.createTitle")}
       </DialogTitle>
 
       <DialogContent>
@@ -292,7 +571,7 @@ export default function FormSede({
         <TextField
           fullWidth
           margin="normal"
-          label="Nombre"
+          label={t("sede.form.fields.name")}
           name="nombre"
           value={formData.nombre}
           onChange={handleChange}
@@ -300,14 +579,53 @@ export default function FormSede({
           helperText={errors.nombre}
         />
 
+        <FormControl fullWidth margin="normal" error={!!errors.paisId}>
+          <InputLabel>{t("sede.form.fields.country")}</InputLabel>
+          <Select
+            name="paisId"
+            value={formData.paisId}
+            onChange={handleChange}
+            label={t("sede.form.fields.country")}
+          >
+            {paisesOpts.map((pais) => (
+              <MenuItem key={pais.id} value={pais.id}>
+                {pais.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>{errors.paisId}</FormHelperText>
+        </FormControl>
+
+        <FormControl
+          fullWidth
+          margin="normal"
+          error={!!errors.deptoId}
+          disabled={!formData.paisId}
+        >
+          <InputLabel>{t("sede.form.fields.department")}</InputLabel>
+          <Select
+            name="deptoId"
+            value={formData.deptoId}
+            onChange={handleChange}
+            label={t("sede.form.fields.department")}
+          >
+            {departamentosOpts.map((departamento) => (
+              <MenuItem key={departamento.id} value={departamento.id}>
+                {departamento.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>{errors.deptoId}</FormHelperText>
+        </FormControl>
+
         {/* Grupo */}
         <FormControl fullWidth margin="normal" error={!!errors.grupoId}>
-          <InputLabel>Grupo</InputLabel>
+          <InputLabel>{t("sede.form.fields.group")}</InputLabel>
           <Select
             name="grupoId"
             value={formData.grupoId}
             onChange={handleChange}
-            label="Grupo"
+            label={t("sede.form.fields.group")}
           >
             {grupos.map((g) => (
               <MenuItem key={g.id} value={g.id}>
@@ -320,12 +638,12 @@ export default function FormSede({
 
         {/* Tipo de sede */}
         <FormControl fullWidth margin="normal" error={!!errors.tipoSedeId}>
-          <InputLabel>Tipo de Sede</InputLabel>
+          <InputLabel>{t("sede.form.fields.type")}</InputLabel>
           <Select
             name="tipoSedeId"
             value={formData.tipoSedeId}
             onChange={handleChange}
-            label="Tipo de Sede"
+            label={t("sede.form.fields.type")}
           >
             {tiposSede.map((t) => (
               <MenuItem key={t.id} value={t.id}>
@@ -337,13 +655,18 @@ export default function FormSede({
         </FormControl>
 
         {/* Municipio */}
-        <FormControl fullWidth margin="normal" error={!!errors.municipioId}>
-          <InputLabel>Municipio</InputLabel>
+        <FormControl
+          fullWidth
+          margin="normal"
+          error={!!errors.municipioId}
+          disabled={!formData.deptoId}
+        >
+          <InputLabel>{t("sede.form.fields.municipality")}</InputLabel>
           <Select
             name="municipioId"
             value={formData.municipioId}
             onChange={handleChange}
-            label="Municipio"
+            label={t("sede.form.fields.municipality")}
           >
             {municipiosOpts.map((m) => (
               <MenuItem key={m.id} value={m.id}>
@@ -358,7 +681,7 @@ export default function FormSede({
         <TextField
           fullWidth
           margin="normal"
-          label="Geolocalización"
+          label={t("sede.form.fields.geolocation")}
           name="geolocalizacion"
           value={formData.geolocalizacion}
           onChange={handleChange}
@@ -370,14 +693,14 @@ export default function FormSede({
         <TextField
           fullWidth
           margin="normal"
-          label="Coordenadas (lat, lon)"
+          label={t("sede.form.fields.coordinates")}
           name="coordenadas"
           value={formData.coordenadas}
           onChange={handleChange}
           error={!!errors.coordenadas}
           helperText={
             errors.coordenadas ||
-            "Ejemplo: 2.927, -75.281  (latitud, longitud)"
+            t("sede.form.helpers.coordinatesExample")
           }
         />
 
@@ -385,7 +708,7 @@ export default function FormSede({
         <TextField
           fullWidth
           margin="normal"
-          label="Área"
+          label={t("sede.form.fields.area")}
           name="area"
           value={formData.area}
           onChange={handleChange}
@@ -395,12 +718,12 @@ export default function FormSede({
 
         {/* Comuna */}
         <FormControl fullWidth margin="normal" error={!!errors.comuna}>
-          <InputLabel>Comuna</InputLabel>
+          <InputLabel>{t("sede.form.fields.commune")}</InputLabel>
           <Select
             name="comuna"
             value={formData.comuna}
             onChange={handleChange}
-            label="Comuna"
+            label={t("sede.form.fields.commune")}
           >
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
               <MenuItem key={c} value={c}>
@@ -415,7 +738,7 @@ export default function FormSede({
         <TextField
           fullWidth
           margin="normal"
-          label="Descripción"
+          label={t("sede.form.fields.description")}
           name="descripcion"
           value={formData.descripcion}
           onChange={handleChange}
@@ -427,26 +750,43 @@ export default function FormSede({
 
         {/* Estado */}
         <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
-          <InputLabel>Estado</InputLabel>
+          <InputLabel>{t("sede.form.fields.status")}</InputLabel>
           <Select
             name="estadoId"
             value={formData.estadoId}
             onChange={handleChange}
-            label="Estado"
+            label={t("sede.form.fields.status")}
           >
-            <MenuItem value={1}>Activo</MenuItem>
-            <MenuItem value={2}>Inactivo</MenuItem>
+            <MenuItem value={1}>{t("common.labels.active")}</MenuItem>
+            <MenuItem value={2}>{t("common.labels.inactive")}</MenuItem>
           </Select>
           <FormHelperText>{errors.estadoId}</FormHelperText>
         </FormControl>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={() => setOpen(false)}>Cancelar</Button>
+        <Button onClick={() => setOpen(false)}>
+          {t("common.actions.cancel")}
+        </Button>
         <Button variant="contained" onClick={handleSubmit}>
-          Guardar
+          {t("common.actions.save")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+
+FormSede.propTypes = {
+  open: PropTypes.bool,
+  setOpen: PropTypes.func,
+  formMode: PropTypes.string,
+  selectedRow: PropTypes.object,
+  initialPaisId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  initialDeptoId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  initialMunicipioId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  grupos: PropTypes.array,
+  tiposSede: PropTypes.array,
+  reloadData: PropTypes.func,
+  setMessage: PropTypes.func,
+  authHeaders: PropTypes.object,
+};
