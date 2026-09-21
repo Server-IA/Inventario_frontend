@@ -20,6 +20,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Card,
+  CardContent,
+  Box,
   TextField,
   Button,
   FormControl,
@@ -27,13 +30,88 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  Stack,
+  Typography,
+  IconButton,
 } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import axios from "../axiosConfig";
 import { useTranslation } from "react-i18next";
 import { validateCamposBase } from "../utils/validations";
+import CloseIcon from "@mui/icons-material/Close";
+import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 
 const asArray = (payload) =>
   Array.isArray(payload) ? payload : payload?.content ?? [];
+
+const getDialogUi = (theme) => {
+  const isDark = theme.palette.mode === "dark";
+  const darkGreen = isDark ? "#E7F6F7" : "#173f39";
+  const green = isDark ? "#2b6b60" : "#173f39";
+  const surface = isDark ? "#10211f" : theme.palette.common.white;
+  const sectionSurface = isDark ? "#142b28" : theme.palette.common.white;
+  const subtleBorder = alpha(green, 0.14);
+  const softShadow = `0 10px 30px ${alpha(darkGreen, isDark ? 0.18 : 0.08)}`;
+  const sectionShadow = `0 4px 14px ${alpha(darkGreen, isDark ? 0.14 : 0.05)}`;
+
+  return {
+    darkGreen,
+    paperSx: {
+      borderRadius: 3,
+      overflow: "hidden",
+      backgroundColor: surface,
+      boxShadow: softShadow,
+    },
+    titleSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2.15,
+      backgroundColor: surface,
+      borderTop: `3px solid ${darkGreen}`,
+      borderBottom: `1px solid ${subtleBorder}`,
+      fontSize: "1.12rem",
+      fontWeight: 700,
+      color: darkGreen,
+    },
+    contentSx: {
+      px: { xs: 2.25, sm: 3 },
+      pt: 6,
+      pb: 2.5,
+      backgroundColor: surface,
+    },
+    actionsSx: {
+      px: { xs: 2.25, sm: 4 },
+      py: 2,
+      backgroundColor: surface,
+      borderTop: `1px solid ${subtleBorder}`,
+    },
+    formCardSx: {
+      borderRadius: 2,
+      border: `1px solid ${subtleBorder}`,
+      backgroundColor: sectionSurface,
+      boxShadow: sectionShadow,
+    },
+    secondaryButtonSx: {
+      px: 2.5,
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 2,
+      color: darkGreen,
+      border: `1px solid ${subtleBorder}`,
+    },
+    primaryButtonSx: {
+      px: 2.5,
+      textTransform: "none",
+      fontWeight: 700,
+      borderRadius: 2,
+      backgroundColor: isDark ? "#173f39" : "#1d4d45",
+      boxShadow: "none",
+      "&:hover": {
+        backgroundColor: isDark ? "#21534b" : "#173f39",
+        boxShadow: "none",
+      },
+    },
+  };
+};
 
 export default function FormSede({
   open = false,
@@ -50,6 +128,8 @@ export default function FormSede({
   authHeaders = {},
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const dialogUi = getDialogUi(theme);
   const initialData = {
     id: null,
     paisId: initialPaisId || "",
@@ -559,218 +639,267 @@ export default function FormSede({
   };
 
   return (
-    <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {formMode === "edit"
-          ? t("sede.form.editTitle")
-          : t("sede.form.createTitle")}
+    <Dialog
+      open={open}
+      onClose={() => setOpen(false)}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: dialogUi.paperSx }}
+    >
+      <DialogTitle sx={dialogUi.titleSx}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: dialogUi.darkGreen,
+                backgroundColor:
+                  theme.palette.mode === "dark" ? alpha("#2b6b60", 0.24) : "#dfeae6",
+              }}
+            >
+              <BusinessOutlinedIcon fontSize="small" />
+            </Box>
+            <Typography
+              variant="h5"
+              sx={{ fontSize: "1.15rem", fontWeight: 700, color: dialogUi.darkGreen }}
+            >
+              {formMode === "edit"
+                ? t("sede.form.editTitle")
+                : t("sede.form.createTitle")}
+            </Typography>
+          </Stack>
+          <IconButton
+            onClick={() => setOpen(false)}
+            size="small"
+            aria-label={t("common.actions.close")}
+            sx={{ color: dialogUi.darkGreen }}
+          >
+            <CloseIcon sx={{ color: dialogUi.darkGreen }} />
+          </IconButton>
+        </Stack>
       </DialogTitle>
 
-      <DialogContent>
-        {/* Nombre */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label={t("sede.form.fields.name")}
-          name="nombre"
-          value={formData.nombre}
-          onChange={handleChange}
-          error={!!errors.nombre}
-          helperText={errors.nombre}
-        />
-
-        <FormControl fullWidth margin="normal" error={!!errors.paisId}>
-          <InputLabel>{t("sede.form.fields.country")}</InputLabel>
-          <Select
-            name="paisId"
-            value={formData.paisId}
+      <DialogContent sx={dialogUi.contentSx}>
+        <Card sx={dialogUi.formCardSx}>
+          <CardContent sx={{ p: { xs: 2.75, sm: 3.25 } }}>
+          {/* Nombre */}
+          <TextField
+            fullWidth
+            margin="normal"
+            label={t("sede.form.fields.name")}
+            name="nombre"
+            value={formData.nombre}
             onChange={handleChange}
-            label={t("sede.form.fields.country")}
-          >
-            {paisesOpts.map((pais) => (
-              <MenuItem key={pais.id} value={pais.id}>
-                {pais.nombre}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.paisId}</FormHelperText>
-        </FormControl>
+            error={!!errors.nombre}
+            helperText={errors.nombre}
+          />
 
-        <FormControl
-          fullWidth
-          margin="normal"
-          error={!!errors.deptoId}
-          disabled={!formData.paisId}
-        >
-          <InputLabel>{t("sede.form.fields.department")}</InputLabel>
-          <Select
-            name="deptoId"
-            value={formData.deptoId}
+          <FormControl fullWidth margin="normal" error={!!errors.paisId}>
+            <InputLabel>{t("sede.form.fields.country")}</InputLabel>
+            <Select
+              name="paisId"
+              value={formData.paisId}
+              onChange={handleChange}
+              label={t("sede.form.fields.country")}
+            >
+              {paisesOpts.map((pais) => (
+                <MenuItem key={pais.id} value={pais.id}>
+                  {pais.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.paisId}</FormHelperText>
+          </FormControl>
+
+          <FormControl
+            fullWidth
+            margin="normal"
+            error={!!errors.deptoId}
+            disabled={!formData.paisId}
+          >
+            <InputLabel>{t("sede.form.fields.department")}</InputLabel>
+            <Select
+              name="deptoId"
+              value={formData.deptoId}
+              onChange={handleChange}
+              label={t("sede.form.fields.department")}
+            >
+              {departamentosOpts.map((departamento) => (
+                <MenuItem key={departamento.id} value={departamento.id}>
+                  {departamento.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.deptoId}</FormHelperText>
+          </FormControl>
+
+          {/* Grupo */}
+          <FormControl fullWidth margin="normal" error={!!errors.grupoId}>
+            <InputLabel>{t("sede.form.fields.group")}</InputLabel>
+            <Select
+              name="grupoId"
+              value={formData.grupoId}
+              onChange={handleChange}
+              label={t("sede.form.fields.group")}
+            >
+              {grupos.map((g) => (
+                <MenuItem key={g.id} value={g.id}>
+                  {g.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.grupoId}</FormHelperText>
+          </FormControl>
+
+          {/* Tipo de sede */}
+          <FormControl fullWidth margin="normal" error={!!errors.tipoSedeId}>
+            <InputLabel>{t("sede.form.fields.type")}</InputLabel>
+            <Select
+              name="tipoSedeId"
+              value={formData.tipoSedeId}
+              onChange={handleChange}
+              label={t("sede.form.fields.type")}
+            >
+              {tiposSede.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.tipoSedeId}</FormHelperText>
+          </FormControl>
+
+          {/* Municipio */}
+          <FormControl
+            fullWidth
+            margin="normal"
+            error={!!errors.municipioId}
+            disabled={!formData.deptoId}
+          >
+            <InputLabel>{t("sede.form.fields.municipality")}</InputLabel>
+            <Select
+              name="municipioId"
+              value={formData.municipioId}
+              onChange={handleChange}
+              label={t("sede.form.fields.municipality")}
+            >
+              {municipiosOpts.map((m) => (
+                <MenuItem key={m.id} value={m.id}>
+                  {m.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.municipioId}</FormHelperText>
+          </FormControl>
+
+          {/* Geolocalización */}
+          <TextField
+            fullWidth
+            margin="normal"
+            label={t("sede.form.fields.geolocation")}
+            name="geolocalizacion"
+            value={formData.geolocalizacion}
             onChange={handleChange}
-            label={t("sede.form.fields.department")}
-          >
-            {departamentosOpts.map((departamento) => (
-              <MenuItem key={departamento.id} value={departamento.id}>
-                {departamento.nombre}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.deptoId}</FormHelperText>
-        </FormControl>
+            error={!!errors.geolocalizacion}
+            helperText={errors.geolocalizacion}
+          />
 
-        {/* Grupo */}
-        <FormControl fullWidth margin="normal" error={!!errors.grupoId}>
-          <InputLabel>{t("sede.form.fields.group")}</InputLabel>
-          <Select
-            name="grupoId"
-            value={formData.grupoId}
+          {/* Coordenadas */}
+          <TextField
+            fullWidth
+            margin="normal"
+            label={t("sede.form.fields.coordinates")}
+            name="coordenadas"
+            value={formData.coordenadas}
             onChange={handleChange}
-            label={t("sede.form.fields.group")}
-          >
-            {grupos.map((g) => (
-              <MenuItem key={g.id} value={g.id}>
-                {g.nombre}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.grupoId}</FormHelperText>
-        </FormControl>
+            error={!!errors.coordenadas}
+            helperText={
+              errors.coordenadas ||
+              t("sede.form.helpers.coordinatesExample")
+            }
+          />
 
-        {/* Tipo de sede */}
-        <FormControl fullWidth margin="normal" error={!!errors.tipoSedeId}>
-          <InputLabel>{t("sede.form.fields.type")}</InputLabel>
-          <Select
-            name="tipoSedeId"
-            value={formData.tipoSedeId}
+          {/* Área */}
+          <TextField
+            fullWidth
+            margin="normal"
+            label={t("sede.form.fields.area")}
+            name="area"
+            value={formData.area}
             onChange={handleChange}
-            label={t("sede.form.fields.type")}
-          >
-            {tiposSede.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.nombre}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.tipoSedeId}</FormHelperText>
-        </FormControl>
+            error={!!errors.area}
+            helperText={errors.area}
+          />
 
-        {/* Municipio */}
-        <FormControl
-          fullWidth
-          margin="normal"
-          error={!!errors.municipioId}
-          disabled={!formData.deptoId}
-        >
-          <InputLabel>{t("sede.form.fields.municipality")}</InputLabel>
-          <Select
-            name="municipioId"
-            value={formData.municipioId}
+          {/* Comuna */}
+          <FormControl fullWidth margin="normal" error={!!errors.comuna}>
+            <InputLabel>{t("sede.form.fields.commune")}</InputLabel>
+            <Select
+              name="comuna"
+              value={formData.comuna}
+              onChange={handleChange}
+              label={t("sede.form.fields.commune")}
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{errors.comuna}</FormHelperText>
+          </FormControl>
+
+          {/* Descripción */}
+          <TextField
+            fullWidth
+            margin="normal"
+            label={t("sede.form.fields.description")}
+            name="descripcion"
+            value={formData.descripcion}
             onChange={handleChange}
-            label={t("sede.form.fields.municipality")}
-          >
-            {municipiosOpts.map((m) => (
-              <MenuItem key={m.id} value={m.id}>
-                {m.nombre}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.municipioId}</FormHelperText>
-        </FormControl>
+            error={!!errors.descripcion}
+            helperText={errors.descripcion}
+            multiline
+            minRows={2}
+          />
 
-        {/* Geolocalización */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label={t("sede.form.fields.geolocation")}
-          name="geolocalizacion"
-          value={formData.geolocalizacion}
-          onChange={handleChange}
-          error={!!errors.geolocalizacion}
-          helperText={errors.geolocalizacion}
-        />
-
-        {/* Coordenadas */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label={t("sede.form.fields.coordinates")}
-          name="coordenadas"
-          value={formData.coordenadas}
-          onChange={handleChange}
-          error={!!errors.coordenadas}
-          helperText={
-            errors.coordenadas ||
-            t("sede.form.helpers.coordinatesExample")
-          }
-        />
-
-        {/* Área */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label={t("sede.form.fields.area")}
-          name="area"
-          value={formData.area}
-          onChange={handleChange}
-          error={!!errors.area}
-          helperText={errors.area}
-        />
-
-        {/* Comuna */}
-        <FormControl fullWidth margin="normal" error={!!errors.comuna}>
-          <InputLabel>{t("sede.form.fields.commune")}</InputLabel>
-          <Select
-            name="comuna"
-            value={formData.comuna}
-            onChange={handleChange}
-            label={t("sede.form.fields.commune")}
-          >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.comuna}</FormHelperText>
-        </FormControl>
-
-        {/* Descripción */}
-        <TextField
-          fullWidth
-          margin="normal"
-          label={t("sede.form.fields.description")}
-          name="descripcion"
-          value={formData.descripcion}
-          onChange={handleChange}
-          error={!!errors.descripcion}
-          helperText={errors.descripcion}
-          multiline
-          minRows={2}
-        />
-
-        {/* Estado */}
-        <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
-          <InputLabel>{t("sede.form.fields.status")}</InputLabel>
-          <Select
-            name="estadoId"
-            value={formData.estadoId}
-            onChange={handleChange}
-            label={t("sede.form.fields.status")}
-          >
-            <MenuItem value={1}>{t("common.labels.active")}</MenuItem>
-            <MenuItem value={2}>{t("common.labels.inactive")}</MenuItem>
-          </Select>
-          <FormHelperText>{errors.estadoId}</FormHelperText>
-        </FormControl>
+          {/* Estado */}
+          <FormControl fullWidth margin="normal" error={!!errors.estadoId}>
+            <InputLabel>{t("sede.form.fields.status")}</InputLabel>
+            <Select
+              name="estadoId"
+              value={formData.estadoId}
+              onChange={handleChange}
+              label={t("sede.form.fields.status")}
+            >
+              <MenuItem value={1}>{t("common.labels.active")}</MenuItem>
+              <MenuItem value={2}>{t("common.labels.inactive")}</MenuItem>
+            </Select>
+            <FormHelperText>{errors.estadoId}</FormHelperText>
+          </FormControl>
+          </CardContent>
+        </Card>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={() => setOpen(false)}>
-          {t("common.actions.cancel")}
-        </Button>
-        <Button variant="contained" onClick={handleSubmit}>
-          {t("common.actions.save")}
-        </Button>
+      <DialogActions sx={dialogUi.actionsSx}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          justifyContent="flex-end"
+          sx={{ width: "100%" }}
+        >
+          <Button onClick={() => setOpen(false)} sx={dialogUi.secondaryButtonSx}>
+            {t("common.actions.cancel")}
+          </Button>
+          <Button variant="contained" onClick={handleSubmit} sx={dialogUi.primaryButtonSx}>
+            {t("common.actions.save")}
+          </Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   );

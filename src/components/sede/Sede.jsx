@@ -15,7 +15,9 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import FilterListIcon from "@mui/icons-material/FilterList";
 
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
@@ -34,8 +36,93 @@ const EMPTY_FILTERS = {
 
 const asItemsArray = (data) => (Array.isArray(data) ? data : []);
 
+const getDialogUi = (theme) => {
+  const isDark = theme.palette.mode === "dark";
+  const darkGreen = isDark ? "#E7F6F7" : "#173f39";
+  const green = isDark ? "#2b6b60" : "#173f39";
+  const surface = isDark ? "#10211f" : theme.palette.common.white;
+  const sectionSurface = isDark ? "#142b28" : theme.palette.common.white;
+  const summarySurface = isDark ? alpha("#2b6b60", 0.28) : "#dfeae6";
+  const subtleBorder = alpha(green, 0.14);
+  const softShadow = `0 10px 30px ${alpha(darkGreen, isDark ? 0.18 : 0.08)}`;
+  const sectionShadow = `0 4px 14px ${alpha(darkGreen, isDark ? 0.14 : 0.05)}`;
+
+  return {
+    darkGreen,
+    paperSx: {
+      borderRadius: 3,
+      overflow: "hidden",
+      backgroundColor: surface,
+      boxShadow: softShadow,
+    },
+    titleSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2.15,
+      backgroundColor: surface,
+      borderTop: `3px solid ${darkGreen}`,
+      borderBottom: `1px solid ${subtleBorder}`,
+      fontSize: "1.12rem",
+      fontWeight: 700,
+      color: darkGreen,
+    },
+    contentSx: {
+      px: { xs: 2.25, sm: 3 },
+      pt: 6,
+      pb: 2.5,
+      backgroundColor: surface,
+    },
+    actionsSx: {
+      px: { xs: 2.25, sm: 3 },
+      py: 2.25,
+      backgroundColor: surface,
+      borderTop: `1px solid ${subtleBorder}`,
+    },
+    summaryCardSx: {
+      borderRadius: 2,
+      border: `1px solid ${subtleBorder}`,
+      boxShadow: sectionShadow,
+      backgroundColor: summarySurface,
+    },
+    formCardSx: {
+      borderRadius: 2,
+      border: `1px solid ${subtleBorder}`,
+      boxShadow: sectionShadow,
+      backgroundColor: sectionSurface,
+    },
+    bodySx: {
+      mt: 0.25,
+      width: "100%",
+    },
+    closeButtonSx: {
+      color: darkGreen,
+    },
+    secondaryButtonSx: {
+      borderRadius: 2,
+      px: 2.5,
+      textTransform: "none",
+      fontWeight: 700,
+      color: darkGreen,
+      border: `1px solid ${subtleBorder}`,
+    },
+    primaryButtonSx: {
+      borderRadius: 2,
+      px: 2.5,
+      textTransform: "none",
+      fontWeight: 700,
+      backgroundColor: isDark ? "#173f39" : "#1d4d45",
+      boxShadow: "none",
+      "&:hover": {
+        backgroundColor: isDark ? "#21534b" : "#173f39",
+        boxShadow: "none",
+      },
+    },
+  };
+};
+
 export default function Sede() {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const dialogUi = getDialogUi(theme);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [openFilters, setOpenFilters] = useState(false);
   const [gruposItems, setGruposItems] = useState([]);
@@ -368,11 +455,38 @@ export default function Sede() {
         open={openFilters}
         onClose={() => setOpenFilters(false)}
         titleKey="sede.filters.title"
+        titleIcon={
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 1.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: dialogUi.darkGreen,
+              backgroundColor:
+                theme.palette.mode === "dark" ? alpha("#2b6b60", 0.24) : "#dfeae6",
+            }}
+          >
+            <FilterListIcon fontSize="small" />
+          </Box>
+        }
         fields={fieldsSede}
         values={filters}
         onChange={handleFiltersChange}
         onClear={handleFiltersClear}
         onApply={handleFiltersApply}
+        paperSx={dialogUi.paperSx}
+        titleSx={dialogUi.titleSx}
+        contentSx={dialogUi.contentSx}
+        summaryCardSx={dialogUi.summaryCardSx}
+        formCardSx={dialogUi.formCardSx}
+        bodySx={dialogUi.bodySx}
+        actionsSx={dialogUi.actionsSx}
+        primaryButtonSx={dialogUi.primaryButtonSx}
+        secondaryButtonSx={dialogUi.secondaryButtonSx}
+        closeButtonSx={dialogUi.closeButtonSx}
       />
     </Box>
   );
