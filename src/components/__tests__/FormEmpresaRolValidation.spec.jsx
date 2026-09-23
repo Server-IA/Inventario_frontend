@@ -193,4 +193,85 @@ describe("Issue #297 - FormEmpresaRol validación de permisos", () => {
       );
     });
   });
+
+  it("en modo edición, bloquea el retiro del último permiso existente sin ejecutar axios.delete", async () => {
+    // Simular que el rol tiene exactamente un permiso asignado inicialmente (id: 1001)
+    axios.get.mockImplementation((url) => {
+      if (url.includes("/v1/items/empresa/0")) {
+        return Promise.resolve({ data: [{ id: 1505, nombre: "Coagrohuila" }] });
+      }
+      if (url.includes("/v1/sub-sistemas")) {
+        return Promise.resolve({ data: mockSubsistemas });
+      }
+      if (url.includes("/v1/empresa-rol-permisos/modulos-subsistema")) {
+        return Promise.resolve({ data: mockModulos });
+      }
+      if (url.includes("/v1/empresa-rol-permisos/rol/10/permisos")) {
+        return Promise.resolve({
+          data: [{ id: 1001, nombre: "CREAR_USUARIO", descripcion: "Crear usuarios", autoridad: "USUARIO_CREAR" }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    const mockSelectedRow = {
+      id: 1,
+      empresaId: 1505,
+      rolId: 10,
+      rolNombre: "ROLE_TEST",
+    };
+
+    render(
+      <ThemeProvider theme={theme}>
+        <FormEmpresaRol
+          open={true}
+          setOpen={setOpen}
+          selectedRow={mockSelectedRow}
+          setSelectedRow={setSelectedRow}
+          setMessage={setMessage}
+          reloadData={reloadData}
+          roles={mockRoles}
+          empresaId={1505}
+          isSystemAdmin={false}
+        />
+      </ThemeProvider>
+    );
+
+    // En modo edición con permisos, esperar a que cargue el subsistema y expandirlo
+    await waitFor(() => {
+      expect(screen.getByText("Seguridad")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Seguridad"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Usuarios")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Usuarios"));
+
+    await waitFor(() => {
+      expect(screen.getByText("CREAR_USUARIO")).toBeInTheDocument();
+    });
+
+    // El botón Quitar debe estar visible para el único permiso asignado
+    const removeButton = screen.getByRole("button", { name: /(quitar|common\.actions\.remove)/i });
+    expect(removeButton).toBeInTheDocument();
+
+    // Intentar retirar el único permiso existente
+    fireEvent.click(removeButton);
+
+    // No debe ejecutar axios.delete
+    expect(axios.delete).not.toHaveBeenCalled();
+
+    // Debe mostrar la advertencia permissionsRequired
+    expect(setMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        severity: "warning",
+        text: "Debe seleccionar al menos un permiso.",
+      })
+    );
+
+    // El permiso debe seguir visible en pantalla
+    expect(screen.getByText("CREAR_USUARIO")).toBeInTheDocument();
+  });
 });
