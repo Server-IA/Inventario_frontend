@@ -20,6 +20,7 @@
     "permissionRemoveError": "Error removing permission",
     "roleRequired": "You must select a role",
     "companyRequired": "You must select a company",
+    "permissionsRequired": "You must select at least one permission.",
     "saveSuccess": "Permissions updated successfully",
     "saveError": "Error saving permissions",
     "permissionsQueryError": "Error querying permissions for one or more roles. You can retry the query.",
