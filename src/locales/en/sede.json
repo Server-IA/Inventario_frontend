@@ -1,0 +1,75 @@
+{
+  "title": "Headquarters Management",
+  "filters": {
+    "title": "Headquarters Filters",
+    "country": "Country",
+    "department": "Department",
+    "municipality": "Municipality"
+  },
+  "columns": {
+    "id": "ID",
+    "name": "Name",
+    "country": "Country",
+    "department": "Department",
+    "municipality": "Municipality",
+    "group": "Group",
+    "type": "Headquarters type",
+    "geolocation": "Geolocation",
+    "coordinates": "Coordinates",
+    "area": "Area",
+    "commune": "Commune",
+    "description": "Description",
+    "status": "Status"
+  },
+  "messages": {
+    "loadError": "Error loading headquarters.",
+    "confirmDelete": "Delete headquarters \"{{name}}\"?",
+    "deleteSuccess": "Headquarters deleted successfully.",
+    "deleteError": "Error deleting headquarters.",
+    "createSuccess": "Headquarters created successfully.",
+    "updateSuccess": "Headquarters updated successfully.",
+    "saveError": "Error saving headquarters.",
+    "saveConflict": "Duplicate data or database restriction."
+  },
+  "form": {
+    "createTitle": "New Headquarters",
+    "editTitle": "Edit Headquarters",
+    "fields": {
+      "name": "Name",
+      "country": "Country",
+      "department": "Department",
+      "municipality": "Municipality",
+      "group": "Group",
+      "type": "Headquarters type",
+      "geolocation": "Geolocation",
+      "coordinates": "Coordinates (lat, lon)",
+      "area": "Area",
+      "commune": "Commune",
+      "description": "Description",
+      "status": "Status"
+    },
+    "helpers": {
+      "coordinatesExample": "Example: 2.927, -75.281 (latitude, longitude)"
+    },
+    "validation": {
+      "nameRequired": "Name is required.",
+      "nameOnlyNumbers": "Name cannot contain only numbers.",
+      "groupRequired": "You must select a group.",
+      "typeRequired": "You must select a headquarters type.",
+      "countryRequired": "You must select a country.",
+      "departmentRequired": "You must select a department.",
+      "municipalityRequired": "You must select a municipality.",
+      "departmentMismatch": "The department does not belong to the selected country.",
+      "municipalityMismatch": "The municipality does not belong to the selected department.",
+      "areaNumeric": "Area must be numeric.",
+      "areaNonNegative": "Area cannot be negative.",
+      "geolocationNumeric": "Geolocation must contain only numbers.",
+      "coordinatesFormat": "You must enter numeric coordinates in 'latitude, longitude' format.",
+      "latitudeRange": "Latitude must be between -90° and 90°.",
+      "longitudeRange": "Longitude must be between -180° and 180°.",
+      "communeRequired": "You must select a commune.",
+      "communeRange": "Commune must be between 1 and 10.",
+      "descriptionOnlyNumbers": "Description cannot contain only numbers."
+    }
+  }
+}

@@ -1,72 +1,56 @@
-// src/components/Sede/GridSede.jsx
-import React, { useEffect, useMemo, useState } from "react";
+/*=============================================================================
+ Nombre del archivo : GridSede.jsx
+ Descripcion        : Grilla estandar para la gestion de sedes.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-09-21 | 0.4.0   | Cesar Medina         | Migra la grilla a           |
+ |            |         |                      | AppDataGrid con i18n.       |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
-import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
-
-const LS_KEY = "gridSede:columnVisibility:v1";
-
-/* -------- Toolbar personalizada -------- */
-function SedeToolbar({ onResetColumns }) {
-  return (
-    <GridToolbarContainer sx={{ p: 1, gap: 1, justifyContent: "space-between" }}>
-      <div>
-        <GridToolbarColumnsButton />
-        <GridToolbarFilterButton />
-        <GridToolbarDensitySelector />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <GridToolbarQuickFilter debounceMs={300} />
-        <button
-          type="button"
-          onClick={onResetColumns}
-          style={{
-            border: "1px solid rgba(0,0,0,.2)",
-            background: "transparent",
-            padding: "4px 8px",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-          title="Restablecer columnas"
-        >
-          Restablecer columnas
-        </button>
-      </div>
-    </GridToolbarContainer>
-  );
-}
+import AppDataGrid from "../common/AppDataGrid";
 
 export default function GridSede({
-  // Datos
   sedes = [],
-
-  // Selección
   selectedRow = null,
   setSelectedRow,
-
-  // Paginación (server-side opcional)
-  paginationModel,        // { page, pageSize } o { page, size }
-  setPaginationModel,     // (model) => void
-  rowCount,               // total en servidor
-  loading = false,        // spinner
+  loading = false,
 }) {
   const columns = useMemo(
     () => [
-      { field: "id", headerName: "ID", width: 80, hideable: true },
-      { field: "nombre", headerName: "Nombre", width: 220, hideable: true },
-
-      // Nombres con fallback a ID
+      { field: "id", headerKey: "sede.columns.id", type: "number", width: 80 },
+      {
+        field: "nombre",
+        headerKey: "sede.columns.name",
+        type: "text",
+        minWidth: 220,
+        flex: 1,
+      },
+      {
+        field: "paisNombre",
+        headerKey: "sede.columns.country",
+        type: "text",
+        minWidth: 160,
+        flex: 0.8,
+      },
+      {
+        field: "departamentoNombre",
+        headerKey: "sede.columns.department",
+        type: "text",
+        minWidth: 180,
+        flex: 0.9,
+      },
       {
         field: "municipioNombre",
-        headerName: "Municipio",
-        width: 200,
-        hideable: true,
+        headerKey: "sede.columns.municipality",
+        type: "text",
+        minWidth: 180,
+        flex: 0.9,
         valueGetter: (p) =>
           p?.row?.municipioNombre ??
           p?.row?.municipio?.name ??
@@ -75,9 +59,10 @@ export default function GridSede({
       },
       {
         field: "grupoNombre",
-        headerName: "Grupo",
-        width: 200,
-        hideable: true,
+        headerKey: "sede.columns.group",
+        type: "text",
+        minWidth: 180,
+        flex: 0.8,
         valueGetter: (p) =>
           p?.row?.grupoNombre ??
           p?.row?.grupo?.name ??
@@ -86,111 +71,68 @@ export default function GridSede({
       },
       {
         field: "tipoSedeNombre",
-        headerName: "Tipo Sede",
-        width: 220,
-        hideable: true,
+        headerKey: "sede.columns.type",
+        type: "text",
+        minWidth: 180,
+        flex: 0.9,
         valueGetter: (p) =>
           p?.row?.tipoSedeNombre ??
           p?.row?.tipoSede?.name ??
           p?.row?.tipoSede?.nombre ??
           String(p?.row?.tipoSedeId ?? ""),
       },
-
-      { field: "geolocalizacion", headerName: "Geolocalización", width: 200, hideable: true },
-      { field: "coordenadas", headerName: "Coordenadas", width: 200, hideable: true },
-      { field: "area", headerName: "Área", width: 120, hideable: true },
-      { field: "comuna", headerName: "Comuna", width: 140, hideable: true },
-      { field: "descripcion", headerName: "Descripción", flex: 1, minWidth: 280, hideable: true },
-
+      {
+        field: "geolocalizacion",
+        headerKey: "sede.columns.geolocation",
+        type: "text",
+        width: 160,
+      },
+      {
+        field: "coordenadas",
+        headerKey: "sede.columns.coordinates",
+        type: "text",
+        width: 170,
+      },
+      { field: "area", headerKey: "sede.columns.area", type: "number", width: 120 },
+      {
+        field: "comuna",
+        headerKey: "sede.columns.commune",
+        type: "number",
+        width: 120,
+      },
+      {
+        field: "descripcion",
+        headerKey: "sede.columns.description",
+        type: "text",
+        flex: 1.1,
+        minWidth: 260,
+      },
       {
         field: "estadoId",
-        headerName: "Estado",
+        headerKey: "sede.columns.status",
+        type: "status",
         width: 140,
-        hideable: true,
         valueGetter: (p) =>
           p?.row?.estado?.name ??
           p?.row?.estado?.nombre ??
-          (String(p?.row?.estadoId) === "1" ? "Activo" : "Inactivo"),
+          p?.row?.estadoNombre ??
+          p?.row?.estadoId,
       },
     ],
     []
   );
 
-  /* -------- Persistencia visibilidad -------- */
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-      if (saved && typeof saved === "object") setColumnVisibilityModel(saved);
-    } catch { /* noop */ }
-  }, []);
-
-  const handleVisibilityChange = (model) => {
-    setColumnVisibilityModel(model);
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(model));
-    } catch { /* noop */ }
-  };
-
-  const handleResetColumns = () => {
-    localStorage.removeItem(LS_KEY);
-    setColumnVisibilityModel({});
-  };
-
-  // ¿Server o Cliente?
-  const serverPagination = Boolean(
-    paginationModel && setPaginationModel && typeof rowCount === "number"
-  );
-
   return (
-    <div style={{ width: "100%" }}>
-      <DataGrid
-        rows={Array.isArray(sedes) ? sedes : []}
-        columns={columns}
-        getRowId={(row) => row.id}
-
-        // Selección
-        onRowClick={(params) => setSelectedRow?.(params.row)}
-        rowSelectionModel={selectedRow?.id ? [selectedRow.id] : []}
-        disableRowSelectionOnClick
-
-        // Columnas + toolbar
-        columnVisibilityModel={columnVisibilityModel}
-        onColumnVisibilityModelChange={handleVisibilityChange}
-        slots={{ toolbar: SedeToolbar }}
-        slotProps={{ toolbar: { onResetColumns: handleResetColumns } }}
-
-        // Paginación
-        paginationMode={serverPagination ? "server" : "client"}
-        loading={loading}
-        {...(serverPagination
-          ? {
-              // ----- Server controlled -----
-              paginationModel: {
-                page: paginationModel.page ?? 0,
-                pageSize: paginationModel.pageSize ?? paginationModel.size ?? 10,
-              },
-              onPaginationModelChange: (model) => {
-                const next = {
-                  page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? 10,
-                };
-                setPaginationModel?.(next); // el padre hace el fetch con estos valores
-              },
-              rowCount,
-              pageSizeOptions: [5, 10, 15, 20, 50],
-            }
-          : {
-              // ----- Client fallback -----
-              pageSizeOptions: [5, 10, 15, 20, 50],
-              initialState: {
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
-              },
-            })}
-        autoHeight
-      />
-    </div>
+    <AppDataGrid
+      rows={sedes}
+      columns={columns}
+      selectedRow={selectedRow}
+      setSelectedRow={setSelectedRow}
+      columnVisibilityKey="gridSede:columnVisibility:v2"
+      quickFilter={false}
+      containerSx={{ borderRadius: 4 }}
+      loading={loading}
+    />
   );
 }
 
@@ -198,12 +140,5 @@ GridSede.propTypes = {
   sedes: PropTypes.array,
   selectedRow: PropTypes.object,
   setSelectedRow: PropTypes.func.isRequired,
-  paginationModel: PropTypes.shape({
-    page: PropTypes.number,
-    pageSize: PropTypes.number,
-    size: PropTypes.number,
-  }),
-  setPaginationModel: PropTypes.func,
-  rowCount: PropTypes.number,
   loading: PropTypes.bool,
 };
