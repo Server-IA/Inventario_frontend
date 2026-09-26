@@ -9,6 +9,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-09-25 | 0.4.0   | Arekkazu             | Creación del archivo para   |
  |            |         |                      | la HU-045.1.                |
+ | 2026-09-26 | 0.4.0   | Arekkazu             | Cascada de ubicación común  |
+ |            |         |                      | con el filtro (HU-045.2).   |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -19,6 +21,25 @@
 
 /** Niveles de ubicación en orden jerárquico. */
 export const NIVELES = ["sede", "bloque", "espacio", "almacen"];
+
+/**
+ * Asigna `valor` a `campo` y, si es un nivel de ubicación, limpia los
+ * inferiores (Sede → Bloque → Espacio → Almacén).
+ * @param {Object} prev Estado actual.
+ * @param {string} campo Campo que cambia.
+ * @param {*} valor Nuevo valor.
+ * @returns {Object} Nuevo estado.
+ */
+export const seleccionarNivel = (prev, campo, valor) => {
+  const next = { ...prev, [campo]: valor };
+  const nivel = NIVELES.indexOf(campo);
+  if (nivel >= 0) {
+    NIVELES.slice(nivel + 1).forEach((inferior) => {
+      next[inferior] = null;
+    });
+  }
+  return next;
+};
 
 export const emptyForm = {
   tipo: null,

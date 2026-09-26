@@ -9,6 +9,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-09-25 | 0.4.0   | Arekkazu             | Creación del archivo para   |
  |            |         |                      | la HU-045.1.                |
+ | 2026-09-26 | 0.4.0   | Arekkazu             | Exporta Selector/useOpciones|
+ |            |         |                      | y onCreated (HU-045.2).     |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -33,7 +35,7 @@ import {
 import { useTranslation } from "react-i18next";
 import axios from "../../axiosConfig";
 import {
-  NIVELES,
+  seleccionarNivel,
   emptyForm,
   validateCostoIndirecto,
   buildPayload,
@@ -49,7 +51,7 @@ const IDLE = { options: [], loading: false, error: false };
  * @param {*} arg Argumento del loader (id del padre o empresa).
  * @param {boolean} active Habilita la carga.
  */
-function useOpciones(loader, arg, active) {
+export function useOpciones(loader, arg, active) {
   const [state, setState] = useState(IDLE);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ function useOpciones(loader, arg, active) {
   return state;
 }
 
-function Selector({ name, label, value, catalogo, disabled, required, error, helperText, onChange, noOptionsText }) {
+export function Selector({ name, label, value, catalogo, disabled, required, error, helperText, onChange, noOptionsText }) {
   const { t } = useTranslation();
   return (
     <Autocomplete
@@ -115,7 +117,7 @@ Selector.propTypes = {
 
 const FULL_ROW = { gridColumn: "1 / -1" };
 
-export default function FormCostoIndirecto({ open, setOpen, setMessage }) {
+export default function FormCostoIndirecto({ open, setOpen, setMessage, onCreated }) {
   const { t, i18n } = useTranslation();
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
@@ -145,18 +147,8 @@ export default function FormCostoIndirecto({ open, setOpen, setMessage }) {
 
   const clearError = (campo) => setErrors((prev) => ({ ...prev, [campo]: undefined }));
 
-  // Al cambiar un nivel de ubicación se limpian los inferiores (Sede → Bloque → Espacio → Almacén).
   const handleSelect = (campo, valor) => {
-    setForm((prev) => {
-      const next = { ...prev, [campo]: valor };
-      const nivel = NIVELES.indexOf(campo);
-      if (nivel >= 0) {
-        NIVELES.slice(nivel + 1).forEach((inferior) => {
-          next[inferior] = null;
-        });
-      }
-      return next;
-    });
+    setForm((prev) => seleccionarNivel(prev, campo, valor));
     clearError(campo);
   };
 
@@ -188,6 +180,7 @@ export default function FormCostoIndirecto({ open, setOpen, setMessage }) {
       const { data } = await axios.post("/v1/costos-indirectos", buildPayload(form));
       setMessage({ open: true, severity: "success", text: data?.mensaje ?? t2("messages.created") });
       setOpen(false);
+      onCreated?.();
     } catch (error) {
       const { fieldErrors, detail } = parseServerError(error);
       setErrors(fieldErrors);
@@ -349,4 +342,5 @@ FormCostoIndirecto.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   setMessage: PropTypes.func.isRequired,
+  onCreated: PropTypes.func,
 };

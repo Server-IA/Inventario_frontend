@@ -5,10 +5,18 @@
       "tipo": "Tipo de costo indirecto",
       "espacio": "Espacio",
       "fechaInicio": "Fecha de inicio",
-      "fechaFin": "Fecha de fin"
+      "fechaFin": "Fecha de fin",
+      "sede": "Sede",
+      "bloque": "Bloque",
+      "almacen": "Almacén",
+      "valor": "Valor",
+      "estado": "Estado"
     },
     "grid": {
       "empty": "No hay costos indirectos para mostrar."
+    },
+    "filters": {
+      "title": "Filtrar costos indirectos"
     },
     "form": {
       "title": "Registrar costo indirecto",
@@ -43,7 +51,8 @@
     "messages": {
       "created": "El costo indirecto fue registrado correctamente.",
       "saveError": "No se pudo registrar el costo indirecto. Revisa los datos e inténtalo de nuevo.",
-      "catalogError": "No se pudieron cargar las listas del formulario. Verifica tus permisos e inténtalo de nuevo."
+      "catalogError": "No se pudieron cargar las listas del formulario. Verifica tus permisos e inténtalo de nuevo.",
+      "listError": "No se pudo cargar el listado de costos indirectos. Inténtalo de nuevo."
     }
   }
 }
