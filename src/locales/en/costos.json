@@ -16,7 +16,9 @@
       "empty": "There are no indirect costs to show."
     },
     "filters": {
-      "title": "Filter indirect costs"
+      "title": "Filter indirect costs",
+      "desde": "From",
+      "hasta": "To"
     },
     "form": {
       "title": "Register indirect cost",

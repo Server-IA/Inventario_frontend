@@ -16,7 +16,9 @@
       "empty": "No hay costos indirectos para mostrar."
     },
     "filters": {
-      "title": "Filtrar costos indirectos"
+      "title": "Filtrar costos indirectos",
+      "desde": "Desde",
+      "hasta": "Hasta"
     },
     "form": {
       "title": "Registrar costo indirecto",

@@ -10,6 +10,8 @@
  |            |         |                      | la HU-045.1 (solo registro).|
  | 2026-09-26 | 0.4.0   | Arekkazu             | Listado paginado con filtros|
  |            |         |                      | (HU-045.2).                 |
+ | 2026-09-26 | 0.4.0   | Arekkazu             | Chips de filtros activos    |
+ |            |         |                      | (HU-045.2).                 |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -18,7 +20,7 @@
  * paginado de `GET /v1/costos-indirectos` con filtros y modal de registro.
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { Box } from "@mui/material";
+import { Box, Chip, Stack } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import axios from "../../axiosConfig";
 import SectionHeader from "../../common/SectionHeader.jsx";
@@ -27,14 +29,14 @@ import AppDataGrid from "../../common/AppDataGrid.jsx";
 import MessageSnackBar from "../../MessageSnackBar.jsx";
 import FormCostoIndirecto from "./FormCostoIndirecto.jsx";
 import FiltroCostoIndirecto, { filtrosVacios, toParams } from "./FiltroCostoIndirecto.jsx";
-import { parseServerError } from "./costoIndirectoValidation";
+import { parseServerError, seleccionarNivel } from "./costoIndirectoValidation";
 
 // El backend envía fechas `yyyy-MM-dd`; se leen como fecha local para que no se corran un día por UTC.
 const fechaLocal = ({ value }) => (value ? new Date(`${value}T00:00:00`) : null);
 const FORMATO_FECHA = { day: "2-digit", month: "2-digit", year: "numeric" };
 
 export default function CostoIndirecto() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formOpen, setFormOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtros, setFiltros] = useState(filtrosVacios);
@@ -117,6 +119,21 @@ export default function CostoIndirecto() {
   );
   const localeText = useMemo(() => ({ noRowsLabel: t("costos.costoIndirecto.grid.empty") }), [t]);
 
+  // Un chip por filtro aplicado: [campo, [etiqueta, valor]]. Quitar uno limpia también sus niveles inferiores.
+  const t2 = (key) => t(`costos.costoIndirecto.${key}`);
+  const fecha = (value) => fechaLocal({ value }).toLocaleDateString(i18n.language, FORMATO_FECHA);
+  const estado = filtros.estadoId && t(Number(filtros.estadoId) === 1 ? "common.labels.active" : "common.labels.inactive");
+  const chips = Object.entries({
+    tipo: [t2("form.fields.tipo"), filtros.tipo?.label],
+    sede: [t2("form.fields.sede"), filtros.sede?.label],
+    bloque: [t2("form.fields.bloque"), filtros.bloque?.label],
+    espacio: [t2("form.fields.espacio"), filtros.espacio?.label],
+    almacen: [t2("form.fields.almacen"), filtros.almacen?.label],
+    estadoId: [t2("columns.estado"), estado],
+    fechaInicio: [t2("filters.desde"), filtros.fechaInicio && fecha(filtros.fechaInicio)],
+    fechaFin: [t2("filters.hasta"), filtros.fechaFin && fecha(filtros.fechaFin)],
+  }).filter(([, [, valor]]) => valor);
+
   return (
     <Box p={2}>
       <SectionHeader titleKey="costos.costoIndirecto.title" />
@@ -132,6 +149,19 @@ export default function CostoIndirecto() {
         onClearFilters={() => applyFilters(filtrosVacios)}
         hasActiveFilters={Object.keys(params).length > 0}
       />
+
+      {chips.length > 0 && (
+        <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1} sx={{ mb: 2 }}>
+          {chips.map(([campo, [etiqueta, valor]]) => (
+            <Chip
+              key={campo}
+              size="small"
+              label={`${etiqueta}: ${valor}`}
+              onDelete={() => applyFilters(seleccionarNivel(filtros, campo, filtrosVacios[campo]))}
+            />
+          ))}
+        </Stack>
+      )}
 
       <FormCostoIndirecto
         open={formOpen}
