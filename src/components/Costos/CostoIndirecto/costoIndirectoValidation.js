@@ -11,6 +11,9 @@
  |            |         |                      | la HU-045.1.                |
  | 2026-09-26 | 0.4.0   | Arekkazu             | Cascada de ubicación común  |
  |            |         |                      | con el filtro (HU-045.2).   |
+ | 2026-09-27 | 0.5.0   | Arekkazu             | formFromRow para precargar  |
+ |            |         |                      | el formulario de edición    |
+ |            |         |                      | (HU-045.3).                 |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -51,6 +54,25 @@ export const emptyForm = {
   fechaFin: "",
   valor: "",
 };
+
+/**
+ * Arma el estado inicial del formulario a partir de una fila del listado,
+ * para precargar la edición sin una consulta extra al backend.
+ * @param {Object} row Fila de `CostoIndirectoListadoItemDTO`.
+ * @returns {Object} Estado compatible con `emptyForm`.
+ */
+export const formFromRow = (row) => ({
+  tipo: row.tipoCostoIndirectoId
+    ? { id: row.tipoCostoIndirectoId, label: row.tipoCostoIndirectoNombre }
+    : null,
+  sede: row.sedeId ? { id: row.sedeId, label: row.sedeNombre } : null,
+  bloque: row.bloqueId ? { id: row.bloqueId, label: row.bloqueNombre } : null,
+  espacio: row.espacioId ? { id: row.espacioId, label: row.espacioNombre } : null,
+  almacen: row.almacenId ? { id: row.almacenId, label: row.almacenNombre } : null,
+  fechaInicio: row.fechaInicio ?? "",
+  fechaFin: row.fechaFin ?? "",
+  valor: row.valor != null ? String(row.valor) : "",
+});
 
 /**
  * Valida el formulario y devuelve códigos de error por campo (claves de

@@ -12,12 +12,15 @@
  |            |         |                      | (HU-045.2).                 |
  | 2026-09-26 | 0.4.0   | Arekkazu             | Chips de filtros activos    |
  |            |         |                      | (HU-045.2).                 |
+ | 2026-09-27 | 0.5.0   | Arekkazu             | Selección de fila y edición |
+ |            |         |                      | mediante PUT (HU-045.3).    |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
  * @module CostoIndirecto
  * @description Contenedor del módulo: encabezado, barra de acciones, listado
- * paginado de `GET /v1/costos-indirectos` con filtros y modal de registro.
+ * paginado de `GET /v1/costos-indirectos` con filtros y modal de
+ * registro/edición.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Chip, Stack } from "@mui/material";
@@ -38,6 +41,7 @@ const FORMATO_FECHA = { day: "2-digit", month: "2-digit", year: "numeric" };
 export default function CostoIndirecto() {
   const { t, i18n } = useTranslation();
   const [formOpen, setFormOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtros, setFiltros] = useState(filtrosVacios);
   const [paginationModel, setPaginationModel] = useState({ page: 0, size: 10 });
@@ -81,6 +85,19 @@ export default function CostoIndirecto() {
     setFiltros(nuevos);
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
     setFiltersOpen(false);
+  };
+
+  const handleCreate = () => {
+    setSelectedRow(null);
+    setFormOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedRow?.id) {
+      setMessage({ open: true, severity: "warning", text: t("common.messages.selectRow") });
+      return;
+    }
+    setFormOpen(true);
   };
 
   const columns = useMemo(
@@ -140,10 +157,10 @@ export default function CostoIndirecto() {
 
       <MessageSnackBar message={message} setMessage={setMessage} />
 
-      {/* ponytail: Actualizar/Eliminar llegan con HU-045.3 y siguientes. */}
       <GridActionBar
-        onAdd={() => setFormOpen(true)}
-        canUpdate={false}
+        onAdd={handleCreate}
+        onUpdate={handleUpdate}
+        canUpdate={Boolean(selectedRow)}
         showDelete={false}
         onFilters={() => setFiltersOpen(true)}
         onClearFilters={() => applyFilters(filtrosVacios)}
@@ -166,8 +183,12 @@ export default function CostoIndirecto() {
       <FormCostoIndirecto
         open={formOpen}
         setOpen={setFormOpen}
+        selectedRow={selectedRow}
         setMessage={setMessage}
-        onCreated={() => setRefreshKey((key) => key + 1)}
+        onCreated={() => {
+          setRefreshKey((key) => key + 1);
+          setSelectedRow(null);
+        }}
       />
 
       <FiltroCostoIndirecto
@@ -187,6 +208,9 @@ export default function CostoIndirecto() {
         pageSizeOptions={[5, 10, 20, 50]}
         localeText={localeText}
         containerSx={{ borderRadius: 4 }}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        onEscape={() => setFormOpen(false)}
       />
     </Box>
   );

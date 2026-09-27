@@ -11,12 +11,16 @@
  |            |         |                      | la HU-045.1.                |
  | 2026-09-26 | 0.4.0   | Arekkazu             | Exporta Selector/useOpciones|
  |            |         |                      | y onCreated (HU-045.2).     |
+ | 2026-09-27 | 0.5.0   | Arekkazu             | Modo edición con PUT sobre  |
+ |            |         |                      | la fila seleccionada        |
+ |            |         |                      | (HU-045.3).                 |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
  * @module FormCostoIndirecto
- * @description Modal de registro de costo indirecto. Consume
- * `POST /v1/costos-indirectos` y carga solo catálogos activos.
+ * @description Modal de registro/edición de costo indirecto. Consume
+ * `POST /v1/costos-indirectos` o, si hay fila seleccionada,
+ * `PUT /v1/costos-indirectos/{id}`. Carga solo catálogos activos.
  */
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
@@ -37,6 +41,7 @@ import axios from "../../axiosConfig";
 import {
   seleccionarNivel,
   emptyForm,
+  formFromRow,
   validateCostoIndirecto,
   buildPayload,
   parseServerError,
@@ -117,8 +122,9 @@ Selector.propTypes = {
 
 const FULL_ROW = { gridColumn: "1 / -1" };
 
-export default function FormCostoIndirecto({ open, setOpen, setMessage, onCreated }) {
+export default function FormCostoIndirecto({ open, setOpen, selectedRow, setMessage, onCreated }) {
   const { t, i18n } = useTranslation();
+  const isEdit = Boolean(selectedRow?.id);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [formAlert, setFormAlert] = useState("");
@@ -132,10 +138,11 @@ export default function FormCostoIndirecto({ open, setOpen, setMessage, onCreate
 
   useEffect(() => {
     if (!open) return;
-    setForm(emptyForm);
+    setForm(isEdit ? formFromRow(selectedRow) : emptyForm);
     setErrors({});
     setFormAlert("");
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEdit, selectedRow]);
 
   const catalogFailed = open && (tipos.error || sedes.error);
   useEffect(() => {
@@ -177,8 +184,14 @@ export default function FormCostoIndirecto({ open, setOpen, setMessage, onCreate
     setErrors({});
     setFormAlert("");
     try {
-      const { data } = await axios.post("/v1/costos-indirectos", buildPayload(form));
-      setMessage({ open: true, severity: "success", text: data?.mensaje ?? t2("messages.created") });
+      const { data } = isEdit
+        ? await axios.put(`/v1/costos-indirectos/${selectedRow.id}`, buildPayload(form))
+        : await axios.post("/v1/costos-indirectos", buildPayload(form));
+      setMessage({
+        open: true,
+        severity: "success",
+        text: data?.mensaje ?? t2(isEdit ? "messages.updated" : "messages.created"),
+      });
       setOpen(false);
       onCreated?.();
     } catch (error) {
@@ -219,7 +232,7 @@ export default function FormCostoIndirecto({ open, setOpen, setMessage, onCreate
       fullWidth
       PaperProps={{ component: "form", onSubmit: handleSubmit, noValidate: true }}
     >
-      <DialogTitle>{t2("form.title")}</DialogTitle>
+      <DialogTitle>{t2(isEdit ? "form.editTitle" : "form.title")}</DialogTitle>
       <DialogContent>
         {formAlert && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -341,6 +354,7 @@ export default function FormCostoIndirecto({ open, setOpen, setMessage, onCreate
 FormCostoIndirecto.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
+  selectedRow: PropTypes.object,
   setMessage: PropTypes.func.isRequired,
   onCreated: PropTypes.func,
 };
