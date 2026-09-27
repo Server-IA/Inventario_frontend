@@ -20,6 +20,10 @@
       "desde": "From",
       "hasta": "To"
     },
+    "confirmDelete": {
+      "title": "Delete indirect cost",
+      "text": "The indirect cost will become inactive and will no longer be available for new cost calculations. Do you want to continue?"
+    },
     "form": {
       "title": "Register indirect cost",
       "editTitle": "Edit indirect cost",
@@ -54,6 +58,8 @@
     "messages": {
       "created": "The indirect cost was registered successfully.",
       "updated": "The indirect cost was updated successfully.",
+      "deleted": "The indirect cost was deleted successfully.",
+      "deleteError": "The indirect cost could not be deleted. Please try again.",
       "saveError": "The indirect cost could not be registered. Check the data and try again.",
       "catalogError": "The form lists could not be loaded. Check your permissions and try again.",
       "listError": "The indirect cost list could not be loaded. Please try again."

@@ -14,16 +14,18 @@
  |            |         |                      | (HU-045.2).                 |
  | 2026-09-27 | 0.5.0   | Arekkazu             | Selección de fila y edición |
  |            |         |                      | mediante PUT (HU-045.3).    |
+ | 2026-09-27 | 0.6.0   | Arekkazu             | Eliminación lógica con      |
+ |            |         |                      | confirmación (HU-045.4).    |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
  * @module CostoIndirecto
  * @description Contenedor del módulo: encabezado, barra de acciones, listado
  * paginado de `GET /v1/costos-indirectos` con filtros y modal de
- * registro/edición.
+ * registro/edición/eliminación lógica.
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Chip, Stack } from "@mui/material";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import axios from "../../axiosConfig";
 import SectionHeader from "../../common/SectionHeader.jsx";
@@ -42,6 +44,8 @@ export default function CostoIndirecto() {
   const { t, i18n } = useTranslation();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtros, setFiltros] = useState(filtrosVacios);
   const [paginationModel, setPaginationModel] = useState({ page: 0, size: 10 });
@@ -98,6 +102,33 @@ export default function CostoIndirecto() {
       return;
     }
     setFormOpen(true);
+  };
+
+  const handleDeleteIntent = () => {
+    if (!selectedRow?.id) {
+      setMessage({ open: true, severity: "warning", text: t("common.messages.selectRow") });
+      return;
+    }
+    setConfirmOpen(true);
+  };
+
+  const confirmarEliminacion = async () => {
+    setDeleting(true);
+    try {
+      await axios.delete(`/v1/costos-indirectos/${selectedRow.id}`);
+      setMessage({ open: true, severity: "success", text: t("costos.costoIndirecto.messages.deleted") });
+      setSelectedRow(null);
+      setRefreshKey((key) => key + 1);
+    } catch (error) {
+      setMessage({
+        open: true,
+        severity: "error",
+        text: parseServerError(error).detail ?? t("costos.costoIndirecto.messages.deleteError"),
+      });
+    } finally {
+      setDeleting(false);
+      setConfirmOpen(false);
+    }
   };
 
   const columns = useMemo(
@@ -160,8 +191,9 @@ export default function CostoIndirecto() {
       <GridActionBar
         onAdd={handleCreate}
         onUpdate={handleUpdate}
+        onDelete={handleDeleteIntent}
         canUpdate={Boolean(selectedRow)}
-        showDelete={false}
+        canDelete={selectedRow?.estadoId === 1}
         onFilters={() => setFiltersOpen(true)}
         onClearFilters={() => applyFilters(filtrosVacios)}
         hasActiveFilters={Object.keys(params).length > 0}
@@ -210,8 +242,24 @@ export default function CostoIndirecto() {
         containerSx={{ borderRadius: 4 }}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
-        onEscape={() => setFormOpen(false)}
+        onEscape={() => {
+          setFormOpen(false);
+          setConfirmOpen(false);
+        }}
       />
+
+      <Dialog open={confirmOpen} onClose={() => !deleting && setConfirmOpen(false)}>
+        <DialogTitle>{t2("confirmDelete.title")}</DialogTitle>
+        <DialogContent>{t2("confirmDelete.text")}</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)} disabled={deleting}>
+            {t("common.actions.cancel")}
+          </Button>
+          <Button color="error" variant="contained" onClick={confirmarEliminacion} disabled={deleting}>
+            {t("common.actions.delete")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
