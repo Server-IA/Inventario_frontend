@@ -34,6 +34,12 @@ const ACTIVE_STATUS = "Activo";
 const INACTIVE_STATUS = "Inactivo";
 const ALL_STATUS = "Todos";
 
+export const asLocationList = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.content)) return data.content;
+  return [];
+};
+
 export default function LocalizacionGeografica() {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -71,7 +77,7 @@ export default function LocalizacionGeografica() {
     try {
       setLoading(true);
       const res = await axios.get("/v1/pais");
-      const list = Array.isArray(res.data) ? res.data : [];
+      const list = asLocationList(res.data);
       const mapped = list.map((p) => ({
         id: p.id,
         nombre: p.nombre,
@@ -86,7 +92,6 @@ export default function LocalizacionGeografica() {
         return mapped[0]?.id || "";
       });
     } catch (err) {
-      console.error("Error cargando paises:", err);
       setMessage({
         open: true,
         severity: "error",
@@ -105,7 +110,7 @@ export default function LocalizacionGeografica() {
     try {
       setLoading(true);
       const res = await axios.get(`/v1/departamento?paisId=${paisId}`);
-      const list = Array.isArray(res.data) ? res.data : [];
+      const list = asLocationList(res.data);
       const mapped = list.map((d) => ({
         id: d.id,
         paisId: d.paisId,
@@ -117,12 +122,16 @@ export default function LocalizacionGeografica() {
       }));
       setDepartamentos(mapped);
     } catch (err) {
-      console.error("Error cargando departamentos:", err);
       setDepartamentos([]);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: err.response?.data?.detail || err.response?.data?.message || t("localizacionGeografica.messages.departmentsLoadError", "Error al cargar departamentos"),
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadMunicipios = useCallback(async (deptoId) => {
     if (!deptoId) {
@@ -131,7 +140,7 @@ export default function LocalizacionGeografica() {
     }
     try {
       const res = await axios.get(`/v1/municipio?departamentoId=${deptoId}`);
-      const list = Array.isArray(res.data) ? res.data : [];
+      const list = asLocationList(res.data);
       const mapped = list.map((m) => ({
         id: m.id,
         departamentoId: m.departamentoId,
@@ -143,10 +152,14 @@ export default function LocalizacionGeografica() {
       }));
       setMunicipios(mapped);
     } catch (err) {
-      console.error("Error cargando municipios:", err);
       setMunicipios([]);
+      setMessage({
+        open: true,
+        severity: "error",
+        text: err.response?.data?.detail || err.response?.data?.message || t("localizacionGeografica.messages.municipalitiesLoadError", "Error al cargar municipios"),
+      });
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadPaises();
@@ -331,6 +344,7 @@ export default function LocalizacionGeografica() {
         }
         await loadPaises();
         if (selectedPaisId) await loadDepartamentos(selectedPaisId);
+        if (selectedDeptoId) await loadMunicipios(selectedDeptoId);
       } else if (type === "depto") {
         if (isActivating) {
           await axios.put(`/v1/departamento/${item.id}`, {
@@ -386,11 +400,9 @@ export default function LocalizacionGeografica() {
     if (!item) return [];
     if (type === "pais") {
       const deptoCount = departamentos.filter((depto) => depto.paisId === item.id).length;
-      const deptoIds = departamentos.filter((depto) => depto.paisId === item.id).map((depto) => depto.id);
-      const munCount = municipios.filter((municipio) => deptoIds.includes(municipio.departamentoId)).length;
       return [
         t("localizacionGeografica.confirm.departmentsAffected", { count: deptoCount }),
-        t("localizacionGeografica.confirm.municipalitiesAffected", { count: munCount }),
+        t("localizacionGeografica.confirm.countryMunicipalitiesCascade", "Todos los municipios de esos departamentos pasarán a estado Inactivo"),
       ];
     }
     if (type === "depto") {

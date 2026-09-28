@@ -39,8 +39,7 @@ describe("Issue #288 - Auth links dark mode and navigation", () => {
     fireEvent.click(registerLink);
     expect(setCurrentModule).toHaveBeenCalledTimes(1);
     const calledArg = setCurrentModule.mock.calls[0][0];
-    expect(calledArg).toBeTruthy();
-    expect(calledArg.type.name || calledArg.type.displayName || calledArg.type).toBeTruthy();
+    expect(calledArg.type).toBe(Register);
   });
 
   it("Register: clicking login link calls setCurrentModule with Login component", () => {
@@ -53,8 +52,7 @@ describe("Issue #288 - Auth links dark mode and navigation", () => {
     fireEvent.click(loginLink);
     expect(setCurrentModule).toHaveBeenCalledTimes(1);
     const calledArg = setCurrentModule.mock.calls[0][0];
-    expect(calledArg).toBeTruthy();
-    expect(calledArg.type.name || calledArg.type.displayName || calledArg.type).toBeTruthy();
+    expect(calledArg.type).toBe(Login);
   });
 
   it("Login: links in dark mode do not use #0F2327 (dark text on dark card)", () => {
