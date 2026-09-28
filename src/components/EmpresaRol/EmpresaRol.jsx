@@ -1,3 +1,17 @@
+/*=============================================================================
+ Nombre del archivo : EmpresaRol.jsx
+ Descripcion        : Gestión de asignaciones de Roles a Empresas (HU-036 / Issue #284).
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-05-22 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+ | 2026-09-03 | 0.4.0   | Jeisson Sanchez      | [Issue #284] Modal de filtros de roles. |
+ | 2026-09-11 | 0.4.0   | Jeisson Sanchez      | [HU-036.6] Filtro por nombre de rol como campo de texto libre. |
+ | 2026-09-14 | 0.4.0   | Jeisson Sanchez      | [HU-036.6 / #284 / #291] Mensaje informativo cuando ningún rol coincide con los filtros. |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
@@ -7,6 +21,11 @@ import {
   Box,
   Button,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -64,6 +83,30 @@ export default function EmpresaRol() {
   const permisosLegacyParams = (targetEmpresaId) =>
     isSystemAdmin ? { params: { empresaId: Number(targetEmpresaId) } } : undefined;
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [empresas, setEmpresas] = useState([]);
+  const [filters, setFilters] = useState({
+    empresaId: "",
+    nombre: "",
+    estadoId: "",
+  });
+  const [tempFilters, setTempFilters] = useState(filters);
+
+  const loadEmpresas = useCallback(async () => {
+    if (!isSystemAdmin) return;
+    try {
+      const res = await axios.get("/v1/items/empresa/0");
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.content)
+        ? res.data.content
+        : [];
+      setEmpresas(list);
+    } catch (err) {
+      console.error("Error cargando empresas:", err);
+      setEmpresas([]);
+    }
+  }, [isSystemAdmin]);
 
   const reloadData = useCallback(async () => {
     try {
@@ -151,7 +194,8 @@ export default function EmpresaRol() {
   useEffect(() => {
     reloadData();
     loadRoles();
-  }, [reloadData, loadRoles]);
+    loadEmpresas();
+  }, [reloadData, loadRoles, loadEmpresas]);
 
   const handleCreate = () => {
     setSelectedRow(null);
@@ -168,6 +212,96 @@ export default function EmpresaRol() {
     }
     setFormOpen(true);
   };
+
+  const handleOpenFilters = () => {
+    setTempFilters(filters);
+    setFilterModalOpen(true);
+  };
+
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setFilterModalOpen(false);
+
+    // Criterio 6 HU-036.6: Si ningún registro coincide con los filtros aplicados, mostrar mensaje informativo
+    const hasSearchFilters = Boolean(
+      tempFilters.empresaId ||
+      (tempFilters.nombre && tempFilters.nombre.trim() !== "") ||
+      tempFilters.estadoId
+    );
+
+    if (hasSearchFilters) {
+      const matchCount = rows.filter((row) => {
+        if (tempFilters.empresaId && String(row.empresaId ?? empresaId) !== String(tempFilters.empresaId)) {
+          return false;
+        }
+        if (tempFilters.nombre && tempFilters.nombre.trim() !== "") {
+          const search = tempFilters.nombre.trim().toLowerCase();
+          const rowNombre = (row.rolNombre || "").toLowerCase();
+          if (!rowNombre.includes(search)) {
+            return false;
+          }
+        }
+        if (tempFilters.estadoId) {
+          const rowEstadoId = row.estadoId ?? row.estado?.id;
+          const rowEstadoNombre = (row.estadoNombre ?? row.estado?.nombre ?? "").toLowerCase();
+          if (tempFilters.estadoId === "1" && rowEstadoId !== 1 && rowEstadoNombre !== "activo") {
+            return false;
+          }
+          if (tempFilters.estadoId === "2" && rowEstadoId !== 2 && rowEstadoNombre !== "inactivo") {
+            return false;
+          }
+        }
+        return true;
+      }).length;
+
+      if (matchCount === 0) {
+        setMessage({
+          open: true,
+          severity: "info",
+          text: t("empresaRol.messages.noFilterResults", "No se encontraron roles con los criterios seleccionados."),
+        });
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    const emptyFilters = { empresaId: "", nombre: "", estadoId: "" };
+    setTempFilters(emptyFilters);
+    setFilters(emptyFilters);
+    setFilterModalOpen(false);
+  };
+
+  const hasActiveFilters = Boolean(
+    filters.empresaId ||
+    (filters.nombre && filters.nombre.trim() !== "") ||
+    filters.estadoId
+  );
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      if (filters.empresaId && String(row.empresaId ?? empresaId) !== String(filters.empresaId)) {
+        return false;
+      }
+      if (filters.nombre && filters.nombre.trim() !== "") {
+        const search = filters.nombre.trim().toLowerCase();
+        const rowNombre = (row.rolNombre || "").toLowerCase();
+        if (!rowNombre.includes(search)) {
+          return false;
+        }
+      }
+      if (filters.estadoId) {
+        const rowEstadoId = row.estadoId ?? row.estado?.id;
+        const rowEstadoNombre = (row.estadoNombre ?? row.estado?.nombre ?? "").toLowerCase();
+        if (filters.estadoId === "1" && rowEstadoId !== 1 && rowEstadoNombre !== "activo") {
+          return false;
+        }
+        if (filters.estadoId === "2" && rowEstadoId !== 2 && rowEstadoNombre !== "inactivo") {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [rows, filters, empresaId]);
 
   const handleViewPermisos = () => {
     if (!selectedRow?.id) {
@@ -373,13 +507,9 @@ export default function EmpresaRol() {
         onDelete={handleDeleteIntent}
         canUpdate={Boolean(selectedRow)}
         canDelete={Boolean(selectedRow)}
-        onFilters={() =>
-          setMessage({
-            open: true,
-            severity: "info",
-            text: t("common.messages.filtersComingSoon"),
-          })
-        }
+        onFilters={handleOpenFilters}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={handleClearFilters}
         extraActions={
           <Button
             onClick={handleViewPermisos}
@@ -413,7 +543,7 @@ export default function EmpresaRol() {
       />
 
       <AppDataGrid
-        rows={rows}
+        rows={filteredRows}
         columns={columns}
         loading={loading}
         selectedRow={selectedRow}
@@ -423,8 +553,89 @@ export default function EmpresaRol() {
           setFormOpen(false);
           setModalPermisosOpen(false);
           setConfirmOpen(false);
+          setFilterModalOpen(false);
         }}
       />
+
+      <Dialog
+        open={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t("common.actions.filters", "Filtros")}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "grid", gridTemplateColumns: isSystemAdmin ? "1fr 1fr" : "1fr", gap: 2, mt: 1 }}>
+            {isSystemAdmin && (
+              <FormControl fullWidth size="small">
+                <InputLabel id="empresa-filter-label">
+                  {t("common.labels.company", "Empresa")}
+                </InputLabel>
+                <Select
+                  labelId="empresa-filter-label"
+                  value={tempFilters.empresaId}
+                  label={t("common.labels.company", "Empresa")}
+                  onChange={(e) => {
+                    setTempFilters((prev) => ({
+                      ...prev,
+                      empresaId: e.target.value,
+                    }));
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>{t("common.labels.all", "Todos")}</em>
+                  </MenuItem>
+                  {empresas.map((emp) => (
+                    <MenuItem key={emp.id} value={emp.id}>
+                      {emp.nombre || emp.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+
+            <TextField
+              fullWidth
+              size="small"
+              id="nombre-filter-input"
+              label={t("empresaRol.columns.role", "Nombre del rol")}
+              placeholder="Ej: Administrador, Técnico..."
+              value={tempFilters.nombre}
+              onChange={(e) =>
+                setTempFilters((prev) => ({ ...prev, nombre: e.target.value }))
+              }
+            />
+
+            <FormControl fullWidth size="small">
+              <InputLabel id="estado-filter-label">
+                {t("empresaRol.columns.status", "Estado")}
+              </InputLabel>
+              <Select
+                labelId="estado-filter-label"
+                value={tempFilters.estadoId}
+                label={t("empresaRol.columns.status", "Estado")}
+                onChange={(e) =>
+                  setTempFilters((prev) => ({ ...prev, estadoId: e.target.value }))
+                }
+              >
+                <MenuItem value="">
+                  <em>{t("common.labels.all", "Todos")}</em>
+                </MenuItem>
+                <MenuItem value="1">{t("common.labels.active", "Activo")}</MenuItem>
+                <MenuItem value="2">{t("common.labels.inactive", "Inactivo")}</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClearFilters}>
+            {t("common.actions.clear", "Limpiar")}
+          </Button>
+          <Button variant="contained" onClick={handleApplyFilters}>
+            {t("common.actions.apply", "Aplicar")}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>{t("empresaRol.confirmDelete.title")}</DialogTitle>
