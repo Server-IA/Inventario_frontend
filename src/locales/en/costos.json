@@ -1,0 +1,60 @@
+{
+  "costoIndirecto": {
+    "title": "Indirect Cost Management",
+    "columns": {
+      "tipo": "Indirect cost type",
+      "espacio": "Space",
+      "fechaInicio": "Start date",
+      "fechaFin": "End date",
+      "sede": "Site",
+      "bloque": "Block",
+      "almacen": "Warehouse",
+      "valor": "Amount",
+      "estado": "Status"
+    },
+    "grid": {
+      "empty": "There are no indirect costs to show."
+    },
+    "filters": {
+      "title": "Filter indirect costs",
+      "desde": "From",
+      "hasta": "To"
+    },
+    "form": {
+      "title": "Register indirect cost",
+      "fields": {
+        "tipo": "Indirect cost type",
+        "sede": "Site",
+        "bloque": "Block",
+        "espacio": "Space",
+        "almacen": "Warehouse",
+        "fechaInicio": "Start date",
+        "fechaFin": "End date",
+        "valor": "Amount"
+      },
+      "helpers": {
+        "optional": "Optional",
+        "selectSedeFirst": "Select a site first.",
+        "selectBloqueFirst": "Select a block first.",
+        "selectEspacioFirst": "Select a space first.",
+        "catalogError": "The list could not be loaded. Check your permissions and try again.",
+        "noOptions": "No active options match."
+      },
+      "validation": {
+        "tipoRequired": "The indirect cost type is required.",
+        "sedeRequired": "The site is required.",
+        "fechaInicioRequired": "The start date is required.",
+        "fechaFinRequired": "The end date is required.",
+        "fechaFinBeforeStart": "The end date must be the same as or later than the start date.",
+        "valorRequired": "The amount is required.",
+        "valorPositive": "The amount must be greater than zero."
+      }
+    },
+    "messages": {
+      "created": "The indirect cost was registered successfully.",
+      "saveError": "The indirect cost could not be registered. Check the data and try again.",
+      "catalogError": "The form lists could not be loaded. Check your permissions and try again.",
+      "listError": "The indirect cost list could not be loaded. Please try again."
+    }
+  }
+}
