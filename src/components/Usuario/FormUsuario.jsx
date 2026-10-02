@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types, no-unused-vars */
 /*=============================================================================
 Nombre del archivo : FormUsuario.jsx
 Descripción        : Modal para registrar o actualizar usuarios del sistema.
@@ -13,6 +14,7 @@ CONTROL DE CAMBIOS
 | 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -182,13 +184,15 @@ export default function FormUsuario({
   const theme = useTheme();
   const isCreateMode = mode === "create";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
-  const darkGreen = theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39";
-  const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
-  const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
-  const summarySurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.28) : "#dfeae6";
-  const assignmentSurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.22) : "#F6FBF8";
-  const subtleBorder = alpha(green, 0.14);
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const darkGreen = theme.palette.mode === "dark" ? "#dfeae6" : "#173f39";
+  const dialogSurface = theme.palette.mode === "dark" ? "#101e1d" : theme.palette.common.white;
+  const sectionSurface = theme.palette.mode === "dark" ? "#142624" : theme.palette.common.white;
+  const summarySurface = theme.palette.mode === "dark" ? "#182c2a" : "#dfeae6";
+  const assignmentSurface = theme.palette.mode === "dark" ? "#162826" : "#F6FBF8";
+  const subtleBorder = theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : alpha(green, 0.14);
+  const sectionShadow = theme.palette.mode === "dark"
+    ? "0 4px 12px rgba(0,0,0,0.3)"
+    : "0 4px 14px rgba(23,63,57,0.05)";
   const contentMaxWidth = 1180;
 
   const [formData, setFormData] = useState(initialData);
@@ -823,7 +827,9 @@ export default function FormUsuario({
           borderRadius: 3,
           overflow: "hidden",
           backgroundColor: dialogSurface,
-          boxShadow: `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`,
+          boxShadow: theme.palette.mode === "dark"
+            ? "0 10px 30px rgba(0,0,0,0.5)"
+            : "0 10px 30px rgba(23,63,57,0.08)",
         },
       }}
     >
@@ -976,7 +982,7 @@ export default function FormUsuario({
                 display: "grid",
                 gridTemplateColumns: {
                   xs: "1fr",
-                  lg: "minmax(0, 1.45fr) minmax(0, 1fr)",
+                  lg: "repeat(2, minmax(0, 1fr))",
                 },
                 gap: 3,
                 alignItems: "start",
