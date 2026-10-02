@@ -1,3 +1,15 @@
+/*=============================================================================
+Nombre del archivo : FormRol.jsx
+Descripción        : Formulario modal para crear y editar roles.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-22 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Homogeneizar tamaño, bordes y foco entre Nombre, Descripción y Estado (size small, outlined coherente). |
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 // src/components/rol/FormRol.jsx
 import * as React from "react";
 import PropTypes from "prop-types";
@@ -152,32 +164,39 @@ export default function FormRol({
 
           <TextField
             fullWidth
-            margin="dense"
+            size="small"
+            margin="normal"
             name="nombre"
-            label="Nombre (ej: ROLE_ADMIN)"
+            label="Nombre"
+            placeholder="Ej: ROLE_ADMIN"
             value={formData.nombre}
             onChange={handleChange}
             error={!!errors.nombre}
             helperText={errors.nombre}
+            InputLabelProps={{ shrink: true }}
           />
 
           <TextField
             fullWidth
-            margin="dense"
+            size="small"
+            margin="normal"
             name="descripcion"
             label="Descripción"
+            placeholder="Descripción detallada del rol"
             value={formData.descripcion}
             onChange={handleChange}
             error={!!errors.descripcion}
             helperText={errors.descripcion}
+            InputLabelProps={{ shrink: true }}
           />
 
-          <FormControl fullWidth margin="dense" error={!!errors.estadoId}>
-            <InputLabel id="estadoId-label">Estado</InputLabel>
+          <FormControl fullWidth size="small" margin="normal" error={!!errors.estadoId}>
+            <InputLabel id="estadoId-label" shrink>Estado</InputLabel>
             <Select
               labelId="estadoId-label"
               label="Estado"
               name="estadoId"
+              notched
               value={formData.estadoId ?? 1}
               onChange={handleChange}
             >
@@ -187,7 +206,7 @@ export default function FormRol({
                 </MenuItem>
               ))}
             </Select>
-            <FormHelperText>{errors.estadoId}</FormHelperText>
+            {errors.estadoId && <FormHelperText>{errors.estadoId}</FormHelperText>}
           </FormControl>
         </DialogContent>
 

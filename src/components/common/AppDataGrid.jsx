@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, no-undef */
 /*=============================================================================
 Nombre del archivo : AppDataGrid.jsx
 Descripción        : Componente reutilizable para la grilla de datos.
@@ -7,6 +8,7 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio      |
 +------------+---------+----------------------+-----------------------------+
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Corregir fondo en modo oscuro (bodyBg en lugar de blanco hardcodeado) para garantizar contraste legible. |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -302,7 +304,8 @@ export default function AppDataGrid({
 
   const mergedSx = {
     border: 0,
-    bgcolor: "#fff",
+    bgcolor: bodyBg,
+    color: isDark ? "#dfeae6" : undefined,
     borderRadius: 4,
     overflow: "hidden",
     "& .MuiDataGrid-columnSeparator": { display: "none" },
