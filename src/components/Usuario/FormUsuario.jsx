@@ -23,6 +23,7 @@ CONTROL DE CAMBIOS
  * usuarios, incluyendo datos personales y asignaciones de rol/empresa.
  */
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Alert,
   Box,
@@ -977,27 +978,16 @@ export default function FormUsuario({
               </CardContent>
             </Card>
 
-            <Box
+            {/* HU-037.1 / Issue #319: Estructura vertical completa (Full Width) */}
+            <Card
               sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  lg: "repeat(2, minmax(0, 1fr))",
-                },
-                gap: 3,
-                alignItems: "start",
+                borderRadius: 2,
+                border: `1px solid ${subtleBorder}`,
+                boxShadow: sectionShadow,
+                backgroundColor: sectionSurface,
                 width: "100%",
               }}
             >
-            <Box sx={{ minWidth: 0 }}>
-              <Card
-                sx={{
-                  borderRadius: 2,
-                  border: `1px solid ${subtleBorder}`,
-                  boxShadow: sectionShadow,
-                  backgroundColor: sectionSurface,
-                }}
-              >
                 <CardContent sx={{ p: { xs: 2.75, sm: 3.25 } }}>
                   <Stack spacing={3}>
                     <SectionHeader
@@ -1233,16 +1223,14 @@ export default function FormUsuario({
                   </Stack>
                 </CardContent>
               </Card>
-            </Box>
-
-            <Box sx={{ minWidth: 0 }}>
-              <Stack spacing={3}>
+                {/* Panel de Configuración de Asignación (Full Width) */}
                 <Card
                   sx={{
                     borderRadius: 2,
                     border: `1px solid ${subtleBorder}`,
                     boxShadow: sectionShadow,
                     backgroundColor: sectionSurface,
+                    width: "100%",
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -1400,7 +1388,19 @@ export default function FormUsuario({
                           {t("usuario.form.messages.assignmentRequired")}
                         </Alert>
                       ) : (
-                        <Stack spacing={1.25}>
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: {
+                              xs: "1fr",
+                              md: "repeat(2, minmax(0, 1fr))",
+                            },
+                            gap: 2,
+                            maxHeight: 460,
+                            overflowY: "auto",
+                            pr: 0.5,
+                          }}
+                        >
                           {summaryAssignments.map((assignment, idx) => (
                             <Card
                               key={`${assignment.rolId}-${assignment.empresaId}-${idx}`}
@@ -1541,14 +1541,11 @@ export default function FormUsuario({
                               </CardContent>
                             </Card>
                           ))}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Stack>
-            </Box>
-            </Box>
+                    </Box>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
           </Stack>
         )}
       </DialogContent>
@@ -1595,3 +1592,19 @@ export default function FormUsuario({
     </Dialog>
   );
 }
+
+FormUsuario.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  mode: PropTypes.string,
+  loading: PropTypes.bool,
+  initialData: PropTypes.object,
+  onSubmit: PropTypes.func,
+  roles: PropTypes.array,
+  empresas: PropTypes.array,
+  empresaRoles: PropTypes.array,
+  tiposIdentificacion: PropTypes.array,
+  isAdmin: PropTypes.bool,
+  sessionCompanyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  sessionCompanyName: PropTypes.string,
+};
