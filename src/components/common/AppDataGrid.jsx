@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars, no-undef */
 /*=============================================================================
 Nombre del archivo : AppDataGrid.jsx
 Descripción        : Componente reutilizable para la grilla de datos.
@@ -9,6 +8,7 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------+
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Corregir fondo en modo oscuro (bodyBg en lugar de blanco hardcodeado) para garantizar contraste legible. |
+| 2026-10-06 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Limpieza de ESLint: retirar supresión global y corregir variables/slots sin uso. |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -19,7 +19,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Paper, Stack, Chip } from "@mui/material";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -478,8 +478,9 @@ export default function AppDataGrid({
           const row = (Array.isArray(rows) ? rows : []).find((r) => (getRowId ? getRowId(r) === id : r?.id === id)) || null;
           setSelectedRow?.(row);
         }}
-        disableRowSelectionOnClick={!selectOnClick}
-        slots={quickFilter ? { toolbar: Toolbar } : undefined}
+        disableRowSelectionOnClick={resolvedDisableRowSelectionOnClick}
+        slots={resolvedSlots}
+        slotProps={slotProps}
         columnVisibilityModel={effectiveColumnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         localeText={gridLocaleText}
