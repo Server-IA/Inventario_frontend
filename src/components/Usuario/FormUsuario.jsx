@@ -978,16 +978,30 @@ export default function FormUsuario({
               </CardContent>
             </Card>
 
-            {/* HU-037.1 / Issue #319: Estructura vertical completa (Full Width) */}
-            <Card
+            {/* HU-037.1 / Issue #319: Layout compuesto:
+                - Fila superior en 2 columnas: Columna izquierda (Información Personal), Columna derecha (Configurar Asignación).
+                - Fila inferior a todo el ancho útil (Full Width): Listado de Asignaciones (evita espacio muerto lateral y cortes bajo el footer). */}
+            <Box
               sx={{
-                borderRadius: 2,
-                border: `1px solid ${subtleBorder}`,
-                boxShadow: sectionShadow,
-                backgroundColor: sectionSurface,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  lg: "repeat(2, minmax(0, 1fr))",
+                },
+                gap: 3,
+                alignItems: "start",
                 width: "100%",
               }}
             >
+              <Card
+                sx={{
+                  borderRadius: 2,
+                  border: `1px solid ${subtleBorder}`,
+                  boxShadow: sectionShadow,
+                  backgroundColor: sectionSurface,
+                  width: "100%",
+                }}
+              >
                 <CardContent sx={{ p: { xs: 2.75, sm: 3.25 } }}>
                   <Stack spacing={3}>
                     <SectionHeader
@@ -1352,13 +1366,13 @@ export default function FormUsuario({
                       />
 
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         onClick={addAssign}
                         startIcon={<AddCircleOutlineIcon />}
                         sx={{
                           alignSelf: "flex-start",
-                          borderColor: alpha(green, 0.26),
-                          color: darkGreen,
+                          backgroundColor: darkGreen,
+                          "&:hover": { backgroundColor: green },
                         }}
                       >
                         {t("common.actions.addAssignment")}
@@ -1366,15 +1380,18 @@ export default function FormUsuario({
                     </Stack>
                   </CardContent>
                 </Card>
+            </Box>
 
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    border: `1px solid ${subtleBorder}`,
-                    boxShadow: sectionShadow,
-                    backgroundColor: sectionSurface,
-                  }}
-                >
+            {/* Listado de Asignaciones (Full Width abajo, ocupando todo el ancho útil) */}
+            <Card
+              sx={{
+                borderRadius: 2,
+                border: `1px solid ${subtleBorder}`,
+                boxShadow: sectionShadow,
+                backgroundColor: sectionSurface,
+                width: "100%",
+              }}
+            >
                   <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
                     <Stack spacing={2}>
                       <SectionHeader
