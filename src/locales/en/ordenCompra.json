@@ -1,0 +1,63 @@
+{
+  "title": "Purchase Order Report",
+  "sections": {
+    "location": "Location",
+    "orderData": "Order Data",
+    "time": "Time"
+  },
+  "filters": {
+    "country": "Country",
+    "department": "Department",
+    "municipality": "Municipality",
+    "headquarters": "Headquarters",
+    "block": "Block",
+    "space": "Space",
+    "warehouse": "Warehouse",
+    "order": "Order",
+    "status": "Order Status",
+    "quickSelect": "Quick Select",
+    "customRange": "Custom Range",
+    "selectDates": "Select Dates",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "quick": {
+      "hoy": "Today",
+      "semana": "Last Week",
+      "mes": "Last Month",
+      "trimestre": "Last Quarter",
+      "anio": "This Year"
+    }
+  },
+  "columns": {
+    "id": "ID",
+    "fecha": "Date/Time",
+    "totalUnits": "Total Units",
+    "totalValue": "Total Value"
+  },
+  "actions": {
+    "generate": "Generate Report"
+  },
+  "messages": {
+    "noOrders": "Order not found for that request.",
+    "loaded": "Order data loaded.",
+    "endpointError": "Purchase orders endpoint not found (404).",
+    "searchError": "Could not load orders.",
+    "emptyDates": "Date range is mandatory.",
+    "invalidDateRange": "Start date cannot be greater than end date.",
+    "noResults": "Showing {{count}} order(s).",
+    "noResultsEmpty": "No records found for the selected filters.",
+    "excelSuccess": "Excel downloaded successfully.",
+    "pdfSuccess": "PDF generated successfully.",
+    "exportError": "Could not generate the report."
+  },
+  "modal": {
+    "exportTitle": "Generate Purchase Order Report",
+    "exporting": "Generating document, please wait...",
+    "exportSub": "Select the format to download your report.",
+    "previewTitle": "Report Preview"
+  },
+  "grid": {
+    "title": "Purchase orders found",
+    "detailsTitle": "Order Items"
+  }
+}
