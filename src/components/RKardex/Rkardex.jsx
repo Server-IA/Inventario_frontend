@@ -19,10 +19,15 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  IconButton, Paper, Popover, LinearProgress
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
+  Paper, Divider, Popover, LinearProgress
 } from "@mui/material";
 import {
+  Close as CloseIcon,
   Search as SearchIcon,
+  Download as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableView as ExcelIcon,
   CalendarToday as CalendarIcon,
   Refresh as RefreshIcon
 } from "@mui/icons-material";
@@ -370,6 +375,85 @@ export default function Rkardex() {
     }
   };
 
+  // Export
+  const [modalExportOpen, setModalExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const buildCondicion = () => {
+    const c = {};
+    c["0"] = `e.emp_id = $EMPRESA_ID$`;
+    c["1"] = ubi.municipio_id ? `AND m.mun_id = ${Number(ubi.municipio_id)}` : "";
+    c["2"] = ubi.sede_id ? `AND s.sed_id = ${Number(ubi.sede_id)}` : "";
+    c["3"] = ubi.bloque_id ? `AND blo.blo_id = ${Number(ubi.bloque_id)}` : "";
+    c["4"] = ubi.espacio_id ? `AND esp.esp_id = ${Number(ubi.espacio_id)}` : "";
+    c["5"] = ubi.almacen_id ? `AND al.alm_id = ${Number(ubi.almacen_id)}` : "";
+    c["6"] = kdxFiltro.producto_id ? `AND p.pro_id = ${Number(kdxFiltro.producto_id)}` : "";
+    c["7"] = kdxFiltro.producto_categoria_id ? `AND p.pro_producto_categoria_id = ${Number(kdxFiltro.producto_categoria_id)}` : "";
+    const userIni = toDateStr(kdxFiltro.fecha_inicio, false);
+    const userFin = toDateStr(kdxFiltro.fecha_fin, true);
+    c["8"] = (userIni && userFin) ? `AND k.kar_fecha_hora BETWEEN '${userIni}' AND '${userFin}'` : "";
+    return c;
+  };
+
+  const buildFiltrosAplicados = () => {
+    const arr = [];
+    if (ubi.sede_id) arr.push("SEDE");
+    if (ubi.almacen_id) arr.push("ALMACEN");
+    if (kdxFiltro.producto_id) arr.push("PRODUCTO");
+    if (kdxFiltro.produccion_id) arr.push("PRODUCCION");
+    if (kdxFiltro.producto_presentacion_id) arr.push("PRODUCTO_PRESENTACION");
+    return arr;
+  };
+
+  const getReportPath = () => {
+    return "/v2/report/nuevo/kardex";
+  };
+
+  const generarReporte = async (formato = "PDF") => {
+    if (!validarFiltros()) {
+      setModalExportOpen(false);
+      return;
+    }
+    setExporting(true);
+    try {
+      const payload = {
+        condicion: buildCondicion(),
+        EMPRESA_ID: empresaId,
+        formato: formato,
+        filtrosAplicados: buildFiltrosAplicados(),
+      };
+
+      const url = getReportPath();
+      const res = await axios({ url, method: "POST", data: payload, responseType: "blob", ...headers });
+
+      const mimeType = formato === "EXCEL" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "application/pdf";
+      const blob = new Blob([res.data], { type: mimeType });
+      const objUrl = window.URL.createObjectURL(blob);
+      
+      if (formato === "EXCEL") {
+        const a = document.createElement("a");
+        a.href = objUrl;
+        a.download = `Kardex_${new Date().getTime()}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(objUrl);
+        setMessage({ open: true, severity: "success", text: t("kardex.messages.excelSuccess", "Excel descargado correctamente.") });
+      } else {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(objUrl);
+        setPreviewOpen(true);
+        setMessage({ open: true, severity: "success", text: t("kardex.messages.pdfSuccess", "PDF generado correctamente.") });
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage({ open: true, severity: "error", text: t("kardex.messages.exportError", "No se pudo generar el reporte.") });
+    } finally {
+      setExporting(false);
+      setModalExportOpen(false);
+    }
+  };
+
   // Columns for grid
   const columns = useMemo(() => [
     { field: "kardexId", headerName: "ID", width: 80 },
@@ -692,6 +776,15 @@ export default function Rkardex() {
           >
             {t("common.actions.search", "Buscar")}
           </Button>
+          <Button 
+            variant="contained" 
+            color="success" 
+            startIcon={<DownloadIcon />} 
+            onClick={() => setModalExportOpen(true)}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("kardex.actions.generate", "Generar Reporte")}
+          </Button>
         </Stack>
       </Box>
 
@@ -705,6 +798,72 @@ export default function Rkardex() {
           autoHeight={true}
         />
       </Box>
+
+      {/* Export Modal */}
+      <Dialog open={modalExportOpen} onClose={() => !exporting && setModalExportOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 }}}>
+        <DialogTitle sx={{ fontWeight: 700, textAlign: "center", pb: 1 }}>
+          {t("kardex.modal.exportTitle", "Generar Reporte Kardex")}
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: "center", pb: 2 }}>
+          {exporting ? (
+            <Box sx={{ py: 3 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                {t("kardex.modal.exporting", "Generando documento, por favor espere...")}
+              </Typography>
+              <LinearProgress color="success" />
+            </Box>
+          ) : (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {t("kardex.modal.exportSub", "Seleccione el formato en el que desea descargar su reporte de Kardex.")}
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button 
+                  variant="outlined" 
+                  color="error" 
+                  size="large"
+                  onClick={() => generarReporte("PDF")}
+                  sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}
+                >
+                  <PdfIcon fontSize="large" />
+                  PDF
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  color="success" 
+                  size="large"
+                  onClick={() => generarReporte("EXCEL")}
+                  sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}
+                >
+                  <ExcelIcon fontSize="large" />
+                  Excel
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        {!exporting && (
+          <DialogActions sx={{ justifyContent: "center", pt: 0, pb: 2 }}>
+            <Button onClick={() => setModalExportOpen(false)} color="inherit" sx={{ textTransform: "none" }}>
+              {t("common.actions.cancel", "Cancelar")}
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
+
+      {/* Preview PDF */}
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {t("kardex.modal.previewTitle", "Vista previa del Reporte")}
+          <IconButton onClick={() => setPreviewOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          {previewUrl && <iframe src={previewUrl} width="100%" height="100%" title="PDF" style={{ border: "none" }} />}
+        </DialogContent>
+      </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
