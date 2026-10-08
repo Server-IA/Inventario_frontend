@@ -23,6 +23,7 @@
     "permissionsRequired": "Debe seleccionar al menos un permiso.",
     "saveSuccess": "Permisos actualizados correctamente",
     "saveError": "Error al guardar permisos",
+    "noFilterResults": "No se encontraron roles con los criterios seleccionados.",
     "permissionsQueryError": "Error al consultar los permisos de uno o más roles. Puede reintentar la consulta.",
     "rolesLoadError": "Error al cargar roles de empresa."
   },
