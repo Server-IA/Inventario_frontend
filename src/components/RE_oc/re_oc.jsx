@@ -43,6 +43,9 @@ import MessageSnackBar from "../MessageSnackBar";
 import useUbicacionFilters from "../useUbicacionFilters";
 import AppDataGrid from "../common/AppDataGrid.jsx";
 
+import VistaPreviaPDFOrdenCompra from "../OrdenCompra/vistapreviapdfordencompra";
+import GridArticuloOrdenCompra from "../OrdenCompra/GridArticuloOrdenCompra";
+
 export default function RE_ordenCompra() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
@@ -125,6 +128,9 @@ export default function RE_ordenCompra() {
   }, []);
 
   // UI state
+  const [ordenData, setOrdenData] = useState(null);
+  const [articulos, setArticulos] = useState([]);
+  const [presentaciones, setPresentaciones] = useState([]);
   const [resultados, setResultados] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
 
@@ -225,6 +231,9 @@ export default function RE_ordenCompra() {
   };
 
   const buscar = async () => {
+    setOrdenData(null);
+    setArticulos([]);
+    setPresentaciones([]);
     setResultados([]);
     if (!validarRango()) return;
 
@@ -245,24 +254,52 @@ export default function RE_ordenCompra() {
         return true;
       });
 
-      if (pedido.pedido_id) {
-        const orden = byDate.find((o) => String(o.pedidoId) === String(pedido.pedido_id));
-        if (!orden) {
-          setMessage({ open: true, severity: "warning", text: t("ordenCompra.messages.noOrders", "No se encontró la orden.") });
-          setResultados([]);
-          return;
+      if (!pedido.pedido_id) {
+        // Calcular totales para la grilla
+        const resultadosConTotales = await Promise.all(byDate.map(async (oc) => {
+          try {
+            const aRes = await axios.get(`/v1/orden_compra/${oc.id}/articulos`, headers).catch(async () => {
+              return await axios.get(`/v1/orden-compra/${oc.id}/articulos`, headers).catch(() => {
+                return axios.get(`/v1/ordenCompra/${oc.id}/articulos`, headers);
+              });
+            });
+            const arts = asArray(aRes.data);
+            const totalUnits = arts.reduce((sum, a) => sum + (Number(a.cantidad) || 0), 0);
+            const totalValue = arts.reduce((sum, a) => sum + ((Number(a.cantidad) || 0) * (Number(a.precioUnitario) || Number(a.precio) || 0)), 0);
+            return { ...oc, totalUnits, totalValue, articulosCargados: arts };
+          } catch {
+            return { ...oc, totalUnits: 0, totalValue: 0, articulosCargados: [] };
+          }
+        }));
+
+        setResultados(resultadosConTotales);
+        if (resultadosConTotales.length === 0) {
+          setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResultsEmpty", "No se encontraron registros.") });
+        } else {
+          setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResults", { count: resultadosConTotales.length }, `Mostrando ${resultadosConTotales.length} orden(es).`) });
         }
-        setResultados([orden]);
-        setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResults", { count: 1 }, "Mostrando 1 orden.") });
         return;
       }
 
-      setResultados(byDate);
-      if (byDate.length === 0) {
-        setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResultsEmpty", "No se encontraron registros.") });
-      } else {
-        setMessage({ open: true, severity: "info", text: t("ordenCompra.messages.noResults", { count: byDate.length }, `Mostrando ${byDate.length} orden(es).`) });
+      const orden = byDate.find((o) => String(o.pedidoId) === String(pedido.pedido_id));
+      if (!orden) {
+        setMessage({ open: true, severity: "warning", text: t("ordenCompra.messages.noOrders", "No se encontró la orden.") });
+        return;
       }
+
+      const [aRes, prRes] = await Promise.all([
+        axios.get(`/v1/orden_compra/${orden.id}/articulos`, headers).catch(async () => {
+          return await axios.get(`/v1/orden-compra/${orden.id}/articulos`, headers).catch(() => {
+            return axios.get(`/v1/ordenCompra/${orden.id}/articulos`, headers);
+          });
+        }),
+        axios.get("/v1/producto_presentacion", headers).catch(() => axios.get("/v1/presentacion", headers))
+      ]);
+
+      setOrdenData(orden);
+      setArticulos(asArray(aRes.data));
+      setPresentaciones(asArray(prRes.data));
+      setMessage({ open: true, severity: "success", text: t("ordenCompra.messages.loaded", "Datos cargados.") });
     } catch (err) {
       const msg = err?.code === "NO_OC_ENDPOINT" ? t("ordenCompra.messages.endpointError", "Endpoint 404") : t("ordenCompra.messages.searchError", "Error");
       setMessage({ open: true, severity: "error", text: msg });
@@ -346,8 +383,26 @@ export default function RE_ordenCompra() {
       headerName: t("ordenCompra.columns.fecha", "Fecha/Hora"), 
       flex: 1, minWidth: 200,
       renderCell: (params) => toLocal(getFechaOC(params.row))
+    },
+    {
+      field: "totalUnits",
+      headerName: t("ordenCompra.columns.totalUnits", "Total Unidades"),
+      width: 150,
+      align: "right",
+      headerAlign: "right",
+    },
+    {
+      field: "totalValue",
+      headerName: t("ordenCompra.columns.totalValue", "Valor Total"),
+      width: 150,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => {
+        const val = Number(params.row.totalValue) || 0;
+        return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "COP" }).format(val);
+      }
     }
-  ], [t]);
+  ], [t, i18n.language]);
 
   const boxStyles = {
     p: 3, 
@@ -599,9 +654,19 @@ export default function RE_ordenCompra() {
         </Stack>
       </Box>
 
-      <Box>
-        <AppDataGrid rows={resultados} columns={columns} loading={loadingSearch} containerSx={{ minHeight: 200 }} autoHeight={true} />
-      </Box>
+      {ordenData ? (
+        <>
+          <VistaPreviaPDFOrdenCompra orden={ordenData} articulos={articulos} />
+          <Box mt={4}>
+            <Typography variant="h6" gutterBottom>{t("ordenCompra.grid.detailsTitle", "Artículos de la Orden")}</Typography>
+            <GridArticuloOrdenCompra items={articulos} presentaciones={presentaciones} setSelectedRows={() => {}} setSelectedRow={() => {}} />
+          </Box>
+        </>
+      ) : (
+        <Box>
+          <AppDataGrid rows={resultados} columns={columns} loading={loadingSearch} containerSx={{ minHeight: 200 }} autoHeight={true} />
+        </Box>
+      )}
 
       <Dialog open={modalExportOpen} onClose={() => !exporting && setModalExportOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 }}}>
         <DialogTitle sx={{ fontWeight: 700, textAlign: "center", pb: 1 }}>
