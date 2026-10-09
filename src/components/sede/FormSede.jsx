@@ -3,14 +3,17 @@
  Descripcion        : Formulario de creacion y edicion de sedes.
 ===============================================================================
  CONTROL DE CAMBIOS
- +------------+---------+----------------------+-----------------------------+
- |   Fecha    | Versión |      Autor           | Descripción del cambio      |
- +------------+---------+----------------------+-----------------------------+
- | 2026-09-21 | 0.4.0   | Cesar Medina         | Agrega cascada geografica   |
- |            |         |                      | pais/departamento/municipio |
- |            |         |                      | y validaciones de coherencia|
- |            |         |                      | con i18n.                   |
- +------------+---------+----------------------+-----------------------------+
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-10-09 | 0.4.0   | Cesar Medina         | Corrige validacion de       |
+|            |         |                      | municipio usando la cascada |
+|            |         |                      | filtrada por departamento.  |
+| 2026-09-21 | 0.4.0   | Cesar Medina         | Agrega cascada geografica   |
+|            |         |                      | pais/departamento/municipio |
+|            |         |                      | y validaciones de coherencia|
+|            |         |                      | con i18n.                   |
++------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -383,9 +386,21 @@ export default function FormSede({
 
         const municipios = asArray(response.data).map((municipio) => ({
           id: Number(municipio.id),
+          departamentoId: Number(
+            municipio.departamentoId ?? municipio.departamento?.id ?? formData.deptoId
+          ),
           nombre: municipio.nombre ?? municipio.name ?? String(municipio.id),
         }));
         setMunicipiosOpts(municipios);
+        setMunicipiosCatalog((current) => {
+          const next = new Map(
+            current.map((municipio) => [Number(municipio.id), municipio])
+          );
+          municipios.forEach((municipio) => {
+            next.set(Number(municipio.id), municipio);
+          });
+          return Array.from(next.values());
+        });
         if (
           formData.municipioId &&
           !municipios.some(
@@ -526,13 +541,26 @@ export default function FormSede({
     if (!Number(formData.municipioId))
       e.municipioId = t("sede.form.validation.municipalityRequired");
 
-    const selectedMunicipio = municipiosById.get(Number(formData.municipioId));
+    const selectedMunicipioFromOptions = municipiosOpts.find(
+      (municipio) => Number(municipio.id) === Number(formData.municipioId)
+    );
+    const selectedMunicipio =
+      selectedMunicipioFromOptions ??
+      municipiosById.get(Number(formData.municipioId));
     const selectedDepartamento = departamentosById.get(Number(formData.deptoId));
+    const municipioMatchesCurrentDepartment =
+      !Number(formData.municipioId) ||
+      !Number(formData.deptoId) ||
+      (municipiosOpts.length > 0
+        ? Boolean(selectedMunicipioFromOptions)
+        : Boolean(
+            selectedMunicipio &&
+              Number(selectedMunicipio.departamentoId) === Number(formData.deptoId)
+          ));
 
     if (
       Number(formData.municipioId) &&
-      (!selectedMunicipio ||
-        Number(selectedMunicipio.departamentoId) !== Number(formData.deptoId))
+      !municipioMatchesCurrentDepartment
     ) {
       e.municipioId = t("sede.form.validation.municipalityMismatch");
     }

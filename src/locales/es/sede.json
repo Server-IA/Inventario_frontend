@@ -23,6 +23,7 @@
   },
   "messages": {
     "loadError": "Error al cargar sedes.",
+    "catalogLoadWarning": "No fue posible cargar completamente los catálogos de Sede: {{catalogs}}.",
     "confirmDelete": "¿Eliminar la sede \"{{name}}\"?",
     "deleteSuccess": "Sede eliminada correctamente.",
     "deleteError": "Error al eliminar sede.",
@@ -71,5 +72,12 @@
       "communeRange": "La comuna debe estar entre 1 y 10.",
       "descriptionOnlyNumbers": "La descripción no puede ser solo números."
     }
+  },
+  "catalogs": {
+    "country": "países",
+    "department": "departamentos",
+    "municipality": "municipios",
+    "group": "grupos",
+    "type": "tipos de sede"
   }
 }

@@ -23,6 +23,7 @@
   },
   "messages": {
     "loadError": "Error loading headquarters.",
+    "catalogLoadWarning": "Headquarters catalogs could not be fully loaded: {{catalogs}}.",
     "confirmDelete": "Delete headquarters \"{{name}}\"?",
     "deleteSuccess": "Headquarters deleted successfully.",
     "deleteError": "Error deleting headquarters.",
@@ -71,5 +72,12 @@
       "communeRange": "Commune must be between 1 and 10.",
       "descriptionOnlyNumbers": "Description cannot contain only numbers."
     }
+  },
+  "catalogs": {
+    "country": "countries",
+    "department": "departments",
+    "municipality": "municipalities",
+    "group": "groups",
+    "type": "headquarters types"
   }
 }

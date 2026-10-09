@@ -10,6 +10,10 @@
  |            |         |                      | agrega cascada geografica   |
  |            |         |                      | y filtros por pais,         |
  |            |         |                      | departamento y municipio.   |
+ | 2026-10-05 | 0.4.0   | Cesar Medina         | Corrige carga parcial de    |
+ |            |         |                      | catalogos y preserva grupo  |
+ |            |         |                      | y tipo de sede si otros     |
+ |            |         |                      | endpoints fallan.           |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
@@ -35,6 +39,12 @@ const EMPTY_FILTERS = {
 };
 
 const asItemsArray = (data) => (Array.isArray(data) ? data : []);
+const asNamedItem = (item) => ({
+  ...item,
+  id: Number(item?.id),
+  nombre: item?.nombre ?? item?.name ?? String(item?.id ?? ""),
+  name: item?.name ?? item?.nombre ?? String(item?.id ?? ""),
+});
 
 const getDialogUi = (theme) => {
   const isDark = theme.palette.mode === "dark";
@@ -173,11 +183,19 @@ export default function Sede() {
   );
 
   const gruposForm = useMemo(
-    () => gruposItems.map((grupo) => ({ id: Number(grupo.id), nombre: grupo.name })),
+    () =>
+      gruposItems.map((grupo) => ({
+        id: Number(grupo.id),
+        nombre: grupo.nombre ?? grupo.name ?? String(grupo.id),
+      })),
     [gruposItems]
   );
   const tiposSedeForm = useMemo(
-    () => tiposSedeItems.map((tipo) => ({ id: Number(tipo.id), nombre: tipo.name })),
+    () =>
+      tiposSedeItems.map((tipo) => ({
+        id: Number(tipo.id),
+        nombre: tipo.nombre ?? tipo.name ?? String(tipo.id),
+      })),
     [tiposSedeItems]
   );
 
@@ -251,10 +269,15 @@ export default function Sede() {
             municipio?.name ??
             "",
           grupoNombre:
-            sede.grupo?.nombre ?? sede.grupo?.name ?? grupo?.name ?? "",
+            sede.grupo?.nombre ??
+            sede.grupo?.name ??
+            grupo?.nombre ??
+            grupo?.name ??
+            "",
           tipoSedeNombre:
             sede.tipoSede?.nombre ??
             sede.tipoSede?.name ??
+            tipoSede?.nombre ??
             tipoSede?.name ??
             "",
         };
@@ -297,41 +320,79 @@ export default function Sede() {
   );
 
   const loadCatalogs = async () => {
-    try {
-      const [
-        paisesResponse,
-        departamentosResponse,
-        municipiosResponse,
-        gruposResponse,
-        tiposSedeResponse,
-      ] = await Promise.all([
-        axios.get("/v1/pais", {
+    const catalogRequests = [
+      {
+        key: "paises",
+        label: t("sede.catalogs.country"),
+        request: axios.get("/v1/pais", {
           ...headers,
           params: { page: 0, size: 1000 },
         }),
-        axios.get("/v1/departamento", {
+        normalize: (payload) => unwrapPage(payload),
+        apply: (items) => setPaisesCatalog(items),
+      },
+      {
+        key: "departamentos",
+        label: t("sede.catalogs.department"),
+        request: axios.get("/v1/departamento", {
           ...headers,
           params: { page: 0, size: 1000 },
         }),
-        axios.get("/v1/municipio", {
+        normalize: (payload) => unwrapPage(payload),
+        apply: (items) => setDepartamentosCatalog(items),
+      },
+      {
+        key: "municipios",
+        label: t("sede.catalogs.municipality"),
+        request: axios.get("/v1/municipio", {
           ...headers,
           params: { page: 0, size: 5000 },
         }),
-        axios.get("/v1/items/grupo/0", headers),
-        axios.get("/v1/items/tipo_sede/0", headers),
-      ]);
+        normalize: (payload) => unwrapPage(payload),
+        apply: (items) => setMunicipiosCatalog(items),
+      },
+      {
+        key: "grupos",
+        label: t("sede.catalogs.group"),
+        request: axios.get("/v1/items/grupo/0", headers),
+        normalize: (payload) => asItemsArray(payload).map(asNamedItem),
+        apply: (items) => setGruposItems(items),
+      },
+      {
+        key: "tiposSede",
+        label: t("sede.catalogs.type"),
+        request: axios.get("/v1/items/tipo_sede/0", headers),
+        normalize: (payload) => asItemsArray(payload).map(asNamedItem),
+        apply: (items) => setTiposSedeItems(items),
+      },
+    ];
 
-      setPaisesCatalog(unwrapPage(paisesResponse.data));
-      setDepartamentosCatalog(unwrapPage(departamentosResponse.data));
-      setMunicipiosCatalog(unwrapPage(municipiosResponse.data));
-      setGruposItems(asItemsArray(gruposResponse.data));
-      setTiposSedeItems(asItemsArray(tiposSedeResponse.data));
-    } catch {
-      setPaisesCatalog([]);
-      setDepartamentosCatalog([]);
-      setMunicipiosCatalog([]);
-      setGruposItems([]);
-      setTiposSedeItems([]);
+    const results = await Promise.allSettled(
+      catalogRequests.map((catalog) => catalog.request)
+    );
+
+    const failedCatalogs = [];
+
+    results.forEach((result, index) => {
+      const catalog = catalogRequests[index];
+
+      if (result.status === "fulfilled") {
+        catalog.apply(catalog.normalize(result.value.data));
+        return;
+      }
+
+      catalog.apply([]);
+      failedCatalogs.push(catalog.label);
+    });
+
+    if (failedCatalogs.length > 0) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: t("sede.messages.catalogLoadWarning", {
+          catalogs: failedCatalogs.join(", "),
+        }),
+      });
     }
   };
 
