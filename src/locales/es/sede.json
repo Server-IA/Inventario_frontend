@@ -1,0 +1,75 @@
+{
+  "title": "Gestión de Sedes",
+  "filters": {
+    "title": "Filtros de Sede",
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio"
+  },
+  "columns": {
+    "id": "ID",
+    "name": "Nombre",
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio",
+    "group": "Grupo",
+    "type": "Tipo de sede",
+    "geolocation": "Geolocalización",
+    "coordinates": "Coordenadas",
+    "area": "Área",
+    "commune": "Comuna",
+    "description": "Descripción",
+    "status": "Estado"
+  },
+  "messages": {
+    "loadError": "Error al cargar sedes.",
+    "confirmDelete": "¿Eliminar la sede \"{{name}}\"?",
+    "deleteSuccess": "Sede eliminada correctamente.",
+    "deleteError": "Error al eliminar sede.",
+    "createSuccess": "Sede creada correctamente.",
+    "updateSuccess": "Sede actualizada correctamente.",
+    "saveError": "Error al guardar sede.",
+    "saveConflict": "Datos duplicados o restricción en base de datos."
+  },
+  "form": {
+    "createTitle": "Nueva Sede",
+    "editTitle": "Editar Sede",
+    "fields": {
+      "name": "Nombre",
+      "country": "País",
+      "department": "Departamento",
+      "municipality": "Municipio",
+      "group": "Grupo",
+      "type": "Tipo de sede",
+      "geolocation": "Geolocalización",
+      "coordinates": "Coordenadas (lat, lon)",
+      "area": "Área",
+      "commune": "Comuna",
+      "description": "Descripción",
+      "status": "Estado"
+    },
+    "helpers": {
+      "coordinatesExample": "Ejemplo: 2.927, -75.281 (latitud, longitud)"
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio.",
+      "nameOnlyNumbers": "El nombre no puede ser solo números.",
+      "groupRequired": "Debe seleccionar un grupo.",
+      "typeRequired": "Debe seleccionar un tipo de sede.",
+      "countryRequired": "Debe seleccionar un país.",
+      "departmentRequired": "Debe seleccionar un departamento.",
+      "municipalityRequired": "Debe seleccionar un municipio.",
+      "departmentMismatch": "El departamento no pertenece al país seleccionado.",
+      "municipalityMismatch": "El municipio no pertenece al departamento seleccionado.",
+      "areaNumeric": "El área debe ser numérica.",
+      "areaNonNegative": "El área no puede ser negativa.",
+      "geolocationNumeric": "La geolocalización debe contener solo números.",
+      "coordinatesFormat": "Debes ingresar coordenadas numéricas en formato 'latitud, longitud'.",
+      "latitudeRange": "La latitud debe estar entre -90° y 90°.",
+      "longitudeRange": "La longitud debe estar entre -180° y 180°.",
+      "communeRequired": "Debe seleccionar la comuna.",
+      "communeRange": "La comuna debe estar entre 1 y 10.",
+      "descriptionOnlyNumbers": "La descripción no puede ser solo números."
+    }
+  }
+}
