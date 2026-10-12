@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types, no-unused-vars */
 /*=============================================================================
 Nombre del archivo : FormUsuario.jsx
 Descripción        : Modal para registrar o actualizar usuarios del sistema.
@@ -14,6 +13,7 @@ CONTROL DE CAMBIOS
 | 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
+| 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
@@ -61,7 +61,6 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import WcOutlinedIcon from "@mui/icons-material/WcOutlined";
 
 const emptyAssignment = {
   rolId: "",
@@ -165,6 +164,12 @@ const SectionHeader = ({ icon: Icon, title, description }) => (
     ) : null}
   </Stack>
 );
+
+SectionHeader.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+};
 
 export default function FormUsuario({
   open,
@@ -986,7 +991,7 @@ export default function FormUsuario({
                 display: "grid",
                 gridTemplateColumns: {
                   xs: "1fr",
-                  lg: "repeat(2, minmax(0, 1fr))",
+                  lg: "minmax(0, 1.45fr) minmax(0, 1fr)",
                 },
                 gap: 3,
                 alignItems: "start",
@@ -1413,9 +1418,7 @@ export default function FormUsuario({
                               md: "repeat(2, minmax(0, 1fr))",
                             },
                             gap: 2,
-                            maxHeight: 460,
-                            overflowY: "auto",
-                            pr: 0.5,
+                            width: "100%",
                           }}
                         >
                           {summaryAssignments.map((assignment, idx) => (
@@ -1449,6 +1452,8 @@ export default function FormUsuario({
                                         size="small"
                                         sx={{
                                           maxWidth: "100%",
+                                          height: "auto",
+                                          minHeight: 24,
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
@@ -1456,6 +1461,8 @@ export default function FormUsuario({
                                               : "#dfeae6",
                                           "& .MuiChip-label": {
                                             display: "block",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
                                           },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
@@ -1468,6 +1475,8 @@ export default function FormUsuario({
                                         size="small"
                                         sx={{
                                           maxWidth: "100%",
+                                          height: "auto",
+                                          minHeight: 24,
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
@@ -1475,6 +1484,8 @@ export default function FormUsuario({
                                               : "#dfeae6",
                                           "& .MuiChip-label": {
                                             display: "block",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
                                           },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
