@@ -7,6 +7,7 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio                        |
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-08-03 | 0.4.0   | Cesar Medina         | Se crea modal de filtros para usuarios.       |
+| 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #323] Retirar bloques informativos redundantes del modal de filtros. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -59,7 +60,6 @@ export default function UserFiltersDialog({
   const darkGreen = theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39";
   const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
   const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
-  const summarySurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.28) : "#dfeae6";
   const subtleBorder = alpha(green, 0.14);
   const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
   const contentMaxWidth = 1180;
@@ -152,27 +152,6 @@ export default function UserFiltersDialog({
           }}
         >
           <Card
-            elevation={0}
-            sx={{
-              borderRadius: 2,
-              border: `1px solid ${subtleBorder}`,
-              boxShadow: sectionShadow,
-              backgroundColor: summarySurface,
-            }}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-              <Stack spacing={1}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: darkGreen }}>
-                  {t("usuario.filters.title")}
-                </Typography>
-                <Typography variant="body2" sx={{ color: darkGreen }}>
-                  {t("usuario.filters.description")}
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-
-          <Card
             sx={{
               borderRadius: 2,
               border: `1px solid ${subtleBorder}`,
@@ -182,39 +161,6 @@ export default function UserFiltersDialog({
           >
             <CardContent sx={{ p: { xs: 2.75, sm: 3.25 } }}>
               <Stack spacing={3}>
-                <Stack spacing={0.45}>
-                  <Stack direction="row" spacing={1.25} alignItems="center">
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1.5,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39",
-                        backgroundColor:
-                          theme.palette.mode === "dark" ? alpha("#2b6b60", 0.24) : "#dfeae6",
-                      }}
-                    >
-                      <PersonOutlineIcon fontSize="small" />
-                    </Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontSize: "1.05rem",
-                        fontWeight: 700,
-                        color: theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39",
-                      }}
-                    >
-                      {t("usuario.filters.sections.main")}
-                    </Typography>
-                  </Stack>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("usuario.filters.sections.mainDescription")}
-                  </Typography>
-                </Stack>
-
                 <Grid
                   container
                   rowSpacing={2}
