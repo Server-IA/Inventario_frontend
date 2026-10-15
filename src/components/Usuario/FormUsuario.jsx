@@ -13,6 +13,8 @@ CONTROL DE CAMBIOS
 | 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
+| 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -21,6 +23,7 @@ CONTROL DE CAMBIOS
  * usuarios, incluyendo datos personales y asignaciones de rol/empresa.
  */
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Alert,
   Box,
@@ -58,7 +61,6 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import WcOutlinedIcon from "@mui/icons-material/WcOutlined";
 
 const emptyAssignment = {
   rolId: "",
@@ -163,6 +165,12 @@ const SectionHeader = ({ icon: Icon, title, description }) => (
   </Stack>
 );
 
+SectionHeader.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+};
+
 export default function FormUsuario({
   open,
   onClose,
@@ -182,13 +190,15 @@ export default function FormUsuario({
   const theme = useTheme();
   const isCreateMode = mode === "create";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
-  const darkGreen = theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39";
-  const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
-  const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
-  const summarySurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.28) : "#dfeae6";
-  const assignmentSurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.22) : "#F6FBF8";
-  const subtleBorder = alpha(green, 0.14);
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const darkGreen = theme.palette.mode === "dark" ? "#dfeae6" : "#173f39";
+  const dialogSurface = theme.palette.mode === "dark" ? "#101e1d" : theme.palette.common.white;
+  const sectionSurface = theme.palette.mode === "dark" ? "#142624" : theme.palette.common.white;
+  const summarySurface = theme.palette.mode === "dark" ? "#182c2a" : "#dfeae6";
+  const assignmentSurface = theme.palette.mode === "dark" ? "#162826" : "#F6FBF8";
+  const subtleBorder = theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : alpha(green, 0.14);
+  const sectionShadow = theme.palette.mode === "dark"
+    ? "0 4px 12px rgba(0,0,0,0.3)"
+    : "0 4px 14px rgba(23,63,57,0.05)";
   const contentMaxWidth = 1180;
 
   const [formData, setFormData] = useState(initialData);
@@ -823,7 +833,9 @@ export default function FormUsuario({
           borderRadius: 3,
           overflow: "hidden",
           backgroundColor: dialogSurface,
-          boxShadow: `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`,
+          boxShadow: theme.palette.mode === "dark"
+            ? "0 10px 30px rgba(0,0,0,0.5)"
+            : "0 10px 30px rgba(23,63,57,0.08)",
         },
       }}
     >
@@ -971,6 +983,9 @@ export default function FormUsuario({
               </CardContent>
             </Card>
 
+            {/* HU-037.1 / Issue #319: Layout compuesto:
+                - Fila superior en 2 columnas: Columna izquierda (Información Personal), Columna derecha (Configurar Asignación).
+                - Fila inferior a todo el ancho útil (Full Width): Listado de Asignaciones (evita espacio muerto lateral y cortes bajo el footer). */}
             <Box
               sx={{
                 display: "grid",
@@ -983,13 +998,13 @@ export default function FormUsuario({
                 width: "100%",
               }}
             >
-            <Box sx={{ minWidth: 0 }}>
               <Card
                 sx={{
                   borderRadius: 2,
                   border: `1px solid ${subtleBorder}`,
                   boxShadow: sectionShadow,
                   backgroundColor: sectionSurface,
+                  width: "100%",
                 }}
               >
                 <CardContent sx={{ p: { xs: 2.75, sm: 3.25 } }}>
@@ -1227,16 +1242,14 @@ export default function FormUsuario({
                   </Stack>
                 </CardContent>
               </Card>
-            </Box>
-
-            <Box sx={{ minWidth: 0 }}>
-              <Stack spacing={3}>
+                {/* Panel de Configuración de Asignación (Full Width) */}
                 <Card
                   sx={{
                     borderRadius: 2,
                     border: `1px solid ${subtleBorder}`,
                     boxShadow: sectionShadow,
                     backgroundColor: sectionSurface,
+                    width: "100%",
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -1358,13 +1371,13 @@ export default function FormUsuario({
                       />
 
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         onClick={addAssign}
                         startIcon={<AddCircleOutlineIcon />}
                         sx={{
                           alignSelf: "flex-start",
-                          borderColor: alpha(green, 0.26),
-                          color: darkGreen,
+                          backgroundColor: darkGreen,
+                          "&:hover": { backgroundColor: green },
                         }}
                       >
                         {t("common.actions.addAssignment")}
@@ -1372,15 +1385,18 @@ export default function FormUsuario({
                     </Stack>
                   </CardContent>
                 </Card>
+            </Box>
 
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    border: `1px solid ${subtleBorder}`,
-                    boxShadow: sectionShadow,
-                    backgroundColor: sectionSurface,
-                  }}
-                >
+            {/* Listado de Asignaciones (Full Width abajo, ocupando todo el ancho útil) */}
+            <Card
+              sx={{
+                borderRadius: 2,
+                border: `1px solid ${subtleBorder}`,
+                boxShadow: sectionShadow,
+                backgroundColor: sectionSurface,
+                width: "100%",
+              }}
+            >
                   <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
                     <Stack spacing={2}>
                       <SectionHeader
@@ -1394,7 +1410,17 @@ export default function FormUsuario({
                           {t("usuario.form.messages.assignmentRequired")}
                         </Alert>
                       ) : (
-                        <Stack spacing={1.25}>
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: {
+                              xs: "1fr",
+                              md: "repeat(2, minmax(0, 1fr))",
+                            },
+                            gap: 2,
+                            width: "100%",
+                          }}
+                        >
                           {summaryAssignments.map((assignment, idx) => (
                             <Card
                               key={`${assignment.rolId}-${assignment.empresaId}-${idx}`}
@@ -1426,6 +1452,8 @@ export default function FormUsuario({
                                         size="small"
                                         sx={{
                                           maxWidth: "100%",
+                                          height: "auto",
+                                          minHeight: 24,
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
@@ -1433,6 +1461,8 @@ export default function FormUsuario({
                                               : "#dfeae6",
                                           "& .MuiChip-label": {
                                             display: "block",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
                                           },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
@@ -1445,6 +1475,8 @@ export default function FormUsuario({
                                         size="small"
                                         sx={{
                                           maxWidth: "100%",
+                                          height: "auto",
+                                          minHeight: 24,
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
@@ -1452,6 +1484,8 @@ export default function FormUsuario({
                                               : "#dfeae6",
                                           "& .MuiChip-label": {
                                             display: "block",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
                                           },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
@@ -1535,14 +1569,11 @@ export default function FormUsuario({
                               </CardContent>
                             </Card>
                           ))}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Stack>
-            </Box>
-            </Box>
+                    </Box>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
           </Stack>
         )}
       </DialogContent>
@@ -1589,3 +1620,19 @@ export default function FormUsuario({
     </Dialog>
   );
 }
+
+FormUsuario.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  mode: PropTypes.string,
+  loading: PropTypes.bool,
+  initialData: PropTypes.object,
+  onSubmit: PropTypes.func,
+  roles: PropTypes.array,
+  empresas: PropTypes.array,
+  empresaRoles: PropTypes.array,
+  tiposIdentificacion: PropTypes.array,
+  isAdmin: PropTypes.bool,
+  sessionCompanyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  sessionCompanyName: PropTypes.string,
+};
