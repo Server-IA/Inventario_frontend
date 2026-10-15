@@ -1,0 +1,68 @@
+{
+  "costoIndirecto": {
+    "title": "Gestión de Costos Indirectos",
+    "columns": {
+      "tipo": "Tipo de costo indirecto",
+      "espacio": "Espacio",
+      "fechaInicio": "Fecha de inicio",
+      "fechaFin": "Fecha de fin",
+      "sede": "Sede",
+      "bloque": "Bloque",
+      "almacen": "Almacén",
+      "valor": "Valor",
+      "estado": "Estado"
+    },
+    "grid": {
+      "empty": "No hay costos indirectos para mostrar."
+    },
+    "filters": {
+      "title": "Filtrar costos indirectos",
+      "desde": "Desde",
+      "hasta": "Hasta"
+    },
+    "confirmDelete": {
+      "title": "Eliminar costo indirecto",
+      "text": "El costo indirecto quedará inactivo y no estará disponible para nuevos cálculos de costos. ¿Deseas continuar?"
+    },
+    "form": {
+      "title": "Registrar costo indirecto",
+      "editTitle": "Editar costo indirecto",
+      "fields": {
+        "tipo": "Tipo de costo indirecto",
+        "sede": "Sede",
+        "bloque": "Bloque",
+        "espacio": "Espacio",
+        "almacen": "Almacén",
+        "fechaInicio": "Fecha de inicio",
+        "fechaFin": "Fecha de fin",
+        "valor": "Valor"
+      },
+      "helpers": {
+        "optional": "Opcional",
+        "selectSedeFirst": "Selecciona una sede primero.",
+        "selectBloqueFirst": "Selecciona un bloque primero.",
+        "selectEspacioFirst": "Selecciona un espacio primero.",
+        "catalogError": "No se pudo cargar la lista. Verifica tus permisos e inténtalo de nuevo.",
+        "noOptions": "No hay opciones activas que coincidan."
+      },
+      "validation": {
+        "tipoRequired": "El tipo de costo indirecto es obligatorio.",
+        "sedeRequired": "La sede es obligatoria.",
+        "fechaInicioRequired": "La fecha de inicio es obligatoria.",
+        "fechaFinRequired": "La fecha de fin es obligatoria.",
+        "fechaFinBeforeStart": "La fecha de fin debe ser igual o posterior a la fecha de inicio.",
+        "valorRequired": "El valor es obligatorio.",
+        "valorPositive": "El valor debe ser mayor a cero."
+      }
+    },
+    "messages": {
+      "created": "El costo indirecto fue registrado correctamente.",
+      "updated": "El costo indirecto fue actualizado correctamente.",
+      "deleted": "El costo indirecto fue eliminado correctamente.",
+      "deleteError": "No se pudo eliminar el costo indirecto. Inténtalo de nuevo.",
+      "saveError": "No se pudo registrar el costo indirecto. Revisa los datos e inténtalo de nuevo.",
+      "catalogError": "No se pudieron cargar las listas del formulario. Verifica tus permisos e inténtalo de nuevo.",
+      "listError": "No se pudo cargar el listado de costos indirectos. Inténtalo de nuevo."
+    }
+  }
+}
