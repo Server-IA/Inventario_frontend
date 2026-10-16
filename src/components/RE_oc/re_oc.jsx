@@ -14,6 +14,8 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.1 / Task #229] Integración con contrato V2 tipado de filtros, resumen y exportar PDF/XLSX. |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Columnas de totalUnidades/valorTotal en grilla, vista previa desde resultados generales y unidades heterogéneas. |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -29,7 +31,8 @@ import {
   PictureAsPdf as PdfIcon,
   TableView as ExcelIcon,
   CalendarToday as CalendarIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -42,6 +45,7 @@ import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import useUbicacionFilters from "../useUbicacionFilters";
 import AppDataGrid from "../common/AppDataGrid.jsx";
+import VistaPreviaPDFOrdenCompra from "../OrdenCompra/vistapreviapdfordencompra";
 
 export default function RE_ordenCompra() {
   const { t, i18n } = useTranslation();
@@ -134,6 +138,7 @@ export default function RE_ordenCompra() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [rowCount, setRowCount] = useState(0);
+  const [ordenData, setOrdenData] = useState(null);
 
   const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
   const [errors, setErrors] = useState({ fechas_rango: false });
@@ -239,6 +244,7 @@ export default function RE_ordenCompra() {
     if (!validarRango()) return;
 
     setLoadingSearch(true);
+    setOrdenData(null);
     try {
       const payload = buildFiltersPayload();
       const res = await axios.post(`/v2/report/orden-compra/resumen?page=${page}&size=${size}`, payload);
@@ -251,6 +257,11 @@ export default function RE_ordenCompra() {
 
       setResultados(mapped);
       setRowCount(Number(data?.totalElements ?? mapped.length));
+
+      // HU-041.2: Si se consultó un pedido específico y arrojó resultado, preseleccionar la orden para resumen
+      if (pedido?.pedido_id && mapped.length > 0) {
+        setOrdenData(mapped[0]);
+      }
 
       if (mapped.length === 0) {
         setMessage({
@@ -277,6 +288,7 @@ export default function RE_ordenCompra() {
       setMessage({ open: true, severity: "error", text });
       setResultados([]);
       setRowCount(0);
+      setOrdenData({ error: true, errorMessage: text });
     } finally {
       setLoadingSearch(false);
     }
@@ -346,7 +358,7 @@ export default function RE_ordenCompra() {
     }
   };
 
-  // Columnas para AppDataGrid según contrato V2
+  // Columnas para AppDataGrid según contrato V2 e integración de totales (HU-041.2)
   const columns = useMemo(() => [
     { field: "ordenCompraId", headerName: t("ordenCompra.columns.id", "ID"), width: 90 },
     {
@@ -389,7 +401,51 @@ export default function RE_ordenCompra() {
       width: 160,
       renderCell: (params) => params.row.estado || "-",
     },
-  ], [t]);
+    {
+      field: "totalUnidades",
+      headerName: t("ordenCompra.columns.totalUnits", "Total Unidades"),
+      width: 160,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => {
+        const u = params.row.totalUnidades;
+        return u !== null && u !== undefined
+          ? Number(u)
+          : t("ordenCompra.columns.heterogeneousUnits", "No aplica: unidades heterogéneas");
+      },
+    },
+    {
+      field: "valorTotal",
+      headerName: t("ordenCompra.columns.totalValue", "Valor Total"),
+      width: 160,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => {
+        const val = Number(params.row.valorTotal) || 0;
+        return new Intl.NumberFormat(i18n.language || "es", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 2,
+        }).format(val);
+      },
+    },
+    {
+      field: "actions",
+      headerName: t("common.actions.viewDetail", "Ver Resumen"),
+      width: 140,
+      renderCell: (params) => (
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<VisibilityIcon />}
+          onClick={() => setOrdenData(params.row)}
+          sx={{ textTransform: "none", borderRadius: 1.5 }}
+        >
+          {t("common.actions.viewDetail", "Ver Resumen")}
+        </Button>
+      ),
+    },
+  ], [t, i18n.language]);
 
   const boxStyles = {
     p: 3,
@@ -542,7 +598,6 @@ export default function RE_ordenCompra() {
                     fullWidth
                     onClick={handleOpenDate}
                     endIcon={<CalendarIcon />}
-                    error={Boolean(errors.fechas_rango)}
                     sx={{
                       justifyContent: "space-between",
                       py: 1,
@@ -654,6 +709,25 @@ export default function RE_ordenCompra() {
           </Button>
         </Stack>
       </Box>
+
+      {/* HU-041.2: Vista previa / resumen detallado accesible desde resultados generales */}
+      {ordenData && (
+        <Box sx={{ mb: 4 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ maxWidth: 550, mb: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              {t("ordenCompra.modal.previewTitle", "Resumen de la Orden de Compra")}
+            </Typography>
+            <Button
+              size="small"
+              onClick={() => setOrdenData(null)}
+              sx={{ textTransform: "none", color: isDark ? "#e7f6f7" : "#173f39" }}
+            >
+              {t("common.actions.close", "Cerrar")}
+            </Button>
+          </Stack>
+          <VistaPreviaPDFOrdenCompra orden={ordenData} />
+        </Box>
+      )}
 
       {/* Resultados Grilla */}
       <Box>

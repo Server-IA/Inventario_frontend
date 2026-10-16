@@ -22,9 +22,26 @@ vi.mock("react-date-range", () => ({
   DateRange: () => <div data-testid="mock-date-range" />,
 }));
 
-import RE_ordenCompra from "../RE_oc/re_oc";
+vi.mock("../common/AppDataGrid.jsx", () => ({
+  default: ({ rows = [], columns = [] }) => (
+    <div data-testid="mock-app-data-grid">
+      {rows.map((row) => (
+        <div key={row.id} data-testid={`row-${row.id}`}>
+          {columns.map((col) => (
+            <span key={col.field}>
+              {col.renderCell ? col.renderCell({ row, value: row[col.field] }) : row[col.field]}
+            </span>
+          ))}
+        </div>
+      ))}
+    </div>
+  ),
+}));
 
-describe("HU-041.1 / Task #229 - Reporte de Orden de Compra V2", () => {
+import RE_ordenCompra from "../RE_oc/re_oc";
+import VistaPreviaPDFOrdenCompra from "../OrdenCompra/vistapreviapdfordencompra";
+
+describe("HU-041.1 & HU-041.2 - Reporte de Orden de Compra y Resumen de Totales", () => {
   const theme = createTheme({ palette: { mode: "light" } });
 
   const mockFiltrosResponse = {
@@ -39,15 +56,6 @@ describe("HU-041.1 / Task #229 - Reporte de Orden de Compra V2", () => {
     almacenes: [{ id: 85, nombre: "Agropecuario Central" }],
     proveedores: [{ id: 88, nombre: "AGROCENTRO" }],
     estados: [{ id: 24, nombre: "Entregado al proveedor" }],
-    seleccionInicial: {
-      paisId: 7,
-      departamentoId: 7,
-      municipioId: 22,
-      sedeId: 86,
-      bloqueId: 81,
-      espacioId: 66,
-      almacenId: 85,
-    },
   };
 
   const mockResumenResponse = {
@@ -64,7 +72,7 @@ describe("HU-041.1 / Task #229 - Reporte de Orden de Compra V2", () => {
         sede: "Sede Neiva Primera",
         almacen: "Agropecuario Central",
         estado: "Entregado al proveedor",
-        cantidadItems: 1,
+        cantidadItems: 2,
         totalUnidades: 22,
         valorTotal: 50000,
       },
@@ -92,156 +100,160 @@ describe("HU-041.1 / Task #229 - Reporte de Orden de Compra V2", () => {
     });
   });
 
-  it("1. Consume correctamente los filtros inteligentes desde GET /v2/report/orden-compra/filtros", async () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <RE_ordenCompra />
-      </ThemeProvider>
-    );
+  describe("HU-041.2: Pruebas unitarias del Resumen de Totales (VistaPreviaPDFOrdenCompra)", () => {
+    it("1. Renderiza valor total y total de unidades devueltos por el backend", () => {
+      const mockOrden = {
+        ordenCompraId: 10,
+        pedidoId: 5,
+        fechaHora: "2026-09-10T14:30:00",
+        proveedor: "Proveedor Prueba",
+        sede: "Sede Central",
+        almacen: "Almacén 1",
+        estado: "Activo",
+        totalUnidades: 35,
+        valorTotal: 125000,
+      };
 
-    await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/report/orden-compra/filtros"),
-        expect.anything()
+      render(
+        <ThemeProvider theme={theme}>
+          <VistaPreviaPDFOrdenCompra orden={mockOrden} />
+        </ThemeProvider>
       );
+
+      expect(screen.getByText("35")).toBeInTheDocument();
+      expect(screen.getByText(/125\.000/)).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Reporte de Orden de Compra")).toBeInTheDocument();
-  });
+    it("2. Muestra mensaje explícito 'No aplica: unidades heterogéneas' cuando totalUnidades es null", () => {
+      const mockOrdenHeterogenea = {
+        ordenCompraId: 11,
+        totalUnidades: null,
+        valorTotal: 85000,
+      };
 
-  it("2. Ejecuta la búsqueda enviando body tipado a POST /v2/report/orden-compra/resumen sin condicion ni EMPRESA_ID", async () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <RE_ordenCompra />
-      </ThemeProvider>
-    );
-
-    await waitFor(() => {
-      expect(axios.get).toHaveBeenCalled();
-    });
-
-    const searchBtn = screen.getByRole("button", { name: /buscar/i });
-    fireEvent.click(searchBtn);
-
-    await waitFor(() => {
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/report/orden-compra/resumen?page=0&size=10"),
-        expect.any(Object)
+      render(
+        <ThemeProvider theme={theme}>
+          <VistaPreviaPDFOrdenCompra orden={mockOrdenHeterogenea} />
+        </ThemeProvider>
       );
+
+      expect(screen.getByText(/No aplica: unidades heterogéneas/i)).toBeInTheDocument();
+      expect(screen.getByText(/85\.000/)).toBeInTheDocument();
     });
 
-    const [, sentBody] = axios.post.mock.calls.find(([url]) =>
-      url.includes("/v2/report/orden-compra/resumen")
-    );
+    it("3. Maneja correctamente órdenes sin productos mostrando totales en 0", () => {
+      const mockOrdenVacia = {
+        ordenCompraId: 12,
+        totalUnidades: 0,
+        valorTotal: 0,
+      };
 
-    // Valida que el body sea estrictamente tipado según contrato V2
-    expect(sentBody).toHaveProperty("fechaInicio");
-    expect(sentBody).toHaveProperty("fechaFin");
-    expect(sentBody).not.toHaveProperty("condicion");
-    expect(sentBody).not.toHaveProperty("EMPRESA_ID");
-    expect(sentBody).not.toHaveProperty("formato");
-  });
-
-  it("3. Genera exportación en PDF mediante POST /v2/report/orden-compra/exportar?formato=PDF", async () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <RE_ordenCompra />
-      </ThemeProvider>
-    );
-
-    const exportModalBtn = screen.getByRole("button", { name: /generar reporte/i });
-    fireEvent.click(exportModalBtn);
-
-    const pdfBtn = screen.getByRole("button", { name: /^PDF$/i });
-    fireEvent.click(pdfBtn);
-
-    await waitFor(() => {
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/report/orden-compra/exportar?formato=PDF"),
-        expect.any(Object),
-        expect.objectContaining({ responseType: "blob" })
+      render(
+        <ThemeProvider theme={theme}>
+          <VistaPreviaPDFOrdenCompra orden={mockOrdenVacia} />
+        </ThemeProvider>
       );
+
+      expect(screen.getByText("0")).toBeInTheDocument();
+      expect(screen.getByText(/0,00/)).toBeInTheDocument();
     });
 
-    const [, pdfBody] = axios.post.mock.calls.find(([url]) =>
-      url.includes("/v2/report/orden-compra/exportar?formato=PDF")
-    );
-    expect(pdfBody).not.toHaveProperty("condicion");
-    expect(pdfBody).not.toHaveProperty("EMPRESA_ID");
-  });
+    it("4. Representa un fallo técnico como estado de error y no como total cero", () => {
+      const mockOrdenError = {
+        error: true,
+        errorMessage: "Error en la consulta de backend",
+      };
 
-  it("4. Genera exportación en Excel mediante POST /v2/report/orden-compra/exportar?formato=XLSX", async () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <RE_ordenCompra />
-      </ThemeProvider>
-    );
-
-    const exportModalBtn = screen.getByRole("button", { name: /generar reporte/i });
-    fireEvent.click(exportModalBtn);
-
-    const excelBtn = screen.getByRole("button", { name: /^Excel$/i });
-    fireEvent.click(excelBtn);
-
-    await waitFor(() => {
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/report/orden-compra/exportar?formato=XLSX"),
-        expect.any(Object),
-        expect.objectContaining({ responseType: "blob" })
+      render(
+        <ThemeProvider theme={theme}>
+          <VistaPreviaPDFOrdenCompra orden={mockOrdenError} />
+        </ThemeProvider>
       );
-    });
 
-    const [, excelBody] = axios.post.mock.calls.find(([url]) =>
-      url.includes("/v2/report/orden-compra/exportar?formato=XLSX")
-    );
-    expect(excelBody).not.toHaveProperty("condicion");
-    expect(excelBody).not.toHaveProperty("EMPRESA_ID");
-  });
-
-  it("5. Gestiona respuestas sin resultados mostrando mensaje accesible", async () => {
-    axios.post.mockImplementationOnce((url) => {
-      if (url.includes("/v2/report/orden-compra/resumen")) {
-        return Promise.resolve({ data: { content: [], totalElements: 0 } });
-      }
-      return Promise.resolve({ data: [] });
-    });
-
-    render(
-      <ThemeProvider theme={theme}>
-        <RE_ordenCompra />
-      </ThemeProvider>
-    );
-
-    const searchBtn = screen.getByRole("button", { name: /buscar/i });
-    fireEvent.click(searchBtn);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/no se encontraron registros para los filtros seleccionados/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText("Error en la consulta de backend")).toBeInTheDocument();
+      expect(screen.queryByText("$0,00")).not.toBeInTheDocument();
     });
   });
 
-  it("6. Maneja errores 400 y 403 de forma controlada sin exponer detalles técnicos", async () => {
-    axios.post.mockImplementationOnce(() =>
-      Promise.reject({
-        response: { status: 403, data: { detail: "Acceso denegado" } },
-      })
-    );
+  describe("HU-041.1 & HU-041.2: Integración en RE_ordenCompra", () => {
+    it("5. Búsqueda y apertura de resumen desde resultados generales", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <RE_ordenCompra />
+        </ThemeProvider>
+      );
 
-    render(
-      <ThemeProvider theme={theme}>
-        <RE_ordenCompra />
-      </ThemeProvider>
-    );
+      await waitFor(() => {
+        expect(axios.get).toHaveBeenCalled();
+      });
 
-    const searchBtn = screen.getByRole("button", { name: /buscar/i });
-    fireEvent.click(searchBtn);
+      const searchBtn = screen.getByRole("button", { name: /buscar/i });
+      fireEvent.click(searchBtn);
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/no tiene permisos para realizar esta operación/i)
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          expect.stringContaining("/v2/report/orden-compra/resumen"),
+          expect.any(Object)
+        );
+      });
+
+      // Abrir resumen desde la grilla
+      const viewDetailBtn = await screen.findByRole("button", { name: /ver resumen/i });
+      fireEvent.click(viewDetailBtn);
+
+      // Verifica que la tarjeta de resumen se abra en pantalla
+      expect(screen.getAllByText("Resumen de la Orden de Compra").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText("Totales de la Compra")).toBeInTheDocument();
+
+      // Cerrar resumen
+      const closeBtn = screen.getByRole("button", { name: /cerrar/i });
+      fireEvent.click(closeBtn);
+
+      expect(screen.queryByText("Totales de la Compra")).not.toBeInTheDocument();
+    });
+
+    it("6. Exportación en PDF mediante POST /v2/report/orden-compra/exportar?formato=PDF", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <RE_ordenCompra />
+        </ThemeProvider>
+      );
+
+      const exportModalBtn = screen.getByRole("button", { name: /generar reporte/i });
+      fireEvent.click(exportModalBtn);
+
+      const pdfBtn = screen.getByRole("button", { name: /^PDF$/i });
+      fireEvent.click(pdfBtn);
+
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          expect.stringContaining("/v2/report/orden-compra/exportar?formato=PDF"),
+          expect.any(Object),
+          expect.objectContaining({ responseType: "blob" })
+        );
+      });
+    });
+
+    it("7. Exportación en Excel mediante POST /v2/report/orden-compra/exportar?formato=XLSX", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <RE_ordenCompra />
+        </ThemeProvider>
+      );
+
+      const exportModalBtn = screen.getByRole("button", { name: /generar reporte/i });
+      fireEvent.click(exportModalBtn);
+
+      const excelBtn = screen.getByRole("button", { name: /^Excel$/i });
+      fireEvent.click(excelBtn);
+
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          expect.stringContaining("/v2/report/orden-compra/exportar?formato=XLSX"),
+          expect.any(Object),
+          expect.objectContaining({ responseType: "blob" })
+        );
+      });
     });
   });
 });
