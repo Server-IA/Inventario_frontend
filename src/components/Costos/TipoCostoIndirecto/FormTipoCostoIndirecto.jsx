@@ -7,6 +7,7 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | Creación del modal de registro para HU-044.1. |
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | Habilitar edición mediante PUT para HU-044.3. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useState, useEffect } from "react";
