@@ -1,0 +1,53 @@
+{
+  "tipoCostoIndirecto": {
+    "title": "Indirect Cost Types Management",
+    "columns": {
+      "id": "ID",
+      "nombre": "Name",
+      "descripcion": "Description",
+      "estado": "Status",
+      "empresa": "Company"
+    },
+    "grid": {
+      "empty": "No indirect cost types to display."
+    },
+    "filters": {
+      "title": "Filter indirect cost types",
+      "nombre": "Name",
+      "estado": "Status"
+    },
+    "form": {
+      "title": "Register indirect cost type",
+      "editTitle": "Update indirect cost type",
+      "fields": {
+        "nombre": "Name",
+        "descripcion": "Description"
+      },
+      "helpers": {
+        "optional": "Optional",
+        "charLimit": "{{count}} / {{max}} characters"
+      },
+      "validation": {
+        "nombreRequired": "The name is required.",
+        "nombreMaxLength": "The name cannot exceed 100 characters.",
+        "descripcionMaxLength": "The description cannot exceed 2048 characters."
+      }
+    },
+    "confirmState": {
+      "activateTitle": "Activate indirect cost type",
+      "inactivateTitle": "Inactivate indirect cost type",
+      "activateText": "Do you want to activate the indirect cost type \"{{nombre}}\"? It will become available for cost parameterization.",
+      "inactivateText": "Do you want to inactivate the indirect cost type \"{{nombre}}\"? It will no longer be available for registering new indirect costs."
+    },
+    "messages": {
+      "created": "The indirect cost type was successfully registered.",
+      "updated": "The indirect cost type was successfully updated.",
+      "stateChanged": "The status of the indirect cost type was successfully updated.",
+      "listError": "Could not load the list of indirect cost types.",
+      "saveError": "Could not save the indirect cost type.",
+      "stateError": "Could not change the status of the indirect cost type.",
+      "duplicateName": "An indirect cost type with that name already exists for the company.",
+      "hasActiveCosts": "Cannot be inactivated because it has active associated indirect costs."
+    }
+  }
+}

@@ -7,6 +7,7 @@ CONTROL DE CAMBIOS
 |   Fecha    | Version |      Autor           | Descripcion del cambio      |
 +------------+---------+----------------------+-----------------------------+
 | 2026-06-03 | 0.4.0   | Jeisson Sanchez      |  Reestructuracion de paises.       |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | Registrar módulo TipoCostoIndirecto (HU-044). |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -73,6 +74,7 @@ import FormRegistroPersona from "./components/seguridad/FormRegistroPersona";
 import FormRegistroEmpresa from "./components/seguridad/FormRegistroEmpresa.jsx";
 import ChangePasswordInitial from "./components/seguridad/ChangePasswordInitial.jsx";
 import Modulo from "./components/modulo/modulos.jsx";
+import TipoCostoIndirecto from "./components/Costos/TipoCostoIndirecto/TipoCostoIndirecto.jsx";
 
 const moduleMap = {
   persona: Persona,
@@ -119,6 +121,8 @@ const moduleMap = {
   re_ordencompra: RE_ordenCompra,
   re_fc: RE_fc,
   modulo: Modulo,
+  tipo_costo_indirecto: TipoCostoIndirecto,
+  tipocostoindirecto: TipoCostoIndirecto,
 };
 
 const APPBAR_GREEN = "#0F2327";
