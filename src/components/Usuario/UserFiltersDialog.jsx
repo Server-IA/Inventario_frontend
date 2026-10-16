@@ -8,6 +8,7 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-08-03 | 0.4.0   | Cesar Medina         | Se crea modal de filtros para usuarios.       |
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #323] Retirar bloques informativos redundantes del modal de filtros. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local en filtros de Rol y Empresa. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -41,6 +42,7 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import { useTranslation } from "react-i18next";
+import SearchableSelect from "../common/SearchableSelect";
 
 export default function UserFiltersDialog({
   open,
@@ -228,21 +230,16 @@ export default function UserFiltersDialog({
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      fullWidth
+                    <SearchableSelect
                       label={t("usuario.form.fields.role")}
                       value={values.rolId ?? ""}
                       onChange={handleFieldChange("rolId")}
+                      options={roles}
+                      fullWidth
+                      emptyOptionLabel={t("common.labels.all")}
+                      placeholder={t("common.actions.search", "Buscar...")}
                       InputLabelProps={{ shrink: true }}
-                    >
-                      <MenuItem value="">{t("common.labels.all")}</MenuItem>
-                      {roles.map((item) => (
-                        <MenuItem key={item.value} value={item.value}>
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    />
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
@@ -262,32 +259,25 @@ export default function UserFiltersDialog({
                     </TextField>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      fullWidth
+                    <SearchableSelect
                       label={t("usuario.form.fields.company")}
                       value={values.empresaId ?? ""}
                       onChange={handleFieldChange("empresaId")}
+                      options={empresas}
                       disabled={companyLocked}
+                      fullWidth
+                      emptyOptionLabel={t("common.labels.all")}
+                      placeholder={t("common.actions.search", "Buscar...")}
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <BusinessOutlinedIcon
-                              fontSize="small"
-                              sx={{ color: alpha(darkGreen, 0.7) }}
-                            />
-                          </InputAdornment>
-                        ),
-                      }}
-                    >
-                      <MenuItem value="">{t("common.labels.all")}</MenuItem>
-                      {empresas.map((item) => (
-                        <MenuItem key={item.value} value={item.value}>
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <BusinessOutlinedIcon
+                            fontSize="small"
+                            sx={{ color: alpha(darkGreen, 0.7) }}
+                          />
+                        </InputAdornment>
+                      }
+                    />
                   </Grid>
                 </Grid>
               </Stack>
