@@ -14,6 +14,7 @@ CONTROL DE CAMBIOS
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #325] Representar estado real de asignaciones (Activo/Inactivo) y orientar cambio de estado a Usuario-Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
@@ -1421,7 +1422,21 @@ export default function FormUsuario({
                             width: "100%",
                           }}
                         >
-                          {summaryAssignments.map((assignment, idx) => (
+                          {summaryAssignments.map((assignment, idx) => {
+                            const isAssignmentActive =
+                              assignment.estadoId !== 2 &&
+                              assignment.estadoId !== "2" &&
+                              String(assignment.estadoNombre || "").toLowerCase() !== "inactivo" &&
+                              assignment.activo !== false;
+
+                            const isPersisted = Boolean(
+                              assignment.usuarioRolId ||
+                              (!isCreateMode && (initialData?.asignaciones || []).some(
+                                (a) => String(a.rolId) === String(assignment.rolId) && String(a.empresaId) === String(assignment.empresaId)
+                              ))
+                            );
+
+                            return (
                             <Card
                               key={`${assignment.rolId}-${assignment.empresaId}-${idx}`}
                               sx={{
@@ -1490,6 +1505,18 @@ export default function FormUsuario({
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
                                       />
+                                      {/* Criterio 1: Cada tarjeta muestra explícitamente Activo o Inactivo */}
+                                      <Chip
+                                        label={isAssignmentActive ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo")}
+                                        size="small"
+                                        color={isAssignmentActive ? "success" : "default"}
+                                        variant={isAssignmentActive ? "filled" : "outlined"}
+                                        sx={{
+                                          fontWeight: 700,
+                                          fontSize: "0.75rem",
+                                          height: 24,
+                                        }}
+                                      />
                                       {assignment.preferido ? (
                                         <Chip
                                           label={t("usuario.form.fields.preferred")}
@@ -1523,18 +1550,34 @@ export default function FormUsuario({
                                         }
                                         label={t("usuario.form.fields.preferred")}
                                       />
-                                      <Button
-                                        color="error"
-                                        onClick={() => removeAssign(idx)}
-                                        startIcon={<BlockOutlinedIcon />}
-                                        sx={{ whiteSpace: "nowrap" }}
-                                      >
-                                        {t(
-                                          mode === "edit"
-                                            ? "usuario.actions.inactivateAssignment"
-                                            : "usuario.actions.removeAssignment"
-                                        )}
-                                      </Button>
+                                      {/* Criterios 2, 3, 4, 5:
+                                          - En modo edición, las asignaciones existentes (persistidas) no se eliminan visualmente
+                                            fingiendo una inactivación que no se persiste; se orienta al flujo de Usuario-Rol.
+                                          - Una asignación inactiva no ofrece botón de inactivar.
+                                          - Los borradores nuevos agregados en la sesión actual sí pueden removerse antes de guardar. */}
+                                      {isPersisted ? (
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            color: "text.secondary",
+                                            fontStyle: "italic",
+                                            ml: "auto",
+                                            display: "block",
+                                          }}
+                                        >
+                                          {t("usuario.form.helpers.manageStatusInUsuarioRol", "Para cambiar el estado de esta asignación, use el módulo Usuario-Rol.")}
+                                        </Typography>
+                                      ) : (
+                                        <Button
+                                          color="error"
+                                          size="small"
+                                          onClick={() => removeAssign(idx)}
+                                          startIcon={<BlockOutlinedIcon />}
+                                          sx={{ whiteSpace: "nowrap", ml: "auto" }}
+                                        >
+                                          {t("common.actions.remove", "Quitar")}
+                                        </Button>
+                                      )}
                                     </Stack>
                                   </Stack>
                                   <Divider sx={{ borderColor: alpha(darkGreen, 0.14) }} />
@@ -1568,7 +1611,8 @@ export default function FormUsuario({
                                 </Stack>
                               </CardContent>
                             </Card>
-                          ))}
+                            );
+                          })}
                     </Box>
                   )}
                 </Stack>
