@@ -14,6 +14,7 @@ CONTROL DE CAMBIOS
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
@@ -61,6 +62,7 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import SearchableSelect from "../common/SearchableSelect";
 
 const emptyAssignment = {
   rolId: "",
@@ -1260,11 +1262,11 @@ export default function FormUsuario({
                         description={t("usuario.form.sections.assignmentConfigurationDescription")}
                       />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.company")}
                         value={selectedAssignmentCompanyId}
                         onChange={(e) => handleAssignChange("empresaId", e.target.value)}
+                        options={empresasOptions}
                         fullWidth
                         required={isAdmin}
                         disabled={!isAdmin}
@@ -1278,21 +1280,16 @@ export default function FormUsuario({
                               })
                             : "")
                         }
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {empresasOptions.map((company) => (
-                          <MenuItem key={company.value} value={company.value}>
-                            {company.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.role")}
                         value={assignDraft.rolId}
                         onChange={(e) => handleAssignChange("rolId", e.target.value)}
+                        options={availableRolesOptions}
                         fullWidth
                         required
                         disabled={
@@ -1302,15 +1299,10 @@ export default function FormUsuario({
                         }
                         error={Boolean(assignmentErrors.rolId)}
                         helperText={roleFieldHelperText}
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {availableRolesOptions.map((role) => (
-                          <MenuItem key={role.value} value={role.value}>
-                            {role.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
                       <Box
                         sx={{
