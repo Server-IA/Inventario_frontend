@@ -1,668 +1,703 @@
 /*=============================================================================
-Nombre del archivo : Rkardex.jsx
-Descripcion        : Reportes del modulo Kardex y vista previa PDF.
+ Nombre del archivo : Rkardex.jsx
+ Descripcion        : Módulo de Reportes de Kardex.
 ===============================================================================
-CONTROL DE CAMBIOS
-+------------+---------+----------------------+----------------------------------------------+
-|   Fecha    | Version |      Autor           | Descripcion del cambio                       |
-+------------+---------+----------------------+----------------------------------------------+
-| 2026-09-11 | 0.4.0   | Cesar Medina         | Aplica estilo visual consistente a preview.  |
-| 2026-09-11 | 0.4.0   | Cesar Medina         | Adapta vista de reportes al modal embebido.  |
-+------------+---------+----------------------+----------------------------------------------+
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-06-17 | 0.4.0   | Jeisson Sanchez      | Refactor UI/UX filtros, HU  |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-11 | 0.4.1   | Jeisson Sanchez      | Rediseño alineación filtros |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-07-27 | 0.5.0   | Jeisson Sanchez      | Integración endpoints API   |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Integración contractual V2 de resumen Kardex con paginación y DTO tipado. |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
-import React, { useEffect, useState } from "react";
-import PropTypes from "prop-types";
+import React, { useEffect, useState, useMemo } from "react";
 import {
-  Box, Typography, TextField, Button, Stack, Grid,
+  Box, Typography, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
-  Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper
+  IconButton, Paper, Popover, LinearProgress
 } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
-import CloseIcon from "@mui/icons-material/Close";
+import {
+  Search as SearchIcon,
+  CalendarToday as CalendarIcon,
+  Refresh as RefreshIcon
+} from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { es, enUS } from "date-fns/locale";
+
 import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
-
 import useUbicacionFilters from "../useUbicacionFilters";
-import UbicacionProductoVencimientoFilters from "../UbicacionProductoVencimientoFilters.jsx";
+import AppDataGrid from "../common/AppDataGrid.jsx";
 
-const getDialogUi = (theme) => {
-  const isDark = theme.palette.mode === "dark";
-  const darkGreen = isDark ? "#E7F6F7" : "#173f39";
-  const green = isDark ? "#2b6b60" : "#173f39";
-  const surface = isDark ? "#10211f" : theme.palette.common.white;
-  const sectionSurface = isDark ? "#142b28" : "#f8fbfa";
-  const subtleBorder = alpha(green, 0.14);
-  const softShadow = `0 14px 36px ${alpha(darkGreen, isDark ? 0.18 : 0.08)}`;
-  const buttonTransition = theme.transitions.create(
-    ["transform", "background-color", "border-color", "box-shadow"],
-    { duration: theme.transitions.duration.shorter }
-  );
-
-  return {
-    darkGreen,
-    paperSx: {
-      borderRadius: 3,
-      overflow: "hidden",
-      backgroundColor: surface,
-      boxShadow: softShadow,
-    },
-    titleSx: {
-      px: { xs: 2.25, sm: 3 },
-      py: 2.15,
-      backgroundColor: surface,
-      borderTop: `3px solid ${darkGreen}`,
-      borderBottom: `1px solid ${subtleBorder}`,
-      fontSize: "1.12rem",
-      fontWeight: 700,
-      color: darkGreen,
-    },
-    contentSx: {
-      px: { xs: 2.25, sm: 3 },
-      pt: 3,
-      pb: 2.5,
-      backgroundColor: surface,
-    },
-    actionsSx: {
-      px: { xs: 2.25, sm: 3 },
-      py: 2,
-      backgroundColor: surface,
-      borderTop: `1px solid ${subtleBorder}`,
-      justifyContent: "space-between",
-      gap: 1.25,
-      flexWrap: "wrap",
-    },
-    bodyCardSx: {
-      p: { xs: 1.5, sm: 2 },
-      borderRadius: 2.25,
-      border: `1px solid ${subtleBorder}`,
-      backgroundColor: sectionSurface,
-      boxShadow: `0 4px 14px ${alpha(darkGreen, isDark ? 0.14 : 0.05)}`,
-    },
-    secondaryButtonSx: {
-      textTransform: "none",
-      fontWeight: 700,
-      borderRadius: 1.75,
-      color: darkGreen,
-      borderColor: alpha(darkGreen, 0.18),
-      transition: buttonTransition,
-      "&:hover": {
-        borderColor: alpha(darkGreen, 0.26),
-        backgroundColor: alpha(darkGreen, 0.06),
-        boxShadow: `0 8px 20px ${alpha(darkGreen, isDark ? 0.14 : 0.08)}`,
-        transform: "translateY(-1px)",
-      },
-      "&:active": {
-        transform: "translateY(1px) scale(0.99)",
-        boxShadow: `0 3px 10px ${alpha(darkGreen, isDark ? 0.16 : 0.09)}`,
-      },
-    },
-    subtleButtonSx: {
-      textTransform: "none",
-      fontWeight: 700,
-      borderRadius: 1.75,
-      color: darkGreen,
-      transition: buttonTransition,
-      "&:hover": {
-        backgroundColor: alpha(darkGreen, 0.06),
-        transform: "translateY(-1px)",
-      },
-      "&:active": {
-        transform: "translateY(1px) scale(0.99)",
-      },
-    },
-  };
-};
-
-export default function RE_kardexPedido({ embeddedInDialog = false }) {
+export default function Rkardex() {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const dialogUi = getDialogUi(theme);
+  const isDark = theme.palette.mode === "dark";
+
   const empresaId = localStorage.getItem("empresaId");
   const token = localStorage.getItem("token");
   const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-  // ===== Utils
+  // Utils
   const asArray = (x) => (Array.isArray(x) ? x : x?.content ?? x?.data ?? []);
-  const getFechaKdx = (o) =>
-    o?.karFechaHora ?? o?.fechaHora ?? o?.fecha ?? o?.createdAt ?? null;
   const toLocal = (val) => {
     if (!val) return "";
     const d = new Date(val);
     return isNaN(d.getTime()) ? String(val) : d.toLocaleString();
   };
 
-  // "YYYY-MM-DDTHH:mm" -> "YYYY-MM-DD HH:mm"
+  const toDateOnly = (val) => {
+    if (!val) return null;
+    const s = String(val).trim();
+    if (s.includes("T")) return s.split("T")[0];
+    if (s.includes(" ")) return s.split(" ")[0];
+    return s;
+  };
+
+  const getInitDates = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+    const y1 = firstDay.getFullYear();
+    const m1 = String(firstDay.getMonth() + 1).padStart(2, "0");
+    const d1 = String(firstDay.getDate()).padStart(2, "0");
+
+    const y2 = today.getFullYear();
+    const m2 = String(today.getMonth() + 1).padStart(2, "0");
+    const d2 = String(today.getDate()).padStart(2, "0");
+
+    return {
+      fecha_inicio: `${y1}-${m1}-${d1}T00:00`,
+      fecha_fin: `${y2}-${m2}-${d2}T23:59`,
+    };
+  };
+
   const toDateStr = (val, end = false) => {
     if (!val) return null;
-    const [d, t] = String(val).split("T");
+    const [d, t_part] = String(val).split("T");
     if (!d) return null;
-    const hhmm = t ? t.slice(0, 5) : end ? "23:59" : "00:00";
+    const hhmm = t_part ? t_part.slice(0, 5) : end ? "23:59" : "00:00";
     return `${d} ${hhmm}`;
   };
 
-  // ===== Hook de ubicación (mismo patrón que RE_pedido / RE_productoVencimiento)
+  // Ubi hook integrado con reportType "kardex"
   const {
     form: ubi,
     handleChange: handleUbiChange,
     data: ubiData,
-    resetTodo,
-  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true });
+    loading: ubiLoading,
+    error: ubiError,
+    fetchInitialData: fetchCatalogs,
+    preloadData,
+    catalogsLoading,
+    catalogsError,
+  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true, reportType: "kardex" });
 
-  // ===== Filtros de kardex (producto, categoría, fechas)
+  // Kardex filters
   const [kdxFiltro, setKdxFiltro] = useState({
     producto_categoria_id: "",
     producto_id: "",
     produccion_id: "",
     producto_presentacion_id: "",
-    fecha_inicio: "",
-    fecha_fin: "",
+    ...getInitDates(),
   });
 
   const handleFiltroChange = (name) => (e) => {
     const value = e?.target ? e.target.value : e;
     setKdxFiltro((f) => ({ ...f, [name]: value }));
+    if (name === "producto_categoria_id") {
+      setKdxFiltro((f) => ({ ...f, producto_categoria_id: value, producto_id: "", producto_presentacion_id: "" }));
+      fetchProductosPorCategoria(value);
+    }
+    if (name === "producto_id") {
+      setKdxFiltro((f) => ({ ...f, producto_id: value, producto_presentacion_id: "" }));
+      fetchPresentacionesPorProducto(value);
+    }
   };
 
-  // ===== Catálogos de producto / categoría (ubicación la maneja el hook)
+  // Catalogs
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [producciones, setProducciones] = useState([]);
   const [presentaciones, setPresentaciones] = useState([]);
 
+  useEffect(() => {
+    if (preloadData) {
+      if (preloadData.categorias) setCategorias(asArray(preloadData.categorias));
+      if (preloadData.producciones) setProducciones(asArray(preloadData.producciones));
+      if (preloadData.fechaInicio && preloadData.fechaFin) {
+        setKdxFiltro((prev) => ({
+          ...prev,
+          fecha_inicio: `${preloadData.fechaInicio}T00:00`,
+          fecha_fin: `${preloadData.fechaFin}T23:59`,
+        }));
+      }
+    }
+  }, [preloadData]);
 
+  const fetchProductosPorCategoria = async (categoriaId) => {
+    if (!categoriaId) {
+      setProductos([]);
+      setPresentaciones([]);
+      return;
+    }
+    try {
+      const res = await axios.get("/v2/report/kardex/productos", { ...headers, params: { categoriaId } });
+      setProductos(asArray(res.data));
+      setPresentaciones([]);
+    } catch {
+      setProductos([]);
+    }
+  };
+
+  const fetchPresentacionesPorProducto = async (productoId) => {
+    if (!productoId) {
+      setPresentaciones([]);
+      return;
+    }
+    try {
+      const res = await axios.get("/v2/report/kardex/presentaciones", { ...headers, params: { productoId } });
+      setPresentaciones(asArray(res.data));
+    } catch {
+      setPresentaciones([]);
+    }
+  };
 
   useEffect(() => {
-    Promise.all([
-      axios.get("/v1/items/producto/0", headers).catch(() => ({ data: [] })),
-      axios
-        .get("/v1/items/producto_categoria/0", headers)
-        .catch(() => ({ data: [] })),
-      axios
-        .get("/v1/items/produccion/0", headers)              // NUEVO
-        .catch(() => ({ data: [] })),
-      axios
-        .get("/v1/items/producto_presentacion/0", headers)   // NUEVO
-        .catch(() => ({ data: [] })),
-    ])
-      .then(([pro, cat, prod, pres]) => {                    // NUEVO destructuring
-        setProductos(asArray(pro.data));
-        setCategorias(asArray(cat.data));
-        setProducciones(asArray(prod.data));                 // NUEVO
-        setPresentaciones(asArray(pres.data));               // NUEVO
-      })
-      .catch(() =>
-        setMessage({
-          open: true,
-          severity: "error",
-          text: "No fue posible cargar los catálogos.",
-        })
-      );
+    fetchCatalogs();
+    // eslint-disable-next-line
   }, []);
 
-
-  // ===== Estado UI
+  // UI state
   const [resultados, setResultados] = useState([]);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [message, setMessage] = useState({
-    open: false,
-    severity: "info",
-    text: "",
-  });
-  const [openUbi, setOpenUbi] = useState(false);
-  const [errors, setErrors] = useState({ fechas_rango: false });
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+  const [rowCount, setRowCount] = useState(0);
 
-  const validarRango = () => {
-    setErrors({ fechas_rango: false });
-    if (kdxFiltro.fecha_inicio && kdxFiltro.fecha_fin) {
-      const ini = new Date(kdxFiltro.fecha_inicio);
-      const fin = new Date(kdxFiltro.fecha_fin);
-      if (ini > fin) {
-        setErrors({ fechas_rango: true });
-        setMessage({
-          open: true,
-          severity: "warning",
-          text: "La fecha de inicio no puede ser mayor que la fecha fin.",
-        });
-        return false;
-      }
+  const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
+  const [errors, setErrors] = useState({ fechas_rango: false, fechas_vacias: false });
+
+  // Date Range Popover
+  const [anchorElDate, setAnchorElDate] = useState(null);
+  const openDate = Boolean(anchorElDate);
+
+  const handleOpenDate = (e) => setAnchorElDate(e.currentTarget);
+  const handleCloseDate = () => setAnchorElDate(null);
+
+  const setQuickDate = (type) => {
+    const today = new Date();
+    let fInicio, fFin;
+    const y2 = today.getFullYear();
+    const m2 = String(today.getMonth() + 1).padStart(2, "0");
+    const d2 = String(today.getDate()).padStart(2, "0");
+    fFin = `${y2}-${m2}-${d2}T23:59`;
+
+    if (type === "hoy") {
+      fInicio = `${y2}-${m2}-${d2}T00:00`;
+    } else if (type === "semana") {
+      const past = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      fInicio = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, "0")}-${String(past.getDate()).padStart(2, "0")}T00:00`;
+    } else if (type === "mes") {
+      const past = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      fInicio = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, "0")}-${String(past.getDate()).padStart(2, "0")}T00:00`;
+    } else if (type === "trimestre") {
+      const past = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+      fInicio = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, "0")}-${String(past.getDate()).padStart(2, "0")}T00:00`;
+    } else if (type === "anio") {
+      fInicio = `${y2}-01-01T00:00`;
+    }
+
+    setKdxFiltro((f) => ({ ...f, fecha_inicio: fInicio, fecha_fin: fFin }));
+    handleCloseDate();
+  };
+
+  const handleSelectDateRange = (item) => {
+    const { startDate, endDate } = item.selection;
+    const y1 = startDate.getFullYear();
+    const m1 = String(startDate.getMonth() + 1).padStart(2, "0");
+    const d1 = String(startDate.getDate()).padStart(2, "0");
+    const fInicio = `${y1}-${m1}-${d1}T00:00`;
+
+    let fFin = "";
+    if (endDate) {
+      const y2 = endDate.getFullYear();
+      const m2 = String(endDate.getMonth() + 1).padStart(2, "0");
+      const d2 = String(endDate.getDate()).padStart(2, "0");
+      fFin = `${y2}-${m2}-${d2}T23:59`;
+    } else {
+      fFin = `${y1}-${m1}-${d1}T23:59`;
+    }
+    setKdxFiltro((f) => ({ ...f, fecha_inicio: fInicio, fecha_fin: fFin }));
+  };
+
+  const validarFiltros = () => {
+    setErrors({ fechas_rango: false, fechas_vacias: false });
+    if (!kdxFiltro.fecha_inicio || !kdxFiltro.fecha_fin) {
+      setErrors((e) => ({ ...e, fechas_vacias: true }));
+      setMessage({ open: true, severity: "warning", text: t("kardex.messages.emptyDates", "El rango de fechas es obligatorio.") });
+      return false;
+    }
+    const ini = new Date(kdxFiltro.fecha_inicio);
+    const fin = new Date(kdxFiltro.fecha_fin);
+    if (ini > fin) {
+      setErrors((e) => ({ ...e, fechas_rango: true }));
+      setMessage({ open: true, severity: "warning", text: t("kardex.messages.invalidDateRange", "La fecha de inicio no puede ser mayor que la fecha fin.") });
+      return false;
     }
     return true;
   };
 
-  // ===== Listado (igual filosofía que Pedido/OC): trae todo y filtra por fechas
-  const fetchAllKardex = async () => {
-    const CANDIDATES = ["/v1/kardex"];
-    const size = 200;
-    for (const basePath of CANDIDATES) {
-      try {
-        // sin paginación
-        const r0 = await axios.get(basePath, headers);
-        const list0 = asArray(r0.data);
-        if (list0.length) return list0;
+  // Construcción del DTO tipado contractual de Kardex
+  const buildFiltersPayload = () => {
+    const payload = {
+      fechaInicio: toDateOnly(kdxFiltro.fecha_inicio),
+      fechaFin: toDateOnly(kdxFiltro.fecha_fin),
+    };
 
-        // con paginación
-        let page = 0,
-          acc = [];
-        for (let i = 0; i < 15; i++) {
-          const r = await axios.get(basePath, {
-            params: { page, size },
-            ...headers,
-          });
-          const list = asArray(r.data);
-          if (!list.length) break;
-          acc = acc.concat(list);
-          page += 1;
-        }
-        if (acc.length) return acc;
-      } catch (err) {
-        if (import.meta.env.DEV)
-          console.debug(
-            "[fetchAllKardex] fallo",
-            basePath,
-            err?.response?.status
-          );
-      }
-    }
-    const e = new Error("No se encontró endpoint para listar kardex.");
-    e.code = "NO_KARDEX_ENDPOINT";
-    throw e;
+    if (ubi?.pais_id) payload.paisId = Number(ubi.pais_id);
+    if (ubi?.departamento_id) payload.departamentoId = Number(ubi.departamento_id);
+    if (ubi?.municipio_id) payload.municipioId = Number(ubi.municipio_id);
+    if (ubi?.sede_id) payload.sedeId = Number(ubi.sede_id);
+    if (ubi?.bloque_id) payload.bloqueId = Number(ubi.bloque_id);
+    if (ubi?.espacio_id) payload.espacioId = Number(ubi.espacio_id);
+    if (ubi?.almacen_id) payload.almacenId = Number(ubi.almacen_id);
+
+    if (kdxFiltro?.producto_categoria_id) payload.categoriaProductoId = Number(kdxFiltro.producto_categoria_id);
+    if (kdxFiltro?.producto_id) payload.productoId = Number(kdxFiltro.producto_id);
+    if (kdxFiltro?.producto_presentacion_id) payload.presentacionId = Number(kdxFiltro.producto_presentacion_id);
+    if (kdxFiltro?.produccion_id) payload.produccionId = Number(kdxFiltro.produccion_id);
+
+    return payload;
   };
 
-  // ===== Buscar (solo UX)
-  const buscar = async () => {
-    setResultados([]);
-    setErrors({ fechas_rango: false });
+  // Búsqueda contractual V2 de resumen paginado
+  const buscar = async (page = 0, size = paginationModel.pageSize) => {
+    if (!validarFiltros()) return;
 
-    if (!validarRango()) return;
-
+    setLoadingSearch(true);
     try {
-      const all = await fetchAllKardex();
+      const payload = buildFiltersPayload();
+      const res = await axios.post(`/v2/report/kardex/resumen?page=${page}&size=${size}`, payload);
+      const data = res?.data;
+      const content = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
+      const mapped = content.map((row, idx) => ({
+        ...row,
+        id: row.id ?? `${row.headerEmpresaId ?? "emp"}-${row.itemProductoId ?? "prod"}-${row.itemFecha ?? "f"}-${page}-${idx}`,
+      }));
 
-      const ini = kdxFiltro.fecha_inicio
-        ? new Date(kdxFiltro.fecha_inicio)
-        : null;
-      const fin = kdxFiltro.fecha_fin ? new Date(kdxFiltro.fecha_fin) : null;
+      setResultados(mapped);
+      setRowCount(Number(data?.totalElements ?? mapped.length));
 
-      const lista = all.filter((row) => {
-        const f = getFechaKdx(row);
-        if (!f || (!ini && !fin)) return true;
-        const d = new Date(f);
-        if (isNaN(d.getTime())) return true;
-        if (ini && d < ini) return false;
-        if (fin && d > fin) return false;
-        return true;
-      });
-
-      setResultados(lista);
-      setMessage({
-        open: true,
-        severity: "info",
-        text: `Mostrando ${lista.length} movimiento(s) de kardex.`,
-      });
-    } catch (err) {
-      const msg =
-        err?.code === "NO_KARDEX_ENDPOINT"
-          ? "No se encontró el endpoint de listado de kardex (404)."
-          : "No se pudo cargar el kardex.";
-      console.error(err);
-      setMessage({ open: true, severity: "error", text: msg });
-    }
-  };
-
-  // ===== PDF: usa ubi + kdxFiltro (índices 0..8 como tenías) =====
-  const buildCondicion = () => {
-    const DEF_INI = "1900-01-01 00:00";
-    const DEF_FIN = "2099-12-31 23:59";
-    const userIni = toDateStr(kdxFiltro.fecha_inicio, false);
-    const userFin = toDateStr(kdxFiltro.fecha_fin, true);
-
-    const c = {};
-    c["0"] = `e.emp_id = $EMPRESA_ID$`;
-    c["1"] = ubi.municipio_id
-      ? `AND m.mun_id = ${Number(ubi.municipio_id)}`
-      : "";
-    c["2"] = ubi.sede_id ? `AND s.sed_id = ${Number(ubi.sede_id)}` : "";
-    c["3"] = ubi.bloque_id ? `AND blo.blo_id = ${Number(ubi.bloque_id)}` : "";
-    c["4"] = ubi.espacio_id ? `AND esp.esp_id = ${Number(ubi.espacio_id)}` : "";
-    c["5"] = ubi.almacen_id ? `AND al.alm_id = ${Number(ubi.almacen_id)}` : "";
-    c["6"] = kdxFiltro.producto_id
-      ? `AND p.pro_id = ${Number(kdxFiltro.producto_id)}`
-      : "";
-    c["7"] = kdxFiltro.producto_categoria_id
-      ? `AND p.pro_producto_categoria_id = ${Number(
-        kdxFiltro.producto_categoria_id
-      )}`
-      : "";
-    c["9"] = kdxFiltro.produccion_id
-      ? `AND pr.pro_id = ${Number(kdxFiltro.produccion_id)}`
-      : "";
-
-    // NUEVO: filtrar por producto_presentacion
-    c["10"] = kdxFiltro.producto_presentacion_id
-      ? `AND pp.prp_id = ${Number(kdxFiltro.producto_presentacion_id)}`
-      : "";
-    c["8"] = `AND k.kar_fecha_hora BETWEEN '${userIni ?? DEF_INI
-      }' AND '${userFin ?? DEF_FIN}'`;
-    return c;
-  };
-
-  // Decide report path based on selected filters
-  const getReportPath = () => {
-    // Priority: producción -> producto_presentacion -> generic kardex
-    if (kdxFiltro.produccion_id) return "/v2/report/nuevo/kardex_produccion";
-    if (kdxFiltro.producto_presentacion_id) return "/v2/report/nuevo/kardex_producto_presentacion";
-    return "/v2/report/nuevo/kardex";
-  };
-
-  const requestPDF = async (condicion) => {
-    const url = getReportPath();
-    const payload = { condicion, EMPRESA_ID: empresaId };
-
-    // Debug: log selected URL and payload before sending
-    console.log('[requestPDF] POST', url, payload);
-
-    try {
-      return await axios({
-        url,
-        method: "POST",
-        data: payload,
-        responseType: "blob",
-        ...headers,
-      });
-    } catch (e1) {
-      // If a specialized endpoint (producción / producto_presentacion) is missing, fall back to generic kardex
-      if (e1?.response?.status === 404 && url !== "/v2/report/nuevo/kardex") {
-        console.log('[requestPDF] specialized endpoint not found, falling back to generic /v2/report/nuevo/kardex');
-        console.log('[requestPDF] fallback POST', '/v2/report/nuevo/kardex', payload);
-        return await axios({
-          url: "/v2/report/nuevo/kardex",
-          method: "POST",
-          data: payload,
-          responseType: "blob",
-          ...headers,
+      if (mapped.length === 0) {
+        setMessage({
+          open: true,
+          severity: "info",
+          text: t("kardex.messages.noResults", "No se encontraron registros para los filtros seleccionados."),
+        });
+      } else {
+        setMessage({
+          open: true,
+          severity: "info",
+          text: t(
+            "kardex.messages.resultsCount",
+            { count: data?.totalElements ?? mapped.length },
+            `Mostrando ${data?.totalElements ?? mapped.length} movimiento(s) de kardex.`
+          ),
         });
       }
-      throw e1;
-    }
-  };
-
-  const extractServerError = async (err) => {
-    try {
-      if (err?.response?.data instanceof Blob) {
-        const t = await err.response.data.text();
-        return t?.slice(0, 400) || err.message;
-      }
-    } catch {
-      // noop
-    }
-    return err?.message || "Error desconocido";
-  };
-
-  const generarReporte = async () => {
-    try {
-      const condicion = buildCondicion();
-      const res = await requestPDF(condicion);
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const url = window.URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      setPreviewOpen(true);
-      setMessage({ open: true, severity: "success", text: "PDF generado." });
     } catch (err) {
-      const txt = await extractServerError(err);
       console.error(err);
-      setMessage({
-        open: true,
-        severity: "error",
-        text: `No se pudo generar el PDF (HTTP ${err?.response?.status ?? "?"
-          }). ${txt}`,
-      });
+      const status = err?.response?.status;
+      let text = t("kardex.messages.searchError", "Error al realizar la búsqueda.");
+      if (status === 403) {
+        text = t("kardex.messages.forbidden", "No tiene permisos para consultar este reporte.");
+      } else if (status === 400) {
+        text = err?.response?.data?.detail || t("kardex.messages.badRequest", "Los filtros enviados son inválidos.");
+      }
+      setMessage({ open: true, severity: "error", text });
+      setResultados([]);
+      setRowCount(0);
+    } finally {
+      setLoadingSearch(false);
     }
+  };
+
+  const handlePaginationChange = (nextModel) => {
+    setPaginationModel(nextModel);
+    buscar(nextModel.page, nextModel.pageSize);
+  };
+
+  // Columnas para AppDataGrid según contrato V2
+  const columns = useMemo(() => [
+    {
+      field: "itemFecha",
+      headerName: t("kardex.columns.fecha", "Fecha/Hora"),
+      flex: 1.1,
+      minWidth: 160,
+      renderCell: (params) => toLocal(params.row.itemFecha || params.row.fechaHora),
+    },
+    {
+      field: "headerSede",
+      headerName: t("kardex.columns.sede", "Sede"),
+      flex: 1,
+      minWidth: 130,
+      renderCell: (params) => params.row.headerSede || params.row.nombreSede || "-",
+    },
+    {
+      field: "headerAlmacen",
+      headerName: t("kardex.columns.almacen", "Almacén"),
+      flex: 1,
+      minWidth: 130,
+      renderCell: (params) => params.row.headerAlmacen || params.row.nombreAlmacen || "-",
+    },
+    {
+      field: "itemProduccionNombre",
+      headerName: t("kardex.columns.produccion", "Producción"),
+      flex: 1.2,
+      minWidth: 140,
+      renderCell: (params) => params.row.itemProduccionNombre || params.row.nombreProduccion || "-",
+    },
+    {
+      field: "itemTipoMovimientoNombre",
+      headerName: t("kardex.columns.movimiento", "Tipo de Movimiento"),
+      flex: 1.1,
+      minWidth: 150,
+      renderCell: (params) => params.row.itemTipoMovimientoNombre || params.row.nombreTipoMovimiento || "-",
+    },
+    {
+      field: "itemProducto",
+      headerName: t("kardex.columns.producto", "Producto"),
+      flex: 1.3,
+      minWidth: 160,
+      renderCell: (params) => params.row.itemProducto || params.row.productoNombre || "-",
+    },
+    {
+      field: "itemPresentacionNombre",
+      headerName: t("kardex.columns.presentacion", "Presentación"),
+      flex: 1.1,
+      minWidth: 130,
+      renderCell: (params) => params.row.itemPresentacionNombre || params.row.presentacionNombre || "-",
+    },
+    {
+      field: "itemCantidad",
+      headerName: t("kardex.columns.cantidad", "Cantidad"),
+      width: 110,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => params.row.itemCantidad ?? params.row.cantidad ?? "-",
+    },
+    {
+      field: "itemSaldo",
+      headerName: t("kardex.columns.saldo", "Saldo"),
+      width: 110,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => params.row.itemSaldo ?? params.row.saldo ?? "-",
+    },
+  ], [t]);
+
+  const boxStyles = {
+    p: 3,
+    borderRadius: 4,
+    bgcolor: isDark ? "rgba(255,255,255,0.02)" : "#fff",
+    boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.2)" : "0 4px 12px rgba(23,63,57,0.06)",
+  };
+
+  const titleStyles = {
+    fontWeight: 600,
+    mb: 2,
+    color: isDark ? "#e7f6f7" : "#173f39",
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
   };
 
   return (
-    <Box sx={{ p: embeddedInDialog ? { xs: 0.5, sm: 1 } : 4 }}>
-      {!embeddedInDialog ? (
-        <Typography variant="h4" gutterBottom>
-          Reporte Kardex
+    <Box sx={{ width: "100%", p: { xs: 2, md: 4 }, color: "text.primary" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: isDark ? "#fff" : "#173f39" }}>
+          {t("kardex.title", "Reportes de Kardex")}
         </Typography>
-      ) : null}
+      </Box>
 
-      {/* Filtros principales (producto, categoría, fechas) */}
-      <Grid container spacing={2} mb={2}>
+      {/* FILTROS GROUPED LAYOUT */}
+      <Grid container spacing={3} mb={3} alignItems="flex-start">
+        {/* Ubicación (Izquierda) */}
+        <Grid item xs={12} md={7}>
+          <Paper sx={boxStyles}>
+            <Typography variant="h6" sx={titleStyles}>
+              {t("kardex.sections.location", "Ubicación")}
+              {ubiLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
+              {ubiError && (
+                <IconButton size="small" onClick={fetchCatalogs} color="error" title={t("common.actions.retry", "Reintentar")}>
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
+                  <InputLabel>{t("kardex.filters.country", "País")}</InputLabel>
+                  <Select label={t("kardex.filters.country", "País")} value={ubi.pais_id || ""} onChange={handleUbiChange("pais_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.paises?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.pais_id}>
+                  <InputLabel>{t("kardex.filters.department", "Departamento")}</InputLabel>
+                  <Select label={t("kardex.filters.department", "Departamento")} value={ubi.departamento_id || ""} onChange={handleUbiChange("departamento_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.departamentos?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.departamento_id}>
+                  <InputLabel>{t("kardex.filters.municipality", "Municipio")}</InputLabel>
+                  <Select label={t("kardex.filters.municipality", "Municipio")} value={ubi.municipio_id || ""} onChange={handleUbiChange("municipio_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.municipios?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError}>
+                  <InputLabel>{t("kardex.filters.headquarters", "Sede")}</InputLabel>
+                  <Select label={t("kardex.filters.headquarters", "Sede")} value={ubi.sede_id || ""} onChange={handleUbiChange("sede_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {ubiData?.sedes?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.sede_id}>
+                  <InputLabel>{t("kardex.filters.block", "Bloque")}</InputLabel>
+                  <Select label={t("kardex.filters.block", "Bloque")} value={ubi.bloque_id || ""} onChange={handleUbiChange("bloque_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.bloques?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.bloque_id}>
+                  <InputLabel>{t("kardex.filters.space", "Espacio")}</InputLabel>
+                  <Select label={t("kardex.filters.space", "Espacio")} value={ubi.espacio_id || ""} onChange={handleUbiChange("espacio_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.espacios?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl size="small" fullWidth disabled={ubiLoading || ubiError || !ubi.espacio_id}>
+                  <InputLabel>{t("kardex.filters.warehouse", "Almacén")}</InputLabel>
+                  <Select label={t("kardex.filters.warehouse", "Almacén")} value={ubi.almacen_id || ""} onChange={handleUbiChange("almacen_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {ubiData?.almacenes?.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
 
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Categoría Producto</InputLabel>
-            <Select
-              label="Categoría Producto"
-              value={kdxFiltro.producto_categoria_id || ""}
-              onChange={handleFiltroChange("producto_categoria_id")}
+        {/* Derecha: Producto + Tiempo */}
+        <Grid item xs={12} md={5}>
+          <Paper sx={boxStyles}>
+            <Typography variant="h6" sx={titleStyles}>
+              {t("kardex.sections.product", "Producto")}
+              {catalogsLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
+              {catalogsError && (
+                <IconButton size="small" onClick={fetchCatalogs} color="error" title={t("common.actions.retry", "Reintentar")}>
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.category", "Categoría")}</InputLabel>
+                  <Select label={t("kardex.filters.category", "Categoría")} value={kdxFiltro.producto_categoria_id || ""} onChange={handleFiltroChange("producto_categoria_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {categorias.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.product", "Producto")}</InputLabel>
+                  <Select label={t("kardex.filters.product", "Producto")} value={kdxFiltro.producto_id || ""} onChange={handleFiltroChange("producto_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todos")}</em></MenuItem>
+                    {productos.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.presentation", "Presentación")}</InputLabel>
+                  <Select label={t("kardex.filters.presentation", "Presentación")} value={kdxFiltro.producto_presentacion_id || ""} onChange={handleFiltroChange("producto_presentacion_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {presentaciones.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl size="small" fullWidth disabled={catalogsLoading || catalogsError}>
+                  <InputLabel>{t("kardex.filters.production", "Producción")}</InputLabel>
+                  <Select label={t("kardex.filters.production", "Producción")} value={kdxFiltro.produccion_id || ""} onChange={handleFiltroChange("produccion_id")}>
+                    <MenuItem value=""><em>{t("common.labels.all", "Todas")}</em></MenuItem>
+                    {producciones.map((it) => <MenuItem key={it.id} value={String(it.id)}>{it.nombre || `#${it.id}`}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Tiempo */}
+              <Grid item xs={12}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: isDark ? "#e7f6f7" : "#173f39", whiteSpace: "nowrap" }}>
+                    {t("kardex.sections.time", "Tiempo")}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={handleOpenDate}
+                    endIcon={<CalendarIcon />}
+                    sx={{
+                      justifyContent: "space-between",
+                      py: 1,
+                      color: (errors.fechas_vacias || errors.fechas_rango) ? "error.main" : (isDark ? "#e7f6f7" : "#173f39"),
+                      borderColor: (errors.fechas_vacias || errors.fechas_rango) ? "error.main" : (isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.23)"),
+                      textTransform: "none",
+                      fontWeight: 500,
+                      borderRadius: 2,
+                    }}
+                  >
+                    {kdxFiltro.fecha_inicio && kdxFiltro.fecha_fin
+                      ? `${toDateStr(kdxFiltro.fecha_inicio)} - ${toDateStr(kdxFiltro.fecha_fin, true)}`
+                      : t("kardex.filters.selectDates", "Seleccionar fechas")}
+                  </Button>
+                </Box>
+                {(errors.fechas_vacias || errors.fechas_rango) && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                    {errors.fechas_rango
+                      ? t("kardex.messages.invalidDateRange", "La fecha de inicio no puede ser mayor que la fecha fin.")
+                      : t("kardex.messages.emptyDates", "El rango de fechas es obligatorio.")}
+                  </Typography>
+                )}
+              </Grid>
+            </Grid>
+
+            <Popover
+              open={openDate}
+              anchorEl={anchorElDate}
+              onClose={handleCloseDate}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              PaperProps={{ sx: { borderRadius: 3, mt: 1, maxWidth: 900 } }}
             >
-              <MenuItem value="">
-                <em>Todas</em>
-              </MenuItem>
-              {asArray(categorias).map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>
-                  {it.nombre ?? it.name ?? `#${it.id}`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Producto</InputLabel>
-            <Select
-              label="Producto"
-              value={kdxFiltro.producto_id || ""}
-              onChange={handleFiltroChange("producto_id")}
-            >
-              <MenuItem value="">
-                <em>Todos</em>
-              </MenuItem>
-              {asArray(productos).map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>
-                  {it.nombre ?? it.name ?? `#${it.id}`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-
-
-        {/* NUEVO: Producción */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Producción</InputLabel>
-            <Select
-              label="Producción"
-              value={kdxFiltro.produccion_id || ""}
-              onChange={handleFiltroChange("produccion_id")}
-            >
-              <MenuItem value="">
-                <em>Todas</em>
-              </MenuItem>
-              {asArray(producciones).map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>
-                  {it.nombre ?? it.name ?? `#${it.id}`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* NUEVO: Producto Presentación */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Presentación</InputLabel>
-            <Select
-              label="Presentación"
-              value={kdxFiltro.producto_presentacion_id || ""}
-              onChange={handleFiltroChange("producto_presentacion_id")}
-            >
-              <MenuItem value="">
-                <em>Todas</em>
-              </MenuItem>
-              {asArray(presentaciones).map((it) => (
-                <MenuItem key={it.id} value={String(it.id)}>
-                  {it.nombre ?? it.name ?? `#${it.id}`}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha Inicio"
-            name="fecha_inicio"
-            type="datetime-local"
-            fullWidth
-            value={kdxFiltro.fecha_inicio || ""}
-            onChange={handleFiltroChange("fecha_inicio")}
-            InputLabelProps={{ shrink: true }}
-            error={errors.fechas_rango}
-            helperText={
-              errors.fechas_rango ? "Inicio no puede ser mayor que fin." : ""
-            }
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha Fin"
-            name="fecha_fin"
-            type="datetime-local"
-            fullWidth
-            value={kdxFiltro.fecha_fin || ""}
-            onChange={handleFiltroChange("fecha_fin")}
-            InputLabelProps={{ shrink: true }}
-            error={errors.fechas_rango}
-            helperText={
-              errors.fechas_rango ? "Fin debe ser >= Inicio." : ""
-            }
-          />
+              <Stack direction={{ xs: "column", md: "row" }} sx={{ p: 2 }}>
+                <Box sx={{ minWidth: 200, pr: 2, borderRight: { md: `1px solid ${theme.palette.divider}` }, mb: { xs: 2, md: 0 } }}>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                    {t("kardex.filters.quickSelect", "Selección rápida")}
+                  </Typography>
+                  <Stack spacing={1}>
+                    {["hoy", "semana", "mes", "trimestre", "anio"].map((type) => {
+                      const labels = {
+                        hoy: "Hoy", semana: "Última Semana", mes: "Último Mes", trimestre: "Último Trimestre", anio: "Este Año",
+                      };
+                      return (
+                        <Button key={type} variant="text" size="small" fullWidth onClick={() => setQuickDate(type)} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
+                          {t(`kardex.filters.quick.${type}`, labels[type])}
+                        </Button>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+                <Box sx={{ pl: { md: 2 } }}>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                    {t("kardex.filters.customRange", "Rango personalizado")}
+                  </Typography>
+                  <Box sx={{
+                    ".rdrCalendarWrapper": {
+                      color: isDark ? "#e7f6f7" : "#000",
+                      bgcolor: isDark ? "transparent" : "#fff",
+                      borderRadius: 2,
+                    },
+                    ".rdrDayNumber span": { color: isDark ? "#e7f6f7" : "#1d2429" },
+                    ".rdrDayPassive .rdrDayNumber span": { color: isDark ? "rgba(255,255,255,0.3)" : "#d5dce0" },
+                    ".rdrMonthAndYearPickers select": { color: isDark ? "#e7f6f7" : "#3e484f" },
+                    ".rdrNextPrevButton": { background: isDark ? "rgba(255,255,255,0.1)" : "#eff2f7" },
+                    ".rdrWeekDay": { color: isDark ? "rgba(255,255,255,0.7)" : "#849095" },
+                    ".rdrDateDisplayWrapper": { backgroundColor: isDark ? "transparent" : "#eff2f7" },
+                    ".rdrDateDisplayItem": { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "#fff", boxShadow: isDark ? "none" : "0 1px 2px 0 rgba(35,57,66,.21)", borderColor: isDark ? "rgba(255,255,255,0.2)" : "transparent" },
+                    ".rdrDateDisplayItemActive": { borderColor: isDark ? "#fff" : "transparent" },
+                    ".rdrDateDisplayItem input": { color: isDark ? "#fff" : "#333" },
+                  }}>
+                    <DateRange
+                      locale={i18n.language?.startsWith("en") ? enUS : es}
+                      editableDateInputs={true}
+                      onChange={handleSelectDateRange}
+                      moveRangeOnFirstSelection={false}
+                      ranges={[{
+                        startDate: kdxFiltro.fecha_inicio ? new Date(kdxFiltro.fecha_inicio) : new Date(),
+                        endDate: kdxFiltro.fecha_fin ? new Date(kdxFiltro.fecha_fin) : new Date(),
+                        key: "selection",
+                      }]}
+                      months={2}
+                      direction="horizontal"
+                      rangeColors={["#173f39"]}
+                    />
+                  </Box>
+                </Box>
+              </Stack>
+            </Popover>
+          </Paper>
         </Grid>
       </Grid>
 
-      {/* Acciones */}
-      <Stack direction="row" spacing={2} mb={3}>
-        <Button variant="contained" onClick={buscar}>
-          Buscar
-        </Button>
-        <Button variant="outlined" onClick={generarReporte}>
-          Generar Reporte
-        </Button>
-        <Button variant="text" onClick={() => setOpenUbi(true)}>
-          Filtros (ubicación)
-        </Button>
-      </Stack>
-
-      {/* Diálogo: reutilizamos UbicacionProductoVencimientoFilters */}
-      <UbicacionProductoVencimientoFilters
-        variant="dialog"
-        title="Filtros (ubicación)"
-        open={openUbi}
-        onClose={() => setOpenUbi(false)}
-        // Ubicación
-        ubiForm={ubi}
-        ubiData={ubiData}
-        handleUbiChange={handleUbiChange}
-        onUbiReset={resetTodo}
-        // Kardex: producto / categoría / fechas
-        filtro={kdxFiltro}
-        productos={productos}
-        categorias={categorias}
-        handleFiltroChange={handleFiltroChange}
-        fechasError={errors.fechas_rango}
-        // Aplicar
-        onApply={() => {
-          setOpenUbi(false);
-          buscar();
-        }}
-      />
-
-      {/* Tabla resultados */}
-      {resultados.length > 0 && (
-        <Box mt={4}>
-          <Typography variant="h6" gutterBottom>
-            Kardex encontrado
-          </Typography>
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Fecha/Hora</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {resultados.map((row, idx) => (
-                  <TableRow key={row.id ?? idx}>
-                    <TableCell>{row.id ?? ""}</TableCell>
-                    <TableCell>{toLocal(getFechaKdx(row))}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
-
-      {/* Preview PDF */}
-      <Dialog
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        fullWidth
-        maxWidth="lg"
-        PaperProps={{ sx: dialogUi.paperSx }}
-      >
-        <DialogTitle sx={dialogUi.titleSx}>
-          Vista previa del Reporte
-          <IconButton
-            onClick={() => setPreviewOpen(false)}
-            sx={{
-              ...dialogUi.subtleButtonSx,
-              position: "absolute",
-              right: 16,
-              top: 12,
-              p: 0.75,
-              minWidth: "auto",
-            }}
+      {/* Botones de acción */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 4 }}>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<SearchIcon />}
+            onClick={() => buscar(0, paginationModel.pageSize)}
+            disabled={loadingSearch}
+            sx={{ borderRadius: 2, px: 4, py: 1, bgcolor: "#173f39", "&:hover": { bgcolor: "#21534b" } }}
           >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={dialogUi.contentSx}>
-          <Box sx={{ ...dialogUi.bodyCardSx, p: 1.5 }}>
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
-                width="100%"
-                height="600"
-                title="PDF"
-                style={{ border: "none", borderRadius: "12px", backgroundColor: "#fff" }}
-              />
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={dialogUi.actionsSx}>
-          <Box sx={{ flex: 1 }} />
-          <Button variant="outlined" onClick={() => setPreviewOpen(false)} sx={dialogUi.secondaryButtonSx}>
-            Cerrar
+            {t("common.actions.search", "Buscar")}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Stack>
+      </Box>
+
+      {/* Resultados Grilla */}
+      <Box>
+        <AppDataGrid
+          rows={resultados}
+          columns={columns}
+          loading={loadingSearch}
+          containerSx={{ minHeight: 200 }}
+          autoHeight={true}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationChange}
+          rowCount={rowCount}
+          pageSizeOptions={[5, 10, 20, 50]}
+        />
+      </Box>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
   );
 }
-
-RE_kardexPedido.propTypes = {
-  embeddedInDialog: PropTypes.bool,
-};
