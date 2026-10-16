@@ -16,15 +16,22 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Integración contractual V2 de resumen Kardex con paginación y DTO tipado. |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-039.3 / Task #216] Exportación contractual V2 de Kardex (PDF a /v2/report/kardex y Excel a /v2/report/kardex/exportar?formato=XLSX). |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
-  IconButton, Paper, Popover, LinearProgress
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
+  Paper, Divider, Popover, LinearProgress
 } from "@mui/material";
 import {
+  Close as CloseIcon,
   Search as SearchIcon,
+  Download as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableView as ExcelIcon,
   CalendarToday as CalendarIcon,
   Refresh as RefreshIcon
 } from "@mui/icons-material";
@@ -257,7 +264,7 @@ export default function Rkardex() {
     return true;
   };
 
-  // Construcción del DTO tipado contractual de Kardex
+  // Construcción del DTO tipado contractual de Kardex sin SQL ni campos fuera de contrato
   const buildFiltersPayload = () => {
     const payload = {
       fechaInicio: toDateOnly(kdxFiltro.fecha_inicio),
@@ -335,6 +342,72 @@ export default function Rkardex() {
   const handlePaginationChange = (nextModel) => {
     setPaginationModel(nextModel);
     buscar(nextModel.page, nextModel.pageSize);
+  };
+
+  // HU-039.3 / T-216: Exportación contractual V2 de Kardex
+  const [modalExportOpen, setModalExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const generarReporte = async (formato = "PDF") => {
+    if (!validarFiltros()) {
+      setModalExportOpen(false);
+      return;
+    }
+    setExporting(true);
+    try {
+      const payload = buildFiltersPayload();
+      const isExcel = formato === "EXCEL" || formato === "XLSX";
+      const url = isExcel
+        ? "/v2/report/kardex/exportar?formato=XLSX"
+        : "/v2/report/kardex";
+
+      const res = await axios.post(url, payload, {
+        responseType: "blob",
+      });
+
+      const mimeType = isExcel
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "application/pdf";
+      const blob = new Blob([res.data], { type: mimeType });
+      const objUrl = window.URL.createObjectURL(blob);
+
+      if (isExcel) {
+        const a = document.createElement("a");
+        a.href = objUrl;
+        a.download = `Kardex_${Date.now()}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(objUrl);
+        setMessage({
+          open: true,
+          severity: "success",
+          text: t("kardex.messages.excelSuccess", "Excel descargado correctamente."),
+        });
+      } else {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(objUrl);
+        setPreviewOpen(true);
+        setMessage({
+          open: true,
+          severity: "success",
+          text: t("kardex.messages.pdfSuccess", "PDF generado correctamente."),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      const status = err?.response?.status;
+      let text = t("kardex.messages.exportError", "No se pudo generar el reporte.");
+      if (status === 403) {
+        text = t("kardex.messages.forbidden", "No tiene permisos para exportar este reporte.");
+      } else if (status === 400) {
+        text = t("kardex.messages.badRequest", "Los filtros enviados son inválidos para la exportación.");
+      }
+      setMessage({ open: true, severity: "error", text });
+    } finally {
+      setExporting(false);
+      setModalExportOpen(false);
+    }
   };
 
   // Columnas para AppDataGrid según contrato V2
@@ -679,6 +752,16 @@ export default function Rkardex() {
           >
             {t("common.actions.search", "Buscar")}
           </Button>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<DownloadIcon />}
+            onClick={() => setModalExportOpen(true)}
+            disabled={exporting}
+            sx={{ borderRadius: 2, px: 3 }}
+          >
+            {t("kardex.actions.generate", "Generar Reporte")}
+          </Button>
         </Stack>
       </Box>
 
@@ -696,6 +779,92 @@ export default function Rkardex() {
           pageSizeOptions={[5, 10, 20, 50]}
         />
       </Box>
+
+      {/* Modal de Exportación (PDF y Excel) */}
+      <Dialog
+        open={modalExportOpen}
+        onClose={() => !exporting && setModalExportOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, textAlign: "center", pb: 1 }}>
+          {t("kardex.modal.exportTitle", "Generar Reporte Kardex")}
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: "center", pb: 2 }}>
+          {exporting ? (
+            <Box sx={{ py: 3 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                {t("kardex.modal.exporting", "Generando documento, por favor espere...")}
+              </Typography>
+              <LinearProgress color="success" />
+            </Box>
+          ) : (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {t("kardex.modal.exportSub", "Seleccione el formato en el que desea descargar su reporte de Kardex.")}
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="large"
+                  onClick={() => generarReporte("PDF")}
+                  sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}
+                >
+                  <PdfIcon fontSize="large" />
+                  PDF
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  size="large"
+                  onClick={() => generarReporte("EXCEL")}
+                  sx={{ width: 120, height: 100, display: "flex", flexDirection: "column", gap: 1, borderRadius: 3 }}
+                >
+                  <ExcelIcon fontSize="large" />
+                  Excel
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        {!exporting && (
+          <DialogActions sx={{ justifyContent: "center", pt: 0, pb: 2 }}>
+            <Button onClick={() => setModalExportOpen(false)} color="inherit" sx={{ textTransform: "none" }}>
+              {t("common.actions.cancel", "Cancelar")}
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
+
+      {/* Visor de Vista previa PDF */}
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        fullWidth
+        maxWidth="lg"
+        PaperProps={{ sx: { borderRadius: 4 } }}
+      >
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {t("kardex.modal.previewTitle", "Vista previa del Reporte")}
+          <IconButton onClick={() => setPreviewOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 0, height: "80vh" }}>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              width="100%"
+              height="100%"
+              title="PDF"
+              style={{ border: "none" }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <MessageSnackBar message={message} setMessage={setMessage} />
     </Box>
