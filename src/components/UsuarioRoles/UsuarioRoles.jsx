@@ -45,14 +45,7 @@ export default function UsuarioRoles() {
   const rolesMap = useMemo(() => buildMap(roles), [roles]);
   const estadosMap = useMemo(() => buildMap(estados), [estados]);
 
-  // Detecta IDs reales del estado ACTIVO/INACTIVO según catálogo
-  const ACTIVO_ID = useMemo(() => {
-    const e = (estados || []).find((x) =>
-      String(x.name ?? x.nombre ?? "").toUpperCase().includes("ACTIVO")
-    );
-    return e?.id ?? 1;
-  }, [estados]);
-
+  // Detecta ID real del estado INACTIVO según catálogo
   const INACTIVO_ID = useMemo(() => {
     const e = (estados || []).find((x) =>
       String(x.name ?? x.nombre ?? "").toUpperCase().includes("INACTIVO")
@@ -124,71 +117,45 @@ export default function UsuarioRoles() {
     setOpenForm(true);
   };
 
-  // ✅ helper: marca inactivo en grilla SIN remover
-  const markRowInactiveLocally = (id) => {
-    setRows((prev) =>
-      (Array.isArray(prev) ? prev : []).map((r) =>
-        r.id === id ? { ...r, estadoId: INACTIVO_ID } : r
-      )
-    );
-    setSelectedRow(null);
-  };
+  const isSelectedInactive = selectedRow?.estadoId === INACTIVO_ID;
+  const toggleActionLabel = isSelectedInactive ? "Activar" : "Inactivar";
 
   /**
-   * ✅ INACTIVAR: NO debe desaparecer de la grid
-   * - intentamos distintas rutas (porque tu backend cambió entre módulos)
-   * - si el request es OK, forzamos estadoId INACTIVO en frontend (sin remover)
+   * ✅ TOGGLE ESTADO: llama al endpoint oficial de backend y refresca desde el servidor
+   * PATCH /v1/system/usuario-roles/{id}/toggle-estado?empresaId={empresaId}
    */
-  const handleDelete = async () => {
-    if (!selectedRow) return;
+  const handleToggleEstado = async () => {
+    if (!selectedRow?.id) return;
 
+    const actionText = isSelectedInactive ? "ACTIVAR" : "INACTIVAR";
     const ok = window.confirm(
-      "¿Seguro que deseas INACTIVAR este registro? (Debe quedar en la grilla)"
+      `¿Seguro que deseas ${actionText} este registro?`
     );
     if (!ok) return;
 
     const id = selectedRow.id;
+    const empresaId = selectedRow.empresaId;
 
     try {
-      // 1) Si existe toggleEstado en algún ambiente
-      try {
-        await axios.patch(`/v1/system/usuario-roles/toggleEstado/${id}`);
-        markRowInactiveLocally(id);
-        return;
-      } catch (e) {
-        // si NO es 404, lo relanzamos
-        if (e?.response?.status && e.response.status !== 404) throw e;
-      }
+      await axios.patch(`/v1/system/usuario-roles/${id}/toggle-estado`, null, {
+        params: { empresaId },
+      });
 
-      // 2) Intento PUT /{id} cambiando SOLO estadoId (+ rolId por si el backend lo exige)
-      //    (si tu backend solo permite cambiar rol, esto puede fallar)
-      try {
-        await axios.put(`/v1/system/usuario-roles/${id}`, {
-          id,
-          rolId: selectedRow.rolId,
-          estadoId: INACTIVO_ID,
-        });
-        markRowInactiveLocally(id);
-        return;
-      } catch (e) {
-        if (e?.response?.status && e.response.status !== 404) {
-          // puede ser 400/405 por validación, seguimos a DELETE
-        }
-      }
-
-      // 3) DELETE /{id} (si el backend lo usa como borrado lógico)
-      await axios.delete(`/v1/system/usuario-roles/${id}`);
-
-      // ✅ CLAVE: NO recargamos de inmediato para que NO desaparezca.
-      // Marcamos localmente inactivo sí o sí:
-      markRowInactiveLocally(id);
-
-      // Si tu backend hace borrado lógico, puedes descomentar para sincronizar:
-      // await loadData();
+      // La grilla se actualiza desde el backend después del cambio exitoso
+      await loadData();
+      setSelectedRow(null);
     } catch (err) {
-      console.error("Error inactivando", err);
-      console.error("Respuesta backend:", err.response?.status, err.response?.data);
-      alert(err.response?.data?.message ?? "No se pudo inactivar.");
+      console.error("Error cambiando estado de usuario-rol:", err);
+      const backendMessage =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        err?.response?.data?.mensaje ||
+        (err?.response?.status === 403
+          ? "No tiene permisos para modificar el estado de esta asignación."
+          : err?.response?.status === 409
+          ? "Conflicto al cambiar el estado de la asignación."
+          : "No se pudo cambiar el estado de la asignación.");
+      alert(backendMessage);
     }
   };
 
@@ -232,12 +199,12 @@ export default function UsuarioRoles() {
 
         <Button
           variant="outlined"
-          color="error"
+          color={isSelectedInactive ? "success" : "error"}
           startIcon={<DeleteRounded />}
           disabled={!selectedRow}
-          onClick={handleDelete}
+          onClick={handleToggleEstado}
         >
-          Inactivar
+          {toggleActionLabel}
         </Button>
       </Stack>
 
