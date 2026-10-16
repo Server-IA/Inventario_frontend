@@ -28,6 +28,7 @@ CONTROL DE CAMBIOS
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se habilita estado para admin empresa contexto|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se reemplaza confirmación nativa por modal MUI|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se corrige prioridad de mapeo para inactivo.  |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #321] Interpretar invalid_params en respuestas HTTP 400 y mostrar motivos específicos de asignaciones. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -293,6 +294,22 @@ const normalizeStatusId = (value) => {
 const resolveBackendMessage = (payload) => {
   if (typeof payload === "string") return payload;
   if (!payload || typeof payload !== "object") return "";
+
+  const invalidParams = payload?.invalid_params || payload?.invalidParams;
+  if (Array.isArray(invalidParams) && invalidParams.length > 0) {
+    const details = invalidParams
+      .map((item) => {
+        const reason = item?.reason || item?.message || "";
+        const name = item?.name ? `(${item.name}) ` : "";
+        return reason ? `${name}${reason}`.trim() : "";
+      })
+      .filter(Boolean);
+
+    if (details.length > 0) {
+      const summary = payload?.detail ?? payload?.message ?? payload?.mensaje ?? "";
+      return summary ? `${summary}: ${details.join("; ")}` : details.join("; ");
+    }
+  }
 
   return (
     // RFC 7807 / ProblemDetail: detail explica la regla de negocio fallida.
