@@ -15,6 +15,7 @@
     "warehouse": "Almacén",
     "order": "Pedido",
     "status": "Estado de la orden",
+    "provider": "Proveedor",
     "quickSelect": "Selección rápida",
     "customRange": "Rango personalizado",
     "selectDates": "Seleccionar fechas",
@@ -31,8 +32,15 @@
   "columns": {
     "id": "ID",
     "fecha": "Fecha/Hora",
+    "order": "Pedido",
+    "supplier": "Proveedor",
+    "headquarters": "Sede",
+    "warehouse": "Almacén",
+    "status": "Estado",
+    "items": "Ítems",
     "totalUnits": "Total Unidades",
-    "totalValue": "Valor Total"
+    "totalValue": "Valor Total",
+    "heterogeneousUnits": "No aplica: unidades heterogéneas"
   },
   "actions": {
     "generate": "Generar Reporte"
@@ -48,7 +56,9 @@
     "noResultsEmpty": "No se encontraron registros para los filtros seleccionados.",
     "excelSuccess": "Excel descargado correctamente.",
     "pdfSuccess": "PDF generado correctamente.",
-    "exportError": "No se pudo generar el reporte."
+    "exportError": "No se pudo generar el reporte.",
+    "forbidden": "No tiene permisos para realizar esta operación.",
+    "badRequest": "La solicitud contiene parámetros inválidos."
   },
   "modal": {
     "exportTitle": "Generar Reporte de Orden de Compra",

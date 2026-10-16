@@ -15,6 +15,7 @@
     "warehouse": "Warehouse",
     "order": "Order",
     "status": "Order Status",
+    "provider": "Supplier",
     "quickSelect": "Quick Select",
     "customRange": "Custom Range",
     "selectDates": "Select Dates",
@@ -31,8 +32,15 @@
   "columns": {
     "id": "ID",
     "fecha": "Date/Time",
+    "order": "Order",
+    "supplier": "Supplier",
+    "headquarters": "Headquarters",
+    "warehouse": "Warehouse",
+    "status": "Status",
+    "items": "Items",
     "totalUnits": "Total Units",
-    "totalValue": "Total Value"
+    "totalValue": "Total Value",
+    "heterogeneousUnits": "Not applicable: heterogeneous units"
   },
   "actions": {
     "generate": "Generate Report"
@@ -48,7 +56,9 @@
     "noResultsEmpty": "No records found for the selected filters.",
     "excelSuccess": "Excel downloaded successfully.",
     "pdfSuccess": "PDF generated successfully.",
-    "exportError": "Could not generate the report."
+    "exportError": "Could not generate the report.",
+    "forbidden": "You do not have permissions for this operation.",
+    "badRequest": "The request contains invalid parameters."
   },
   "modal": {
     "exportTitle": "Generate Purchase Order Report",
