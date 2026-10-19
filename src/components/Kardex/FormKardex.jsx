@@ -36,6 +36,7 @@ import axios from "../axiosConfig";
 import * as Yup from "yup";
 import GridArticuloKardex from "./GridArticuloKardex";
 import { resolveKardexId } from "./utils/kardexFormatters";
+import { canSaveKardex, resolveMovementTypeId, shouldResetEditLoading } from "./utils/kardexEditSession";
 import AppDataGrid from "../common/AppDataGrid";
 import GridActionBar from "../common/GridActionBar";
 
@@ -307,6 +308,7 @@ export default function FormKardex({
   const [articleFormMode, setArticleFormMode] = useState("create");
   const [articleFormData, setArticleFormData] = useState(newArticleDraft());
   const [savingKardex, setSavingKardex] = useState(false);
+  const [loadingEditData, setLoadingEditData] = useState(false);
   const [lookupOpen, setLookupOpen] = useState(false);
   const [lookupType, setLookupType] = useState("");
   const [lookupQuery, setLookupQuery] = useState("");
@@ -317,6 +319,7 @@ export default function FormKardex({
   const createSessionInitializedRef = useRef(false);
   const editSessionKeyRef = useRef(null);
   const [pendingEditFallback, setPendingEditFallback] = useState(null);
+  const [pendingMovementTypeName, setPendingMovementTypeName] = useState("");
 
   const token = localStorage.getItem("token");
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -814,10 +817,12 @@ export default function FormKardex({
   }, [presentaciones]);
 
   useEffect(() => {
-    if (open || articleModalOpen) return;
+    if (!shouldResetEditLoading({ open, articleModalOpen })) return;
     createSessionInitializedRef.current = false;
     editSessionKeyRef.current = null;
+    setLoadingEditData(false);
     setPendingEditFallback(null);
+    setPendingMovementTypeName("");
   }, [open, articleModalOpen]);
 
   useEffect(() => {
@@ -828,6 +833,7 @@ export default function FormKardex({
     setArticleSelectedRow(null);
     setErrors({});
     setPendingEditFallback(null);
+    setPendingMovementTypeName("");
     createSessionInitializedRef.current = true;
   }, [open, formMode]);
 
@@ -840,11 +846,21 @@ export default function FormKardex({
     const sessionKey = String(kardexId);
     if (editSessionKeyRef.current === sessionKey) return;
     editSessionKeyRef.current = sessionKey;
+    let isCurrentRequest = true;
+    setLoadingEditData(true);
+    setFormData({ ...EMPTY_FORM_DATA, id: kardexId });
+    setDraftItems([]);
+    setArticleSelectedRow(null);
+    setPendingEditFallback(null);
+    setPendingMovementTypeName("");
 
     const loadEditData = async () => {
       try {
         const res = await axios.get(`/v1/kardex/${kardexId}/update-form`, headers);
         const data = res?.data ?? {};
+        if (!isCurrentRequest) return;
+        const movementTypeName = selectedRow?.nombreTipoMovimiento ?? "";
+        const movementTypeId = data.tipoMovimientoId ?? resolveMovementTypeId(tiposMovimiento, movementTypeName);
 
         setFormData({
           id: data.id ?? kardexId,
@@ -852,13 +868,13 @@ export default function FormKardex({
           almacenId: data.almacenId ?? "",
           almacenDestinoId: data.almacenDestinoId ?? "",
           produccionId: data.produccionId ?? "",
-          tipoMovimientoId:
-            data.tipoMovimientoId ?? findIdByName(tiposMovimiento, selectedRow?.nombreTipoMovimiento),
+          tipoMovimientoId: movementTypeId,
           pedidoId: data.pedidoId ?? "",
           ordenCompraId: data.ordenCompraId ?? "",
           clienteProveedorId: data.clienteProveedorId ?? "",
           descripcion: data.descripcion ?? "",
         });
+        setPendingMovementTypeName(data.tipoMovimientoId ? "" : movementTypeName);
 
         const mapped = (data.items || []).map((it, idx) => ({
           id: it?.id ?? null,
@@ -881,6 +897,7 @@ export default function FormKardex({
         setDraftItems(mapped);
         setPendingEditFallback(null);
       } catch {
+        if (!isCurrentRequest) return;
         setFormData(buildFallbackFormData(selectedRow, kardexId));
         setPendingEditFallback({ kardexId, selectedRow });
 
@@ -889,6 +906,7 @@ export default function FormKardex({
             ...headers,
             params: { page: 0, size: 200, sort: "id,desc" },
           });
+          if (!isCurrentRequest) return;
           const content = pickList(itemsRes);
           const mapped = content.map((it, idx) => ({
             id: it?.id ?? null,
@@ -909,13 +927,27 @@ export default function FormKardex({
           }));
           setDraftItems(mapped);
         } catch {
-          setDraftItems([]);
+          if (isCurrentRequest) setDraftItems([]);
         }
+      } finally {
+        if (isCurrentRequest) setLoadingEditData(false);
       }
     };
 
     loadEditData();
+    return () => {
+      isCurrentRequest = false;
+    };
   }, [open, formMode, selectedRow]);
+
+  useEffect(() => {
+    if (!pendingMovementTypeName) return;
+    const movementTypeId = resolveMovementTypeId(tiposMovimiento, pendingMovementTypeName);
+    if (!movementTypeId) return;
+
+    setFormData((prev) => ({ ...prev, tipoMovimientoId: prev.tipoMovimientoId || movementTypeId }));
+    setPendingMovementTypeName("");
+  }, [pendingMovementTypeName, tiposMovimiento]);
 
   useEffect(() => {
     if (!open || formMode !== "edit" || !pendingEditFallback) return;
@@ -1318,7 +1350,7 @@ export default function FormKardex({
   }, [filteredDraftItems, articleSelectedRow]);
 
   const handleSaveKardex = async () => {
-    if (savingKardex) return;
+    if (!canSaveKardex({ savingKardex, loadingEditData })) return;
     if (isTrasladoUi && !formData.almacenDestinoId) {
       setMessage({
         open: true,
@@ -1703,8 +1735,8 @@ export default function FormKardex({
               Cancelar
             </Button>
           </Box>
-          <Button variant="contained" onClick={handleSaveKardex} disabled={savingKardex} sx={dialogUi.primaryButtonSx}>
-            {savingKardex ? "Guardando..." : "Guardar Kardex"}
+          <Button variant="contained" onClick={handleSaveKardex} disabled={!canSaveKardex({ savingKardex, loadingEditData })} sx={dialogUi.primaryButtonSx}>
+            {savingKardex ? "Guardando..." : loadingEditData ? "Cargando Kardex..." : "Guardar Kardex"}
           </Button>
         </DialogActions>
       </Dialog>

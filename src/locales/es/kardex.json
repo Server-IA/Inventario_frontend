@@ -1,0 +1,63 @@
+{
+  "title": "Reportes de Kardex",
+  "sections": {
+    "location": "Ubicación",
+    "product": "Producto",
+    "time": "Tiempo"
+  },
+  "filters": {
+    "country": "País",
+    "department": "Departamento",
+    "municipality": "Municipio",
+    "headquarters": "Sede",
+    "block": "Bloque",
+    "space": "Espacio",
+    "warehouse": "Almacén",
+    "category": "Categoría",
+    "product": "Producto",
+    "presentation": "Presentación",
+    "production": "Producción",
+    "quickSelect": "Selección rápida",
+    "customRange": "Rango personalizado",
+    "selectDates": "Seleccionar fechas",
+    "startDate": "Fecha Inicio",
+    "endDate": "Fecha Fin",
+    "quick": {
+      "hoy": "Hoy",
+      "semana": "Última Semana",
+      "mes": "Último Mes",
+      "trimestre": "Último Trimestre",
+      "anio": "Este Año"
+    }
+  },
+  "columns": {
+    "fecha": "Fecha/Hora",
+    "sede": "Sede",
+    "almacen": "Almacén",
+    "produccion": "Producción",
+    "movimiento": "Tipo de Movimiento",
+    "producto": "Producto",
+    "presentacion": "Presentación",
+    "cantidad": "Cantidad",
+    "saldo": "Saldo"
+  },
+  "actions": {
+    "generate": "Generar Reporte"
+  },
+  "messages": {
+    "catalogsError": "Error al cargar catálogos. Por favor, reintente.",
+    "emptyDates": "El rango de fechas es obligatorio.",
+    "invalidDateRange": "La fecha de inicio no puede ser mayor que la fecha fin.",
+    "noResults": "No se encontraron registros para los filtros seleccionados.",
+    "searchError": "Error al realizar la búsqueda.",
+    "excelSuccess": "Excel descargado correctamente.",
+    "pdfSuccess": "PDF generado correctamente.",
+    "exportError": "No se pudo generar el reporte."
+  },
+  "modal": {
+    "exportTitle": "Generar Reporte Kardex",
+    "exporting": "Generando documento, por favor espere...",
+    "exportSub": "Seleccione el formato en el que desea descargar su reporte de Kardex.",
+    "previewTitle": "Vista previa del Reporte"
+  }
+}

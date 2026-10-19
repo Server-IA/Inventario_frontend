@@ -39,10 +39,13 @@
     "impactIntro": "Esta acción afectará los siguientes registros asociados:",
     "notShown": "No aparecerán en los selectores del sistema.",
     "departmentsAffected": "{{count}} Departamentos pasarán a estado Inactivo",
-    "municipalitiesAffected": "{{count}} Municipios pasarán a estado Inactivo"
+    "municipalitiesAffected": "{{count}} Municipios pasarán a estado Inactivo",
+    "countryMunicipalitiesCascade": "Todos los municipios de esos departamentos pasarán a estado Inactivo"
   },
   "messages": {
     "loadError": "Error al cargar países",
+    "departmentsLoadError": "Error al cargar departamentos",
+    "municipalitiesLoadError": "Error al cargar municipios",
     "paisCreated": "País creado con éxito",
     "paisUpdated": "País actualizado con éxito",
     "deptoCreated": "Departamento creado con éxito",
