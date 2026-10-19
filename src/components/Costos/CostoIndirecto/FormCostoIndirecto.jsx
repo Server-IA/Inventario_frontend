@@ -7,11 +7,11 @@
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
- | 2026-09-25 | 0.4.0   | Arekkazu             | Creación del archivo para   |
+ | 2026-09-25 | 0.4.0   | Alexander Lozada     | Creación del archivo para   |
  |            |         |                      | la HU-045.1.                |
- | 2026-09-26 | 0.4.0   | Arekkazu             | Exporta Selector/useOpciones|
+ | 2026-09-26 | 0.4.0   | Alexander Lozada     | Exporta Selector/useOpciones|
  |            |         |                      | y onCreated (HU-045.2).     |
- | 2026-09-27 | 0.5.0   | Arekkazu             | Modo edición con PUT sobre  |
+ | 2026-09-27 | 0.5.0   | Alexander Lozada     | Modo edición con PUT sobre  |
  |            |         |                      | la fila seleccionada        |
  |            |         |                      | (HU-045.3).                 |
  +------------+---------+----------------------+-----------------------------+
