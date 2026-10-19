@@ -31,6 +31,7 @@ import esPedido from "./locales/es/pedido.json";
 import esVencimiento from "./locales/es/vencimiento.json";
 import esEmpresa from "./locales/es/empresa.json";
 import esKardex from "./locales/es/kardex.json";
+import esOrdenCompra from "./locales/es/ordenCompra.json";
 import enCommon from "./locales/en/common.json";
 import enAuth from "./locales/en/auth.json";
 import enUsuario from "./locales/en/usuario.json";
@@ -41,6 +42,7 @@ import enPedido from "./locales/en/pedido.json";
 import enVencimiento from "./locales/en/vencimiento.json";
 import enEmpresa from "./locales/en/empresa.json";
 import enKardex from "./locales/en/kardex.json";
+import enOrdenCompra from "./locales/en/ordenCompra.json";
 
 const normalizeLanguage = (language) =>
   String(language || "")
@@ -74,6 +76,7 @@ i18n
           vencimiento: esVencimiento,
           empresa: esEmpresa,
           kardex: esKardex,
+          ordenCompra: esOrdenCompra,
         },
       },
       en: {
@@ -88,6 +91,7 @@ i18n
           vencimiento: enVencimiento,
           empresa: enEmpresa,
           kardex: enKardex,
+          ordenCompra: enOrdenCompra,
         },
       },
     },

@@ -15,6 +15,7 @@
  | 2026-07-27 | 0.5.0   | Jeisson Sanchez      | Integración endpoints API   |
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Integración contractual V2 de resumen Kardex con paginación y DTO tipado. |
+| 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Corregir paginación server-side AppDataGrid y evitar preload duplicado. |
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-039.3 / Task #216] Exportación contractual V2 de Kardex (PDF a /v2/report/kardex y Excel a /v2/report/kardex/exportar?formato=XLSX). |
  +------------+---------+----------------------+-----------------------------+
@@ -104,7 +105,7 @@ export default function Rkardex() {
     data: ubiData,
     loading: ubiLoading,
     error: ubiError,
-    fetchInitialData: fetchCatalogs,
+    fetchInitialData,
     preloadData,
     catalogsLoading,
     catalogsError,
@@ -179,11 +180,6 @@ export default function Rkardex() {
       setPresentaciones([]);
     }
   };
-
-  useEffect(() => {
-    fetchCatalogs();
-    // eslint-disable-next-line
-  }, []);
 
   // UI state
   const [resultados, setResultados] = useState([]);
@@ -340,8 +336,10 @@ export default function Rkardex() {
   };
 
   const handlePaginationChange = (nextModel) => {
-    setPaginationModel(nextModel);
-    buscar(nextModel.page, nextModel.pageSize);
+    const page = nextModel.page ?? 0;
+    const pageSize = nextModel.pageSize ?? nextModel.size ?? 10;
+    setPaginationModel({ page, pageSize });
+    buscar(page, pageSize);
   };
 
   // HU-039.3 / T-216: Exportación contractual V2 de Kardex
@@ -512,7 +510,7 @@ export default function Rkardex() {
               {t("kardex.sections.location", "Ubicación")}
               {ubiLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
               {ubiError && (
-                <IconButton size="small" onClick={fetchCatalogs} color="error" title={t("common.actions.retry", "Reintentar")}>
+                <IconButton size="small" onClick={fetchInitialData} color="error" title={t("common.actions.retry", "Reintentar")}>
                   <RefreshIcon fontSize="small" />
                 </IconButton>
               )}
@@ -592,7 +590,7 @@ export default function Rkardex() {
               {t("kardex.sections.product", "Producto")}
               {catalogsLoading && <LinearProgress sx={{ flexGrow: 1, ml: 2, height: 2 }} />}
               {catalogsError && (
-                <IconButton size="small" onClick={fetchCatalogs} color="error" title={t("common.actions.retry", "Reintentar")}>
+                <IconButton size="small" onClick={fetchInitialData} color="error" title={t("common.actions.retry", "Reintentar")}>
                   <RefreshIcon fontSize="small" />
                 </IconButton>
               )}
@@ -774,7 +772,7 @@ export default function Rkardex() {
           containerSx={{ minHeight: 200 }}
           autoHeight={true}
           paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationChange}
+          setPaginationModel={handlePaginationChange}
           rowCount={rowCount}
           pageSizeOptions={[5, 10, 20, 50]}
         />
