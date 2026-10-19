@@ -40,7 +40,9 @@
     "items": "Ítems",
     "totalUnits": "Total Unidades",
     "totalValue": "Valor Total",
-    "heterogeneousUnits": "No aplica: unidades heterogéneas"
+    "heterogeneousUnits": "No aplica: unidades heterogéneas",
+    "mixedUnits": "Unidades mixtas",
+    "heterogeneousUnitsTooltip": "No se consolidan unidades porque la orden contiene productos con unidades de medida heterogéneas."
   },
   "actions": {
     "generate": "Generar Reporte"
