@@ -23,8 +23,22 @@ vi.mock("react-date-range", () => ({
 }));
 
 vi.mock("../common/AppDataGrid.jsx", () => ({
-  default: ({ rows = [], columns = [] }) => (
+  default: ({ rows = [], columns = [], paginationModel, setPaginationModel }) => (
     <div data-testid="mock-app-data-grid">
+      <div data-testid="pagination-controls">
+        <button
+          data-testid="next-page-btn"
+          onClick={() => setPaginationModel?.({ page: (paginationModel?.page ?? 0) + 1, size: paginationModel?.pageSize ?? 10 })}
+        >
+          Siguiente página
+        </button>
+        <button
+          data-testid="change-size-btn"
+          onClick={() => setPaginationModel?.({ page: 0, size: 20 })}
+        >
+          20 filas
+        </button>
+      </div>
       {rows.map((row) => (
         <div key={row.id} data-testid={`kardex-row-${row.id}`}>
           {columns.map((col) => (
@@ -218,6 +232,46 @@ describe("HU-039.2 / Task #214 - Previsualización del Reporte Kardex V2", () =>
       expect(
         screen.getByText(/no tiene permisos para consultar este reporte/i)
       ).toBeInTheDocument();
+    });
+  });
+
+  it("5. Ejecuta paginación server-side y cambio de tamaño solicitando nueva página a backend", async () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <Rkardex />
+      </ThemeProvider>
+    );
+
+    const searchBtn = screen.getByRole("button", { name: /buscar/i });
+    fireEvent.click(searchBtn);
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining("/v2/report/kardex/resumen?page=0&size=10"),
+        expect.any(Object)
+      );
+    });
+
+    // Disparar página 1 mediante control de paginación
+    const nextPageBtn = screen.getByTestId("next-page-btn");
+    fireEvent.click(nextPageBtn);
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining("/v2/report/kardex/resumen?page=1&size=10"),
+        expect.any(Object)
+      );
+    });
+
+    // Disparar cambio de tamaño a 20
+    const changeSizeBtn = screen.getByTestId("change-size-btn");
+    fireEvent.click(changeSizeBtn);
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining("/v2/report/kardex/resumen?page=0&size=20"),
+        expect.any(Object)
+      );
     });
   });
 });
