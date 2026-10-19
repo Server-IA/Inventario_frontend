@@ -7,9 +7,9 @@
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
- | 2026-09-25 | 0.4.0   | Arekkazu             | Creación del archivo para   |
+ | 2026-09-25 | 0.4.0   | Alexander Lozada     | Creación del archivo para   |
  |            |         |                      | la HU-045.1.                |
- | 2026-09-26 | 0.4.0   | Arekkazu             | Exporta Selector/useOpciones|
+ | 2026-09-26 | 0.4.0   | Alexander Lozada     | Exporta Selector/useOpciones|
  |            |         |                      | y onCreated (HU-045.2).     |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
