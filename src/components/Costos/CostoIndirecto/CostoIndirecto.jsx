@@ -6,13 +6,13 @@
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
- | 2026-09-25 | 0.4.0   | Arekkazu             | Creación del archivo para   |
+ | 2026-09-25 | 0.4.0   | Alexander Lozada     | Creación del archivo para   |
  |            |         |                      | la HU-045.1 (solo registro).|
- | 2026-09-26 | 0.4.0   | Arekkazu             | Listado paginado con filtros|
+ | 2026-09-26 | 0.4.0   | Alexander Lozada     | Listado paginado con filtros|
  |            |         |                      | (HU-045.2).                 |
- | 2026-09-26 | 0.4.0   | Arekkazu             | Chips de filtros activos    |
+ | 2026-09-26 | 0.4.0   | Alexander Lozada     | Chips de filtros activos    |
  |            |         |                      | (HU-045.2).                 |
- | 2026-09-27 | 0.5.0   | Arekkazu             | Selección de fila y edición |
+ | 2026-09-27 | 0.5.0   | Alexander Lozada     | Selección de fila y edición |
  |            |         |                      | mediante PUT (HU-045.3).    |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/

@@ -7,11 +7,11 @@
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
- | 2026-09-25 | 0.4.0   | Arekkazu             | Creación del archivo para   |
+ | 2026-09-25 | 0.4.0   | Alexander Lozada     | Creación del archivo para   |
  |            |         |                      | la HU-045.1.                |
- | 2026-09-26 | 0.4.0   | Arekkazu             | Cascada de ubicación común  |
+ | 2026-09-26 | 0.4.0   | Alexander Lozada     | Cascada de ubicación común  |
  |            |         |                      | con el filtro (HU-045.2).   |
- | 2026-09-27 | 0.5.0   | Arekkazu             | formFromRow para precargar  |
+ | 2026-09-27 | 0.5.0   | Alexander Lozada     | formFromRow para precargar  |
  |            |         |                      | el formulario de edición    |
  |            |         |                      | (HU-045.3).                 |
  +------------+---------+----------------------+-----------------------------+
