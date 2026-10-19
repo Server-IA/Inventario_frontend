@@ -1,3 +1,15 @@
+/*=============================================================================
+Nombre del archivo : GridRol.jsx
+Descripción        : Grilla para la gestión de roles.
+===============================================================================
+CONTROL DE CAMBIOS
++------------+---------+----------------------+-----------------------------+
+|   Fecha    | Versión |      Autor           | Descripción del cambio      |
++------------+---------+----------------------+-----------------------------+
+| 2026-05-22 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Quitar barra de herramientas innecesaria (quickFilter) y mapear estado con chip visual. |
++------------+---------+----------------------+-----------------------------+
+=============================================================================*/
 // src/components/rol/GridRol.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
@@ -27,8 +39,7 @@ export default function GridRol({
       { field: "id", headerName: "ID", width: 90, type: "number" },
       { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 220 },
       { field: "descripcion", headerName: "Descripción", flex: 1.4, minWidth: 260 },
-      { field: "estadoId", headerName: "Estado ID", width: 110, type: "number" },
-      { field: "estadoNombre", headerName: "Estado", width: 160 },
+      { field: "estadoNombre", headerName: "Estado", width: 160, type: "status" },
 
       // Auditoría
       { field: "createdBy", headerName: "Creado por", width: 130, type: "number" },
@@ -73,7 +84,6 @@ export default function GridRol({
         loading={loading}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
-        quickFilter
         columnVisibilityModel={columnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         columnVisibilityKey={LS_KEY}
