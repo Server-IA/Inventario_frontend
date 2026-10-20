@@ -8,6 +8,7 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-28 | 1.0.0   | Jeisson Sanchez      | Integración reportes (Kardex, PV, Pedidos) |
 | 2026-10-19 | 1.0.0   | Jeisson Sanchez      | Condicionar requests de pedido a reportType pedido para no sobrecargar Kardex. |
+| 2026-10-19 | 1.0.0   | Jeisson Sanchez      | Flags explicitos cargarPedidos / cargarCategoriasEstadoPedido por consumidor. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 // src/components/useUbicacionFilters.js
@@ -80,6 +81,8 @@ export default function useUbicacionFilters({
   autoselectSingle = true,
   initialForm = {},
   reportType = null,
+  cargarPedidos = false,
+  cargarCategoriasEstadoPedido = false,
 } = {}) {
   /* ---------- Ubicación (cascada) ---------- */
   const [form, setForm] = useState({
@@ -540,18 +543,21 @@ export default function useUbicacionFilters({
   const [categoriasEstado, setCategoriasEstado] = useState([]);
 
   useEffect(() => {
-    // Solo cargar pedidos y categoría de estado cuando el consumidor requiera datos de pedido
-    if (reportType === "pedido" || initialForm?.pedido_id !== undefined) {
+    // Los catalogos de pedido solo se cargan cuando el consumidor los requiere de forma explicita,
+    // para no disparar peticiones ajenas al reporte (Kardex, Vencimiento, Factura, etc.).
+    if (cargarPedidos) {
       axios
         .get("/v1/pedido", headers)
         .then((r) => setPedidos(asArray(r.data)))
         .catch(() => setPedidos([]));
+    }
+    if (cargarCategoriasEstadoPedido) {
       axios
         .get("/v1/items/estado_categoria/0", headers)
         .then((r) => setCategoriasEstado(asArray(r.data)))
         .catch(() => setCategoriasEstado([]));
     }
-  }, [reportType]);
+  }, [cargarPedidos, cargarCategoriasEstadoPedido]);
 
   /* ---------- API del hook ---------- */
   return {
