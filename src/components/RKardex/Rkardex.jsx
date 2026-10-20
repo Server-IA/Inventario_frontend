@@ -16,6 +16,7 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Integración contractual V2 de resumen Kardex con paginación y DTO tipado. |
 | 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Corregir paginación server-side AppDataGrid y evitar preload duplicado. |
+| 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-039.2 / Task #214] Leer total de la paginación desde data.page (PaginacionDTO) del contrato V2. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
@@ -291,8 +292,14 @@ export default function Rkardex() {
         id: row.id ?? `${row.headerEmpresaId ?? "emp"}-${row.itemProductoId ?? "prod"}-${row.itemFecha ?? "f"}-${page}-${idx}`,
       }));
 
+      // El contrato V2 entrega la paginacion en `page` (PaginacionDTO) y no en la raiz.
+      const paginacion = data?.page ?? data?.header ?? {};
+      const totalElementos = Number(
+        paginacion.totalElements ?? data?.totalElements ?? mapped.length
+      );
+
       setResultados(mapped);
-      setRowCount(Number(data?.totalElements ?? mapped.length));
+      setRowCount(totalElementos);
 
       if (mapped.length === 0) {
         setMessage({
@@ -306,8 +313,8 @@ export default function Rkardex() {
           severity: "info",
           text: t(
             "kardex.messages.resultsCount",
-            { count: data?.totalElements ?? mapped.length },
-            `Mostrando ${data?.totalElements ?? mapped.length} movimiento(s) de kardex.`
+            { count: totalElementos },
+            `Mostrando ${totalElementos} movimiento(s) de kardex.`
           ),
         });
       }

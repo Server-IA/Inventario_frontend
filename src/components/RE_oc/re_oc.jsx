@@ -249,8 +249,14 @@ export default function RE_ordenCompra() {
         id: row.ordenCompraId ?? row.id ?? `oc-${page}-${idx}`,
       }));
 
+      // El contrato V2 entrega la paginacion en `page` (PaginacionDTO) y no en la raiz.
+      const paginacion = data?.page ?? data?.header ?? {};
+      const totalElementos = Number(
+        paginacion.totalElements ?? data?.totalElements ?? mapped.length
+      );
+
       setResultados(mapped);
-      setRowCount(Number(data?.totalElements ?? mapped.length));
+      setRowCount(totalElementos);
 
       if (mapped.length === 0) {
         setMessage({
@@ -262,7 +268,7 @@ export default function RE_ordenCompra() {
         setMessage({
           open: true,
           severity: "info",
-          text: t("ordenCompra.messages.noResults", { count: data?.totalElements ?? mapped.length }),
+          text: t("ordenCompra.messages.noResults", { count: totalElementos }),
         });
       }
     } catch (err) {
