@@ -13,6 +13,7 @@
  | 2026-07-18 | 0.4.2   | Jeisson Sanchez      | Soporte Dark Mode Picker    |
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.1 / Task #229] Integración con contrato V2 tipado de filtros, resumen y exportar PDF/XLSX. |
+| 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-041.1 / Task #229] Leer total de la paginación desde data.page (PaginacionDTO) del contrato V2. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
@@ -249,8 +250,14 @@ export default function RE_ordenCompra() {
         id: row.ordenCompraId ?? row.id ?? `oc-${page}-${idx}`,
       }));
 
+      // El contrato V2 entrega la paginacion en `page` (PaginacionDTO) y no en la raiz.
+      const paginacion = data?.page ?? data?.header ?? {};
+      const totalElementos = Number(
+        paginacion.totalElements ?? data?.totalElements ?? mapped.length
+      );
+
       setResultados(mapped);
-      setRowCount(Number(data?.totalElements ?? mapped.length));
+      setRowCount(totalElementos);
 
       if (mapped.length === 0) {
         setMessage({
@@ -262,7 +269,7 @@ export default function RE_ordenCompra() {
         setMessage({
           open: true,
           severity: "info",
-          text: t("ordenCompra.messages.noResults", { count: data?.totalElements ?? mapped.length }),
+          text: t("ordenCompra.messages.noResults", { count: totalElementos }),
         });
       }
     } catch (err) {
