@@ -95,7 +95,13 @@ export default function RE_ordenCompra() {
     pedido,
     handlePedidoChange,
     pedidos,
-  } = useUbicacionFilters({ empresaId, headers, autoselectSingle: true, reportType: "orden-compra" });
+  } = useUbicacionFilters({
+    empresaId,
+    headers,
+    autoselectSingle: true,
+    reportType: "orden-compra",
+    cargarPedidos: true,
+  });
 
   const [formReporte, setFormReporte] = useState({
     proveedor_id: "",
