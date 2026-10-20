@@ -16,6 +16,7 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Columnas de totalUnidades/valorTotal en grilla, vista previa desde resultados generales y unidades heterogéneas. |
 | 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Conectar setPaginationModel en AppDataGrid, modal flotante para detalle de orden y tooltip de unidades mixtas. |
+| 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Leer total de la paginacion desde data.page (PaginacionDTO) del contrato V2. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
@@ -256,8 +257,14 @@ export default function RE_ordenCompra() {
         id: row.ordenCompraId ?? row.id ?? `oc-${page}-${idx}`,
       }));
 
+      // El contrato V2 entrega la paginacion en `page` (PaginacionDTO) y no en la raiz.
+      const paginacion = data?.page ?? data?.header ?? {};
+      const totalElementos = Number(
+        paginacion.totalElements ?? data?.totalElements ?? mapped.length
+      );
+
       setResultados(mapped);
-      setRowCount(Number(data?.totalElements ?? mapped.length));
+      setRowCount(totalElementos);
 
       // HU-041.2: Si se consultó un pedido específico y arrojó resultado, preseleccionar la orden para resumen
       if (pedido?.pedido_id && mapped.length > 0) {
@@ -274,7 +281,7 @@ export default function RE_ordenCompra() {
         setMessage({
           open: true,
           severity: "info",
-          text: t("ordenCompra.messages.noResults", { count: data?.totalElements ?? mapped.length }),
+          text: t("ordenCompra.messages.noResults", { count: totalElementos }),
         });
       }
     } catch (err) {
