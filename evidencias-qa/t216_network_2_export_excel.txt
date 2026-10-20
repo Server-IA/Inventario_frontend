@@ -1,0 +1,17 @@
+GET https://dev.api.inmero.co/inventario/api/v2/menu?tipoAplicacion=web
+  status    : 200
+  query     : tipoAplicacion=web
+
+GET https://dev.api.inmero.co/inventario/api/v2/report/kardex/filtros
+  status    : 200
+
+POST https://dev.api.inmero.co/inventario/api/v2/report/kardex
+  status    : 200
+  body      : {"fechaInicio":"2026-01-01","fechaFin":"2026-10-19"}
+  validacion: OK (sin condicion / EMPRESA_ID / filtrosAplicados)
+
+POST https://dev.api.inmero.co/inventario/api/v2/report/kardex/exportar?formato=XLSX
+  status    : 200
+  query     : formato=XLSX
+  body      : {"fechaInicio":"2026-01-01","fechaFin":"2026-10-19"}
+  validacion: OK (sin condicion / EMPRESA_ID / filtrosAplicados)
