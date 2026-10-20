@@ -62,9 +62,10 @@ literal enviado y status HTTP), con validación automática del body: `OK - DTO 
 | Archivo | Evidencia |
 |---|---|
 | `t231_01_network_busqueda_resumen.png` | `POST /api/v2/report/orden-compra/resumen?page=0&size=10` con body tipado. |
-| `t231_02_grilla_totales.png` | Grilla con columnas Total Unidades y Valor Total. |
+| `t231_02_grilla_totales.png` | Grilla con columnas Total Unidades y Valor Total. Se observa la etiqueta corta **"Unidades mixtas"**, el truncamiento con puntos suspensivos en Estado/Sede/Almacén y los importes alineados a la derecha. |
 | `t231_03_network_paginacion.png` | Cambio de filas por página → `?page=0&size=5`. |
-| `t231_04_modal_detalle_orden.png` | Detalle de la orden en modal flotante (sin desplazar la grilla). |
+| `t231_04_modal_detalle_orden.png` | Detalle de la orden en `Dialog` modal flotante ("Vista previa del Reporte #371") con botón Cerrar, **sin desplazar la grilla**. |
+| `t231_05_modal_cerrado_grilla_intacta.png` | Modal cerrado con `Escape`; la grilla de resultados permanece intacta. |
 | `t231_network_1_busqueda.txt` | Log textual de la búsqueda. |
 | `t231_network_2_paginacion.txt` | Log textual de la paginación. |
 
