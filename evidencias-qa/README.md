@@ -39,6 +39,24 @@ literal enviado y status HTTP), con validación automática del body: `OK - DTO 
 | `t216_network_1_export_pdf.txt` | Log textual de la exportación PDF. |
 | `t216_network_2_export_excel.txt` | Log textual de la exportación Excel. |
 
+## T-229 / HU-041.1 — Generar y descargar el Reporte de Orden de Compra (PR #128)
+
+| Archivo | Evidencia |
+|---|---|
+| `t229_01_network_precarga_filtros.png` | Network de la carga inicial con la precarga de filtros V2 (`GET /api/v2/report/orden-compra/filtros`). |
+| `t229_02_network_busqueda_dto_tipado.png` | `POST /api/v2/report/orden-compra/resumen?page=0&size=10` con body tipado. |
+| `t229_03_grilla_ordenes.png` | Grilla de órdenes con los resultados del backend V2. |
+| `t229_04_modal_exportar_ui.png` | Modal de exportación con selección de PDF y Excel. |
+| `t229_05_network_export_pdf.png` | `POST /api/v2/report/orden-compra/exportar?formato=PDF` con body tipado y status 200. |
+| `t229_06_network_export_excel.png` | `POST /api/v2/report/orden-compra/exportar?formato=XLSX` con query visible, body tipado y status 200. |
+| `t229_07_documento_pdf_orden_compra.png` | Visor del reporte PDF generado. |
+| `t229_reporte_orden_compra.pdf` | **Binario real del PDF generado por el backend** (77.447 bytes, cabecera `%PDF-`). |
+| `t229_reporte_orden_compra.xlsx` | **Archivo `.xlsx` real descargado** (41.354 bytes, cabecera `PK`). |
+| `t229_network_1_carga_inicial.txt` | Log textual de la carga inicial. |
+| `t229_network_2_busqueda.txt` | Log textual de la búsqueda. |
+| `t229_network_3_export_pdf.txt` | Log textual de la exportación PDF. |
+| `t229_network_4_export_excel.txt` | Log textual de la exportación Excel. |
+
 ## T-231 / HU-041.2 — Resumen de totales de Orden de Compra (PR #129)
 
 | Archivo | Evidencia |
@@ -56,10 +74,10 @@ literal enviado y status HTTP), con validación automática del body: `OK - DTO 
 
 | Hallazgo QA | Corrección | Rama |
 |---|---|---|
-| Paginación server-side no conectada a `AppDataGrid` | Se usa la prop canónica `setPaginationModel` (habilita `paginationMode="server"`) y se normaliza el modelo `{ page, pageSize }`. | T-214 / T-216 / T-231 |
-| **Total de resultados siempre en 0 (bug real)** | El contrato V2 entrega la paginación en `data.page` (`PaginacionDTO`), no en la raíz. Se corrigió la lectura; antes `rowCount` caía a `mapped.length` y el botón "página siguiente" quedaba deshabilitado. | T-214 / T-216 / T-231 |
+| Paginación server-side no conectada a `AppDataGrid` | Se usa la prop canónica `setPaginationModel` (habilita `paginationMode="server"`) y se normaliza el modelo `{ page, pageSize }`. | T-214 / T-216 / T-229 / T-231 |
+| **Total de resultados siempre en 0 (bug real)** | El contrato V2 entrega la paginación en `data.page` (`PaginacionDTO`), no en la raíz. Se corrigió la lectura; antes `rowCount` caía a `mapped.length` y el botón "página siguiente" quedaba deshabilitado. | T-214 / T-216 / T-229 / T-231 |
 | Conflicto activo contra `test` | Merge de `origin/test` resuelto (`src/i18n.js`). PRs en `mergeable: clean`. | T-214 |
-| Requests ajenos al módulo | `useUbicacionFilters` ya no dispara `/v1/pedido` ni `/v1/items/estado_categoria/0` salvo que el consumidor lo pida con los flags `cargarPedidos` / `cargarCategoriasEstadoPedido`. | T-214 / T-231 |
+| Requests ajenos al módulo | `useUbicacionFilters` ya no dispara `/v1/pedido` ni `/v1/items/estado_categoria/0` salvo que el consumidor lo pida con los flags `cargarPedidos` / `cargarCategoriasEstadoPedido`. | T-214 / T-229 / T-231 |
 | Preload duplicado de `/filtros` | Se eliminó la segunda llamada a `fetchCatalogs()`; el preload vive únicamente en el hook. | T-214 |
 | Clave i18n `kardex.messages.resultsCount` ausente | Agregada en `es` y `en`. | T-214 |
 | Pruebas sin cobertura de paginación | Pruebas que disparan página 1 y cambio de tamaño verificando la 2ª y 3ª petición a `/resumen`. | T-214 / T-231 |
