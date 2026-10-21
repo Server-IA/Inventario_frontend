@@ -4,8 +4,6 @@
  * @description Función que maneja el cierre de sesión del usuario eliminando el token del almacenamiento local y redirigiendo al inicio.
  */
 
-import axios from 'axios';
-
 /**
  * Componente Logout.
  *

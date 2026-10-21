@@ -10,13 +10,13 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
-import { Box, CssBaseline, Container, Toolbar, Paper } from "@mui/material";
+import { Box, CssBaseline, Container, Toolbar } from "@mui/material";
 
 import { useThemeToggle } from "./components/dashboard/ThemeToggleProvider";
 import { useTranslation } from "react-i18next";
 import "./i18n.js";
 import "./index.css";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import AppBarComponent from "./components/dashboard/AppBarComponent.jsx";
 import Copyright from "./components/dashboard/Copyright";
@@ -128,7 +128,6 @@ const App = () => {
   useTranslation();
   useThemeToggle();
   const location = useLocation();
-  const navigate = useNavigate();
   const [currentModule, setCurrentModule] = useState(null);
   const hasValidToken = () => {
     const token = localStorage.getItem("token");
