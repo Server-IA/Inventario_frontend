@@ -1,0 +1,259 @@
+GET https://dev.api.inmero.co/inventario/api/v2/menu?tipoAplicacion=web
+  status    : 200
+  query     : tipoAplicacion=web
+
+GET https://dev.api.inmero.co/inventario/api/v1/system/empresa-rol
+  status    : 200
+
+GET https://dev.api.inmero.co/inventario/api/v1/items/rol/0
+  status    : 200
+
+GET https://dev.api.inmero.co/inventario/api/v1/items/empresa/0
+  status    : 200
+
+GET https://dev.api.inmero.co/inventario/api/v1/items/rol/0
+  status    : 200
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/3/permisos?empresaId=452
+  status    : 200
+  query     : empresaId=452
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/1/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/7/permisos?empresaId=20
+  status    : 200
+  query     : empresaId=20
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=26
+  status    : 200
+  query     : empresaId=26
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=452
+  status    : 200
+  query     : empresaId=452
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/9/permisos?empresaId=1452
+  status    : 200
+  query     : empresaId=1452
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/5/permisos?empresaId=1452
+  status    : 200
+  query     : empresaId=1452
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=1957
+  status    : 200
+  query     : empresaId=1957
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/4/permisos?empresaId=1957
+  status    : 200
+  query     : empresaId=1957
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/6/permisos?empresaId=964
+  status    : 200
+  query     : empresaId=964
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/4/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/7/permisos?empresaId=964
+  status    : 200
+  query     : empresaId=964
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/9/permisos?empresaId=964
+  status    : 200
+  query     : empresaId=964
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/8/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/9/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/1/permisos?empresaId=452
+  status    : 200
+  query     : empresaId=452
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/4/permisos?empresaId=452
+  status    : 200
+  query     : empresaId=452
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/6/permisos?empresaId=1957
+  status    : 200
+  query     : empresaId=1957
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/8/permisos?empresaId=202
+  status    : 200
+  query     : empresaId=202
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/1/permisos?empresaId=1
+  status    : 200
+  query     : empresaId=1
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/3/permisos?empresaId=1957
+  status    : 200
+  query     : empresaId=1957
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/25/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2102
+  status    : 200
+  query     : empresaId=2102
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/15/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2202
+  status    : 200
+  query     : empresaId=2202
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2252
+  status    : 200
+  query     : empresaId=2252
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2256
+  status    : 200
+  query     : empresaId=2256
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/18/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/20/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/4/permisos?empresaId=2256
+  status    : 200
+  query     : empresaId=2256
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=1
+  status    : 200
+  query     : empresaId=1
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2304
+  status    : 200
+  query     : empresaId=2304
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2305
+  status    : 200
+  query     : empresaId=2305
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2307
+  status    : 200
+  query     : empresaId=2307
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2309
+  status    : 200
+  query     : empresaId=2309
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2310
+  status    : 200
+  query     : empresaId=2310
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2311
+  status    : 200
+  query     : empresaId=2311
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2312
+  status    : 200
+  query     : empresaId=2312
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=2352
+  status    : 200
+  query     : empresaId=2352
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/32/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/13/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/28/permisos?empresaId=508
+  status    : 200
+  query     : empresaId=508
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/1/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/4/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/10/permisos?empresaId=20
+  status    : 200
+  query     : empresaId=20
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=20
+  status    : 200
+  query     : empresaId=20
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/8/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/20/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/19/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/6/permisos?empresaId=502
+  status    : 200
+  query     : empresaId=502
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/2/permisos?empresaId=502
+  status    : 200
+  query     : empresaId=502
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/359/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/15/permisos?empresaId=2304
+  status    : 200
+  query     : empresaId=2304
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/24/permisos?empresaId=2304
+  status    : 200
+  query     : empresaId=2304
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/4/permisos?empresaId=2304
+  status    : 200
+  query     : empresaId=2304
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/16/permisos?empresaId=1
+  status    : 200
+  query     : empresaId=1
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/16/permisos?empresaId=4
+  status    : 200
+  query     : empresaId=4
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/15/permisos?empresaId=1505
+  status    : 200
+  query     : empresaId=1505
+
+GET https://dev.api.inmero.co/inventario/api/v1/empresa-rol-permisos/rol/19/permisos?empresaId=1
+  status    : 200
+  query     : empresaId=1
