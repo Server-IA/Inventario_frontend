@@ -64,32 +64,37 @@ export const buildPayload = (form = {}) => ({
 });
 
 /**
- * Parsea respuestas de error HTTP (400, 403, 404, 409) del backend de Spring Boot
+ * Devuelve la clave i18n del mensaje genérico asociado a un estado HTTP conocido.
+ */
+export const getServerErrorMessageKey = (status) => {
+  if (status === 403) return "forbidden";
+  if (status === 404) return "notFound";
+  if (status === 409) return "conflict";
+  return null;
+};
+
+/**
+ * Parsea respuestas de error HTTP (400, 403, 404, 409) del backend de Spring Boot.
+ * Los textos visibles se resuelven en el componente consumidor para respetar i18n.
  */
 export const parseServerError = (error) => {
   const data = error?.response?.data;
   const status = error?.response?.status;
-
   const fieldErrors = {};
-  let detail = data?.detail || data?.message || data?.mensaje || "";
+  const detail = data?.detail || data?.message || data?.mensaje || "";
 
   if (data?.invalid_params && Array.isArray(data.invalid_params)) {
     data.invalid_params.forEach((item) => {
       if (item.name) {
-        fieldErrors[item.name] = item.reason || item.message || "Valor inválido";
+        fieldErrors[item.name] = item.reason || item.message || "invalidValue";
       }
     });
   }
 
-  if (status === 409) {
-    if (!detail) {
-      detail = "Ya existe un tipo de costo indirecto con ese nombre para la empresa o tiene costos asociados.";
-    }
-  } else if (status === 403) {
-    detail = "No tienes permisos para realizar esta acción o el registro no pertenece a tu empresa.";
-  } else if (status === 404) {
-    detail = "El tipo de costo indirecto no fue encontrado.";
-  }
-
-  return { fieldErrors, detail, status };
+  return {
+    fieldErrors,
+    detail,
+    status,
+    messageKey: getServerErrorMessageKey(status),
+  };
 };
