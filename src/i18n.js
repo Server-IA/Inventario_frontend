@@ -11,6 +11,7 @@
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Traducciones geográficas.   |
  +------------+---------+----------------------+-----------------------------+
  | 2026-06-26 | 0.4.0   | Jeisson Sanchez      | Traducciones Kardex.        |
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | Integrar traducciones para módulo de costos (Tipos de Costos Indirectos). |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -30,6 +31,7 @@ import esLocalizacionGeografica from "./locales/es/localizacionGeografica.json";
 import esPedido from "./locales/es/pedido.json";
 import esVencimiento from "./locales/es/vencimiento.json";
 import esEmpresa from "./locales/es/empresa.json";
+import esCostos from "./locales/es/costos.json";
 import esKardex from "./locales/es/kardex.json";
 import esOrdenCompra from "./locales/es/ordenCompra.json";
 import enCommon from "./locales/en/common.json";
@@ -41,6 +43,7 @@ import enLocalizacionGeografica from "./locales/en/localizacionGeografica.json";
 import enPedido from "./locales/en/pedido.json";
 import enVencimiento from "./locales/en/vencimiento.json";
 import enEmpresa from "./locales/en/empresa.json";
+import enCostos from "./locales/en/costos.json";
 import enKardex from "./locales/en/kardex.json";
 import enOrdenCompra from "./locales/en/ordenCompra.json";
 
@@ -75,6 +78,7 @@ i18n
           pedido: esPedido,
           vencimiento: esVencimiento,
           empresa: esEmpresa,
+          costos: esCostos,
           kardex: esKardex,
           ordenCompra: esOrdenCompra,
         },
@@ -90,6 +94,7 @@ i18n
           pedido: enPedido,
           vencimiento: enVencimiento,
           empresa: enEmpresa,
+          costos: enCostos,
           kardex: enKardex,
           ordenCompra: enOrdenCompra,
         },
