@@ -1069,6 +1069,7 @@ export default function Usuario() {
           severity: "success",
           text: successMessage,
         });
+        return { success: true };
       } else {
         const requestId =
           payload.requestId ??
@@ -1139,6 +1140,7 @@ export default function Usuario() {
           severity: "success",
           text: successMessage,
         });
+        return { success: true };
       }
     } catch (err) {
       const fallbackMessage =
@@ -1150,6 +1152,7 @@ export default function Usuario() {
         severity: "error",
         text: resolveBackendMessage(err?.response?.data) || fallbackMessage,
       });
+      return { success: false };
     }
   };
 
