@@ -44,6 +44,17 @@
   "actions": {
     "generate": "Generate Report"
   },
+  "pedido": {
+    "fallbackLabel": "Order #{{id}}",
+    "statusMatchers": {
+      "active": ["active", "activo"],
+      "inactive": ["inactive", "cancelled", "completed", "finalized", "inactivo", "anulado", "cancelado", "completado", "finalizado"]
+    },
+    "messages": {
+      "unavailable": "The selected order is no longer available or is not active. Select an active order before continuing.",
+      "notActive": "The selected order is not in an active state. Select an active order before continuing."
+    }
+  },
   "messages": {
     "catalogsError": "Error loading catalogs. Please retry.",
     "emptyDates": "Date range is mandatory.",

@@ -6,6 +6,9 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------+
 |   Fecha    | Version |      Autor           | Descripcion del cambio      |
 +------------+---------+----------------------+-----------------------------+
+| 2026-10-23 | 0.4.0   | Cesar Medina         | Externaliza a i18n los      |
+|            |         |                      | textos y matchers de estado |
+|            |         |                      | usados para validar pedidos.|
 | 2026-10-21 | 0.4.0   | Cesar Medina         | Restringe pedidos inactivos |
 |            |         |                      | en movimientos de entrada y |
 |            |         |                      | valida selecciones obsoletas|
@@ -36,6 +39,7 @@ import {
 import PropTypes from "prop-types";
 import SearchIcon from "@mui/icons-material/Search";
 import { alpha, useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import axios from "../axiosConfig";
 import * as Yup from "yup";
 import GridArticuloKardex from "./GridArticuloKardex";
@@ -171,23 +175,23 @@ const getPedidoEstadoNombre = (pedido) =>
   pedido?.estado ??
   "";
 
-const isPedidoActive = (pedido) => {
+const isPedidoActive = (pedido, estadoMatchers = {}) => {
   if (!pedido) return false;
 
   const estadoNombre = normalize(getPedidoEstadoNombre(pedido));
   const estadoId = toNumericIdOrNull(getPedidoEstadoId(pedido));
+  const activeMatchers = Array.isArray(estadoMatchers?.active)
+    ? estadoMatchers.active.map(normalize).filter(Boolean)
+    : [];
+  const inactiveMatchers = Array.isArray(estadoMatchers?.inactive)
+    ? estadoMatchers.inactive.map(normalize).filter(Boolean)
+    : [];
 
   if (estadoNombre) {
-    if (
-      estadoNombre.includes("inactivo") ||
-      estadoNombre.includes("anulado") ||
-      estadoNombre.includes("cancelado") ||
-      estadoNombre.includes("completado") ||
-      estadoNombre.includes("finalizado")
-    ) {
+    if (inactiveMatchers.some((matcher) => estadoNombre.includes(matcher))) {
       return false;
     }
-    if (estadoNombre.includes("activo")) return true;
+    if (activeMatchers.some((matcher) => estadoNombre.includes(matcher))) return true;
   }
 
   if (estadoId != null) {
@@ -320,6 +324,7 @@ export default function FormKardex({
   setMessage,
   setSelectedRow,
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const dialogUi = getDialogUi(theme);
   const [formData, setFormData] = useState({
@@ -370,6 +375,16 @@ export default function FormKardex({
 
   const token = localStorage.getItem("token");
   const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+  const pedidoEstadoMatchers = useMemo(() => {
+    const active = t("kardex.pedido.statusMatchers.active", { returnObjects: true });
+    const inactive = t("kardex.pedido.statusMatchers.inactive", { returnObjects: true });
+
+    return {
+      active: Array.isArray(active) ? active : [active],
+      inactive: Array.isArray(inactive) ? inactive : [inactive],
+    };
+  }, [t]);
 
   const openLookup = (type) => {
     if (type === "presentacion" && !articleFormData?.productoId) {
@@ -546,12 +561,12 @@ export default function FormKardex({
 
   const selectedPedidoLabel = useMemo(() => {
     const it = pedidos.find((p) => String(p?.id) === String(formData?.pedidoId));
-    return it ? renderName(it) : formData?.pedidoId ? `Pedido #${formData.pedidoId}` : "";
-  }, [pedidos, formData?.pedidoId]);
+    return it ? renderName(it) : formData?.pedidoId ? t("kardex.pedido.fallbackLabel", { id: formData.pedidoId }) : "";
+  }, [pedidos, formData?.pedidoId, t]);
 
   const pedidosActivos = useMemo(
-    () => pedidos.filter((pedido) => isPedidoActive(pedido)),
-    [pedidos]
+    () => pedidos.filter((pedido) => isPedidoActive(pedido, pedidoEstadoMatchers)),
+    [pedidos, pedidoEstadoMatchers]
   );
 
   const selectedPedido = useMemo(
@@ -562,13 +577,13 @@ export default function FormKardex({
   const selectedPedidoValidationMessage = useMemo(() => {
     if (!isEntradaUi || !formData?.pedidoId) return "";
     if (!selectedPedido) {
-      return "El pedido seleccionado ya no está disponible o no está activo. Selecciona un pedido activo antes de continuar.";
+      return t("kardex.pedido.messages.unavailable");
     }
-    if (!isPedidoActive(selectedPedido)) {
-      return "El pedido seleccionado no está en estado activo. Selecciona un pedido activo antes de continuar.";
+    if (!isPedidoActive(selectedPedido, pedidoEstadoMatchers)) {
+      return t("kardex.pedido.messages.notActive");
     }
     return "";
-  }, [isEntradaUi, formData?.pedidoId, selectedPedido]);
+  }, [isEntradaUi, formData?.pedidoId, pedidoEstadoMatchers, selectedPedido, t]);
 
   const selectedProductoLabel = useMemo(() => {
     const it = productos.find((p) => String(p?.id) === String(articleFormData?.productoId));
