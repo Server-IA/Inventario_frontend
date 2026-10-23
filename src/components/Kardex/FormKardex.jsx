@@ -6,6 +6,10 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------+
 |   Fecha    | Version |      Autor           | Descripcion del cambio      |
 +------------+---------+----------------------+-----------------------------+
+| 2026-10-21 | 0.4.0   | Cesar Medina         | Restringe pedidos inactivos |
+|            |         |                      | en movimientos de entrada y |
+|            |         |                      | valida selecciones obsoletas|
+|            |         |                      | antes de continuar.         |
 | 2026-05-08 | 0.4.0   | Jeisson Sanchez      | Encabezado estandar agregado.|
 | 2026-09-09 | 0.4.0   | Cesar Medina         | Preserva encabezado y detalle entre pasos. |
 | 2026-09-11 | 0.4.0   | Cesar Medina         | Aplica estilo visual consistente a modales. |
@@ -148,6 +152,49 @@ const toNumericIdOrNull = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+};
+
+const getPedidoEstadoId = (pedido) =>
+  pedido?.estado?.id ??
+  pedido?.estadoId ??
+  pedido?.pedidoEstadoId ??
+  pedido?.estado_id ??
+  pedido?.pedEstadoId ??
+  null;
+
+const getPedidoEstadoNombre = (pedido) =>
+  pedido?.estado?.nombre ??
+  pedido?.estado?.name ??
+  pedido?.estadoNombre ??
+  pedido?.nombreEstado ??
+  pedido?.pedidoEstadoNombre ??
+  pedido?.estado ??
+  "";
+
+const isPedidoActive = (pedido) => {
+  if (!pedido) return false;
+
+  const estadoNombre = normalize(getPedidoEstadoNombre(pedido));
+  const estadoId = toNumericIdOrNull(getPedidoEstadoId(pedido));
+
+  if (estadoNombre) {
+    if (
+      estadoNombre.includes("inactivo") ||
+      estadoNombre.includes("anulado") ||
+      estadoNombre.includes("cancelado") ||
+      estadoNombre.includes("completado") ||
+      estadoNombre.includes("finalizado")
+    ) {
+      return false;
+    }
+    if (estadoNombre.includes("activo")) return true;
+  }
+
+  if (estadoId != null) {
+    return estadoId === 1 || estadoId === 18;
+  }
+
+  return true;
 };
 
 const isPresentacionDevolutiva = (p) =>
@@ -499,8 +546,29 @@ export default function FormKardex({
 
   const selectedPedidoLabel = useMemo(() => {
     const it = pedidos.find((p) => String(p?.id) === String(formData?.pedidoId));
-    return it ? renderName(it) : "";
+    return it ? renderName(it) : formData?.pedidoId ? `Pedido #${formData.pedidoId}` : "";
   }, [pedidos, formData?.pedidoId]);
+
+  const pedidosActivos = useMemo(
+    () => pedidos.filter((pedido) => isPedidoActive(pedido)),
+    [pedidos]
+  );
+
+  const selectedPedido = useMemo(
+    () => pedidos.find((pedido) => String(pedido?.id) === String(formData?.pedidoId)) ?? null,
+    [pedidos, formData?.pedidoId]
+  );
+
+  const selectedPedidoValidationMessage = useMemo(() => {
+    if (!isEntradaUi || !formData?.pedidoId) return "";
+    if (!selectedPedido) {
+      return "El pedido seleccionado ya no está disponible o no está activo. Selecciona un pedido activo antes de continuar.";
+    }
+    if (!isPedidoActive(selectedPedido)) {
+      return "El pedido seleccionado no está en estado activo. Selecciona un pedido activo antes de continuar.";
+    }
+    return "";
+  }, [isEntradaUi, formData?.pedidoId, selectedPedido]);
 
   const selectedProductoLabel = useMemo(() => {
     const it = productos.find((p) => String(p?.id) === String(articleFormData?.productoId));
@@ -557,13 +625,13 @@ export default function FormKardex({
 
   const lookupBaseRows = useMemo(() => {
     if (lookupType === "produccion") return producciones;
-    if (lookupType === "pedido") return pedidos;
+    if (lookupType === "pedido") return pedidosActivos;
     if (lookupType === "producto") return productos;
     if (lookupType === "presentacion") {
       return presentacionesByProducto;
     }
     return [];
-  }, [lookupType, producciones, pedidos, productos, presentacionesByProducto, presentaciones, articleFormData?.productoId]);
+  }, [lookupType, producciones, pedidosActivos, productos, presentacionesByProducto, presentaciones, articleFormData?.productoId]);
 
   const lookupRows = useMemo(() => {
     const q = normalize(lookupQuery);
@@ -1146,6 +1214,15 @@ export default function FormKardex({
         setErrors((prev) => ({ ...prev, almacenDestinoId: "Almacen destino obligatorio para traslados." }));
         return;
       }
+      if (selectedPedidoValidationMessage) {
+        setErrors((prev) => ({ ...prev, pedidoId: selectedPedidoValidationMessage }));
+        setMessage({
+          open: true,
+          severity: "warning",
+          text: selectedPedidoValidationMessage,
+        });
+        return;
+      }
       setErrors({});
       setOpen(false);
       setArticleModalOpen(true);
@@ -1356,6 +1433,15 @@ export default function FormKardex({
         open: true,
         severity: "warning",
         text: "Para movimientos de traslado debes seleccionar un almacen destino.",
+      });
+      return;
+    }
+    if (selectedPedidoValidationMessage) {
+      setErrors((prev) => ({ ...prev, pedidoId: selectedPedidoValidationMessage }));
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: selectedPedidoValidationMessage,
       });
       return;
     }
@@ -1590,6 +1676,8 @@ export default function FormKardex({
                     fullWidth
                     label="Pedido"
                     value={selectedPedidoLabel}
+                  error={!!errors.pedidoId || !!selectedPedidoValidationMessage}
+                  helperText={errors.pedidoId || selectedPedidoValidationMessage}
                     inputProps={{ readOnly: true }}
                     onClick={() => openLookup("pedido")}
                     InputProps={{
