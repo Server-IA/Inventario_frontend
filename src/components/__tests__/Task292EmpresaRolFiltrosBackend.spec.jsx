@@ -14,9 +14,13 @@ vi.mock("../axiosConfig", () => ({
   },
 }));
 
+const { translate } = vi.hoisted(() => ({
+  translate: (key, fallback) => (typeof fallback === "string" ? fallback : key),
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key, fallback) => (typeof fallback === "string" ? fallback : key),
+    t: translate,
     i18n: { language: "es" },
   }),
 }));
@@ -36,7 +40,11 @@ vi.mock("../common/AppDataGrid.jsx", () => ({
 }));
 
 vi.mock("../EmpresaRol/FormEmpresaRol.jsx", () => ({
-  default: () => <div data-testid="mock-form-empresa-rol" />,
+  default: ({ reloadData }) => (
+    <button type="button" data-testid="form-reload-data" onClick={() => reloadData()}>
+      Recargar desde formulario
+    </button>
+  ),
 }));
 
 vi.mock("../EmpresaRol/ModalVerPermisos.jsx", () => ({
@@ -183,7 +191,45 @@ describe("Task #292 / HU-036.6 - Filtrar listado de roles por nombre y estado en
     });
   });
 
-  it("3. Al limpiar filtros, restablece los parámetros y vuelve a consultar la API completa", async () => {
+  it("3. Las recargas posteriores del formulario conservan los filtros aplicados", async () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <EmpresaRol />
+      </ThemeProvider>
+    );
+
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "common.actions.filters" }));
+    fireEvent.change(await screen.findByTestId("filter-field-nombre"), {
+      target: { value: "Técnico" },
+    });
+    fireEvent.click(screen.getByTestId("apply-filters-btn"));
+
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(
+        "/v1/empresa-rol",
+        expect.objectContaining({ params: expect.objectContaining({ nombre: "Técnico" }) })
+      );
+    });
+
+    const filteredRequestCount = () =>
+      axios.get.mock.calls.filter(
+        ([url, config]) =>
+          url === "/v1/empresa-rol" && config?.params?.nombre === "Técnico"
+      ).length;
+    const countBeforeFormReload = filteredRequestCount();
+
+    fireEvent.click(screen.getByTestId("form-reload-data"));
+
+    await waitFor(() => {
+      expect(filteredRequestCount()).toBeGreaterThan(countBeforeFormReload);
+    });
+  });
+
+  it("4. Al limpiar filtros, restablece los parámetros y vuelve a consultar la API completa", async () => {
     render(
       <ThemeProvider theme={theme}>
         <EmpresaRol />
@@ -209,7 +255,7 @@ describe("Task #292 / HU-036.6 - Filtrar listado de roles por nombre y estado en
     });
   });
 
-  it("4. Maneja respuestas 404 (empresa inexistente) mostrando el mensaje del backend", async () => {
+  it("5. Maneja respuestas 404 (empresa inexistente) mostrando el mensaje del backend", async () => {
     axios.get.mockImplementationOnce((url) => {
       if (url.includes("/v1/empresa-rol")) {
         return Promise.reject({

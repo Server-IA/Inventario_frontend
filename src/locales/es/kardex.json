@@ -49,6 +49,7 @@
     "emptyDates": "El rango de fechas es obligatorio.",
     "invalidDateRange": "La fecha de inicio no puede ser mayor que la fecha fin.",
     "noResults": "No se encontraron registros para los filtros seleccionados.",
+    "resultsCount": "Mostrando {{count}} movimiento(s) de kardex.",
     "searchError": "Error al realizar la búsqueda.",
     "excelSuccess": "Excel descargado correctamente.",
     "pdfSuccess": "PDF generado correctamente.",

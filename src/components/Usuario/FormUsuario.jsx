@@ -14,7 +14,9 @@ CONTROL DE CAMBIOS
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Acento superior neutro y tarjetas sin brillo en modo oscuro. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -61,6 +63,7 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import SearchableSelect from "../common/SearchableSelect";
 
 const emptyAssignment = {
   rolId: "",
@@ -191,6 +194,7 @@ export default function FormUsuario({
   const isCreateMode = mode === "create";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
   const darkGreen = theme.palette.mode === "dark" ? "#dfeae6" : "#173f39";
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : "#173f39";
   const dialogSurface = theme.palette.mode === "dark" ? "#101e1d" : theme.palette.common.white;
   const sectionSurface = theme.palette.mode === "dark" ? "#142624" : theme.palette.common.white;
   const summarySurface = theme.palette.mode === "dark" ? "#182c2a" : "#dfeae6";
@@ -844,7 +848,7 @@ export default function FormUsuario({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -1260,11 +1264,11 @@ export default function FormUsuario({
                         description={t("usuario.form.sections.assignmentConfigurationDescription")}
                       />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.company")}
                         value={selectedAssignmentCompanyId}
                         onChange={(e) => handleAssignChange("empresaId", e.target.value)}
+                        options={empresasOptions}
                         fullWidth
                         required={isAdmin}
                         disabled={!isAdmin}
@@ -1278,21 +1282,16 @@ export default function FormUsuario({
                               })
                             : "")
                         }
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {empresasOptions.map((company) => (
-                          <MenuItem key={company.value} value={company.value}>
-                            {company.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.role")}
                         value={assignDraft.rolId}
                         onChange={(e) => handleAssignChange("rolId", e.target.value)}
+                        options={availableRolesOptions}
                         fullWidth
                         required
                         disabled={
@@ -1302,15 +1301,10 @@ export default function FormUsuario({
                         }
                         error={Boolean(assignmentErrors.rolId)}
                         helperText={roleFieldHelperText}
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {availableRolesOptions.map((role) => (
-                          <MenuItem key={role.value} value={role.value}>
-                            {role.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
                       <Box
                         sx={{
@@ -1428,10 +1422,9 @@ export default function FormUsuario({
                                 borderRadius: 1.75,
                                 border: `1px solid ${alpha(green, 0.1)}`,
                                 backgroundColor: assignmentSurface,
-                                boxShadow: `0 2px 8px ${alpha(
-                                  darkGreen,
-                                  theme.palette.mode === "dark" ? 0.12 : 0.035
-                                )}`,
+                                boxShadow: theme.palette.mode === "dark"
+                                  ? "0 2px 8px rgba(0, 0, 0, 0.35)"
+                                  : `0 2px 8px ${alpha(darkGreen, 0.035)}`,
                               }}
                             >
                               <CardContent sx={{ py: 1.75 }}>

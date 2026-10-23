@@ -223,7 +223,7 @@ export default function EmpresaRol() {
     } finally {
       setLoading(false);
     }
-  }, [empresaId, isSystemAdmin, t]);
+  }, [empresaId, filters, isSystemAdmin, t]);
 
   // CARGAR CATÁLOGO DE ROLES (solo para el formulario)
   const loadRoles = useCallback(async () => {
@@ -244,10 +244,13 @@ export default function EmpresaRol() {
   }, []);
 
   useEffect(() => {
-    reloadData(filters);
+    reloadData();
+  }, [reloadData]);
+
+  useEffect(() => {
     loadRoles();
     loadEmpresas();
-  }, []);
+  }, [loadEmpresas, loadRoles]);
 
   const handleCreate = () => {
     setSelectedRow(null);
@@ -273,7 +276,6 @@ export default function EmpresaRol() {
   const handleApplyFilters = () => {
     setFilters(tempFilters);
     setFilterModalOpen(false);
-    reloadData(tempFilters);
   };
 
   const handleClearFilters = () => {
@@ -282,7 +284,6 @@ export default function EmpresaRol() {
     setFilters(emptyFilters);
     setFilterModalOpen(false);
     setMessage((prev) => (prev.severity === "info" ? { open: false, severity: "info", text: "" } : prev));
-    reloadData(emptyFilters);
   };
 
   const hasActiveFilters = Boolean(

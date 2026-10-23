@@ -120,6 +120,7 @@ export default function CrudFilterModal({
                     label={fieldLabel}
                     placeholder={fieldPlaceholder || t("common.actions.search", "Buscar...")}
                     emptyOptionLabel={t("common.labels.all", "Todos")}
+                    noOptionsText={t("common.labels.noOptions", "Sin resultados")}
                     value={values[f.name] || ""}
                     disabled={isDisabled}
                     options={currentOptions}
