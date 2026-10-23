@@ -58,11 +58,14 @@ export default function TipoCostoIndirecto() {
         if (cancelled) return;
         setRows([]);
         setRowCount(0);
-        const { detail } = parseServerError(error);
+        const { detail, messageKey } = parseServerError(error);
+        const fallbackMessage = t("costos.tipoCostoIndirecto.messages.listError");
         setMessage({
           open: true,
           severity: "error",
-          text: detail || t("costos.tipoCostoIndirecto.messages.listError", "No se pudo cargar el listado de tipos de costos indirectos."),
+          text: messageKey
+            ? t(`costos.tipoCostoIndirecto.messages.${messageKey}`)
+            : detail || fallbackMessage,
         });
       })
       .finally(() => {
