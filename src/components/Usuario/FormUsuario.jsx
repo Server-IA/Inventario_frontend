@@ -16,6 +16,7 @@ CONTROL DE CAMBIOS
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
 | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #325] Permitir activar e inactivar asignaciones existentes en modo edición con actualización de estado y toggle interactivo. |
 | 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Acento superior neutro y tarjetas sin brillo en modo oscuro. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
@@ -58,6 +59,7 @@ import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
@@ -736,6 +738,61 @@ export default function FormUsuario({
     setFormData((prev) => ({ ...prev, asignaciones }));
   };
 
+  const restoreRejectedAssignmentStatusChanges = () => {
+    setFormData((prev) => ({
+      ...prev,
+      asignaciones: (Array.isArray(prev?.asignaciones) ? prev.asignaciones : []).map((item) => {
+        if (!item?.hasPendingStatusChange) return item;
+
+        const assignment = { ...item };
+        delete assignment.estadoIdBeforeChange;
+        delete assignment.hasPendingStatusChange;
+        const restoredStatus = Number(item.estadoIdBeforeChange ?? assignment.estadoId ?? 1);
+
+        return {
+          ...assignment,
+          estadoId: restoredStatus,
+          estadoNombre:
+            restoredStatus === 1
+              ? t("common.labels.active", "Activo")
+              : t("common.labels.inactive", "Inactivo"),
+          activo: restoredStatus === 1,
+        };
+      }),
+    }));
+  };
+
+  const toggleAssignmentStatus = (idx) => {
+    const asignaciones = Array.isArray(formData?.asignaciones)
+      ? [...formData.asignaciones]
+      : [];
+    const item = asignaciones[idx];
+    if (!item) return;
+
+    const currentStatus = Number(item.estadoId ?? 1);
+    const confirmedStatus = Number(item.estadoIdBeforeChange ?? currentStatus);
+    const newStatus = currentStatus === 1 ? 2 : 1;
+    const statusChanged = newStatus !== confirmedStatus;
+    const assignment = { ...item };
+    delete assignment.estadoIdBeforeChange;
+    delete assignment.hasPendingStatusChange;
+
+    asignaciones[idx] = {
+      ...assignment,
+      estadoId: newStatus,
+      estadoNombre: newStatus === 1 ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo"),
+      activo: newStatus === 1,
+      ...(statusChanged
+        ? {
+            estadoIdBeforeChange: confirmedStatus,
+            hasPendingStatusChange: true,
+          }
+        : {}),
+    };
+
+    setFormData((prev) => ({ ...prev, asignaciones }));
+  };
+
   const togglePreferido = (idx) => {
     const asignaciones = Array.isArray(formData?.asignaciones)
       ? [...formData.asignaciones]
@@ -808,7 +865,7 @@ export default function FormUsuario({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const isFormValid = validateForm();
     if (!isFormValid) return;
 
@@ -819,7 +876,15 @@ export default function FormUsuario({
       return;
     }
 
-    onSubmit?.(formData);
+    try {
+      const result = await onSubmit?.(formData);
+      if (result?.success === false) {
+        restoreRejectedAssignmentStatusChanges();
+      }
+    } catch (error) {
+      restoreRejectedAssignmentStatusChanges();
+      throw error;
+    }
   };
 
   const summaryAssignments = Array.isArray(formData?.asignaciones)
@@ -1483,6 +1548,35 @@ export default function FormUsuario({
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
                                       />
+                                      {/* Estado explícito de la asignación: Activa o Inactiva */}
+                                      <Chip
+                                        label={
+                                          Number(assignment.estadoId ?? 1) === 1
+                                            ? t("common.labels.active", "Activo")
+                                            : t("common.labels.inactive", "Inactivo")
+                                        }
+                                        size="small"
+                                        color={Number(assignment.estadoId ?? 1) === 1 ? "success" : "default"}
+                                        variant={Number(assignment.estadoId ?? 1) === 1 ? "filled" : "outlined"}
+                                        sx={{
+                                          fontWeight: 700,
+                                          fontSize: "0.75rem",
+                                          height: 24,
+                                        }}
+                                      />
+                                      {assignment.hasPendingStatusChange ? (
+                                        <Chip
+                                          label={t("common.labels.pendingSave", "Pendiente de guardar")}
+                                          size="small"
+                                          color="warning"
+                                          variant="outlined"
+                                          sx={{
+                                            fontWeight: 600,
+                                            fontSize: "0.72rem",
+                                            height: 22,
+                                          }}
+                                        />
+                                      ) : null}
                                       {assignment.preferido ? (
                                         <Chip
                                           label={t("usuario.form.fields.preferred")}
@@ -1516,18 +1610,36 @@ export default function FormUsuario({
                                         }
                                         label={t("usuario.form.fields.preferred")}
                                       />
-                                      <Button
-                                        color="error"
-                                        onClick={() => removeAssign(idx)}
-                                        startIcon={<BlockOutlinedIcon />}
-                                        sx={{ whiteSpace: "nowrap" }}
-                                      >
-                                        {t(
-                                          mode === "edit"
-                                            ? "usuario.actions.inactivateAssignment"
-                                            : "usuario.actions.removeAssignment"
-                                        )}
-                                      </Button>
+                                      {/* Las asignaciones persistidas se actualizan por usuarioRolId; los borradores nuevos se quitan antes de guardar. */}
+                                      {assignment.usuarioRolId ? (
+                                        <Button
+                                          color={Number(assignment.estadoId ?? 1) === 1 ? "error" : "success"}
+                                          size="small"
+                                          onClick={() => toggleAssignmentStatus(idx)}
+                                          startIcon={
+                                            Number(assignment.estadoId ?? 1) === 1 ? (
+                                              <BlockOutlinedIcon fontSize="small" />
+                                            ) : (
+                                              <CheckCircleOutlineIcon fontSize="small" />
+                                            )
+                                          }
+                                          sx={{ whiteSpace: "nowrap", ml: "auto" }}
+                                        >
+                                          {Number(assignment.estadoId ?? 1) === 1
+                                            ? t("common.actions.inactivate", "Inactivar")
+                                            : t("common.actions.activate", "Activar")}
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          color="error"
+                                          size="small"
+                                          onClick={() => removeAssign(idx)}
+                                          startIcon={<BlockOutlinedIcon fontSize="small" />}
+                                          sx={{ whiteSpace: "nowrap", ml: "auto" }}
+                                        >
+                                          {t("common.actions.remove", "Quitar")}
+                                        </Button>
+                                      )}
                                     </Stack>
                                   </Stack>
                                   <Divider sx={{ borderColor: alpha(darkGreen, 0.14) }} />
