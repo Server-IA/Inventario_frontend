@@ -14,10 +14,14 @@ vi.mock("../axiosConfig", () => ({
   },
 }));
 
+const translatedMessages = vi.hoisted(() => ({
+  "costos.tipoCostoIndirecto.messages.forbidden": "You do not have permission to view indirect cost types.",
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key, fallback) => (typeof fallback === "string" ? fallback : key),
-    i18n: { language: "es" },
+    t: (key, fallback) => translatedMessages[key] || fallback || key,
+    i18n: { language: "en" },
   }),
 }));
 
@@ -136,7 +140,7 @@ describe("Task #264 - HU-044.2 Visualizar listado de tipos de costos indirectos"
     expect(screen.getByText("Inactivo")).toBeInTheDocument();
   });
 
-  it("2. Maneja errores de backend mostrando la notificación correspondiente", async () => {
+  it("2. Traduce el 403 con el idioma activo y no expone el detalle fijo del backend", async () => {
     axios.get.mockImplementation(() =>
       Promise.reject({
         response: {
@@ -154,8 +158,9 @@ describe("Task #264 - HU-044.2 Visualizar listado de tipos de costos indirectos"
 
     expect(
       await screen.findByText(
-        "No tienes permisos para realizar esta acción o el registro no pertenece a tu empresa."
+        "You do not have permission to view indirect cost types."
       )
     ).toBeInTheDocument();
+    expect(screen.queryByText("No tienes permisos de gestión de costos.")).not.toBeInTheDocument();
   });
 });
