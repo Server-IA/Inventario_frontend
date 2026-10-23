@@ -54,7 +54,7 @@ vi.mock("../common/AppDataGrid.jsx", () => ({
 
 import Rkardex from "../RKardex/Rkardex";
 
-describe("HU-039.2 / Task #214 - Previsualización del Reporte Kardex V2", () => {
+describe("HU-039.2 & HU-039.3 - Previsualización y Exportación del Reporte Kardex V2", () => {
   const theme = createTheme({ palette: { mode: "light" } });
 
   const mockKardexFiltros = {
@@ -107,6 +107,8 @@ describe("HU-039.2 / Task #214 - Previsualización del Reporte Kardex V2", () =>
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.URL.createObjectURL = vi.fn(() => "blob:mock-kardex-url");
+    window.URL.revokeObjectURL = vi.fn();
     axios.get.mockImplementation((url) => {
       if (url.includes("/v2/report/kardex/filtros")) {
         return Promise.resolve({ data: mockKardexFiltros });
@@ -124,114 +126,183 @@ describe("HU-039.2 / Task #214 - Previsualización del Reporte Kardex V2", () =>
       if (url.includes("/v2/report/kardex/resumen")) {
         return Promise.resolve({ data: mockKardexResumen });
       }
-      return Promise.resolve({ data: {} });
-    });
-  });
-
-  it("1. Inicializa y consulta filtros inteligentes desde GET /v2/report/kardex/filtros", async () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <Rkardex />
-      </ThemeProvider>
-    );
-
-    await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/report/kardex/filtros"),
-        expect.anything()
-      );
-    });
-
-    expect(screen.getByText("Reportes de Kardex")).toBeInTheDocument();
-  });
-
-  it("2. Ejecuta búsqueda mediante POST /v2/report/kardex/resumen con DTO tipado sin condicion, SQL ni EMPRESA_ID", async () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <Rkardex />
-      </ThemeProvider>
-    );
-
-    await waitFor(() => {
-      expect(axios.get).toHaveBeenCalled();
-    });
-
-    const searchBtn = screen.getByRole("button", { name: /buscar/i });
-    fireEvent.click(searchBtn);
-
-    await waitFor(() => {
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining("/v2/report/kardex/resumen?page=0&size=10"),
-        expect.any(Object)
-      );
-    });
-
-    const [, sentBody] = axios.post.mock.calls.find(([url]) =>
-      url.includes("/v2/report/kardex/resumen")
-    );
-
-    // Valida que el body no contenga SQL ni campos fuera del contrato
-    expect(sentBody).toHaveProperty("fechaInicio");
-    expect(sentBody).toHaveProperty("fechaFin");
-    expect(sentBody).not.toHaveProperty("condicion");
-    expect(sentBody).not.toHaveProperty("EMPRESA_ID");
-    expect(sentBody).not.toHaveProperty("formato");
-    expect(sentBody).not.toHaveProperty("filtrosAplicados");
-
-    // Valida renderizado de columnas requeridas en el resumen
-    await waitFor(() => {
-      expect(screen.getByText("CERTUS 70 WG Fungicida")).toBeInTheDocument();
-      expect(screen.getByText("Sede Neiva Primera")).toBeInTheDocument();
-      expect(screen.getByText("Agropecuario Central")).toBeInTheDocument();
-      expect(screen.getByText("Entrada Insumo Agrícola")).toBeInTheDocument();
-      expect(screen.getByText("Paquete de 500 g")).toBeInTheDocument();
-    });
-  });
-
-  it("3. Muestra mensaje amigable cuando no hay registros para los filtros seleccionados", async () => {
-    axios.post.mockImplementationOnce((url) => {
-      if (url.includes("/v2/report/kardex/resumen")) {
-        return Promise.resolve({ data: { content: [], totalElements: 0 } });
+      if (url.includes("/v2/report/kardex/exportar")) {
+        return Promise.resolve({ data: new Blob(["xlsx-data"], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }) });
+      }
+      if (url.includes("/v2/report/kardex")) {
+        return Promise.resolve({ data: new Blob(["pdf-data"], { type: "application/pdf" }) });
       }
       return Promise.resolve({ data: {} });
     });
+  });
 
-    render(
-      <ThemeProvider theme={theme}>
-        <Rkardex />
-      </ThemeProvider>
-    );
+  describe("HU-039.2: Previsualización de Kardex", () => {
+    it("1. Inicializa y consulta filtros inteligentes desde GET /v2/report/kardex/filtros", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <Rkardex />
+        </ThemeProvider>
+      );
 
-    const searchBtn = screen.getByRole("button", { name: /buscar/i });
-    fireEvent.click(searchBtn);
+      await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledWith(
+          expect.stringContaining("/v2/report/kardex/filtros"),
+          expect.anything()
+        );
+      });
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/no se encontraron registros para los filtros seleccionados/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText("Reportes de Kardex")).toBeInTheDocument();
+    });
+
+    it("2. Ejecuta búsqueda mediante POST /v2/report/kardex/resumen con DTO tipado sin condicion, SQL ni EMPRESA_ID", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <Rkardex />
+        </ThemeProvider>
+      );
+
+      await waitFor(() => {
+        expect(axios.get).toHaveBeenCalled();
+      });
+
+      const searchBtn = screen.getByRole("button", { name: /buscar/i });
+      fireEvent.click(searchBtn);
+
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          expect.stringContaining("/v2/report/kardex/resumen?page=0&size=10"),
+          expect.any(Object)
+        );
+      });
+
+      const [, sentBody] = axios.post.mock.calls.find(([url]) =>
+        url.includes("/v2/report/kardex/resumen")
+      );
+
+      expect(sentBody).toHaveProperty("fechaInicio");
+      expect(sentBody).toHaveProperty("fechaFin");
+      expect(sentBody).not.toHaveProperty("condicion");
+      expect(sentBody).not.toHaveProperty("EMPRESA_ID");
+      expect(sentBody).not.toHaveProperty("formato");
+      expect(sentBody).not.toHaveProperty("filtrosAplicados");
+
+      await waitFor(() => {
+        expect(screen.getByText("CERTUS 70 WG Fungicida")).toBeInTheDocument();
+        expect(screen.getByText("Sede Neiva Primera")).toBeInTheDocument();
+        expect(screen.getByText("Agropecuario Central")).toBeInTheDocument();
+        expect(screen.getByText("Entrada Insumo Agrícola")).toBeInTheDocument();
+        expect(screen.getByText("Paquete de 500 g")).toBeInTheDocument();
+      });
+    });
+
+    it("3. Muestra mensaje amigable cuando no hay registros para los filtros seleccionados", async () => {
+      axios.post.mockImplementationOnce((url) => {
+        if (url.includes("/v2/report/kardex/resumen")) {
+          return Promise.resolve({ data: { content: [], totalElements: 0 } });
+        }
+        return Promise.resolve({ data: {} });
+      });
+
+      render(
+        <ThemeProvider theme={theme}>
+          <Rkardex />
+        </ThemeProvider>
+      );
+
+      const searchBtn = screen.getByRole("button", { name: /buscar/i });
+      fireEvent.click(searchBtn);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/no se encontraron registros para los filtros seleccionados/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("4. Gestiona errores HTTP (400, 403) de forma controlada sin confundirlos con vacío", async () => {
+      axios.post.mockImplementationOnce(() =>
+        Promise.reject({
+          response: { status: 403, data: { detail: "Acceso no autorizado al reporte" } },
+        })
+      );
+
+      render(
+        <ThemeProvider theme={theme}>
+          <Rkardex />
+        </ThemeProvider>
+      );
+
+      const searchBtn = screen.getByRole("button", { name: /buscar/i });
+      fireEvent.click(searchBtn);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/no tiene permisos para consultar este reporte/i)
+        ).toBeInTheDocument();
+      });
     });
   });
 
-  it("4. Gestiona errores HTTP (400, 403) de forma controlada sin confundirlos con vacío", async () => {
-    axios.post.mockImplementationOnce(() =>
-      Promise.reject({
-        response: { status: 403, data: { detail: "Acceso no autorizado al reporte" } },
-      })
-    );
+  describe("HU-039.3: Exportación PDF y Excel (T-216)", () => {
+    it("5. Exporta reporte en PDF conectando a POST /v2/report/kardex con DTO tipado", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <Rkardex />
+        </ThemeProvider>
+      );
 
-    render(
-      <ThemeProvider theme={theme}>
-        <Rkardex />
-      </ThemeProvider>
-    );
+      const exportModalBtn = screen.getByRole("button", { name: /generar reporte/i });
+      fireEvent.click(exportModalBtn);
 
-    const searchBtn = screen.getByRole("button", { name: /buscar/i });
-    fireEvent.click(searchBtn);
+      const pdfBtn = screen.getByRole("button", { name: /^PDF$/i });
+      fireEvent.click(pdfBtn);
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/no tiene permisos para consultar este reporte/i)
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          "/v2/report/kardex",
+          expect.any(Object),
+          expect.objectContaining({ responseType: "blob" })
+        );
+      });
+
+      const [, pdfBody] = axios.post.mock.calls.find(([url]) =>
+        url === "/v2/report/kardex"
+      );
+      expect(pdfBody).toHaveProperty("fechaInicio");
+      expect(pdfBody).toHaveProperty("fechaFin");
+      expect(pdfBody).not.toHaveProperty("condicion");
+      expect(pdfBody).not.toHaveProperty("EMPRESA_ID");
+      expect(pdfBody).not.toHaveProperty("filtrosAplicados");
+    });
+
+    it("6. Exporta reporte en Excel conectando a POST /v2/report/kardex/exportar?formato=XLSX", async () => {
+      render(
+        <ThemeProvider theme={theme}>
+          <Rkardex />
+        </ThemeProvider>
+      );
+
+      const exportModalBtn = screen.getByRole("button", { name: /generar reporte/i });
+      fireEvent.click(exportModalBtn);
+
+      const excelBtn = screen.getByRole("button", { name: /^Excel$/i });
+      fireEvent.click(excelBtn);
+
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledWith(
+          "/v2/report/kardex/exportar?formato=XLSX",
+          expect.any(Object),
+          expect.objectContaining({ responseType: "blob" })
+        );
+      });
+
+      const [, excelBody] = axios.post.mock.calls.find(([url]) =>
+        url.includes("/v2/report/kardex/exportar?formato=XLSX")
+      );
+      expect(excelBody).toHaveProperty("fechaInicio");
+      expect(excelBody).toHaveProperty("fechaFin");
+      expect(excelBody).not.toHaveProperty("condicion");
+      expect(excelBody).not.toHaveProperty("EMPRESA_ID");
     });
   });
 
