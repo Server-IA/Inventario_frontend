@@ -16,6 +16,7 @@ CONTROL DE CAMBIOS
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
 | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Acento superior neutro y tarjetas sin brillo en modo oscuro. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -193,6 +194,7 @@ export default function FormUsuario({
   const isCreateMode = mode === "create";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
   const darkGreen = theme.palette.mode === "dark" ? "#dfeae6" : "#173f39";
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : "#173f39";
   const dialogSurface = theme.palette.mode === "dark" ? "#101e1d" : theme.palette.common.white;
   const sectionSurface = theme.palette.mode === "dark" ? "#142624" : theme.palette.common.white;
   const summarySurface = theme.palette.mode === "dark" ? "#182c2a" : "#dfeae6";
@@ -846,7 +848,7 @@ export default function FormUsuario({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -1420,10 +1422,9 @@ export default function FormUsuario({
                                 borderRadius: 1.75,
                                 border: `1px solid ${alpha(green, 0.1)}`,
                                 backgroundColor: assignmentSurface,
-                                boxShadow: `0 2px 8px ${alpha(
-                                  darkGreen,
-                                  theme.palette.mode === "dark" ? 0.12 : 0.035
-                                )}`,
+                                boxShadow: theme.palette.mode === "dark"
+                                  ? "0 2px 8px rgba(0, 0, 0, 0.35)"
+                                  : `0 2px 8px ${alpha(darkGreen, 0.035)}`,
                               }}
                             >
                               <CardContent sx={{ py: 1.75 }}>

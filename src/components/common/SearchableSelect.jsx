@@ -8,6 +8,7 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Creación de selector con altura limitada y búsqueda local en frontend. |
 | 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Tamaño estándar por defecto (size="medium"), id/label sincronizado para notched outline y corrección de altura visual. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Se abre el notch del outline cuando la etiqueta flota y el campo está vacío. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useState, useMemo } from "react";
@@ -77,6 +78,7 @@ export default function SearchableSelect({
         name={name}
         value={value ?? ""}
         label={label}
+        {...(InputLabelProps?.shrink ? { notched: true } : {})}
         onChange={onChange}
         startAdornment={startAdornment}
         onClose={() => setSearchTerm("")}

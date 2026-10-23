@@ -164,4 +164,23 @@ describe("Issue #324 - SearchableSelect con altura canónica, notch de label y b
 
     expect(screen.getByText("Agrocentro del Huila")).toBeInTheDocument();
   });
+
+  it("8. Abre el notch del outline con etiqueta flotante aunque el campo esté vacío", () => {
+    const { container } = render(
+      <ThemeProvider theme={lightTheme}>
+        <SearchableSelect
+          label="Empresa"
+          value=""
+          onChange={vi.fn()}
+          options={mockOptions}
+          InputLabelProps={{ shrink: true }}
+        />
+      </ThemeProvider>
+    );
+
+    const legend = container.querySelector(".MuiOutlinedInput-root legend");
+
+    expect(legend).toBeInTheDocument();
+    expect(legend).toHaveStyle({ maxWidth: "100%" });
+  });
 });

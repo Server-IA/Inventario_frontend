@@ -9,6 +9,7 @@ CONTROL DE CAMBIOS
 | 2026-08-03 | 0.4.0   | Cesar Medina         | Se crea modal de filtros para usuarios.       |
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #323] Retirar bloques informativos redundantes del modal de filtros. |
 | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local en filtros de Rol y Empresa. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Sombra neutra en modo oscuro y acento superior sin línea blanca. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -71,6 +72,7 @@ export default function UserFiltersDialog({
     theme.palette.mode === "dark"
       ? "0 10px 30px rgba(0, 0, 0, 0.5)"
       : `0 10px 30px ${alpha(darkGreen, 0.08)}`;
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : darkGreen;
   const contentMaxWidth = 1180;
 
   const handleFieldChange = (name) => (event) => {
@@ -97,7 +99,7 @@ export default function UserFiltersDialog({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >

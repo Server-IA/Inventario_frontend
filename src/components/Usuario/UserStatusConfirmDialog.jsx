@@ -9,6 +9,7 @@ CONTROL DE CAMBIOS
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se crea modal MUI para confirmar cambio estado|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se suavizan transiciones y ajusta botón cerrar|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se separan acciones y refuerza feedback click |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Sombras neutras en modo oscuro y acento superior sin línea blanca. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -107,8 +108,13 @@ export default function UserStatusConfirmDialog({
   const summarySurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.28) : "#dfeae6";
   const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
   const subtleBorder = alpha(green, 0.14);
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
-  const softShadow = `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`;
+  const sectionShadow = theme.palette.mode === "dark"
+    ? "0 4px 14px rgba(0, 0, 0, 0.35)"
+    : `0 4px 14px ${alpha(darkGreen, 0.05)}`;
+  const softShadow = theme.palette.mode === "dark"
+    ? "0 10px 30px rgba(0, 0, 0, 0.5)"
+    : `0 10px 30px ${alpha(darkGreen, 0.08)}`;
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : darkGreen;
   const fullName = [user?.nombre, user?.apellido].filter(Boolean).join(" ").trim();
   const initials = `${String(user?.nombre ?? "").charAt(0)}${String(user?.apellido ?? "").charAt(0)}`
     .trim()
@@ -134,7 +140,7 @@ export default function UserStatusConfirmDialog({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -341,13 +347,17 @@ export default function UserStatusConfirmDialog({
             "&:hover": {
               borderColor: alpha(darkGreen, 0.34),
               backgroundColor: alpha(darkGreen, 0.05),
-              boxShadow: `0 8px 18px ${alpha(darkGreen, 0.08)}`,
+              boxShadow: theme.palette.mode === "dark"
+                ? "0 8px 18px rgba(0, 0, 0, 0.35)"
+                : `0 8px 18px ${alpha(darkGreen, 0.08)}`,
               transform: "translateY(-1px)",
             },
             "&:active": {
               backgroundColor: alpha(darkGreen, 0.12),
               borderColor: alpha(darkGreen, 0.4),
-              boxShadow: `0 2px 8px ${alpha(darkGreen, 0.14)}`,
+              boxShadow: theme.palette.mode === "dark"
+                ? "0 2px 8px rgba(0, 0, 0, 0.35)"
+                : `0 2px 8px ${alpha(darkGreen, 0.14)}`,
               transform: "translateY(1px) scale(0.98)",
             },
           }}
