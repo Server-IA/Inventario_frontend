@@ -37,6 +37,7 @@ export default function SearchableSelect({
   helperText = "",
   placeholder = "Buscar...",
   emptyOptionLabel = "Todos",
+  noOptionsText = "Sin resultados",
   size,
   fullWidth = true,
   name,
@@ -130,7 +131,7 @@ export default function SearchableSelect({
         {filteredOptions.length === 0 ? (
           <Box sx={{ py: 1.5, px: 2, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
-              Sin resultados
+              {noOptionsText}
             </Typography>
           </Box>
         ) : (
@@ -161,6 +162,7 @@ SearchableSelect.propTypes = {
   helperText: PropTypes.node,
   placeholder: PropTypes.string,
   emptyOptionLabel: PropTypes.string,
+  noOptionsText: PropTypes.string,
   size: PropTypes.string,
   fullWidth: PropTypes.bool,
   name: PropTypes.string,
