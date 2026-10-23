@@ -1,93 +1,182 @@
-import { describe, it, expect } from "vitest";
+import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key, fallback) => fallback ?? key,
+  }),
+}));
+
+vi.mock("../axiosConfig", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+import axios from "../axiosConfig";
 import FormUsuario from "../Usuario/FormUsuario";
 
-describe("Issue #325 - Validación del componente FormUsuario y contratos de estado de asignaciones", () => {
-  it("1. exporta FormUsuario como componente funcional React válido con PropTypes definidos", () => {
-    expect(typeof FormUsuario).toBe("function");
-    expect(FormUsuario.propTypes).toBeDefined();
-    expect(FormUsuario.propTypes.open).toBeDefined();
-    expect(FormUsuario.propTypes.mode).toBeDefined();
-    expect(FormUsuario.propTypes.onClose).toBeDefined();
-    expect(FormUsuario.propTypes.onSubmit).toBeDefined();
+const validUser = {
+  requestId: 91,
+  username: "qa.usuario@inmero.co",
+  nombre: "Usuario",
+  apellido: "QA",
+  emailPersonal: "qa.personal@inmero.co",
+  tipoIdentificacionId: "1",
+  identificacion: "12345678",
+  estrato: "3",
+  asignaciones: [],
+};
+
+const EMPTY_ROLES = [];
+const EMPTY_EMPRESAS = [];
+const EMPTY_EMPRESA_ROLES = [];
+
+const renderEditForm = ({ initialData, onSubmit = vi.fn() }) =>
+  render(
+    <ThemeProvider theme={createTheme()}>
+      <FormUsuario
+        open
+        mode="edit"
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        initialData={initialData}
+        roles={EMPTY_ROLES}
+        empresas={EMPTY_EMPRESAS}
+        empresaRoles={EMPTY_EMPRESA_ROLES}
+        isAdmin
+        tiposIdentificacion={[{ id: 1, nombre: "Cédula" }]}
+      />
+    </ThemeProvider>
+  );
+
+describe("Issue #325 - estado de asignaciones en Actualizar usuario", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    axios.get.mockResolvedValue({ data: [] });
   });
 
-  it("2. valida lógica de conmutación de estado (Activo <-> Inactivo) y bandera hasPendingStatusChange", () => {
-    const mockAsignaciones = [
-      {
-        usuarioRolId: 101,
-        rolId: 2,
-        empresaId: 1505,
-        estadoId: 1, // Activa
+  it("mantiene removible un borrador nuevo en modo edición", async () => {
+    const user = userEvent.setup();
+
+    renderEditForm({
+      initialData: {
+        ...validUser,
+        asignaciones: [
+          {
+            empresaId: "1505",
+            empresaNombre: "Empresa de prueba",
+            rolId: "4",
+            rolNombre: "Rol temporal",
+            estadoId: 1,
+          },
+        ],
       },
-      {
-        usuarioRolId: 102,
-        rolId: 4,
-        empresaId: 1505,
-        estadoId: 2, // Inactiva
-      },
-    ];
+    });
 
-    // Simula toggleAssignmentStatus sobre la primera asignación
-    const currentStatus = Number(mockAsignaciones[0].estadoId ?? 1);
-    const newStatus = currentStatus === 1 ? 2 : 1;
-    mockAsignaciones[0] = {
-      ...mockAsignaciones[0],
-      estadoId: newStatus,
-      hasPendingStatusChange: true,
-    };
+    expect(screen.getByRole("button", { name: "Quitar" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Inactivar" })).not.toBeInTheDocument();
 
-    expect(mockAsignaciones[0].estadoId).toBe(2);
-    expect(mockAsignaciones[0].hasPendingStatusChange).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Quitar" }));
 
-    // Simula toggleAssignmentStatus sobre la segunda asignación (reactivación)
-    const currentStatus2 = Number(mockAsignaciones[1].estadoId ?? 1);
-    const newStatus2 = currentStatus2 === 1 ? 2 : 1;
-    mockAsignaciones[1] = {
-      ...mockAsignaciones[1],
-      estadoId: newStatus2,
-      hasPendingStatusChange: true,
-    };
-
-    expect(mockAsignaciones[1].estadoId).toBe(1);
-    expect(mockAsignaciones[1].hasPendingStatusChange).toBe(true);
+    expect(screen.queryByText("Rol: Rol temporal")).not.toBeInTheDocument();
   });
 
-  it("3. formatea el payload de asignaciones transmitiendo usuarioRolId y estadoId actualizado para el PUT de backend", () => {
-    const asignacionesModificadas = [
-      {
-        usuarioRolId: 101,
-        rolId: 2,
-        empresaId: 1505,
-        estadoId: 2, // Inactivada
-      },
-      {
-        usuarioRolId: 102,
-        rolId: 4,
-        empresaId: 1505,
-        estadoId: 1, // Reactivada
-      },
-    ];
+  it("envía la inactivación de una asignación persistida con su mismo usuarioRolId", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue({ success: true });
 
-    const payload = asignacionesModificadas.map((item) => ({
-      ...(item?.usuarioRolId ? { usuarioRolId: Number(item.usuarioRolId) } : {}),
-      empresaId: Number(item.empresaId),
-      rolId: Number(item.rolId),
-      estadoId: Number(item?.estadoId ?? 1),
-    }));
+    renderEditForm({
+      onSubmit,
+      initialData: {
+        ...validUser,
+        asignaciones: [
+          {
+            usuarioRolId: 216,
+            empresaId: "1505",
+            empresaNombre: "Empresa de prueba",
+            rolId: "4",
+            rolNombre: "Rol activo",
+            estadoId: 1,
+            iniciaContratoEn: "2026-09-23",
+            finalizaContratoEn: "",
+          },
+        ],
+      },
+    });
 
-    expect(payload).toEqual([
-      {
-        usuarioRolId: 101,
-        empresaId: 1505,
-        rolId: 2,
-        estadoId: 2,
+    await user.click(screen.getByRole("button", { name: "Inactivar" }));
+
+    expect(screen.getByText("Inactivo")).toBeInTheDocument();
+    expect(screen.getByText("Pendiente de guardar")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "common.actions.save" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          asignaciones: [
+            expect.objectContaining({
+              usuarioRolId: 216,
+              estadoId: 2,
+              hasPendingStatusChange: true,
+            }),
+          ],
+        })
+      );
+    });
+  });
+
+  it("revierte el cambio local pendiente cuando el backend rechaza la actualización", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue({ success: false });
+
+    renderEditForm({
+      onSubmit,
+      initialData: {
+        ...validUser,
+        asignaciones: [
+          {
+            usuarioRolId: 215,
+            empresaId: "1505",
+            empresaNombre: "Empresa de prueba",
+            rolId: "4",
+            rolNombre: "Rol persistido",
+            estadoId: 2,
+            iniciaContratoEn: "2026-09-23",
+            finalizaContratoEn: "",
+          },
+        ],
       },
-      {
-        usuarioRolId: 102,
-        empresaId: 1505,
-        rolId: 4,
-        estadoId: 1,
-      },
-    ]);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Activar" }));
+
+    expect(screen.getByText("Activo")).toBeInTheDocument();
+    expect(screen.getByText("Pendiente de guardar")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "common.actions.save" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          asignaciones: [
+            expect.objectContaining({
+              usuarioRolId: 215,
+              estadoId: 1,
+              hasPendingStatusChange: true,
+            }),
+          ],
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Activar" })).toBeInTheDocument();
+      expect(screen.queryByText("Pendiente de guardar")).not.toBeInTheDocument();
+    });
   });
 });

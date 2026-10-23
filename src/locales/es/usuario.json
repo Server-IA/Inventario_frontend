@@ -117,8 +117,7 @@
       "loadingCompanyRoles": "Consultando los roles disponibles para la empresa seleccionada...",
       "selectCompanyFirst": "Selecciona primero una empresa para consultar los roles disponibles.",
       "noRolesForCompany": "No hay roles disponibles para la empresa seleccionada.",
-      "selectContractStartFirst": "Selecciona primero la fecha inicio para habilitar la fecha fin.",
-      "manageStatusInUsuarioRol": "Para activar o inactivar esta asignación, use el módulo Usuario-Rol."
+      "selectContractStartFirst": "Selecciona primero la fecha inicio para habilitar la fecha fin."
     },
     "actions": {
       "register": "Registrar"

@@ -17,6 +17,7 @@ CONTROL DE CAMBIOS
 | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
 | 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #325] Permitir activar e inactivar asignaciones existentes en modo edición con actualización de estado y toggle interactivo. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Acento superior neutro y tarjetas sin brillo en modo oscuro. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -195,6 +196,7 @@ export default function FormUsuario({
   const isCreateMode = mode === "create";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
   const darkGreen = theme.palette.mode === "dark" ? "#dfeae6" : "#173f39";
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : "#173f39";
   const dialogSurface = theme.palette.mode === "dark" ? "#101e1d" : theme.palette.common.white;
   const sectionSurface = theme.palette.mode === "dark" ? "#142624" : theme.palette.common.white;
   const summarySurface = theme.palette.mode === "dark" ? "#182c2a" : "#dfeae6";
@@ -736,6 +738,30 @@ export default function FormUsuario({
     setFormData((prev) => ({ ...prev, asignaciones }));
   };
 
+  const restoreRejectedAssignmentStatusChanges = () => {
+    setFormData((prev) => ({
+      ...prev,
+      asignaciones: (Array.isArray(prev?.asignaciones) ? prev.asignaciones : []).map((item) => {
+        if (!item?.hasPendingStatusChange) return item;
+
+        const assignment = { ...item };
+        delete assignment.estadoIdBeforeChange;
+        delete assignment.hasPendingStatusChange;
+        const restoredStatus = Number(item.estadoIdBeforeChange ?? assignment.estadoId ?? 1);
+
+        return {
+          ...assignment,
+          estadoId: restoredStatus,
+          estadoNombre:
+            restoredStatus === 1
+              ? t("common.labels.active", "Activo")
+              : t("common.labels.inactive", "Inactivo"),
+          activo: restoredStatus === 1,
+        };
+      }),
+    }));
+  };
+
   const toggleAssignmentStatus = (idx) => {
     const asignaciones = Array.isArray(formData?.asignaciones)
       ? [...formData.asignaciones]
@@ -744,14 +770,24 @@ export default function FormUsuario({
     if (!item) return;
 
     const currentStatus = Number(item.estadoId ?? 1);
+    const confirmedStatus = Number(item.estadoIdBeforeChange ?? currentStatus);
     const newStatus = currentStatus === 1 ? 2 : 1;
+    const statusChanged = newStatus !== confirmedStatus;
+    const assignment = { ...item };
+    delete assignment.estadoIdBeforeChange;
+    delete assignment.hasPendingStatusChange;
 
     asignaciones[idx] = {
-      ...item,
+      ...assignment,
       estadoId: newStatus,
       estadoNombre: newStatus === 1 ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo"),
       activo: newStatus === 1,
-      hasPendingStatusChange: true,
+      ...(statusChanged
+        ? {
+            estadoIdBeforeChange: confirmedStatus,
+            hasPendingStatusChange: true,
+          }
+        : {}),
     };
 
     setFormData((prev) => ({ ...prev, asignaciones }));
@@ -829,7 +865,7 @@ export default function FormUsuario({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const isFormValid = validateForm();
     if (!isFormValid) return;
 
@@ -840,7 +876,15 @@ export default function FormUsuario({
       return;
     }
 
-    onSubmit?.(formData);
+    try {
+      const result = await onSubmit?.(formData);
+      if (result?.success === false) {
+        restoreRejectedAssignmentStatusChanges();
+      }
+    } catch (error) {
+      restoreRejectedAssignmentStatusChanges();
+      throw error;
+    }
   };
 
   const summaryAssignments = Array.isArray(formData?.asignaciones)
@@ -869,7 +913,7 @@ export default function FormUsuario({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -1443,10 +1487,9 @@ export default function FormUsuario({
                                 borderRadius: 1.75,
                                 border: `1px solid ${alpha(green, 0.1)}`,
                                 backgroundColor: assignmentSurface,
-                                boxShadow: `0 2px 8px ${alpha(
-                                  darkGreen,
-                                  theme.palette.mode === "dark" ? 0.12 : 0.035
-                                )}`,
+                                boxShadow: theme.palette.mode === "dark"
+                                  ? "0 2px 8px rgba(0, 0, 0, 0.35)"
+                                  : `0 2px 8px ${alpha(darkGreen, 0.035)}`,
                               }}
                             >
                               <CardContent sx={{ py: 1.75 }}>
@@ -1567,11 +1610,8 @@ export default function FormUsuario({
                                         }
                                         label={t("usuario.form.fields.preferred")}
                                       />
-                                      {/* Issue #325 (Nuevo alcance QA):
-                                          - Si la asignación ya existe/está persistida (o estamos en modo edición):
-                                            Permite Activar o Inactivar alternando su estado local pendiente de guardar.
-                                          - Si es un borrador nuevo (sin persistir): Permite quitar la asignación. */}
-                                      {assignment.usuarioRolId || !isCreateMode ? (
+                                      {/* Las asignaciones persistidas se actualizan por usuarioRolId; los borradores nuevos se quitan antes de guardar. */}
+                                      {assignment.usuarioRolId ? (
                                         <Button
                                           color={Number(assignment.estadoId ?? 1) === 1 ? "error" : "success"}
                                           size="small"
