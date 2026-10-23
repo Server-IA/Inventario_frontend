@@ -751,6 +751,7 @@ export default function FormUsuario({
       estadoId: newStatus,
       estadoNombre: newStatus === 1 ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo"),
       activo: newStatus === 1,
+      hasPendingStatusChange: true,
     };
 
     setFormData((prev) => ({ ...prev, asignaciones }));
@@ -1520,6 +1521,19 @@ export default function FormUsuario({
                                           height: 24,
                                         }}
                                       />
+                                      {assignment.hasPendingStatusChange ? (
+                                        <Chip
+                                          label={t("common.labels.pendingSave", "Pendiente de guardar")}
+                                          size="small"
+                                          color="warning"
+                                          variant="outlined"
+                                          sx={{
+                                            fontWeight: 600,
+                                            fontSize: "0.72rem",
+                                            height: 22,
+                                          }}
+                                        />
+                                      ) : null}
                                       {assignment.preferido ? (
                                         <Chip
                                           label={t("usuario.form.fields.preferred")}
