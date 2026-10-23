@@ -14,8 +14,9 @@ CONTROL DE CAMBIOS
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
-| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #325] Representar estado real de asignaciones (Activo/Inactivo) y orientar cambio de estado a Usuario-Rol. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #325] Permitir activar e inactivar asignaciones existentes en modo edición con actualización de estado y toggle interactivo. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -57,11 +58,13 @@ import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import SearchableSelect from "../common/SearchableSelect";
 
 const emptyAssignment = {
   rolId: "",
@@ -733,6 +736,26 @@ export default function FormUsuario({
     setFormData((prev) => ({ ...prev, asignaciones }));
   };
 
+  const toggleAssignmentStatus = (idx) => {
+    const asignaciones = Array.isArray(formData?.asignaciones)
+      ? [...formData.asignaciones]
+      : [];
+    const item = asignaciones[idx];
+    if (!item) return;
+
+    const currentStatus = Number(item.estadoId ?? 1);
+    const newStatus = currentStatus === 1 ? 2 : 1;
+
+    asignaciones[idx] = {
+      ...item,
+      estadoId: newStatus,
+      estadoNombre: newStatus === 1 ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo"),
+      activo: newStatus === 1,
+    };
+
+    setFormData((prev) => ({ ...prev, asignaciones }));
+  };
+
   const togglePreferido = (idx) => {
     const asignaciones = Array.isArray(formData?.asignaciones)
       ? [...formData.asignaciones]
@@ -1261,11 +1284,11 @@ export default function FormUsuario({
                         description={t("usuario.form.sections.assignmentConfigurationDescription")}
                       />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.company")}
                         value={selectedAssignmentCompanyId}
                         onChange={(e) => handleAssignChange("empresaId", e.target.value)}
+                        options={empresasOptions}
                         fullWidth
                         required={isAdmin}
                         disabled={!isAdmin}
@@ -1279,21 +1302,16 @@ export default function FormUsuario({
                               })
                             : "")
                         }
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {empresasOptions.map((company) => (
-                          <MenuItem key={company.value} value={company.value}>
-                            {company.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.role")}
                         value={assignDraft.rolId}
                         onChange={(e) => handleAssignChange("rolId", e.target.value)}
+                        options={availableRolesOptions}
                         fullWidth
                         required
                         disabled={
@@ -1303,15 +1321,10 @@ export default function FormUsuario({
                         }
                         error={Boolean(assignmentErrors.rolId)}
                         helperText={roleFieldHelperText}
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {availableRolesOptions.map((role) => (
-                          <MenuItem key={role.value} value={role.value}>
-                            {role.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
                       <Box
                         sx={{
@@ -1422,21 +1435,7 @@ export default function FormUsuario({
                             width: "100%",
                           }}
                         >
-                          {summaryAssignments.map((assignment, idx) => {
-                            const isAssignmentActive =
-                              assignment.estadoId !== 2 &&
-                              assignment.estadoId !== "2" &&
-                              String(assignment.estadoNombre || "").toLowerCase() !== "inactivo" &&
-                              assignment.activo !== false;
-
-                            const isPersisted = Boolean(
-                              assignment.usuarioRolId ||
-                              (!isCreateMode && (initialData?.asignaciones || []).some(
-                                (a) => String(a.rolId) === String(assignment.rolId) && String(a.empresaId) === String(assignment.empresaId)
-                              ))
-                            );
-
-                            return (
+                          {summaryAssignments.map((assignment, idx) => (
                             <Card
                               key={`${assignment.rolId}-${assignment.empresaId}-${idx}`}
                               sx={{
@@ -1505,12 +1504,16 @@ export default function FormUsuario({
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
                                       />
-                                      {/* Criterio 1: Cada tarjeta muestra explícitamente Activo o Inactivo */}
+                                      {/* Estado explícito de la asignación: Activa o Inactiva */}
                                       <Chip
-                                        label={isAssignmentActive ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo")}
+                                        label={
+                                          Number(assignment.estadoId ?? 1) === 1
+                                            ? t("common.labels.active", "Activo")
+                                            : t("common.labels.inactive", "Inactivo")
+                                        }
                                         size="small"
-                                        color={isAssignmentActive ? "success" : "default"}
-                                        variant={isAssignmentActive ? "filled" : "outlined"}
+                                        color={Number(assignment.estadoId ?? 1) === 1 ? "success" : "default"}
+                                        variant={Number(assignment.estadoId ?? 1) === 1 ? "filled" : "outlined"}
                                         sx={{
                                           fontWeight: 700,
                                           fontSize: "0.75rem",
@@ -1550,29 +1553,34 @@ export default function FormUsuario({
                                         }
                                         label={t("usuario.form.fields.preferred")}
                                       />
-                                      {/* Criterios 2, 3, 4, 5:
-                                          - En modo edición, las asignaciones existentes (persistidas) no se eliminan visualmente
-                                            fingiendo una inactivación que no se persiste; se orienta al flujo de Usuario-Rol.
-                                          - Una asignación inactiva no ofrece botón de inactivar.
-                                          - Los borradores nuevos agregados en la sesión actual sí pueden removerse antes de guardar. */}
-                                      {isPersisted ? (
-                                        <Typography
-                                          variant="caption"
-                                          sx={{
-                                            color: "text.secondary",
-                                            fontStyle: "italic",
-                                            ml: "auto",
-                                            display: "block",
-                                          }}
+                                      {/* Issue #325 (Nuevo alcance QA):
+                                          - Si la asignación ya existe/está persistida (o estamos en modo edición):
+                                            Permite Activar o Inactivar alternando su estado local pendiente de guardar.
+                                          - Si es un borrador nuevo (sin persistir): Permite quitar la asignación. */}
+                                      {assignment.usuarioRolId || !isCreateMode ? (
+                                        <Button
+                                          color={Number(assignment.estadoId ?? 1) === 1 ? "error" : "success"}
+                                          size="small"
+                                          onClick={() => toggleAssignmentStatus(idx)}
+                                          startIcon={
+                                            Number(assignment.estadoId ?? 1) === 1 ? (
+                                              <BlockOutlinedIcon fontSize="small" />
+                                            ) : (
+                                              <CheckCircleOutlineIcon fontSize="small" />
+                                            )
+                                          }
+                                          sx={{ whiteSpace: "nowrap", ml: "auto" }}
                                         >
-                                          {t("usuario.form.helpers.manageStatusInUsuarioRol", "Para cambiar el estado de esta asignación, use el módulo Usuario-Rol.")}
-                                        </Typography>
+                                          {Number(assignment.estadoId ?? 1) === 1
+                                            ? t("common.actions.inactivate", "Inactivar")
+                                            : t("common.actions.activate", "Activar")}
+                                        </Button>
                                       ) : (
                                         <Button
                                           color="error"
                                           size="small"
                                           onClick={() => removeAssign(idx)}
-                                          startIcon={<BlockOutlinedIcon />}
+                                          startIcon={<BlockOutlinedIcon fontSize="small" />}
                                           sx={{ whiteSpace: "nowrap", ml: "auto" }}
                                         >
                                           {t("common.actions.remove", "Quitar")}
@@ -1611,8 +1619,7 @@ export default function FormUsuario({
                                 </Stack>
                               </CardContent>
                             </Card>
-                            );
-                          })}
+                          ))}
                     </Box>
                   )}
                 </Stack>
