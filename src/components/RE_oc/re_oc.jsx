@@ -14,13 +14,17 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.1 / Task #229] Integración con contrato V2 tipado de filtros, resumen y exportar PDF/XLSX. |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Columnas de totalUnidades/valorTotal en grilla, vista previa desde resultados generales y unidades heterogéneas. |
+| 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Conectar setPaginationModel en AppDataGrid, modal flotante para detalle de orden y tooltip de unidades mixtas. |
+| 2026-10-19 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Leer total de la paginacion desde data.page (PaginacionDTO) del contrato V2. |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box, Typography, Button, Stack, Grid,
   FormControl, InputLabel, Select, MenuItem,
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
-  Paper, Divider, Popover, LinearProgress
+  Paper, Divider, Popover, LinearProgress, Tooltip
 } from "@mui/material";
 import {
   Close as CloseIcon,
@@ -29,7 +33,8 @@ import {
   PictureAsPdf as PdfIcon,
   TableView as ExcelIcon,
   CalendarToday as CalendarIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -42,6 +47,7 @@ import axios from "../axiosConfig";
 import MessageSnackBar from "../MessageSnackBar";
 import useUbicacionFilters from "../useUbicacionFilters";
 import AppDataGrid from "../common/AppDataGrid.jsx";
+import VistaPreviaPDFOrdenCompra from "../OrdenCompra/vistapreviapdfordencompra";
 
 export default function RE_ordenCompra() {
   const { t, i18n } = useTranslation();
@@ -140,6 +146,7 @@ export default function RE_ordenCompra() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const [rowCount, setRowCount] = useState(0);
+  const [ordenData, setOrdenData] = useState(null);
 
   const [message, setMessage] = useState({ open: false, severity: "info", text: "" });
   const [errors, setErrors] = useState({ fechas_rango: false });
@@ -245,6 +252,7 @@ export default function RE_ordenCompra() {
     if (!validarRango()) return;
 
     setLoadingSearch(true);
+    setOrdenData(null);
     try {
       const payload = buildFiltersPayload();
       const res = await axios.post(`/v2/report/orden-compra/resumen?page=${page}&size=${size}`, payload);
@@ -263,6 +271,11 @@ export default function RE_ordenCompra() {
 
       setResultados(mapped);
       setRowCount(totalElementos);
+
+      // HU-041.2: Si se consultó un pedido específico y arrojó resultado, preseleccionar la orden para resumen
+      if (pedido?.pedido_id && mapped.length > 0) {
+        setOrdenData(mapped[0]);
+      }
 
       if (mapped.length === 0) {
         setMessage({
@@ -289,14 +302,17 @@ export default function RE_ordenCompra() {
       setMessage({ open: true, severity: "error", text });
       setResultados([]);
       setRowCount(0);
+      setOrdenData({ error: true, errorMessage: text });
     } finally {
       setLoadingSearch(false);
     }
   };
 
   const handlePaginationChange = (nextModel) => {
-    setPaginationModel(nextModel);
-    buscar(nextModel.page, nextModel.pageSize);
+    const page = nextModel.page ?? 0;
+    const pageSize = nextModel.pageSize ?? nextModel.size ?? 10;
+    setPaginationModel({ page, pageSize });
+    buscar(page, pageSize);
   };
 
   // Exportación contractual V2 (PDF / XLSX)
@@ -358,7 +374,7 @@ export default function RE_ordenCompra() {
     }
   };
 
-  // Columnas para AppDataGrid según contrato V2
+  // Columnas para AppDataGrid según contrato V2 e integración de totales (HU-041.2)
   const columns = useMemo(() => [
     { field: "ordenCompraId", headerName: t("ordenCompra.columns.id", "ID"), width: 90 },
     {
@@ -379,29 +395,123 @@ export default function RE_ordenCompra() {
       headerName: t("ordenCompra.columns.supplier", "Proveedor"),
       flex: 1.2,
       minWidth: 150,
-      renderCell: (params) => params.row.proveedor || "-",
+      renderCell: (params) => {
+        const val = params.row.proveedor || "-";
+        return (
+          <Tooltip title={val} arrow disableInteractive>
+            <Typography variant="body2" noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {val}
+            </Typography>
+          </Tooltip>
+        );
+      },
     },
     {
       field: "sede",
       headerName: t("ordenCompra.columns.headquarters", "Sede"),
       flex: 1.1,
       minWidth: 140,
-      renderCell: (params) => params.row.sede || "-",
+      renderCell: (params) => {
+        const val = params.row.sede || "-";
+        return (
+          <Tooltip title={val} arrow disableInteractive>
+            <Typography variant="body2" noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {val}
+            </Typography>
+          </Tooltip>
+        );
+      },
     },
     {
       field: "almacen",
       headerName: t("ordenCompra.columns.warehouse", "Almacén"),
       flex: 1.1,
       minWidth: 140,
-      renderCell: (params) => params.row.almacen || "-",
+      renderCell: (params) => {
+        const val = params.row.almacen || "-";
+        return (
+          <Tooltip title={val} arrow disableInteractive>
+            <Typography variant="body2" noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {val}
+            </Typography>
+          </Tooltip>
+        );
+      },
     },
     {
       field: "estado",
       headerName: t("ordenCompra.columns.status", "Estado"),
-      width: 160,
-      renderCell: (params) => params.row.estado || "-",
+      width: 150,
+      renderCell: (params) => {
+        const val = params.row.estado || "-";
+        return (
+          <Tooltip title={val} arrow disableInteractive>
+            <Typography variant="body2" noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {val}
+            </Typography>
+          </Tooltip>
+        );
+      },
     },
-  ], [t]);
+    {
+      field: "totalUnidades",
+      headerName: t("ordenCompra.columns.totalUnits", "Total Unidades"),
+      width: 140,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => {
+        const u = params.row.totalUnidades;
+        if (u !== null && u !== undefined) {
+          return Number(u);
+        }
+        return (
+          <Tooltip
+            title={t(
+              "ordenCompra.columns.heterogeneousUnitsTooltip",
+              "No se consolidan unidades porque la orden contiene productos con unidades de medida heterogéneas."
+            )}
+            arrow
+            disableInteractive
+          >
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic", cursor: "help" }}>
+              {t("ordenCompra.columns.mixedUnits", "Unidades mixtas")}
+            </Typography>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      field: "valorTotal",
+      headerName: t("ordenCompra.columns.totalValue", "Valor Total"),
+      width: 160,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => {
+        const val = Number(params.row.valorTotal) || 0;
+        return new Intl.NumberFormat(i18n.language || "es", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 2,
+        }).format(val);
+      },
+    },
+    {
+      field: "actions",
+      headerName: t("common.actions.viewDetail", "Ver Resumen"),
+      width: 140,
+      renderCell: (params) => (
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<VisibilityIcon />}
+          onClick={() => setOrdenData(params.row)}
+          sx={{ textTransform: "none", borderRadius: 1.5 }}
+        >
+          {t("common.actions.viewDetail", "Ver Resumen")}
+        </Button>
+      ),
+    },
+  ], [t, i18n.language]);
 
   const boxStyles = {
     p: 3,
@@ -554,7 +664,6 @@ export default function RE_ordenCompra() {
                     fullWidth
                     onClick={handleOpenDate}
                     endIcon={<CalendarIcon />}
-                    error={Boolean(errors.fechas_rango)}
                     sx={{
                       justifyContent: "space-between",
                       py: 1,
@@ -667,6 +776,42 @@ export default function RE_ordenCompra() {
         </Stack>
       </Box>
 
+      {/* HU-041.2: Vista previa / resumen detallado en diálogo modal para no desplazar la grilla ni alterar el contexto */}
+      <Dialog
+        open={Boolean(ordenData)}
+        onClose={() => setOrdenData(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            p: 1,
+            bgcolor: isDark ? "background.paper" : "#f6fbf9",
+            color: isDark ? "#e7f6f7" : "#173f39",
+          },
+        }}
+      >
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            {ordenData?.pedidoId
+              ? `${t("ordenCompra.modal.detailTitle", "Detalle de orden de compra")} #${ordenData.pedidoId}`
+              : t("ordenCompra.modal.detailTitle", "Detalle de orden de compra")}
+          </Typography>
+          <IconButton onClick={() => setOrdenData(null)} size="small" aria-label="close">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ py: 2 }}>
+          {ordenData && <VistaPreviaPDFOrdenCompra orden={ordenData} />}
+        </DialogContent>
+        <DialogActions sx={{ px: 2.5, pb: 2 }}>
+          <Button onClick={() => setOrdenData(null)} variant="outlined" color="inherit" sx={{ textTransform: "none", borderRadius: 2 }}>
+            {t("common.actions.close", "Cerrar")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Resultados Grilla */}
       <Box>
         <AppDataGrid
@@ -676,7 +821,7 @@ export default function RE_ordenCompra() {
           containerSx={{ minHeight: 200 }}
           autoHeight={true}
           paginationModel={paginationModel}
-          onPaginationModelChange={handlePaginationChange}
+          setPaginationModel={handlePaginationChange}
           rowCount={rowCount}
           pageSizeOptions={[5, 10, 20, 50]}
         />

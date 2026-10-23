@@ -40,7 +40,9 @@
     "items": "Ítems",
     "totalUnits": "Total Unidades",
     "totalValue": "Valor Total",
-    "heterogeneousUnits": "No aplica: unidades heterogéneas"
+    "heterogeneousUnits": "No aplica: unidades heterogéneas",
+    "mixedUnits": "Unidades mixtas",
+    "heterogeneousUnitsTooltip": "No se consolidan unidades porque la orden contiene productos con unidades de medida heterogéneas."
   },
   "actions": {
     "generate": "Generar Reporte"
@@ -64,7 +66,8 @@
     "exportTitle": "Generar Reporte de Orden de Compra",
     "exporting": "Generando documento, por favor espere...",
     "exportSub": "Seleccione el formato en el que desea descargar su reporte.",
-    "previewTitle": "Vista previa del Reporte"
+    "previewTitle": "Vista previa del Reporte",
+    "detailTitle": "Detalle de orden de compra"
   },
   "grid": {
     "title": "Órdenes de compra encontradas",
