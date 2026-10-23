@@ -10,22 +10,18 @@
  | 2026-09-03 | 0.4.0   | Jeisson Sanchez      | [Issue #284] Modal de filtros de roles. |
  | 2026-09-11 | 0.4.0   | Jeisson Sanchez      | [HU-036.6] Filtro por nombre de rol como campo de texto libre. |
  | 2026-09-14 | 0.4.0   | Jeisson Sanchez      | [HU-036.6 / #284 / #291] Mensaje informativo cuando ningún rol coincide con los filtros. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Task #292 / HU-036.6] Filtrado en backend (GET /empresa-rol con params), SearchableSelect para empresa y uso de CrudFilterModal. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
+  Box,
+  Button,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Box,
-  Button,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -37,6 +33,7 @@ import ModalVerPermisos from "./ModalVerPermisos";
 import SectionHeader from "../common/SectionHeader.jsx";
 import GridActionBar from "../common/GridActionBar.jsx";
 import AppDataGrid from "../common/AppDataGrid.jsx";
+import CrudFilterModal from "../common/CrudFilterModal.jsx";
 
 const SYSTEM_ROLE_REGEX = /(ROLE_ADMINISTRADOR_SISTEMA|ADMINISTRADOR[_\s-]*SISTEMA|ADMIN\s*SISTEMA)/i;
 
@@ -108,17 +105,56 @@ export default function EmpresaRol() {
     }
   }, [isSystemAdmin]);
 
-  const reloadData = useCallback(async () => {
+  const reloadData = useCallback(async (customFilters) => {
     try {
       setLoading(true);
 
+      const activeFilt = customFilters ?? filters;
+      const params = {};
+
+      if (activeFilt.nombre && activeFilt.nombre.trim() !== "") {
+        params.nombre = activeFilt.nombre.trim();
+      }
+
+      if (activeFilt.estadoId) {
+        params.estadoId = Number(activeFilt.estadoId);
+      }
+
+      if (isSystemAdmin && activeFilt.empresaId) {
+        params.empresaId = Number(activeFilt.empresaId);
+      }
+
       const resEmpresaRol = await axios.get(
-        isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol"
+        isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
+        { params }
       );
-      const empresaRoles = resEmpresaRol.data;
+      const empresaRoles = Array.isArray(resEmpresaRol.data)
+        ? resEmpresaRol.data
+        : Array.isArray(resEmpresaRol.data?.content)
+        ? resEmpresaRol.data.content
+        : [];
+
+      // Si ningún registro coincide con los filtros aplicados, mostrar mensaje informativo (Criterio 6 HU-036.6)
+      const hasAppliedFilters = Boolean(
+        activeFilt.empresaId ||
+        (activeFilt.nombre && activeFilt.nombre.trim() !== "") ||
+        activeFilt.estadoId
+      );
+
+      if (hasAppliedFilters && empresaRoles.length === 0) {
+        setMessage({
+          open: true,
+          severity: "info",
+          text: t("empresaRol.messages.noFilterResults", "No se encontraron roles con los criterios seleccionados."),
+        });
+      }
 
       const resRoles = await axios.get("/v1/items/rol/0");
-      const rolesCatalogo = resRoles.data;
+      const rolesCatalogo = Array.isArray(resRoles.data)
+        ? resRoles.data
+        : Array.isArray(resRoles.data?.content)
+        ? resRoles.data.content
+        : [];
 
       let anyPermisoError = false;
       const enriched = await Promise.all(
@@ -153,6 +189,14 @@ export default function EmpresaRol() {
       );
 
       setRows(enriched);
+
+      // Requerido 4: Si al aplicar filtros la fila seleccionada queda fuera del listado, limpiar selectedRow
+      setSelectedRow((prev) => {
+        if (!prev) return null;
+        const exists = enriched.some((r) => r.id === prev.id);
+        return exists ? prev : null;
+      });
+
       if (anyPermisoError) {
         setMessage({
           open: true,
@@ -163,10 +207,18 @@ export default function EmpresaRol() {
     } catch (error) {
       console.error(error);
       setRows([]);
+      setSelectedRow(null);
+
+      // Manejar 404 (empresa inexistente), 400, 401 y 403 con mensaje de backend (Bloqueante 1)
+      const backendMessage =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.response?.data?.mensaje;
+
       setMessage({
         open: true,
         severity: "error",
-        text: t("empresaRol.messages.rolesLoadError", "Error al cargar roles de empresa."),
+        text: backendMessage || t("empresaRol.messages.rolesLoadError", "Error al cargar roles de empresa."),
       });
     } finally {
       setLoading(false);
@@ -192,10 +244,10 @@ export default function EmpresaRol() {
   }, []);
 
   useEffect(() => {
-    reloadData();
+    reloadData(filters);
     loadRoles();
     loadEmpresas();
-  }, [reloadData, loadRoles, loadEmpresas]);
+  }, []);
 
   const handleCreate = () => {
     setSelectedRow(null);
@@ -221,47 +273,7 @@ export default function EmpresaRol() {
   const handleApplyFilters = () => {
     setFilters(tempFilters);
     setFilterModalOpen(false);
-
-    // Criterio 6 HU-036.6: Si ningún registro coincide con los filtros aplicados, mostrar mensaje informativo
-    const hasSearchFilters = Boolean(
-      tempFilters.empresaId ||
-      (tempFilters.nombre && tempFilters.nombre.trim() !== "") ||
-      tempFilters.estadoId
-    );
-
-    if (hasSearchFilters) {
-      const matchCount = rows.filter((row) => {
-        if (tempFilters.empresaId && String(row.empresaId ?? empresaId) !== String(tempFilters.empresaId)) {
-          return false;
-        }
-        if (tempFilters.nombre && tempFilters.nombre.trim() !== "") {
-          const search = tempFilters.nombre.trim().toLowerCase();
-          const rowNombre = (row.rolNombre || "").toLowerCase();
-          if (!rowNombre.includes(search)) {
-            return false;
-          }
-        }
-        if (tempFilters.estadoId) {
-          const rowEstadoId = row.estadoId ?? row.estado?.id;
-          const rowEstadoNombre = (row.estadoNombre ?? row.estado?.nombre ?? "").toLowerCase();
-          if (tempFilters.estadoId === "1" && rowEstadoId !== 1 && rowEstadoNombre !== "activo") {
-            return false;
-          }
-          if (tempFilters.estadoId === "2" && rowEstadoId !== 2 && rowEstadoNombre !== "inactivo") {
-            return false;
-          }
-        }
-        return true;
-      }).length;
-
-      if (matchCount === 0) {
-        setMessage({
-          open: true,
-          severity: "info",
-          text: t("empresaRol.messages.noFilterResults", "No se encontraron roles con los criterios seleccionados."),
-        });
-      }
-    }
+    reloadData(tempFilters);
   };
 
   const handleClearFilters = () => {
@@ -269,6 +281,8 @@ export default function EmpresaRol() {
     setTempFilters(emptyFilters);
     setFilters(emptyFilters);
     setFilterModalOpen(false);
+    setMessage((prev) => (prev.severity === "info" ? { open: false, severity: "info", text: "" } : prev));
+    reloadData(emptyFilters);
   };
 
   const hasActiveFilters = Boolean(
@@ -277,31 +291,41 @@ export default function EmpresaRol() {
     filters.estadoId
   );
 
-  const filteredRows = useMemo(() => {
-    return rows.filter((row) => {
-      if (filters.empresaId && String(row.empresaId ?? empresaId) !== String(filters.empresaId)) {
-        return false;
-      }
-      if (filters.nombre && filters.nombre.trim() !== "") {
-        const search = filters.nombre.trim().toLowerCase();
-        const rowNombre = (row.rolNombre || "").toLowerCase();
-        if (!rowNombre.includes(search)) {
-          return false;
-        }
-      }
-      if (filters.estadoId) {
-        const rowEstadoId = row.estadoId ?? row.estado?.id;
-        const rowEstadoNombre = (row.estadoNombre ?? row.estado?.nombre ?? "").toLowerCase();
-        if (filters.estadoId === "1" && rowEstadoId !== 1 && rowEstadoNombre !== "activo") {
-          return false;
-        }
-        if (filters.estadoId === "2" && rowEstadoId !== 2 && rowEstadoNombre !== "inactivo") {
-          return false;
-        }
-      }
-      return true;
+  const filterFields = useMemo(() => {
+    const f = [];
+
+    if (isSystemAdmin) {
+      f.push({
+        name: "empresaId",
+        labelKey: "common.labels.company",
+        type: "searchableSelect",
+        options: empresas.map((emp) => ({
+          value: emp.id,
+          label: emp.nombre || emp.name,
+        })),
+        fullRow: true,
+      });
+    }
+
+    f.push({
+      name: "nombre",
+      labelKey: "empresaRol.filters.roleNameLabel",
+      type: "text",
+      placeholderKey: "empresaRol.filters.namePlaceholder",
     });
-  }, [rows, filters, empresaId]);
+
+    f.push({
+      name: "estadoId",
+      labelKey: "empresaRol.columns.status",
+      type: "select",
+      options: [
+        { value: "1", label: t("common.labels.active", "Activo") },
+        { value: "2", label: t("common.labels.inactive", "Inactivo") },
+      ],
+    });
+
+    return f;
+  }, [empresas, isSystemAdmin, t]);
 
   const handleViewPermisos = () => {
     if (!selectedRow?.id) {
@@ -543,7 +567,7 @@ export default function EmpresaRol() {
       />
 
       <AppDataGrid
-        rows={filteredRows}
+        rows={rows}
         columns={columns}
         loading={loading}
         selectedRow={selectedRow}
@@ -557,85 +581,18 @@ export default function EmpresaRol() {
         }}
       />
 
-      <Dialog
+      <CrudFilterModal
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>{t("common.actions.filters", "Filtros")}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: isSystemAdmin ? "1fr 1fr" : "1fr", gap: 2, mt: 1 }}>
-            {isSystemAdmin && (
-              <FormControl fullWidth size="small">
-                <InputLabel id="empresa-filter-label">
-                  {t("common.labels.company", "Empresa")}
-                </InputLabel>
-                <Select
-                  labelId="empresa-filter-label"
-                  value={tempFilters.empresaId}
-                  label={t("common.labels.company", "Empresa")}
-                  onChange={(e) => {
-                    setTempFilters((prev) => ({
-                      ...prev,
-                      empresaId: e.target.value,
-                    }));
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>{t("common.labels.all", "Todos")}</em>
-                  </MenuItem>
-                  {empresas.map((emp) => (
-                    <MenuItem key={emp.id} value={emp.id}>
-                      {emp.nombre || emp.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-
-            <TextField
-              fullWidth
-              size="small"
-              id="nombre-filter-input"
-              label={t("empresaRol.columns.role", "Nombre del rol")}
-              placeholder="Ej: Administrador, Técnico..."
-              value={tempFilters.nombre}
-              onChange={(e) =>
-                setTempFilters((prev) => ({ ...prev, nombre: e.target.value }))
-              }
-            />
-
-            <FormControl fullWidth size="small">
-              <InputLabel id="estado-filter-label">
-                {t("empresaRol.columns.status", "Estado")}
-              </InputLabel>
-              <Select
-                labelId="estado-filter-label"
-                value={tempFilters.estadoId}
-                label={t("empresaRol.columns.status", "Estado")}
-                onChange={(e) =>
-                  setTempFilters((prev) => ({ ...prev, estadoId: e.target.value }))
-                }
-              >
-                <MenuItem value="">
-                  <em>{t("common.labels.all", "Todos")}</em>
-                </MenuItem>
-                <MenuItem value="1">{t("common.labels.active", "Activo")}</MenuItem>
-                <MenuItem value="2">{t("common.labels.inactive", "Inactivo")}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClearFilters}>
-            {t("common.actions.clear", "Limpiar")}
-          </Button>
-          <Button variant="contained" onClick={handleApplyFilters}>
-            {t("common.actions.apply", "Aplicar")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title={t("common.actions.filters", "Filtros")}
+        fields={filterFields}
+        values={tempFilters}
+        onChange={({ name, value }) =>
+          setTempFilters((prev) => ({ ...prev, [name]: value }))
+        }
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+      />
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>{t("empresaRol.confirmDelete.title")}</DialogTitle>

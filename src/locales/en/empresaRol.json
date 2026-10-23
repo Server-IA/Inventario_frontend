@@ -46,5 +46,9 @@
     "editTitle": "Edit Role and Permissions",
     "roleLabel": "Role",
     "companyLabel": "Company"
+  },
+  "filters": {
+    "namePlaceholder": "E.g.: Administrator, Technician...",
+    "roleNameLabel": "Role name"
   }
 }
