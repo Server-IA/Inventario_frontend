@@ -7,6 +7,7 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Creación de selector con altura limitada y búsqueda local en frontend. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Tamaño estándar por defecto (size="medium"), id/label sincronizado para notched outline y corrección de altura visual. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React, { useState, useMemo } from "react";
@@ -35,7 +36,7 @@ export default function SearchableSelect({
   helperText = "",
   placeholder = "Buscar...",
   emptyOptionLabel = "Todos",
-  size = "small",
+  size,
   fullWidth = true,
   name,
   maxItemsVisible = 10,

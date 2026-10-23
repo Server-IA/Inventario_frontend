@@ -4,8 +4,9 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import SearchableSelect from "../common/SearchableSelect";
 
-describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", () => {
-  const theme = createTheme({ palette: { mode: "light" } });
+describe("Issue #324 - SearchableSelect con altura canónica, notch de label y búsqueda local", () => {
+  const lightTheme = createTheme({ palette: { mode: "light" } });
+  const darkTheme = createTheme({ palette: { mode: "dark" } });
 
   const mockOptions = [
     { value: "1", label: "Coagrohuila Central" },
@@ -15,10 +16,10 @@ describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", 
     { value: "5", label: "Semillas La Pradera" },
   ];
 
-  it("1. Renderiza el componente con su etiqueta y valor inicial", () => {
+  it("1. Renderiza el componente con su etiqueta, notch outline consistente y valor inicial", () => {
     const handleChange = vi.fn();
     render(
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={lightTheme}>
         <SearchableSelect
           label="Empresa"
           value="1"
@@ -28,14 +29,35 @@ describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", 
       </ThemeProvider>
     );
 
+    // Debe existir la etiqueta flotante y el legend de notchedOutline con el mismo texto
     expect(screen.getAllByText("Empresa").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Coagrohuila Central")).toBeInTheDocument();
   });
 
-  it("2. Al abrir el menú, muestra el campo de búsqueda local con scroll interno", () => {
+  it("2. Conserva dimensiones homogéneas (medium por defecto) sin forzar altura reducida", () => {
+    const handleChange = vi.fn();
+    const { container } = render(
+      <ThemeProvider theme={lightTheme}>
+        <SearchableSelect
+          label="Empresa"
+          value=""
+          onChange={handleChange}
+          options={mockOptions}
+        />
+      </ThemeProvider>
+    );
+
+    const formControl = container.querySelector(".MuiFormControl-root");
+    expect(formControl).toBeInTheDocument();
+    // No debe forzar la clase MuiInputBase-sizeSmall por defecto para alinearse con campos estándar de 56px
+    const selectRoot = container.querySelector(".MuiInputBase-root");
+    expect(selectRoot).not.toHaveClass("MuiInputBase-sizeSmall");
+  });
+
+  it("3. Al abrir el menú, muestra el campo de búsqueda local con scroll interno", () => {
     const handleChange = vi.fn();
     render(
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={lightTheme}>
         <SearchableSelect
           label="Empresa"
           value=""
@@ -46,19 +68,17 @@ describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", 
       </ThemeProvider>
     );
 
-    // Abrir el selector
     const selectTrigger = screen.getByRole("combobox");
     fireEvent.mouseDown(selectTrigger);
 
-    // Debe mostrar el input de búsqueda dentro del subheader
     const searchInput = screen.getByPlaceholderText("Buscar empresa...");
     expect(searchInput).toBeInTheDocument();
   });
 
-  it("3. Filtra las opciones localmente en frontend sin solicitudes remotas", () => {
+  it("4. Filtra las opciones localmente en frontend sin solicitudes remotas", () => {
     const handleChange = vi.fn();
     render(
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={lightTheme}>
         <SearchableSelect
           label="Empresa"
           value=""
@@ -75,16 +95,15 @@ describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", 
     const searchInput = screen.getByPlaceholderText("Buscar empresa...");
     fireEvent.change(searchInput, { target: { value: "Neiva" } });
 
-    // Solo debe coincidir 'Fertilizantes Neiva'
     expect(screen.getByText("Fertilizantes Neiva")).toBeInTheDocument();
     expect(screen.queryByText("Coagrohuila Central")).not.toBeInTheDocument();
     expect(screen.queryByText("Agrocentro del Huila")).not.toBeInTheDocument();
   });
 
-  it("4. Muestra 'Sin resultados' cuando ningún término coincide con las opciones", () => {
+  it("5. Muestra 'Sin resultados' cuando ningún término coincide con las opciones", () => {
     const handleChange = vi.fn();
     render(
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={lightTheme}>
         <SearchableSelect
           label="Rol"
           value=""
@@ -104,10 +123,10 @@ describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", 
     expect(screen.getByText("Sin resultados")).toBeInTheDocument();
   });
 
-  it("5. Seleccionar una opción filtrada invoca onChange con el valor correspondiente", () => {
+  it("6. Seleccionar una opción filtrada invoca onChange con el valor correspondiente", () => {
     const handleChange = vi.fn();
     render(
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={lightTheme}>
         <SearchableSelect
           label="Empresa"
           value=""
@@ -128,5 +147,21 @@ describe("Issue #324 - SearchableSelect con altura limitada y búsqueda local", 
     fireEvent.click(optionItem);
 
     expect(handleChange).toHaveBeenCalled();
+  });
+
+  it("7. Renderiza de forma neutra y legible en dark mode sin errores visuales", () => {
+    const handleChange = vi.fn();
+    render(
+      <ThemeProvider theme={darkTheme}>
+        <SearchableSelect
+          label="Empresa"
+          value="2"
+          onChange={handleChange}
+          options={mockOptions}
+        />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText("Agrocentro del Huila")).toBeInTheDocument();
   });
 });

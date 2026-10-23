@@ -63,7 +63,14 @@ export default function UserFiltersDialog({
   const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
   const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
   const subtleBorder = alpha(green, 0.14);
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const sectionShadow =
+    theme.palette.mode === "dark"
+      ? "0 4px 14px rgba(0, 0, 0, 0.35)"
+      : `0 4px 14px ${alpha(darkGreen, 0.05)}`;
+  const softShadow =
+    theme.palette.mode === "dark"
+      ? "0 10px 30px rgba(0, 0, 0, 0.5)"
+      : `0 10px 30px ${alpha(darkGreen, 0.08)}`;
   const contentMaxWidth = 1180;
 
   const handleFieldChange = (name) => (event) => {
@@ -81,7 +88,7 @@ export default function UserFiltersDialog({
           borderRadius: 3,
           overflow: "hidden",
           backgroundColor: dialogSurface,
-          boxShadow: `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`,
+          boxShadow: softShadow,
         },
       }}
     >
