@@ -788,8 +788,8 @@ export default function RE_ordenCompra() {
         <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
             {ordenData?.pedidoId
-              ? `${t("ordenCompra.modal.previewTitle", "Detalle de orden de compra")} #${ordenData.pedidoId}`
-              : t("ordenCompra.modal.previewTitle", "Detalle de orden de compra")}
+              ? `${t("ordenCompra.modal.detailTitle", "Detalle de orden de compra")} #${ordenData.pedidoId}`
+              : t("ordenCompra.modal.detailTitle", "Detalle de orden de compra")}
           </Typography>
           <IconButton onClick={() => setOrdenData(null)} size="small" aria-label="close">
             <CloseIcon fontSize="small" />

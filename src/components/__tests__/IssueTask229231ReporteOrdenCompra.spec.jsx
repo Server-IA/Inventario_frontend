@@ -215,8 +215,8 @@ describe("HU-041.1 & HU-041.2 - Reporte de Orden de Compra y Resumen de Totales"
       const viewDetailBtn = await screen.findByRole("button", { name: /ver resumen/i });
       fireEvent.click(viewDetailBtn);
 
-      // Verifica que la tarjeta de resumen se abra en pantalla
-      expect(screen.getAllByText("Resumen de la Orden de Compra").length).toBeGreaterThanOrEqual(1);
+      // Verifica que el detalle de la orden se abra en modal con su título canónico y totales
+      expect(screen.getAllByText(/Detalle de orden de compra/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText("Totales de la Compra")).toBeInTheDocument();
 
       // Cerrar resumen

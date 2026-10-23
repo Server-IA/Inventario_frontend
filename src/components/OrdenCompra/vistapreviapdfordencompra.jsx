@@ -8,6 +8,7 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-01 | 0.4.0   | Cesar Medina         | Creación del componente.    |
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Consumir totalUnidades y valorTotal directamente del backend, soporte de unidades heterogéneas y estado de error. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [HU-041.2 / Task #231] Reemplazar colores hardcodeados por tokens de tema (background.paper, text.primary/secondary, divider) y eliminar título duplicado. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import React from "react";
@@ -53,83 +54,122 @@ export default function VistaPreviaPDFOrdenCompra({ orden }) {
   }).format(valorTotalNumber);
 
   return (
-    <Box mt={4}>
-      <Card elevation={3} sx={{ maxWidth: 550, backgroundColor: "#1e1e1e", borderRadius: 3, alignSelf: "flex-start" }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ color: "#fff", fontWeight: 700 }}>
-            {t("ordenCompra.modal.previewTitle", "Resumen de la Orden de Compra")}
-          </Typography>
-
-          <Grid container spacing={1}>
+    <Box mt={1}>
+      <Card
+        elevation={0}
+        sx={{
+          maxWidth: 550,
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          border: (theme) => `1px solid ${theme.palette.divider}`,
+          alignSelf: "flex-start",
+        }}
+      >
+        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+          <Grid container spacing={1.5}>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>ID:</strong></Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>ID:</strong>
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{idOrden}</Typography>
-            </Grid>
-
-            <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.order", "Pedido")}:</strong></Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{pedidoId}</Typography>
-            </Grid>
-
-            <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.fecha", "Fecha")}:</strong></Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{fecha}</Typography>
+              <Typography variant="body2" color="text.primary">
+                {idOrden}
+              </Typography>
             </Grid>
 
             <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.supplier", "Proveedor")}:</strong></Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.order", "Pedido")}:</strong>
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{proveedor}</Typography>
-            </Grid>
-
-            <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.headquarters", "Sede")}:</strong></Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{sede}</Typography>
+              <Typography variant="body2" color="text.primary">
+                {pedidoId}
+              </Typography>
             </Grid>
 
             <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.warehouse", "Almacén")}:</strong></Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.fecha", "Fecha")}:</strong>
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{almacen}</Typography>
+              <Typography variant="body2" color="text.primary">
+                {fecha}
+              </Typography>
             </Grid>
 
             <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.status", "Estado")}:</strong></Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.supplier", "Proveedor")}:</strong>
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#fff" }}>{estado}</Typography>
+              <Typography variant="body2" color="text.primary">
+                {proveedor}
+              </Typography>
+            </Grid>
+
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.headquarters", "Sede")}:</strong>
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.primary">
+                {sede}
+              </Typography>
+            </Grid>
+
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.warehouse", "Almacén")}:</strong>
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.primary">
+                {almacen}
+              </Typography>
+            </Grid>
+
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.status", "Estado")}:</strong>
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="body2" color="text.primary">
+                {estado}
+              </Typography>
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 2, borderColor: "rgba(255,255,255,0.15)" }} />
+          <Divider sx={{ my: 2 }} />
 
           {/* HU-041.2: Resumen económico y total de unidades según backend */}
-          <Typography variant="subtitle2" sx={{ color: "#66bb6a", fontWeight: 700, mb: 1 }}>
+          <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 700, mb: 1 }}>
             {t("ordenCompra.sections.totals", "Totales de la Compra")}
           </Typography>
-          <Grid container spacing={1}>
+          <Grid container spacing={1.5}>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.totalUnits", "Total Unidades")}:</strong></Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.totalUnits", "Total Unidades")}:</strong>
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#fff", fontWeight: 600 }}>{totalUnidadesDisplay}</Typography>
+              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                {totalUnidadesDisplay}
+              </Typography>
             </Grid>
 
             <Grid item xs={6}>
-              <Typography sx={{ color: "#bbb" }}><strong>{t("ordenCompra.columns.totalValue", "Valor Total")}:</strong></Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>{t("ordenCompra.columns.totalValue", "Valor Total")}:</strong>
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "1.05rem" }}>
+              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 700, fontSize: "1.05rem" }}>
                 {valorTotalDisplay}
               </Typography>
             </Grid>

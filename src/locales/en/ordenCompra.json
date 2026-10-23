@@ -66,7 +66,8 @@
     "exportTitle": "Generate Purchase Order Report",
     "exporting": "Generating document, please wait...",
     "exportSub": "Select the format to download your report.",
-    "previewTitle": "Report Preview"
+    "previewTitle": "Report Preview",
+    "detailTitle": "Purchase order detail"
   },
   "grid": {
     "title": "Purchase orders found",
