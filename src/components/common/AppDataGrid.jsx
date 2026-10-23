@@ -9,6 +9,7 @@ CONTROL DE CAMBIOS
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
 | 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Corregir fondo en modo oscuro (bodyBg en lugar de blanco hardcodeado) para garantizar contraste legible. |
 | 2026-10-06 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Limpieza de ESLint: retirar supresión global y corregir variables/slots sin uso. |
+| 2026-10-23 | 0.4.1   | Oscar Julian Andrade | Propagar pageSize y size al cambiar filas por página en paginación server-side (HU-044.4). |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -452,11 +453,13 @@ export default function AppDataGrid({
                 pageSize: paginationModel.pageSize ?? paginationModel.size ?? pageSizeOptions[0] ?? 10,
               },
               onPaginationModelChange: (model) => {
-                const next = {
+                const pageSize =
+                  model.pageSize ?? model.size ?? pageSizeOptions[0] ?? 10;
+                setPaginationModel?.({
                   page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? pageSizeOptions[0] ?? 10,
-                };
-                setPaginationModel?.(next);
+                  pageSize,
+                  size: pageSize,
+                });
               },
               rowCount,
             }
