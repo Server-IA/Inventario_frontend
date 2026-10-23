@@ -17,11 +17,13 @@ import SectionHeader from "../../common/SectionHeader.jsx";
 import GridActionBar from "../../common/GridActionBar.jsx";
 import AppDataGrid from "../../common/AppDataGrid.jsx";
 import MessageSnackBar from "../../MessageSnackBar.jsx";
+import FormTipoCostoIndirecto from "./FormTipoCostoIndirecto.jsx";
 import FiltroTipoCostoIndirecto from "./FiltroTipoCostoIndirecto.jsx";
 import { filtrosVacios, toParams, parseServerError } from "./tipoCostoIndirectoValidation";
 
 export default function TipoCostoIndirecto() {
   const { t } = useTranslation();
+  const [formOpen, setFormOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtros, setFiltros] = useState(filtrosVacios);
@@ -29,7 +31,7 @@ export default function TipoCostoIndirecto() {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [refreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [message, setMessage] = useState({ open: false, severity: "success", text: "" });
 
   const queryParams = useMemo(() => toParams(filtros), [filtros]);
@@ -156,6 +158,16 @@ export default function TipoCostoIndirecto() {
 
   const hasActiveFilters = Object.keys(queryParams).length > 0;
 
+  const handleCreate = () => {
+    setSelectedRow(null);
+    setFormOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedRow?.id) return;
+    setFormOpen(true);
+  };
+
   return (
     <Box p={2}>
       <SectionHeader titleKey="costos.tipoCostoIndirecto.title" />
@@ -163,8 +175,8 @@ export default function TipoCostoIndirecto() {
       <MessageSnackBar message={message} setMessage={setMessage} />
 
       <GridActionBar
-        onAdd={() => {}}
-        onUpdate={() => {}}
+        onAdd={handleCreate}
+        onUpdate={handleUpdate}
         onDelete={() => {}}
         canAdd={true}
         canUpdate={Boolean(selectedRow)}
@@ -189,6 +201,17 @@ export default function TipoCostoIndirecto() {
           ))}
         </Stack>
       )}
+
+      <FormTipoCostoIndirecto
+        open={formOpen}
+        setOpen={setFormOpen}
+        selectedRow={selectedRow}
+        setMessage={setMessage}
+        onCreated={() => {
+          setRefreshKey((k) => k + 1);
+          setSelectedRow(null);
+        }}
+      />
 
       <FiltroTipoCostoIndirecto
         open={filtersOpen}
