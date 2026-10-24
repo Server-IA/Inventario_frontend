@@ -1,0 +1,15 @@
+EVIDENCIA CONTRACTUAL ISSUE #321 - HTTP 400 invalid_params como objeto
+Fecha: 2026-10-23
+Endpoint: PUT /api/v1/usuarios/{id}
+Respuesta del Backend:
+{
+  "detail": "La solicitud contiene datos inválidos o acciones no permitidas.",
+  "invalid_params": {
+    "asignaciones[2].rolId": "El rol 'GERENTE' no está activo para la empresa 'Empresa Norte'.",
+    "asignaciones[4].rolId": "El rol 'SUPERVISOR' no está activo para la empresa 'Coagrohuila Central'."
+  }
+}
+
+Resultado visual en Frontend:
+Snackbar / Alerta muestra:
+"La solicitud contiene datos inválidos o acciones no permitidas.: El rol 'GERENTE' no está activo para la empresa 'Empresa Norte'.; El rol 'SUPERVISOR' no está activo para la empresa 'Coagrohuila Central'."

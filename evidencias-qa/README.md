@@ -82,3 +82,24 @@ literal enviado y status HTTP), con validación automática del body: `OK - DTO 
 | Preload duplicado de `/filtros` | Se eliminó la segunda llamada a `fetchCatalogs()`; el preload vive únicamente en el hook. | T-214 |
 | Clave i18n `kardex.messages.resultsCount` ausente | Agregada en `es` y `en`. | T-214 |
 | Pruebas sin cobertura de paginación | Pruebas que disparan página 1 y cambio de tamaño verificando la 2ª y 3ª petición a `/resumen`. | T-214 / T-231 |
+
+---
+
+## Issue #321 — Error HTTP 400 invalid_params como objeto (PR #126)
+
+| Archivo | Evidencia |
+|---|---|
+| `issue321_01_http400_invalid_params_funcional.png` | Respuesta HTTP 400 con `invalid_params` como mapa de objetos. Se observa el Snackbar alertando los mensajes funcionales completos (`El rol 'GERENTE' no está activo para la empresa 'Empresa Norte'`, etc.) sin exponer índices técnicos (`asignaciones[2].rolId`). |
+| `issue321_evidencia_contrato_400.txt` | Detalle del payload de backend simulado y captura del mensaje formateado para el usuario. |
+
+---
+
+## Issue #324 — SearchableSelect con altura 56px, notch alineado y modo oscuro sin halo (PR #134)
+
+| Archivo | Evidencia |
+|---|---|
+| `issue324_02_form_modo_claro_notch_alineacion.png` | Formulario de usuario en modo claro: campos con altura canónica uniforme (56px) y `notched outline` abriendo el hueco exacto para la etiqueta sin tacharla. |
+| `issue324_03_filtros_dark_select_busqueda.png` | Modal de filtros en modo oscuro sin halo neón, sombra neutra sobria (`rgba(0,0,0,0.5)`). |
+| `issue324_04_filtros_modo_oscuro_sin_halo.png` | Diálogo de filtros en dark mode con fondo limpio y bordes sutiles sin resplandor claro. |
+| `issue324_04_form_dark_select_busqueda.png` | Formulario en modo oscuro con paleta sobria, tarjetas sin resplandor y campos consistentes. |
+| `issue324_05_form_modo_oscuro_sin_halo.png` | Vista completa del modal de usuario en dark mode demostrando la eliminación del resplandor neón en los marcos. |
