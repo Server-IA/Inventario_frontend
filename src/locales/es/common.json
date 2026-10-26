@@ -15,7 +15,9 @@
     "remove": "Quitar",
     "addAssignment": "Agregar asignación",
     "search": "Buscar",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "activate": "Activar",
+    "inactivate": "Inactivar"
   },
   "labels": {
     "status": "Estado",

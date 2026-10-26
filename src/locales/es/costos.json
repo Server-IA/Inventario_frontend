@@ -1,0 +1,57 @@
+{
+  "tipoCostoIndirecto": {
+    "title": "Gestión de Tipos de Costos Indirectos",
+    "columns": {
+      "id": "ID",
+      "nombre": "Nombre",
+      "descripcion": "Descripción",
+      "estado": "Estado",
+      "empresa": "Empresa"
+    },
+    "grid": {
+      "empty": "No hay tipos de costos indirectos para mostrar."
+    },
+    "filters": {
+      "title": "Filtrar tipos de costos indirectos",
+      "nombre": "Nombre",
+      "estado": "Estado"
+    },
+    "form": {
+      "title": "Registrar tipo de costo indirecto",
+      "editTitle": "Actualizar tipo de costo indirecto",
+      "fields": {
+        "nombre": "Nombre",
+        "descripcion": "Descripción"
+      },
+      "helpers": {
+        "optional": "Opcional",
+        "charLimit": "{{count}} / {{max}} caracteres"
+      },
+      "validation": {
+        "nombreRequired": "El nombre es obligatorio.",
+        "nombreMaxLength": "El nombre no puede exceder 100 caracteres.",
+        "descripcionMaxLength": "La descripción no puede exceder 2048 caracteres."
+      }
+    },
+    "confirmState": {
+      "activateTitle": "Activar tipo de costo indirecto",
+      "inactivateTitle": "Inactivar tipo de costo indirecto",
+      "activateText": "¿Deseas activar el tipo de costo indirecto \"{{nombre}}\"? Volverá a estar disponible para la parametrización de costos.",
+      "inactivateText": "¿Deseas inactivar el tipo de costo indirecto \"{{nombre}}\"? Dejará de estar disponible para registrar nuevos costos indirectos."
+    },
+    "messages": {
+      "created": "El tipo de costo indirecto fue registrado exitosamente.",
+      "updated": "El tipo de costo indirecto fue actualizado exitosamente.",
+      "stateChanged": "El estado del tipo de costo indirecto fue actualizado exitosamente.",
+      "listError": "No se pudo cargar el listado de tipos de costos indirectos.",
+      "forbidden": "No tienes permisos para consultar los tipos de costos indirectos.",
+      "notFound": "El tipo de costo indirecto no fue encontrado.",
+      "conflict": "No se puede completar la operación porque existe un conflicto con el tipo de costo indirecto.",
+      "invalidValue": "Valor inválido.",
+      "saveError": "No se pudo guardar el tipo de costo indirecto.",
+      "stateError": "No se pudo cambiar el estado del tipo de costo indirecto.",
+      "duplicateName": "Ya existe un tipo de costo indirecto con ese nombre para la empresa.",
+      "hasActiveCosts": "No se puede inactivar porque tiene costos indirectos activos asociados."
+    }
+  }
+}

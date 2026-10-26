@@ -6,7 +6,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import i18n from "../../i18n";
 import UserFiltersDialog from "../Usuario/UserFiltersDialog";
 
-const renderDialog = (overrides = {}) => {
+const renderDialog = ({ themeMode = "light", ...overrides } = {}) => {
   const callbacks = {
     onClose: vi.fn(),
     onChange: vi.fn(),
@@ -15,7 +15,7 @@ const renderDialog = (overrides = {}) => {
   };
 
   render(
-    <ThemeProvider theme={createTheme({ palette: { mode: "light" } })}>
+    <ThemeProvider theme={createTheme({ palette: { mode: themeMode } })}>
       <UserFiltersDialog
         open
         values={{ username: "", nombre: "", apellido: "", rolId: "", estadoId: "", empresaId: "" }}
@@ -82,6 +82,18 @@ describe("Issue #323 - UserFiltersDialog simplificado", () => {
     await user.click(empresa);
     await user.click(await screen.findByRole("option", { name: "INMERO" }));
     expect(onChange).toHaveBeenLastCalledWith("empresaId", "1");
+  });
+
+  it("no usa sombras ni acentos claros en modo oscuro", () => {
+    renderDialog({ themeMode: "dark" });
+
+    const dialog = screen.getByRole("dialog");
+    const header = dialog.querySelector(".MuiDialogTitle-root");
+    const shadow = getComputedStyle(dialog).boxShadow.replace(/\s+/g, "").toLowerCase();
+
+    expect(shadow).toContain("rgba(0,0,0");
+    expect(shadow).not.toContain("231,246,247");
+    expect(getComputedStyle(header).borderTop).not.toContain("231, 246, 247");
   });
 
   it("conserva las acciones Limpiar, Cancelar, Aplicar y cerrar", async () => {

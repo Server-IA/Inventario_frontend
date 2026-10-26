@@ -28,6 +28,8 @@ CONTROL DE CAMBIOS
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se habilita estado para admin empresa contexto|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se reemplaza confirmación nativa por modal MUI|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se corrige prioridad de mapeo para inactivo.  |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #321] Interpretar invalid_params en respuestas HTTP 400 y mostrar motivos específicos de asignaciones. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #321] Soportar invalid_params como objeto clave-valor y listar mensajes funcionales de asignaciones afectadas. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -290,9 +292,41 @@ const normalizeStatusId = (value) => {
  * @param {object} payload Cuerpo de respuesta.
  * @returns {string}
  */
-const resolveBackendMessage = (payload) => {
+export const resolveBackendMessage = (payload) => {
   if (typeof payload === "string") return payload;
   if (!payload || typeof payload !== "object") return "";
+
+  const invalidParams = payload?.invalid_params || payload?.invalidParams;
+
+  if (invalidParams && typeof invalidParams === "object") {
+    let details = [];
+
+    if (Array.isArray(invalidParams)) {
+      details = invalidParams
+        .map((item) => {
+          if (typeof item === "string") return item.trim();
+          return (item?.reason || item?.message || "").trim();
+        })
+        .filter(Boolean);
+    } else {
+      // invalid_params como objeto clave-valor: { "asignaciones[2].rolId": "El rol 'GERENTE' no está activo..." }
+      details = Object.entries(invalidParams)
+        .map(([, val]) => {
+          if (typeof val === "string") return val.trim();
+          if (val && typeof val === "object") return (val?.reason || val?.message || "").trim();
+          return "";
+        })
+        .filter(Boolean);
+    }
+
+    if (details.length > 0) {
+      const summary = payload?.detail ?? payload?.message ?? payload?.mensaje ?? "";
+      if (summary) {
+        return `${summary}: ${details.join("; ")}`;
+      }
+      return details.join("; ");
+    }
+  }
 
   return (
     // RFC 7807 / ProblemDetail: detail explica la regla de negocio fallida.
@@ -1069,6 +1103,7 @@ export default function Usuario() {
           severity: "success",
           text: successMessage,
         });
+        return { success: true };
       } else {
         const requestId =
           payload.requestId ??
@@ -1139,6 +1174,7 @@ export default function Usuario() {
           severity: "success",
           text: successMessage,
         });
+        return { success: true };
       }
     } catch (err) {
       const fallbackMessage =
@@ -1150,6 +1186,7 @@ export default function Usuario() {
         severity: "error",
         text: resolveBackendMessage(err?.response?.data) || fallbackMessage,
       });
+      return { success: false };
     }
   };
 
