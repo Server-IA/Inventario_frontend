@@ -44,6 +44,17 @@
   "actions": {
     "generate": "Generar Reporte"
   },
+  "pedido": {
+    "fallbackLabel": "Pedido #{{id}}",
+    "statusMatchers": {
+      "active": ["activo", "active"],
+      "inactive": ["inactivo", "anulado", "cancelado", "completado", "finalizado", "inactive", "cancelled", "completed", "finalized"]
+    },
+    "messages": {
+      "unavailable": "El pedido seleccionado ya no está disponible o no está activo. Selecciona un pedido activo antes de continuar.",
+      "notActive": "El pedido seleccionado no está en estado activo. Selecciona un pedido activo antes de continuar."
+    }
+  },
   "messages": {
     "catalogsError": "Error al cargar catálogos. Por favor, reintente.",
     "emptyDates": "El rango de fechas es obligatorio.",
