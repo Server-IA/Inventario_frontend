@@ -10,6 +10,10 @@
  |            |         |                      | agrega cascada geografica   |
  |            |         |                      | y filtros por pais,         |
  |            |         |                      | departamento y municipio.   |
+| 2026-10-23 | 0.4.0   | Cesar Medina         | Prioriza campos geograficos |
+|            |         |                      | planos del backend y evita  |
+|            |         |                      | cargas redundantes en       |
+|            |         |                      | filtros cerrados.           |
  | 2026-10-05 | 0.4.0   | Cesar Medina         | Corrige carga parcial de    |
  |            |         |                      | catalogos y preserva grupo  |
  |            |         |                      | y tipo de sede si otros     |
@@ -137,9 +141,6 @@ export default function Sede() {
   const [openFilters, setOpenFilters] = useState(false);
   const [gruposItems, setGruposItems] = useState([]);
   const [tiposSedeItems, setTiposSedeItems] = useState([]);
-  const [paisesCatalog, setPaisesCatalog] = useState([]);
-  const [departamentosCatalog, setDepartamentosCatalog] = useState([]);
-  const [municipiosCatalog, setMunicipiosCatalog] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -152,21 +153,24 @@ export default function Sede() {
   });
 
   const token = localStorage.getItem("token");
-  const headers = { headers: { Authorization: `Bearer ${token}` } };
-  const { getPaises, getDepartamentos, getMunicipios } = makeLoaders(headers);
+  const headers = useMemo(
+    () => ({ headers: { Authorization: `Bearer ${token}` } }),
+    [token]
+  );
+  const filterLoaders = useMemo(() => makeLoaders(headers), [headers]);
 
   const fieldsSede = useMemo(
     () => [
       {
         name: "paisId",
         labelKey: "sede.filters.country",
-        getOptions: getPaises,
+        getOptions: filterLoaders.getPaises,
         clearChildren: ["deptoId", "municipioId"],
       },
       {
         name: "deptoId",
         labelKey: "sede.filters.department",
-        getOptions: getDepartamentos,
+        getOptions: filterLoaders.getDepartamentos,
         dependsOn: ["paisId"],
         disabled: (values) => !values.paisId,
         clearChildren: ["municipioId"],
@@ -174,12 +178,12 @@ export default function Sede() {
       {
         name: "municipioId",
         labelKey: "sede.filters.municipality",
-        getOptions: getMunicipios,
+        getOptions: filterLoaders.getMunicipios,
         dependsOn: ["deptoId"],
         disabled: (values) => !values.deptoId,
       },
     ],
-    [getDepartamentos, getMunicipios, getPaises]
+    [filterLoaders]
   );
 
   const gruposForm = useMemo(
@@ -199,18 +203,6 @@ export default function Sede() {
     [tiposSedeItems]
   );
 
-  const paisesById = useMemo(
-    () => new Map(paisesCatalog.map((pais) => [Number(pais.id), pais])),
-    [paisesCatalog]
-  );
-  const departamentosById = useMemo(
-    () => new Map(departamentosCatalog.map((depto) => [Number(depto.id), depto])),
-    [departamentosCatalog]
-  );
-  const municipiosById = useMemo(
-    () => new Map(municipiosCatalog.map((municipio) => [Number(municipio.id), municipio])),
-    [municipiosCatalog]
-  );
   const gruposById = useMemo(
     () => new Map(gruposItems.map((grupo) => [Number(grupo.id), grupo])),
     [gruposItems]
@@ -232,23 +224,19 @@ export default function Sede() {
         const tipoSedeId = Number(
           sede.tipoSedeId ?? sede.tipoSede?.id ?? sede.tipo_sede_id ?? 0
         );
-        const municipio = municipiosById.get(municipioId);
         const deptoId = Number(
-          sede.departamentoId ??
+          sede.deptoId ??
+            sede.departamentoId ??
             sede.departamento?.id ??
-            municipio?.departamentoId ??
-            municipio?.departamento?.id ??
+            sede.departamento_id ??
             0
         );
-        const departamento = departamentosById.get(deptoId);
         const paisId = Number(
           sede.paisId ??
             sede.pais?.id ??
-            departamento?.paisId ??
-            departamento?.pais?.id ??
+            sede.pais_id ??
             0
         );
-        const pais = paisesById.get(paisId);
         const grupo = gruposById.get(grupoId);
         const tipoSede = tiposSedeById.get(tipoSedeId);
 
@@ -259,14 +247,23 @@ export default function Sede() {
           paisId: paisId || "",
           grupoId: grupoId || "",
           tipoSedeId: tipoSedeId || "",
-          paisNombre: sede.pais?.nombre ?? pais?.nombre ?? "",
+          paisNombre:
+            sede.paisNombre ??
+            sede.pais_nombre ??
+            sede.pais?.nombre ??
+            sede.pais?.name ??
+            "",
           departamentoNombre:
-            sede.departamento?.nombre ?? departamento?.nombre ?? "",
+            sede.departamentoNombre ??
+            sede.departamento_nombre ??
+            sede.departamento?.nombre ??
+            sede.departamento?.name ??
+            "",
           municipioNombre:
+            sede.municipioNombre ??
+            sede.municipio_nombre ??
             sede.municipio?.nombre ??
             sede.municipio?.name ??
-            municipio?.nombre ??
-            municipio?.name ??
             "",
           grupoNombre:
             sede.grupo?.nombre ??
@@ -283,10 +280,7 @@ export default function Sede() {
         };
       }),
     [
-      departamentosById,
       gruposById,
-      municipiosById,
-      paisesById,
       sedes,
       tiposSedeById,
     ]
@@ -321,36 +315,6 @@ export default function Sede() {
 
   const loadCatalogs = async () => {
     const catalogRequests = [
-      {
-        key: "paises",
-        label: t("sede.catalogs.country"),
-        request: axios.get("/v1/pais", {
-          ...headers,
-          params: { page: 0, size: 1000 },
-        }),
-        normalize: (payload) => unwrapPage(payload),
-        apply: (items) => setPaisesCatalog(items),
-      },
-      {
-        key: "departamentos",
-        label: t("sede.catalogs.department"),
-        request: axios.get("/v1/departamento", {
-          ...headers,
-          params: { page: 0, size: 1000 },
-        }),
-        normalize: (payload) => unwrapPage(payload),
-        apply: (items) => setDepartamentosCatalog(items),
-      },
-      {
-        key: "municipios",
-        label: t("sede.catalogs.municipality"),
-        request: axios.get("/v1/municipio", {
-          ...headers,
-          params: { page: 0, size: 5000 },
-        }),
-        normalize: (payload) => unwrapPage(payload),
-        apply: (items) => setMunicipiosCatalog(items),
-      },
       {
         key: "grupos",
         label: t("sede.catalogs.group"),

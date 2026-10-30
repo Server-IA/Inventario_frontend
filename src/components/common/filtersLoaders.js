@@ -1,3 +1,17 @@
+/*=============================================================================
+ Nombre del archivo : filtersLoaders.js
+ Descripcion        : Loaders compartidos para filtros CRUD y cascadas.
+===============================================================================
+ CONTROL DE CAMBIOS
+ +------------+---------+----------------------+-----------------------------+
+ |   Fecha    | Versión |      Autor           | Descripción del cambio      |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-10-30 | 0.4.0   | Cesar Medina         | Migra loaders geograficos a |
+ |            |         |                      | endpoints items compatibles |
+ |            |         |                      | con Administrador Empresa.  |
+ +------------+---------+----------------------+-----------------------------+
+=============================================================================*/
+
 import axios from "../axiosConfig";
 
 /** Normaliza: [] ó { content: [] } */
@@ -22,35 +36,37 @@ export const makeLoaders = (headers, opts = {}) => {
 
   /** País */
   const getPaises = async () => {
-    const { data } = await axios.get("/v1/pais", {
-      ...headers,
-      params: { page: 0, size: 1000 },
-    });
-    return unwrap(data).map((p) => ({ value: p.id, label: p.nombre }));
+    const { data } = await axios.get("/v1/items/pais/0", headers);
+    return unwrap(data).map((p) => ({
+      value: p.id,
+      label: p.name ?? p.nombre ?? String(p.id),
+    }));
   };
 
   /** Departamento (depende de paisId) */
   const getDepartamentos = async (values) => {
     if (!values.paisId) return [];
-    const { data } = await axios.get("/v1/departamento", {
-      ...headers,
-      params: { page: 0, size: 1000 },
-    });
-    const list = unwrap(data).filter(
-      (d) => Number(d.paisId) === Number(values.paisId)
+    const { data } = await axios.get(
+      `/v1/items/departamento/${Number(values.paisId)}`,
+      headers
     );
-    return list.map((d) => ({ value: d.id, label: d.nombre }));
+    return unwrap(data).map((d) => ({
+      value: d.id,
+      label: d.name ?? d.nombre ?? String(d.id),
+    }));
   };
 
   /** Municipio (depende de deptoId) */
   const getMunicipios = async (values) => {
     if (!values.deptoId) return [];
-    const { data } = await axios.get("/v1/municipio", {
-      ...headers,
-      params: { departamentoId: values.deptoId, page: 0, size: 1000 },
-    });
-    const list = unwrap(data);
-    return list.map((m) => ({ value: m.id, label: m.nombre }));
+    const { data } = await axios.get(
+      `/v1/items/municipio/${Number(values.deptoId)}`,
+      headers
+    );
+    return unwrap(data).map((m) => ({
+      value: m.id,
+      label: m.name ?? m.nombre ?? String(m.id),
+    }));
   };
 
   /** Sede (depende de municipioId; opcional empresaId) */

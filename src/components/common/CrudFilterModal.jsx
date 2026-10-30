@@ -6,6 +6,9 @@
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-10-30 | 0.4.0   | Cesar Medina         | Evita cargas de opciones    |
+ |            |         |                      | con modal cerrado e ignora  |
+ |            |         |                      | respuestas obsoletas.       |
  | 2026-09-21 | 0.4.0   | Cesar Medina         | Permite personalizar el     |
  |            |         |                      | estilo visual del modal.    |
  +------------+---------+----------------------+-----------------------------+
@@ -66,22 +69,47 @@ export default function CrudFilterModal({
   };
 
   useEffect(() => {
-    fields.forEach(async (f) => {
-      if (f.getOptions) {
-        const opts = await f.getOptions(values);
-        setOptions((prev) => ({ ...prev, [f.name]: opts }));
-        
-        // Auto-seleccionar si solo hay una opción y el campo está vacío
-        if (opts.length === 1 && !values[f.name]) {
-          const field = fields.find(field => field.name === f.name);
-          // Solo auto-completar si el campo no está deshabilitado
-          if (!field?.disabled?.(values)) {
-            handleFieldChange(f.name, opts[0].value);
+    if (!open) return undefined;
+
+    let active = true;
+
+    const loadOptions = async () => {
+      for (const f of fields) {
+        if (!f.getOptions) continue;
+
+        try {
+          const opts = await f.getOptions(values);
+          if (!active) return;
+
+          setOptions((prev) => ({ ...prev, [f.name]: opts }));
+
+          // Auto-seleccionar si solo hay una opción y el campo está vacío
+          if (opts.length === 1 && !values[f.name]) {
+            const field = fields.find((field) => field.name === f.name);
+            // Solo auto-completar si el campo no está deshabilitado
+            if (!field?.disabled?.(values)) {
+              handleFieldChange(f.name, opts[0].value);
+            }
           }
+        } catch {
+          if (!active) return;
+          setOptions((prev) => ({ ...prev, [f.name]: [] }));
         }
       }
-    });
-  }, [fields, values]);
+    };
+
+    loadOptions();
+
+    return () => {
+      active = false;
+    };
+  }, [fields, open, values]);
+
+  useEffect(() => {
+    if (!open) {
+      setOptions({});
+    }
+  }, [open]);
 
   return (
     <Dialog

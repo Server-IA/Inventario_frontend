@@ -6,6 +6,9 @@
 +------------+---------+----------------------+-----------------------------+
 |   Fecha    | Versión |      Autor           | Descripción del cambio      |
 +------------+---------+----------------------+-----------------------------+
+| 2026-10-23 | 0.4.0   | Cesar Medina         | Migra cascada geografica a  |
+|            |         |                      | endpoints items compatibles |
+|            |         |                      | con Administrador Empresa.  |
 | 2026-10-09 | 0.4.0   | Cesar Medina         | Corrige validacion de       |
 |            |         |                      | municipio usando la cascada |
 |            |         |                      | filtrada por departamento.  |
@@ -16,7 +19,7 @@
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -152,8 +155,6 @@ export default function FormSede({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
   const [paisesOpts, setPaisesOpts] = useState([]);
-  const [departamentosCatalog, setDepartamentosCatalog] = useState([]);
-  const [municipiosCatalog, setMunicipiosCatalog] = useState([]);
   const [departamentosOpts, setDepartamentosOpts] = useState([]);
   const [municipiosOpts, setMunicipiosOpts] = useState([]);
 
@@ -174,127 +175,44 @@ export default function FormSede({
     return "";
   };
 
-  const departamentosById = useMemo(
-    () =>
-      new Map(
-        departamentosCatalog.map((departamento) => [Number(departamento.id), departamento])
-      ),
-    [departamentosCatalog]
-  );
-  const municipiosById = useMemo(
-    () =>
-      new Map(
-        municipiosCatalog.map((municipio) => [Number(municipio.id), municipio])
-      ),
-    [municipiosCatalog]
-  );
-
-  const resolveInitialLocation = ({
-    row,
-    municipios,
-    departamentos,
-  }) => {
-    const municipioId = getSafeId(
-      row?.municipioId,
-      row?.municipio?.id,
-      initialMunicipioId
-    );
-    const municipio = municipios.find(
-      (item) => Number(item.id) === Number(municipioId)
-    );
-    const deptoId = getSafeId(
+  const resolveInitialLocation = (row) => ({
+    paisId: getSafeId(
+      row?.paisId,
+      row?.pais?.id,
+      initialPaisId
+    ),
+    deptoId: getSafeId(
       row?.deptoId,
       row?.departamentoId,
       row?.departamento?.id,
-      municipio?.departamentoId,
       initialDeptoId
-    );
-    const departamento = departamentos.find(
-      (item) => Number(item.id) === Number(deptoId)
-    );
-    const paisId = getSafeId(
-      row?.paisId,
-      row?.pais?.id,
-      departamento?.paisId,
-      initialPaisId
-    );
-
-    return {
-      paisId,
-      deptoId,
-      municipioId,
-    };
-  };
+    ),
+    municipioId: getSafeId(
+      row?.municipioId,
+      row?.municipio?.id,
+      initialMunicipioId
+    ),
+  });
 
   useEffect(() => {
     if (!open) return;
 
     let active = true;
 
-    const loadLocationCatalogs = async () => {
+    const loadPaises = async () => {
       try {
-        const [paisesResult, departamentosResult, municipiosResult] =
-          await Promise.allSettled([
-            axios.get("/v1/pais", {
-              ...authHeaders,
-              params: { page: 0, size: 1000 },
-            }),
-            axios.get("/v1/departamento", {
-              ...authHeaders,
-              params: { page: 0, size: 1000 },
-            }),
-            axios.get("/v1/municipio", {
-              ...authHeaders,
-              params: { page: 0, size: 5000 },
-            }),
-          ]);
-
+        const response = await axios.get("/v1/items/pais/0", authHeaders);
         if (!active) return;
 
-        const paises =
-          paisesResult.status === "fulfilled"
-            ? asArray(paisesResult.value.data).map((pais) => ({
-                id: Number(pais.id),
-                nombre: pais.nombre ?? pais.name ?? String(pais.id),
-              }))
-            : [];
-        const departamentos =
-          departamentosResult.status === "fulfilled"
-            ? asArray(departamentosResult.value.data).map((departamento) => ({
-                id: Number(departamento.id),
-                paisId: Number(departamento.paisId),
-                nombre:
-                  departamento.nombre ??
-                  departamento.name ??
-                  String(departamento.id),
-              }))
-            : [];
-        const municipios =
-          municipiosResult.status === "fulfilled"
-            ? asArray(municipiosResult.value.data).map((municipio) => ({
-                id: Number(municipio.id),
-                departamentoId: Number(municipio.departamentoId),
-                nombre: municipio.nombre ?? municipio.name ?? String(municipio.id),
-              }))
-            : [];
-
-        const location = resolveInitialLocation({
-          row: formMode === "edit" ? selectedRow : null,
-          municipios,
-          departamentos,
-        });
+        const paises = asArray(response.data).map((pais) => ({
+          id: Number(pais.id),
+          nombre: pais.name ?? pais.nombre ?? String(pais.id),
+        }));
+        const location = resolveInitialLocation(formMode === "edit" ? selectedRow : null);
 
         setPaisesOpts(paises);
-        setDepartamentosCatalog(departamentos);
-        setMunicipiosCatalog(municipios);
-        setDepartamentosOpts(
-          location.paisId
-            ? departamentos.filter(
-                (departamento) =>
-                  Number(departamento.paisId) === Number(location.paisId)
-              )
-            : []
-        );
+        setDepartamentosOpts([]);
+        setMunicipiosOpts([]);
         setFormData({
           id:
             formMode === "edit" && selectedRow
@@ -333,19 +251,18 @@ export default function FormSede({
       } catch {
         if (!active) return;
         setPaisesOpts([]);
-        setDepartamentosCatalog([]);
-        setMunicipiosCatalog([]);
         setDepartamentosOpts([]);
         setMunicipiosOpts([]);
       }
     };
 
-    loadLocationCatalogs();
+    loadPaises();
 
     return () => {
       active = false;
     };
   }, [
+    authHeaders,
     open,
     formMode,
     selectedRow,
@@ -363,11 +280,51 @@ export default function FormSede({
       return;
     }
 
-    const nextDepartamentos = departamentosCatalog.filter(
-      (departamento) =>
-        Number(departamento.paisId) === Number(formData.paisId)
-    );
-    setDepartamentosOpts(nextDepartamentos);
+    let active = true;
+
+    const loadDepartamentosByPais = async () => {
+      try {
+        const response = await axios.get(
+          `/v1/items/departamento/${Number(formData.paisId)}`,
+          authHeaders
+        );
+        if (!active) return;
+
+        const departamentos = asArray(response.data).map((departamento) => ({
+          id: Number(departamento.id),
+          nombre: departamento.name ?? departamento.nombre ?? String(departamento.id),
+        }));
+        setDepartamentosOpts(departamentos);
+
+        if (
+          formData.deptoId &&
+          !departamentos.some(
+            (departamento) => Number(departamento.id) === Number(formData.deptoId)
+          )
+        ) {
+          setFormData((current) => ({ ...current, deptoId: "", municipioId: "" }));
+        }
+      } catch {
+        if (!active) return;
+        setDepartamentosOpts([]);
+        setMunicipiosOpts([]);
+      }
+    };
+
+    loadDepartamentosByPais();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    formData.deptoId,
+    formData.paisId,
+    open,
+    authHeaders,
+  ]);
+
+  useEffect(() => {
+    if (!open) return;
 
     if (!formData.deptoId) {
       setMunicipiosOpts([]);
@@ -378,29 +335,19 @@ export default function FormSede({
 
     const loadMunicipiosByDepartment = async () => {
       try {
-        const response = await axios.get("/v1/municipio", {
-          ...authHeaders,
-          params: { departamentoId: Number(formData.deptoId), page: 0, size: 1000 },
-        });
+        const response = await axios.get(
+          `/v1/items/municipio/${Number(formData.deptoId)}`,
+          authHeaders
+        );
         if (!active) return;
 
         const municipios = asArray(response.data).map((municipio) => ({
           id: Number(municipio.id),
-          departamentoId: Number(
-            municipio.departamentoId ?? municipio.departamento?.id ?? formData.deptoId
-          ),
-          nombre: municipio.nombre ?? municipio.name ?? String(municipio.id),
+          departamentoId: Number(formData.deptoId),
+          nombre: municipio.name ?? municipio.nombre ?? String(municipio.id),
         }));
         setMunicipiosOpts(municipios);
-        setMunicipiosCatalog((current) => {
-          const next = new Map(
-            current.map((municipio) => [Number(municipio.id), municipio])
-          );
-          municipios.forEach((municipio) => {
-            next.set(Number(municipio.id), municipio);
-          });
-          return Array.from(next.values());
-        });
+
         if (
           formData.municipioId &&
           !municipios.some(
@@ -421,10 +368,9 @@ export default function FormSede({
       active = false;
     };
   }, [
-    departamentosCatalog,
+    authHeaders,
     formData.deptoId,
     formData.municipioId,
-    formData.paisId,
     open,
   ]);
 
@@ -541,22 +487,16 @@ export default function FormSede({
     if (!Number(formData.municipioId))
       e.municipioId = t("sede.form.validation.municipalityRequired");
 
-    const selectedMunicipioFromOptions = municipiosOpts.find(
+    const selectedDepartamento = departamentosOpts.find(
+      (departamento) => Number(departamento.id) === Number(formData.deptoId)
+    );
+    const selectedMunicipio = municipiosOpts.find(
       (municipio) => Number(municipio.id) === Number(formData.municipioId)
     );
-    const selectedMunicipio =
-      selectedMunicipioFromOptions ??
-      municipiosById.get(Number(formData.municipioId));
-    const selectedDepartamento = departamentosById.get(Number(formData.deptoId));
     const municipioMatchesCurrentDepartment =
       !Number(formData.municipioId) ||
       !Number(formData.deptoId) ||
-      (municipiosOpts.length > 0
-        ? Boolean(selectedMunicipioFromOptions)
-        : Boolean(
-            selectedMunicipio &&
-              Number(selectedMunicipio.departamentoId) === Number(formData.deptoId)
-          ));
+      Boolean(selectedMunicipio);
 
     if (
       Number(formData.municipioId) &&
