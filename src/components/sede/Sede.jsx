@@ -56,7 +56,7 @@ const getDialogUi = (theme) => {
   const green = isDark ? "#2b6b60" : "#173f39";
   const surface = isDark ? "#10211f" : theme.palette.common.white;
   const sectionSurface = isDark ? "#142b28" : theme.palette.common.white;
-  const summarySurface = isDark ? alpha("#2b6b60", 0.28) : "#dfeae6";
+
   const subtleBorder = alpha(green, 0.14);
   const softShadow = `0 10px 30px ${alpha(darkGreen, isDark ? 0.18 : 0.08)}`;
   const sectionShadow = `0 4px 14px ${alpha(darkGreen, isDark ? 0.14 : 0.05)}`;
@@ -91,12 +91,7 @@ const getDialogUi = (theme) => {
       backgroundColor: surface,
       borderTop: `1px solid ${subtleBorder}`,
     },
-    summaryCardSx: {
-      borderRadius: 2,
-      border: `1px solid ${subtleBorder}`,
-      boxShadow: sectionShadow,
-      backgroundColor: summarySurface,
-    },
+
     formCardSx: {
       borderRadius: 2,
       border: `1px solid ${subtleBorder}`,
@@ -505,7 +500,7 @@ export default function Sede() {
         paperSx={dialogUi.paperSx}
         titleSx={dialogUi.titleSx}
         contentSx={dialogUi.contentSx}
-        summaryCardSx={dialogUi.summaryCardSx}
+
         formCardSx={dialogUi.formCardSx}
         bodySx={dialogUi.bodySx}
         actionsSx={dialogUi.actionsSx}

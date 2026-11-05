@@ -80,7 +80,7 @@ const getDialogUi = (theme) => {
     },
     contentSx: {
       px: { xs: 2.25, sm: 3 },
-      pt: 6,
+      pt: 3,
       pb: 2.5,
       backgroundColor: surface,
     },
@@ -292,6 +292,7 @@ export default function FormSede({
 
         const departamentos = asArray(response.data).map((departamento) => ({
           id: Number(departamento.id),
+          paisId: Number(formData.paisId),
           nombre: departamento.name ?? departamento.nombre ?? String(departamento.id),
         }));
         setDepartamentosOpts(departamentos);
