@@ -15,7 +15,9 @@
     "remove": "Remove",
     "addAssignment": "Add assignment",
     "search": "Search",
-    "retry": "Retry"
+    "retry": "Retry",
+    "activate": "Activate",
+    "inactivate": "Inactivate"
   },
   "labels": {
     "status": "Status",
