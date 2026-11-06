@@ -243,25 +243,6 @@ test.afterAll(async () => {
 
       if (resource.relationId != null) {
         try {
-          const permissionsResponse = await api.get(
-            `${BACKEND_URI}/api/v1/empresa-rol-permisos/rol/${resource.roleId}/permisos?empresaId=${resource.empresaId}`,
-            { headers: authHeaders(token) }
-          );
-          if (permissionsResponse.ok()) {
-            const permissionIds = unwrap(await permissionsResponse.json()).map((permission) => permission.id);
-            if (permissionIds.length > 0) {
-              const deletePermissions = await api.delete(
-                `${BACKEND_URI}/api/v1/empresa-rol-permisos/rol/${resource.roleId}/permisos/quitar?empresaId=${resource.empresaId}`,
-                { headers: authHeaders(token), data: { permisosId: permissionIds } }
-              );
-              if (![200, 202, 204].includes(deletePermissions.status())) {
-                failures.push(`${label}: retirar permisos devolvió HTTP ${deletePermissions.status()}`);
-              }
-            }
-          } else {
-            failures.push(`${label}: consultar permisos devolvió HTTP ${permissionsResponse.status()}`);
-          }
-
           const deleteRelation = await api.delete(
             `${BACKEND_URI}/api/v1/system/empresa-rol/${resource.relationId}`,
             { headers: authHeaders(token) }
