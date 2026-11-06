@@ -8,6 +8,7 @@ import {
   clickDialogButton,
   expectSnackMessage,
   findGridCellInColumnAcrossPages,
+  findFirstAvailableEmpresaRolPermission,
   authHeaders,
   BACKEND_URI,
 } from './helpers/e2e.shared.utils';
@@ -38,10 +39,12 @@ async function createRoleByApi(request) {
 
 async function createEmpresaRolByApi(request, rolId, empresaId) {
   const token = await loginAsAdminGetToken(request);
+  const permission = await findFirstAvailableEmpresaRolPermission(request, token);
   const res = await request.post(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
     headers: authHeaders(token),
-    data: { empresaId, rolId },
+    data: { empresaId, rolId, permisoIds: [Number(permission.id)] },
   });
+  expect([200, 201, 204], `No fue posible crear Empresa-Rol para empresa ${empresaId}`).toContain(res.status());
   return res.status();
 }
 
@@ -83,6 +86,17 @@ async function getRowByRolNombre(page, rolNombre) {
     maxPages: 80,
   });
   return cell.locator('xpath=ancestor::*[@role="row" and @data-id]').first();
+}
+
+async function getEstadoEmpresaRol(page, rowId) {
+  const estadoHeader = page.getByRole('columnheader', { name: 'Estado' });
+  const estadoColumnIndex = await estadoHeader.getAttribute('aria-colindex');
+  if (!estadoColumnIndex) return '';
+
+  const row = page.locator(`[role="row"][data-id="${rowId}"]`);
+  if ((await row.count()) === 0) return '';
+
+  return ((await row.locator(`[role="cell"][aria-colindex="${estadoColumnIndex}"]`).textContent()) ?? '').trim();
 }
 
 async function deleteEmpresaRolByRolNombre(page, rolNombre, maxAttempts = 3) {
@@ -170,29 +184,19 @@ test.describe('RF-036 - Empresa Rol (admin sistema) casos positivos', () => {
     await clickDialogButton(page, 'Cerrar');
   });
 
-  test('ERS-04: eliminar la relación creada', async ({ page }) => {
+  test('ERS-04: inactiva la relación creada mediante soft-delete', async ({ page }) => {
     expect(uniqueRoleName, 'beforeAll debió crear el rol de prueba').toBeTruthy();
     await waitForGridRowsLoaded(page);
 
-    const { status } = await deleteEmpresaRolByRolNombre(page, uniqueRoleName);
+    const { rowId, status } = await deleteEmpresaRolByRolNombre(page, uniqueRoleName);
     expect([200, 202, 204]).toContain(status);
     await expectSnackMessage(page, /eliminados correctamente|eliminado|eliminar|no se puede eliminar|asociad/i);
 
     await expect
       .poll(
-        async () => {
-          try {
-            await findGridCellInColumnAcrossPages(page, 'Rol', uniqueRoleName, {
-              timeout: 3000,
-              maxPages: 80,
-            });
-            return false;
-          } catch {
-            return true;
-          }
-        },
-        { timeout: 15000, message: `La relación con rol "${uniqueRoleName}" sigue visible tras eliminar` }
+        () => getEstadoEmpresaRol(page, rowId),
+        { timeout: 15000, message: `La relación con rol "${uniqueRoleName}" no quedó inactiva` }
       )
-      .toBe(true);
+      .toMatch(/^Inactivo$/i);
   });
 });

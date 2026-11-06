@@ -361,17 +361,29 @@ const handleSave = async () => {
     setLoading(true);
 
     if (!isEdit) {
+      const permisoIds = permisosSeleccionados.map(Number);
       await axios.post(
         isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
         isSystemAdmin
           ? {
               empresaId: getTargetEmpresaId(),
               rolId: Number(rolId),
+              permisoIds,
             }
           : {
               rolId: Number(rolId),
+              permisoIds,
             }
       );
+
+      setMessage({
+        open: true,
+        severity: "success",
+        text: t("empresaRol.messages.saveSuccess"),
+      });
+      reloadData();
+      handleClose();
+      return;
     }
 
     let modulosALL = [];
