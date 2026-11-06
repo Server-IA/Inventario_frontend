@@ -183,7 +183,11 @@ describe("Issue #297 - FormEmpresaRol validación de permisos", () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(axios.post).toHaveBeenCalled();
+      expect(axios.post).toHaveBeenCalledTimes(1);
+      expect(axios.post).toHaveBeenCalledWith("/v1/empresa-rol", {
+        rolId: 10,
+        permisoIds: [1001, 1002],
+      });
       expect(setMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           open: true,

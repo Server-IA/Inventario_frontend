@@ -77,10 +77,10 @@ function relationIdFromLocation(response) {
   return Number(match[1]);
 }
 
-async function createEmpresaRolByApi(request, token, rolId, empresaId, resource) {
+async function createEmpresaRolByApi(request, token, rolId, empresaId, permisoId, resource) {
   const response = await request.post(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
     headers: authHeaders(token),
-    data: { empresaId, rolId },
+    data: { empresaId, rolId, permisoIds: [Number(permisoId)] },
   });
   expect([200, 201, 204], `No fue posible crear Empresa-Rol para empresa ${empresaId}`).toContain(
     response.status()
@@ -344,14 +344,14 @@ test.describe('Empresa-Rol - cobertura E2E issues #276, #277 y #278', () => {
     );
     await dialog.getByRole('button', { name: /^Guardar$/i }).click();
     const response = await responsePromise;
+    expect([200, 201, 204]).toContain(response.status());
     const relationId = relationIdFromLocation(response);
     resource.relationId = relationId;
     resource.empresaId = targetEmpresaId;
-
-    expect([200, 201, 204]).toContain(response.status());
     expect(response.request().postDataJSON()).toMatchObject({
       empresaId: targetEmpresaId,
       rolId: role.id,
+      permisoIds: [permission.id],
     });
   });
 
@@ -359,11 +359,10 @@ test.describe('Empresa-Rol - cobertura E2E issues #276, #277 y #278', () => {
     const role = await createRoleByApi(request, 278);
     const resource = createdResources.find((item) => item.roleId === role.id);
 
-    await createEmpresaRolByApi(request, role.token, role.id, TARGET_EMPRESA_ID, resource);
     const { permission, subsystemName, moduleName } = await firstAvailablePermission(request, role.token);
     expect(subsystemName, 'El permiso temporal no tiene subsistema navegable').toBeTruthy();
     expect(moduleName, 'El permiso temporal no tiene módulo navegable').toBeTruthy();
-    await assignPermissionByApi(request, role.token, role.id, TARGET_EMPRESA_ID, permission.id);
+    await createEmpresaRolByApi(request, role.token, role.id, TARGET_EMPRESA_ID, permission.id, resource);
 
     // Asignar un segundo permiso para que la prueba pueda retirar uno sin violar la regla de negocio
     // (Issue #297: un rol de empresa debe tener al menos un permiso; no se permite retirar el último)

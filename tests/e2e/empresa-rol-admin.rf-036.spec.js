@@ -9,6 +9,7 @@ import {
   clickDialogButton,
   expectSnackMessage,
   findGridCellInColumnAcrossPages,
+  findFirstAvailableEmpresaRolPermission,
   authHeaders,
   BACKEND_URI,
 } from './helpers/e2e.shared.utils';
@@ -39,10 +40,12 @@ async function createRoleByApi(request) {
 
 async function createEmpresaRolByApi(request, rolId, empresaId) {
   const token = await loginAsAdminGetToken(request);
+  const permission = await findFirstAvailableEmpresaRolPermission(request, token);
   const res = await request.post(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
     headers: authHeaders(token),
-    data: { empresaId, rolId },
+    data: { empresaId, rolId, permisoIds: [Number(permission.id)] },
   });
+  expect([200, 201, 204], `No fue posible crear Empresa-Rol para empresa ${empresaId}`).toContain(res.status());
   return res.status();
 }
 
