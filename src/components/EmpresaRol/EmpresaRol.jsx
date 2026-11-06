@@ -354,27 +354,6 @@ export default function EmpresaRol() {
     try {
       setLoading(true);
 
-      const resRoles = await axios.get("/v1/items/rol/0");
-      const rolBase = resRoles.data.find((r) => r.name === selectedRow.rolNombre);
-
-      if (!rolBase) throw new Error(t("empresaRol.messages.baseRoleNotFound"));
-
-      const rolId = rolBase.id;
-
-      const permisosRes = await axios.get(
-        `/v1/empresa-rol-permisos/rol/${rolId}/permisos`,
-        permisosLegacyParams(selectedRow?.empresaId ?? empresaId)
-      );
-
-      const permisos = permisosRes.data || [];
-      const permisosIds = permisos.map((p) => p.id);
-
-      if (permisosIds.length > 0) {
-        await axios.delete(`/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`, {
-          data: { permisosId: permisosIds },
-        });
-      }
-
       await axios.delete(
         isSystemAdmin
           ? `/v1/system/empresa-rol/${selectedRow.id}`

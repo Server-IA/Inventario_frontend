@@ -13,6 +13,8 @@
  | 2026-06-26 | 0.4.0   | Jeisson Sanchez      | Traducciones Kardex.        |
  | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | Integrar traducciones para módulo de costos (Tipos de Costos Indirectos). |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-09-11 | 0.4.0   | Cesar Medina         | Traducciones modulo Sede.   |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
  * @module i18n
@@ -29,6 +31,7 @@ import esAlmacen from "./locales/es/almacen.json";
 import esEmpresaRol from "./locales/es/empresaRol.json";
 import esLocalizacionGeografica from "./locales/es/localizacionGeografica.json";
 import esPedido from "./locales/es/pedido.json";
+import esSede from "./locales/es/sede.json";
 import esVencimiento from "./locales/es/vencimiento.json";
 import esEmpresa from "./locales/es/empresa.json";
 import esCostos from "./locales/es/costos.json";
@@ -41,6 +44,7 @@ import enAlmacen from "./locales/en/almacen.json";
 import enEmpresaRol from "./locales/en/empresaRol.json";
 import enLocalizacionGeografica from "./locales/en/localizacionGeografica.json";
 import enPedido from "./locales/en/pedido.json";
+import enSede from "./locales/en/sede.json";
 import enVencimiento from "./locales/en/vencimiento.json";
 import enEmpresa from "./locales/en/empresa.json";
 import enCostos from "./locales/en/costos.json";
@@ -76,6 +80,7 @@ i18n
           empresaRol: esEmpresaRol,
           localizacionGeografica: esLocalizacionGeografica,
           pedido: esPedido,
+          sede: esSede,
           vencimiento: esVencimiento,
           empresa: esEmpresa,
           costos: esCostos,
@@ -92,6 +97,7 @@ i18n
           empresaRol: enEmpresaRol,
           localizacionGeografica: enLocalizacionGeografica,
           pedido: enPedido,
+          sede: enSede,
           vencimiento: enVencimiento,
           empresa: enEmpresa,
           costos: enCostos,
