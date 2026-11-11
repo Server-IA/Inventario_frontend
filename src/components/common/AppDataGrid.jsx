@@ -7,6 +7,9 @@ CONTROL DE CAMBIOS
 |   Fecha    | Versión |      Autor           | Descripción del cambio      |
 +------------+---------+----------------------+-----------------------------+
 | 2026-05-06 | 0.4.0   | Cesar Medina         | Creación del archivo.       |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Corregir fondo en modo oscuro (bodyBg en lugar de blanco hardcodeado) para garantizar contraste legible. |
+| 2026-10-06 | 0.4.0   | Jeisson Sanchez      | [Issue #320] Limpieza de ESLint: retirar supresión global y corregir variables/slots sin uso. |
+| 2026-10-23 | 0.4.1   | Oscar Julian Andrade | Propagar pageSize y size al cambiar filas por página en paginación server-side (HU-044.4). |
 +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 /**
@@ -17,7 +20,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Paper, Stack, Chip } from "@mui/material";
 import { DataGrid, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarDensitySelector, GridToolbarExport } from "@mui/x-data-grid";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -302,7 +305,8 @@ export default function AppDataGrid({
 
   const mergedSx = {
     border: 0,
-    bgcolor: "#fff",
+    bgcolor: bodyBg,
+    color: isDark ? "#dfeae6" : undefined,
     borderRadius: 4,
     overflow: "hidden",
     "& .MuiDataGrid-columnSeparator": { display: "none" },
@@ -449,11 +453,13 @@ export default function AppDataGrid({
                 pageSize: paginationModel.pageSize ?? paginationModel.size ?? pageSizeOptions[0] ?? 10,
               },
               onPaginationModelChange: (model) => {
-                const next = {
+                const pageSize =
+                  model.pageSize ?? model.size ?? pageSizeOptions[0] ?? 10;
+                setPaginationModel?.({
                   page: model.page ?? 0,
-                  size: model.pageSize ?? model.size ?? pageSizeOptions[0] ?? 10,
-                };
-                setPaginationModel?.(next);
+                  pageSize,
+                  size: pageSize,
+                });
               },
               rowCount,
             }
@@ -475,8 +481,9 @@ export default function AppDataGrid({
           const row = (Array.isArray(rows) ? rows : []).find((r) => (getRowId ? getRowId(r) === id : r?.id === id)) || null;
           setSelectedRow?.(row);
         }}
-        disableRowSelectionOnClick={!selectOnClick}
-        slots={quickFilter ? { toolbar: Toolbar } : undefined}
+        disableRowSelectionOnClick={resolvedDisableRowSelectionOnClick}
+        slots={resolvedSlots}
+        slotProps={slotProps}
         columnVisibilityModel={effectiveColumnVisibilityModel}
         onColumnVisibilityModelChange={handleVisibilityChange}
         localeText={gridLocaleText}

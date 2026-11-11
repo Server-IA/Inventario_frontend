@@ -20,8 +20,10 @@
     "permissionRemoveError": "Error removing permission",
     "roleRequired": "You must select a role",
     "companyRequired": "You must select a company",
+    "permissionsRequired": "You must select at least one permission.",
     "saveSuccess": "Permissions updated successfully",
     "saveError": "Error saving permissions",
+    "noFilterResults": "No roles found matching the selected criteria.",
     "permissionsQueryError": "Error querying permissions for one or more roles. You can retry the query.",
     "rolesLoadError": "Error loading company roles."
   },
@@ -44,5 +46,9 @@
     "editTitle": "Edit Role and Permissions",
     "roleLabel": "Role",
     "companyLabel": "Company"
+  },
+  "filters": {
+    "namePlaceholder": "E.g.: Administrator, Technician...",
+    "roleNameLabel": "Role name"
   }
 }

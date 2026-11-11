@@ -52,6 +52,31 @@ export function authHeaders(token) {
   };
 }
 
+export async function findFirstAvailableEmpresaRolPermission(request, token, excludeIds = []) {
+  const subsystemsResponse = await request.get(`${BACKEND_URI}/api/v1/sub-sistemas?campos=id,nombre`, {
+    headers: authHeaders(token),
+  });
+  expect(subsystemsResponse.ok(), 'No fue posible consultar el catálogo de subsistemas').toBeTruthy();
+
+  const excluded = new Set((excludeIds ?? []).map(Number));
+  for (const subsystem of unwrap(await subsystemsResponse.json())) {
+    const modulesResponse = await request.get(
+      `${BACKEND_URI}/api/v1/empresa-rol-permisos/modulos-subsistema?subsistemaIds=${subsystem.id}`,
+      { headers: authHeaders(token) }
+    );
+    if (!modulesResponse.ok()) continue;
+
+    for (const modulo of unwrap(await modulesResponse.json())) {
+      const permission = (modulo.permisos ?? []).find(
+        (item) => item?.id != null && !excluded.has(Number(item.id))
+      );
+      if (permission) return permission;
+    }
+  }
+
+  throw new Error('No hay permisos disponibles para crear la relación Empresa-Rol de prueba');
+}
+
 export function uniqueEmail(prefix = 'e2e.onboarding') {
   const stamp = `${Date.now()}${Math.floor(Math.random() * 100000)}`;
   return `${prefix}.${stamp}@example.com`;
