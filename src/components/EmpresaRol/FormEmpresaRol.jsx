@@ -9,6 +9,8 @@ CONTROL DE CAMBIOS
 | 2026-05-22 | 0.4.0   | Cesar Medina         | Se corrige referencia de tema en el modal.    |
 | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #277] Enviar empresa elegida al crear. |
 | 2026-08-25 | 0.4.0   | Jeisson Sanchez      | [Issue #278] Enviar empresa objetivo al quitar permiso. |
+| 2026-09-17 | 0.4.0   | Jeisson Sanchez      | [Issue #297] Validar selección obligatoria de permisos antes de guardar. |
+| 2026-09-22 | 0.4.0   | Jeisson Sanchez      | [Issue #297] Bloquear retiro del último permiso en edición. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 import React, { useEffect, useState } from "react";
@@ -285,6 +287,16 @@ const agruparPorSubsistema = (modulosArray) => {
      Quitar permiso (solo estado local)
   =============================== */
   const quitarPermiso = async (permisoId) => {
+    // Issue #297: Si se intenta retirar el último permiso existente, no ejecutar DELETE y mostrar advertencia
+    if (permisosSeleccionados.length <= 1) {
+      setMessage({
+        open: true,
+        severity: "warning",
+        text: t("empresaRol.messages.permissionsRequired", "Debe seleccionar al menos un permiso."),
+      });
+      return;
+    }
+
     try {
       await axios.delete(
         `/v1/empresa-rol-permisos/rol/${rolId}/permisos/quitar`,
@@ -335,21 +347,43 @@ const handleSave = async () => {
     return;
   }
 
+  // Issue #297: Validar que se haya seleccionado al menos un permiso antes de proceder
+  if (!permisosSeleccionados || permisosSeleccionados.length === 0) {
+    setMessage({
+      open: true,
+      severity: "warning",
+      text: t("empresaRol.messages.permissionsRequired", "Debe seleccionar al menos un permiso."),
+    });
+    return;
+  }
+
   try {
     setLoading(true);
 
     if (!isEdit) {
+      const permisoIds = permisosSeleccionados.map(Number);
       await axios.post(
         isSystemAdmin ? "/v1/system/empresa-rol" : "/v1/empresa-rol",
         isSystemAdmin
           ? {
               empresaId: getTargetEmpresaId(),
               rolId: Number(rolId),
+              permisoIds,
             }
           : {
               rolId: Number(rolId),
+              permisoIds,
             }
       );
+
+      setMessage({
+        open: true,
+        severity: "success",
+        text: t("empresaRol.messages.saveSuccess"),
+      });
+      reloadData();
+      handleClose();
+      return;
     }
 
     let modulosALL = [];

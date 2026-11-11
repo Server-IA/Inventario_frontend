@@ -11,6 +11,9 @@
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Traducciones geográficas.   |
  +------------+---------+----------------------+-----------------------------+
  | 2026-06-26 | 0.4.0   | Jeisson Sanchez      | Traducciones Kardex.        |
+ | 2026-10-16 | 0.4.0   | Jeisson Sanchez      | Integrar traducciones para módulo de costos (Tipos de Costos Indirectos). |
+ +------------+---------+----------------------+-----------------------------+
+ | 2026-09-11 | 0.4.0   | Cesar Medina         | Traducciones modulo Sede.   |
  +------------+---------+----------------------+-----------------------------+
  | 2026-09-25 | 0.4.0   | Alexander Lozada     | Traducciones Costos         |
  |            |         |                      | (HU-045.1).                 |
@@ -31,9 +34,12 @@ import esAlmacen from "./locales/es/almacen.json";
 import esEmpresaRol from "./locales/es/empresaRol.json";
 import esLocalizacionGeografica from "./locales/es/localizacionGeografica.json";
 import esPedido from "./locales/es/pedido.json";
+import esSede from "./locales/es/sede.json";
 import esVencimiento from "./locales/es/vencimiento.json";
 import esEmpresa from "./locales/es/empresa.json";
 import esCostos from "./locales/es/costos.json";
+import esKardex from "./locales/es/kardex.json";
+import esOrdenCompra from "./locales/es/ordenCompra.json";
 import enCommon from "./locales/en/common.json";
 import enAuth from "./locales/en/auth.json";
 import enUsuario from "./locales/en/usuario.json";
@@ -41,9 +47,12 @@ import enAlmacen from "./locales/en/almacen.json";
 import enEmpresaRol from "./locales/en/empresaRol.json";
 import enLocalizacionGeografica from "./locales/en/localizacionGeografica.json";
 import enPedido from "./locales/en/pedido.json";
+import enSede from "./locales/en/sede.json";
 import enVencimiento from "./locales/en/vencimiento.json";
 import enEmpresa from "./locales/en/empresa.json";
 import enCostos from "./locales/en/costos.json";
+import enKardex from "./locales/en/kardex.json";
+import enOrdenCompra from "./locales/en/ordenCompra.json";
 
 const normalizeLanguage = (language) =>
   String(language || "")
@@ -74,9 +83,12 @@ i18n
           empresaRol: esEmpresaRol,
           localizacionGeografica: esLocalizacionGeografica,
           pedido: esPedido,
+          sede: esSede,
           vencimiento: esVencimiento,
           empresa: esEmpresa,
           costos: esCostos,
+          kardex: esKardex,
+          ordenCompra: esOrdenCompra,
         },
       },
       en: {
@@ -88,9 +100,12 @@ i18n
           empresaRol: enEmpresaRol,
           localizacionGeografica: enLocalizacionGeografica,
           pedido: enPedido,
+          sede: enSede,
           vencimiento: enVencimiento,
           empresa: enEmpresa,
           costos: enCostos,
+          kardex: enKardex,
+          ordenCompra: enOrdenCompra,
         },
       },
     },

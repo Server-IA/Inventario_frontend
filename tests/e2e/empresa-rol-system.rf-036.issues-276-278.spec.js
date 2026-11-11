@@ -77,10 +77,10 @@ function relationIdFromLocation(response) {
   return Number(match[1]);
 }
 
-async function createEmpresaRolByApi(request, token, rolId, empresaId, resource) {
+async function createEmpresaRolByApi(request, token, rolId, empresaId, permisoId, resource) {
   const response = await request.post(`${BACKEND_URI}/api/v1/system/empresa-rol`, {
     headers: authHeaders(token),
-    data: { empresaId, rolId },
+    data: { empresaId, rolId, permisoIds: [Number(permisoId)] },
   });
   expect([200, 201, 204], `No fue posible crear Empresa-Rol para empresa ${empresaId}`).toContain(
     response.status()
@@ -93,11 +93,13 @@ async function createEmpresaRolByApi(request, token, rolId, empresaId, resource)
   return relationId;
 }
 
-async function firstAvailablePermission(request, token) {
+async function firstAvailablePermission(request, token, excludeIds = []) {
   const subsystemsResponse = await request.get(`${BACKEND_URI}/api/v1/sub-sistemas?campos=id,nombre`, {
     headers: authHeaders(token),
   });
   expect(subsystemsResponse.ok(), 'No fue posible consultar subsistemas').toBeTruthy();
+
+  const excluded = new Set((excludeIds ?? []).map(Number));
 
   for (const subsystem of unwrap(await subsystemsResponse.json())) {
     const modulesResponse = await request.get(
@@ -107,9 +109,9 @@ async function firstAvailablePermission(request, token) {
     if (!modulesResponse.ok()) continue;
 
     const module = unwrap(await modulesResponse.json()).find((item) =>
-      (item.permisos ?? []).some((permission) => permission?.id != null)
+      (item.permisos ?? []).some((permission) => permission?.id != null && !excluded.has(Number(permission.id)))
     );
-    const permission = module?.permisos?.find((item) => item?.id != null);
+    const permission = module?.permisos?.find((item) => item?.id != null && !excluded.has(Number(item.id)));
     if (permission) {
       return {
         permission,
@@ -241,25 +243,6 @@ test.afterAll(async () => {
 
       if (resource.relationId != null) {
         try {
-          const permissionsResponse = await api.get(
-            `${BACKEND_URI}/api/v1/empresa-rol-permisos/rol/${resource.roleId}/permisos?empresaId=${resource.empresaId}`,
-            { headers: authHeaders(token) }
-          );
-          if (permissionsResponse.ok()) {
-            const permissionIds = unwrap(await permissionsResponse.json()).map((permission) => permission.id);
-            if (permissionIds.length > 0) {
-              const deletePermissions = await api.delete(
-                `${BACKEND_URI}/api/v1/empresa-rol-permisos/rol/${resource.roleId}/permisos/quitar?empresaId=${resource.empresaId}`,
-                { headers: authHeaders(token), data: { permisosId: permissionIds } }
-              );
-              if (![200, 202, 204].includes(deletePermissions.status())) {
-                failures.push(`${label}: retirar permisos devolvió HTTP ${deletePermissions.status()}`);
-              }
-            }
-          } else {
-            failures.push(`${label}: consultar permisos devolvió HTTP ${permissionsResponse.status()}`);
-          }
-
           const deleteRelation = await api.delete(
             `${BACKEND_URI}/api/v1/system/empresa-rol/${resource.relationId}`,
             { headers: authHeaders(token) }
@@ -331,20 +314,25 @@ test.describe('Empresa-Rol - cobertura E2E issues #276, #277 y #278', () => {
     await selectMuiOption(dialog, 0, role.nombre);
     await selectMuiOption(dialog, 1, targetCompany.nombre ?? targetCompany.name);
 
+    // Seleccionar al menos un permiso para cumplir la validación de guardado (Issue #297)
+    const { permission, subsystemName, moduleName } = await firstAvailablePermission(request, role.token);
+    await expandPermissionPath(dialog, subsystemName, moduleName, permission.nombre);
+    await dialog.getByText(permission.nombre, { exact: true }).click();
+
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes('/api/v1/system/empresa-rol') && response.request().method() === 'POST'
     );
     await dialog.getByRole('button', { name: /^Guardar$/i }).click();
     const response = await responsePromise;
+    expect([200, 201, 204]).toContain(response.status());
     const relationId = relationIdFromLocation(response);
     resource.relationId = relationId;
     resource.empresaId = targetEmpresaId;
-
-    expect([200, 201, 204]).toContain(response.status());
     expect(response.request().postDataJSON()).toMatchObject({
       empresaId: targetEmpresaId,
       rolId: role.id,
+      permisoIds: [permission.id],
     });
   });
 
@@ -352,11 +340,17 @@ test.describe('Empresa-Rol - cobertura E2E issues #276, #277 y #278', () => {
     const role = await createRoleByApi(request, 278);
     const resource = createdResources.find((item) => item.roleId === role.id);
 
-    await createEmpresaRolByApi(request, role.token, role.id, TARGET_EMPRESA_ID, resource);
     const { permission, subsystemName, moduleName } = await firstAvailablePermission(request, role.token);
     expect(subsystemName, 'El permiso temporal no tiene subsistema navegable').toBeTruthy();
     expect(moduleName, 'El permiso temporal no tiene módulo navegable').toBeTruthy();
-    await assignPermissionByApi(request, role.token, role.id, TARGET_EMPRESA_ID, permission.id);
+    await createEmpresaRolByApi(request, role.token, role.id, TARGET_EMPRESA_ID, permission.id, resource);
+
+    // Asignar un segundo permiso para que la prueba pueda retirar uno sin violar la regla de negocio
+    // (Issue #297: un rol de empresa debe tener al menos un permiso; no se permite retirar el último)
+    const { permission: secondPermission } = await firstAvailablePermission(request, role.token, [permission.id]);
+    if (secondPermission) {
+      await assignPermissionByApi(request, role.token, role.id, TARGET_EMPRESA_ID, secondPermission.id);
+    }
 
     await loginAsSystemAdmin(page, request, 'EmpresaRol');
     await openModuleScreen(page, 'EmpresaRol', /Roles de Empresa/i);

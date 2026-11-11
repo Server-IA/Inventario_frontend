@@ -9,6 +9,7 @@ CONTROL DE CAMBIOS
 | 2026-05-08 | 0.4.0   | Cesar Medina         | Creación del archivo.                         |
 | 2026-06-03 | 0.4.0   | Cesar Medina         | Se documenta y ajusta detalle visual del modal|
 | 2026-06-29 | 0.4.0   | Cesar Medina         | Se corrige el estado visible del encabezado.  |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Sombras neutras en modo oscuro y acento superior sin línea blanca. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -276,8 +277,13 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
   const assignmentSurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.22) : "#F6FBF8";
   const subtleBorder = alpha(green, 0.14);
   const subtleDivider = alpha(darkGreen, 0.14);
-  const softShadow = `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`;
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const softShadow = theme.palette.mode === "dark"
+    ? "0 10px 30px rgba(0, 0, 0, 0.5)"
+    : `0 10px 30px ${alpha(darkGreen, 0.08)}`;
+  const sectionShadow = theme.palette.mode === "dark"
+    ? "0 4px 14px rgba(0, 0, 0, 0.35)"
+    : `0 4px 14px ${alpha(darkGreen, 0.05)}`;
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : darkGreen;
   const userStatus = getStatusVisuals(
     {
       statusName: data?.estadoNombre,
@@ -309,7 +315,7 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -532,7 +538,9 @@ export default function UserDetailDialog({ open, data, loading = false, error = 
                         sx={{
                           borderRadius: 1.75,
                           border: `1px solid ${alpha(green, 0.1)}`,
-                          boxShadow: `0 2px 8px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.12 : 0.035)}`,
+                          boxShadow: theme.palette.mode === "dark"
+                            ? "0 2px 8px rgba(0, 0, 0, 0.35)"
+                            : `0 2px 8px ${alpha(darkGreen, 0.035)}`,
                           backgroundColor: assignmentSurface,
                         }}
                       >
