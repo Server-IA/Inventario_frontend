@@ -6,6 +6,10 @@
  +------------+---------+----------------------+-----------------------------+
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-11-06 | 0.4.0   | Cesar Medina         | Retira módulos legacy de    |
+ |            |         |                      | roles de usuario y deja     |
+ |            |         |                      | solo el módulo Usuario.     |
+ +------------+---------+----------------------+-----------------------------+
  | 2026-06-03 | 0.4.0   | Jeisson Sanchez      | Reestructuración de países. |
  +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Ajuste i18n del módulo.     |
@@ -229,11 +233,8 @@ import TipoUnida from "../tipo_unidad/tipounidad.jsx";
 import TipoCostoIndirecto from "../Costos/TipoCostoIndirecto/TipoCostoIndirecto.jsx";
 import Estado from "../estado/estado.jsx";
 import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
-import UsuarioRol from "../usario_rol/usariorol.jsx";
-import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import Usuario from "../Usuario/Usuario.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
-import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // ImÃ¡genes
 import img1 from "/images/cards/1.jpg";
 import img2 from "/images/cards/2.jpg";
@@ -294,8 +295,6 @@ import r_factura from "/images/cards/r_factura.webp";
 import prodcutos_vencidos from "/images/cards/prodcutos_vencidos.webp";
 import r_orden_compra from "/images/cards/r_orden_compra.webp";
 import pedido_coti from "/images/cards/pedido_coti.webp";
-import usariorol from "/images/cards/usariorol.webp";
-import usai_rol_sistema from "/images/cards/usai_rol_sistema.webp";
 import rol_empresa from "/images/cards/rol_empresa.webp";
 
 import tipo_unidad from "/images/cards/tipo_unidad.webp";
@@ -419,11 +418,8 @@ const icons = {
 
 export const components = {
   modulo: modulo,
-  Rol_usuario: Rol_usuario,
   EmpresaRol: EmpresaRol,
   Usuario: Usuario,
-  UsuarioRoles: UsuarioRoles,
-  UsuarioRol: UsuarioRol,
   PedidoCotizacion: PedidoCotizacion,
   Estado: Estado,
   tipoidentificacion: TipoIdentificacion,
@@ -478,8 +474,6 @@ export const components = {
 const moduleImages = {
   EmpresaRol: rol_empresa,
   Usuario: persona,
-  UsuarioRoles: usai_rol_sistema,
-  UsuarioRol: usariorol,
   PedidoCotizacion: pedido_coti,
   persona,
   rol,
@@ -592,9 +586,15 @@ export default function Navigator2({
     setCurrentModuleItem(Component ? <Component /> : null);
   };
 
+  const shouldHideLegacyRoleModule = (moduleId) =>
+    ["Rol_usuario", "UsuarioRoles", "UsuarioRol"].includes(toKey(moduleId));
+
   const renderSubmenu = (children, parentMenuId) => {
     const uniqueChildren = children.filter(
       (item, index, self) => index === self.findIndex((t) => t.id === item.id),
+    );
+    const visibleChildren = uniqueChildren.filter(
+      (item) => !shouldHideLegacyRoleModule(item.id),
     );
 
     return (
@@ -607,7 +607,7 @@ export default function Navigator2({
         }}
       >
         <Grid container spacing={2.5}>
-          {uniqueChildren.map(({ id, text, icon }) => (
+          {visibleChildren.map(({ id, text, icon }) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={id}>
               <Box
                 onClick={() => handleSubMenuClick(id, parentMenuId)}
@@ -801,7 +801,7 @@ export default function Navigator2({
               (c) =>
                 !["pais", "departamento", "municipio"].includes(
                   toKey(c.id).toLowerCase(),
-                ),
+                ) && !shouldHideLegacyRoleModule(c.id),
             );
           }
         });
