@@ -141,7 +141,6 @@ export default function FormCostoIndirecto({ open, setOpen, selectedRow, setMess
     setForm(isEdit ? formFromRow(selectedRow) : emptyForm);
     setErrors({});
     setFormAlert("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isEdit, selectedRow]);
 
   const catalogFailed = open && (tipos.error || sedes.error);
