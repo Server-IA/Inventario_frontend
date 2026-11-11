@@ -22,6 +22,7 @@
     },
     "form": {
       "title": "Registrar costo indirecto",
+      "editTitle": "Editar costo indirecto",
       "fields": {
         "tipo": "Tipo de costo indirecto",
         "sede": "Sede",
@@ -52,6 +53,7 @@
     },
     "messages": {
       "created": "El costo indirecto fue registrado correctamente.",
+      "updated": "El costo indirecto fue actualizado correctamente.",
       "saveError": "No se pudo registrar el costo indirecto. Revisa los datos e inténtalo de nuevo.",
       "catalogError": "No se pudieron cargar las listas del formulario. Verifica tus permisos e inténtalo de nuevo.",
       "listError": "No se pudo cargar el listado de costos indirectos. Inténtalo de nuevo."
