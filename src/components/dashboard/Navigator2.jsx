@@ -229,6 +229,7 @@ import RE_productoVencimiento from "../RE_pv/re_pvn.jsx";
 import RE_ordenCompra from "../RE_oc/re_oc.jsx";
 import RE_fc from "../RE_fc/re_fc.jsx";
 import TipoUnida from "../tipo_unidad/tipounidad.jsx";
+import TipoCostoIndirecto from "../Costos/TipoCostoIndirecto/TipoCostoIndirecto.jsx";
 import Estado from "../estado/estado.jsx";
 import PedidoCotizacion from "../p_cotizacion/PedidoCotizacion.jsx";
 import UsuarioRol from "../usario_rol/usariorol.jsx";
@@ -420,7 +421,7 @@ const icons = {
   Description: <DescriptionOutlinedIcon />,
 };
 
-const components = {
+export const components = {
   modulo: modulo,
   Rol_usuario: Rol_usuario,
   EmpresaRol: EmpresaRol,
@@ -474,6 +475,7 @@ const components = {
   RE_oc: RE_ordenCompra,
   RE_fc: RE_fc,
   tipo_unidad: TipoUnida,
+  "tipo-costo-indirecto": TipoCostoIndirecto,
   CategoriaEstado: CategoriaEstado,
   rol: Rol,
 };

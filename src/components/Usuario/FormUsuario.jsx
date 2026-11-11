@@ -13,6 +13,11 @@ CONTROL DE CAMBIOS
 | 2026-08-14 | 0.4.0   | Cesar Medina         | Se refuerzan validaciones y responsive.       |
 | 2026-08-21 | 0.4.0   | Cesar Medina         | Se endurecen obligatorios de correo y estrato.|
 | 2026-08-24 | 0.4.0   | Cesar Medina         | Se completa validación QA de documento y fecha|
+| 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Restaurar proporción 1.45fr/1fr, tarjetas con contenido completo y retiro de supresión ESLint. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local para Empresa y Rol. |
+| 2026-09-30 | 0.4.0   | Jeisson Sanchez      | [Issue #319] Eliminar resplandor neón en modo oscuro (sombras neutras y paleta sobria) y optimizar distribución del panel de asignaciones. |
+| 2026-10-23 | 0.4.0   | Jeisson Sanchez      | [Issue #325] Permitir activar e inactivar asignaciones existentes en modo edición con actualización de estado y toggle interactivo. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Acento superior neutro y tarjetas sin brillo en modo oscuro. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -21,6 +26,7 @@ CONTROL DE CAMBIOS
  * usuarios, incluyendo datos personales y asignaciones de rol/empresa.
  */
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Alert,
   Box,
@@ -53,12 +59,13 @@ import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import WcOutlinedIcon from "@mui/icons-material/WcOutlined";
+import SearchableSelect from "../common/SearchableSelect";
 
 const emptyAssignment = {
   rolId: "",
@@ -163,6 +170,12 @@ const SectionHeader = ({ icon: Icon, title, description }) => (
   </Stack>
 );
 
+SectionHeader.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+};
+
 export default function FormUsuario({
   open,
   onClose,
@@ -182,13 +195,16 @@ export default function FormUsuario({
   const theme = useTheme();
   const isCreateMode = mode === "create";
   const green = theme.palette.mode === "dark" ? "#2b6b60" : "#173f39";
-  const darkGreen = theme.palette.mode === "dark" ? "#E7F6F7" : "#173f39";
-  const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
-  const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
-  const summarySurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.28) : "#dfeae6";
-  const assignmentSurface = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.22) : "#F6FBF8";
-  const subtleBorder = alpha(green, 0.14);
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const darkGreen = theme.palette.mode === "dark" ? "#dfeae6" : "#173f39";
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : "#173f39";
+  const dialogSurface = theme.palette.mode === "dark" ? "#101e1d" : theme.palette.common.white;
+  const sectionSurface = theme.palette.mode === "dark" ? "#142624" : theme.palette.common.white;
+  const summarySurface = theme.palette.mode === "dark" ? "#182c2a" : "#dfeae6";
+  const assignmentSurface = theme.palette.mode === "dark" ? "#162826" : "#F6FBF8";
+  const subtleBorder = theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : alpha(green, 0.14);
+  const sectionShadow = theme.palette.mode === "dark"
+    ? "0 4px 12px rgba(0,0,0,0.3)"
+    : "0 4px 14px rgba(23,63,57,0.05)";
   const contentMaxWidth = 1180;
 
   const [formData, setFormData] = useState(initialData);
@@ -722,6 +738,61 @@ export default function FormUsuario({
     setFormData((prev) => ({ ...prev, asignaciones }));
   };
 
+  const restoreRejectedAssignmentStatusChanges = () => {
+    setFormData((prev) => ({
+      ...prev,
+      asignaciones: (Array.isArray(prev?.asignaciones) ? prev.asignaciones : []).map((item) => {
+        if (!item?.hasPendingStatusChange) return item;
+
+        const assignment = { ...item };
+        delete assignment.estadoIdBeforeChange;
+        delete assignment.hasPendingStatusChange;
+        const restoredStatus = Number(item.estadoIdBeforeChange ?? assignment.estadoId ?? 1);
+
+        return {
+          ...assignment,
+          estadoId: restoredStatus,
+          estadoNombre:
+            restoredStatus === 1
+              ? t("common.labels.active", "Activo")
+              : t("common.labels.inactive", "Inactivo"),
+          activo: restoredStatus === 1,
+        };
+      }),
+    }));
+  };
+
+  const toggleAssignmentStatus = (idx) => {
+    const asignaciones = Array.isArray(formData?.asignaciones)
+      ? [...formData.asignaciones]
+      : [];
+    const item = asignaciones[idx];
+    if (!item) return;
+
+    const currentStatus = Number(item.estadoId ?? 1);
+    const confirmedStatus = Number(item.estadoIdBeforeChange ?? currentStatus);
+    const newStatus = currentStatus === 1 ? 2 : 1;
+    const statusChanged = newStatus !== confirmedStatus;
+    const assignment = { ...item };
+    delete assignment.estadoIdBeforeChange;
+    delete assignment.hasPendingStatusChange;
+
+    asignaciones[idx] = {
+      ...assignment,
+      estadoId: newStatus,
+      estadoNombre: newStatus === 1 ? t("common.labels.active", "Activo") : t("common.labels.inactive", "Inactivo"),
+      activo: newStatus === 1,
+      ...(statusChanged
+        ? {
+            estadoIdBeforeChange: confirmedStatus,
+            hasPendingStatusChange: true,
+          }
+        : {}),
+    };
+
+    setFormData((prev) => ({ ...prev, asignaciones }));
+  };
+
   const togglePreferido = (idx) => {
     const asignaciones = Array.isArray(formData?.asignaciones)
       ? [...formData.asignaciones]
@@ -794,7 +865,7 @@ export default function FormUsuario({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const isFormValid = validateForm();
     if (!isFormValid) return;
 
@@ -805,7 +876,15 @@ export default function FormUsuario({
       return;
     }
 
-    onSubmit?.(formData);
+    try {
+      const result = await onSubmit?.(formData);
+      if (result?.success === false) {
+        restoreRejectedAssignmentStatusChanges();
+      }
+    } catch (error) {
+      restoreRejectedAssignmentStatusChanges();
+      throw error;
+    }
   };
 
   const summaryAssignments = Array.isArray(formData?.asignaciones)
@@ -823,7 +902,9 @@ export default function FormUsuario({
           borderRadius: 3,
           overflow: "hidden",
           backgroundColor: dialogSurface,
-          boxShadow: `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`,
+          boxShadow: theme.palette.mode === "dark"
+            ? "0 10px 30px rgba(0,0,0,0.5)"
+            : "0 10px 30px rgba(23,63,57,0.08)",
         },
       }}
     >
@@ -832,7 +913,7 @@ export default function FormUsuario({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -971,6 +1052,9 @@ export default function FormUsuario({
               </CardContent>
             </Card>
 
+            {/* HU-037.1 / Issue #319: Layout compuesto:
+                - Fila superior en 2 columnas: Columna izquierda (Información Personal), Columna derecha (Configurar Asignación).
+                - Fila inferior a todo el ancho útil (Full Width): Listado de Asignaciones (evita espacio muerto lateral y cortes bajo el footer). */}
             <Box
               sx={{
                 display: "grid",
@@ -983,13 +1067,13 @@ export default function FormUsuario({
                 width: "100%",
               }}
             >
-            <Box sx={{ minWidth: 0 }}>
               <Card
                 sx={{
                   borderRadius: 2,
                   border: `1px solid ${subtleBorder}`,
                   boxShadow: sectionShadow,
                   backgroundColor: sectionSurface,
+                  width: "100%",
                 }}
               >
                 <CardContent sx={{ p: { xs: 2.75, sm: 3.25 } }}>
@@ -1227,16 +1311,14 @@ export default function FormUsuario({
                   </Stack>
                 </CardContent>
               </Card>
-            </Box>
-
-            <Box sx={{ minWidth: 0 }}>
-              <Stack spacing={3}>
+                {/* Panel de Configuración de Asignación (Full Width) */}
                 <Card
                   sx={{
                     borderRadius: 2,
                     border: `1px solid ${subtleBorder}`,
                     boxShadow: sectionShadow,
                     backgroundColor: sectionSurface,
+                    width: "100%",
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -1247,11 +1329,11 @@ export default function FormUsuario({
                         description={t("usuario.form.sections.assignmentConfigurationDescription")}
                       />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.company")}
                         value={selectedAssignmentCompanyId}
                         onChange={(e) => handleAssignChange("empresaId", e.target.value)}
+                        options={empresasOptions}
                         fullWidth
                         required={isAdmin}
                         disabled={!isAdmin}
@@ -1265,21 +1347,16 @@ export default function FormUsuario({
                               })
                             : "")
                         }
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {empresasOptions.map((company) => (
-                          <MenuItem key={company.value} value={company.value}>
-                            {company.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
-                      <TextField
-                        select
+                      <SearchableSelect
                         label={t("usuario.form.fields.role")}
                         value={assignDraft.rolId}
                         onChange={(e) => handleAssignChange("rolId", e.target.value)}
+                        options={availableRolesOptions}
                         fullWidth
                         required
                         disabled={
@@ -1289,15 +1366,10 @@ export default function FormUsuario({
                         }
                         error={Boolean(assignmentErrors.rolId)}
                         helperText={roleFieldHelperText}
+                        placeholder={t("common.actions.search", "Buscar...")}
+                        emptyOptionLabel={t("common.labels.select", "Seleccione...")}
                         InputLabelProps={{ shrink: true }}
-                      >
-                        <MenuItem value="">{t("common.labels.select")}</MenuItem>
-                        {availableRolesOptions.map((role) => (
-                          <MenuItem key={role.value} value={role.value}>
-                            {role.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
 
                       <Box
                         sx={{
@@ -1358,13 +1430,13 @@ export default function FormUsuario({
                       />
 
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         onClick={addAssign}
                         startIcon={<AddCircleOutlineIcon />}
                         sx={{
                           alignSelf: "flex-start",
-                          borderColor: alpha(green, 0.26),
-                          color: darkGreen,
+                          backgroundColor: darkGreen,
+                          "&:hover": { backgroundColor: green },
                         }}
                       >
                         {t("common.actions.addAssignment")}
@@ -1372,15 +1444,18 @@ export default function FormUsuario({
                     </Stack>
                   </CardContent>
                 </Card>
+            </Box>
 
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    border: `1px solid ${subtleBorder}`,
-                    boxShadow: sectionShadow,
-                    backgroundColor: sectionSurface,
-                  }}
-                >
+            {/* Listado de Asignaciones (Full Width abajo, ocupando todo el ancho útil) */}
+            <Card
+              sx={{
+                borderRadius: 2,
+                border: `1px solid ${subtleBorder}`,
+                boxShadow: sectionShadow,
+                backgroundColor: sectionSurface,
+                width: "100%",
+              }}
+            >
                   <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
                     <Stack spacing={2}>
                       <SectionHeader
@@ -1394,7 +1469,17 @@ export default function FormUsuario({
                           {t("usuario.form.messages.assignmentRequired")}
                         </Alert>
                       ) : (
-                        <Stack spacing={1.25}>
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: {
+                              xs: "1fr",
+                              md: "repeat(2, minmax(0, 1fr))",
+                            },
+                            gap: 2,
+                            width: "100%",
+                          }}
+                        >
                           {summaryAssignments.map((assignment, idx) => (
                             <Card
                               key={`${assignment.rolId}-${assignment.empresaId}-${idx}`}
@@ -1402,10 +1487,9 @@ export default function FormUsuario({
                                 borderRadius: 1.75,
                                 border: `1px solid ${alpha(green, 0.1)}`,
                                 backgroundColor: assignmentSurface,
-                                boxShadow: `0 2px 8px ${alpha(
-                                  darkGreen,
-                                  theme.palette.mode === "dark" ? 0.12 : 0.035
-                                )}`,
+                                boxShadow: theme.palette.mode === "dark"
+                                  ? "0 2px 8px rgba(0, 0, 0, 0.35)"
+                                  : `0 2px 8px ${alpha(darkGreen, 0.035)}`,
                               }}
                             >
                               <CardContent sx={{ py: 1.75 }}>
@@ -1426,6 +1510,8 @@ export default function FormUsuario({
                                         size="small"
                                         sx={{
                                           maxWidth: "100%",
+                                          height: "auto",
+                                          minHeight: 24,
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
@@ -1433,6 +1519,8 @@ export default function FormUsuario({
                                               : "#dfeae6",
                                           "& .MuiChip-label": {
                                             display: "block",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
                                           },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
@@ -1445,6 +1533,8 @@ export default function FormUsuario({
                                         size="small"
                                         sx={{
                                           maxWidth: "100%",
+                                          height: "auto",
+                                          minHeight: 24,
                                           color: darkGreen,
                                           backgroundColor:
                                             theme.palette.mode === "dark"
@@ -1452,10 +1542,41 @@ export default function FormUsuario({
                                               : "#dfeae6",
                                           "& .MuiChip-label": {
                                             display: "block",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
                                           },
                                           "& .MuiChip-icon": { color: darkGreen },
                                         }}
                                       />
+                                      {/* Estado explícito de la asignación: Activa o Inactiva */}
+                                      <Chip
+                                        label={
+                                          Number(assignment.estadoId ?? 1) === 1
+                                            ? t("common.labels.active", "Activo")
+                                            : t("common.labels.inactive", "Inactivo")
+                                        }
+                                        size="small"
+                                        color={Number(assignment.estadoId ?? 1) === 1 ? "success" : "default"}
+                                        variant={Number(assignment.estadoId ?? 1) === 1 ? "filled" : "outlined"}
+                                        sx={{
+                                          fontWeight: 700,
+                                          fontSize: "0.75rem",
+                                          height: 24,
+                                        }}
+                                      />
+                                      {assignment.hasPendingStatusChange ? (
+                                        <Chip
+                                          label={t("common.labels.pendingSave", "Pendiente de guardar")}
+                                          size="small"
+                                          color="warning"
+                                          variant="outlined"
+                                          sx={{
+                                            fontWeight: 600,
+                                            fontSize: "0.72rem",
+                                            height: 22,
+                                          }}
+                                        />
+                                      ) : null}
                                       {assignment.preferido ? (
                                         <Chip
                                           label={t("usuario.form.fields.preferred")}
@@ -1489,18 +1610,36 @@ export default function FormUsuario({
                                         }
                                         label={t("usuario.form.fields.preferred")}
                                       />
-                                      <Button
-                                        color="error"
-                                        onClick={() => removeAssign(idx)}
-                                        startIcon={<BlockOutlinedIcon />}
-                                        sx={{ whiteSpace: "nowrap" }}
-                                      >
-                                        {t(
-                                          mode === "edit"
-                                            ? "usuario.actions.inactivateAssignment"
-                                            : "usuario.actions.removeAssignment"
-                                        )}
-                                      </Button>
+                                      {/* Las asignaciones persistidas se actualizan por usuarioRolId; los borradores nuevos se quitan antes de guardar. */}
+                                      {assignment.usuarioRolId ? (
+                                        <Button
+                                          color={Number(assignment.estadoId ?? 1) === 1 ? "error" : "success"}
+                                          size="small"
+                                          onClick={() => toggleAssignmentStatus(idx)}
+                                          startIcon={
+                                            Number(assignment.estadoId ?? 1) === 1 ? (
+                                              <BlockOutlinedIcon fontSize="small" />
+                                            ) : (
+                                              <CheckCircleOutlineIcon fontSize="small" />
+                                            )
+                                          }
+                                          sx={{ whiteSpace: "nowrap", ml: "auto" }}
+                                        >
+                                          {Number(assignment.estadoId ?? 1) === 1
+                                            ? t("common.actions.inactivate", "Inactivar")
+                                            : t("common.actions.activate", "Activar")}
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          color="error"
+                                          size="small"
+                                          onClick={() => removeAssign(idx)}
+                                          startIcon={<BlockOutlinedIcon fontSize="small" />}
+                                          sx={{ whiteSpace: "nowrap", ml: "auto" }}
+                                        >
+                                          {t("common.actions.remove", "Quitar")}
+                                        </Button>
+                                      )}
                                     </Stack>
                                   </Stack>
                                   <Divider sx={{ borderColor: alpha(darkGreen, 0.14) }} />
@@ -1535,14 +1674,11 @@ export default function FormUsuario({
                               </CardContent>
                             </Card>
                           ))}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Stack>
-            </Box>
-            </Box>
+                    </Box>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
           </Stack>
         )}
       </DialogContent>
@@ -1589,3 +1725,19 @@ export default function FormUsuario({
     </Dialog>
   );
 }
+
+FormUsuario.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  mode: PropTypes.string,
+  loading: PropTypes.bool,
+  initialData: PropTypes.object,
+  onSubmit: PropTypes.func,
+  roles: PropTypes.array,
+  empresas: PropTypes.array,
+  empresaRoles: PropTypes.array,
+  tiposIdentificacion: PropTypes.array,
+  isAdmin: PropTypes.bool,
+  sessionCompanyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  sessionCompanyName: PropTypes.string,
+};
