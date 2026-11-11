@@ -7,6 +7,8 @@
  |   Fecha    | Versión |      Autor           | Descripción del cambio      |
  +------------+---------+----------------------+-----------------------------+
  | 2026-07-28 | 1.0.0   | Jeisson Sanchez      | Integración reportes (Kardex, PV, Pedidos) |
+| 2026-10-19 | 1.0.0   | Jeisson Sanchez      | Condicionar requests de pedido a reportType pedido para no sobrecargar Kardex. |
+| 2026-10-19 | 1.0.0   | Jeisson Sanchez      | Flags explicitos cargarPedidos / cargarCategoriasEstadoPedido por consumidor. |
  +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 // src/components/useUbicacionFilters.js
@@ -79,6 +81,8 @@ export default function useUbicacionFilters({
   autoselectSingle = true,
   initialForm = {},
   reportType = null,
+  cargarPedidos = false,
+  cargarCategoriasEstadoPedido = false,
 } = {}) {
   /* ---------- Ubicación (cascada) ---------- */
   const [form, setForm] = useState({
@@ -174,7 +178,6 @@ export default function useUbicacionFilters({
       setUseV2Cascade(false);
       fetchV1Countries();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportType]);
 
   const limpiarCamposDesde = (campo) => {
@@ -234,7 +237,6 @@ export default function useUbicacionFilters({
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useV2Cascade]);
 
   // País -> Departamentos
@@ -268,7 +270,6 @@ export default function useUbicacionFilters({
         setData((d) => ({ ...d, departamentos: [] }));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.pais_id, useV2Cascade]);
 
   // Depto -> Municipios
@@ -301,7 +302,6 @@ export default function useUbicacionFilters({
         setData((d) => ({ ...d, municipios: [] }));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.departamento_id, useV2Cascade]);
 
   // Municipio -> Sedes
@@ -344,7 +344,6 @@ export default function useUbicacionFilters({
         setData((d) => ({ ...d, sedes: [] }));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.municipio_id, empresaId, useV2Cascade]);
 
   // Sede -> Bloques
@@ -370,7 +369,6 @@ export default function useUbicacionFilters({
         setData((d) => ({ ...d, bloques: [] }));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.sede_id, useV2Cascade]);
 
   // Bloque -> Espacios
@@ -396,7 +394,6 @@ export default function useUbicacionFilters({
         setData((d) => ({ ...d, espacios: [] }));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.bloque_id, useV2Cascade]);
 
   // Espacio -> Almacenes
@@ -422,7 +419,6 @@ export default function useUbicacionFilters({
         setData((d) => ({ ...d, almacenes: [] }));
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.espacio_id, useV2Cascade]);
 
   /* ---------- LOCAL CASCADING FOR V2 REPORTS ---------- */
@@ -442,7 +438,6 @@ export default function useUbicacionFilters({
     if (autoselectSingle && filtered.length === 1) {
       setForm((f) => ({ ...f, departamento_id: String(filtered[0].id) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.pais_id, rawDepartamentos, useV2Cascade]);
 
   useEffect(() => {
@@ -456,7 +451,6 @@ export default function useUbicacionFilters({
     if (autoselectSingle && filtered.length === 1) {
       setForm((f) => ({ ...f, municipio_id: String(filtered[0].id) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.departamento_id, rawMunicipios, useV2Cascade]);
 
   useEffect(() => {
@@ -470,7 +464,6 @@ export default function useUbicacionFilters({
     if (autoselectSingle && filtered.length === 1) {
       setForm((f) => ({ ...f, sede_id: String(filtered[0].id) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.municipio_id, rawSedes, useV2Cascade]);
 
   useEffect(() => {
@@ -484,7 +477,6 @@ export default function useUbicacionFilters({
     if (autoselectSingle && filtered.length === 1) {
       setForm((f) => ({ ...f, bloque_id: String(filtered[0].id) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.sede_id, rawBloques, useV2Cascade]);
 
   useEffect(() => {
@@ -498,7 +490,6 @@ export default function useUbicacionFilters({
     if (autoselectSingle && filtered.length === 1) {
       setForm((f) => ({ ...f, espacio_id: String(filtered[0].id) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.bloque_id, rawEspacios, useV2Cascade]);
 
   useEffect(() => {
@@ -512,7 +503,6 @@ export default function useUbicacionFilters({
     if (autoselectSingle && filtered.length === 1) {
       setForm((f) => ({ ...f, almacen_id: String(filtered[0].id) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.espacio_id, rawAlmacenes, useV2Cascade]);
 
   const resetTodo = () => {
@@ -553,16 +543,21 @@ export default function useUbicacionFilters({
   const [categoriasEstado, setCategoriasEstado] = useState([]);
 
   useEffect(() => {
-    axios
-      .get("/v1/pedido", headers)
-      .then((r) => setPedidos(asArray(r.data)))
-      .catch(() => setPedidos([]));
-    axios
-      .get("/v1/items/estado_categoria/0", headers)
-      .then((r) => setCategoriasEstado(asArray(r.data)))
-      .catch(() => setCategoriasEstado([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Los catalogos de pedido solo se cargan cuando el consumidor los requiere de forma explicita,
+    // para no disparar peticiones ajenas al reporte (Kardex, Vencimiento, Factura, etc.).
+    if (cargarPedidos) {
+      axios
+        .get("/v1/pedido", headers)
+        .then((r) => setPedidos(asArray(r.data)))
+        .catch(() => setPedidos([]));
+    }
+    if (cargarCategoriasEstadoPedido) {
+      axios
+        .get("/v1/items/estado_categoria/0", headers)
+        .then((r) => setCategoriasEstado(asArray(r.data)))
+        .catch(() => setCategoriasEstado([]));
+    }
+  }, [cargarPedidos, cargarCategoriasEstadoPedido]);
 
   /* ---------- API del hook ---------- */
   return {

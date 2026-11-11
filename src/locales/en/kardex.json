@@ -49,6 +49,7 @@
     "emptyDates": "Date range is mandatory.",
     "invalidDateRange": "Start date cannot be greater than end date.",
     "noResults": "No records found for the selected filters.",
+    "resultsCount": "Showing {{count}} kardex movement(s).",
     "searchError": "Error performing search.",
     "excelSuccess": "Excel downloaded successfully.",
     "pdfSuccess": "PDF generated successfully.",

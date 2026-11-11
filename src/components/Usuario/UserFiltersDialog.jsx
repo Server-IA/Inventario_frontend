@@ -8,6 +8,8 @@ CONTROL DE CAMBIOS
 +------------+---------+----------------------+-----------------------------------------------+
 | 2026-08-03 | 0.4.0   | Cesar Medina         | Se crea modal de filtros para usuarios.       |
 | 2026-10-12 | 0.4.0   | Jeisson Sanchez      | [Issue #323] Retirar bloques informativos redundantes del modal de filtros. |
+| 2026-10-16 | 0.4.0   | Jeisson Sanchez      | [Issue #324] Integrar SearchableSelect con altura limitada y búsqueda local en filtros de Rol y Empresa. |
+| 2026-10-23 | 0.4.0   | Oscar Andrade (QA)   | [Issue #324] Sombra neutra en modo oscuro y acento superior sin línea blanca. |
 +------------+---------+----------------------+-----------------------------------------------+
 =============================================================================*/
 /**
@@ -41,6 +43,7 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import { useTranslation } from "react-i18next";
+import SearchableSelect from "../common/SearchableSelect";
 
 export default function UserFiltersDialog({
   open,
@@ -61,7 +64,15 @@ export default function UserFiltersDialog({
   const dialogSurface = theme.palette.mode === "dark" ? "#10211f" : theme.palette.common.white;
   const sectionSurface = theme.palette.mode === "dark" ? "#142b28" : theme.palette.common.white;
   const subtleBorder = alpha(green, 0.14);
-  const sectionShadow = `0 4px 14px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.14 : 0.05)}`;
+  const sectionShadow =
+    theme.palette.mode === "dark"
+      ? "0 4px 14px rgba(0, 0, 0, 0.35)"
+      : `0 4px 14px ${alpha(darkGreen, 0.05)}`;
+  const softShadow =
+    theme.palette.mode === "dark"
+      ? "0 10px 30px rgba(0, 0, 0, 0.5)"
+      : `0 10px 30px ${alpha(darkGreen, 0.08)}`;
+  const headerAccent = theme.palette.mode === "dark" ? alpha("#2b6b60", 0.8) : darkGreen;
   const contentMaxWidth = 1180;
 
   const handleFieldChange = (name) => (event) => {
@@ -79,7 +90,7 @@ export default function UserFiltersDialog({
           borderRadius: 3,
           overflow: "hidden",
           backgroundColor: dialogSurface,
-          boxShadow: `0 10px 30px ${alpha(darkGreen, theme.palette.mode === "dark" ? 0.18 : 0.08)}`,
+          boxShadow: softShadow,
         },
       }}
     >
@@ -88,7 +99,7 @@ export default function UserFiltersDialog({
           px: { xs: 2.25, sm: 3 },
           py: 2.15,
           backgroundColor: dialogSurface,
-          borderTop: `3px solid ${darkGreen}`,
+          borderTop: `3px solid ${headerAccent}`,
           borderBottom: `1px solid ${subtleBorder}`,
         }}
       >
@@ -228,21 +239,16 @@ export default function UserFiltersDialog({
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      fullWidth
+                    <SearchableSelect
                       label={t("usuario.form.fields.role")}
                       value={values.rolId ?? ""}
                       onChange={handleFieldChange("rolId")}
+                      options={roles}
+                      fullWidth
+                      emptyOptionLabel={t("common.labels.all")}
+                      placeholder={t("common.actions.search", "Buscar...")}
                       InputLabelProps={{ shrink: true }}
-                    >
-                      <MenuItem value="">{t("common.labels.all")}</MenuItem>
-                      {roles.map((item) => (
-                        <MenuItem key={item.value} value={item.value}>
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    />
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
@@ -262,32 +268,25 @@ export default function UserFiltersDialog({
                     </TextField>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      fullWidth
+                    <SearchableSelect
                       label={t("usuario.form.fields.company")}
                       value={values.empresaId ?? ""}
                       onChange={handleFieldChange("empresaId")}
+                      options={empresas}
                       disabled={companyLocked}
+                      fullWidth
+                      emptyOptionLabel={t("common.labels.all")}
+                      placeholder={t("common.actions.search", "Buscar...")}
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <BusinessOutlinedIcon
-                              fontSize="small"
-                              sx={{ color: alpha(darkGreen, 0.7) }}
-                            />
-                          </InputAdornment>
-                        ),
-                      }}
-                    >
-                      <MenuItem value="">{t("common.labels.all")}</MenuItem>
-                      {empresas.map((item) => (
-                        <MenuItem key={item.value} value={item.value}>
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <BusinessOutlinedIcon
+                            fontSize="small"
+                            sx={{ color: alpha(darkGreen, 0.7) }}
+                          />
+                        </InputAdornment>
+                      }
+                    />
                   </Grid>
                 </Grid>
               </Stack>
