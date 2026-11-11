@@ -12,6 +12,9 @@
  +------------+---------+----------------------+-----------------------------+
  | 2026-06-06 | 0.4.0   | Jeisson Sanchez      | Corrección texto menú.      |
  +------------+---------+----------------------+-----------------------------+
+ | 2026-09-25 | 0.4.0   | Alexander Lozada     | Módulo Costo Indirecto      |
+ |            |         |                      | (HU-045.1).                 |
+ +------------+---------+----------------------+-----------------------------+
 =============================================================================*/
 import * as React from "react";
 import {
@@ -233,6 +236,7 @@ import UsuarioRol from "../usario_rol/usariorol.jsx";
 import UsuarioRoles from "../UsuarioRoles/UsuarioRoles.jsx";
 import Usuario from "../Usuario/Usuario.jsx";
 import EmpresaRol from "../EmpresaRol/EmpresaRol.jsx";
+import CostoIndirecto from "../Costos/CostoIndirecto/CostoIndirecto.jsx";
 import Rol_usuario from "../Rol_usuario/Rol_usuario.jsx";
 // ImÃ¡genes
 import img1 from "/images/cards/1.jpg";
@@ -421,6 +425,7 @@ export const components = {
   modulo: modulo,
   Rol_usuario: Rol_usuario,
   EmpresaRol: EmpresaRol,
+  CostoIndirecto: CostoIndirecto,
   Usuario: Usuario,
   UsuarioRoles: UsuarioRoles,
   UsuarioRol: UsuarioRol,
